@@ -23,12 +23,17 @@
 % partial function arrow
 \newcommand{\pfun}[2]{#1 \rightharpoonup #2}
 
-% natural numbers
+% some math sets
 \newcommand{\N}{{\mathbb{N}}}
+\newcommand{\Q}{{\mathbb{Q}}}
 
 % domain/codomain notation
 \newcommand{\dom}[1]{\textit{dom}{({#1})}}
 \newcommand{\codom}[1]{\textit{codom}{({#1})}}
+
+% some logical notation
+%\newcommand{\implies}{{\Rightarrow}}
+%\newcommand{\iff}{{\Leftrightarrow}}
 
 % check-mark and cross-mark
 \newcommand{\cmark}{\text{\color{green}\ding{51}}}
@@ -36,6 +41,7 @@
 
 % event structure
 \newcommand{\lES}{ES}
+\newcommand{\lG}{G}
 
 % event set
 \newcommand{\lE}{{\mathtt{E}}}
@@ -48,6 +54,7 @@
 \newcommand{\Tid}{\mathsf{Tid}}
 \newcommand{\Loc}{\mathsf{Loc}}
 \newcommand{\Val}{\mathsf{Val}}
+\newcommand{\Bool}{\mathsf{Bool}}
 \newcommand{\Lab}{\mathsf{Lab}}
 \newcommand{\Mod}{\mathsf{Mod}}
 \newcommand{\Scp}{\mathsf{Scope}}
@@ -60,10 +67,15 @@
 \newcommand{\lSCP}{{\mathtt{scp}}}
 \newcommand{\lVALR}{{\mathtt{val_r}}}
 \newcommand{\lVALW}{{\mathtt{val_w}}}
+\newcommand{\lINIT}{{\mathtt{init}}}
+\newcommand{\lSN}{{\mathtt{sn}}}
 
 \newcommand{\rlab}[2]{\lR({#1},{#2})}
 \newcommand{\wlab}[2]{\lW({#1},{#2})}
 \newcommand{\flab}{\lF}
+
+\newcommand{\Ex}{{\mathtt{ex}}}
+\newcommand{\rlabEx}[2]{\lR^{\Ex}({#1},{#2})}
 
 \newcommand{\rlabS}[3]{\lR^{#3}({#1},{#2})}
 \newcommand{\wlabS}[3]{\lW^{#3}({#1},{#2})}
@@ -104,6 +116,8 @@
 \newcommand{\lSW}{{\color{colorSW}\mathtt{sw}}}
 \newcommand{\lHB}{{\color{colorHB}\mathtt{hb}}}
 
+\newcommand{\imm}{{\textrm IMM}~}
+
 \newcommand{\ocl}{{\textrm OpenCL}}
 \newcommand{\ptx}{{\textrm PTX}}
 \newcommand{\lSWocl}{{\color{colorSW}\mathtt{sw_\ocl}}}
@@ -128,6 +142,7 @@
 \newcommand{\lCTRL}{{{\color{colorDEPS}\mathtt{ctrl}}}}
 \newcommand{\lDATA}{{{\color{colorDEPS}\mathtt{data}}}}
 \newcommand{\lADDR}{{{\color{colorDEPS}\mathtt{addr}}}}
+\newcommand{\lCASDEP}{{{\color{colorDEPS}\mathtt{casdep}}}}
 \newcommand{\lDEP}{{\color{colorDEPS}\mathtt{dep}}}
 
 \newcommand{\lmakeE}[1]{#1\mathtt{e}}

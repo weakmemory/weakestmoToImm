@@ -27,8 +27,6 @@
 {\center \LARGE Compiling Event Structures to the Intermediate Memory Model }
 \end{center}
 
-\section{Event Structures}
-
 \begin{definition}
   An \emph{event structure} $\lES$ is a tuple
   $\tup{\lE, \lEi, \lTID, \lLAB, \lMOD, \lPO, \lRMW, \lRF, \lEW, \lMO}$ where:
@@ -38,10 +36,13 @@
   \item $\lTID \defeq \fun{\lE}{\Tid}$ --- function that assigns a thread id to every event.
     Given thread id $i \in \Tid$ we will denote by $\lE_i$ the set of all events belonging 
     to $i^{th}$ thread, that is $\lE_i \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
+    We assume that if $e \in \lEi$ then $\lTID(e) = 0$.
   \item $\lLAB \defeq \fun{\lE}{\Lab}$ --- function that assigns a label to every event.
     Labels are of one of the following forms:
     \begin{itemize}
-    \item $\rlab{x}{v}$ --- a read, where $x \in \Loc$, $v \in \Val$;
+    \item $\rlab{x}{v}^s$ --- a read, where $x \in \Loc$, $v \in \Val$ 
+      and $s \in \Bool$ is an exclusive flag 
+      (we will denote exclusive reads as $\rlabEx{x}{v}$);
     \item $\wlab{x}{v}$ --- a write, where $x \in \Loc$, $v \in \Val$;
     \item $\flab$ --- a fence.
     \end{itemize}
@@ -82,6 +83,39 @@
     same location writing same values 
     (that is $\lEW(e_1, e_2) \Rightarrow \lVALW(e_1) = \lVALW(e_2)$).
   \item $\lMO \subseteq \lW \times \lW$ --- \emph{modification order}, which is a strict partial order.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  An \imm execution graph $\lG$ is a tuple \\
+  $\tup{\lE, \lLAB, \lMOD, \lRMW, \lRF, \lMO, \lDATA, \lADDR, \lCTRL, \lCASDEP}$ where:
+  \begin{itemize}
+    \item $\lE$ is a set of events. 
+      Events in \imm have different representation comparing to the event structure model. 
+      That is, an event is either:
+      \begin{itemize}
+        \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
+        \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
+      \end{itemize}
+      Given this representation one could restore some piece of the event structure notation, 
+      in particular:
+      \begin{itemize}
+        \item $\lEi \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
+        \item $\lTID :: \fun{\lE}{\Tid}$ s.t. \\
+          $\forall{e} ~.~ (e = \tup{\lINIT~x} \implies \lTID(e) = 0) \wedge 
+           (e = \tup{i, n} \Rightarrow \lTID(e) = i)$;
+        \item $\lPO \subseteq \lE \times \lE$ s.t. \\
+          $\tup{e_1, e_2} \in \lPO \iff (e_1 \in \lEi \wedge e_2 \not\in \lEi) \vee 
+           (e_1 \not\in \lEi \wedge e_2 \not\in \lEi \wedge \lTID(e_1) = \lTID(e_2) \wedge
+            \lSN(e_1) < \lSN(e_2))$, 
+          where $\lSN(\tup{i, n}) = n$.
+      \end{itemize}
+      \item $\lLAB, \lMOD, \lRMW, \lRF, \lMO$ have the same definitions
+        as in the event structure model.
+      \item $\lDATA \subseteq \lR \times \lW$ --- data dependency;
+      \item $\lADDR \subseteq \lR \times (\lR \cup \lW)$ --- address dependency;
+      \item $\lCTRL \supseteq \lCTRL; \lPO$ --- control dependency;
+      \item $\lCASDEP \subseteq [R];\lPO;[R^{\Ex}]$ --- CAS dependency;
   \end{itemize}
 \end{definition}
 
