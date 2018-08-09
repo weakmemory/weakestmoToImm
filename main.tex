@@ -93,6 +93,16 @@
 \end{definition}
 
 \begin{definition}
+  For an event structure $\lES$ the set of its visible events $\lVIS(\lES)$ defined as follow:
+  \begin{itemize}
+    \item $\lVIS(\lES) \defeq 
+      \{ e \in \lES ~|~ \lES.\lW;(\lES.\lCF \cap (\lES.\lPO \cup \lES.\lRF)^+);[e] \subseteq 
+         \lES.\lEW;\lES.\lPO^=
+      \}$
+  \end{itemize}
+\end{definition} 
+
+\begin{definition}
   Given an event structure $\lES$ we will a call a tuple $\tup{\lE, \lPO, \lRMW, \lRF, \lMO}$ 
   its \emph{execution} $\lX$ if the following conditions hold:
   \begin{itemize}
@@ -157,6 +167,18 @@
   for some $\lG.\lMO$-maximal write event $w$, 
   or $O_{\lG} = 0$ and $\lG.\lW_x = \emptyset$.
 \end{definition}
+
+\section{Compilation correctness}
+
+\begin{theorem}
+  For every consistent \imm execution graph $G$
+  there exists a consistent event structure $\lES$ and its consistent execution $\lX$
+  such that an outcome of execution graph $O_{\lG}$ matches
+  an outcome of events structure's execution $O_{\lX}$, 
+  that is $O_{\lG} = O_{\lX}$
+  (precise definitions of consistent execution graph, event structure and execution 
+   will be given later).
+\end{theorem}
 
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
 \bibliographystyle{acm}
