@@ -1,0 +1,92 @@
+\documentclass[12pt]{article}
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[justification=centering]{caption}
+\usepackage{subcaption}
+\usepackage{cite}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{bussproofs}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{array}
+\usepackage{stmaryrd}
+\usepackage{pifont}
+
+\input{defs.tex}
+
+\begin{document}
+
+\begin{center}
+{\center \LARGE Compiling Event Structures to the Intermediate Memory Model }
+\end{center}
+
+\section{Event Structures}
+
+\begin{definition}
+  An \emph{event structure} $\lES$ is a tuple
+  $\tup{\lE, \lEi, \lTID, \lLAB, \lMOD, \lPO, \lRMW, \lRF, \lEW, \lMO}$ where:
+  \begin{itemize}
+  \item $\lE \subseteq \N$ --- finite set of events. 
+  \item $\lEi \subseteq \lE$ --- initialization events.
+  \item $\lTID \defeq \fun{\lE}{\Tid}$ --- function that assigns a thread id to every event.
+    Given thread id $i \in \Tid$ we will denote by $\lE_i$ the set of all events belonging 
+    to $i^{th}$ thread, that is $\lE_i \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
+  \item $\lLAB \defeq \fun{\lE}{\Lab}$ --- function that assigns a label to every event.
+    Labels are of one of the following forms:
+    \begin{itemize}
+    \item $\rlab{x}{v}$ --- a read, where $x \in \Loc$, $v \in \Val$;
+    \item $\wlab{x}{v}$ --- a write, where $x \in \Loc$, $v \in \Val$;
+    \item $\flab$ --- a fence.
+    \end{itemize}
+    $\lLAB$ induces the following functions:
+    \begin{itemize}
+    \item $\lTYP \defeq \fun{\lE}{\{\lR, \lW, \lF\}}$ --- assigns a type to every event;
+    \item $\lLOC \defeq \pfun{\lE}{Loc}$ --- returns the location of event (when applicable);
+    \item $\lVALR \defeq \pfun{\lE}{Val}$ --- returns the read value of event (when applicable);
+    \item $\lVALW \defeq \pfun{\lE}{Val}$ --- returns the written value of event (when applicable).
+    \end{itemize}
+    We assume that $\forall{e} \in \lEi. \; \lLAB(e) = \wlab{x}{0}$.
+  \item A function $\lMOD = G.\lE \rightarrow \Mod$ is a memory order assignment.
+    Elements of the set $\Mod \defeq \{ \rlx, \rel, \acq, \acqrel, \sco \}$ are
+    called \emph{memory order} parameters.
+    Additionally, $\lMOD$ satisfies the following constraints:
+    \begin{itemize}
+    \item $e \in \lR \Rightarrow \lMOD(e) \in \{ \rlx, \acq, \sco \}$,
+    \item $e \in \lW \Rightarrow \lMOD(e) \in \{ \rlx, \rel, \sco \}$,
+    \item $e \in \lF \Rightarrow \lMOD(e) \in \{ \rlx, \acqrel, \sco \}$.
+    \end{itemize}
+  \item $\lPO \subseteq \lE \times \lE$ --- \emph{program order}, which is a strict partial order.
+    It orders all initialization events before all other events,
+    that is $\lEi \times (\lE \setminus \lEi) \subseteq \lPO$.
+    Moreover, $\lPO$ induces the \emph{conflict relation} $\lCF$.
+    \begin{itemize}
+      \item  $\lCF \defeq \lPO^{-1};[E];\lPO \setminus \lPO^{=}$.
+    \end{itemize}
+  \item $\lRMW \subseteq \lR;(\lPO_{imm} \cap =_{loc});\lW \times \lE$ ---
+    \emph{read-modify-write pairs}.
+  \item $\lRF \subseteq \lW; =_{loc}; \lR$ --- \emph{reads-from} relation, which the following
+    hold for:
+    \begin{itemize}
+    \item $\forall{\tup{a, b}} \in \lRF. \; \lVALW(a) = \lVALR(b)$;
+    \item $\forall{a_1, a_2, b}. \; \tup{a_1, b} \in \lRF \wedge \tup{a_2, b} \in \lRF \Rightarrow a_1 = a_2.$
+    \end{itemize}
+  \item $\lEW \subseteq \lW \times \lW$ --- is the \emph{equal write} relation, 
+    which is an irreflexive, symmetric and transitive relation between conflicting writes on the
+    same location writing same values 
+    (that is $\lEW(e_1, e_2) \Rightarrow \lVALW(e_1) = \lVALW(e_2)$).
+  \item $\lMO \subseteq \lW \times \lW$ --- \emph{modification order}, which is a strict partial order.
+  \end{itemize}
+\end{definition}
+
+\setmonofont[Mapping=tex-text]{CMU Typewriter Text}
+\bibliographystyle{acm}
+\bibliography{main.bib}
+
+\end{document}
