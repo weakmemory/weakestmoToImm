@@ -27,6 +27,8 @@
 {\center \LARGE Compiling Event Structures to the Intermediate Memory Model }
 \end{center}
 
+\section{Event Structure Model}
+
 \begin{definition}
   An \emph{event structure} $\lES$ is a tuple
   $\tup{\lE, \lEi, \lTID, \lLAB, \lMOD, \lPO, \lRMW, \lRF, \lEW, \lMO}$ where:
@@ -82,9 +84,39 @@
     which is an irreflexive, symmetric and transitive relation between conflicting writes on the
     same location writing same values 
     (that is $\lEW(e_1, e_2) \Rightarrow \lVALW(e_1) = \lVALW(e_2)$).
+    Given $\lRF$, $\lEW$ and $\lCF$ we will also define a derived \emph{justified from} relation:
+    \begin{itemize}
+      \item $\lJF \defeq \lEW^?;\lRF \setminus \lCF$
+    \end{itemize}
   \item $\lMO \subseteq \lW \times \lW$ --- \emph{modification order}, which is a strict partial order.
   \end{itemize}
 \end{definition}
+
+\begin{definition}
+  Given an event structure $\lES$ we will a call a tuple $\tup{\lE, \lPO, \lRMW, \lRF, \lMO}$ 
+  its \emph{execution} $\lX$ if the following conditions hold:
+  \begin{itemize}
+    \item $\lX.\lE \subseteq \lVIS(\lES)$
+    \item $[\lX.\lE];\lES.\lCF;[\lX.\lE] = \emptyset$
+    \item $\lES.\lPO;[\lX.\lE] \subseteq \lX.\lE \times \lX.\lE$
+    \item $\forall{\tup{e, e'}} \in (\lX.\lE;\lES.\lPO;[\lES.\lE \setminus \lX.\lE]) ~.~ 
+      \exists{e''} \in \lX.\lE ~.~ \tup{e', e''} \in \lES.\lCF$
+    \item $\lX.\lPO = \lES.\lPO \cap \lX.\lE \times \lX.\lE$
+    \item $\lX.\lRMW = \lES.\lRMW \cap \lX.\lE \times \lX.\lE$
+    \item $\lX.\lRF = \lES.\lJF \cap \lX.\lE \times \lX.\lE$
+    \item $\lX.\lMO = \lES.\lMO \cap \lX.\lE \times \lX.\lE$
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  A function $O_{\lX} :: \fun{\Loc}{\Val}$ is an \emph{outcome} 
+  of an event structure's $\lES$ execution $\lX$
+  if for every $x \in \Loc$ either $O_{\lX}(x) = \lES.\lVALW(w)$ 
+  for some $\lX.\lMO$-maximal write event $w$, 
+  or $O_{\lG} = 0$ and $\lX.\lW_x = \emptyset$.
+\end{definition}
+
+\section{Intermediate Memory Model}
 
 \begin{definition}
   An \imm execution graph $\lG$ is a tuple \\
@@ -117,6 +149,13 @@
       \item $\lCTRL \supseteq \lCTRL; \lPO$ --- control dependency;
       \item $\lCASDEP \subseteq [R];\lPO;[R^{\Ex}]$ --- CAS dependency;
   \end{itemize}
+\end{definition}
+
+\begin{definition}
+  A function $O_{\lG} :: \fun{\Loc}{\Val}$ is an \emph{outcome} of an \imm execution graph $\lG$
+  if for every $x \in \Loc$ either $O_{\lG}(x) = \lG.\lVALW(w)$ 
+  for some $\lG.\lMO$-maximal write event $w$, 
+  or $O_{\lG} = 0$ and $\lG.\lW_x = \emptyset$.
 \end{definition}
 
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
