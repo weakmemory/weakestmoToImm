@@ -62,6 +62,11 @@
 \newcommand{\lW}{{\mathtt{W}}}
 \newcommand{\lF}{{\mathtt{F}}}
 
+\newcommand{\lEsqeq}[1]{{\lE^{\sqsubseteq#1}}}
+\newcommand{\lRsqeq}[1]{{\lR^{\sqsubseteq#1}}}
+\newcommand{\lWsqeq}[1]{{\lW^{\sqsubseteq#1}}}
+\newcommand{\lFsqeq}[1]{{\lF^{\sqsubseteq#1}}}
+
 % labeling of events
 \newcommand{\Tid}{\mathsf{Tid}}
 \newcommand{\Loc}{\mathsf{Loc}}
@@ -106,6 +111,7 @@
 \colorlet{colorRB}{purple}
 \colorlet{colorECO}{red!80!black}
 \colorlet{colorRSEQ}{cyan}
+\colorlet{colorRELP}{cyan}
 \colorlet{colorSW}{blue!40!black}
 \colorlet{colorHB}{blue}
 \colorlet{colorSCB}{violet}
@@ -119,6 +125,7 @@
 \colorlet{colorDEPS}{violet!60!black}
 
 \newcommand{\lPO}{{\color{colorPO}\mathtt{po}}}
+\newcommand{\lPOloc}{{\lPO_{|loc}}}
 \newcommand{\lRF}{{\color{colorRF}\mathtt{rf}}}
 \newcommand{\lJF}{{\color{colorRF}\mathtt{jf}}}
 \newcommand{\lRMW}{{\color{colorRMW}\mathtt{rmw}}}
@@ -129,6 +136,7 @@
 \newcommand{\lECO}{{\color{colorECO}\mathtt{eco}}}
 
 \newcommand{\lRSEQ}{{\color{colorRSEQ}\mathtt{rseq}}}
+\newcommand{\lRELP}{{\color{colorRELP}\mathtt{relp}}}
 \newcommand{\lSW}{{\color{colorSW}\mathtt{sw}}}
 \newcommand{\lHB}{{\color{colorHB}\mathtt{hb}}}
 

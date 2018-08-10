@@ -97,8 +97,23 @@
   \begin{itemize}
     \item $\lES.\lRB \defeq (\lES.\lJF^{-1};\lES.\lMO) \setminus \lES.\lCF^?$ --- 
       \emph{reads before};
-    \item $\lES.\lECO \defeq (\lES.\lJF \cup \lES.\lRB \cup \lES.\lMO)$ --- 
+    \item $\lES.\lECO \defeq (\lES.\lJF \cup \lES.\lRB \cup \lES.\lMO)^+$ --- 
       \emph{extended coherence order}
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Giving an event structure $\lES$ we define the \emph{happens-before} relation $\lHB$
+  using auxililarly relations: 
+  $\lRSEQ$ --- release sequence,
+  $\lRELP$ --- release prefix and
+  $\lSW$ --- synchronize-with.
+  \begin{itemize}
+  \item $\lRSEQ \defeq [\lWsqeq{rlx}];(\lPOloc;[\lWsqeq{rlx}] \cup 
+    (\lPOloc^?;[\lWsqeq{\rlx}];\lJF;\lRMW)^*)$;
+  \item $\lRELP \defeq [\lEsqeq{rel}];([\lW] \cup [\lF];\lPO);\lRSEQ$
+  \item $\lSW \defeq \lRELP; (\lRFI \cup \lPOloc^?;\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$
+  \item $\lHB \defeq (\lPO \cup \lSW)^+$
   \end{itemize}
 \end{definition}
 
