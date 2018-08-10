@@ -93,6 +93,16 @@
 \end{definition}
 
 \begin{definition}
+  Using the primitive relations of an event structure $\lES$ we define following derived relations:
+  \begin{itemize}
+    \item $\lES.\lRB \defeq (\lES.\lJF^{-1};\lES.\lMO) \setminus \lES.\lCF^?$ --- 
+      \emph{reads before};
+    \item $\lES.\lECO \defeq (\lES.\lJF \cup \lES.\lRB \cup \lES.\lMO)$ --- 
+      \emph{extended coherence order}
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
   For an event structure $\lES$ the set of its visible events $\lVIS(\lES)$ defined as follow:
   \begin{itemize}
     \item $\lVIS(\lES) \defeq 
@@ -100,7 +110,7 @@
          \lES.\lEW;\lES.\lPO^=
       \}$
   \end{itemize}
-\end{definition} 
+\end{definition}
 
 \begin{definition}
   Given an event structure $\lES$ we will a call a tuple $\tup{\lE, \lPO, \lRMW, \lRF, \lMO}$ 
@@ -175,10 +185,26 @@
   there exists a consistent event structure $\lES$ and its consistent execution $\lX$
   such that an outcome of execution graph $O_{\lG}$ matches
   an outcome of events structure's execution $O_{\lX}$, 
-  that is $O_{\lG} = O_{\lX}$
-  (precise definitions of consistent execution graph, event structure and execution 
-   will be given later).
+  that is $O_{\lG} = O_{\lX}$.
 \end{theorem}
+
+\subsection{Simulation relation}
+
+\begin{definition}
+  Simulation relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ that binds an 
+  event structure $\lES$, an \imm execution graph $\lG$ and 
+  a traversal configuration $\tup{\lC, \lI}$,
+  holds if there exists a injecive mapping between events $\lM :: \fun{\lG.\lE}{\lES.\lE}$
+  and a program counter $\lPC :: \fun{\Tid}{\lES.\lE}$
+  such that the following conditions are met:
+  \begin{itemize}
+    \item $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
+    \item $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
+    \item $\forall{i \in \Tid} ~.~ \lDOM(\lES.\lPO^?;[\lPC(i)]) = \lM(\lC) \cap \lES.\lE_i$;
+    \item $\forall{\tup{w, r} \in \lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF}$;
+    \item $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI] ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO}$;
+  \end{itemize}
+\end{definition}
 
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
 \bibliographystyle{acm}
