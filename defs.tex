@@ -1,9 +1,13 @@
+\newcommand{\rulehskip}{\hskip 1.5em}
+
 \theoremstyle{definition}
 
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
 
 \newcommand{\textdef}[1]{\textit{#1}}
+
+\newcommand{\imm}{{\textrm IMM}~}
 
 % inline code 
 \newcommand{\code}[1]{\texttt{#1}}
@@ -89,6 +93,9 @@
 \newcommand{\lVIS}{{\mathtt{vis}}}
 \newcommand{\lPC}{{\mathtt{pc}}}
 
+\newcommand{\lCOVERABLE}{{\mathtt{Coverable}}}
+\newcommand{\lISSUABLE}{{\mathtt{Issuable}}}
+
 \newcommand{\rlab}[2]{\lR({#1},{#2})}
 \newcommand{\wlab}[2]{\lW({#1},{#2})}
 \newcommand{\flab}{\lF}
@@ -102,6 +109,7 @@
 
 % some predefined relations
 \colorlet{colorPO}{gray!60!black}
+\colorlet{colorPPO}{magenta}
 \colorlet{colorRF}{green!60!black}
 \colorlet{colorJF}{green!40!black}
 \colorlet{colorRMW}{olive!70!black}
@@ -117,15 +125,17 @@
 \colorlet{colorSCB}{violet}
 \colorlet{colorPSC}{violet}
 \colorlet{colorFSC}{violet}
+\colorlet{colorSC}{violet}
 \colorlet{colorWGR}{magenta!40!black}
 \colorlet{colorDEV}{magenta}
 \colorlet{colorINCL}{magenta!70!black}
 \colorlet{colorOBS}{green!40!black}
 \colorlet{colorCA}{teal}
 \colorlet{colorDEPS}{violet!60!black}
+\colorlet{colorDETOUR}{teal}
 
 \newcommand{\lPO}{{\color{colorPO}\mathtt{po}}}
-\newcommand{\lPOloc}{{\lPO_{|loc}}}
+\newcommand{\lPPO}{{\color{colorPPO}\mathtt{ppo}}}
 \newcommand{\lRF}{{\color{colorRF}\mathtt{rf}}}
 \newcommand{\lJF}{{\color{colorRF}\mathtt{jf}}}
 \newcommand{\lRMW}{{\color{colorRMW}\mathtt{rmw}}}
@@ -140,8 +150,6 @@
 \newcommand{\lSW}{{\color{colorSW}\mathtt{sw}}}
 \newcommand{\lHB}{{\color{colorHB}\mathtt{hb}}}
 
-\newcommand{\imm}{{\textrm IMM}~}
-
 \newcommand{\ocl}{{\textrm OpenCL}}
 \newcommand{\ptx}{{\textrm PTX}}
 \newcommand{\lSWocl}{{\color{colorSW}\mathtt{sw_\ocl}}}
@@ -152,6 +160,7 @@
 \newcommand{\lPSCF}{\lPSC_\lF}
 \newcommand{\lFSC}{{\color{colorFSC}\mathtt{fsc}}}
 \newcommand{\lPSC}{{\color{colorPSC}\mathtt{psc}}}
+\newcommand{\lSC}{{\color{colorSC}\mathtt{sc}}}
 
 \newcommand{\lWGR}{{\color{colorWGR}\mathtt{wgr}}}
 \newcommand{\lWGRi}[1]{{\color{colorWGR}\mathtt{wgr}_{#1}}}
@@ -169,6 +178,8 @@
 \newcommand{\lCASDEP}{{{\color{colorDEPS}\mathtt{casdep}}}}
 \newcommand{\lDEP}{{\color{colorDEPS}\mathtt{dep}}}
 
+\newcommand{\lDETOUR}{{\color{colorDETOUR}\mathtt{detour}}}
+
 \newcommand{\lmakeE}[1]{#1\mathtt{e}}
 \newcommand{\lRFE}{\lmakeE{\lRF}}
 \newcommand{\lCOE}{\lmakeE{\lCO}}
@@ -179,6 +190,8 @@
 \newcommand{\lRFI}{\lmakeI{\lRF}}
 \newcommand{\lCOI}{\lmakeI{\lCO}}
 \newcommand{\lFRI}{\lmakeI{\lFR}}
+
+\newcommand{\lmakeLoc}[1]{#1_{|loc}}
 
 %% memory orders
 \newcommand{\na}{\mathtt{na}}

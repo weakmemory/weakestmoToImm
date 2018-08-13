@@ -109,10 +109,10 @@
   $\lRELP$ --- release prefix and
   $\lSW$ --- synchronize-with.
   \begin{itemize}
-  \item $\lRSEQ \defeq [\lWsqeq{rlx}];(\lPOloc;[\lWsqeq{rlx}] \cup 
-    (\lPOloc^?;[\lWsqeq{\rlx}];\lJF;\lRMW)^*)$;
+  \item $\lRSEQ \defeq [\lWsqeq{rlx}];(\lmakeLoc{\lPO};[\lWsqeq{rlx}] \cup 
+    (\lmakeLoc{\lPO^?};[\lWsqeq{\rlx}];\lJF;\lRMW)^*)$;
   \item $\lRELP \defeq [\lEsqeq{rel}];([\lW] \cup [\lF];\lPO);\lRSEQ$
-  \item $\lSW \defeq \lRELP; (\lRFI \cup \lPOloc^?;\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$
+  \item $\lSW \defeq \lRELP; (\lRFI \cup \lmakeLoc{\lPO^?};\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$
   \item $\lHB \defeq (\lPO \cup \lSW)^+$
   \end{itemize}
 \end{definition}
@@ -202,6 +202,69 @@
   an outcome of events structure's execution $O_{\lX}$, 
   that is $O_{\lG} = O_{\lX}$.
 \end{theorem}
+
+\subsection{Traversal}
+
+\begin{definition}
+  A traversal configuration of an execution graph $\lG$ is a pair $\tup{\lC, \lI}$, 
+  where $\lC \subseteq \lG.\lE$ is a set of \emph{covered} events 
+  and $\lI \subseteq \lG.\lW$ is a set of \emph{issued} events,
+  that additionally satisfies the following properties:
+  \begin{itemize}
+    \item $\lG.\lEi \subseteq \lC$;
+    \item $\lC \cap \lG.\lW \subseteq \lI$;
+    \item $\lC \subseteq \lCOVERABLE(\lG, \lC, \lI)$;
+    \item $\lI \subseteq \lISSUABLE(\lG, \lC, \lI)$;
+  \end{itemize}
+  Configuration is called \emph{initial} when $\lC = \lI = \lG.\lEi$.
+\end{definition}
+
+\begin{definition}
+  A write event $w \in \lG.\lW$ is \emph{issuable} in $\lG$ and $\tup{\lC, \lI}$,
+  denoted $w \in \lISSUABLE(\lG, \lC, \lI)$, 
+  if the following conditions are met:
+  \begin{itemize}
+    \item $\dom{([\lG.\lW^{rel}];\lmakeLoc{\lG.\lPO} \cup [\lG.\lF];\lG.\lPO);[w]} \subseteq \lC$
+    \item $\dom{(\lG.\lDETOUR \cup \lG.\lRFE);\lG.\lPPO;[w]} \subseteq \lI$
+    \item $\dom{(\lG.\lDETOUR \cup \lG.\lRFE);[\lG.R^{acq}];\lG.\lPO;[w]} \subseteq \lI$
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  An event $e \in \lG.\lE$ is \emph{coverable} in $\lG$ and $\tup{\lC, \lI}$,
+  denoted $e \in \lCOVERABLE(\lG, \lC, \lI)$, 
+  if $\dom{\lG.\lPO;[e]} \subseteq \lC$ and either:
+  \begin{itemize}
+    \item $e \in \lG.\lW \cap \lI$
+    \item $e \in \lG.\lR \wedge \dom{\lG.\lRF;[e]} \subseteq I$
+    \item $e \in \lG.\lF^{\sqsubset\sco}$
+    \item $e \in \lG.\lF^{\sco} \wedge \dom{\lG.\lSC;[e]} \subseteq \lC$
+  \end{itemize}
+\end{definition}
+
+\begin{figure}[thb]
+
+\small
+    
+    \begin{center}
+    \AxiomC{$e \in \lCOVERABLE(\lG, \lC, \lI)$}
+    \UnaryInfC{$
+      \lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}
+    $}
+    \DisplayProof
+    % 
+    \rulehskip
+    % 
+    \AxiomC{$w \in \lISSUABLE(\lG, \lC, \lI)$}
+    \UnaryInfC{$
+      \lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC, \lI \uplus \{w\}}
+    $}
+    \DisplayProof
+    \end{center}
+    
+    \caption{Traversal step relation}
+    \label{fig:traversal-rules}
+\end{figure}
 
 \subsection{Simulation relation}
 
