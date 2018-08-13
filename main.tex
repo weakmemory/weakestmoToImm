@@ -273,22 +273,23 @@
   Simulation relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ that binds an 
   event structure $\lES$, an \imm execution graph $\lG$ and 
   a traversal configuration $\tup{\lC, \lI}$,
-  holds if there exists a injecive mapping between events $\lM :: \fun{\lG.\lE}{\lES.\lE}$
-  and a program counter $\lPC :: \fun{\Tid}{\lES.\lE}$
+  holds if there exists two injecive mappings between events 
+  $\lMC, \lM :: \fun{\lG.\lE}{\lES.\lE}$
   such that the following conditions are met:
   \begin{enumerate}[label=\textbf{S.\arabic*}]
-    \item \label{item:sim-lab} 
-      $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
-    \item \label{item:sim-pc} 
-      $\forall{i \in \Tid} ~.~ \lDOM(\lES.\lPO^?;[\lPC(i)]) = \lM(\lC) \cap \lES.\lE_i$;
+    \item \label{item:sim-lab}
+      $\forall{e \in \lC} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lMC(e)) \wedge
+       \forall{e \in \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lMI(e))$;
     \item \label{item:sim-vis} 
       $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
+    \item \label{item:sim-po} 
+      $\lES.\lPO;[\lMC(\lC)] \subseteq [\lMC(\lC)];\lES.\lPO;[\lMC(\lC)]$;
     \item \label{item:sim-rf-i} 
-      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lRF}$;
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC] ~.~ \tup{\lMI(w), \lMC(r)} \in \lES.\lRF}$;
     \item \label{item:sim-rf-c} 
-      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF}$;
+      $\forall{\tup{w, r} \in [\lC];\lG.\lRF;[\lC] ~.~ \tup{\lMC(w), \lMC(r)} \in \lES.\lJF}$;
     \item \label{item:sim-mo}
-      $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI] ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO}$;
+      $\forall{\tup{w, w'} \in [\lC];\lG.\lMO;[\lC] ~.~ \tup{\lMC(w), \lMC(w')} \in \lES.\lMO}$;
   \end{enumerate}
 \end{definition}
 
@@ -315,17 +316,17 @@
 
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
-  \ref{item:sim-lab} and \ref{item:sim-pc} follow
+  \ref{item:sim-lab} and \ref{item:sim-po} follow
   from the definition of the basic simulation step and $\lCOVERABLE$.
-  As we are not modifying the set of issuable events, 
-  \ref{item:sim-mo} follows directly from the $\lSIM(\lES, \lG, \lC, \lI)$.
+  %% As we are not modifying the set of issuable events, 
+  %% \ref{item:sim-mo} follows directly from the $\lSIM(\lES, \lG, \lC, \lI)$.
   In order to prove other properties of simulation relation,
   we have to consider different cases.
 
   \begin{itemize}
     \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$. 
-      As fences do not contribute to the $\lRF$ relation, 
-      \ref{item:sim-rf-i} and \ref{item:sim-rf-c} follows immediately.
+      As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
+      \ref{item:sim-rf-i}, \ref{item:sim-rf-c} and \ref{item:sim-mo} follows immediately.
       Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
       and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
       the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
@@ -333,7 +334,8 @@
       any $\lPO$-predcessor of $\hat{e}$ is visible, and thus $\hat{e}$ is also visible.
       We have proven \ref{item:sim-vis}.
 
-    \item $e$ is a write event, that is $e \in \lG.\lW$. 
+    \item $e$ is a write event, that is $e \in \lG.\lW$.
+      
       
 
     \item $e \in \lG.\lR$
@@ -347,12 +349,11 @@
 
 \small
 
+    %% \noLine
+    %% \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
+
     \begin{center}
     \AxiomC{$\hat{e} = max(\lE) + 1$}
-    \noLine
-    \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
-    \noLine
-    \UnaryInfC{$\lPC' = \lPC[\lG.\lTID(e) \rightarrow \hat{e}]$}
     \noLine
     \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
 
@@ -362,12 +363,12 @@
     \noLine
     \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
 
-    \AxiomC{$\lPO' = \lPO \cup \lE_i \times \{\hat{e}\}$}
+%%    \AxiomC{$\lPO' = \lPO \cup \lE_i \times \{\hat{e}\}$}
 
-    \TrinaryInfC{$
-      \tup{\lM, \lPC, \lE, \lTID, \lLAB, \lMOD, \lPO, \lRMW}
-      \xRightarrow{\lG, \lC, \lI, e}
-      \tup{\lM', \lPC', \lE', \lTID', \lLAB', \lMOD', \lPO', \lRMW}
+    \BinaryInfC{$
+      \tup{\lE, \lTID, \lLAB, \lMOD}
+      \xRightarrow{\lG, e}
+      (\hat{e}, \tup{\lE', \lTID', \lLAB', \lMOD'})
     $}
     \DisplayProof
     \end{center}
@@ -383,19 +384,19 @@
     \begin{subfigure}{1\textwidth}
     [COVER-WRITE]
     \begin{center}
-    \AxiomC{$
-      \tup{\lM, \lPC, \lES_{base}}
-      \xRightarrow{\lG, \lC, \lI, e}
-      \tup{\lM', \lPC', \lES'_{base}}
-    $}
-
-    \AxiomC{$e \in \lG.\lW$}
+    \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
     \noLine
-    \UnaryInfC{$\lMO' = \lMO \cup \lM(\lG.\lMO) \cap E' \times E'$}
-    \BinaryInfC{$
-      \tup{\lM, \lPC, \lES_{base}, \lRF, \lEW, \lMO}
+    \UnaryInfC{$e \in \lG.\lW \cap \lCOVERABLE(\lG, \lC, \lI)$}
+
+    \AxiomC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+
+    \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+    \noLine
+    \UnaryInfC{$\lMO' = \lMO \cup \lMC'([\lC];\lG.\lMO;[e])$}
+    \TrinaryInfC{$
+      \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
       \xrightarrow{\lG, \lC, \lI, e}
-      \tup{\lM', \lPC', \lES_{base}, \lRF, \lEW, \lMO'}
+      \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO'}
     $}
     \DisplayProof
     \end{center}
