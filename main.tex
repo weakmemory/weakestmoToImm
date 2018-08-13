@@ -279,12 +279,14 @@
   \begin{enumerate}[label=\textbf{S.\arabic*}]
     \item \label{item:sim-lab} 
       $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
-    \item \label{item:sim-} 
+    \item \label{item:sim-pc} 
       $\forall{i \in \Tid} ~.~ \lDOM(\lES.\lPO^?;[\lPC(i)]) = \lM(\lC) \cap \lES.\lE_i$;
     \item \label{item:sim-vis} 
       $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
-    \item \label{item:sim-rf} 
-      $\forall{\tup{w, r} \in \lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF}$;
+    \item \label{item:sim-rf-i} 
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lRF}$;
+    \item \label{item:sim-rf-c} 
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF}$;
     \item \label{item:sim-mo}
       $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI] ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO}$;
   \end{enumerate}
@@ -313,13 +315,31 @@
 
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
-  We then have to consider the following cases.
-  \begin{itemize}
-    \item $e \in \lG.\lW$. 
+  \ref{item:sim-lab} and \ref{item:sim-pc} follow
+  from the definition of the basic simulation step and $\lCOVERABLE$.
+  As we are not modifying the set of issuable events, 
+  \ref{item:sim-mo} follows directly from the $\lSIM(\lES, \lG, \lC, \lI)$.
+  In order to prove other properties of simulation relation,
+  we have to consider different cases.
 
-    \item $e \in \lG.\lR \wedge \dom{\lG.\lRF;[e]} \subseteq I$
-    \item $e \in \lG.\lF^{\sqsubset\sco}$
-    \item $e \in \lG.\lF^{\sco} \wedge \dom{\lG.\lSC;[e]} \subseteq \lC$
+  \begin{itemize}
+    \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$. 
+      As fences do not contribute to the $\lRF$ relation, 
+      \ref{item:sim-rf-i} and \ref{item:sim-rf-c} follows immediately.
+      Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
+      and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
+      the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
+      But since $\lSIM(\lES, \lG, \lC, \lI)$ holds we know that 
+      any $\lPO$-predcessor of $\hat{e}$ is visible, and thus $\hat{e}$ is also visible.
+      We have proven \ref{item:sim-vis}.
+
+    \item $e$ is a write event, that is $e \in \lG.\lW$. 
+      
+
+    \item $e \in \lG.\lR$
+
+
+%    \item $e \in \lG.\lF^{\sco} \wedge \dom{\lG.\lSC;[e]} \subseteq \lC$
   \end{itemize}
 \end{proof}
 
