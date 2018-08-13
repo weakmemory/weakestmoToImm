@@ -18,6 +18,7 @@
 \usepackage{array}
 \usepackage{stmaryrd}
 \usepackage{pifont}
+\usepackage{enumitem}
 
 \input{defs.tex}
 
@@ -275,14 +276,115 @@
   holds if there exists a injecive mapping between events $\lM :: \fun{\lG.\lE}{\lES.\lE}$
   and a program counter $\lPC :: \fun{\Tid}{\lES.\lE}$
   such that the following conditions are met:
-  \begin{itemize}
-    \item $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
-    \item $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
-    \item $\forall{i \in \Tid} ~.~ \lDOM(\lES.\lPO^?;[\lPC(i)]) = \lM(\lC) \cap \lES.\lE_i$;
-    \item $\forall{\tup{w, r} \in \lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF}$;
-    \item $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI] ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO}$;
-  \end{itemize}
+  \begin{enumerate}[label=\textbf{S.\arabic*}]
+    \item \label{item:sim-lab} 
+      $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
+    \item \label{item:sim-} 
+      $\forall{i \in \Tid} ~.~ \lDOM(\lES.\lPO^?;[\lPC(i)]) = \lM(\lC) \cap \lES.\lE_i$;
+    \item \label{item:sim-vis} 
+      $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
+    \item \label{item:sim-rf} 
+      $\forall{\tup{w, r} \in \lG.\lRF;[\lC] ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF}$;
+    \item \label{item:sim-mo}
+      $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI] ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO}$;
+  \end{enumerate}
 \end{definition}
+
+\begin{lemma}
+  Given an event structure $\lES$, an \imm execution graph $\lG$ 
+  and its traversal configuration $\tup{\lC, \lI}$
+  if the relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds and 
+  there exists $\tup{\lC', \lI'}$ s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC', \lI'}$
+  then there exists $\lES'$ s.t. $\lSIM(\lES', \lG, \tup{\lC', \lI'})$ 
+\end{lemma}
+
+\begin{proof}
+  We will define simulation step relation 
+  $\tup{\lM, \lPC, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'}$
+  in order to build an updated event mapping $\lM'$, program counter $\lPC'$ 
+  and event structure $\lES'$ 
+  when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$.
+  Simulation step relation is defined accordint to rules in fig.~\ref{fig:simrules}.
+  Auxiliary relation 
+  $\tup{\lM, \lPC, \lES_{base}} \xRightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'_{base}}$,
+  called basic simulation step, 
+  is used to update event mapping, program counter and some components of event structure
+  (fig.~\ref{fig:simrules-base}).
+
+  First, suppose that 
+  $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
+  We then have to consider the following cases.
+  \begin{itemize}
+    \item $e \in \lG.\lW$. 
+
+    \item $e \in \lG.\lR \wedge \dom{\lG.\lRF;[e]} \subseteq I$
+    \item $e \in \lG.\lF^{\sqsubset\sco}$
+    \item $e \in \lG.\lF^{\sco} \wedge \dom{\lG.\lSC;[e]} \subseteq \lC$
+  \end{itemize}
+\end{proof}
+
+\begin{figure}[thb]
+
+\small
+
+    \begin{center}
+    \AxiomC{$\hat{e} = max(\lE) + 1$}
+    \noLine
+    \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
+    \noLine
+    \UnaryInfC{$\lPC' = \lPC[\lG.\lTID(e) \rightarrow \hat{e}]$}
+    \noLine
+    \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
+
+    \AxiomC{$\lTID' = \lTID[\hat{e} \rightarrow \lG.\lTID(e)]$}
+    \noLine
+    \UnaryInfC{$\lLAB' = \lLAB[\hat{e} \rightarrow \lG.\lLAB(e)]$}
+    \noLine
+    \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
+
+    \AxiomC{$\lPO' = \lPO \cup \lE_i \times \{\hat{e}\}$}
+
+    \TrinaryInfC{$
+      \tup{\lM, \lPC, \lE, \lTID, \lLAB, \lMOD, \lPO, \lRMW}
+      \xRightarrow{\lG, \lC, \lI, e}
+      \tup{\lM', \lPC', \lE', \lTID', \lLAB', \lMOD', \lPO', \lRMW}
+    $}
+    \DisplayProof
+    \end{center}
+    
+\caption{Basic simulation step}
+\label{fig:simrules-base}
+\end{figure}
+
+\begin{figure}
+    
+\small
+
+    \begin{subfigure}{1\textwidth}
+    [COVER-WRITE]
+    \begin{center}
+    \AxiomC{$
+      \tup{\lM, \lPC, \lES_{base}}
+      \xRightarrow{\lG, \lC, \lI, e}
+      \tup{\lM', \lPC', \lES'_{base}}
+    $}
+
+    \AxiomC{$e \in \lG.\lW$}
+    \noLine
+    \UnaryInfC{$\lMO' = \lMO \cup \lM(\lG.\lMO) \cap E' \times E'$}
+    \BinaryInfC{$
+      \tup{\lM, \lPC, \lES_{base}, \lRF, \lEW, \lMO}
+      \xrightarrow{\lG, \lC, \lI, e}
+      \tup{\lM', \lPC', \lES_{base}, \lRF, \lEW, \lMO'}
+    $}
+    \DisplayProof
+    \end{center}
+    \label{fig:simrule-write-cover}
+    \end{subfigure}
+    
+    \caption{Simulation step}
+    \label{fig:simrules}
+\end{figure}
 
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
 \bibliographystyle{acm}
