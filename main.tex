@@ -282,6 +282,10 @@
        \forall{e \in \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lMI(e))$;
     \item \label{item:sim-vis} 
       $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
+      \note{I am afraid that we cannot prove this.
+        See the cover read case of proof for details.
+        Instead I propose to use \ref{lem:2}.
+      }
     \item \label{item:sim-po} 
       $\lES.\lPO;[\lMC(\lC)] \subseteq [\lMC(\lC)];\lES.\lPO;[\lMC(\lC)]$;
     \item \label{item:sim-rf-i} 
@@ -316,15 +320,16 @@
 
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
-  \ref{item:sim-lab} and \ref{item:sim-po} follow
-  from the definition of the basic simulation step and $\lCOVERABLE$.
+  \ref{item:sim-lab} follow from the definition of the basic simulation step.
   %% As we are not modifying the set of issuable events, 
   %% \ref{item:sim-mo} follows directly from the $\lSIM(\lES, \lG, \lC, \lI)$.
   In order to prove other properties of simulation relation,
   we have to consider different cases.
 
   \begin{itemize}
-    \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$. 
+    \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
+      \ref{item:sim-po} follows from the $\lSIM(\lES, \lG, \tup{\lC, \lI})$ 
+      and the definition of $\lCOVERABLE$.
       As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
       \ref{item:sim-rf-i}, \ref{item:sim-rf-c} and \ref{item:sim-mo} follows immediately.
       Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
@@ -335,10 +340,49 @@
       We have proven \ref{item:sim-vis}.
 
     \item $e$ is a write event, that is $e \in \lG.\lW$.
+      \ref{item:sim-po} and \ref{item:sim-vis} can be proven similarly 
+      to the case when $e$ is a non-sc fence.
+      Since $e$ is a write, it cannot have any incoming $\lRF$ edges and thus
+      the \ref{item:sim-rf-i} follows directly from 
+      the fact that $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds.
+      To prove \ref{item:sim-rf-c} consider a read $r \in \lC$ that reads from $e$,
+      that is $\tup{e, r} \in \lG.\lRF$.
+      From the definition of $\lCOVERABLE$ we know that $e \in I$,
+      and thus $\tup{e, r} \in [\lI];\lG.\lRF;[\lC]$.
+      Then from \ref{item:sim-rf-i} we can conclude that $\tup{\lMI(e), \lMC(r)} \in \lES.\lRF$.
+      According to (COVER-WRITE) rule\footnote{\note{ask Anton how to make reference to rules}}
+      $\tup{\hat{e}, \lMI(e)} \in \lEW'$
+      and thus $\tup{\hat{e}, \lMC(r)} \in \lES'.\lJF$.
+      Finally, \ref{item:sim-mo} follows directly from the
+      construction of $\lMO'$ in (COVER-WRITE) rule.
       
-      
-
-    \item $e \in \lG.\lR$
+    \item $e$ is a read event, that is $e \in \lG.\lR$.
+      Again \ref{item:sim-po} can be proven similarly to the previous cases.
+      \ref{item:sim-mo} holds because read events do not contribute to the $\lMO$.
+      From the definition of $\lCOVERABLE$ we know that for write $w \in \lG.\lW$
+      that $e$ read from, that is $\tup{w, e} \in \lG.\lRF$, $w \in I$.
+      From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf-i} holds.
+      If additionally $w \in \lC$ then \ref{item:sim-rf-c} also holds
+      (as $\lES.\lRF \subseteq \lES.\lJF$),
+      otherwise it holds because there was no new edges
+      added to the $[\lC];\lG.\lRF;[\lC]$ on this step.
+      \note{further go my speculations}.
+      As for \ref{item:sim-vis} note that after we added $e$ into $\lC$,
+      new conflicting writes that $e$ depends on may appear.
+      Unlike the cases when $e$ is a write or a fence,
+      the last edge in a dependency path not necessary a $\lPO$ edge,
+      it might be an $\lRFE$ edge.
+      That is, we might have events $w, w'$, such that
+      $\tup{w, w'} \in (\lPO \cup \lRF)^+$,
+      $\tup{w', e} \in \lRFE$ and $\tup{w, e} \in \lCF$.
+      If $w$ not covered, that is $w \in \lI \setminus \lC$,
+      then we can conclude that $\tup{e, w} \in \lPO$ in execution graph,
+      that is the read $e$ reads from a write that depends on some promised write
+      from the same thread.
+      In order to support invariant \ref{item:sim-vis} we have to
+      cover all events up to $w$ at this step.
+      Alternatively we can give up on maintaining this property
+      and use \ref{lemma:2} instead.
 
 
 %    \item $e \in \lG.\lF^{\sco} \wedge \dom{\lG.\lSC;[e]} \subseteq \lC$
@@ -382,23 +426,69 @@
 \small
 
     \begin{subfigure}{1\textwidth}
+    [COVER-FENCE]
+    \begin{center}
+      \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
+      \noLine
+      \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+      \noLine
+      \UnaryInfC{$e \in \lG.\lF^{\sqsubset\sco} \cap \lCOVERABLE(\lG, \lC, \lI)$}
+
+      \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+      \BinaryInfC{$
+        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \xrightarrow{\lG, \lC, \lI, e}
+        \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
+        $}
+      \DisplayProof
+    \end{center}
+    \label{fig:simrule-fence-cover}
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
     [COVER-WRITE]
     \begin{center}
-    \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
-    \noLine
-    \UnaryInfC{$e \in \lG.\lW \cap \lCOVERABLE(\lG, \lC, \lI)$}
+      \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
+      \noLine
+      \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
 
-    \AxiomC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+      \noLine
+      \UnaryInfC{$e \in \lG.\lW \cap \lCOVERABLE(\lG, \lC, \lI)$}
+      
+      \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+      \noLine
+      \UnaryInfC{$\lMO' = \lMO \cup \lMC'([\lC];\lG.\lMO;[e]) \cup \lMC'([e];\lG.\lMO;[\lC])$}
+      \noLine
+      \UnaryInfC{$\lEW' = \lEW \cup \{\tup{\hat{e}, \lMI(e)}, \tup{\lMI(e), \hat{e}}\}$}
+      \BinaryInfC{$
+        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \xrightarrow{\lG, \lC, \lI, e}
+        \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
+        $}
+      \DisplayProof
+    \end{center}
+    \label{fig:simrule-write-cover}
+    \end{subfigure}
 
-    \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
-    \noLine
-    \UnaryInfC{$\lMO' = \lMO \cup \lMC'([\lC];\lG.\lMO;[e])$}
-    \TrinaryInfC{$
-      \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-      \xrightarrow{\lG, \lC, \lI, e}
-      \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO'}
-    $}
-    \DisplayProof
+    \begin{subfigure}{1\textwidth}
+    [COVER-READ]
+    \begin{center}
+      \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
+      \noLine
+      \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+
+      \noLine
+      \UnaryInfC{$e \in \lG.\lR \cap \lCOVERABLE(\lG, \lC, \lI)$}
+      
+      \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+      \noLine
+      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lMI(w), \hat{e}} ~|~ \tup{w, e} \in \lG.\lRF \} $}
+      \BinaryInfC{$
+        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \xrightarrow{\lG, \lC, \lI, e}
+        \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+        $}
+      \DisplayProof
     \end{center}
     \label{fig:simrule-write-cover}
     \end{subfigure}
