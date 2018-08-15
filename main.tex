@@ -322,23 +322,28 @@
 \end{lemma}
 
 \begin{proof}
-  We will define simulation step relation 
-  $\tup{\lM, \lPC, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'}$
-  in order to build an updated event mapping $\lM'$, program counter $\lPC'$ 
+  
+  Note, that according to rules of traversal step relation (fig.~\ref{fig:traversal-rules})
+  the traversal adds one covered or one issued event at one step.
+  In order to build an updated event mappings $\lMC'$, $\lMI'$ 
   and event structure $\lES'$ 
-  when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$.
-  Simulation step relation is defined accordint to rules in fig.~\ref{fig:simrules}.
+  when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$
+  we will define simulation step relation 
+  $\tup{\lM, \lPC, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'}$.
+  Simulation step relation is defined according to rules in fig.~\ref{fig:simrules}.
   Auxiliary relation 
   $\tup{\lM, \lPC, \lES_{base}} \xRightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'_{base}}$,
   called basic simulation step, 
   is used to update event mapping, program counter and some components of event structure
   (fig.~\ref{fig:simrules-base}).
+  Our goal then is to prove that $\lSIM(\lES', \lG, \tup{\lC', \lI'})$ holds.
+  Again, as the traversal adds one covered or one issued event at one step,
+  we basically need to show that \ref{item:sim-lab}-\ref{item:sim-mo} hold
+  for that added event.
 
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
   \ref{item:sim-lab} follow from the definition of the basic simulation step.
-  %% As we are not modifying the set of issuable events, 
-  %% \ref{item:sim-mo} follows directly from the $\lSIM(\lES, \lG, \lC, \lI)$.
   In order to prove other properties of simulation relation,
   we have to consider different cases.
 
@@ -407,6 +412,8 @@
 
 \begin{figure}[thb]
 
+\begin{subfigure}{1\textwidth}
+
 \small
 
     %% \noLine
@@ -435,9 +442,9 @@
     
 \caption{Basic simulation step}
 \label{fig:simrules-base}
-\end{figure}
+\end{subfigure}
 
-\begin{figure}
+\begin{subfigure}{1\textwidth}
     
 \small
 
@@ -506,12 +513,38 @@
         $}
       \DisplayProof
     \end{center}
-    \label{fig:simrule-write-cover}
+    \label{fig:simrule-read-cover}
     \end{subfigure}
+
+    %% \begin{subfigure}{1\textwidth}
+    %% [ISSUE-WRITE]
+    %% \begin{center}
+    %%   \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
+    %%   \noLine
+    %%   \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+
+    %%   \noLine
+    %%   \UnaryInfC{$e \in \lG.\lR \cap \lCOVERABLE(\lG, \lC, \lI)$}
+      
+    %%   \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+    %%   \noLine
+    %%   \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lMI(w), \hat{e}} ~|~ \tup{w, e} \in \lG.\lRF \} $}
+    %%   \BinaryInfC{$
+    %%     \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+    %%     \xrightarrow{\lG, \lC, \lI, e}
+    %%     \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+    %%     $}
+    %%   \DisplayProof
+    %% \end{center}
+    %% \label{fig:simrule-write-issue}
+    %% \end{subfigure}
     
     \caption{Simulation step}
     \label{fig:simrules}
+\end{subfigure}
+
 \end{figure}
+
 
 \begin{lemma}
   \label{lemma:2}
