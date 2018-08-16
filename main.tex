@@ -304,12 +304,12 @@
       }
     \item \label{item:sim-po} 
       $\lES.\lPO;[\lMC(\lC)] \subseteq [\lMC(\lC)];\lES.\lPO;[\lMC(\lC)]$;
-    \item \label{item:sim-rf-i} 
-      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC] ~.~ \tup{\lMI(w), \lMC(r)} \in \lES.\lRF}$;
-    \item \label{item:sim-rf-c} 
-      $\forall{\tup{w, r} \in [\lC];\lG.\lRF;[\lC] ~.~ \tup{\lMC(w), \lMC(r)} \in \lES.\lJF}$;
+    \item \label{item:sim-rf} 
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{\lMI(w), \lMC(r)} \in \lES.\lRF$;
+    \item \label{item:sim-ew} 
+      $\forall{w \in \lC} ~.~ \tup{\lMI(w), \lMC(w)} \in \lES.\lEW$;
     \item \label{item:sim-mo}
-      $\forall{\tup{w, w'} \in [\lC];\lG.\lMO;[\lC] ~.~ \tup{\lMC(w), \lMC(w')} \in \lES.\lMO}$;
+      $\forall{\tup{w, w'} \in [\lC];\lG.\lMO;[\lC]} ~.~ \tup{\lMC(w), \lMC(w')} \in \lES.\lMO$;
   \end{enumerate}
 \end{definition}
 
@@ -351,8 +351,10 @@
     \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
       \ref{item:sim-po} follows from the $\lSIM(\lES, \lG, \tup{\lC, \lI})$ 
       and the definition of $\lCOVERABLE$.
+      \ref{item:sim-ew} follows from the fact that
+      we did not modify the set of covered writes on this step.
       As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
-      \ref{item:sim-rf-i}, \ref{item:sim-rf-c} and \ref{item:sim-mo} follows immediately.
+      \ref{item:sim-rf}, and \ref{item:sim-mo} follows immediately.
       Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
       and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
       the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
@@ -364,29 +366,27 @@
       \ref{item:sim-po} and \ref{item:sim-vis} can be proven similarly 
       to the case when $e$ is a non-sc fence.
       Since $e$ is a write, it cannot have any incoming $\lRF$ edges and thus
-      the \ref{item:sim-rf-i} follows directly from 
+      the \ref{item:sim-rf} follows directly from 
       the fact that $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds.
-      To prove \ref{item:sim-rf-c} consider a read $r \in \lC$ that reads from $e$,
-      that is $\tup{e, r} \in \lG.\lRF$.
-      From the definition of $\lCOVERABLE$ we know that $e \in I$,
-      and thus $\tup{e, r} \in [\lI];\lG.\lRF;[\lC]$.
-      Then from \ref{item:sim-rf-i} we can conclude that $\tup{\lMI(e), \lMC(r)} \in \lES.\lRF$.
-      According to (COVER-WRITE) rule\footnote{\note{ask Anton how to make reference to rules}}
-      $\tup{\hat{e}, \lMI(e)} \in \lEW'$
-      and thus $\tup{\hat{e}, \lMC(r)} \in \lES'.\lJF$.
-      Finally, \ref{item:sim-mo} follows directly from the
-      construction of $\lMO'$ in (COVER-WRITE) rule.
+      \ref{item:sim-ew} and \ref{item:sim-mo} follow from the construction
+      of $\lEW'$ and $\lMO'$ in (COVER-WRITE) rule.
+      %% To prove \ref{item:sim-rf-c} consider a read $r \in \lC$ that reads from $e$,
+      %% that is $\tup{e, r} \in \lG.\lRF$.
+      %% From the definition of $\lCOVERABLE$ we know that $e \in I$,
+      %% and thus $\tup{e, r} \in [\lI];\lG.\lRF;[\lC]$.
+      %% Then from \ref{item:sim-rf-i} we can conclude that $\tup{\lMI(e), \lMC(r)} \in \lES.\lRF$.
+      %% According to (COVER-WRITE) rule\footnote{\note{ask Anton how to make reference to rules}}
+      %% $\tup{\hat{e}, \lMI(e)} \in \lEW'$
+      %% and thus $\tup{\hat{e}, \lMC(r)} \in \lES'.\lJF$.
       
     \item $e$ is a read event, that is $e \in \lG.\lR$.
       Again \ref{item:sim-po} can be proven similarly to the previous cases.
+      \ref{item:sim-ew} follows from the fact that
+      we did not modify the set of covered writes on this step.
       \ref{item:sim-mo} holds because read events do not contribute to the $\lMO$.
       From the definition of $\lCOVERABLE$ we know that for write $w \in \lG.\lW$
       that $e$ read from, that is $\tup{w, e} \in \lG.\lRF$, $w \in I$.
-      From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf-i} holds.
-      If additionally $w \in \lC$ then \ref{item:sim-rf-c} also holds
-      (as $\lES.\lRF \subseteq \lES.\lJF$),
-      otherwise it holds because there was no new edges
-      added to the $[\lC];\lG.\lRF;[\lC]$ on this step.
+      From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf} holds.
       \note{further go my speculations}.
       As for \ref{item:sim-vis} note that after we added $e$ into $\lC$,
       new conflicting writes that $e$ depends on may appear.
