@@ -329,12 +329,12 @@
   and event structure $\lES'$ 
   when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$
   we will define simulation step relation 
-  $\tup{\lM, \lPC, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'}$.
+  $\tup{\lMC, \lMI, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lMC', \lMI', \lES'}$.
   Simulation step relation is defined according to rules in fig.~\ref{fig:simrules}.
   Auxiliary relation 
-  $\tup{\lM, \lPC, \lES_{base}} \xRightarrow{\lG, \lC, \lI, e} \tup{\lM', \lPC', \lES'_{base}}$,
+  $(\lM, \lES_{base}) \xRightarrow{\lG, e} (\lM', \lES'_{base})$,
   called basic simulation step, 
-  is used to update event mapping, program counter and some components of event structure
+  is used to update event mapping and some components of event structure
   (fig.~\ref{fig:simrules-base}).
   Our goal then is to prove that $\lSIM(\lES', \lG, \tup{\lC', \lI'})$ holds.
   Again, as the traversal adds one covered or one issued event at one step,
@@ -416,13 +416,12 @@
 
 \small
 
-    %% \noLine
-    %% \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
-
     \begin{center}
     \AxiomC{$\hat{e} = max(\lE) + 1$}
     \noLine
     \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
+    \noLine
+    \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
 
     \AxiomC{$\lTID' = \lTID[\hat{e} \rightarrow \lG.\lTID(e)]$}
     \noLine
@@ -430,12 +429,10 @@
     \noLine
     \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
 
-%%    \AxiomC{$\lPO' = \lPO \cup \lE_i \times \{\hat{e}\}$}
-
     \BinaryInfC{$
-      \tup{\lE, \lTID, \lLAB, \lMOD}
+      (\lM, \tup{\lE, \lTID, \lLAB, \lMOD})
       \xRightarrow{\lG, e}
-      (\hat{e}, \tup{\lE', \lTID', \lLAB', \lMOD'})
+      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD'})
     $}
     \DisplayProof
     \end{center}
@@ -451,9 +448,7 @@
     \begin{subfigure}{1\textwidth}
     [COVER-FENCE]
     \begin{center}
-      \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
-      \noLine
-      \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+      \AxiomC{$(\lMC, \lES_{base}) \xRightarrow{\lG, e} (\lMC', \lES'_{base})$}
       \noLine
       \UnaryInfC{$e \in \lG.\lF^{\sqsubset\sco} \cap \lCOVERABLE(\lG, \lC, \lI)$}
 
@@ -461,7 +456,7 @@
       \BinaryInfC{$
         \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
         \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
+        \tup{\lMC', \lMI, \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
         $}
       \DisplayProof
     \end{center}
@@ -471,10 +466,7 @@
     \begin{subfigure}{1\textwidth}
     [COVER-WRITE]
     \begin{center}
-      \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
-      \noLine
-      \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
-
+      \AxiomC{$(\lMC, \lES_{base}) \xRightarrow{\lG, e} (\lMC', \lES'_{base})$}
       \noLine
       \UnaryInfC{$e \in \lG.\lW \cap \lCOVERABLE(\lG, \lC, \lI)$}
       
@@ -482,11 +474,11 @@
       \noLine
       \UnaryInfC{$\lMO' = \lMO \cup \lMC'([\lC];\lG.\lMO;[e]) \cup \lMC'([e];\lG.\lMO;[\lC])$}
       \noLine
-      \UnaryInfC{$\lEW' = \lEW \cup \{\tup{\hat{e}, \lMI(e)}, \tup{\lMI(e), \hat{e}}\}$}
+      \UnaryInfC{$\lEW' = \lEW \cup \{\tup{\lMC'(e), \lMI(e)}, \tup{\lMI(e), \lMC'(e)}\}$}
       \BinaryInfC{$
         \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
         \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
+        \tup{\lMC', \lMI, \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
         $}
       \DisplayProof
     \end{center}
@@ -496,48 +488,51 @@
     \begin{subfigure}{1\textwidth}
     [COVER-READ]
     \begin{center}
-      \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
-      \noLine
-      \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
-
+      \AxiomC{$(\lMC, \lES_{base}) \xRightarrow{\lG, e} (\lMC', \lES'_{base})$}
       \noLine
       \UnaryInfC{$e \in \lG.\lR \cap \lCOVERABLE(\lG, \lC, \lI)$}
       
       \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
       \noLine
-      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lMI(w), \hat{e}} ~|~ \tup{w, e} \in \lG.\lRF \} $}
+      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lMI(w), \lMC'(e)} ~|~ \tup{w, e} \in \lG.\lRF \} $}
       \BinaryInfC{$
         \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
         \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+        \tup{\lMC', \lMI, \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
         $}
       \DisplayProof
     \end{center}
     \label{fig:simrule-read-cover}
     \end{subfigure}
 
-    %% \begin{subfigure}{1\textwidth}
-    %% [ISSUE-WRITE]
-    %% \begin{center}
-    %%   \AxiomC{$\lES_{base} \xRightarrow{\lG, e} (\hat{e}, \lES'_{base})$}
-    %%   \noLine
-    %%   \UnaryInfC{$\lMC' = \lMC[e \rightarrow \hat{e}]$}
+    \begin{subfigure}{1\textwidth}
+    [ISSUE-WRITE]
+    \begin{center}
+      \AxiomC{$e \in \lISSUABLE(\lG, \lC, \lI)$}
+      \noLine
+      \UnaryInfC{$\lG^{crt} = \lCERTIFY(\lG, e)$}
+      \noLine
+      \UnaryInfC{$(\lMI, \lES_{base}) \xRightarrow{\lG, (e_1, \dots, e_n)} (\lMI', \lES'_{base})$}
+      \noLine
+      \UnaryInfC{$\lG^{crt} \vdash \tup{\lC, \lI} \xrightarrow{(e_1, \dots, e_n)} \tup{\lC^{crt}, \lI^{crt}}$}
 
-    %%   \noLine
-    %%   \UnaryInfC{$e \in \lG.\lR \cap \lCOVERABLE(\lG, \lC, \lI)$}
+      \AxiomC{$\lC^{diff} = \lC^{crt} \setminus \lC$}
+      \noLine
+      \UnaryInfC{$\lPO' = \lPO \cup \lMI'([\lC^{diff}];\lG^{crt}.\lPO;[\lC^{diff}])$}
+      \noLine
+      \UnaryInfC{$\lRF' = \lRF \cup \lMI'([\lC^{diff}];\lG^{crt}.\lRF;[\lC^{diff}])$}
+      \noLine
+      \UnaryInfC{$\lMO' = \lMO \cup \lMI'([\lC^{diff}];\lG^{crt}.\lMO;[\lC^{diff}])$}
       
-    %%   \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
-    %%   \noLine
-    %%   \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lMI(w), \hat{e}} ~|~ \tup{w, e} \in \lG.\lRF \} $}
-    %%   \BinaryInfC{$
-    %%     \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-    %%     \xrightarrow{\lG, \lC, \lI, e}
-    %%     \tup{\lMC', \lMI, \lES_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
-    %%     $}
-    %%   \DisplayProof
-    %% \end{center}
-    %% \label{fig:simrule-write-issue}
-    %% \end{subfigure}
+      \BinaryInfC{$
+        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \xrightarrow{\lG, \lC, \lI, e}
+        \tup{\lMC, \lMI', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO'}
+        $}
+      \DisplayProof
+    \end{center}
+    \label{fig:simrule-write-issue}
+    \end{subfigure}
     
     \caption{Simulation step}
     \label{fig:simrules}
