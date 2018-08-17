@@ -1,4 +1,5 @@
 \newcommand{\rulehskip}{\hskip 1.5em}
+\mathchardef\mhyphen="2D
 
 \theoremstyle{definition}
 
@@ -23,10 +24,10 @@
 \newcommand{\defeq}{\triangleq}
 
 % function arrow
-\newcommand{\fun}[2]{#1 \rightarrow #2}
+\newcommand{\fun}{\rightarrow}
 
 % partial function arrow
-\newcommand{\pfun}[2]{#1 \rightharpoonup #2}
+\newcommand{\pfun}{\rightharpoonup}
 
 % some math sets
 \newcommand{\N}{{\mathbb{N}}}
@@ -106,7 +107,9 @@
 \newcommand{\flab}{\lF}
 
 \newcommand{\Ex}{{\mathtt{ex}}}
-\newcommand{\rlabEx}[2]{\lR^{\Ex}({#1},{#2})}
+\newcommand{\NotEx}{{\mathtt{not \mhyphen ex}}}
+\newcommand{\rlabExExpl}[3]{\lR^{#3}({#1},{#2})}
+\newcommand{\rlabEx}[2]{\rlabExExpl{#1}{#2}{\Ex}}
 
 \newcommand{\rlabS}[3]{\lR^{#3}({#1},{#2})}
 \newcommand{\wlabS}[3]{\lW^{#3}({#1},{#2})}

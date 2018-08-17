@@ -36,25 +36,26 @@
   \begin{itemize}
   \item $\lE \subseteq \N$ --- finite set of events. 
   \item $\lEi \subseteq \lE$ --- initialization events.
-  \item $\lTID \defeq \fun{\lE}{\Tid}$ --- function that assigns a thread id to every event.
+  \item $\lTID \defeq \lE \fun \Tid$ --- function that assigns a thread id to every event.
     Given thread id $i \in \Tid$ we will denote by $\lE_i$ the set of all events belonging 
     to $i^{th}$ thread, that is $\lE_i \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
     We assume that if $e \in \lEi$ then $\lTID(e) = 0$.
-  \item $\lLAB \defeq \fun{\lE}{\Lab}$ --- function that assigns a label to every event.
+  \item $\lLAB \defeq \lE \fun \Lab$ --- function that assigns a label to every event.
     Labels are of one of the following forms:
     \begin{itemize}
-    \item $\rlab{x}{v}^s$ --- a read, where $x \in \Loc$, $v \in \Val$ 
-      and $s \in \Bool$ is an exclusive flag 
-      (we will denote exclusive reads as $\rlabEx{x}{v}$);
+    \item $\rlabExExpl{x}{v}{\mathtt{f}}$ --- a read, where $x \in \Loc$, $v \in \Val$ 
+      and $\mathtt{f} \in \{\Ex, \NotEx\}$ is an exclusive flag 
+      (we will denote exclusive reads as $\rlabEx{x}{v}$,
+       for non-exclusive reads we will omit the flag);
     \item $\wlab{x}{v}$ --- a write, where $x \in \Loc$, $v \in \Val$;
     \item $\flab$ --- a fence.
     \end{itemize}
     $\lLAB$ induces the following functions:
     \begin{itemize}
-    \item $\lTYP \defeq \fun{\lE}{\{\lR, \lW, \lF\}}$ --- assigns a type to every event;
-    \item $\lLOC \defeq \pfun{\lE}{Loc}$ --- returns the location of event (when applicable);
-    \item $\lVALR \defeq \pfun{\lE}{Val}$ --- returns the read value of event (when applicable);
-    \item $\lVALW \defeq \pfun{\lE}{Val}$ --- returns the written value of event (when applicable).
+    \item $\lTYP \defeq \lE \fun \{\lR, \lW, \lF\}$ --- assigns a type to every event;
+    \item $\lLOC \defeq \lE \pfun \Loc $ --- returns the location of event (when applicable);
+    \item $\lVALR \defeq \lE \pfun \Val$ --- returns the read value of event (when applicable);
+    \item $\lVALW \defeq \lE \pfun \Val$ --- returns the written value of event (when applicable).
     \end{itemize}
     We assume that $\forall{e} \in \lEi. \; \lLAB(e) = \wlab{x}{0}$.
   \item A function $\lMOD = G.\lE \rightarrow \Mod$ is a memory order assignment.
@@ -62,8 +63,8 @@
     called \emph{memory order} parameters.
     Additionally, $\lMOD$ satisfies the following constraints:
     \begin{itemize}
-    \item $e \in \lR \Rightarrow \lMOD(e) \in \{ \rlx, \acq, \sco \}$,
-    \item $e \in \lW \Rightarrow \lMOD(e) \in \{ \rlx, \rel, \sco \}$,
+    \item $e \in \lR \Rightarrow \lMOD(e) \in \{ \rlx, \acq, \sco \}$;
+    \item $e \in \lW \Rightarrow \lMOD(e) \in \{ \rlx, \rel, \sco \}$;
     \item $e \in \lF \Rightarrow \lMOD(e) \in \{ \rlx, \acqrel, \sco \}$.
     \end{itemize}
   \item $\lPO \subseteq \lE \times \lE$ --- \emph{program order}, which is a strict partial order.
@@ -73,7 +74,7 @@
     \begin{itemize}
       \item  $\lCF \defeq \lPO^{-1};[E];\lPO \setminus \lPO^{=}$.
     \end{itemize}
-  \item $\lRMW \subseteq \lR;(\lPO_{imm} \cap =_{loc});\lW \times \lE$ ---
+  \item $\lRMW \subseteq [\lR];(\lPO_{imm} \cap =_{loc});[\lW]$ ---
     \emph{read-modify-write pairs}.
   \item $\lRF \subseteq \lW; =_{loc}; \lR$ --- \emph{reads-from} relation, which the following
     hold for:
@@ -94,12 +95,13 @@
 \end{definition}
 
 \begin{definition}
-  Using the primitive relations of an event structure $\lES$ we define following derived relations:
+  Using the primitive relations of an event structure $\lES$,
+  we define following derived relations:
   \begin{itemize}
     \item $\lES.\lRB \defeq (\lES.\lJF^{-1};\lES.\lMO) \setminus \lES.\lCF^?$ --- 
       \emph{reads before};
     \item $\lES.\lECO \defeq (\lES.\lJF \cup \lES.\lRB \cup \lES.\lMO)^+$ --- 
-      \emph{extended coherence order}
+      \emph{extended coherence order}.
   \end{itemize}
 \end{definition}
 
@@ -112,15 +114,15 @@
   \begin{itemize}
   \item $\lRSEQ \defeq [\lWsqeq{rlx}];(\lmakeLoc{\lPO};[\lWsqeq{rlx}] \cup 
     (\lmakeLoc{\lPO^?};[\lWsqeq{\rlx}];\lJF;\lRMW)^*)$;
-  \item $\lRELP \defeq [\lEsqeq{rel}];([\lW] \cup [\lF];\lPO);\lRSEQ$
-  \item $\lSW \defeq \lRELP; (\lRFI \cup \lmakeLoc{\lPO^?};\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$
-  \item $\lHB \defeq (\lPO \cup \lSW)^+$
+  \item $\lRELP \defeq [\lEsqeq{rel}];([\lW] \cup [\lF];\lPO);\lRSEQ$;
+  \item $\lSW \defeq \lRELP; (\lRFI \cup \lmakeLoc{\lPO^?};\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$;
+  \item $\lHB \defeq (\lPO \cup \lSW)^+$.
   \end{itemize}
 \end{definition}
 
 \begin{definition}
   For an event $e$ from an event structure $\lES$
-  the \emph{masking set} of $e$, denotes as $\lMASK(\lES, e)$,
+  the \emph{masking set} of $e$, denoted as $\lMASK(\lES, e)$,
   is a set of conflicting write events that $e$ depends on.
   This set is called masking, because its elements might make an event $e$ \emph{invisible}.
   \begin{itemize}
@@ -130,17 +132,17 @@
 \end{definition}
 
 \begin{definition}
-  For an event structure $\lES$ the set of its visible events $\lVIS(\lES)$ defined as follow.
+  For an event structure $\lES$ the set of its visible events $\lVIS(\lES)$ defined as follow:
   \begin{itemize}
     \item $\lVIS(\lES) \defeq 
       \{ e \in \lES ~|~ \lES.\lW;(\lES.\lCF \cap (\lES.\lPO \cup \lES.\lRF)^+);[e] \subseteq 
          \lES.\lEW;\lES.\lPO^=
-      \}$
+      \}$,
   \end{itemize}
-  Or equivalently.
+  or equivalently:
   \begin{itemize}
     \item $\lVIS(\lES) \defeq 
-      \{ e \in \lES ~|~ \forall{w \in \lMASK(\lES, e)} ~.~ \tup{w, e} \in \lES.\lEW;\lES.\lPO^=\}$
+      \{ e \in \lES ~|~ \forall{w \in \lMASK(\lES, e)} ~.~ \tup{w, e} \in \lES.\lEW;\lES.\lPO^=\}$.
   \end{itemize}
 \end{definition}
 
@@ -148,20 +150,20 @@
   Given an event structure $\lES$ we will a call a tuple $\tup{\lE, \lPO, \lRMW, \lRF, \lMO}$ 
   its \emph{execution} $\lX$ if the following conditions hold:
   \begin{itemize}
-    \item $\lX.\lE \subseteq \lVIS(\lES)$
-    \item $[\lX.\lE];\lES.\lCF;[\lX.\lE] = \emptyset$
-    \item $\lES.\lPO;[\lX.\lE] \subseteq \lX.\lE \times \lX.\lE$
+    \item $\lX.\lE \subseteq \lVIS(\lES)$;
+    \item $[\lX.\lE];\lES.\lCF;[\lX.\lE] = \emptyset$;
+    \item $\lES.\lPO;[\lX.\lE] \subseteq \lX.\lE \times \lX.\lE$;
     \item $\forall{\tup{e, e'}} \in (\lX.\lE;\lES.\lPO;[\lES.\lE \setminus \lX.\lE]) ~.~ 
-      \exists{e''} \in \lX.\lE ~.~ \tup{e', e''} \in \lES.\lCF$
-    \item $\lX.\lPO = \lES.\lPO \cap \lX.\lE \times \lX.\lE$
-    \item $\lX.\lRMW = \lES.\lRMW \cap \lX.\lE \times \lX.\lE$
-    \item $\lX.\lRF = \lES.\lJF \cap \lX.\lE \times \lX.\lE$
-    \item $\lX.\lMO = \lES.\lMO \cap \lX.\lE \times \lX.\lE$
+      \exists{e''} \in \lX.\lE ~.~ \tup{e', e''} \in \lES.\lCF$;
+    \item $\lX.\lPO = [\lX.\lE];\lES.\lPO;[\lX.\lE]$;
+    \item $\lX.\lRMW = [\lX.\lE];\lES.\lRMW;[\lX.\lE]$;
+    \item $\lX.\lRF = [\lX.\lE];\lES.\lJF;[\lX.\lE]$;
+    \item $\lX.\lMO = [\lX.\lE];\lES.\lMO;[\lX.\lE]$.
   \end{itemize}
 \end{definition}
 
 \begin{definition}
-  A function $O_{\lX} :: \fun{\Loc}{\Val}$ is an \emph{outcome} 
+  A function $O_{\lX} : \Loc \fun \Val$ is an \emph{outcome} 
   of an event structure's $\lES$ execution $\lX$
   if for every $x \in \Loc$ either $O_{\lX}(x) = \lES.\lVALW(w)$ 
   for some $\lX.\lMO$-maximal write event $w$, 
@@ -185,7 +187,7 @@
       in particular:
       \begin{itemize}
         \item $\lEi \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
-        \item $\lTID :: \fun{\lE}{\Tid}$ s.t. \\
+        \item $\lTID : \fun{\lE}{\Tid}$ s.t. \\
           $\forall{e} ~.~ (e = \tup{\lINIT~x} \implies \lTID(e) = 0) \wedge 
            (e = \tup{i, n} \Rightarrow \lTID(e) = i)$;
         \item $\lPO \subseteq \lE \times \lE$ s.t. \\
@@ -204,7 +206,7 @@
 \end{definition}
 
 \begin{definition}
-  A function $O_{\lG} :: \fun{\Loc}{\Val}$ is an \emph{outcome} of an \imm execution graph $\lG$
+  A function $O_{\lG} : \Loc \fun \Val$ is an \emph{outcome} of an \imm execution graph $\lG$
   if for every $x \in \Loc$ either $O_{\lG}(x) = \lG.\lVALW(w)$ 
   for some $\lG.\lMO$-maximal write event $w$, 
   or $O_{\lG} = 0$ and $\lG.\lW_x = \emptyset$.
@@ -290,7 +292,7 @@
   event structure $\lES$, an \imm execution graph $\lG$ and 
   a traversal configuration $\tup{\lC, \lI}$,
   holds if there exists two injecive mappings between events 
-  $\lMC, \lM :: \fun{\lG.\lE}{\lES.\lE}$
+  $\lMC, \lM : \lG.\lE \fun \lES.\lE$
   such that the following conditions are met:
   \begin{enumerate}[label=\textbf{S.\arabic*}]
     \item \label{item:sim-lab}
