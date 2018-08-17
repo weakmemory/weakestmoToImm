@@ -19,6 +19,7 @@
 \usepackage{stmaryrd}
 \usepackage{pifont}
 \usepackage{enumitem}
+\usepackage{extarrows}
 
 \input{defs.tex}
 
@@ -431,10 +432,12 @@
     \noLine
     \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
 
-    \BinaryInfC{$
-      (\lM, \tup{\lE, \lTID, \lLAB, \lMOD})
-      \xRightarrow{\lG, e}
-      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD'})
+    \AxiomC{$\lPO' = \lPO \cup \lM([\lC];\lG.\lPO;[e])$}
+
+    \TrinaryInfC{$
+      \lG \vdash (\lM, \tup{\lE, \lTID, \lLAB, \lMOD, \lPO, \lRMW})
+      \lBASICSTEP{e}
+      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD', \lPO', \lRMW})
     $}
     \DisplayProof
     \end{center}
@@ -450,15 +453,23 @@
     \begin{subfigure}{1\textwidth}
     [COVER-FENCE]
     \begin{center}
-      \AxiomC{$(\lMC, \lES_{base}) \xRightarrow{\lG, e} (\lMC', \lES'_{base})$}
-      \noLine
-      \UnaryInfC{$e \in \lG.\lF^{\sqsubset\sco} \cap \lCOVERABLE(\lG, \lC, \lI)$}
 
-      \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+      \AxiomC{$e \in \lG.\lF^{\sqsubset\sco}$}
+      \noLine
+      \UnaryInfC{$e \not\in \dom{\lM}$}
+      \noLine
+      \UnaryInfC{$
+        \lG \vdash (\lM, \lES_{base})
+        \lBASICSTEP{e}
+        (\lM', \lES'_{base})
+      $}
+
+      \AxiomC{$\lPO' = \lPO \cup \lM'([\lC];\lG.\lPO;[e])$}
+
       \BinaryInfC{$
-        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC', \lMI, \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
+        \lG \vdash \tup{\lM, \lES_{base}, \lRF, \lEW, \lMO}
+        \lCOVERSTEP{e}
+        \tup{\lM', \lES'_{base}, \lRF, \lEW, \lMO}
         $}
       \DisplayProof
     \end{center}
@@ -466,45 +477,48 @@
     \end{subfigure}
 
     \begin{subfigure}{1\textwidth}
-    [COVER-WRITE]
-    \begin{center}
-      \AxiomC{$(\lMC, \lES_{base}) \xRightarrow{\lG, e} (\lMC', \lES'_{base})$}
-      \noLine
-      \UnaryInfC{$e \in \lG.\lW \cap \lCOVERABLE(\lG, \lC, \lI)$}
-      
-      \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
-      \noLine
-      \UnaryInfC{$\lMO' = \lMO \cup \lMC'([\lC];\lG.\lMO;[e]) \cup \lMC'([e];\lG.\lMO;[\lC])$}
-      \noLine
-      \UnaryInfC{$\lEW' = \lEW \cup \{\tup{\lMC'(e), \lMI(e)}, \tup{\lMI(e), \lMC'(e)}\}$}
-      \BinaryInfC{$
-        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC', \lMI, \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
-        $}
-      \DisplayProof
-    \end{center}
-    \label{fig:simrule-write-cover}
-    \end{subfigure}
-
-    \begin{subfigure}{1\textwidth}
     [COVER-READ]
     \begin{center}
-      \AxiomC{$(\lMC, \lES_{base}) \xRightarrow{\lG, e} (\lMC', \lES'_{base})$}
+      \AxiomC{$e \in \lG.\lR$}
       \noLine
-      \UnaryInfC{$e \in \lG.\lR \cap \lCOVERABLE(\lG, \lC, \lI)$}
+      \UnaryInfC{$e \not\in \dom{\lM} \vee \lG.\lLAB(e) \neq \lES.\lLAB(\lM(e))$}
+      \noLine
+      \UnaryInfC{$
+        \lG \vdash (\lM, \lES_{base})
+        \lBASICSTEP{e}
+        (\lM', \lES'_{base})
+      $}
       
-      \AxiomC{$\lPO' = \lPO \cup \lMC'([\lC];\lG.\lPO;[e])$}
+      \AxiomC{$\lPO' = \lPO \cup \lM'([\lC];\lG.\lPO;[e])$}
       \noLine
-      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lMI(w), \lMC'(e)} ~|~ \tup{w, e} \in \lG.\lRF \} $}
+      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lM'(w), \lM'(e)} ~|~ \tup{w, e} \in \lG.\lRF \} $}
+      
       \BinaryInfC{$
-        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC', \lMI, \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+        (\lG, \tup{\lC, \lI}) \vdash 
+        \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \lCOVERSTEP{e}
+        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
         $}
       \DisplayProof
     \end{center}
     \label{fig:simrule-read-cover}
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+    [COVER-SKIP]
+    \begin{center}
+
+      \AxiomC{$e \in \dom{m} \wedge \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$}
+
+      \UnaryInfC{$
+        (\lG, \tup{\lC, \lI}) \vdash
+        \tup{\lM, \lES_{base}, \lRF, \lEW, \lMO}
+        \lCOVERSTEP{e}
+        \tup{\lM, \lES_{base}, \lRF, \lEW, \lMO}
+        $}
+      \DisplayProof
+    \end{center}
+    \label{fig:simrule-cover-skip}
     \end{subfigure}
 
     \begin{subfigure}{1\textwidth}
