@@ -58,8 +58,6 @@
 \newcommand{\lM}{m}
 \newcommand{\lMC}{m_{c}}
 \newcommand{\lMI}{m_{i}}
-% simulation relation 
-\newcommand{\lSIM}{\mathcal{I}}
 
 \newcommand{\lDOM}{{dom}}
 
@@ -98,12 +96,17 @@
 
 \newcommand{\lMASK}{{\mathtt{Mask}}}
 \newcommand{\lVIS}{{\mathtt{Vis}}}
-\newcommand{\lCOVERABLE}{{\mathtt{Coverable}}}
-\newcommand{\lISSUABLE}{{\mathtt{Issuable}}}
-\newcommand{\lCERTIFY}{{\mathtt{Certify}}}
 
-\newcommand{\lBASICSTEP}[1]{\xLongrightarrow{#1}}
-\newcommand{\lCOVERSTEP}[1]{\xlongrightarrow{#1}_{\lC}}
+% simulation relation 
+\newcommand{\simR}{\mathcal{I}}
+\newcommand{\simRw}{\mathcal{I}_{weak}}
+
+\newcommand{\coverable}{{\mathtt{Coverable}}}
+\newcommand{\issuable}{{\mathtt{Issuable}}}
+%\newcommand{\lCERTIFY}{{\mathtt{Certify}}}
+
+\newcommand{\ESbasicstep}[1]{\xLongrightarrow{#1}}
+\newcommand{\ESstep}[1]{\xlongrightarrow{#1}}
 
 \newcommand{\rlab}[2]{\lR({#1},{#2})}
 \newcommand{\wlab}[2]{\lW({#1},{#2})}

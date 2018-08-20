@@ -233,15 +233,15 @@
   \begin{itemize}
     \item $\lG.\lEi \subseteq \lC$;
     \item $\lC \cap \lG.\lW \subseteq \lI$;
-    \item $\lC \subseteq \lCOVERABLE(\lG, \lC, \lI)$;
-    \item $\lI \subseteq \lISSUABLE(\lG, \lC, \lI)$;
+    \item $\lC \subseteq \coverable(\lG, \lC, \lI)$;
+    \item $\lI \subseteq \issuable(\lG, \lC, \lI)$;
   \end{itemize}
   Configuration is called \emph{initial} when $\lC = \lI = \lG.\lEi$.
 \end{definition}
 
 \begin{definition}
   A write event $w \in \lG.\lW$ is \emph{issuable} in $\lG$ and $\tup{\lC, \lI}$,
-  denoted $w \in \lISSUABLE(\lG, \lC, \lI)$, 
+  denoted $w \in \issuable(\lG, \lC, \lI)$, 
   if the following conditions are met:
   \begin{itemize}
     \item $\dom{([\lG.\lW^{rel}];\lmakeLoc{\lG.\lPO} \cup [\lG.\lF];\lG.\lPO);[w]} \subseteq \lC$
@@ -252,7 +252,7 @@
 
 \begin{definition}
   An event $e \in \lG.\lE$ is \emph{coverable} in $\lG$ and $\tup{\lC, \lI}$,
-  denoted $e \in \lCOVERABLE(\lG, \lC, \lI)$, 
+  denoted $e \in \coverable(\lG, \lC, \lI)$, 
   if $\dom{\lG.\lPO;[e]} \subseteq \lC$ and either:
   \begin{itemize}
     \item $e \in \lG.\lW \cap \lI$
@@ -267,7 +267,7 @@
 \small
     
     \begin{center}
-    \AxiomC{$e \in \lCOVERABLE(\lG, \lC, \lI)$}
+    \AxiomC{$e \in \coverable(\lG, \lC, \lI)$}
     \UnaryInfC{$
       \lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}
     $}
@@ -275,7 +275,7 @@
     % 
     \rulehskip
     % 
-    \AxiomC{$w \in \lISSUABLE(\lG, \lC, \lI)$}
+    \AxiomC{$w \in \issuable(\lG, \lC, \lI)$}
     \UnaryInfC{$
       \lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC, \lI \uplus \{w\}}
     $}
@@ -289,71 +289,81 @@
 \subsection{Simulation relation}
 
 \begin{definition}
-  Simulation relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ that binds an 
-  event structure $\lES$, an \imm execution graph $\lG$ and 
-  a traversal configuration $\tup{\lC, \lI}$,
-  holds if there exists two injecive mappings between events 
-  $\lMC, \lM : \lG.\lE \fun \lES.\lE$
-  such that the following conditions are met:
+  Relation $\simR(\lES, \lG, \lM, \tup{\lC, \lI})$, that binds an 
+  event structure $\lES$, an \imm execution graph $\lG$,
+  an event mapping $\lM : \lG.\lE \fun \lES.\lE$
+  and a traversal configuration $\tup{\lC, \lI}$,
+  holds if the following conditions are met:
   \begin{enumerate}[label=\textbf{S.\arabic*}]
     \item \label{item:sim-lab}
-      $\forall{e \in \lC} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lMC(e)) \wedge
-       \forall{e \in \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lMI(e))$;
+      $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
     \item \label{item:sim-vis} 
       $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
-      \note{I am afraid that we cannot prove this.
-        See the cover read case of proof for details.
-        Instead I propose to use Lemma \ref{lemma:2}.
-      }
+    \item \label{item:sim-cf}
+      $\forall{e_1, e_2 \in \lC \cup \lI} ~.~ \tup{\lM(e_1), \lM(e_2)} \not\in \lES.\lCF$;
     \item \label{item:sim-po} 
-      $\lES.\lPO;[\lMC(\lC)] \subseteq [\lMC(\lC)];\lES.\lPO;[\lMC(\lC)]$;
+      $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$;
     \item \label{item:sim-rf} 
-      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{\lMI(w), \lMC(r)} \in \lES.\lRF$;
-    \item \label{item:sim-ew} 
-      $\forall{w \in \lC} ~.~ \tup{\lMI(w), \lMC(w)} \in \lES.\lEW$;
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF$;
     \item \label{item:sim-mo}
-      $\forall{\tup{w, w'} \in [\lC];\lG.\lMO;[\lC]} ~.~ \tup{\lMC(w), \lMC(w')} \in \lES.\lMO$;
+      $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI]} ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO$;
+  \end{enumerate}
+\end{definition}
+
+\begin{definition}
+  Relation $\simRw(\lES, \lG, \tup{\lC, \lI}, \lM, c)$, that binds an 
+  event structure $\lES$, an \imm execution graph $\lG$,
+  a traversal configuration $\tup{\lC, \lI}$,
+  an event mapping $\lM : \lG.\lE \fun \lES.\lE$ and an event $e \in \lG.\lE$
+  weakens the conditions of the relation $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$
+  in the following way:
+  \begin{enumerate}[label=\textbf{S.\arabic*}$'$,start=2]
+  \item \label{item:simweak-vis}
+    $\forall{e \in (\lC \cup \lI) \setminus \codom{[c];\lG.\lPO} \}} ~.~ \lM(e) \in \lVIS(\lES)$;
   \end{enumerate}
 \end{definition}
 
 \begin{lemma}
   Given an event structure $\lES$, an \imm execution graph $\lG$ 
   and its traversal configuration $\tup{\lC, \lI}$
-  if the relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds and 
+  if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds and 
   there exists $\tup{\lC', \lI'}$ s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC', \lI'}$
-  then there exists $\lES'$ s.t. $\lSIM(\lES', \lG, \tup{\lC', \lI'})$ 
+  then there exists $\lES'$ s.t. $\lG \vdash (\lM, \lES) \esstep^+ (\lM', \lES')$
+  and $\simR(\lES', \lG, \tup{\lC', \lI'})$ 
 \end{lemma}
 
 \begin{proof}
   
-  Note, that according to rules of traversal step relation (fig.~\ref{fig:traversal-rules})
-  the traversal adds one covered or one issued event at one step.
-  In order to build an updated event mappings $\lMC'$, $\lMI'$ 
-  and event structure $\lES'$ 
-  when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$
-  we will define simulation step relation 
-  $\tup{\lMC, \lMI, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lMC', \lMI', \lES'}$.
-  Simulation step relation is defined according to rules in fig.~\ref{fig:simrules}.
-  Auxiliary relation 
-  $(\lM, \lES_{base}) \xRightarrow{\lG, e} (\lM', \lES'_{base})$,
-  called basic simulation step, 
-  is used to update event mapping and some components of event structure
-  (fig.~\ref{fig:simrules-base}).
-  Our goal then is to prove that $\lSIM(\lES', \lG, \tup{\lC', \lI'})$ holds.
-  Again, as the traversal adds one covered or one issued event at one step,
-  we basically need to show that \ref{item:sim-lab}-\ref{item:sim-mo} hold
-  for that added event.
+  %% Note, that according to rules of traversal step relation (fig.~\ref{fig:traversal-rules})
+  %% the traversal adds one covered or one issued event at one step.
+  %% In order to build an updated event mappings $\lMC'$, $\lMI'$ 
+  %% and event structure $\lES'$ 
+  %% when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$
+  %% we will define simulation step relation 
+  %% $\tup{\lMC, \lMI, \lES} \xrightarrow{\lG, \lC, \lI, e} \tup{\lMC', \lMI', \lES'}$.
+  %% Simulation step relation is defined according to rules in fig.~\ref{fig:simrules}.
+  %% Auxiliary relation 
+  %% $(\lM, \lES_{base}) \xRightarrow{\lG, e} (\lM', \lES'_{base})$,
+  %% called basic simulation step, 
+  %% is used to update event mapping and some components of event structure
+  %% (fig.~\ref{fig:simrules-base}).
+  %% Our goal then is to prove that $\simR(\lES', \lG, \tup{\lC', \lI'})$ holds.
+  %% Again, as the traversal adds one covered or one issued event at one step,
+  %% we basically need to show that \ref{item:sim-lab}-\ref{item:sim-mo} hold
+  %% for that added event.
 
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
+  
+  
   \ref{item:sim-lab} follow from the definition of the basic simulation step.
   In order to prove other properties of simulation relation,
   we have to consider different cases.
 
   \begin{itemize}
     \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
-      \ref{item:sim-po} follows from the $\lSIM(\lES, \lG, \tup{\lC, \lI})$ 
-      and the definition of $\lCOVERABLE$.
+      \ref{item:sim-po} follows from the $\simR(\lES, \lG, \tup{\lC, \lI})$ 
+      and the definition of $\coverable$.
       \ref{item:sim-ew} follows from the fact that
       we did not modify the set of covered writes on this step.
       As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
@@ -361,7 +371,7 @@
       Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
       and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
       the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
-      But since $\lSIM(\lES, \lG, \lC, \lI)$ holds we know that 
+      But since $\simR(\lES, \lG, \lC, \lI)$ holds we know that 
       any $\lPO$-predcessor of $\hat{e}$ is visible, and thus $\hat{e}$ is also visible.
       We have proven \ref{item:sim-vis}.
 
@@ -370,12 +380,12 @@
       to the case when $e$ is a non-sc fence.
       Since $e$ is a write, it cannot have any incoming $\lRF$ edges and thus
       the \ref{item:sim-rf} follows directly from 
-      the fact that $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds.
+      the fact that $\simR(\lES, \lG, \tup{\lC, \lI})$ holds.
       \ref{item:sim-ew} and \ref{item:sim-mo} follow from the construction
       of $\lEW'$ and $\lMO'$ in (COVER-WRITE) rule.
       %% To prove \ref{item:sim-rf-c} consider a read $r \in \lC$ that reads from $e$,
       %% that is $\tup{e, r} \in \lG.\lRF$.
-      %% From the definition of $\lCOVERABLE$ we know that $e \in I$,
+      %% From the definition of $\coverable$ we know that $e \in I$,
       %% and thus $\tup{e, r} \in [\lI];\lG.\lRF;[\lC]$.
       %% Then from \ref{item:sim-rf-i} we can conclude that $\tup{\lMI(e), \lMC(r)} \in \lES.\lRF$.
       %% According to (COVER-WRITE) rule\footnote{\note{ask Anton how to make reference to rules}}
@@ -387,7 +397,7 @@
       \ref{item:sim-ew} follows from the fact that
       we did not modify the set of covered writes on this step.
       \ref{item:sim-mo} holds because read events do not contribute to the $\lMO$.
-      From the definition of $\lCOVERABLE$ we know that for write $w \in \lG.\lW$
+      From the definition of $\coverable$ we know that for write $w \in \lG.\lW$
       that $e$ read from, that is $\tup{w, e} \in \lG.\lRF$, $w \in I$.
       From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf} holds.
       \note{further go my speculations}.
@@ -432,12 +442,10 @@
     \noLine
     \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
 
-    \AxiomC{$\lPO' = \lPO \cup \lM([\lC];\lG.\lPO;[e])$}
-
-    \TrinaryInfC{$
-      \lG \vdash (\lM, \tup{\lE, \lTID, \lLAB, \lMOD, \lPO, \lRMW})
-      \lBASICSTEP{e}
-      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD', \lPO', \lRMW})
+    \BinaryInfC{$
+      \lG \vdash (\lM, \tup{\lE, \lTID, \lLAB, \lMOD})
+      \ESbasicstep{e}
+      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD'})
     $}
     \DisplayProof
     \end{center}
@@ -451,107 +459,88 @@
 \small
 
     \begin{subfigure}{1\textwidth}
-    [COVER-FENCE]
+    [ADD-FENCE]
     \begin{center}
 
       \AxiomC{$e \in \lG.\lF^{\sqsubset\sco}$}
       \noLine
-      \UnaryInfC{$e \not\in \dom{\lM}$}
-      \noLine
       \UnaryInfC{$
         \lG \vdash (\lM, \lES_{base})
-        \lBASICSTEP{e}
+        \ESbasicstep{e}
         (\lM', \lES'_{base})
       $}
 
-      \AxiomC{$\lPO' = \lPO \cup \lM'([\lC];\lG.\lPO;[e])$}
+      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
 
       \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lRF, \lEW, \lMO}
-        \lCOVERSTEP{e}
-        \tup{\lM', \lES'_{base}, \lRF, \lEW, \lMO}
+        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \ESstep{e}
+        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
         $}
       \DisplayProof
+      
     \end{center}
     \label{fig:simrule-fence-cover}
     \end{subfigure}
 
     \begin{subfigure}{1\textwidth}
-    [COVER-READ]
+    [ADD-READ]
     \begin{center}
+      
       \AxiomC{$e \in \lG.\lR$}
-      \noLine
-      \UnaryInfC{$e \not\in \dom{\lM} \vee \lG.\lLAB(e) \neq \lES.\lLAB(\lM(e))$}
       \noLine
       \UnaryInfC{$
         \lG \vdash (\lM, \lES_{base})
-        \lBASICSTEP{e}
+        \ESbasicstep{e}
         (\lM', \lES'_{base})
       $}
       
-      \AxiomC{$\lPO' = \lPO \cup \lM'([\lC];\lG.\lPO;[e])$}
+      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
       \noLine
-      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lM'(w), \lM'(e)} ~|~ \tup{w, e} \in \lG.\lRF \} $}
+      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lM'(w), \lM'(e)} ~|~ \tup{w, e} \in \lG.\lRF \}$}
       
       \BinaryInfC{$
-        (\lG, \tup{\lC, \lI}) \vdash 
-        \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \lCOVERSTEP{e}
+        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \ESstep{e}
         \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
         $}
       \DisplayProof
+      
     \end{center}
-    \label{fig:simrule-read-cover}
+    \label{fig:esstep-read}
     \end{subfigure}
 
     \begin{subfigure}{1\textwidth}
-    [COVER-SKIP]
+    [ADD-WRITE]
     \begin{center}
 
-      \AxiomC{$e \in \dom{m} \wedge \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$}
-
+      \AxiomC{$e \in \lG.\lW$}
+      \noLine
       \UnaryInfC{$
-        (\lG, \tup{\lC, \lI}) \vdash
-        \tup{\lM, \lES_{base}, \lRF, \lEW, \lMO}
-        \lCOVERSTEP{e}
-        \tup{\lM, \lES_{base}, \lRF, \lEW, \lMO}
-        $}
-      \DisplayProof
-    \end{center}
-    \label{fig:simrule-cover-skip}
-    \end{subfigure}
-
-    \begin{subfigure}{1\textwidth}
-    [ISSUE-WRITE]
-    \begin{center}
-      \AxiomC{$e \in \lISSUABLE(\lG, \lC, \lI)$}
+        \lG \vdash (\lM, \lES_{base})
+        \ESbasicstep{e}
+        (\lM', \lES'_{base})
+      $}
+      
+      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
       \noLine
-      \UnaryInfC{$\lG^{crt} = \lCERTIFY(\lG, e)$}
+      \UnaryInfC{$\lMO' = \lMO \cup \lM'(\lG.\lMO;[e])$}
       \noLine
-      \UnaryInfC{$(\lMI, \lES_{base}) \xRightarrow{\lG, (e_1, \dots, e_n)} (\lMI', \lES'_{base})$}
-      \noLine
-      \UnaryInfC{$\lG^{crt} \vdash \tup{\lC, \lI} \xrightarrow{(e_1, \dots, e_n)} \tup{\lC^{crt}, \lI^{crt}}$}
-
-      \AxiomC{$\lC^{diff} = \lC^{crt} \setminus \lC$}
-      \noLine
-      \UnaryInfC{$\lPO' = \lPO \cup \lMI'([\lC^{diff}];\lG^{crt}.\lPO;[\lC^{diff}])$}
-      \noLine
-      \UnaryInfC{$\lRF' = \lRF \cup \lMI'([\lC^{diff}];\lG^{crt}.\lRF;[\lC^{diff}])$}
-      \noLine
-      \UnaryInfC{$\lMO' = \lMO \cup \lMI'([\lC^{diff}];\lG^{crt}.\lMO;[\lC^{diff}])$}
+      \UnaryInfC{$\lEW' = \lEW \cup [\lM'(e)];[\lM(e)];\lEW^? \cup \lEW^?;[\lM(e)];[\lM'(e)]$}
       
       \BinaryInfC{$
-        \tup{\lMC, \lMI, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \xrightarrow{\lG, \lC, \lI, e}
-        \tup{\lMC, \lMI', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO'}
+        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \ESstep{e}
+        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
         $}
       \DisplayProof
+      
     \end{center}
-    \label{fig:simrule-write-issue}
+    \label{fig:esstep-write}
     \end{subfigure}
     
-    \caption{Simulation step}
-    \label{fig:simrules}
+    \caption{Event structure construction step}
+    \label{fig:esstep}
 \end{subfigure}
 
 \end{figure}
@@ -561,12 +550,12 @@
   \label{lemma:2}
   Given an event structure $\lES$, an \imm execution graph $\lG$ 
   and its traversal configuration $\tup{\lC, \lI}$
-  if the relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds
+  if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
   then for any covered event $e \in \lC$ and any
   write from its masking set $w \in \lMASK(\lG, \hat{e})$
   there exist $\lES', \lC', \lI'$ such that
   $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$, 
-  $\lSIM(\lES', \lG, \tup{\lC', \lI'})$
+  $\simR(\lES', \lG, \tup{\lC', \lI'})$
   and $\tup{w, \hat{e}} \in \lES'.\lEW;\lES'.\lPO^=$.
   \note{Probably, $\lI = \lI'$ ?}
 \end{lemma}
@@ -575,7 +564,7 @@
   \label{lemma:3}
   Given an event structure $\lES$, an \imm execution graph $\lG$ 
   and its traversal configuration $\tup{\lC, \lI}$
-  if the relation $\lSIM(\lES, \lG, \tup{\lC, \lI})$ holds
+  if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
   then there exists $\lES', \lC', \lI'$ and event structure execution $\lX$ such that
   $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$
   and $\lX$ satisfies the following conditions.
