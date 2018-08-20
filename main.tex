@@ -300,7 +300,7 @@
     \item \label{item:sim-vis} 
       $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
     \item \label{item:sim-cf}
-      $\forall{e_1, e_2 \in \lC \cup \lI} ~.~ \tup{\lM(e_1), \lM(e_2)} \not\in \lES.\lCF$;
+      $\forall{e_1, e_2 \in \lC} ~.~ \tup{\lM(e_1), \lM(e_2)} \not\in \lES.\lCF$;
     \item \label{item:sim-po} 
       $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$;
     \item \label{item:sim-rf} 
@@ -328,7 +328,7 @@
   and its traversal configuration $\tup{\lC, \lI}$
   if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds and 
   there exists $\tup{\lC', \lI'}$ s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC', \lI'}$
-  then there exists $\lES'$ s.t. $\lG \vdash (\lM, \lES) \esstep^+ (\lM', \lES')$
+  then there exists $\lES'$ and $\lM'$ s.t. $\lG \vdash (\lM, \lES) \ESstep{}^+ (\lM', \lES')$
   and $\simR(\lES', \lG, \tup{\lC', \lI'})$ 
 \end{lemma}
 
@@ -354,14 +354,62 @@
 
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
+  In this case we use basic construction step (fig.~\ref{fig:esstep-base})
+  in order to build updated mapping $\lM'$ as well as
+  updated components of event structure: $\lES', \lTID', \lLAB', \lMOD'$,
+  and updated program order relation $\lPO'$.
+  Giving that we already can prove
+  \ref{item:sim-lab}, \ref{item:sim-cf} and \ref{item:sim-po}.
+
+  \begin{itemize}
+  \item \ref{item:sim-lab}
+    \begin{equation}
+      \begin{split}
+        & \forall{a \in (\lC \uplus \{e\}) \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \iff \\
+        & \forall{a \in \lC \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \wedge
+        \lG.\lLAB(e) = \lES.\lLAB(\lM(e))
+      \end{split}
+    \end{equation}
+    First conjunct follows from the $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$;
+    second conjunct follows from the definition of basic event structure construction step.
+
+  \item \ref{item:sim-cf} \\
+    We need to show that
+    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \not\in \lES'.\lCF$.
+    Assume it is not true, that is
+    $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \in \lES'.\lCF$.
+    Giving that $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds,
+    we can conclude that $a = e \vee b = e$.
+    Let us say $a = e$ and $c = \lca(\lM'(e), \lM'(b))$.
+    From the definition of [BASIC-STEP] and 
+    $\tup{\lM'(c), \lM'(e)} \in \lES'.\lPO$ follows that $\tup{c, e} \in \lG.\lPO$.
+    From the definition of $\coverable$ we know that $\dom{\lG.\lPO;[e]} \subseteq \lC$;
+    giving that and $\tup{c, e} \in \lG.\lPO$ we can conclude that $c \in \lC$.
+    \note{Next, show that $\tup{c, b} \in \lG.\lPO$ and using the fact that
+      $\lG.\lPO$ is total order on events from same thread show a contradiction.
+      BTW We need additional condition for $\lPO$ in simulation relation.
+    }
+    
+    
+    
+  \end{itemize}
+  
+  \ref{item:sim-lab} follows trivially from the definition of basic construction step.
+  \ref{item:sim-cf} 
   
   
   \ref{item:sim-lab} follow from the definition of the basic simulation step.
   In order to prove other properties of simulation relation,
   we have to consider different cases.
+  
 
   \begin{itemize}
-    \item $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
+  \item
+    $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
+    In this case we use [ADD-FENCE] rule in order to build $\lES'$ and $\lM'$.
+    \ref{item:sim-lab} follows from the definition of the basic simulation step.
+    \ref{item:sim-cf} 
+    
       \ref{item:sim-po} follows from the $\simR(\lES, \lG, \tup{\lC, \lI})$ 
       and the definition of $\coverable$.
       \ref{item:sim-ew} follows from the fact that
@@ -451,7 +499,7 @@
     \end{center}
     
 \caption{Basic simulation step}
-\label{fig:simrules-base}
+\label{fig:esstep-base}
 \end{subfigure}
 
 \begin{subfigure}{1\textwidth}
