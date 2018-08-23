@@ -288,119 +288,144 @@
 
 \subsection{Simulation relation}
 
+\subsubsection{Basic simulation}
+
+In this section we will present a relation $simRb(S, G, \tup{C, I}, s, t)$.
+It states some properties about labeling of events and $\lPO$ order in $G$ and $S$
+that are preserved by $s$ and $t$. 
+We will show that this relation is closed with respect to $\ESle$ order on event structures.
+Moreover, we will provide a necessary conditions, that when preserved,
+allow to add a new covered event to $C$ and still satisfy the relation.
+
 \begin{definition}
-  Relation $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$, that binds an 
-  event structure $\lES$, an \imm execution graph $\lG$,
-  a traversal configuration $\tup{\lC, \lI}$ and
-  an event mapping $\lM : \lG.\lE \fun \lES.\lE$,
+  Relation $\simRb(S, G, \tup{C, I}, s, t)$, that binds an 
+  event structure $S$, an \imm execution graph $G$,
+  a traversal configuration $\tup{C, I}$,
+  a source $s : G.\lE \fun S.\lE$ and target $t : S.\lE \fun G.\lE$ event mappings
   holds if the following conditions are met:
   \begin{enumerate}[label=\textbf{S.\arabic*}]
-    \item \label{item:sim-lab}
-      $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
-    %% \item \label{item:sim-vis} 
-    %%   $\forall{e \in \lC \cup \lI} ~.~ \lM(e) \in \lVIS(\lES)$;
-    \item \label{item:sim-cf}
-      $\forall{e_1, e_2 \in \lC} ~.~ \tup{\lM(e_1), \lM(e_2)} \not\in \lES.\lCF$;
-    \item \label{item:sim-po-prfx} 
-      $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$;
-    \item \label{item:sim-po} 
-      $\forall{\tup{\hat{e_1}, \hat{e_2}} \in [\lM(\lC)];\lES.\lPO;[\lM(\lC)]} ~.~
-        \tup{\lM(\hat{e_1}), \lM(\hat{e_2})} \in \lG.\lPO$;
-    %% \item \label{item:sim-rf} 
-    %%   $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF$;
-    %% \item \label{item:sim-mo}
-    %%   $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI]} ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO$;
+  \item \label{item:sim-dom-s}
+    $\dom{s} \subseteq C \cup I$
+  %% \item \label{item:sim-dom-t}
+  %%   $\dom{t} = S.\lE$
+  \item \label{item:sim-lab}
+    $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
+  \item \label{item:sim-cf}
+    $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
+  \item \label{item:sim-po-prfx} 
+    $S.\lPO;[s(\lC)] \subseteq [s(C)];S.\lPO$;
+  %% \item \label{item:sim-po}
+  %%   $\forall{\tup{\hat{e_1}, \hat{e_2}} \in [s(C)];S.\lPO;[s(C)]} ~.~
+  %%       \tup{s^{-1}(\hat{e_1}), s^{-1}(\hat{e_2})} \in G.\lPO$;
+    
+  %% \item \label{item:sim-po} 
+  %%   $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
+  %%   \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
   \end{enumerate}
 \end{definition}
 
+\begin{prop}
+  Forall $S$, $G$, $\tup{C, I}$, $s$, $t$ and $S'$
+  such that $\simRb(S, G, \tup{C, I}, s, t)$ holds and $S \ESle S'$
+  $\simRb(S', G, \tup{C, I}, s, t)$
+\end{prop}
+
 \begin{lemma}
-  Given $\lES$, $\lG$, $\tup{\lC, \lI}$, $\lM$
-  if the relation $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds and 
-  there exists $e$ s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$
-  then there exists $\lES'$ and $\lM'$ s.t. $\lG \vdash (\lM, \lES) \ESbasicstep{e} (\lM', \lES')$
-  and $\simRb(\lES', \lG, \tup{\lC \uplus \{e\}, \lI}, \lM')$ 
+  Given $S$, $G$, $\tup{C, I}$, $s$, $t$
+  if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and 
+  there exists $e$ s.t. $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$
+  and $\hat{e} \in S.\lE$ s.t. $S.\lLAB(\hat{e}) = G.\lLAB(e)$,
+  $\tup{s(\front{C, \lTID(e)}), \hat{e}} \in S.\lPO_{imm}$
+  then $\simRb(S, G, \tup{C \uplus \{e\}, I}, s[e \mapsto \hat{e}], t[\hat{e} \mapsto e])$ holds. 
 \end{lemma}
 
 \begin{proof}
-  There is only one rule in the definition of basic construction step, that is [BASIC-STEP].
-  We use that rule in order to build $\lES'$ and $\lM'$.
-  Our goal then is to show that $\simRb(\lES', \lG, \tup{\lC \uplus \{e\}, \lI}, \lM')$ holds.
-  
+  Let $C' = C \mplus \{e\}$, $s' = s[e \mapsto \hat{e}]$ and $t' = t[\hat{e} \mapsto e]$.
+  Let us prove that all conditions for $\simRb(S, G, \tup{C', I}, s', t')$ are met. 
   \begin{itemize}
   \item \ref{item:sim-lab}
     \begin{equation}
       \begin{split}
-        & \forall{a \in (\lC \uplus \{e\}) \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \iff \\
-        & \forall{a \in \lC \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \wedge
-        \lG.\lLAB(e) = \lES.\lLAB(\lM(e))
+        & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(s'(a)) \iff \\
+        & \forall{a \in C \cup I} ~.~ G.\lLAB(a) = S.\lLAB(s(a)) \wedge G.\lLAB(e) = S.\lLAB(s'(e))
       \end{split}
     \end{equation}
-    First conjunct follows from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$;
-    second conjunct follows from the definition of [BASIC-STEP].
+    First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$;
+    second conjunct follows from the proposition's premise.
 
   \item \ref{item:sim-cf} \\
     We need to show that
-    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \not\in \lES'.\lCF$.
-    Assume it is not true, that is
-    $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \in \lES'.\lCF$.
-    Giving that $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds,
+    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\s'(a), s'(b)} \not\in S.\lCF$.
+    Let us consider the opposite, that is
+    $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{s'(a), s'(b)} \in S.\lCF$.
+    Giving that $\simRb(S, G, \tup{C, I}, s, t)$ holds,
     we can conclude that $a = e \vee b = e$.
-    Let us say $a = e$ and $c = \lca(\lM'(e), \lM'(b))$.
-    From the definition of [BASIC-STEP] and 
-    $\tup{\lM'(c), \lM'(e)} \in \lES'.\lPO$ follows that $\tup{c, e} \in \lG.\lPO$.
-    From the definition of $\coverable$ we know that $\dom{\lG.\lPO;[e]} \subseteq \lC$;
-    giving that and $\tup{c, e} \in \lG.\lPO$ we can conclude that $c \in \lC$.
-    Giving that $b \neq e \wedge c \neq e$ and $\tup{\lM'(c), \lM'(b)} \in \lES'.\lPO$
-    it is obvious that $\tup{\lM(c), \lM(b)} \in \lES.\lPO$,
-    from that and \ref{item:sim-po} of $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$
-    follows that $\tup{c, b} \in \lG.\lPO$.
-    That is, we have $\tup{c, b} \in \lG.\lPO$, $\tup{c, e} \in \lG.\lPO$
-    and $\lTID(c) = \lTID(b) = \lTID(e)$.
-    Because $\lG.\lPO$ totally orders events from the same thread
-    we have two possibilities: $\tup{e, b} \in \lG.\lPO$ or $\tup{b, e} \in \lG.\lPO$.
-    In the first case, since $b \in C$ and thus $b \in \coverable(\lG, \lG, \lI)$
-    it should be that $\dom{\lG.\lPO;[b]} \subseteq \lC$ and thus $e \in C$
-    but that contradicts $e \in \nextset(\lG, \lC)$.
-    In the second case, using [BASIC-STEP]
-    we can conclude that $\tup{\lM(b), \lM(e)} \in \lES'.\lPO$,
-    but that contradicts $\tup{\lM(b), \lM(e)} \in \lES'.\lCF$.
+    Let us suppose that $a = e$.
+    Consider $c$ such that $\tup{c, e} \in G.\lPO_{imm}$.
+    Because $e \in \coverable(G, C, \lI)$ we know that $c \in C$.
+    From that and $\simRb(S, G, \tup{C, I}, s, t)$
+    we can conclude that $\tup{s(b), s(c)} \not\in S.\lCF$.
+    If $\tup{s(b), s(c)} \in S.\lPO$ then by transitivity of $S.\lPO$
+    $\tup{s'(b), s'(e)} \in S.\lPO$
+    which contradicts the fact that $\tup{s'(b), s'(e)} \in S.\lCF$.
+    Otherwise $\tup{s(c), s(b)} \in S.\lPO$.
+    But since $b \in C$ and thus $b \in \coverable{G, C, I}$,
+    we can conclude that it shoud be the case that $e \in C$.
+    But that contradicts $e \in \nextset(G, C)$.
 
   \item \ref{item:sim-po-prfx} \\
-    Let us show that \\
-    $[\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] =
-    [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])$.
     
-    \begin{equation}
+    \begin{equation*}
       \begin{split}
-        &   [\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] = \\
-        &   [\lM'(\lC \uplus \{e\})];(\lES'.\lPO;[\lM(\lC)] \cup \lES'.\lPO;[\lM'(e)]) = \\
-        & = [\lM(\lC)];\lES'.\lPO;[\lM(\lC)] \cup [\lM(\lC)];\lES'.\lPO;[\lM'(e)] \cup \\
-        &     \cup [\lM'(e)];\lES'.\lPO;[\lM(\lC)] \cup [\lM'(e)];\lES'.\lPO;[\lM'(e)]
+        &     S.\lPO;[s'(C \uplus \{e\})] \subseteq [s'(C \uplus \{e\})];S.\lPO \iff \\
+        &\iff S.\lPO;[s(C)] \cup S.\lPO;[\hat{e}] \subseteq [s(C)];S.\lPO \cup [\hat{e}];S.\lPO
       \end{split}
-    \end{equation}
-    
-    Because $\lES'.\lPO = \lES.\lPO \cup \lM'(\lG.\lPO;[e])$ we can further rewrite that.
-    
-    \begin{equation}
-      \begin{split}
-        &   [\lM(\lC)];\lES'.\lPO;[\lM(\lC)] \cup [\lM(\lC)];\lES'.\lPO;[\lM'(e)] \cup \\
-        &     \cup [\lM'(e)];\lES'.\lPO;[\lM(\lC)] \cup [\lM'(e)];\lES'.\lPO;[\lM'(e)] = \\
-        & = [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])
-      \end{split}
-    \end{equation}
-    
-    Using that we can rewrite \ref{item:sim-po-prfx} as follows:
+    \end{equation*}
 
-    $$
-    \lES.\lPO;[\lM(\lC)] \cup \lM'(\lG.\lPO;[e]) \subseteq
-    [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])
-    $$
+    $S.\lPO;[s(C)] \subseteq [s(C)];S.\lPO$ because $\simRb(S, G, \tup{C, I}, s, t)$ holds.
+    Let us show that $S.\lPO;[\hat{e}] \subseteq [s(C)];S.\lPO$.
+    Suppose there exists $\hat{a}$ s.t. $\tup{\hat{a}, \hat{e}} \in S.\lPO$ but
+    $\hat{a} \not\in s(C)$.
+    $\tup{s(\front(C, \lTID(e)), \hat{e}} \in S.\lPO_{imm}$
+    it must be the case that $\tup{\hat{a}, s(\front(C, \lTID(e))} \in S.\lPO$.
+    But $\front(C, \lTID(e) \in C$ and thus from $\ref{item:sim-po-prfx}$
+    follows that $\hat{a} \in C$. Contradiction.
     
-    $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$
-    follows from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
-    $\lM'(\lG.\lPO;[e]) \subseteq \lM'([\lC];\lG.\lPO;[e])$ holds iff
-    $\dom{\lG.\lPO;[e]} \subseteq \lC$, which is true,
-    because $e \in \coverable(\lG, \lC, \lI)$.
+    %% Let us show that \\
+    %% $[\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] =
+    %% [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])$.
+    
+    %% \begin{equation*}
+    %%   \begin{split}
+    %%     &   [\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] = \\
+    %%     &   [\lM'(\lC \uplus \{e\})];(\lES'.\lPO;[\lM(\lC)] \cup \lES'.\lPO;[\lM'(e)]) = \\
+    %%     & = [\lM(\lC)];\lES'.\lPO;[\lM(\lC)] \cup [\lM(\lC)];\lES'.\lPO;[\lM'(e)] \cup \\
+    %%     &     \cup [\lM'(e)];\lES'.\lPO;[\lM(\lC)] \cup [\lM'(e)];\lES'.\lPO;[\lM'(e)]
+    %%   \end{split}
+    %% \end{equation*}
+    
+    %% Because $\lES'.\lPO = \lES.\lPO \cup \lM'(\lG.\lPO;[e])$ we can further rewrite that.
+    
+    %% \begin{equation*}
+    %%   \begin{split}
+    %%     &   [\lM(\lC)];\lES'.\lPO;[\lM(\lC)] \cup [\lM(\lC)];\lES'.\lPO;[\lM'(e)] \cup \\
+    %%     &     \cup [\lM'(e)];\lES'.\lPO;[\lM(\lC)] \cup [\lM'(e)];\lES'.\lPO;[\lM'(e)] = \\
+    %%     & = [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])
+    %%   \end{split}
+    %% \end{equation*}
+    
+    %% Using that we can rewrite \ref{item:sim-po-prfx} as follows:
+
+    %% \begin{equation*}
+    %% \lES.\lPO;[\lM(\lC)] \cup \lM'(\lG.\lPO;[e]) \subseteq
+    %% [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])
+    %% \end{equation*}
+    
+    %% $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$
+    %% follows from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+    %% $\lM'(\lG.\lPO;[e]) \subseteq \lM'([\lC];\lG.\lPO;[e])$ holds iff
+    %% $\dom{\lG.\lPO;[e]} \subseteq \lC$, which is true,
+    %% because $e \in \coverable(\lG, \lC, \lI)$.
 
   \item \ref{item:sim-po} \\
     As we have already showed \\
@@ -415,28 +440,88 @@
 \end{proof}
 
 \begin{definition}
-  Relation $\simRw(\lES, \lG, \tup{\lC, \lI}, \lM, c)$, that binds an 
+  Relation $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$, that binds an 
   event structure $\lES$, an \imm execution graph $\lG$,
   a traversal configuration $\tup{\lC, \lI}$,
-  an event mapping $\lM : \lG.\lE \fun \lES.\lE$ and an event $e \in \lG.\lE$
-  weakens the conditions of the relation $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$
-  in the following way:
-  \begin{enumerate}[label=\textbf{S.\arabic*}$'$,start=2]
-  \item \label{item:simweak-vis}
-    $\forall{e \in (\lC \cup \lI) \setminus \codom{[c];\lG.\lPO} \}} ~.~ \lM(e) \in \lVIS(\lES)$;
+  an event mapping $\lM : \lG.\lE \fun \lES.\lE$
+  holds when the following conditions are met:
+  \begin{enumerate}[label=\textbf{I.\arabic*}]
+    \item \label{item:sim-lab}
+      $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
+    \item \label{item:sim-cf}
+      $\forall{e_1, e_2 \in \lC \cup \lI} ~.~ \tup{\lM(e_1), \lM(e_2)} \not\in \lES.\lCF$;
+    \item \label{item:sim-po-prfx} 
+      $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$;
+    \item \label{item:sim-po} 
+      $\forall{\tup{\hat{e_1}, \hat{e_2}} \in [\lM(\lC)];\lES.\lPO;[\lM(\lC)]} ~.~
+        \tup{\lM(\hat{e_1}), \lM(\hat{e_2})} \in \lG.\lPO$;
+    \item \label{item:sim-rf} 
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF$;
+    \item \label{item:sim-jf}
+      $
+      \forall{\tup{\hat{w}, \hat{r}} \in \lES.\lJF} ~.~
+      \exists{w' \in \lC \cup \lI} ~.~ \tup{\lM(w'), \hat{r}} \in \lES.\lJF
+      $
+    \item \label{item:sim-mo}
+      $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI]} ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO$;
+    \item \label{item:sim-vis}
+      $\forall{e \in \lC} ~.~ \lM(e) \in \lVIS(\lES)$;
   \end{enumerate}
 \end{definition}
 
 \begin{lemma}
-  Given an event structure $\lES$, an \imm execution graph $\lG$ 
-  and its traversal configuration $\tup{\lC, \lI}$
-  if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds and 
-  there exists $\tup{\lC', \lI'}$ s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC', \lI'}$
-  then there exists $\lES'$ and $\lM'$ s.t. $\lG \vdash (\lM, \lES) \ESstep{}^+ (\lM', \lES')$
-  and $\simR(\lES', \lG, \tup{\lC', \lI'})$ 
+  Given $\lES$, $\lG$, $\tup{\lC, \lI}$, $\lM$
+  if the relation $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds and 
+  there exists $\tup{\lC', \lI'}$
+  s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC', \lI'}$
+  then there exists $\lES'$ and $\lM'$ s.t. $\lG \vdash (\lM, \lES) \ESstepstar (\lM', \lES')$
+  and $\simR(\lES', \lG, \tup{\lC', \lI'}, \lM')$ 
 \end{lemma}
 
 \begin{proof}
+  First, suppose that 
+  $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
+  Let us consider different cases:
+  \begin{itemize}
+  \item $e \in \lG.\lW$. \\
+    Note that, from the definition of $\coverable$ follows that $e \in \lI$.
+    In this case we say that $\lES' = \lES$ and $\lM' = \lM$.
+    We need to show that \ref{item:sim-lab} - \ref{item:sim-vis}
+    holds for $\lES$, $\lG$, $\tup{\lC \uplus \{e\}, \lI}$, $\lM$.
+    \begin{itemize}
+    \item \ref{item:sim-lab} \\
+      From the \ref{item:sim-lab} of $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$
+      and $e \in \lI$ follows that $\lG.\lLAB(e) = \lES.\lLAB(\lM(e))$
+    \item \ref{item:sim-cf} \\
+      
+    \item \ref{item:sim-po-prfx} \\
+
+    \item \ref{item:sim-po} \\
+
+    \item \ref{item:sim-rf} \\
+      Since $e \in \lG.\lW$ there is no incoming $\lG.\lRF$ edges into $e$.
+      Thus the property follows trivially from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+
+    \item \ref{item:sim-mo} \\
+      As we did not modify $\lI$ on this step the property trivially follows
+      from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+
+    \item \ref{item:sim-vis} \\
+      
+      
+    \end{itemize}
+    
+
+    
+
+  \end{itemize}
+
+
+  
+  
+\end{proof}
+
+%% \begin{proof}                   
   
   %% Note, that according to rules of traversal step relation (fig.~\ref{fig:traversal-rules})
   %% the traversal adds one covered or one issued event at one step.
@@ -456,85 +541,86 @@
   %% we basically need to show that \ref{item:sim-lab}-\ref{item:sim-mo} hold
   %% for that added event.
 
-  First, suppose that 
-  $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
-  In this case we use basic construction step (fig.~\ref{fig:esstep-base})
-  in order to build updated mapping $\lM'$ as well as
-  updated components of event structure: $\lES', \lTID', \lLAB', \lMOD'$,
-  and updated program order relation $\lPO'$.
-  Giving that we already can prove
-  \ref{item:sim-lab}, \ref{item:sim-cf} and \ref{item:sim-po}.
+  %% First, suppose that 
+  %% $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
+  %% In this case we use basic construction step (fig.~\ref{fig:esstep-base})
+  %% in order to build updated mapping $\lM'$ as well as
+  %% updated components of event structure: $\lES', \lTID', \lLAB', \lMOD'$,
+  %% and updated program order relation $\lPO'$.
+  %% Giving that we already can prove
+  %% \ref{item:sim-lab}, \ref{item:sim-cf} and \ref{item:sim-po}.
 
-  \begin{itemize}
-  \item \ref{item:sim-lab}
-    \begin{equation}
-      \begin{split}
-        & \forall{a \in (\lC \uplus \{e\}) \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \iff \\
-        & \forall{a \in \lC \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \wedge
-        \lG.\lLAB(e) = \lES.\lLAB(\lM(e))
-      \end{split}
-    \end{equation}
-    First conjunct follows from the $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$;
-    second conjunct follows from the definition of basic event structure construction step.
+  %% \begin{itemize}
+  %% \item \ref{item:sim-lab}
+  %%   \begin{equation}
+  %%     \begin{split}
+  %%       & \forall{a \in (\lC \uplus \{e\}) \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \iff \\
+  %%       & \forall{a \in \lC \cup \lI} ~.~ \lG.\lLAB(a) = \lES.\lLAB(\lM(a)) \wedge
+  %%       \lG.\lLAB(e) = \lES.\lLAB(\lM(e))
+  %%     \end{split}
+  %%   \end{equation}
+  %%   First conjunct follows from the $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$;
+  %%   second conjunct follows from the definition of basic event structure construction step.
 
-  \item \ref{item:sim-cf} \\
-    We need to show that
-    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \not\in \lES'.\lCF$.
-    Assume it is not true, that is
-    $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \in \lES'.\lCF$.
-    Giving that $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds,
-    we can conclude that $a = e \vee b = e$.
-    Let us say $a = e$ and $c = \lca(\lM'(e), \lM'(b))$.
-    From the definition of [BASIC-STEP] and 
-    $\tup{\lM'(c), \lM'(e)} \in \lES'.\lPO$ follows that $\tup{c, e} \in \lG.\lPO$.
-    From the definition of $\coverable$ we know that $\dom{\lG.\lPO;[e]} \subseteq \lC$;
-    giving that and $\tup{c, e} \in \lG.\lPO$ we can conclude that $c \in \lC$.
-    \note{Next, show that $\tup{c, b} \in \lG.\lPO$ and using the fact that
-      $\lG.\lPO$ is total order on events from same thread show a contradiction.
-      BTW We need additional condition for $\lPO$ in simulation relation.
-    }
+  %% \item \ref{item:sim-cf} \\
+  %%   We need to show that
+  %%   $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \not\in \lES'.\lCF$.
+  %%   Assume it is not true, that is
+  %%   $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \in \lES'.\lCF$.
+  %%   Giving that $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds,
+  %%   we can conclude that $a = e \vee b = e$.
+  %%   Let us say $a = e$ and $c = \lca(\lM'(e), \lM'(b))$.
+  %%   From the definition of [BASIC-STEP] and 
+  %%   $\tup{\lM'(c), \lM'(e)} \in \lES'.\lPO$ follows that $\tup{c, e} \in \lG.\lPO$.
+  %%   From the definition of $\coverable$ we know that $\dom{\lG.\lPO;[e]} \subseteq \lC$;
+  %%   giving that and $\tup{c, e} \in \lG.\lPO$ we can conclude that $c \in \lC$.
+  %%   \note{Next, show that $\tup{c, b} \in \lG.\lPO$ and using the fact that
+  %%     $\lG.\lPO$ is total order on events from same thread show a contradiction.
+  %%     BTW We need additional condition for $\lPO$ in simulation relation.
+  %%   }
     
     
     
-  \end{itemize}
+  %% \end{itemize}
   
-  \ref{item:sim-lab} follows trivially from the definition of basic construction step.
-  \ref{item:sim-cf} 
+  %% \ref{item:sim-lab} follows trivially from the definition of basic construction step.
+  %% \ref{item:sim-cf} 
   
   
-  \ref{item:sim-lab} follow from the definition of the basic simulation step.
-  In order to prove other properties of simulation relation,
-  we have to consider different cases.
+  %% \ref{item:sim-lab} follow from the definition of the basic simulation step.
+  %% In order to prove other properties of simulation relation,
+  %% we have to consider different cases.
   
 
-  \begin{itemize}
-  \item
-    $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
-    In this case we use [ADD-FENCE] rule in order to build $\lES'$ and $\lM'$.
-    \ref{item:sim-lab} follows from the definition of the basic simulation step.
-    \ref{item:sim-cf} 
+  %% \begin{itemize}
+  %% \item
+  %%   $e$ is a non-sc fence event, that is $e \in \lG.\lF^{\sqsubset\sco}$.
+  %%   In this case we use [ADD-FENCE] rule in order to build $\lES'$ and $\lM'$.
+  %%   \ref{item:sim-lab} follows from the definition of the basic simulation step.
+  %%   \ref{item:sim-cf} 
     
-      \ref{item:sim-po} follows from the $\simR(\lES, \lG, \tup{\lC, \lI})$ 
-      and the definition of $\coverable$.
-      \ref{item:sim-ew} follows from the fact that
-      we did not modify the set of covered writes on this step.
-      As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
-      \ref{item:sim-rf}, and \ref{item:sim-mo} follows immediately.
-      Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
-      and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
-      the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
-      But since $\simR(\lES, \lG, \lC, \lI)$ holds we know that 
-      any $\lPO$-predcessor of $\hat{e}$ is visible, and thus $\hat{e}$ is also visible.
-      We have proven \ref{item:sim-vis}.
+  %%     \ref{item:sim-po} follows from the $\simR(\lES, \lG, \tup{\lC, \lI})$ 
+  %%     and the definition of $\coverable$.
+  %%     \ref{item:sim-ew} follows from the fact that
+  %%     we did not modify the set of covered writes on this step.
+  %%     As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
+  %%     \ref{item:sim-rf}, and \ref{item:sim-mo} follows immediately.
+  %%     Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
+  %%     and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
+  %%     the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
+  %%     But since $\simR(\lES, \lG, \lC, \lI)$ holds we know that 
+  %%     any $\lPO$-predcessor of $\hat{e}$ is visible, and thus $\hat{e}$ is also visible.
+  %%     We have proven \ref{item:sim-vis}.
 
-    \item $e$ is a write event, that is $e \in \lG.\lW$.
-      \ref{item:sim-po} and \ref{item:sim-vis} can be proven similarly 
-      to the case when $e$ is a non-sc fence.
-      Since $e$ is a write, it cannot have any incoming $\lRF$ edges and thus
-      the \ref{item:sim-rf} follows directly from 
-      the fact that $\simR(\lES, \lG, \tup{\lC, \lI})$ holds.
-      \ref{item:sim-ew} and \ref{item:sim-mo} follow from the construction
-      of $\lEW'$ and $\lMO'$ in (COVER-WRITE) rule.
+  %%   \item $e$ is a write event, that is $e \in \lG.\lW$.
+  %%     \ref{item:sim-po} and \ref{item:sim-vis} can be proven similarly 
+  %%     to the case when $e$ is a non-sc fence.
+  %%     Since $e$ is a write, it cannot have any incoming $\lRF$ edges and thus
+  %%     the \ref{item:sim-rf} follows directly from 
+  %%     the fact that $\simR(\lES, \lG, \tup{\lC, \lI})$ holds.
+  %%     \ref{item:sim-ew} and \ref{item:sim-mo} follow from the construction
+  %%     of $\lEW'$ and $\lMO'$ in (COVER-WRITE) rule.
+  
       %% To prove \ref{item:sim-rf-c} consider a read $r \in \lC$ that reads from $e$,
       %% that is $\tup{e, r} \in \lG.\lRF$.
       %% From the definition of $\coverable$ we know that $e \in I$,
@@ -544,36 +630,37 @@
       %% $\tup{\hat{e}, \lMI(e)} \in \lEW'$
       %% and thus $\tup{\hat{e}, \lMC(r)} \in \lES'.\lJF$.
       
-    \item $e$ is a read event, that is $e \in \lG.\lR$.
-      Again \ref{item:sim-po} can be proven similarly to the previous cases.
-      \ref{item:sim-ew} follows from the fact that
-      we did not modify the set of covered writes on this step.
-      \ref{item:sim-mo} holds because read events do not contribute to the $\lMO$.
-      From the definition of $\coverable$ we know that for write $w \in \lG.\lW$
-      that $e$ read from, that is $\tup{w, e} \in \lG.\lRF$, $w \in I$.
-      From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf} holds.
-      \note{further go my speculations}.
-      As for \ref{item:sim-vis} note that after we added $e$ into $\lC$,
-      new conflicting writes that $e$ depends on may appear.
-      Unlike the cases when $e$ is a write or a fence,
-      the last edge in a dependency path not necessary a $\lPO$ edge,
-      it might be an $\lRFE$ edge.
-      That is, we might have events $w, w'$, such that
-      $\tup{w, w'} \in (\lPO \cup \lRF)^+$,
-      $\tup{w', e} \in \lRFE$ and $\tup{w, e} \in \lCF$.
-      If $w$ not covered, that is $w \in \lI \setminus \lC$,
-      then we can conclude that $\tup{e, w} \in \lPO$ in execution graph,
-      that is the read $e$ reads from a write that depends on some promised write
-      from the same thread.
-      In order to support invariant \ref{item:sim-vis} we have to
-      cover all events up to $w$ at this step.
-      Alternatively we can give up on maintaining this property
-      and use Lemma \ref{lemma:2} instead.
+    %% \item $e$ is a read event, that is $e \in \lG.\lR$.
+    %%   Again \ref{item:sim-po} can be proven similarly to the previous cases.
+    %%   \ref{item:sim-ew} follows from the fact that
+    %%   we did not modify the set of covered writes on this step.
+    %%   \ref{item:sim-mo} holds because read events do not contribute to the $\lMO$.
+    %%   From the definition of $\coverable$ we know that for write $w \in \lG.\lW$
+    %%   that $e$ read from, that is $\tup{w, e} \in \lG.\lRF$, $w \in I$.
+    %%   From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf} holds.
+    %%   \note{further go my speculations}.
+    %%   As for \ref{item:sim-vis} note that after we added $e$ into $\lC$,
+    %%   new conflicting writes that $e$ depends on may appear.
+    %%   Unlike the cases when $e$ is a write or a fence,
+    %%   the last edge in a dependency path not necessary a $\lPO$ edge,
+    %%   it might be an $\lRFE$ edge.
+    %%   That is, we might have events $w, w'$, such that
+    %%   $\tup{w, w'} \in (\lPO \cup \lRF)^+$,
+    %%   $\tup{w', e} \in \lRFE$ and $\tup{w, e} \in \lCF$.
+    %%   If $w$ not covered, that is $w \in \lI \setminus \lC$,
+    %%   then we can conclude that $\tup{e, w} \in \lPO$ in execution graph,
+    %%   that is the read $e$ reads from a write that depends on some promised write
+    %%   from the same thread.
+    %%   In order to support invariant \ref{item:sim-vis} we have to
+    %%   cover all events up to $w$ at this step.
+    %%   Alternatively we can give up on maintaining this property
+    %%   and use Lemma \ref{lemma:2} instead.
 
 
 %    \item $e \in \lG.\lF^{\sco} \wedge \dom{\lG.\lSC;[e]} \subseteq \lC$
-  \end{itemize}
-\end{proof}
+
+  %%   \end{itemize}
+%% \end{proof}
 
 \begin{figure}[thb]
 
@@ -581,6 +668,7 @@
 
 \small
 
+    [BASIC-STEP]
     \begin{center}
     \AxiomC{$\hat{e} = max(\lE) + 1$}
     \noLine
@@ -602,7 +690,7 @@
     \DisplayProof
     \end{center}
     
-\caption{Basic simulation step}
+\caption{Event structure basic construction step}
 \label{fig:esstep-base}
 \end{subfigure}
 
@@ -698,36 +786,36 @@
 \end{figure}
 
 
-\begin{lemma}
-  \label{lemma:2}
-  Given an event structure $\lES$, an \imm execution graph $\lG$ 
-  and its traversal configuration $\tup{\lC, \lI}$
-  if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
-  then for any covered event $e \in \lC$ and any
-  write from its masking set $w \in \lMASK(\lG, \hat{e})$
-  there exist $\lES', \lC', \lI'$ such that
-  $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$, 
-  $\simR(\lES', \lG, \tup{\lC', \lI'})$
-  and $\tup{w, \hat{e}} \in \lES'.\lEW;\lES'.\lPO^=$.
-  \note{Probably, $\lI = \lI'$ ?}
-\end{lemma}
+%% \begin{lemma}
+%%   \label{lemma:2}
+%%   Given an event structure $\lES$, an \imm execution graph $\lG$ 
+%%   and its traversal configuration $\tup{\lC, \lI}$
+%%   if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
+%%   then for any covered event $e \in \lC$ and any
+%%   write from its masking set $w \in \lMASK(\lG, \hat{e})$
+%%   there exist $\lES', \lC', \lI'$ such that
+%%   $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$, 
+%%   $\simR(\lES', \lG, \tup{\lC', \lI'})$
+%%   and $\tup{w, \hat{e}} \in \lES'.\lEW;\lES'.\lPO^=$.
+%%   \note{Probably, $\lI = \lI'$ ?}
+%% \end{lemma}
 
-\begin{lemma}
-  \label{lemma:3}
-  Given an event structure $\lES$, an \imm execution graph $\lG$ 
-  and its traversal configuration $\tup{\lC, \lI}$
-  if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
-  then there exists $\lES', \lC', \lI'$ and event structure execution $\lX$ such that
-  $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$
-  and $\lX$ satisfies the following conditions.
-  \begin{itemize}
-  \item $\lX.\lE = \lMC(C')$
-  \item $\lX.\lPO = \lMC([\lC'];\lG.\lPO;[\lC'])$
-  \item $\lX.\lRMW = \lMC([\lC'];\lG.\lRMW;[\lC'])$
-  \item $\lX.\lRF = \lMC([\lC'];\lG.\lRF;[\lC'])$
-  \item $\lX.\lMO = \lMC([\lC'];\lG.\lMO;[\lC'])$    
-  \end{itemize}
-\end{lemma}
+%% \begin{lemma}
+%%   \label{lemma:3}
+%%   Given an event structure $\lES$, an \imm execution graph $\lG$ 
+%%   and its traversal configuration $\tup{\lC, \lI}$
+%%   if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
+%%   then there exists $\lES', \lC', \lI'$ and event structure execution $\lX$ such that
+%%   $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$
+%%   and $\lX$ satisfies the following conditions.
+%%   \begin{itemize}
+%%   \item $\lX.\lE = \lMC(C')$
+%%   \item $\lX.\lPO = \lMC([\lC'];\lG.\lPO;[\lC'])$
+%%   \item $\lX.\lRMW = \lMC([\lC'];\lG.\lRMW;[\lC'])$
+%%   \item $\lX.\lRF = \lMC([\lC'];\lG.\lRF;[\lC'])$
+%%   \item $\lX.\lMO = \lMC([\lC'];\lG.\lMO;[\lC'])$    
+%%   \end{itemize}
+%% \end{lemma}
 
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
 \bibliographystyle{acm}
