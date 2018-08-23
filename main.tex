@@ -290,7 +290,7 @@
 
 \subsubsection{Basic simulation}
 
-In this section we will present a relation $simRb(S, G, \tup{C, I}, s, t)$.
+In this section we will present a relation $\simRb(S, G, \tup{C, I}, s, t)$.
 It states some properties about labeling of events and $\lPO$ order in $G$ and $S$
 that are preserved by $s$ and $t$. 
 We will show that this relation is closed with respect to $\ESle$ order on event structures.
@@ -306,21 +306,12 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   \begin{enumerate}[label=\textbf{S.\arabic*}]
   \item \label{item:sim-dom-s}
     $\dom{s} \subseteq C \cup I$
-  %% \item \label{item:sim-dom-t}
-  %%   $\dom{t} = S.\lE$
   \item \label{item:sim-lab}
     $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
   \item \label{item:sim-cf}
     $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
   \item \label{item:sim-po-prfx} 
     $S.\lPO;[s(\lC)] \subseteq [s(C)];S.\lPO$;
-  %% \item \label{item:sim-po}
-  %%   $\forall{\tup{\hat{e_1}, \hat{e_2}} \in [s(C)];S.\lPO;[s(C)]} ~.~
-  %%       \tup{s^{-1}(\hat{e_1}), s^{-1}(\hat{e_2})} \in G.\lPO$;
-    
-  %% \item \label{item:sim-po} 
-  %%   $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
-  %%   \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
   \end{enumerate}
 \end{definition}
 
@@ -330,19 +321,24 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   $\simRb(S', G, \tup{C, I}, s, t)$
 \end{prop}
 
-\begin{lemma}
+\begin{prop}
   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and 
-  there exists $e$ s.t. $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$
-  and $\hat{e} \in S.\lE$ s.t. $S.\lLAB(\hat{e}) = G.\lLAB(e)$,
-  $\tup{s(\front{C, \lTID(e)}), \hat{e}} \in S.\lPO_{imm}$
+  there exists $e \in G.\lE$ and $\hat{e} \in S.\lE$ s.t.
+  \begin{itemize}
+  \item $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$,
+  \item $S.\lLAB(\hat{e}) = G.\lLAB(e)$,
+  \item $\tup{s(\front{C, \lTID(e)}), \hat{e}} \in S.\lPO_{imm}$
+  \end{itemize}
   then $\simRb(S, G, \tup{C \uplus \{e\}, I}, s[e \mapsto \hat{e}], t[\hat{e} \mapsto e])$ holds. 
-\end{lemma}
+\end{prop}
 
 \begin{proof}
-  Let $C' = C \mplus \{e\}$, $s' = s[e \mapsto \hat{e}]$ and $t' = t[\hat{e} \mapsto e]$.
+  Let $C' = C \uplus \{e\}$, $s' = s[e \mapsto \hat{e}]$ and $t' = t[\hat{e} \mapsto e]$.
   Let us prove that all conditions for $\simRb(S, G, \tup{C', I}, s', t')$ are met. 
   \begin{itemize}
+  \item \ref{item:sim-dom-s}
+    Holds trivially.
   \item \ref{item:sim-lab}
     \begin{equation}
       \begin{split}
@@ -355,7 +351,7 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 
   \item \ref{item:sim-cf} \\
     We need to show that
-    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\s'(a), s'(b)} \not\in S.\lCF$.
+    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{s'(a), s'(b)} \not\in S.\lCF$.
     Let us consider the opposite, that is
     $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{s'(a), s'(b)} \in S.\lCF$.
     Giving that $\simRb(S, G, \tup{C, I}, s, t)$ holds,
@@ -386,10 +382,10 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     Let us show that $S.\lPO;[\hat{e}] \subseteq [s(C)];S.\lPO$.
     Suppose there exists $\hat{a}$ s.t. $\tup{\hat{a}, \hat{e}} \in S.\lPO$ but
     $\hat{a} \not\in s(C)$.
-    $\tup{s(\front(C, \lTID(e)), \hat{e}} \in S.\lPO_{imm}$
+    Since $\tup{s(\front(C, \lTID(e)), \hat{e}} \in S.\lPO_{imm}$
     it must be the case that $\tup{\hat{a}, s(\front(C, \lTID(e))} \in S.\lPO$.
-    But $\front(C, \lTID(e) \in C$ and thus from $\ref{item:sim-po-prfx}$
-    follows that $\hat{a} \in C$. Contradiction.
+    But $\front(C, \lTID(e)) \in C$ and thus from $\ref{item:sim-po-prfx}$
+    follows that $\hat{a} \in s(C)$. Contradiction.
     
     %% Let us show that \\
     %% $[\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] =
@@ -427,94 +423,137 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     %% $\dom{\lG.\lPO;[e]} \subseteq \lC$, which is true,
     %% because $e \in \coverable(\lG, \lC, \lI)$.
 
-  \item \ref{item:sim-po} \\
-    As we have already showed \\
-    $[\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] =
-    [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])$.
-    Thus we can prove the property for the two disjoint parts of the relation.
-    For the first part it follows from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
-    For the second part it is obvious.
+  %% \item \ref{item:sim-po} \\
+  %%   As we have already showed \\
+  %%   $[\lM'(\lC \uplus \{e\})];\lES'.\lPO;[\lM'(\lC \uplus \{e\})] =
+  %%   [\lM(\lC)];\lES.\lPO;[\lM(\lC)] \cup \lM'([\lC];\lG.\lPO;[e])$.
+  %%   Thus we can prove the property for the two disjoint parts of the relation.
+  %%   For the first part it follows from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+  %%   For the second part it is obvious.
     
   \end{itemize}
   
 \end{proof}
 
 \begin{definition}
-  Relation $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$, that binds an 
-  event structure $\lES$, an \imm execution graph $\lG$,
-  a traversal configuration $\tup{\lC, \lI}$,
-  an event mapping $\lM : \lG.\lE \fun \lES.\lE$
-  holds when the following conditions are met:
-  \begin{enumerate}[label=\textbf{I.\arabic*}]
-    \item \label{item:sim-lab}
-      $\forall{e \in \lC \cup \lI} ~.~ \lG.\lLAB(e) = \lES.\lLAB(\lM(e))$;
-    \item \label{item:sim-cf}
-      $\forall{e_1, e_2 \in \lC \cup \lI} ~.~ \tup{\lM(e_1), \lM(e_2)} \not\in \lES.\lCF$;
-    \item \label{item:sim-po-prfx} 
-      $\lES.\lPO;[\lM(\lC)] \subseteq [\lM(\lC)];\lES.\lPO;[\lM(\lC)]$;
-    \item \label{item:sim-po} 
-      $\forall{\tup{\hat{e_1}, \hat{e_2}} \in [\lM(\lC)];\lES.\lPO;[\lM(\lC)]} ~.~
-        \tup{\lM(\hat{e_1}), \lM(\hat{e_2})} \in \lG.\lPO$;
+  Relation $\simRw(S, G, \tup{C, I}, s, t, \lPC)$, that binds an 
+  event structure $S$, an \imm execution graph $G$,
+  a traversal configuration $\tup{C, I}$,
+  a source $s : G.\lE \fun S.\lE$ and target $t : S.\lE \fun G.\lE$ event mappings,
+  a program counter $\lPC$
+  holds whenever and $\simRb(S, G, \tup{C, I}, s)$ and
+  additionally the following conditions are met:
+  \begin{enumerate}[label=\textbf{S.\arabic*},start=5]
+    \item \label{item:sim-dom-t}
+      $\dom{t} = S.\lE$;
+    \item \label{item:sim-typ-tid}
+      $\forall{\hat{e} \in S.\lE} ~.~
+      S.\lTYP(\hat{e}) = G.\lTYP(t(\hat{e})) \wedge
+      S.\lTID(\hat{e}) = G.\lTID(t(\hat{e}))
+      $;
+    \item \label{item:sim-lab-tw}
+      $\forall{\hat{e} \in S.\lW} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
+    \item \label{item:sim-po-imm}
+      $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
+       \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
     \item \label{item:sim-rf} 
-      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{\lM(w), \lM(r)} \in \lES.\lJF$;
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{s(w), s(r)} \in \lES.\lJF$;
     \item \label{item:sim-jf}
       $
       \forall{\tup{\hat{w}, \hat{r}} \in \lES.\lJF} ~.~
-      \exists{w' \in \lC \cup \lI} ~.~ \tup{\lM(w'), \hat{r}} \in \lES.\lJF
-      $
+      \exists{w' \in \lC \cup \lI} ~.~ \tup{s(w'), \hat{r}} \in \lES.\lJF
+      $;
     \item \label{item:sim-mo}
-      $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI]} ~.~ \tup{\lM(w), \lM(w')} \in \lES.\lMO$;
+      $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI]} ~.~ \tup{s(w), s(w')} \in \lES.\lMO$;
+      
     \item \label{item:sim-vis}
-      $\forall{e \in \lC} ~.~ \lM(e) \in \lVIS(\lES)$;
+      $\forall{e \in (C \cup I)} ~.~
+      e \in \dom{G.\lPO^?;[\lPC(\lTID(e))]} \implies s(e) \in \lVIS(S)$;
   \end{enumerate}
 \end{definition}
 
 \begin{lemma}
-  Given $\lES$, $\lG$, $\tup{\lC, \lI}$, $\lM$
-  if the relation $\simR(\lES, \lG, \tup{\lC, \lI}, \lM)$ holds and 
+  Given $\lES$, $\lG$, $\tup{\lC, \lI}$, $s$, $t$ and $\lPC$
+  if the relation $\simRw(S, G, \tup{\lC, \lI}, s, t, \lPC)$ holds and 
   there exists $\tup{\lC', \lI'}$
   s.t. $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC', \lI'}$
-  then there exists $\lES'$ and $\lM'$ s.t. $\lG \vdash (\lM, \lES) \ESstepstar (\lM', \lES')$
-  and $\simR(\lES', \lG, \tup{\lC', \lI'}, \lM')$ 
+  then there exists $S'$, $s'$ and $t'$ s.t. $\lG \vdash (s, t, S) \ESstepstar (s', t', S')$
+  and $\simRw(S', G, \tup{\lC', \lI'}, s', t', \lPC)$ 
 \end{lemma}
 
 \begin{proof}
   First, suppose that 
   $\lG \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
-  Let us consider different cases:
+  If there exists $\hat{e} \in S$ s.t. $S.\lLAB(\hat{e}) = G.\lLAB(e)$ and 
+  $\tup{s(\front(C, \lTID(e))), \hat{e}} \in S.\lPO_{imm}$
+  then the premises of $\ref{prop:2}$ are met and we can apply it.
+  From $\ref{prop:2}$ follows that $\simRb(S, G, \tup{C', I}, s')$,
+  where $s' = s[e \mapsto \hat{e}]$ holds.
+  Let $t' = t$. Obviously \ref{item:sim-dom-t}-\ref{item:sim-po-imm} holds,
+  because neither $S$ neither $t$ was modified. 
+  We need to show that \ref{item:sim-dom-rf}-\ref{item:sim-vis-weak} holds.
+  Let us consider different subcases:
   \begin{itemize}
-  \item $e \in \lG.\lW$. \\
-    Note that, from the definition of $\coverable$ follows that $e \in \lI$.
-    In this case we say that $\lES' = \lES$ and $\lM' = \lM$.
-    We need to show that \ref{item:sim-lab} - \ref{item:sim-vis}
-    holds for $\lES$, $\lG$, $\tup{\lC \uplus \{e\}, \lI}$, $\lM$.
+  \item $e \in G.\lW$.
     \begin{itemize}
-    \item \ref{item:sim-lab} \\
-      From the \ref{item:sim-lab} of $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$
-      and $e \in \lI$ follows that $\lG.\lLAB(e) = \lES.\lLAB(\lM(e))$
-    \item \ref{item:sim-cf} \\
-      
-    \item \ref{item:sim-po-prfx} \\
-
-    \item \ref{item:sim-po} \\
 
     \item \ref{item:sim-rf} \\
-      Since $e \in \lG.\lW$ there is no incoming $\lG.\lRF$ edges into $e$.
-      Thus the property follows trivially from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
-
+      We need to show that
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC \uplus\{e\}]} ~.~
+      \tup{s(w), s(r)} \in \lES.\lJF
+      $.
+      $\tup{w, r} \in [\lI];\lG.\lRF;[\lC \uplus\{e\}] \iff
+      \tup{w, r} \in [\lI];\lG.\lRF;[\lC] \cup  [\lI];\lG.\lRF;[e]
+      $.
+      For the first subset it follows from the $\simRw(S, G, \tup{\lC, \lI}, s, t, \lPC)$,
+      the second subset is empty, since $e \in G.\lW$
+      
     \item \ref{item:sim-mo} \\
-      As we did not modify $\lI$ on this step the property trivially follows
-      from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+      Holds trivially, since we did not modify $I$ on this step.
 
-    \item \ref{item:sim-vis} \\
-      
-      
+    \item \ref{item:sim-vis-weak} \\
+      Let us show that $e \in \dom{G.\lPO^?;[\lPC(i)]}$, where $i = G.\lTID(e)$.
+      By the definition of $e \in \Next(G, C)$ $\tup{\front(C, i), e} \in G.\lPO_{imm}$.
+      By \ref{item:sim-pc} $\tup{\lPC(i), \front(C, i)} \in G.\lPO$.
+      Thus $\tup{\lPC(i), e} \in G.\lPO$ and \ref{item:sim-vis-weak} holds.
     \end{itemize}
-    
-
-    
-
   \end{itemize}
+  
+  
+  %% Let us consider different cases:
+  %% \begin{itemize}
+  %% \item $e \in \lG.\lW$. \\
+  %%   Note that, from the definition of $\coverable$ follows that $e \in \lI$.
+  %%   In this case we say that $\lES' = \lES$ and $\lM' = \lM$.
+  %%   We need to show that \ref{item:sim-lab} - \ref{item:sim-vis}
+  %%   holds for $\lES$, $\lG$, $\tup{\lC \uplus \{e\}, \lI}$, $\lM$.
+  %%   \begin{itemize}
+  %%   \item \ref{item:sim-lab} \\
+  %%     From the \ref{item:sim-lab} of $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$
+  %%     and $e \in \lI$ follows that $\lG.\lLAB(e) = \lES.\lLAB(\lM(e))$
+  %%   \item \ref{item:sim-cf} \\
+      
+  %%   \item \ref{item:sim-po-prfx} \\
+
+  %%   \item \ref{item:sim-po} \\
+
+  %%   \item \ref{item:sim-rf} \\
+  %%     Since $e \in \lG.\lW$ there is no incoming $\lG.\lRF$ edges into $e$.
+  %%     Thus the property follows trivially from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+
+  %%   \item \ref{item:sim-mo} \\
+  %%     As we did not modify $\lI$ on this step the property trivially follows
+  %%     from the $\simRb(\lES, \lG, \tup{\lC, \lI}, \lM)$.
+
+  %%   \item \ref{item:sim-vis} \\
+      
+      
+  %%   \end{itemize}
+    
+
+    
+
+  %% \end{itemize}
 
 
   
