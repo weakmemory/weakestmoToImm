@@ -149,6 +149,21 @@
   \end{itemize}
 \end{definition}
 
+\begin{definition}
+  Event structure $S$ is called \emph{consistent} if the following conditions hold:
+  
+  \begin{itemize}
+
+    \item $S.\lRF \subseteq S.\lPO \cup (\lVIS(S) \times S.\lE)$;
+
+    \item $S.\lRF \cup S.\lCF = \emptyset$;
+
+    \item $(S.\lHB;S.\lRF^{-1}) \cup S.\lCF = \emptyset$;
+
+    \item $S.\lHB;S.\lECO^?$ is ireflexive.
+  \end{itemize}
+\end{definition}
+
 \section{Executions}
 
 \begin{definition}
