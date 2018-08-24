@@ -32,6 +32,8 @@
 \section{Event Structure Model}
 
 \begin{definition}
+  \label{def:es}
+  
   An \emph{event structure} $\lES$ is a tuple
   $\tup{\lE, \lEi, \lTID, \lLAB, \lMOD, \lPO, \lRMW, \lRF, \lEW, \lMO}$ where:
   \begin{itemize}
@@ -147,28 +149,75 @@
   \end{itemize}
 \end{definition}
 
+\section{Executions}
+
 \begin{definition}
-  Given an event structure $\lES$ we will a call a tuple $\tup{\lE, \lPO, \lRMW, \lRF, \lMO}$ 
-  its \emph{execution} $\lX$ if the following conditions hold:
+  An execution graph $G$ is a tuple $\tup{\lX, \lLAB, \lMOD, \lRMW, \lRF, \lMO}$ where:
   \begin{itemize}
-    \item $\lX.\lE \subseteq \lVIS(\lES)$;
-    \item $[\lX.\lE];\lES.\lCF;[\lX.\lE] = \emptyset$;
-    \item $\lES.\lPO;[\lX.\lE] \subseteq \lX.\lE \times \lX.\lE$;
-    \item $\forall{\tup{e, e'}} \in (\lX.\lE;\lES.\lPO;[\lES.\lE \setminus \lX.\lE]) ~.~ 
-      \exists{e''} \in \lX.\lE ~.~ \tup{e', e''} \in \lES.\lCF$;
-    \item $\lX.\lPO = [\lX.\lE];\lES.\lPO;[\lX.\lE]$;
-    \item $\lX.\lRMW = [\lX.\lE];\lES.\lRMW;[\lX.\lE]$;
-    \item $\lX.\lRF = [\lX.\lE];\lES.\lJF;[\lX.\lE]$;
-    \item $\lX.\lMO = [\lX.\lE];\lES.\lMO;[\lX.\lE]$.
+
+  \item $\lX$ is a set of x-events. 
+    Execution events have different representation comparing to the event structure events. 
+    That is, an x-event is either:
+    \begin{itemize}
+      \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
+      \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
+    \end{itemize}
+    Given this representation one could restore some piece of the event structure notation, 
+    in particular:
+    \begin{itemize}
+
+      \item $\lEi \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
+
+      \item $\lTID : \lX \fun \Tid$ s.t. \\
+        $\forall{e} ~.~ (e = \tup{\lINIT~x} \implies \lTID(e) = 0) \wedge 
+        (e = \tup{i, n} \Rightarrow \lTID(e) = i)$;
+      
+      \item $\lPO \subseteq \lE \times \lE$ s.t. \\
+        \begin{equation*}
+          \begin{split}
+            & \tup{e_1, e_2} \in \lPO \\
+            & \iff (e_1 \in \lEi \wedge e_2 \not\in \lEi) \vee 
+              (e_1, e_2 \not\in \lEi \wedge \lTID(e_1) = \lTID(e_2) \wedge
+              \lSN(e_1) < \lSN(e_2))
+          \end{split}
+        \end{equation*}
+        where $\lSN(\tup{i, n}) = n$.
+
+        Note that in case of executions $\lPO$ is a total order.
+    \end{itemize}
+    
+  \item $\lLAB, \lMOD, \lRMW, \lRF, \lMO$ have definitions similar to those given
+    in the definition \ref{def:es} of event structure,
+    except that they are defined on a set $\lX$.
+
   \end{itemize}
 \end{definition}
 
 \begin{definition}
-  A function $O_{\lX} : \Loc \fun \Val$ is an \emph{outcome} 
-  of an event structure's $\lES$ execution $\lX$
-  if for every $x \in \Loc$ either $O_{\lX}(x) = \lES.\lVALW(w)$ 
-  for some $\lX.\lMO$-maximal write event $w$, 
-  or $O_{\lG} = 0$ and $\lX.\lW_x = \emptyset$.
+  Given an event structure $S$ we will a call an execution graph $G$
+  extracted from $S$, denoted as $S \rhd G$,
+  if there exists a function $s : G.\lX \fun S.\lE$, called \emph{source event mapping},
+  such that the following conditions are met.
+  \begin{itemize}
+    \item $\dom{s} = G.\lX$
+    \item $s(G.\lX) \subseteq \lVIS(S)$;
+    \item $[s(G.\lX)];S.\lCF;[s(G.\lX)] = \emptyset$;
+    \item $S.\lPO;[s(G.\lX)] \subseteq s(G.\lX) \times s(G.\lX)$;
+    \item $\forall{\tup{e, e'}} \in [s(G.\lX)];S.\lPO;[S.\lE \setminus s(G.\lX)] ~.~ 
+      \exists{e''} \in s(G.\lX) ~.~ \tup{e', e''} \in S.\lCF$;
+    \item $\lX.\lPO = [s(G.\lX)];S.\lPO;[s(G.\lX)]$;
+    \item $\lX.\lRMW = [s(G.\lX)];S.\lRMW;[s(G.\lX)]$;
+    \item $\lX.\lRF = [s(G.\lX)];S.\lJF;[s(G.\lX)]$;
+    \item $\lX.\lMO = [s(G.\lX)];S.\lMO;[s(G.\lX)]$;
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  A function $O : \Loc \fun \Val$ is an \emph{outcome} 
+  of a consistent execution graph $G$
+  if for every $x \in \Loc$ either $O(x) = G.\lVALW(w)$ 
+  for some $G.\lMO$-maximal write event $w$, 
+  or $O = 0$ and $G.\lW_x = \emptyset$.
 \end{definition}
 
 \section{Intermediate Memory Model}
@@ -444,8 +493,13 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   holds whenever and $\simRb(S, G, \tup{C, I}, s)$ and
   additionally the following conditions are met:
   \begin{enumerate}[label=\textbf{S.\arabic*},start=5]
+
+    \item \label{item:sim-pc}
+      $\forall{i \in \Tid} ~.~ \tup{\lPC(i), \front(C, i)} \in G.\lPO$
+
     \item \label{item:sim-dom-t}
       $\dom{t} = S.\lE$;
+
     \item \label{item:sim-typ-tid}
       $\forall{\hat{e} \in S.\lE} ~.~
       S.\lTYP(\hat{e}) = G.\lTYP(t(\hat{e})) \wedge
@@ -453,22 +507,27 @@ allow to add a new covered event to $C$ and still satisfy the relation.
       $;
     \item \label{item:sim-lab-tw}
       $\forall{\hat{e} \in S.\lW} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
+
     \item \label{item:sim-po-imm}
       $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
        \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
-    \item \label{item:sim-rf} 
-      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{s(w), s(r)} \in \lES.\lJF$;
+
     \item \label{item:sim-jf}
       $
       \forall{\tup{\hat{w}, \hat{r}} \in \lES.\lJF} ~.~
       \exists{w' \in \lC \cup \lI} ~.~ \tup{s(w'), \hat{r}} \in \lES.\lJF
       $;
+
+    \item \label{item:sim-rf} 
+      $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC]} ~.~ \tup{s(w), s(r)} \in \lES.\lJF$;
+
     \item \label{item:sim-mo}
       $\forall{\tup{w, w'} \in [\lI];\lG.\lMO;[\lI]} ~.~ \tup{s(w), s(w')} \in \lES.\lMO$;
       
-    \item \label{item:sim-vis}
+    \item \label{item:sim-vis-weak}
       $\forall{e \in (C \cup I)} ~.~
       e \in \dom{G.\lPO^?;[\lPC(\lTID(e))]} \implies s(e) \in \lVIS(S)$;
+
   \end{enumerate}
 \end{definition}
 
@@ -489,9 +548,9 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   then the premises of $\ref{prop:2}$ are met and we can apply it.
   From $\ref{prop:2}$ follows that $\simRb(S, G, \tup{C', I}, s')$,
   where $s' = s[e \mapsto \hat{e}]$ holds.
-  Let $t' = t$. Obviously \ref{item:sim-dom-t}-\ref{item:sim-po-imm} holds,
+  Let $t' = t$. Obviously \ref{item:sim-dom-t}-\ref{item:sim-jf} holds,
   because neither $S$ neither $t$ was modified. 
-  We need to show that \ref{item:sim-dom-rf}-\ref{item:sim-vis-weak} holds.
+  We need to show that \ref{item:sim-rf}-\ref{item:sim-vis-weak} holds.
   Let us consider different subcases:
   \begin{itemize}
   \item $e \in G.\lW$.
@@ -502,20 +561,27 @@ allow to add a new covered event to $C$ and still satisfy the relation.
       $\forall{\tup{w, r} \in [\lI];\lG.\lRF;[\lC \uplus\{e\}]} ~.~
       \tup{s(w), s(r)} \in \lES.\lJF
       $.
+      
       $\tup{w, r} \in [\lI];\lG.\lRF;[\lC \uplus\{e\}] \iff
       \tup{w, r} \in [\lI];\lG.\lRF;[\lC] \cup  [\lI];\lG.\lRF;[e]
       $.
+      
       For the first subset it follows from the $\simRw(S, G, \tup{\lC, \lI}, s, t, \lPC)$,
       the second subset is empty, since $e \in G.\lW$
       
     \item \ref{item:sim-mo} \\
-      Holds trivially, since we did not modify $I$ on this step.
+      We need to show that $\forall{w \in I} ~.~ s'(w) = s(w)$.
+      %% Since $s' = s[e \mapsto \hat{e}]$ it sufficient to show that $s'(e) = s(e)$.
+      %% Since $e$ is a coverable write, it should be issued, that is $e \in \issued(G, C, I)$.
+      %% From that follows $e \in \dom{s}$ and $G.\lLAB(e) = $
+      %% Holds trivially, since we did not modify $I$ on this step.
 
     \item \ref{item:sim-vis-weak} \\
       Let us show that $e \in \dom{G.\lPO^?;[\lPC(i)]}$, where $i = G.\lTID(e)$.
-      By the definition of $e \in \Next(G, C)$ $\tup{\front(C, i), e} \in G.\lPO_{imm}$.
+      By the definition of $e \in \nextset(G, C)$ $\tup{\front(C, i), e} \in G.\lPO_{imm}$.
       By \ref{item:sim-pc} $\tup{\lPC(i), \front(C, i)} \in G.\lPO$.
       Thus $\tup{\lPC(i), e} \in G.\lPO$ and \ref{item:sim-vis-weak} holds.
+
     \end{itemize}
   \end{itemize}
   
