@@ -406,7 +406,7 @@ allow to add a new covered event to $C$ and still satisfy the relation.
       S.\lTID(\hat{e}) = G.\lTID(t(\hat{e}))
       $;
 
-  \item \label{item:sim-lab-tw}
+  \item \label{item:sim-lab-wf}
     $\forall{\hat{e} \in S.\lW \cup S.\lF} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
 
   \item \label{item:sim-cf}
@@ -457,13 +457,14 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   Let $e = t(\hat{e})$, $C' = C \uplus \{e\}$, $s' = s[e \mapsto \hat{e}]$.
   Let us prove that all conditions for $\simRb(S, G, \tup{C', I}, s', t)$ are met.
   \begin{itemize}
+
   \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
 
   \item \ref{item:sim-ts-id} \\
     \begin{equation}
       \begin{split}
         & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ t(s'(a)) = a \iff \\
-        & \forall{a \in C \cup I} ~.~ (t(s(a)) = a) \wedge t(s'(e)) = e
+        & (\forall{a \in C \cup I} ~.~ t(s(a)) = a) \wedge t(s'(e)) = e
       \end{split}
     \end{equation}
     First conjunct follows from $\simRb(S, G, \tup{C, I}, s, t)$.
@@ -493,6 +494,10 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     \end{equation}
     First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$;
     second conjunct follows from the definition of forwarding event.
+
+  \item \ref{item:sim-typ-tid} and \ref{item:sim-lab-wf}
+    follows trivially from $\simRb(S, G, \tup{C, I}, s, t)$.
+    
 
   \item \ref{item:sim-cf} \\
     We need to show that
@@ -533,20 +538,54 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     But $\front(C, \lTID(e)) \in C$ and thus from $\ref{item:sim-po-prfx}$
     of $\simRb(S, G, \tup{C, I}, s, t)$ follows that $\hat{a} \in s(C)$. Contradiction.
 
+  \item \ref{item:sim-po} \\
+    First, note that 
+    
+    \begin{equation*}
+      \begin{split}
+        [C \uplus \{e\}];G.\lPO;[C \uplus \{e\}] =
+          [C];G.\lPO;[C] \cup [C];G.\lPO;[e] \cup [e];G.\lPO;[C]
+      \end{split}
+    \end{equation*}
+
+    Also, as $e \in \nextset(G, C, I)$, $e \not\in C$ and
+    because $C$ is $G.\lPO$ prefix closed, $[e];G.\lPO;[C]$ is empty.
+    Thus we only have to show that
+
+    \begin{equation*}
+      \begin{split}
+        & \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C] \cup [C];G.\lPO;[e]} ~.~
+            \tup{s'(e_1), s'(e_2)} \in S.\lPO \iff \\
+        & \iff
+          \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO ~ \wedge \\
+        & \wedge
+          \forall{\tup{e_1, e_2} \in [C];G.\lPO;[e]} ~.~ \tup{s(e_1), s'(e_2)} \in S.\lPO
+      \end{split}
+    \end{equation*}
+
+    First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
+    Let $c = \front(C, \lTID(\hat{e}))$. 
+    From \ref{item:frwd-front} we know that $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
+    Thus, from \ref{item:sim-po-imm} of $\simRb(S, G, \tup{C, I}, s, t)$
+    follows that $\tup{c, e} \in G.\lPO_{imm}$ and $c \in C$.
+    From that and \ref{item:sim-po} of $\simRb(S, G, \tup{C, I}, s, t)$
+    we can conclude that
+    $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[c]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$.
+    The second conjunct follows directly from the later fact and the transitivity of $\lPO$.
+
   \item \ref{item:sim-rf} \\
     
     \begin{equation*}
       \begin{split}
         & \forall{\tup{w, r} \in [I];G.\lRF;[C \uplus \{e\}]} ~.~
           \tup{s'(w), s'(r)} \in S.\lRF \iff \\
-        & \forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lRF \wedge
-          \forall{w \in I}. \tup{w, e} \in G.\lRF \implies \tup{s(w), \hat{e}} \in S.\lRF
+        & \iff \forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lRF ~ \wedge \\
+        & \wedge \forall{w \in I}. \tup{w, e} \in G.\lRF \Rightarrow \tup{s(w), \hat{e}} \in S.\lRF
       \end{split}
     \end{equation*}
 
-    Note that we used the fact that $s'_{|C \cup I} = s_{|C \cup I}$.
     Left conjunct follows immediately from $\simRb(S, G, \tup{C, I}, s, t)$.
-    Right conjunct follows from the definition of forwarding event.
+    Right conjunct follows from the \ref{item:frwd-rf}.
     
   \end{itemize}
   
