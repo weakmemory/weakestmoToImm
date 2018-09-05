@@ -498,7 +498,6 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   \item \ref{item:sim-typ-tid} and \ref{item:sim-lab-wf}
     follows trivially from $\simRb(S, G, \tup{C, I}, s, t)$.
     
-
   \item \ref{item:sim-cf} \\
     We need to show that
     $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{s'(a), s'(b)} \not\in S.\lCF$.
@@ -515,13 +514,14 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     $\tup{s'(b), s'(e)} \in S.\lPO$
     which contradicts the fact that $\tup{s'(b), s'(e)} \in S.\lCF$.
     Otherwise \mbox{$\tup{s(c), s(b)} \in S.\lPO$}.
-    \note{We need to show that $\tup{s(c), s(b)} \in S.\lPO$ implies $\tup{c, b} \in G.\lPO$}.
+    From \ref{item:sim-po-imm} follows that $\tup{c, b} \in G.\lPO$
+    and thus $\tup{e, b} \in G.\lPO$.
     But since $b \in C$ and thus $b \in \coverable(G, C, I)$,
     we can conclude that it shoud be the case that $e \in C$.
     But that contradicts $e \in \nextset(G, C)$.
 
   \item \ref{item:sim-po-prfx} \\
-    
+
     \begin{equation*}
       \begin{split}
         &     S.\lPO;[s'(C \uplus \{e\})] \subseteq [s'(C \uplus \{e\})];S.\lPO \iff \\
@@ -569,10 +569,12 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     Thus, from \ref{item:sim-po-imm} of $\simRb(S, G, \tup{C, I}, s, t)$
     follows that $\tup{c, e} \in G.\lPO_{imm}$ and $c \in C$.
     From that and \ref{item:sim-po} of $\simRb(S, G, \tup{C, I}, s, t)$
-    we can conclude that
+    we can conclude that \\
     $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[c]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$.
     The second conjunct follows directly from the later fact and the transitivity of $\lPO$.
 
+  \item \ref{item:sim-po-imm} follows trivially from $\simRb(S, G, \tup{C, I}, s, t)$.
+    
   \item \ref{item:sim-rf} \\
     
     \begin{equation*}
