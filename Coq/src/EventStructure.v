@@ -124,6 +124,10 @@ Record Wf :=
                             (PA' : c'.(Continuation.prev_act) = None),
         c = c' \/
         c.(Continuation.thread) <> c'.(Continuation.thread);
+    cons_exists : forall e (EE : E e) (NINIT : ~ Einit e),
+        exists c,
+          << CC : K c >> /\
+          << PA : c.(Continuation.prev_act) = Some e >>;
   }.
 
 Implicit Type WF : Wf.
