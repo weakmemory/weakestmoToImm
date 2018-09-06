@@ -3,5 +3,8 @@
 *.blg
 *.log
 *.pdf
+*.vo
+*.vio
+*.glob
 
 *~
