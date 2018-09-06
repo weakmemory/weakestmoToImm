@@ -438,7 +438,7 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 %% \end{prop}
 
 \begin{lemma}
-  \label{lemma:sim-basic}
+  \label{lemma:sim-forward}
   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and 
   there exists forwarding event $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$
@@ -597,12 +597,225 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and
   $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$ then
-  there exists $S', s', t'$ such that $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+  there exists $S', s', t'$ such that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
 \end{lemma}
 
 \begin{proof}
-  Let $G \vdash (s, t, S) \ESstep{e} (s', t', S')$
+  Let $i = \lTID(e)$, $c = \front(C, i)$.
+  Consider there exists $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$
+  (that is \ref{item:frwd-front} holds for $\hat{e}$).
+  From \ref{item:sim-ts-id} and \ref{item:sim-po-imm}
+  follows that $\tup{c, t(\hat{e})} \in G.\lPO$.
+  Because of that and the fact that $e \in \nextset(G, C, I)$
+  we can conclude that $t(\hat{e}) = e$,
+  and since $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$
+  also \ref{item:frwd-coverable} holds.
+  
+  Next, let us consider different subcases.  
+
+  \begin{itemize}
+    \item $e \in G.\lW \cup G.\lF$ \\
+      Then from \ref{item:sim-lab-wf} follows \ref{item:frwd-descr}.
+      Since $\hat{e}$ is not a read event, there is no incoming $S.\lRF$ edges
+      and thus \ref{item:frwd-rf} holds.
+      To sum up, we have proven that $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
+      Given that we can apply Lemma \ref{lemma:sim-forward}
+      and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds
+      (where $s' = s[e \mapsto \hat{e}]$).
+
+    \item $e \in G.\lR$ and \ref{item:frwd-descr}, \ref{item:frwd-rf} hold for $\hat{e}$.
+      Then $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
+      We can apply Lemma \ref{lemma:sim-forward}
+      and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds
+      (where $s' = s[e \mapsto \hat{e}]$).
+
+    \item $e \in G.\lR$ and either \ref{item:frwd-descr} or \ref{item:frwd-rf}
+      does not hold for $\hat{e}$.
+      This case is similar to the case when there is no
+      $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$,
+      that we will consider next.
+  \end{itemize}
+  
+  Now, let us suppose that there is no $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
+  Note that in this case we can conclude that $e \not\in I$.
+  Indeed, if $e \in I$ then by \ref{item:som-dom-s} and ...
+  $s(e) \in S.\W$.
+  
+  Let $G \vdash (s, t, S) \ESstep{e} (s, t', S')$.
+  If we can show that $\simRb(S', G, \tup{C, I}, s, t')$ holds and
+  $\hat{e} \in \forward(S', G, \tup{C, I}, s, t')$ then by Lemma \ref{lemma:sim-forward}
+  it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds
+  ($s' = s[e \mapsto \hat{e}]$).
+
+  First, let us show that $\simRb(S', G, \tup{C, I}, s, t')$ holds.
+
+  \begin{itemize}
+
+  \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
+
+  \item \label{item:sim-ts-id} holds, because not $C$ nor $I$ were modified.
+
+  \item \label{item:sim-st-id} is also holds, since $t(\hat{e}) = e$, $e \in \nextset(G, C, I)$
+    and thus $e \not\in C$.
+    If 
+    
+    $\forall{\hat{e} \in S.\lE} ~.~ t(\hat{e}) \in C \cup I \implies s(t(\hat{e})) = \hat{e}$
+   
+  \item \label{item:sim-lab}
+    $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
+
+  \item \label{item:sim-typ-tid}
+      $\forall{\hat{e} \in S.\lE} ~.~
+      S.\lTYP(\hat{e}) = G.\lTYP(t(\hat{e})) \wedge
+      S.\lTID(\hat{e}) = G.\lTID(t(\hat{e}))
+      $;
+
+  \item \label{item:sim-lab-wf}
+    $\forall{\hat{e} \in S.\lW \cup S.\lF} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
+
+  \item \label{item:sim-cf}
+    $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
+
+  \item \label{item:sim-po-prfx} 
+    $S.\lPO;[s(\lC)] \subseteq [s(C)];S.\lPO$;
+
+  \item \label{item:sim-po}
+    $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$;
+
+  \item \label{item:sim-po-imm}
+    $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
+     \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
+
+  \item \label{item:sim-rf} 
+    $\forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lJF$;
+  \end{itemize}
+  
+  
 \end{proof}
+
+\begin{figure}[thb]
+
+\begin{subfigure}{1\textwidth}
+
+\small
+
+    [BASIC-STEP]
+    \begin{center}
+    \AxiomC{$\hat{e} = max(\lE) + 1$}
+    \noLine
+    \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
+    \noLine
+    \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
+
+    \AxiomC{$\lTID' = \lTID[\hat{e} \rightarrow \lG.\lTID(e)]$}
+    \noLine
+    \UnaryInfC{$\lLAB' = \lLAB[\hat{e} \rightarrow \lG.\lLAB(e)]$}
+    \noLine
+    \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
+
+    \BinaryInfC{$
+      \lG \vdash (\lM, \tup{\lE, \lTID, \lLAB, \lMOD})
+      \ESbasicstep{e}
+      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD'})
+    $}
+    \DisplayProof
+    \end{center}
+    
+\caption{Event structure basic construction step}
+\label{fig:esstep-base}
+\end{subfigure}
+
+\begin{subfigure}{1\textwidth}
+    
+\small
+
+    \begin{subfigure}{1\textwidth}
+    [ADD-FENCE]
+    \begin{center}
+
+      \AxiomC{$e \in \lG.\lF^{\sqsubset\sco}$}
+      \noLine
+      \UnaryInfC{$
+        \lG \vdash (\lM, \lES_{base})
+        \ESbasicstep{e}
+        (\lM', \lES'_{base})
+      $}
+
+      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
+
+      \BinaryInfC{$
+        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \ESstep{e}
+        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
+        $}
+      \DisplayProof
+      
+    \end{center}
+    \label{fig:simrule-fence-cover}
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+    [ADD-READ]
+    \begin{center}
+      
+      \AxiomC{$e \in \lG.\lR$}
+      \noLine
+      \UnaryInfC{$
+        \lG \vdash (\lM, \lES_{base})
+        \ESbasicstep{e}
+        (\lM', \lES'_{base})
+      $}
+      
+      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
+      \noLine
+      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lM'(w), \lM'(e)} ~|~ \tup{w, e} \in \lG.\lRF \}$}
+      
+      \BinaryInfC{$
+        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \ESstep{e}
+        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+        $}
+      \DisplayProof
+      
+    \end{center}
+    \label{fig:esstep-read}
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+    [ADD-WRITE]
+    \begin{center}
+
+      \AxiomC{$e \in \lG.\lW$}
+      \noLine
+      \UnaryInfC{$
+        \lG \vdash (\lM, \lES_{base})
+        \ESbasicstep{e}
+        (\lM', \lES'_{base})
+      $}
+      
+      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
+      \noLine
+      \UnaryInfC{$\lMO' = \lMO \cup \lM'(\lG.\lMO;[e])$}
+      \noLine
+      \UnaryInfC{$\lEW' = \lEW \cup [\lM'(e)];[\lM(e)];\lEW^? \cup \lEW^?;[\lM(e)];[\lM'(e)]$}
+      
+      \BinaryInfC{$
+        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \ESstep{e}
+        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
+        $}
+      \DisplayProof
+      
+    \end{center}
+    \label{fig:esstep-write}
+    \end{subfigure}
+    
+    \caption{Event structure construction step}
+    \label{fig:esstep}
+\end{subfigure}
+
+\end{figure}
+
 
 \subsection{Weak simulation}
 
@@ -912,130 +1125,6 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 
   %%   \end{itemize}
 %% \end{proof}
-
-\begin{figure}[thb]
-
-\begin{subfigure}{1\textwidth}
-
-\small
-
-    [BASIC-STEP]
-    \begin{center}
-    \AxiomC{$\hat{e} = max(\lE) + 1$}
-    \noLine
-    \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
-    \noLine
-    \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
-
-    \AxiomC{$\lTID' = \lTID[\hat{e} \rightarrow \lG.\lTID(e)]$}
-    \noLine
-    \UnaryInfC{$\lLAB' = \lLAB[\hat{e} \rightarrow \lG.\lLAB(e)]$}
-    \noLine
-    \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
-
-    \BinaryInfC{$
-      \lG \vdash (\lM, \tup{\lE, \lTID, \lLAB, \lMOD})
-      \ESbasicstep{e}
-      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD'})
-    $}
-    \DisplayProof
-    \end{center}
-    
-\caption{Event structure basic construction step}
-\label{fig:esstep-base}
-\end{subfigure}
-
-\begin{subfigure}{1\textwidth}
-    
-\small
-
-    \begin{subfigure}{1\textwidth}
-    [ADD-FENCE]
-    \begin{center}
-
-      \AxiomC{$e \in \lG.\lF^{\sqsubset\sco}$}
-      \noLine
-      \UnaryInfC{$
-        \lG \vdash (\lM, \lES_{base})
-        \ESbasicstep{e}
-        (\lM', \lES'_{base})
-      $}
-
-      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
-
-      \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \ESstep{e}
-        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
-        $}
-      \DisplayProof
-      
-    \end{center}
-    \label{fig:simrule-fence-cover}
-    \end{subfigure}
-
-    \begin{subfigure}{1\textwidth}
-    [ADD-READ]
-    \begin{center}
-      
-      \AxiomC{$e \in \lG.\lR$}
-      \noLine
-      \UnaryInfC{$
-        \lG \vdash (\lM, \lES_{base})
-        \ESbasicstep{e}
-        (\lM', \lES'_{base})
-      $}
-      
-      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
-      \noLine
-      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lM'(w), \lM'(e)} ~|~ \tup{w, e} \in \lG.\lRF \}$}
-      
-      \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \ESstep{e}
-        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
-        $}
-      \DisplayProof
-      
-    \end{center}
-    \label{fig:esstep-read}
-    \end{subfigure}
-
-    \begin{subfigure}{1\textwidth}
-    [ADD-WRITE]
-    \begin{center}
-
-      \AxiomC{$e \in \lG.\lW$}
-      \noLine
-      \UnaryInfC{$
-        \lG \vdash (\lM, \lES_{base})
-        \ESbasicstep{e}
-        (\lM', \lES'_{base})
-      $}
-      
-      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
-      \noLine
-      \UnaryInfC{$\lMO' = \lMO \cup \lM'(\lG.\lMO;[e])$}
-      \noLine
-      \UnaryInfC{$\lEW' = \lEW \cup [\lM'(e)];[\lM(e)];\lEW^? \cup \lEW^?;[\lM(e)];[\lM'(e)]$}
-      
-      \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \ESstep{e}
-        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
-        $}
-      \DisplayProof
-      
-    \end{center}
-    \label{fig:esstep-write}
-    \end{subfigure}
-    
-    \caption{Event structure construction step}
-    \label{fig:esstep}
-\end{subfigure}
-
-\end{figure}
-
 
 %% \begin{lemma}
 %%   \label{lemma:2}
