@@ -63,6 +63,8 @@
     \end{itemize}
     We assume that $\forall{e} \in \lEi. \; \lLAB(e) = \wlab{x}{0}$.
   \item A function $\lMOD = G.\lE \rightarrow \Mod$ is a memory order assignment.
+    \app{It's better to have modifies being a part of event's label and have $\lMOD$
+    being a derived function, not a part of an event structure.}
     Elements of the set $\Mod \defeq \{ \rlx, \rel, \acq, \acqrel, \sco \}$ are
     called \emph{memory order} parameters.
     Additionally, $\lMOD$ satisfies the following constraints:
