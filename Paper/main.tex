@@ -366,18 +366,29 @@ Also we will provide a necessary conditions, that when preserved,
 allow to add a new covered event to $C$ and still satisfy the relation.
 
 \begin{definition}
-  An event $\hat{e} \in S$ is a \emph{forwarding event} in
+  An event $e \in G.\lE$ is a \emph{forwarding event} in
   the traversal configuration $\tup{C, I}$ of the execution graph $G$,
-  denoted as $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$, if the following is true:
+  denoted as $e \in \forward(S, G, \tup{C, I}, s, t)$, if the following is true:
   \begin{enumerate}[label=\textbf{F.\arabic*}]
+
     \item \label{item:frwd-coverable}
-      $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{t(\hat{e})\}, I}$;
+      $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$;
+
+    \item \label{item:frwd-s}
+      $e \in \dom{s}$;
+      
+    \item \label{item:frwd-ts-id}
+      $t(s(e)) = e$;
+
     \item \label{item:frwd-desc}
-      $S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
+      $G.\lLAB(e) = S.\lLAB(s(e))$;
+
     \item \label{item:frwd-front}
-      $\tup{s(\front(C, \lTID(\hat{e}))), \hat{e}} \in S.\lPO_{imm}$;
+      $\tup{s(\front(C, \lTID(\hat{e}))), s(e)} \in S.\lPO_{imm}$;
+
     \item \label{item:frwd-rf}
-      $\tup{\hat{w}, \hat{e}} \in S.\lRF \implies \tup{t(\hat{w}), t(\hat{e})} \in G.\lRF$.
+      $\tup{\hat{w}, s(e)} \in S.\lRF \Leftrightarrow \tup{t(\hat{w}), e} \in G.\lRF$.
+
   \end{enumerate}
 \end{definition}
 
@@ -398,8 +409,8 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   \item \label{item:sim-ts-id}
     $\forall{e \in C \cup I} ~.~ t(s(e)) = e$
 
-  \item \label{item:sim-st-id}
-    $\forall{\hat{e} \in S.\lE} ~.~ t(\hat{e}) \in C \cup I \implies s(t(\hat{e})) = \hat{e}$
+  %% \item \label{item:sim-st-id}
+  %%   $\forall{\hat{e} \in S.\lE} ~.~ t(\hat{e}) \in C \cup I \implies s(t(\hat{e})) = \hat{e}$
    
   \item \label{item:sim-lab}
     $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
@@ -445,68 +456,67 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   \label{lemma:sim-forward}
   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and 
-  there exists forwarding event $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$
-  then $\simRb(S, G, \tup{C \uplus \{t(\hat{e})\}, I}, s[t(\hat{e}) \mapsto \hat{e}], t)$ holds. 
+  there exists forwarding event $e \in \forward(S, G, \tup{C, I}, s, t)$
+  then $\simRb(S, G, \tup{C \uplus \{e\}, I}, s, t)$ holds. 
 \end{lemma}
 
 \begin{proof}
-  First, let us show that $s'_{|C \cup I} = s_{|C \cup I}$.
-  We will use that fact later in the proof.
-  By the definition $s' = s[t(\hat{e}) \mapsto \hat{e}]$.
-  Since $t(\hat{e}) \in \nextset(G, C, I)$ we know that $t(\hat{e}) \not\in C$.
-  Thus $s'_{|C} = s_{|C}$.
-  Suppose $t(\hat{e}) \in I$. Then by \ref{item:sim-st-id}
-  we know that $s(t(\hat{e})) = \hat{e}$ and thus $s'_{|I} = s_{|I}$.
+  %% First, let us show that $s'_{|C \cup I} = s_{|C \cup I}$.
+  %% We will use that fact later in the proof.
+  %% By the definition $s' = s[t(\hat{e}) \mapsto \hat{e}]$.
+  %% Since $t(\hat{e}) \in \nextset(G, C, I)$ we know that $t(\hat{e}) \not\in C$.
+  %% Thus $s'_{|C} = s_{|C}$.
+  %% Suppose $t(\hat{e}) \in I$. Then by \ref{item:sim-st-id}
+  %% we know that $s(t(\hat{e})) = \hat{e}$ and thus $s'_{|I} = s_{|I}$.
   
-  Let $e = t(\hat{e})$, $C' = C \uplus \{e\}$, $s' = s[e \mapsto \hat{e}]$.
-  Let us prove that all conditions for $\simRb(S, G, \tup{C', I}, s', t)$ are met.
+  Let us prove that all conditions for $\simRb(S, G, \tup{C \uplus \{e\}, I}, s, t)$ are met.
   \begin{itemize}
 
   \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
 
   \item \ref{item:sim-ts-id} \\
-    \begin{equation}
+    \begin{equation*}
       \begin{split}
-        & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ t(s'(a)) = a \iff \\
-        & (\forall{a \in C \cup I} ~.~ t(s(a)) = a) \wedge t(s'(e)) = e
+        & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ t(s(a)) = a \iff \\
+        & (\forall{a \in C \cup I} ~.~ t(s(a)) = a) \wedge t(s(e)) = e
       \end{split}
-    \end{equation}
+    \end{equation*}
     First conjunct follows from $\simRb(S, G, \tup{C, I}, s, t)$.
-    As for the second conjunct, note that $e = t(\hat{e})$ and $s'(e) = \hat{e}$.
+    Second conjunct follows from \ref{item:frwd-ts-id}.
 
-  \item \ref{item:sim-st-id} \\
-    \begin{equation}
-      \begin{split}
-        \forall{\hat{a} \in S.\lE} ~.~ t(\hat{a}) \in (C \uplus \{e\}) \cup I ~.~
-          s'(t(\hat{a})) = \hat{a}
-      \end{split}
-    \end{equation}
+  %% \item \ref{item:sim-st-id} \\
+  %%   \begin{equation*}
+  %%     \begin{split}
+  %%       & \forall{\hat{a} \in S.\lE} ~.~ t(\hat{a}) \in (C \uplus \{e\}) \cup I \Rightarrow
+  %%         s(t(\hat{a})) = \hat{a} \iff \\
+  %%       & \iff
+  %%         \forall{\hat{a} \in S.\lE} ~.~ (t(\hat{a}) \in C \cup I \Rightarrow
+  %%           s(t(\hat{a})) = \hat{a}) \wedge
+  %%           (t(\hat{a}) = e \Rightarrow s(t(\hat{a})) = \hat{a}) 
+  %%     \end{split}
+  %%   \end{equation*}
 
-    From $\simRb(S, G, \tup{C, I}, s, t)$ and $s'_{|C \cup I} = s_{|C \cup I}$
-    we know that it holds for every $\hat{a}$
-    such that $t(\hat{a}) \in C \cup I$.
-    We only need to show that $s'(t(\hat{e})) = \hat{e}$.
-    But that follows immediately from the definition of $s'$.
+  %%   First conjunct follows from $\simRb(S, G, \tup{C, I}, s, t)$.
 
   \item \ref{item:sim-lab} \\
     \begin{equation}
       \begin{split}
-        & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(s'(a)) \iff \\
+        & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(s(a)) \iff \\
         & \forall{a \in C \cup I} ~.~
-          G.\lLAB(a) = S.\lLAB(s(a)) \wedge G.\lLAB(e) = S.\lLAB(\hat{e})
+          G.\lLAB(a) = S.\lLAB(s(a)) \wedge G.\lLAB(e) = S.\lLAB(s(e))
       \end{split}
     \end{equation}
-    First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$;
-    second conjunct follows from the definition of forwarding event.
+    First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
+    Second conjunct follows from the \ref{item:frwd-descr}.
 
   \item \ref{item:sim-typ-tid} and \ref{item:sim-lab-wf}
     follows trivially from $\simRb(S, G, \tup{C, I}, s, t)$.
     
   \item \ref{item:sim-cf} \\
     We need to show that
-    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{s'(a), s'(b)} \not\in S.\lCF$.
+    $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{s(a), s(b)} \not\in S.\lCF$.
     Let us consider the opposite, that is
-    $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{s'(a), s'(b)} \in S.\lCF$.
+    $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{s(a), s(b)} \in S.\lCF$.
     Giving that $\simRb(S, G, \tup{C, I}, s, t)$ holds,
     we can conclude that \mbox{$a = e \vee b = e$}.
     Let us suppose that $a = e$.
@@ -515,29 +525,29 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     From that and $\simRb(S, G, \tup{C, I}, s, t)$
     we can conclude that $\tup{s(b), s(c)} \not\in S.\lCF$.
     If $\tup{s(b), s(c)} \in S.\lPO$ then by transitivity of $S.\lPO$
-    $\tup{s'(b), s'(e)} \in S.\lPO$
-    which contradicts the fact that $\tup{s'(b), s'(e)} \in S.\lCF$.
+    $\tup{s(b), s(e)} \in S.\lPO$
+    which contradicts the fact that $\tup{s(b), s(e)} \in S.\lCF$.
     Otherwise \mbox{$\tup{s(c), s(b)} \in S.\lPO$}.
     From \ref{item:sim-po-imm} follows that $\tup{c, b} \in G.\lPO$
     and thus $\tup{e, b} \in G.\lPO$.
     But since $b \in C$ and thus $b \in \coverable(G, C, I)$,
     we can conclude that it shoud be the case that $e \in C$.
-    But that contradicts $e \in \nextset(G, C)$.
+    But that contradicts $e \in \nextset(G, C, I)$.
 
   \item \ref{item:sim-po-prfx} \\
 
     \begin{equation*}
       \begin{split}
-        &     S.\lPO;[s'(C \uplus \{e\})] \subseteq [s'(C \uplus \{e\})];S.\lPO \iff \\
-        &\iff S.\lPO;[s(C)] \cup S.\lPO;[\hat{e}] \subseteq [s(C)];S.\lPO \cup [\hat{e}];S.\lPO
+        &     S.\lPO;[s(C \uplus \{e\})] \subseteq [s(C \uplus \{e\})];S.\lPO \iff \\
+        &\iff S.\lPO;[s(C)] \cup S.\lPO;[s(e)] \subseteq [s(C)];S.\lPO \cup [s(e)];S.\lPO
       \end{split}
     \end{equation*}
 
     $S.\lPO;[s(C)] \subseteq [s(C)];S.\lPO$ because $\simRb(S, G, \tup{C, I}, s, t)$ holds.
-    Let us show that $S.\lPO;[\hat{e}] \subseteq [s(C)];S.\lPO$.
-    Suppose there exists $\hat{a}$ s.t. $\tup{\hat{a}, \hat{e}} \in S.\lPO$ but
+    Let us show that $S.\lPO;[s(e)] \subseteq [s(C)];S.\lPO$.
+    Suppose there exists $\hat{a}$ s.t. $\tup{\hat{a}, s(e)} \in S.\lPO$ but
     $\hat{a} \not\in s(C)$.
-    Since $\tup{s(\front(C, \lTID(e)), \hat{e}} \in S.\lPO_{imm}$
+    Because of \ref{item:frwd-front}
     it must be the case that $\tup{\hat{a}, s(\front(C, \lTID(e))} \in S.\lPO$.
     But $\front(C, \lTID(e)) \in C$ and thus from $\ref{item:sim-po-prfx}$
     of $\simRb(S, G, \tup{C, I}, s, t)$ follows that $\hat{a} \in s(C)$. Contradiction.
@@ -559,17 +569,17 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     \begin{equation*}
       \begin{split}
         & \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C] \cup [C];G.\lPO;[e]} ~.~
-            \tup{s'(e_1), s'(e_2)} \in S.\lPO \iff \\
+            \tup{s(e_1), s(e_2)} \in S.\lPO \iff \\
         & \iff
           \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO ~ \wedge \\
         & \wedge
-          \forall{\tup{e_1, e_2} \in [C];G.\lPO;[e]} ~.~ \tup{s(e_1), s'(e_2)} \in S.\lPO
+          \forall{\tup{e_1, e_2} \in [C];G.\lPO;[e]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO
       \end{split}
     \end{equation*}
 
     First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
     Let $c = \front(C, \lTID(\hat{e}))$. 
-    From \ref{item:frwd-front} we know that $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
+    From \ref{item:frwd-front} we know that $\tup{s(c), s(e)} \in S.\lPO_{imm}$.
     Thus, from \ref{item:sim-po-imm} of $\simRb(S, G, \tup{C, I}, s, t)$
     follows that $\tup{c, e} \in G.\lPO_{imm}$ and $c \in C$.
     From that and \ref{item:sim-po} of $\simRb(S, G, \tup{C, I}, s, t)$
@@ -643,7 +653,7 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   Now, let us suppose that there is no $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
   Note that in this case we can conclude that $e \not\in I$.
   Indeed, if $e \in I$ then by \ref{item:som-dom-s} and ...
-  $s(e) \in S.\W$.
+  $s(e) \in S.\lW$.
   
   Let $G \vdash (s, t, S) \ESstep{e} (s, t', S')$.
   If we can show that $\simRb(S', G, \tup{C, I}, s, t')$ holds and
@@ -657,41 +667,41 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 
   \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
 
-  \item \label{item:sim-ts-id} holds, because not $C$ nor $I$ were modified.
+  %% \item \label{item:sim-ts-id} holds, because not $C$ nor $I$ were modified.
 
-  \item \label{item:sim-st-id} is also holds, since $t(\hat{e}) = e$, $e \in \nextset(G, C, I)$
-    and thus $e \not\in C$.
-    If 
-    
-    $\forall{\hat{e} \in S.\lE} ~.~ t(\hat{e}) \in C \cup I \implies s(t(\hat{e})) = \hat{e}$
+  %% \item \label{item:sim-st-id} is also holds, since $t(\hat{e}) = e$, $e \in \nextset(G, C, I)$
+  %%   and thus $e \not\in C$.
+  %%   \todo{...}
    
-  \item \label{item:sim-lab}
-    $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
+  %% \item \label{item:sim-lab}
+    
+  %%   $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
 
-  \item \label{item:sim-typ-tid}
-      $\forall{\hat{e} \in S.\lE} ~.~
-      S.\lTYP(\hat{e}) = G.\lTYP(t(\hat{e})) \wedge
-      S.\lTID(\hat{e}) = G.\lTID(t(\hat{e}))
-      $;
+  %% \item \label{item:sim-typ-tid}
+  %%     $\forall{\hat{e} \in S.\lE} ~.~
+  %%     S.\lTYP(\hat{e}) = G.\lTYP(t(\hat{e})) \wedge
+  %%     S.\lTID(\hat{e}) = G.\lTID(t(\hat{e}))
+  %%     $;
 
-  \item \label{item:sim-lab-wf}
-    $\forall{\hat{e} \in S.\lW \cup S.\lF} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
+  %% \item \label{item:sim-lab-wf}
+  %%   $\forall{\hat{e} \in S.\lW \cup S.\lF} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
 
-  \item \label{item:sim-cf}
-    $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
+  %% \item \label{item:sim-cf}
+  %%   $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
 
-  \item \label{item:sim-po-prfx} 
-    $S.\lPO;[s(\lC)] \subseteq [s(C)];S.\lPO$;
+  %% \item \label{item:sim-po-prfx} 
+  %%   $S.\lPO;[s(\lC)] \subseteq [s(C)];S.\lPO$;
 
-  \item \label{item:sim-po}
-    $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$;
+  %% \item \label{item:sim-po}
+  %%   $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$;
 
-  \item \label{item:sim-po-imm}
-    $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
-     \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
+  %% \item \label{item:sim-po-imm}
+  %%   $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
+  %%    \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
 
-  \item \label{item:sim-rf} 
-    $\forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lJF$;
+  %% \item \label{item:sim-rf} 
+  %%   $\forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lJF$
+    ;
   \end{itemize}
   
   
