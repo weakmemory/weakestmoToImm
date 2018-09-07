@@ -374,13 +374,13 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     \item \label{item:frwd-coverable}
       $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$;
 
-    \item \label{item:frwd-s}
+    \item \label{item:frwd-dom-s}
       $e \in \dom{s}$;
       
     \item \label{item:frwd-ts-id}
       $t(s(e)) = e$;
 
-    \item \label{item:frwd-desc}
+    \item \label{item:frwd-descr}
       $G.\lLAB(e) = S.\lLAB(s(e))$;
 
     \item \label{item:frwd-front}
@@ -439,6 +439,10 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 
   \item \label{item:sim-rf} 
     $\forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lJF$;
+
+  \item \label{item:sim-ew} 
+    $\forall{\hat{w_1}, \hat{w_2} \in S.\lE} ~.~
+      t(\hat{w_1}) = t(\hat{w_2}) \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$;
 
   \end{enumerate}
 \end{definition}
@@ -632,11 +636,33 @@ allow to add a new covered event to $C$ and still satisfy the relation.
       Then from \ref{item:sim-lab-wf} follows \ref{item:frwd-descr}.
       Since $\hat{e}$ is not a read event, there is no incoming $S.\lRF$ edges
       and thus \ref{item:frwd-rf} holds.
-      To sum up, we have proven that $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
-      Given that we can apply Lemma \ref{lemma:sim-forward}
-      and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds
-      (where $s' = s[e \mapsto \hat{e}]$).
-
+      Let $s' = s[e \mapsto \hat{e}]$.
+      Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
+      To sum up, we have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
+      If $\simRb(S, G, \tup{C, I}, s', t)$ holds then 
+      we can apply Lemma \ref{lemma:sim-forward}
+      and thus show that $\simRb(S, G, \tup{C, I}, s', t)$ holds.
+      We know that $e \in \nextset(G, C, I)$ and thus $e \not\in C$ and $s'_{|C} = s_{|C}$.
+      If $e \in G.\lF$ then $e \not\in I$ by the definition,
+      and thus also $s'_{|I} = s_{|I}$.
+      If $e \in G.\lW$ then by the definition of coverable event follows that $e \in I$.
+      In this case $s'_{|I \setminus \{e\}} = s_{|I \setminus \{e\}}$
+      Then it is easy to see that for $\simRb(S, G, \tup{C, I}, s', t)$
+      all items except \ref{item:sim-lab} and \ref{item:sim-rf} holds.
+      If $e \not\in I$ then this two items also holds trivially.
+      Otherwise $e \in I$ and we have to prove that
+      \ref{item:sim-lab} and \ref{item:sim-rf} hold.
+      \ref{item:sim-lab} follows from the \ref{item:frwd-descr}.
+      Next, consider $s(e)$ and $s'(e)$. We know that $t(s(e)) = t(s'(e)) = e$
+      and thus from \ref{item:sim-ew} follows that $\tup{s(e), s'(e)} \in S.\lEW$.
+      This leads to 
+      $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
+      and thus \ref{item:sim-rf} holds.
+      
+      
+      
+      
+      
     \item $e \in G.\lR$ and \ref{item:frwd-descr}, \ref{item:frwd-rf} hold for $\hat{e}$.
       Then $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
       We can apply Lemma \ref{lemma:sim-forward}
