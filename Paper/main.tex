@@ -614,76 +614,15 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 \begin{lemma}
   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and
-  $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$ then
-  there exists $S', s', t'$ such that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+  there exists $e$ s.t. $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$ then
+  there exists $S', s', t'$ such that
+  $G \vdash (S, s, t) \ESstep{e} (S', s', t')$
+  and $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
 \end{lemma}
 
 \begin{proof}
-  Let $i = \lTID(e)$, $c = \front(C, i)$.
-  Consider there exists $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$
-  (that is \ref{item:frwd-front} holds for $\hat{e}$).
-  From \ref{item:sim-ts-id} and \ref{item:sim-po-imm}
-  follows that $\tup{c, t(\hat{e})} \in G.\lPO$.
-  Because of that and the fact that $e \in \nextset(G, C, I)$
-  we can conclude that $t(\hat{e}) = e$,
-  and since $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$
-  also \ref{item:frwd-coverable} holds.
-  
-  Next, let us consider different subcases.  
-
-  \begin{itemize}
-    \item $e \in G.\lW \cup G.\lF$ \\
-      Then from \ref{item:sim-lab-wf} follows \ref{item:frwd-descr}.
-      Since $\hat{e}$ is not a read event, there is no incoming $S.\lRF$ edges
-      and thus \ref{item:frwd-rf} holds.
-      Let $s' = s[e \mapsto \hat{e}]$.
-      Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
-      To sum up, we have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
-      If $\simRb(S, G, \tup{C, I}, s', t)$ holds then 
-      we can apply Lemma \ref{lemma:sim-forward}
-      and thus show that $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t)$ holds.
-      We know that $e \in \nextset(G, C, I)$ and thus $e \not\in C$ and $s'_{|C} = s_{|C}$.
-      If $e \in G.\lF$ then $e \not\in I$ by the definition,
-      and thus also $s'_{|I} = s_{|I}$.
-      If $e \in G.\lW$ then by the definition of coverable event follows that $e \in I$.
-      In this case $s'_{|I \setminus \{e\}} = s_{|I \setminus \{e\}}$
-      Then it is easy to see that for $\simRb(S, G, \tup{C, I}, s', t)$
-      all items except \ref{item:sim-lab} and \ref{item:sim-rf} holds.
-      If $e \not\in I$ then this two items also holds trivially.
-      Otherwise $e \in I$ and we have to prove that
-      \ref{item:sim-lab} and \ref{item:sim-rf} hold.
-      \ref{item:sim-lab} follows from the \ref{item:frwd-descr}.
-      Next, consider $s(e)$ and $s'(e)$. We know that $t(s(e)) = t(s'(e)) = e$
-      and thus from \ref{item:sim-ew} follows that $\tup{s(e), s'(e)} \in S.\lEW$.
-      This leads to 
-      $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
-      and thus \ref{item:sim-rf} holds.
-      
-    \item $e \in G.\lR$ and \ref{item:frwd-descr}, \ref{item:frwd-rf} hold for $\hat{e}$. \\
-      Let $s' = s[e \mapsto \hat{e}]$.
-      Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
-      We have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
-      It is easy to see that $s'_{|C \cup I} = s_{|C \cup I}$
-      (since $e \not\in C \cup I$) and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds.
-      By Lemma \ref{lemma:sim-forward} $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t)$ holds.
-      
-      Then $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
-      We can apply Lemma \ref{lemma:sim-forward}
-      and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds.
-
-    \item $e \in G.\lR$ and either \ref{item:frwd-descr} or \ref{item:frwd-rf}
-      does not hold for $\hat{e}$. \\
-      This case is similar to the case when there is no
-      $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$,
-      that we will consider next.
-      \note{perhaps, we need a separate proof for this case}.
-  \end{itemize}
-  
-  Now, let us suppose that there is no $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
-  
-  Let $G \vdash (s, t, S) \ESstep{e} (s', t', S')$.
   If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
-  $\hat{e} \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
+  $e \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
   it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
 
   First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
@@ -723,48 +662,129 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
     $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
     That means \ref{item:sim-ew} holds.
-        
-  %% \item 
-
-  %% \item \label{item:sim-ts-id} holds, because not $C$ nor $I$ were modified.
-
-  %% \item \label{item:sim-st-id} is also holds, since $t(\hat{e}) = e$, $e \in \nextset(G, C, I)$
-  %%   and thus $e \not\in C$.
-  %%   \todo{...}
-   
-  %% \item \label{item:sim-lab}
-    
-  %%   $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
-
-  %% \item \label{item:sim-typ-tid}
-  %%     $\forall{\hat{e} \in S.\lE} ~.~
-  %%     S.\lTYP(\hat{e}) = G.\lTYP(t(\hat{e})) \wedge
-  %%     S.\lTID(\hat{e}) = G.\lTID(t(\hat{e}))
-  %%     $;
-
-  %% \item \label{item:sim-lab-wf}
-  %%   $\forall{\hat{e} \in S.\lW \cup S.\lF} ~.~ S.\lLAB(\hat{e}) = G.\lLAB(t(\hat{e}))$;
-
-  %% \item \label{item:sim-cf}
-  %%   $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
-
-  %% \item \label{item:sim-po-prfx} 
-  %%   $S.\lPO;[s(\lC)] \subseteq [s(C)];S.\lPO$;
-
-  %% \item \label{item:sim-po}
-  %%   $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$;
-
-  %% \item \label{item:sim-po-imm}
-  %%   $\forall{\tup{\hat{e_1}, \hat{e_2}} \in S.\lPO_{imm}} ~.~
-  %%    \tup{t(\hat{e_1}), t(\hat{e_2})} \in G.\lPO_{imm}$;
-
-  %% \item \label{item:sim-rf} 
-  %%   $\forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lJF$
+      
   
   \end{itemize}
-  
-  
 \end{proof}
+
+%% \begin{lemma}
+%%   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
+%%   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and
+%%   $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$ then
+%%   there exists $S', s', t'$ such that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+%% \end{lemma}
+
+%% \begin{proof}
+%%   Let $i = \lTID(e)$, $c = \front(C, i)$.
+%%   Consider there exists $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$
+%%   (that is \ref{item:frwd-front} holds for $\hat{e}$).
+%%   From \ref{item:sim-ts-id} and \ref{item:sim-po-imm}
+%%   follows that $\tup{c, t(\hat{e})} \in G.\lPO$.
+%%   Because of that and the fact that $e \in \nextset(G, C, I)$
+%%   we can conclude that $t(\hat{e}) = e$,
+%%   and since $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$
+%%   also \ref{item:frwd-coverable} holds.
+  
+%%   Next, let us consider different subcases.  
+
+%%   \begin{itemize}
+%%     \item $e \in G.\lW \cup G.\lF$ \\
+%%       Then from \ref{item:sim-lab-wf} follows \ref{item:frwd-descr}.
+%%       Since $\hat{e}$ is not a read event, there is no incoming $S.\lRF$ edges
+%%       and thus \ref{item:frwd-rf} holds.
+%%       Let $s' = s[e \mapsto \hat{e}]$.
+%%       Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
+%%       To sum up, we have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
+%%       If $\simRb(S, G, \tup{C, I}, s', t)$ holds then 
+%%       we can apply Lemma \ref{lemma:sim-forward}
+%%       and thus show that $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t)$ holds.
+%%       We know that $e \in \nextset(G, C, I)$ and thus $e \not\in C$ and $s'_{|C} = s_{|C}$.
+%%       If $e \in G.\lF$ then $e \not\in I$ by the definition,
+%%       and thus also $s'_{|I} = s_{|I}$.
+%%       If $e \in G.\lW$ then by the definition of coverable event follows that $e \in I$.
+%%       In this case $s'_{|I \setminus \{e\}} = s_{|I \setminus \{e\}}$
+%%       Then it is easy to see that for $\simRb(S, G, \tup{C, I}, s', t)$
+%%       all items except \ref{item:sim-lab} and \ref{item:sim-rf} holds.
+%%       If $e \not\in I$ then this two items also holds trivially.
+%%       Otherwise $e \in I$ and we have to prove that
+%%       \ref{item:sim-lab} and \ref{item:sim-rf} hold.
+%%       \ref{item:sim-lab} follows from the \ref{item:frwd-descr}.
+%%       Next, consider $s(e)$ and $s'(e)$. We know that $t(s(e)) = t(s'(e)) = e$
+%%       and thus from \ref{item:sim-ew} follows that $\tup{s(e), s'(e)} \in S.\lEW$.
+%%       This leads to 
+%%       $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
+%%       and thus \ref{item:sim-rf} holds.
+      
+%%     \item $e \in G.\lR$ and \ref{item:frwd-descr}, \ref{item:frwd-rf} hold for $\hat{e}$. \\
+%%       Let $s' = s[e \mapsto \hat{e}]$.
+%%       Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
+%%       We have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
+%%       It is easy to see that $s'_{|C \cup I} = s_{|C \cup I}$
+%%       (since $e \not\in C \cup I$) and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds.
+%%       By Lemma \ref{lemma:sim-forward} $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t)$ holds.
+      
+%%       Then $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
+%%       We can apply Lemma \ref{lemma:sim-forward}
+%%       and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds.
+
+%%     \item $e \in G.\lR$ and either \ref{item:frwd-descr} or \ref{item:frwd-rf}
+%%       does not hold for $\hat{e}$. \\
+%%       This case is similar to the case when there is no
+%%       $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$,
+%%       that we will consider next.
+%%       \note{perhaps, we need a separate proof for this case}.
+%%   \end{itemize}
+  
+%%   Now, let us suppose that there is no $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
+  
+%%   Let $G \vdash (s, t, S) \ESstep{e} (s', t', S')$.
+%%   If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
+%%   $\hat{e} \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
+%%   it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+
+%%   First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
+
+%%   \begin{itemize}
+
+%%   \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
+
+%%   \item \ref{item:sim-ts-id}-\ref{item:sim-lab-wf} follows trivially from [BASIC-STEP].
+
+%%   \item \ref{item:sim-cf}-\ref{item:sim-po} holds, because
+%%     $e \in \nextset(G, C, I)$,
+%%     %(thus $e \not\in C$ and $\forall{a \in C}~.~\tup{a, e} \in G.\lPO$),
+%%     $s'_{|C} = s_{|C}$ and $\simRb(S, G, \tup{C, I}, s, t)$.
+
+%%   \item \ref{item:sim-po-imm} holds, because we have added to $S$
+%%     one single $\lPO_{imm}$ edge, that is $\tup{s(c), \hat{e}}$.
+%%     We also know that $t(\hat{e}) = e$ and since $e \in \nextset(G, C, I)$
+%%     there is a corresponding $\lPO_{imm}$ edge in $G$ ($\tup{c, e} \in G.\lPO_{imm}$).
+
+%%   \item \ref{item:sim-rf} \\
+%%     If $e \not\in G.\lW$ then it holds trivially
+%%     (since in this case $s'_{|C \cup I} = s_{|C \cup I}$).
+%%     Otherwise consider $s(e)$ and $s'(e)$.
+%%     From [WRITE-STEP] we know that $\tup{s(e), s'(e)} \in S.\lEW$.
+%%     This leads to 
+%%     $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
+%%     and thus \ref{item:sim-rf} holds.
+
+%%   \item \ref{item:sim-ew} \\
+%%     If $e \not\in G.\lW$ then it holds trivially.
+%%     Otherwise, from \ref{item:sim-ew} of $\simRb(S, G, \tup{C, I}, s, t)$ we know that
+%%     $\forall{\hat{w_1}, \hat{w_2} \in S.\lW} ~.~ t(\hat{w_1}) = t(\hat{w_2}) = e
+%%     \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$.
+%%     Also, we know that $e \in I$ (because $e \in G.\lW \cap \coverable(G, C, I)$)
+%%     and thus $t(s(e)) = e$.
+%%     From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
+%%     $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
+%%     That means \ref{item:sim-ew} holds.
+      
+  
+%%   \end{itemize}
+  
+  
+%% \end{proof}
 
 \begin{figure}[thb]
 
@@ -778,18 +798,22 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     \noLine
     \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
     \noLine
-    \UnaryInfC{$\lM' = \lM[e \rightarrow \hat{e}]$}
-
-    \AxiomC{$\lTID' = \lTID[\hat{e} \rightarrow \lG.\lTID(e)]$}
+    \UnaryInfC{$s' = s[e \mapsto \hat{e}]$}
     \noLine
-    \UnaryInfC{$\lLAB' = \lLAB[\hat{e} \rightarrow \lG.\lLAB(e)]$}
-    \noLine
-    \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \rightarrow \lG.\lMOD(e)]$}
+    \UnaryInfC{$t' = t[\hat{e} \mapsto e]$}
 
-    \BinaryInfC{$
-      \lG \vdash (\lM, \tup{\lE, \lTID, \lLAB, \lMOD})
+    \AxiomC{$\lTID' = \lTID[\hat{e} \mapsto \lG.\lTID(e)]$}
+    \noLine
+    \UnaryInfC{$\lLAB' = \lLAB[\hat{e} \mapsto \lG.\lLAB(e)]$}
+    \noLine
+    \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \mapsto \lG.\lMOD(e)]$}
+
+    \AxiomC{$\lPO' = \lPO \cup s(G.\lPO;[e])$}
+
+    \TrinaryInfC{$
+      \lG \vdash (s, t, \tup{\lE, \lTID, \lLAB, \lMOD}, \lPO)
       \ESbasicstep{e}
-      (\lM', \tup{\lE', \lTID', \lLAB', \lMOD'})
+      (s', t', \tup{\lE', \lTID', \lLAB', \lMOD'}, \lPO')
     $}
     \DisplayProof
     \end{center}
@@ -803,7 +827,7 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 \small
 
     \begin{subfigure}{1\textwidth}
-    [ADD-FENCE]
+    [FENCE-STEP]
     \begin{center}
 
       \AxiomC{$e \in \lG.\lF^{\sqsubset\sco}$}
@@ -814,39 +838,35 @@ allow to add a new covered event to $C$ and still satisfy the relation.
         (\lM', \lES'_{base})
       $}
 
-      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
-
-      \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+      \UnaryInfC{$
+        \lG \vdash \tup{s, t, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
         \ESstep{e}
-        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
-        $}
+        \tup{s', t', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
+      $}
       \DisplayProof
       
     \end{center}
-    \label{fig:simrule-fence-cover}
+    \label{fig:esstep-fence}
     \end{subfigure}
 
     \begin{subfigure}{1\textwidth}
-    [ADD-READ]
+    [READ-STEP]
     \begin{center}
       
       \AxiomC{$e \in \lG.\lR$}
       \noLine
       \UnaryInfC{$
-        \lG \vdash (\lM, \lES_{base})
+        \lG \vdash (s, t, \lES_{base}, \lPO)
         \ESbasicstep{e}
-        (\lM', \lES'_{base})
+        (s', t', \lES'_{base}, \lPO')
       $}
-      
-      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
-      \noLine
-      \UnaryInfC{$\lRF' = \lRF \cup \{\tup{\lM'(w), \lM'(e)} ~|~ \tup{w, e} \in \lG.\lRF \}$}
+
+      \AxiomC{$\lRF' = \lRF \cup \{\tup{s'(w), s'(e)} ~|~ \tup{w, e} \in \lG.\lRF \}$}
       
       \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \lG \vdash \tup{s, t, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
         \ESstep{e}
-        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+        \tup{s', t', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
         $}
       \DisplayProof
       
@@ -855,27 +875,25 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     \end{subfigure}
 
     \begin{subfigure}{1\textwidth}
-    [ADD-WRITE]
+    [WRITE-STEP]
     \begin{center}
 
       \AxiomC{$e \in \lG.\lW$}
       \noLine
       \UnaryInfC{$
-        \lG \vdash (\lM, \lES_{base})
+        \lG \vdash (s, t, \lES_{base}, \lPO)
         \ESbasicstep{e}
-        (\lM', \lES'_{base})
+        (s', t', \lES'_{base}, \lPO')
       $}
       
-      \AxiomC{$\lPO' = \lPO \cup \lM'(\lG.\lPO;[e])$}
+      \AxiomC{$\lMO' = \lMO \cup s'(\lG.\lMO;[e])$}
       \noLine
-      \UnaryInfC{$\lMO' = \lMO \cup \lM'(\lG.\lMO;[e])$}
-      \noLine
-      \UnaryInfC{$\lEW' = \lEW \cup [\lM'(e)];[\lM(e)];\lEW^? \cup \lEW^?;[\lM(e)];[\lM'(e)]$}
+      \UnaryInfC{$\lEW' = (\lEW \cup \tup{s(e), s'(e)})^{+=}$}
       
       \BinaryInfC{$
-        \lG \vdash \tup{\lM, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
+        \lG \vdash \tup{s, t, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
         \ESstep{e}
-        \tup{\lM', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
+        \tup{s', t', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
         $}
       \DisplayProof
       
