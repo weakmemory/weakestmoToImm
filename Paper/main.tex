@@ -164,19 +164,19 @@
 
     \item $(S.\lHB;S.\lJF^{-1}) \cap S.\lCF = \emptyset$;
 
-    \item $S.\lHB;S.\lECO^?$ is ireflexive.
+    \item $S.\lHB;S.\lECO^?$ is irreflexive.
   \end{itemize}
 \end{definition}
 
 \section{Executions}
 
 \begin{definition}
-  An execution graph $G$ is a tuple $\tup{\lX, \lLAB, \lMOD, \lRMW, \lRF, \lMO}$ where:
+  An execution graph $X$ is a tuple $\tup{\lE, \lLAB, \lRMW, \lRF, \lMO}$ where:
   \begin{itemize}
 
-  \item $\lX$ is a set of x-events. 
+  \item $\lE$ is a set of events. 
     Execution events have different representation comparing to the event structure events. 
-    That is, an x-event is either:
+    That is, an event is either:
     \begin{itemize}
       \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
       \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
@@ -188,14 +188,19 @@
       \item $\lEo \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
 
       \item $\lTID : \lX \fun \Tid$ s.t. \\
-        $\forall{e} ~.~ (e = \tup{\lINIT~x} \implies \lTID(e) = 0) \wedge 
-        (e = \tup{i, n} \Rightarrow \lTID(e) = i)$;
-      
+        \begin{equation*}
+          \begin{split}
+            \forall{e} ~.~
+            & (\exists{x \in \Loc} ~.~ e = \tup{\lINIT~x} \Rightarrow \lTID(e) = 0) \wedge \\ \wedge
+            & (\exists{i \in \Tid, n \in \N} ~.~ e = \tup{i, n} \Rightarrow \lTID(e) = i)
+          \end{split}
+        \end{equation*}
+        
       \item $\lPO \subseteq \lE \times \lE$ s.t. \\
         \begin{equation*}
           \begin{split}
-            & \tup{e_1, e_2} \in \lPO \\
-            & \iff (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
+            & \tup{e_1, e_2} \in \lPO \Leftrightarrow \\
+            & \Leftrightarrow (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
               (e_1, e_2 \not\in \lEo \wedge \lTID(e_1) = \lTID(e_2) \wedge
               \lSN(e_1) < \lSN(e_2))
           \end{split}
@@ -205,72 +210,75 @@
         Note that in case of executions $\lPO$ is a total order.
     \end{itemize}
     
-  \item $\lLAB, \lMOD, \lRMW, \lRF, \lMO$ have definitions similar to those given
+  \item $\lLAB, \lRMW, \lRF, \lMO$ have definitions similar to those given
     in the definition \ref{def:es} of event structure,
-    except that they are defined on a set $\lX$.
+    except that they are defined on a set $X.\lE$.
 
   \end{itemize}
 \end{definition}
 
 \begin{definition}
-  Given an event structure $S$ we will a call an execution graph $G$
-  extracted from $S$, denoted as $S \rhd G$,
-  if there exists a function $s : G.\lX \fun S.\lE$, called \emph{source event mapping},
+  Given an event structure $S$ we will a call an execution graph $X$
+  extracted from $S$, denoted as $S \rhd X$,
+  if there exists a function $s : X.\lE \fun S.\lE$, called \emph{source event mapping},
   such that the following conditions are met.
   \begin{itemize}
-    \item $\dom{s} = G.\lX$
-    \item $s(G.\lX) \subseteq \lVIS(S)$;
-    \item $[s(G.\lX)];S.\lCF;[s(G.\lX)] = \emptyset$;
-    \item $S.\lPO;[s(G.\lX)] \subseteq s(G.\lX) \times s(G.\lX)$;
-    \item $\forall{\tup{e, e'}} \in [s(G.\lX)];S.\lPO;[S.\lE \setminus s(G.\lX)] ~.~ 
-      \exists{e''} \in s(G.\lX) ~.~ \tup{e', e''} \in S.\lCF$;
-    \item $\lX.\lPO = [s(G.\lX)];S.\lPO;[s(G.\lX)]$;
-    \item $\lX.\lRMW = [s(G.\lX)];S.\lRMW;[s(G.\lX)]$;
-    \item $\lX.\lRF = [s(G.\lX)];S.\lJF;[s(G.\lX)]$;
-    \item $\lX.\lMO = [s(G.\lX)];S.\lMO;[s(G.\lX)]$;
+    \item $s(X.\lE) \subseteq \lVIS(S)$;
+    \item $[s(X.\lE)];S.\lCF;[s(X.\lE)] = \emptyset$;
+    \item $S.\lPO;[s(X.\lE)] \subseteq s(X.\lE) \times s(X.\lE)$;
+    \item $\forall{\tup{e, e'}} \in [s(X.\lE)];S.\lPO;[S.\lE \setminus s(X.\lE)] ~.~ 
+      \exists{e''} \in s(X.\lE) ~.~ \tup{e', e''} \in S.\lCF$;
+    \item $\lE.\lPO = [s(X.\lE)];S.\lPO;[s(X.\lE)]$;
+    \item $\lE.\lRMW = [s(X.\lE)];S.\lRMW;[s(X.\lE)]$;
+    \item $\lE.\lRF = [s(X.\lE)];S.\lJF;[s(X.\lE)]$;
+    \item $\lE.\lMO = [s(X.\lE)];S.\lMO;[s(X.\lE)]$;
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  We will call an execution graph $X$ \emph{consistent} if the following properties hold:
+  \begin{itemize}
+    \item $X.\lMO^= = [X.\lW];=_{\lLOC};[X.\lW]$
+    \item $X.\lRMW \cap (X.\lRB;X.\lMO) = \emptyset$
+    \item $X.\lHB;X.\lECO^?$ is irreflexive.
   \end{itemize}
 \end{definition}
 
 \begin{definition}
   A function $O : \Loc \fun \Val$ is an \emph{outcome} 
-  of a consistent execution graph $G$
-  if for every $x \in \Loc$ either $O(x) = G.\lVALW(w)$ 
-  for some $G.\lMO$-maximal write event $w$, 
-  or $O = 0$ and $G.\lW_x = \emptyset$.
+  of a consistent execution graph $X$
+  if for every $x \in \Loc$ either $O(x) = X.\lVALW(w)$ 
+  for some $X.\lMO$-maximal write event $w$, 
+  or $O(x) = 0$ and $X.\lW_x = \emptyset$.
 \end{definition}
 
 \section{Intermediate Memory Model}
 
 \begin{definition}
-  An \imm execution graph $\lG$ is a tuple \\
-  $\tup{\lE, \lLAB, \lMOD, \lRMW, \lRF, \lMO, \lDATA, \lADDR, \lCTRL, \lCASDEP}$ where:
+  An \imm execution graph $G$ is a tuple \\
+  $\tup{X, \lDATA, \lADDR, \lCTRL, \lCASDEP}$ where:
   \begin{itemize}
-    \item $\lE$ is a set of events. 
-      Events in \imm have different representation comparing to the event structure model. 
-      That is, an event is either:
-      \begin{itemize}
-        \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
-        \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
-      \end{itemize}
-      Given this representation one could restore some piece of the event structure notation, 
-      in particular:
-      \begin{itemize}
-        \item $\lEo \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
-        \item $\lTID : \fun{\lE}{\Tid}$ s.t. \\
-          $\forall{e} ~.~ (e = \tup{\lINIT~x} \implies \lTID(e) = 0) \wedge 
-           (e = \tup{i, n} \Rightarrow \lTID(e) = i)$;
-        \item $\lPO \subseteq \lE \times \lE$ s.t. \\
-          $\tup{e_1, e_2} \in \lPO \iff (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
-           (e_1 \not\in \lEo \wedge e_2 \not\in \lEo \wedge \lTID(e_1) = \lTID(e_2) \wedge
-            \lSN(e_1) < \lSN(e_2))$, 
-          where $\lSN(\tup{i, n}) = n$.
-      \end{itemize}
-      \item $\lLAB, \lMOD, \lRMW, \lRF, \lMO$ have the same definitions
-        as in the event structure model.
-      \item $\lDATA \subseteq \lR \times \lW$ --- data dependency;
-      \item $\lADDR \subseteq \lR \times (\lR \cup \lW)$ --- address dependency;
-      \item $\lCTRL \supseteq \lCTRL; \lPO$ --- control dependency;
-      \item $\lCASDEP \subseteq [R];\lPO;[R^{\Ex}]$ --- CAS dependency;
+    \item $X$ is a regular execution graph (from the definition \ref{def:exec}).
+      We will omit the $X$ when refering to its components in the context of $G$
+      (e.g. we will write $G.\lPO$ instead of $G.X.\lPO$).
+    \item $\lDATA \subseteq \lR \times \lW$ --- data dependency.
+    \item $\lADDR \subseteq \lR \times (\lR \cup \lW)$ --- address dependency.
+    \item $\lCTRL \supseteq \lCTRL; \lPO$ --- control dependency.
+    \item $\lCASDEP \subseteq [R];\lPO;[R^{\Ex}]$ --- CAS dependency.
+  \end{itemize}
+
+  We will also need several derived relations:
+  \begin{itemize}
+    \item $G.\lBOB \defeq $
+  \end{itemize}
+
+\end{definition}
+
+\begin{definition}
+  An \imm execution graph $G$ is called \emph{\imm-consistent} if the following properties hold:
+  \begin{itemize}
+    \item $G.X$ is a consistent execution;
+    \item $G.\lRFE \cup G.\lBOB \cup G.\lPPO \cup G.\lDETOUR$ is acyclic.
   \end{itemize}
 \end{definition}
 
@@ -285,10 +293,10 @@
 
 \begin{theorem}
   For every consistent \imm execution graph $G$
-  there exists a consistent event structure $\lES$ and its consistent execution $\lX$
+  there exists a consistent event structure $\lES$ and its consistent execution $\lE$
   such that an outcome of execution graph $O_{\lG}$ matches
-  an outcome of events structure's execution $O_{\lX}$, 
-  that is $O_{\lG} = O_{\lX}$.
+  an outcome of events structure's execution $O_{\lE}$, 
+  that is $O_{\lG} = O_{\lE}$.
 \end{theorem}
 
 \subsection{Traversal}
@@ -1251,15 +1259,15 @@ allow to add a new covered event to $C$ and still satisfy the relation.
 %%   Given an event structure $\lES$, an \imm execution graph $\lG$ 
 %%   and its traversal configuration $\tup{\lC, \lI}$
 %%   if the relation $\simR(\lES, \lG, \tup{\lC, \lI})$ holds
-%%   then there exists $\lES', \lC', \lI'$ and event structure execution $\lX$ such that
+%%   then there exists $\lES', \lC', \lI'$ and event structure execution $\lE$ such that
 %%   $\lG \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$
-%%   and $\lX$ satisfies the following conditions.
+%%   and $\lE$ satisfies the following conditions.
 %%   \begin{itemize}
-%%   \item $\lX.\lE = \lMC(C')$
-%%   \item $\lX.\lPO = \lMC([\lC'];\lG.\lPO;[\lC'])$
-%%   \item $\lX.\lRMW = \lMC([\lC'];\lG.\lRMW;[\lC'])$
-%%   \item $\lX.\lRF = \lMC([\lC'];\lG.\lRF;[\lC'])$
-%%   \item $\lX.\lMO = \lMC([\lC'];\lG.\lMO;[\lC'])$    
+%%   \item $\lE.\lE = \lMC(C')$
+%%   \item $\lE.\lPO = \lMC([\lC'];\lG.\lPO;[\lC'])$
+%%   \item $\lE.\lRMW = \lMC([\lC'];\lG.\lRMW;[\lC'])$
+%%   \item $\lE.\lRF = \lMC([\lC'];\lG.\lRF;[\lC'])$
+%%   \item $\lE.\lMO = \lMC([\lC'];\lG.\lMO;[\lC'])$    
 %%   \end{itemize}
 %% \end{lemma}
 
