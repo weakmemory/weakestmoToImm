@@ -662,8 +662,24 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
     $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
     That means \ref{item:sim-ew} holds.
-      
   
+  \end{itemize}
+
+  Now, let us show that $e \in \forward(S', G, \tup{C, I}, s', t')$.
+
+  \begin{itemize}
+
+    \item \ref{item:frwd-coverable} is a Lemma primise;
+
+    \item \ref{item:frwd-dom-s}, \ref{item:frwd-ts-id} and \ref{item:frwd-descr}
+      follows trivially from [BASIC-STEP];
+
+    \item \ref{item:frwd-front}
+      $\tup{s(\front(C, \lTID(\hat{e}))), s(e)} \in S.\lPO_{imm}$;
+
+    \item \ref{item:frwd-rf}
+      $\tup{\hat{w}, s(e)} \in S.\lRF \Leftrightarrow \tup{t(\hat{w}), e} \in G.\lRF$.
+    
   \end{itemize}
 \end{proof}
 
