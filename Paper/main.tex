@@ -39,7 +39,7 @@
   \label{def:es}
   
   An \emph{event structure} $S$ is a tuple
-  $\tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO, \lRMW, \lRF, \lEW, \lMO}$ where:
+  $\tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO, \lCF, \lRMW, \lJF, \lEW, \lMO}$ where:
   \begin{itemize}
   \item $\lE \subseteq \N$ --- finite set of s-events. 
   \item $\lEo \subseteq \lE$ --- initialization events.
@@ -827,154 +827,118 @@ Here is a \ref{rule:bstep}
 
 \begin{figure}[thb]
 
-  \labelAxiom{BASIC-STEP}{rule:bstep}
-
-  \begin{center}
-    \AxiomC{$e = max(\lE) + 1$}
-    \noLine
-    \UnaryInfC{$E' = \lE \cup \{e\}$}
-
-    \AxiomC{$\Cont \in \lCONT$}
-    \AxiomC{$\Cont \contstep{l} \Cont'$}
-    \noLine
-    \BinaryInfC{$\lCONT' = (\lCONT \setminus \{\Cont\}) \cup \{\Cont'\}$}
-
-    \AxiomC{$\lLAB' = \lLAB[e \mapsto l]$}
-    \noLine
-    \UnaryInfC{$\lTID' = \lTID[e' \mapsto \Cont.\lTID]$}
-    \noLine
-    \UnaryInfC{$\lPO' = (\lPO \cup \tup{\Cont.\lPREV, e})^+$}
-
-    \TrinaryInfC{$
-      \tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO}
-      \ebstep{e}
-      \tup{\lE', \lEo, \lTID', \lLAB', \lCONT', \lPO'}
-      $}
-    \DisplayProof
-  \end{center}
-\end{figure}
-
-\begin{figure}[thb]
-
-\begin{subfigure}{1\textwidth}
-
-\small
-
-    [BASIC-STEP]
+  \begin{subfigure}{1\textwidth}
+    \labelAxiom{BASIC-STEP}{rule:bstep}
+  
     \begin{center}
-    \AxiomC{$\hat{e} = max(\lE) + 1$}
-    \noLine
-    \UnaryInfC{$E' = \lE \cup \{\hat{e}\}$}
-    \noLine
-    \UnaryInfC{$s' = s[e \mapsto \hat{e}]$}
-    \noLine
-    \UnaryInfC{$t' = t[\hat{e} \mapsto e]$}
-
-    \AxiomC{$\lTID' = \lTID[\hat{e} \mapsto G.\lTID(e)]$}
-    \noLine
-    \UnaryInfC{$\lLAB' = \lLAB[\hat{e} \mapsto G.\lLAB(e)]$}
-    \noLine
-    \UnaryInfC{$\lMOD' = \lMOD[\hat{e} \mapsto G.\lMOD(e)]$}
-
-    \AxiomC{$\lPO' = \lPO \cup s(G.\lPO;[e])$}
-
-    \TrinaryInfC{$
-      G \vdash (s, t, \tup{\lE, \lTID, \lLAB, \lMOD}, \lPO)
-      \ESbasicstep{e}
-      (s', t', \tup{\lE', \lTID', \lLAB', \lMOD'}, \lPO')
-    $}
-    \DisplayProof
-    \end{center}
-    
-\caption{Event structure basic construction step}
-\label{fig:esstep-base}
-\end{subfigure}
-
-\begin{subfigure}{1\textwidth}
-    
-\small
-
-    \begin{subfigure}{1\textwidth}
-    [FENCE-STEP]
-    \begin{center}
-
-      \AxiomC{$e \in G.\lF^{\sqsubset\sco}$}
+      \AxiomC{$e = max(\lE) + 1$}
       \noLine
-      \UnaryInfC{$
-        G \vdash (\lM, \lES_{base})
-        \ESbasicstep{e}
-        (\lM', \lES'_{base})
-      $}
+      \UnaryInfC{$E' = \lE \cup \{e\}$}
 
-      \UnaryInfC{$
-        G \vdash \tup{s, t, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \ESstep{e}
-        \tup{s', t', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW, \lMO}
-      $}
-      \DisplayProof
-      
-    \end{center}
-    \label{fig:esstep-fence}
-    \end{subfigure}
-
-    \begin{subfigure}{1\textwidth}
-    [READ-STEP]
-    \begin{center}
-      
-      \AxiomC{$e \in G.\lR$}
+      \AxiomC{$\Cont \in \lCONT$}
+      \AxiomC{$\Cont \contstep{l} \Cont'$}
       \noLine
-      \UnaryInfC{$
-        G \vdash (s, t, \lES_{base}, \lPO)
-        \ESbasicstep{e}
-        (s', t', \lES'_{base}, \lPO')
-      $}
+      \BinaryInfC{$\lCONT' = (\lCONT \setminus \{\Cont\}) \cup \{\Cont'\}$}
 
-      \AxiomC{$\lRF' = \lRF \cup \{\tup{s'(w), s'(e)} ~|~ \tup{w, e} \in G.\lRF \}$}
-      
-      \BinaryInfC{$
-        G \vdash \tup{s, t, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \ESstep{e}
-        \tup{s', t', \lES'_{base}, \lPO', \lRMW, \lRF', \lEW, \lMO}
+      \AxiomC{$\lLAB' = \lLAB[e \mapsto l]$}
+      \noLine
+      \UnaryInfC{$\lTID' = \lTID[e' \mapsto \Cont.\lTID]$}
+      \noLine
+      \UnaryInfC{$\lPO' = (\lPO \cup \tup{\Cont.\lPREV, e})^+$}
+      \noLine
+      \UnaryInfC{$\lCF' = \lCF \cup \{e\} \times \codom{[\Cont.\lPREV];\lPO}$}
+
+      \TrinaryInfC{$
+        \tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO, \lCF}
+        \ebstep{e}
+        \tup{\lE', \lEo, \lTID', \lLAB', \lCONT', \lPO', \lCF'}
         $}
       \DisplayProof
-      
     \end{center}
-    \label{fig:esstep-read}
-    \end{subfigure}
 
-    \begin{subfigure}{1\textwidth}
-    [WRITE-STEP]
+  \end{subfigure}
+  \rulevspace
+
+  \begin{subfigure}{1\textwidth}
+    \labelAxiom{FENCE-STEP}{rule:fstep}
+  
     \begin{center}
+      \AxiomC{$e \in \lF$}
+      \noLine
+      \UnaryInfC{$S_{base} \ebstep{e} S'_{base}$}
 
-      \AxiomC{$e \in G.\lW$}
-      \noLine
       \UnaryInfC{$
-        G \vdash (s, t, \lES_{base}, \lPO)
-        \ESbasicstep{e}
-        (s', t', \lES'_{base}, \lPO')
-      $}
-      
-      \AxiomC{$\lMO' = \lMO \cup s'(G.\lMO;[e])$}
-      \noLine
-      \UnaryInfC{$\lEW' = (\lEW \cup \tup{s(e), s'(e)})^{+=}$}
-      
-      \BinaryInfC{$
-        G \vdash \tup{s, t, \lES_{base}, \lPO, \lRMW, \lRF, \lEW, \lMO}
-        \ESstep{e}
-        \tup{s', t', \lES'_{base}, \lPO', \lRMW, \lRF, \lEW', \lMO'}
+        \tup{S_{base}, \lRMW, \lJF, \lEW, \lMO}
+        \estep{e}
+        \tup{S'_{base}, \lRMW, \lJF, \lEW, \lMO}
         $}
       \DisplayProof
-      
     \end{center}
-    \label{fig:esstep-write}
-    \end{subfigure}
+
+  \end{subfigure}
+  \rulevspace
+
+  \begin{subfigure}{1\textwidth}
+    \labelAxiom{READ-STEP}{rule:rstep}
+  
+    \begin{center}
+      \AxiomC{$e \in \lR$}
+      \noLine
+      \UnaryInfC{$S_{base} \ebstep{e} S'_{base}$}
+
+      \AxiomC{$\exists{w \in \lW}$}
+      \noLine
+      \UnaryInfC{$\lLOC'(w) = \lLOC'(e)$}
+      \noLine
+      \UnaryInfC{$\lVALW'(w) = \lVALR'(e)$}
+      \noLine
+      \UnaryInfC{$\lJF' = \lJF \cup \tup{w, e}$}
+
+      \BinaryInfC{$
+        \tup{S_{base}, \lRMW, \lJF, \lEW, \lMO}
+        \estep{e}
+        \tup{S'_{base}, \lRMW, \lJF', \lEW, \lMO}
+        $}
+      \DisplayProof
+    \end{center}
     
-    \caption{Event structure construction step}
-    \label{fig:esstep}
-\end{subfigure}
+  \end{subfigure}
+  \rulevspace
+
+  \begin{subfigure}{1\textwidth}
+    \labelAxiom{WRITE-STEP}{rule:wstep}
+  
+    \begin{center}
+      \AxiomC{$e \in \lW$}
+      \noLine
+      \UnaryInfC{$S_{base} \ebstep{e} S'_{base}$}
+      \noLine
+      \UnaryInfC{$\exists{\lW_{ew} \subseteq \lW}$}
+      \noLine
+      \UnaryInfC{$\exists{w \in \lW_{X}}$}
+      \noLine
+      \UnaryInfC{$\exists{\lW_{X} \subseteq \dom{[\lW];=_{\lLOC};[e] \setminus \lCF'^{?}}}$}
+
+      
+      \AxiomC{$\forall{w \in \lW_{ew}} ~.~ \tup{e, w} \in \lCF'_{|\lLOC}$}
+      \noLine
+      \UnaryInfC{$\forall{w \in \lW_{ew}} ~.~ \lVALW(e) = \lVALW(w)$}
+      \noLine
+      \UnaryInfC{$\lEW' = (\lEW \cup \lW_{ew} \times \{e\})^=$}
+      \noLine
+      \UnaryInfC{$\lMO' = \lMO \cup \dom{(\lMO;[w])^?} \times \{e\} \cup \{e\} \times \codom{[w];\lMO}$}
+
+      \BinaryInfC{$
+        \tup{S_{base}, \lRMW, \lJF, \lEW, \lMO}
+        \estep{e}
+        \tup{S'_{base}, \lRMW, \lJF, \lEW', \lMO'}
+        $}
+      \DisplayProof
+    \end{center}
+    
+  \end{subfigure}  
 
 \end{figure}
-
 
 \subsection{Weak simulation}
 
