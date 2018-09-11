@@ -3,7 +3,23 @@ From promising Require Import Basic.
 From imm Require Import Events.
 Require Import AuxRel.
 
-Definition eventid := nat.
+Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
+
+Module EventId.
+Record t :=
+  mk {
+      thread : thread_id;
+      lbl    : label;
+      prefix : list label;
+    }.
+Definition path e := e.(lbl) :: e.(prefix).
+
+Definition ext_sb (a b : EventId.t) : Prop :=
+  exists l, b.(path) = l ++ a.(path).
+
+Definition ext_cf :=
+   compl_rel ext_sb ∩ compl_rel ext_sb⁻¹.
+End EventId.
 
 Module Language.
 Record t :=
@@ -15,47 +31,43 @@ Record t :=
      }.
 End Language.
 
-Module Continuation.
+Module ES.
 Record t :=
-  { lang     : Language.t;
-    state    : lang.(Language.state);
-    thread   : thread_id;
-    prev_act : option eventid;
-  }.
-End Continuation.
+  mk { acts : list EventId.t;
+       acts_init : list EventId.t;
+       next_act : EventId.t;
+       tid  : EventId.t -> thread_id;
+       rmw  : EventId.t -> EventId.t -> Prop ;
+       rf : EventId.t -> EventId.t -> Prop ;
+       co : EventId.t -> EventId.t -> Prop ;
+       ew : EventId.t -> EventId.t -> Prop ;
+     }.
 
-Record event_structure :=
-  { acts : list eventid;
-    acts_init : list eventid;
-    next_act : eventid;
-    tid  : eventid -> thread_id;
-    lab  : eventid -> label;
-    sb   : eventid -> eventid -> Prop ;
-    rmw  : eventid -> eventid -> Prop ;
-    rf : eventid -> eventid -> Prop ;
-    co : eventid -> eventid -> Prop ;
-    ew : eventid -> eventid -> Prop ;
-    cons : list Continuation.t;
-  }.
+Definition acts_set ES := fun x => In x ES.(acts).
+Definition acts_init_set ES := fun x => In x ES.(acts_init).
+End ES.
+
+(* Module Continuation. *)
+(* Record t := *)
+(*   mk { lang     : Language.t; *)
+(*        state    : lang.(Language.state); *)
+(*        thread   : thread_id; (* replace with one field of type "thread_id + eventid" "*) *)
+(*        prev_act : option EventId.t; *)
+(*      }. *)
+(* End Continuation. *)
 
 Section EventStructure.
 
-Variable ES : event_structure.
+Variable EG : ES.t.
 
-Definition acts_set := fun x => In x ES.(acts).
-Definition acts_init_set := fun x => In x ES.(acts_init).
-Definition cons_set := fun x => In x ES.(cons).
-
-Notation "'E'" := acts_set.
-Notation "'Einit'" := acts_init_set.
-Notation "'K'" := cons_set.
-Notation "'next_act'" := ES.(next_act).
-Notation "'lab'" := ES.(lab).
-Notation "'sb'" := ES.(sb).
-Notation "'rmw'" := ES.(rmw).
-Notation "'ew'" := ES.(ew).
-Notation "'rf'" := ES.(rf).
-Notation "'co'" := ES.(co).
+Notation "'Einit'" := EG.(ES.acts_init_set).
+(* Notation "'next_act'" := EG.(next_act). *)
+Notation "'lab'" := EG.(lab).
+Notation "'sb'" := EG.(sb).
+Notation "'rmw'" := EG.(rmw).
+Notation "'ew'" := EG.(ew).
+Notation "'rf'" := EG.(rf).
+Notation "'co'" := EG.(co).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
@@ -77,12 +89,6 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
-Definition cf := (sb⁻¹ ;; <| Einit |> ;; sb) \ sb ⁼.
-
-Hint Unfold cf : unfolderDb. 
-
-Lemma cf_irr : irreflexive cf.
-Proof. basic_solver. Qed.
 
 Record Wf :=
   { initD : Einit ⊆₁ E;
@@ -111,20 +117,20 @@ Record Wf :=
     ew_sym : symmetric ew ;
     next_act_lt : forall e (EE : E e), lt e next_act;
 
-    cons_prev_ninit : forall c (CC : K c) e (PA : c.(Continuation.prev_act) = Some e),
+    conts_prev_ninit : forall c (CC : K c) e (PA : c.(Continuation.prev_act) = Some e),
         ~ Einit e;
-    cons_prevE : forall c (CC : K c) e (PA : c.(Continuation.prev_act) = Some e), E e;
+    conts_prevE : forall c (CC : K c) e (PA : c.(Continuation.prev_act) = Some e), E e;
 
-    cons_uniq_prev : forall c c' (CC : K c) (CC' : K c') e
+    conts_uniq_prev : forall c c' (CC : K c) (CC' : K c') e
                             (PA : c.(Continuation.prev_act) = Some e),
         c = c' \/
         c.(Continuation.prev_act) <> c'.(Continuation.prev_act);
-    cons_uniq_tid : forall c c' (CC : K c) (CC' : K c')
+    conts_uniq_tid : forall c c' (CC : K c) (CC' : K c')
                             (PA  : c .(Continuation.prev_act) = None)
                             (PA' : c'.(Continuation.prev_act) = None),
         c = c' \/
         c.(Continuation.thread) <> c'.(Continuation.thread);
-    cons_exists : forall e (EE : E e) (NINIT : ~ Einit e),
+    conts_exists : forall e (EE : E e) (NINIT : ~ Einit e),
         exists c,
           << CC : K c >> /\
           << PA : c.(Continuation.prev_act) = Some e >>;
