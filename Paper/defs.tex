@@ -100,6 +100,7 @@
 \newcommand{\lINIT}{{\mathtt{init}}}
 \newcommand{\lSN}{{\mathtt{sn}}}
 \newcommand{\lPC}{{\mathtt{pc}}}
+\newcommand{\lPREV}{{\mathtt{prev}}}
 
 \newcommand{\lMASK}{{\mathtt{Mask}}}
 \newcommand{\lVIS}{{\mathtt{Vis}}}
@@ -118,6 +119,9 @@
 %\newcommand{\lCERTIFY}{{\mathtt{Certify}}}
 
 \newcommand{\trstep}{\longrightarrow}
+\newcommand{\contstep}[1]{\xhookrightarrow{#1}}
+\newcommand{\ebstep}[1]{\xLongrightarrow{#1}}
+
 \newcommand{\ESle}{\preceq}
 \newcommand{\ESbasicstep}[1]{\xLongrightarrow{#1}}
 \newcommand{\ESstep}[1]{\xlongrightarrow{#1}}
@@ -281,7 +285,6 @@
 \newcommand{\labelAxiom}[2]{%
 \hfill{\normalfont\textsc{(#1)}}\refstepcounter{mylabelcounter}
 \immediate\write\@auxout{%
-  %% \string\newlabel{#2}{{1}{\thepage}{{#1}}{mylabelcounter.\number\value{mylabelcounter}}{}}
   \string\newlabel{#2}{{\unexpanded{\normalfont\textsc{#1}}}{\thepage}{{\unexpanded{\normalfont\textsc{#1}}}}{mylabelcounter.\number\value{mylabelcounter}}{}}
 }%
 }

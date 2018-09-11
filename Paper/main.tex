@@ -20,6 +20,9 @@
 \usepackage{pifont}
 \usepackage{enumitem}
 \usepackage{extarrows}
+
+\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
 %% \usepackage{chngcntr}
 
 \input{defs.tex}
@@ -819,6 +822,38 @@ allow to add a new covered event to $C$ and still satisfy the relation.
   
 %% \end{proof}
 
+
+Here is a \ref{rule:bstep}
+
+\begin{figure}[thb]
+
+  \labelAxiom{BASIC-STEP}{rule:bstep}
+
+  \begin{center}
+    \AxiomC{$e = max(\lE) + 1$}
+    \noLine
+    \UnaryInfC{$E' = \lE \cup \{e\}$}
+
+    \AxiomC{$\Cont \in \lCONT$}
+    \AxiomC{$\Cont \contstep{l} \Cont'$}
+    \noLine
+    \BinaryInfC{$\lCONT' = (\lCONT \setminus \{\Cont\}) \cup \{\Cont'\}$}
+
+    \AxiomC{$\lLAB' = \lLAB[e \mapsto l]$}
+    \noLine
+    \UnaryInfC{$\lTID' = \lTID[e' \mapsto \Cont.\lTID]$}
+    \noLine
+    \UnaryInfC{$\lPO' = (\lPO \cup \tup{\Cont.\lPREV, e})^+$}
+
+    \TrinaryInfC{$
+      \tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO}
+      \ebstep{e}
+      \tup{\lE', \lEo, \lTID', \lLAB', \lCONT', \lPO'}
+      $}
+    \DisplayProof
+  \end{center}
+\end{figure}
+
 \begin{figure}[thb]
 
 \begin{subfigure}{1\textwidth}
@@ -956,25 +991,18 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     \item \label{item:sim-pc}
       $\forall{i \in \Tid} ~.~ \lPC(i) \in C$
 
-
-
-    
-
-
     \item \label{item:sim-jf}
       $
       \forall{\tup{\hat{w}, \hat{r}} \in \lES.\lJF} ~.~
       \exists{w' \in \lC \cup I} ~.~ \tup{s(w'), \hat{r}} \in \lES.\lJF
       $;
 
-
-
     \item \label{item:sim-mo}
       $\forall{\tup{w, w'} \in [I];G.\lMO;[I]} ~.~ \tup{s(w), s(w')} \in \lES.\lMO$;
       
     \item \label{item:sim-vis-weak}
       $\forall{e \in (C \cup I)} ~.~
-      e \in \dom{G.\lPO^?;[\lPC(\lTID(e))]} \implies s(e) \in \lVIS(S)$;
+      e \in \dom{G.\lPO^?;[\lPC(\lTID(e))]} \implies s(e) \in \lVIS(S)$.
 
   \end{enumerate}
 \end{definition}
@@ -1103,10 +1131,7 @@ allow to add a new covered event to $C$ and still satisfy the relation.
     
 
   %% \end{itemize}
-
-
-  
-  
+ 
 \end{proof}
 
 %% \begin{proof}                   

@@ -6,6 +6,7 @@
 *.vo
 *.vio
 *.glob
+*.out
 
 *~
 
