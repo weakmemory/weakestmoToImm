@@ -6,5 +6,8 @@
 *.vo
 *.vio
 *.glob
+*.out
 
 *~
+
+Paper/auto/*

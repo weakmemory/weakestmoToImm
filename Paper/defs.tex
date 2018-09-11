@@ -1,4 +1,6 @@
 \newcommand{\rulehskip}{\hskip 1.5em}
+\newcommand{\rulevspace}{\vspace{1em}}
+
 \mathchardef\mhyphen="2D
 
 \theoremstyle{definition}
@@ -66,16 +68,17 @@
 
 % event set
 \newcommand{\lE}{{\mathtt{E}}}
-\newcommand{\lEi}{{\mathtt{E_0}}}
+\newcommand{\lEi}[1]{\lE_{#1}}
+\newcommand{\lEo}{\lEi{0}}
 \newcommand{\lR}{{\mathtt{R}}}
 \newcommand{\lW}{{\mathtt{W}}}
 \newcommand{\lF}{{\mathtt{F}}}
 \newcommand{\lX}{{\mathtt{X}}}
 
-\newcommand{\lEsqeq}[1]{{\lE^{\sqsubseteq#1}}}
-\newcommand{\lRsqeq}[1]{{\lR^{\sqsubseteq#1}}}
-\newcommand{\lWsqeq}[1]{{\lW^{\sqsubseteq#1}}}
-\newcommand{\lFsqeq}[1]{{\lF^{\sqsubseteq#1}}}
+\newcommand{\lEsqeq}[1]{{\lE^{\sqsupseteq#1}}}
+\newcommand{\lRsqeq}[1]{{\lR^{\sqsupseteq#1}}}
+\newcommand{\lWsqeq}[1]{{\lW^{\sqsupseteq#1}}}
+\newcommand{\lFsqeq}[1]{{\lF^{\sqsupseteq#1}}}
 
 % labeling of events
 \newcommand{\Tid}{\mathsf{Tid}}
@@ -84,6 +87,7 @@
 \newcommand{\Bool}{\mathsf{Bool}}
 \newcommand{\Lab}{\mathsf{Lab}}
 \newcommand{\Mod}{\mathsf{Mod}}
+\newcommand{\Cont}{\kappa}
 \newcommand{\Scp}{\mathsf{Scope}}
 
 \newcommand{\lLAB}{{\mathtt{lab}}}
@@ -92,11 +96,13 @@
 \newcommand{\lLOC}{{\mathtt{loc}}}
 \newcommand{\lMOD}{{\mathtt{mod}}}
 \newcommand{\lSCP}{{\mathtt{scp}}}
+\newcommand{\lCONT}{{\mathtt{K}}}
 \newcommand{\lVALR}{{\mathtt{val_r}}}
 \newcommand{\lVALW}{{\mathtt{val_w}}}
 \newcommand{\lINIT}{{\mathtt{init}}}
 \newcommand{\lSN}{{\mathtt{sn}}}
 \newcommand{\lPC}{{\mathtt{pc}}}
+\newcommand{\lPREV}{{\mathtt{prev}}}
 
 \newcommand{\lMASK}{{\mathtt{Mask}}}
 \newcommand{\lVIS}{{\mathtt{Vis}}}
@@ -114,23 +120,28 @@
 
 %\newcommand{\lCERTIFY}{{\mathtt{Certify}}}
 
+\newcommand{\trstep}{\longrightarrow}
+\newcommand{\contstep}[1]{\xhookrightarrow{#1}}
+\newcommand{\ebstep}[1]{\xLongrightarrow{#1}}
+\newcommand{\estep}[1]{\xlongrightarrow{#1}}
+
 \newcommand{\ESle}{\preceq}
 \newcommand{\ESbasicstep}[1]{\xLongrightarrow{#1}}
 \newcommand{\ESstep}[1]{\xlongrightarrow{#1}}
 \newcommand{\ESstepstar}{\longrightarrow^*}
 
-\newcommand{\rlab}[2]{\lR({#1},{#2})}
-\newcommand{\wlab}[2]{\lW({#1},{#2})}
-\newcommand{\flab}{\lF}
+\newcommand{\rlab}[3]{\lR^{#1}({#2},{#3})}
+\newcommand{\wlab}[3]{\lW^{#1}({#2},{#3})}
+\newcommand{\flab}[1]{\lF^{#1}}
 
 \newcommand{\Ex}{{\mathtt{ex}}}
 \newcommand{\NotEx}{{\mathtt{not \mhyphen ex}}}
-\newcommand{\rlabExExpl}[3]{\lR^{#3}({#1},{#2})}
-\newcommand{\rlabEx}[2]{\rlabExExpl{#1}{#2}{\Ex}}
+\newcommand{\rlabExExpl}[4]{\lR_{#4}^{#1}({#2},{#3})}
+\newcommand{\rlabEx}[3]{\rlabExExpl{#1}{#2}{#3}{\Ex}}
 
-\newcommand{\rlabS}[3]{\lR^{#3}({#1},{#2})}
-\newcommand{\wlabS}[3]{\lW^{#3}({#1},{#2})}
-\newcommand{\flabS}[1]{\lF^{#1}}
+%% \newcommand{\rlabS}[3]{\lR^{#3}({#1},{#2})}
+%% \newcommand{\wlabS}[3]{\lW^{#3}({#1},{#2})}
+%% \newcommand{\flabS}[1]{\lF^{#1}}
 
 % some predefined relations
 \colorlet{colorPO}{gray!60!black}
@@ -158,6 +169,7 @@
 \colorlet{colorCA}{teal}
 \colorlet{colorDEPS}{violet!60!black}
 \colorlet{colorDETOUR}{teal}
+\colorlet{colorBOB}{gray!80!black}
 
 \newcommand{\lPO}{{\color{colorPO}\mathtt{po}}}
 \newcommand{\lPPO}{{\color{colorPPO}\mathtt{ppo}}}
@@ -201,8 +213,9 @@
 \newcommand{\lDATA}{{{\color{colorDEPS}\mathtt{data}}}}
 \newcommand{\lADDR}{{{\color{colorDEPS}\mathtt{addr}}}}
 \newcommand{\lCASDEP}{{{\color{colorDEPS}\mathtt{casdep}}}}
-\newcommand{\lDEP}{{\color{colorDEPS}\mathtt{dep}}}
+\newcommand{\lDEPS}{{\color{colorDEPS}\mathtt{dep}}}
 
+\newcommand{\lBOB}{{\color{colorBOB}\mathtt{bob}}}
 \newcommand{\lDETOUR}{{\color{colorDETOUR}\mathtt{detour}}}
 
 \newcommand{\lmakeE}[1]{#1\mathtt{e}}
@@ -275,7 +288,6 @@
 \newcommand{\labelAxiom}[2]{%
 \hfill{\normalfont\textsc{(#1)}}\refstepcounter{mylabelcounter}
 \immediate\write\@auxout{%
-  %% \string\newlabel{#2}{{1}{\thepage}{{#1}}{mylabelcounter.\number\value{mylabelcounter}}{}}
   \string\newlabel{#2}{{\unexpanded{\normalfont\textsc{#1}}}{\thepage}{{\unexpanded{\normalfont\textsc{#1}}}}{mylabelcounter.\number\value{mylabelcounter}}{}}
 }%
 }
