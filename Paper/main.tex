@@ -39,8 +39,20 @@
   \label{def:es}
   
   An \emph{event structure} $S$ is a tuple
-  $\tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO, \lCF, \lRMW, \lJF, \lEW, \lMO}$ where:
+  $\tup{\lEs, \lJF, \lEW, \lMO}$ where:
   \begin{itemize}
+    \item $\lEs$ is a set of \emph{s-events}.
+    An s-event $\hat{e} \in \lEs$ is a tuple $\tup{i, \Path}$
+    where $i \in \Tid$ and $\Path = (l_1, \dots, l_n)$ is a finite sequence of labels.
+    Giving $\lEs$ we will also derive the following definitions:
+    \item $\lTID : \lE \fun \Tid$ --- function that assigns a thread id to every event.
+      \begin{equation*}
+        \lTID(\tup{i, \Path}) \defeq i
+      \end{equation*}
+      Given thread id $i \in \Tid$ we will denote by $\lEi{i}$ the set of all events belonging 
+      to $i^{th}$ thread, that is $\lEi{i} \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
+      We assume that if $e \in \lEo$ then $\lTID(e) = 0$.
+    
   \item $\lE \subseteq \N$ --- finite set of s-events. 
   \item $\lEo \subseteq \lE$ --- initialization events.
   \item $\lTID \defeq \lE \fun \Tid$ --- function that assigns a thread id to every event.
