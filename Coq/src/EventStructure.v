@@ -21,9 +21,6 @@ Definition ext_sb (a b : EventId.t) : Prop :=
   exists hd tl,
     b.(path) = (hd :: tl) ++ a.(path).
 
-Definition ext_cf :=
-   compl_rel (ext_sb^? ∪ ext_sb⁻¹).
-
 Definition init_tid := xH.
 
 Definition init (e : EventId.t) : Prop :=
@@ -32,7 +29,7 @@ Definition init (e : EventId.t) : Prop :=
   << IPRE : e.(prefix) = [] >>.
 End EventId.
 
-Hint Unfold EventId.path EventId.ext_sb EventId.ext_cf
+Hint Unfold EventId.path EventId.ext_sb
      EventId.init EventId.init_tid : unfolderDb.
 
 Module Language.
@@ -60,7 +57,9 @@ Definition acts_ninit_set ES := ES.(acts_set) \₁ EventId.init.
 
 Definition sb ES := ES.(acts_init_set) × ES.(acts_ninit_set) ∪
                     EventId.ext_sb ;; <| ES.(acts_set) |>.
-Definition cf ES := <| ES.(acts_set) |> ;; EventId.ext_cf ;; <| ES.(acts_set) |>.
+Definition cf ES := <| ES.(acts_set) |> ;;
+                    compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹) ;;
+                    <| ES.(acts_set) |>.
 End ES.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.acts_ninit_set
