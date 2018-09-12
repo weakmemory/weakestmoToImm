@@ -43,7 +43,7 @@ Notation "'same_loc'" := (same_loc EventId.lab).
 Notation "'same_val'" := (same_val EventId.lab).
 
 Definition t_basic
-           (execs : state -> Prop)
+           (execs : thread_id -> state -> Prop)
            (event  : EventId.t)
            (event' : option EventId.t)
            (s s' : ES.t) : Prop :=
@@ -57,8 +57,8 @@ Definition t_basic
   << TRE  : exists state state',
       let new_act  := (ThreadEvent thread state.(eindex)) in
       let new_act' := (ThreadEvent thread (1 + state.(eindex))) in
-      << SS    : execs state  >> /\
-      << SS'   : execs state' >> /\
+      << SS    : execs thread state  >> /\
+      << SS'   : execs thread state' >> /\
       << ISTEP : istep thread label_list state state' >> /\
       << EREP1 : event = act_to_event state'.(G) new_act >> /\
       << EREP2 :
@@ -112,7 +112,7 @@ Definition add_co (w : EventId.t) (s s' : ES.t) : Prop :=
                  s.(ES.ew)
     >>.
 
-Inductive t_ (execs : state -> Prop) (s s' : ES.t) : Prop :=
+Inductive t_ (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
 | t_fence  e  (FF : F e) (BS : t_basic execs e None s s')
 | t_load   e s1          (BS : t_basic execs e None s s1)
            (RF : add_rf e s1 s')
@@ -124,7 +124,7 @@ Inductive t_ (execs : state -> Prop) (s s' : ES.t) : Prop :=
            (EW : add_ew e' s2 s3)
            (CO : add_co e' s3 s').
 
-Definition t (m : model) (execs : state -> Prop) (s s' : ES.t) : Prop :=
+Definition t (m : model) (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
   << TT  : t_ execs s s' >> /\
   << CON : es_consistent s' m >>.
 End ESstep.
