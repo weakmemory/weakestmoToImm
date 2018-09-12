@@ -1,25 +1,39 @@
+Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events.
 Require Import AuxRel.
+
+Export ListNotations.
 
 Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
 
 Module EventId.
 Record t :=
   mk {
-      thread : thread_id;
-      lbl    : label;
+      tid    : thread_id;
+      lab    : label;
       prefix : list label;
     }.
-Definition path e := e.(lbl) :: e.(prefix).
+Definition path e := e.(lab) :: e.(prefix).
 
 Definition ext_sb (a b : EventId.t) : Prop :=
-  exists l, b.(path) = l ++ a.(path).
+  exists hd tl,
+    b.(path) = (hd :: tl) ++ a.(path).
 
 Definition ext_cf :=
-   compl_rel ext_sb ∩ compl_rel ext_sb⁻¹.
+   compl_rel (ext_sb^? ∪ ext_sb⁻¹).
+
+Definition init_tid := xH.
+
+Definition init (e : EventId.t) : Prop :=
+  << ITID : e.(tid) = init_tid >> /\
+  << ILAB : exists l, e.(lab) = Astore Xpln Opln l 0 >> /\
+  << IPRE : e.(prefix) = [] >>.
 End EventId.
+
+Hint Unfold EventId.path EventId.ext_sb EventId.ext_cf
+     EventId.init EventId.init_tid : unfolderDb.
 
 Module Language.
 Record t :=
@@ -34,9 +48,6 @@ End Language.
 Module ES.
 Record t :=
   mk { acts : list EventId.t;
-       acts_init : list EventId.t;
-       next_act : EventId.t;
-       tid  : EventId.t -> thread_id;
        rmw  : EventId.t -> EventId.t -> Prop ;
        rf : EventId.t -> EventId.t -> Prop ;
        co : EventId.t -> EventId.t -> Prop ;
@@ -44,34 +55,33 @@ Record t :=
      }.
 
 Definition acts_set ES := fun x => In x ES.(acts).
-Definition acts_init_set ES := fun x => In x ES.(acts_init).
+Definition acts_init_set  ES := ES.(acts_set) ∩₁ EventId.init.
+Definition acts_ninit_set ES := ES.(acts_set) \₁ EventId.init.
+
+Definition sb ES := ES.(acts_init_set) × ES.(acts_ninit_set) ∪
+                    EventId.ext_sb ;; <| ES.(acts_set) |>.
+Definition cf ES := <| ES.(acts_set) |> ;; EventId.ext_cf ;; <| ES.(acts_set) |>.
 End ES.
 
-(* Module Continuation. *)
-(* Record t := *)
-(*   mk { lang     : Language.t; *)
-(*        state    : lang.(Language.state); *)
-(*        thread   : thread_id; (* replace with one field of type "thread_id + eventid" "*) *)
-(*        prev_act : option EventId.t; *)
-(*      }. *)
-(* End Continuation. *)
+Hint Unfold ES.acts_set ES.acts_init_set ES.acts_ninit_set
+     ES.sb ES.cf : unfolderDb.
 
 Section EventStructure.
 
 Variable EG : ES.t.
 
+Notation "'E'"     := EG.(ES.acts_set).
 Notation "'Einit'" := EG.(ES.acts_init_set).
-(* Notation "'next_act'" := EG.(next_act). *)
-Notation "'lab'" := EG.(lab).
-Notation "'sb'" := EG.(sb).
-Notation "'rmw'" := EG.(rmw).
-Notation "'ew'" := EG.(ew).
-Notation "'rf'" := EG.(rf).
-Notation "'co'" := EG.(co).
+Notation "'sb'" := EG.(ES.sb).
+Notation "'rmw'" := EG.(ES.rmw).
+Notation "'ew'" := EG.(ES.ew).
+Notation "'rf'" := EG.(ES.rf).
+Notation "'co'" := EG.(ES.co).
+Notation "'lab'" := EventId.lab.
+Notation "'cf'" := EG.(ES.cf).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
-Notation "'mod'" := (mod lab).
 Notation "'same_loc'" := (same_loc lab).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
@@ -89,10 +99,11 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
-
 Record Wf :=
-  { initD : Einit ⊆₁ E;
-    init_lab : forall e (INIT : Einit e), exists l, lab e = Astore Xpln Opln l 0 ;
+  { init_tidI : forall e (EE : E e) (ITID : e.(EventId.tid) = EventId.init_tid),
+      Einit e;
+    initL : forall l, (exists b, E b /\ loc b = Some l) ->
+                      exists a, Einit a /\ loc a = Some l ;
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
@@ -115,28 +126,25 @@ Record Wf :=
     ewc : ew ⊆ cf ;
     ew_trans : transitive ew ;
     ew_sym : symmetric ew ;
-    next_act_lt : forall e (EE : E e), lt e next_act;
-
-    conts_prev_ninit : forall c (CC : K c) e (PA : c.(Continuation.prev_act) = Some e),
-        ~ Einit e;
-    conts_prevE : forall c (CC : K c) e (PA : c.(Continuation.prev_act) = Some e), E e;
-
-    conts_uniq_prev : forall c c' (CC : K c) (CC' : K c') e
-                            (PA : c.(Continuation.prev_act) = Some e),
-        c = c' \/
-        c.(Continuation.prev_act) <> c'.(Continuation.prev_act);
-    conts_uniq_tid : forall c c' (CC : K c) (CC' : K c')
-                            (PA  : c .(Continuation.prev_act) = None)
-                            (PA' : c'.(Continuation.prev_act) = None),
-        c = c' \/
-        c.(Continuation.thread) <> c'.(Continuation.thread);
-    conts_exists : forall e (EE : E e) (NINIT : ~ Einit e),
-        exists c,
-          << CC : K c >> /\
-          << PA : c.(Continuation.prev_act) = Some e >>;
   }.
 
 Implicit Type WF : Wf.
+
+Lemma sb_irr : irreflexive sb.
+Proof.
+  repeat autounfold with unfolderDb.
+  ins. desf.
+  { apply H1. splits; eauto. }
+  generalize H. clear H.
+  set (ll := EventId.prefix x).
+  intros HH.
+  assert (length ll = length tl + 1 + length ll) as LL.
+  2: omega.
+  rewrite HH at 1. rewrite length_app. simpls. omega.
+Qed.
+
+Lemma cf_irr : irreflexive cf.
+Proof. basic_solver. Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
