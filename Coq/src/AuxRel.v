@@ -16,11 +16,18 @@ Section AuxRel.
     exists y,
       << INS : s y >> /\
       << IMG : x = f y >>.
+
+  Definition rel_image (x x' : B) : Prop :=
+    exists y y',
+      << INR  : r y y' >> /\
+      << IMG  : x  = f y >> /\
+      << IMG' : x' = f y' >>.
 End AuxRel.
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
-Notation "f ∘ s" := (set_image f s) (at level 1, only parsing).
+Notation "f ∘₁ s" := (set_image f s) (at level 10).
+Notation "f ∘ r"  := (rel_image f r) (at level 10).
 
-Hint Unfold eq_class_rel set_image : unfolderDb. 
+Hint Unfold eq_class_rel set_image rel_image : unfolderDb. 
 
