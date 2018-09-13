@@ -44,3 +44,56 @@ Section SimRel.
       fp_imgrf : upd f e e' ∘ (Grf ;; <| eq e |>) ⊆ Srf;
     }.
 End SimRel.
+
+Lemma simstep_forward S G sc TC f e e'
+      (SRC : simrel_common S G TC f)
+      (FP  : forward_pair S G sc TC f e e') :
+  exists f',
+    simrel_common S G (mkTC (covered TC ∪₁ eq e) (issued TC)) f'.
+Proof.
+  assert (~ covered TC e) as NCOV.
+  { intros COV.
+    edestruct fp_tcstep as [a ST]; eauto.
+    red in ST. desf; simpls.
+    { assert ((covered TC ∪₁ eq e) a ) as HH.
+      { apply COVEQ. by right. }
+      unfold set_union in *. desf. }
+    apply NISS. apply ISSEQ. by right. }
+  exists (upd f e e').
+  constructor; ins.
+  { destruct FP. destruct SRC.
+    unfold set_union in *.
+    desf.
+    { rewrite updo.
+      2: { intros HH. desf. }
+      basic_solver. }
+    { by rewrite upds. }
+    destruct (classic (e = e0)) as [|NEQ]; subst.
+    { by rewrite upds. }
+    rewrite updo; auto. }
+  { rewrite set_image_union.
+    rewrite set_image_updo; auto.
+    rewrite set_image_eq.
+    rewrite upds.
+    rewrite id_union.
+    rewrite seq_union_r.
+    rewrite seq_union_l.
+    apply inclusion_union_l.
+    { rewrite sbPrcl; eauto. by unionR left. }
+    admit. }
+  { admit. }
+  { split; [|basic_solver].
+    rewrite set_image_union.
+    rewrite set_image_eq. rewrite upds.
+    rewrite set_image_updo; auto.
+    rewrite id_union.
+    repeat rewrite seq_union_r.
+    repeat rewrite seq_union_l.
+    unionL.
+    { apply SRC. }
+    3: { autounfold with unfolderDb.
+         ins. desf. apply H3.
+         basic_solver. }
+    all: admit. }
+  all: admit.
+Admitted.
