@@ -118,7 +118,7 @@ Record Wf :=
     co_trans : transitive co ;
     co_total :
       forall ol ws (WS : ws ⊆₁ E ∩₁ W ∩₁ (fun x => loc x = ol))
-             (NCF : ws × ws ∩ cf ≡ ∅₂),
+             (NCF : <| ws |> ;; cf ;; <| ws |> ≡ ∅₂),
         is_total ws co;
     co_irr : irreflexive co ;
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
