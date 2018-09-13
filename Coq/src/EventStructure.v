@@ -23,14 +23,15 @@ Definition ext_sb (a b : EventId.t) : Prop :=
 
 Definition init_tid := xH.
 
-Definition init (e : EventId.t) : Prop :=
-  << ITID : e.(tid) = init_tid >> /\
-  << ILAB : exists l, e.(lab) = Astore Xpln Opln l 0 >> /\
-  << IPRE : e.(prefix) = [] >>.
+Record init (e : EventId.t) :=
+  { itid : e.(tid) = init_tid ;
+    ilab : exists l, e.(lab) = Astore Xpln Opln l 0;
+    ipre : e.(prefix) = [];
+  }.
 End EventId.
 
 Hint Unfold EventId.path EventId.ext_sb
-     EventId.init EventId.init_tid : unfolderDb.
+     EventId.init_tid : unfolderDb.
 
 Module Language.
 Record t :=
@@ -116,7 +117,10 @@ Record Wf :=
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
     co_trans : transitive co ;
-    co_total : forall ol, is_total (E ∩₁ W ∩₁ (fun x => loc x = ol)) co ;
+    co_total :
+      forall ol ws (WS : ws ⊆₁ E ∩₁ W ∩₁ (fun x => loc x = ol))
+             (NCF : <| ws |> ;; cf ;; <| ws |> ≡ ∅₂),
+        is_total ws co;
     co_irr : irreflexive co ;
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
@@ -133,7 +137,6 @@ Lemma sb_irr : irreflexive sb.
 Proof.
   repeat autounfold with unfolderDb.
   ins. desf.
-  { apply H1. splits; eauto. }
   generalize H. clear H.
   set (ll := EventId.prefix x).
   intros HH.
