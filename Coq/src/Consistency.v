@@ -15,6 +15,7 @@ Notation "'lab'" := EventId.lab.
 Notation "'sb'" := EG.(ES.sb).
 Notation "'rmw'" := EG.(ES.rmw).
 Notation "'ew'" := EG.(ES.ew).
+Notation "'jf'" := EG.(ES.jf).
 Notation "'rf'" := EG.(ES.rf).
 Notation "'co'" := EG.(ES.co).
 Notation "'cf'" := EG.(ES.cf).
@@ -40,15 +41,15 @@ Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
 Definition vis :=
-  codom_rel (cf ∩ (sb ∪ rf)⁺ ∩ (ew ;; sb ⁼)).
+  codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ;; sb ⁼)).
 
 Definition hb : relation EventId.t := fun x y => True. (* TODO: define *)
 Definition eco (m : model) : relation EventId.t := fun x y => True. (* TODO: define *)
 
 Record es_consistent m :=
-  { visC : rf ⊆ sb ∪ vis × E;
-    cfC  : rf ∩ cf ≡ ∅₂;
-    hbC  : (hb ;; rf⁻¹) ∩ cf ≡ ∅₂;
+  { visC : jf ⊆ sb ∪ vis × E;
+    cfC  : jf ∩ cf ≡ ∅₂;
+    hbC  : (hb ;; jf⁻¹) ∩ cf ≡ ∅₂;
     cohC : irreflexive (hb ;; eco m);
   }.
 
