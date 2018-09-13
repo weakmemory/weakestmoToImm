@@ -95,7 +95,7 @@ Inductive t_ (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
            (EW : add_ew e' s2 s3)
            (CO : add_co e' s3 s').
 
-Record t (m : model) (execs : thread_id -> state -> Prop) (s s' : ES.t) :=
+Definition t (m : model) (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
   << TT  : t_ execs s s' >> /\
   << CON : es_consistent s' m >>.
 End ESstep.
