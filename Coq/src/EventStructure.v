@@ -47,7 +47,7 @@ Module ES.
 Record t :=
   mk { acts : list EventId.t;
        rmw  : EventId.t -> EventId.t -> Prop ;
-       rf : EventId.t -> EventId.t -> Prop ;
+       jf : EventId.t -> EventId.t -> Prop ;
        co : EventId.t -> EventId.t -> Prop ;
        ew : EventId.t -> EventId.t -> Prop ;
      }.
@@ -61,6 +61,7 @@ Definition sb ES := ES.(acts_init_set) × ES.(acts_ninit_set) ∪
 Definition cf ES := <| ES.(acts_set) |> ;;
                     compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹) ;;
                     <| ES.(acts_set) |>.
+Definition rf ES := ES.(ew)^? ;; ES.(jf) \ ES.(cf).
 End ES.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.acts_ninit_set
@@ -75,7 +76,7 @@ Notation "'Einit'" := EG.(ES.acts_init_set).
 Notation "'sb'" := EG.(ES.sb).
 Notation "'rmw'" := EG.(ES.rmw).
 Notation "'ew'" := EG.(ES.ew).
-Notation "'rf'" := EG.(ES.rf).
+Notation "'jf'" := EG.(ES.jf).
 Notation "'co'" := EG.(ES.co).
 Notation "'lab'" := EventId.lab.
 Notation "'cf'" := EG.(ES.cf).
@@ -108,11 +109,11 @@ Record Wf :=
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
-    rfE : rf ≡ ⦗E⦘ ⨾ rf ⨾ ⦗E⦘ ;
-    rfD : rf ≡ ⦗W⦘ ⨾ rf ⨾ ⦗R⦘ ;
-    rfl : rf ⊆ same_loc ;
-    rfv : funeq val rf ;
-    rff : functional rf⁻¹ ;
+    jfE : jf ≡ ⦗E⦘ ⨾ jf ⨾ ⦗E⦘ ;
+    jfD : jf ≡ ⦗W⦘ ⨾ jf ⨾ ⦗R⦘ ;
+    jfl : jf ⊆ same_loc ;
+    jfv : funeq val jf ;
+    jff : functional jf⁻¹ ;
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
@@ -151,4 +152,6 @@ Proof. basic_solver. Qed.
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 
+(* TODO: rfE, rfD, rfl, rfv.
+   However, `functional rf⁻¹` doesn't hold. *)
 End EventStructure.
