@@ -11,3 +11,8 @@
 *~
 
 Paper/auto/*
+
+Coq/.coqdeps.d
+Coq/Makefile.coq
+Coq/Makefile.coq.conf
+Coq/_CoqProject
