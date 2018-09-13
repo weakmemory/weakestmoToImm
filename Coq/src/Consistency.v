@@ -65,10 +65,10 @@ Definition eco (m : model) : relation EventId.t :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
 
 Record es_consistent m :=
-  { visC : jf ⊆ sb ∪ vis × E;
-    cfC  : jf ∩ cf ≡ ∅₂;
-    hbC  : (hb ;; jf⁻¹) ∩ cf ≡ ∅₂;
-    cohC : irreflexive (hb ;; (eco m)^?);
+  { esc_vis : jf ⊆ sb ∪ vis × E;
+    esc_cf  : jf ∩ cf ≡ ∅₂;
+    esc_hb  : (hb ;; jf⁻¹) ∩ cf ≡ ∅₂;
+    esc_coh : irreflexive (hb ;; (eco m)^?);
   }.
 
 End Consistency.
