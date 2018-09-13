@@ -116,7 +116,10 @@ Record Wf :=
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
     co_trans : transitive co ;
-    co_total : forall ol, is_total (E ∩₁ W ∩₁ (fun x => loc x = ol)) co ;
+    co_total :
+      forall ol ws (WS : ws ⊆₁ E ∩₁ W ∩₁ (fun x => loc x = ol))
+             (NCF : ws × ws ∩ cf ≡ ∅₂),
+        is_total ws co;
     co_irr : irreflexive co ;
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
