@@ -28,7 +28,9 @@ Section SimRel.
       sbF : f ∘ (<| C |> ;; Gsb ;; <| C |>) ≡
             <| f ∘₁ C |> ;; Ssb ;; <| f ∘₁ C |>;
       cimgNcf : <| f ∘₁ C |> ;; Scf ;; <| f ∘₁ C |> ≡ ∅₂;
-      imgrf : f ∘ (<| I |> ;; Grf ;; <| C |>) ≡ Srf;
-      imgco : f ∘ (<| I |> ;; Gco ;; <| I |>) ⊆ Sco;
+      imgrf : f ∘ (<| I |> ;; Grf ;; <| C |>) ≡
+              <| f ∘₁ I |> ;; Srf  ;; <| f ∘₁ C |>;
+      imgco : f ∘ (<| I |> ;; Gco ;; <| I |>) ⊆
+              <| f ∘₁ I |> ;; Sco  ;; <| f ∘₁ I |>;
     }.
 End SimRel.
