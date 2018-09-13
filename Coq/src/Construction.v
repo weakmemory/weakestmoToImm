@@ -1,38 +1,9 @@
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events ProgToExecution Execution.
-Require Import AuxRel EventStructure Consistency.
+Require Import AuxRel AuxDef EventStructure Consistency.
 
 Export ListNotations.
-
-Definition opt_to_list {A} (a : option A) : list A :=
-  match a with
-  | None => []
-  | Some a => [a]
-  end.
-
-Definition same_val {A} (lab : A -> label) : relation A :=
-  (fun x y => val lab x = val lab y).
-
-Fixpoint act_to_event_helper (G : execution) (tid : thread_id)
-           (n : nat) : label * list label :=
-  let e := ThreadEvent tid n in
-  let lbl := G.(lab) e in
-  match n with
-  | 0 => (lbl, [])
-  | S n =>
-    let (hd, tl) := act_to_event_helper G tid n in
-    (lbl, hd :: tl)
-  end.
-
-Definition act_to_event (G : execution) (e : actid) : EventId.t :=
-  let lbl := G.(lab) e in
-  match e with
-  | InitEvent   _   => EventId.mk e.(tid) lbl []
-  | ThreadEvent t n =>
-    let (hd, tl) := act_to_event_helper G t n in
-    EventId.mk t hd tl
-  end.
 
 Module ESstep.
   
@@ -124,7 +95,7 @@ Inductive t_ (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
            (EW : add_ew e' s2 s3)
            (CO : add_co e' s3 s').
 
-Definition t (m : model) (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
+Record t (m : model) (execs : thread_id -> state -> Prop) (s s' : ES.t) :=
   << TT  : t_ execs s s' >> /\
   << CON : es_consistent s' m >>.
 End ESstep.
