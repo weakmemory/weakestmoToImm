@@ -7,18 +7,18 @@ Inductive model := weakest | weakestmo.
 
 Section Consistency.
 
-Variable EG : ES.t.
+Variable S : ES.t.
 
-Notation "'E'" := EG.(ES.acts_set).
-Notation "'E_init'" := EG.(ES.acts_init_set).
+Notation "'E'" := S.(ES.acts_set).
+Notation "'E_init'" := S.(ES.acts_init_set).
 Notation "'lab'" := EventId.lab.
-Notation "'sb'" := EG.(ES.sb).
-Notation "'rmw'" := EG.(ES.rmw).
-Notation "'ew'" := EG.(ES.ew).
-Notation "'jf'" := EG.(ES.jf).
-Notation "'rf'" := EG.(ES.rf).
-Notation "'co'" := EG.(ES.co).
-Notation "'cf'" := EG.(ES.cf).
+Notation "'sb'" := S.(ES.sb).
+Notation "'rmw'" := S.(ES.rmw).
+Notation "'ew'" := S.(ES.ew).
+Notation "'jf'" := S.(ES.jf).
+Notation "'rf'" := S.(ES.rf).
+Notation "'co'" := S.(ES.co).
+Notation "'cf'" := S.(ES.cf).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
@@ -43,14 +43,32 @@ Notation "'Sc'" := (is_sc lab).
 Definition vis :=
   codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ;; sb ⁼)).
 
-Definition hb : relation EventId.t := fun x y => True. (* TODO: define *)
-Definition eco (m : model) : relation EventId.t := fun x y => True. (* TODO: define *)
+Definition sw : relation EventId.t := fun x y => True. (* TODO: define *)
+
+Definition hb : relation EventId.t := (sb ∪ sw)⁺.
+
+Definition co_strong : relation EventId.t :=
+  <| W |> ;; hb ;; <| W |> ∩ same_loc.
+
+Definition mco (m : model) : relation EventId.t :=
+  match m with
+  | weakest   => co
+  | weakestmo => co_strong 
+  end.
+
+Definition fr : relation EventId.t := rf⁻¹ ;; co \ cf^?.
+
+Definition mfr (m : model) : relation EventId.t :=
+  (rf⁻¹ ;; mco m) \ cf^?.
+
+Definition eco (m : model) : relation EventId.t :=
+  (rf ∪ (mco m) ∪ (mfr m))⁺.
 
 Record es_consistent m :=
   { visC : jf ⊆ sb ∪ vis × E;
     cfC  : jf ∩ cf ≡ ∅₂;
     hbC  : (hb ;; jf⁻¹) ∩ cf ≡ ∅₂;
-    cohC : irreflexive (hb ;; eco m);
+    cohC : irreflexive (hb ;; (eco m)^?);
   }.
 
 End Consistency.
