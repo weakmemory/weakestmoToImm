@@ -1,7 +1,7 @@
 COQMODULE    := es2imm
 COQTHEORIES  := src/*.v
 
-.PHONY: all theories clean
+.PHONY: all theories clean tounicode
 
 all: build
 
@@ -25,3 +25,10 @@ Makefile.coq: Makefile $(COQTHEORIES)
 clean:
 	$(MAKE) -f Makefile.coq clean
 	rm -f _CoqProject Makefile.coq
+
+tounicode:
+	sed -i 's/<</⟪/g' $(COQTHEORIES) 
+	sed -i 's/>>/⟫/g' $(COQTHEORIES)
+	sed -i 's/;;/⨾/g' $(COQTHEORIES)
+	sed -i 's/<|/⦗/g' $(COQTHEORIES)
+	sed -i 's/|>/⦘/g' $(COQTHEORIES)

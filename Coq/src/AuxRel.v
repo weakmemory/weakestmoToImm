@@ -43,7 +43,7 @@ Proof.
   all: rewrite updo; auto.
 Qed.
 
-Lemma set_collect_eqv : f ∘ <| s |> ≡ <| f ∘₁ s |>.
+Lemma set_collect_eqv : f ∘ ⦗ s ⦘ ≡ ⦗ f ∘₁ s ⦘.
 Proof.
   autounfold with unfolderDb.
   splits; ins; desf; eauto.

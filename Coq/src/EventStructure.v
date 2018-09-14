@@ -57,11 +57,11 @@ Definition acts_init_set  ES := ES.(acts_set) ∩₁ EventId.init.
 Definition acts_ninit_set ES := ES.(acts_set) \₁ EventId.init.
 
 Definition sb ES := ES.(acts_init_set) × ES.(acts_ninit_set) ∪
-                    EventId.ext_sb ;; <| ES.(acts_set) |>.
-Definition cf ES := <| ES.(acts_set) |> ;;
-                    compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹) ;;
-                    <| ES.(acts_set) |>.
-Definition rf ES := ES.(ew)^? ;; ES.(jf) \ ES.(cf).
+                    EventId.ext_sb ⨾ ⦗ ES.(acts_set) ⦘.
+Definition cf ES := ⦗ ES.(acts_set) ⦘ ⨾
+                    compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹) ⨾
+                    ⦗ ES.(acts_set) ⦘.
+Definition rf ES := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 End ES.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.acts_ninit_set
@@ -120,7 +120,7 @@ Record Wf :=
     co_trans : transitive co ;
     co_total :
       forall ol ws (WS : ws ⊆₁ E ∩₁ W ∩₁ (fun x => loc x = ol))
-             (NCF : <| ws |> ;; cf ;; <| ws |> ≡ ∅₂),
+             (NCF : ⦗ ws ⦘ ⨾ cf ⨾ ⦗ ws ⦘ ≡ ∅₂),
         is_total ws co;
     co_irr : irreflexive co ;
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;

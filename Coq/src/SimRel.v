@@ -1,10 +1,13 @@
 From hahn Require Import Hahn.
-From imm Require Import Events Execution TraversalConfig Traversal.
-Require Import AuxDef AuxRel EventStructure.
+From imm Require Import Events Execution TraversalConfig Traversal
+     Prog ProgToExecutionProperties.
+Require Import AuxRel EventStructure Construction Consistency.
 
 Section SimRel.
+  Variable prog : Prog.t.
   Variable S : ES.t.
   Variable G  : execution.
+  Variable GPROG : program_execution prog G.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable f  : actid -> EventId.t.
@@ -24,24 +27,26 @@ Section SimRel.
   (* TODO. Probably, we need the following condition:
              s is injective on C ∪₁ I
    *)
+  (* TODO. Should state smth about `execs` used in Construction.v.
+     Probably, in terms of a program. *)
   Record simrel_common :=
     { labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
-      sbPrcl : Ssb ;; <| f ∘₁ C |> ⊆ <| f ∘₁ C |> ;; Ssb;
-      sbF : f ∘ (<| C |> ;; Gsb ;; <| C |>) ≡
-            <| f ∘₁ C |> ;; Ssb ;; <| f ∘₁ C |>;
-      cimgNcf : <| f ∘₁ C |> ;; Scf ;; <| f ∘₁ C |> ≡ ∅₂;
-      imgrf : f ∘ (<| I |> ;; Grf ;; <| C |>) ≡
-              <| f ∘₁ I |> ;; Srf  ;; <| f ∘₁ C |>;
-      imgco : f ∘ (<| I |> ;; Gco ;; <| I |>) ⊆
-              <| f ∘₁ I |> ;; Sco  ;; <| f ∘₁ I |>;
+      sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
+      sbF : f ∘ (⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘) ≡
+            ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘;
+      cimgNcf : ⦗ f ∘₁ C ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ C ⦘ ≡ ∅₂;
+      imgrf : f ∘ (⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘) ≡
+              ⦗ f ∘₁ I ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ C ⦘;
+      imgco : f ∘ (⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘) ⊆
+              ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
     }.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
       fp_labEq : Slab e' = Glab e;
       fp_covsb : Ssb ;; <| eq e' |> ⊆ (f ∘ <| C |>) ;; Ssb; 
-      fp_imgrf : upd f e e' ∘ (Grf ;; <| eq e |>) ⊆ Srf;
+      fp_imgrf : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
 
@@ -132,3 +137,12 @@ Proof.
   { admit. }
  
 Admitted.
+
+
+(* Lemma 2 from notes. *)
+Lemma simstep_exists_forward execs S G TC f
+      (SRC : simrel_common S G TC f) :
+  exists e (e' : EventId.t) S' f',
+    ⟪ EST : ESstep.t weakestmo execs S S' ⟫ /\
+    ⟪ SRC : simrel_common S' G (mkTC (covered TC ∪₁ eq e) (issued TC)) f' ⟫.
+Proof. Admitted.
