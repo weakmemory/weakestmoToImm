@@ -41,14 +41,14 @@ Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
 Definition vis :=
-  codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ;; sb ⁼)).
+  codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ⨾ sb ⁼)).
 
 Definition sw : relation EventId.t := fun x y => True. (* TODO: define *)
 
 Definition hb : relation EventId.t := (sb ∪ sw)⁺.
 
 Definition co_strong : relation EventId.t :=
-  <| W |> ;; hb ;; <| W |> ∩ same_loc.
+  ⦗ W ⦘ ⨾ hb ⨾ ⦗ W ⦘ ∩ same_loc.
 
 Definition mco (m : model) : relation EventId.t :=
   match m with
@@ -56,10 +56,10 @@ Definition mco (m : model) : relation EventId.t :=
   | weakestmo => co_strong 
   end.
 
-Definition fr : relation EventId.t := rf⁻¹ ;; co \ cf^?.
+Definition fr : relation EventId.t := rf⁻¹ ⨾ co \ cf^?.
 
 Definition mfr (m : model) : relation EventId.t :=
-  (rf⁻¹ ;; mco m) \ cf^?.
+  (rf⁻¹ ⨾ mco m) \ cf^?.
 
 Definition eco (m : model) : relation EventId.t :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
@@ -67,8 +67,8 @@ Definition eco (m : model) : relation EventId.t :=
 Record es_consistent m :=
   { esc_vis : jf ⊆ sb ∪ vis × E;
     esc_cf  : jf ∩ cf ≡ ∅₂;
-    esc_hb  : (hb ;; jf⁻¹) ∩ cf ≡ ∅₂;
-    esc_coh : irreflexive (hb ;; (eco m)^?);
+    esc_hb  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂;
+    esc_coh : irreflexive (hb ⨾ (eco m)^?);
   }.
 
 End Consistency.
