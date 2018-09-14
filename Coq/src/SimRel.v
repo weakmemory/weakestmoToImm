@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal.
-Require Import AuxRel EventStructure.
+Require Import AuxDef AuxRel EventStructure.
 
 Section SimRel.
   Variable S : ES.t.
@@ -8,7 +8,7 @@ Section SimRel.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable f  : actid -> EventId.t.
-  
+
   Notation "'C'" := (covered TC).
   Notation "'I'" := (issued TC).
   Notation "'Glab'" := (G.(lab)).
@@ -37,10 +37,10 @@ Section SimRel.
               <| f ∘₁ I |> ;; Sco  ;; <| f ∘₁ I |>;
     }.
   
-  (* TODO. Probably, add condition F.2. *) 
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
       fp_labEq : Slab e' = Glab e;
+      fp_covsb : Ssb ;; <| eq e' |> ⊆ (f ∘ <| C |>) ;; Ssb; 
       fp_imgrf : upd f e e' ∘ (Grf ;; <| eq e |>) ⊆ Srf;
     }.
 End SimRel.
@@ -59,10 +59,17 @@ Proof.
       { apply COVEQ. by right. }
       unfold set_union in *. desf. }
     apply NISS. apply ISSEQ. by right. }
+
+  assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
+  { admit. } 
+
+  destruct FP.
+  set (SRC' := SRC).
+  destruct SRC'.
   exists (upd f e e').
   constructor; ins.
-  { destruct FP. destruct SRC.
-    unfold set_union in *.
+  (* labEq *)
+  { unfold set_union in *.
     desf.
     { rewrite updo.
       2: { intros HH. desf. }
@@ -71,6 +78,7 @@ Proof.
     destruct (classic (e = e0)) as [|NEQ]; subst.
     { by rewrite upds. }
     rewrite updo; auto. }
+  (* sbPrcl *)
   { rewrite set_collect_union.
     rewrite set_collect_updo; auto.
     rewrite set_collect_eq.
@@ -80,6 +88,32 @@ Proof.
     rewrite seq_union_l.
     apply inclusion_union_l.
     { rewrite sbPrcl; eauto. by unionR left. }
+    apply inclusion_union_r1_search.
+    rewrite <- set_collect_eqv.
+    apply fp_covsb0. }
+  (* sbF *)
+  { repeat rewrite collect_rel_seq.
+    {
+      repeat rewrite set_collect_eqv.
+      repeat rewrite set_collect_union.
+      repeat rewrite eqv_rel_union.
+      repeat rewrite seq_union_l.
+      repeat rewrite seq_union_r.
+      split.
+      { unionL.
+        { apply inclusion_union_r. left. apply inclusion_union_r. left.
+          repeat rewrite <- set_collect_eqv.   
+          repeat rewrite <- collect_rel_seq.
+          
+          rewrite <- (set_collect_restr G.(sb) FupdCOV).
+          rewrite <- restr_relE.
+          assert (H: set_collect_restr FupdCOV). as Hh. 
+          rewrite <- (set_collect_restr FupdCOV).
+        }
+      }
+    }
+  }
+  { }
     admit. }
   { admit. }
   { split; [|basic_solver].
