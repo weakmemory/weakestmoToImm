@@ -71,9 +71,9 @@ Proof.
     destruct (classic (e = e0)) as [|NEQ]; subst.
     { by rewrite upds. }
     rewrite updo; auto. }
-  { rewrite set_image_union.
-    rewrite set_image_updo; auto.
-    rewrite set_image_eq.
+  { rewrite set_collect_union.
+    rewrite set_collect_updo; auto.
+    rewrite set_collect_eq.
     rewrite upds.
     rewrite id_union.
     rewrite seq_union_r.
@@ -83,9 +83,9 @@ Proof.
     admit. }
   { admit. }
   { split; [|basic_solver].
-    rewrite set_image_union.
-    rewrite set_image_eq. rewrite upds.
-    rewrite set_image_updo; auto.
+    rewrite set_collect_union.
+    rewrite set_collect_eq. rewrite upds.
+    rewrite set_collect_updo; auto.
     rewrite id_union.
     repeat rewrite seq_union_r.
     repeat rewrite seq_union_l.
@@ -95,5 +95,6 @@ Proof.
          ins. desf. apply H3.
          basic_solver. }
     all: admit. }
-  all: admit.
+  { admit. }
+ 
 Admitted.

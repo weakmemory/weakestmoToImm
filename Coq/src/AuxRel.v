@@ -11,26 +11,15 @@ Section AuxRel.
   Variables r r' : relation A.
 
   Definition eq_class_rel : relation A := (r ∪ r⁻¹) ^?.
-  
-  Definition set_image (x : B) : Prop :=
-    exists y,
-      << INS : s y >> /\
-      << IMG : x = f y >>.
-
-  Definition rel_image (x x' : B) : Prop :=
-    exists y y',
-      << INR  : r y y' >> /\
-      << IMG  : x  = f y >> /\
-      << IMG' : x' = f y' >>.
-  
+    
 End AuxRel.
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
-Notation "f ∘₁ s" := (set_image f s) (at level 10).
-Notation "f ∘ r"  := (rel_image f r) (at level 10).
+Notation "f ∘₁ s" := (set_collect f s) (at level 10).
+Notation "f ∘ r"  := (collect_rel f r) (at level 10).
 
-Hint Unfold eq_class_rel set_image rel_image : unfolderDb. 
+Hint Unfold eq_class_rel : unfolderDb. 
 
 Section Props.
 
@@ -42,21 +31,32 @@ Variable b : B.
 Variables s s' : A -> Prop.
 Variables r r' : relation A.
 
-Lemma set_image_union : f ∘₁ (s ∪₁ s') ≡₁ f ∘₁ s ∪₁ f ∘₁ s'.
-Proof. basic_solver. Qed.
+Lemma set_collect_updo (NC : ~ s a) : (upd f a b) ∘₁ s ≡₁ f ∘₁ s.
+Proof.
+  assert (forall x: A, s x -> x <> a). 
+  { ins. intros HH. by subst. }
+  autounfold with unfolderDb.
+  splits; unfold set_subset; ins.
+  all: desf; eexists; splits; eauto.
+  all: rewrite updo; auto.
+Qed.
 
-Lemma set_image_eq : f ∘₁ (eq a) ≡₁ eq (f a).
-Proof. basic_solver. Qed.
-
-Lemma set_image_updo (NC : ~ s a) : (upd f a b) ∘₁ s ≡₁ f ∘₁ s.
+Lemma set_collect_eqv : f ∘ <| s |> ≡ <| f ∘₁ s |>.
 Proof.
   autounfold with unfolderDb.
-  split; red; ins; desf.
-  all: eexists; splits; eauto.
-  all: rewrite updo; auto.
-  all: by intros HH; subst.
+  splits; ins; desf; eauto.
+  eexists. eexists.
+  splits; eauto.
+Qed.
+
+Lemma rel_image_seq
+  (INJ : forall x y: A, f(x) = f(y) -> x = y) :
+  (f ∘ (r ;; r') ≡ (f ∘ r) ;; (f ∘ r')).
+Proof.
+  autounfold with unfolderDb.
+  split; ins; desf; eauto.
+  all: repeat eexists; eauto.
+  apply INJ in H1. desf.
 Qed.
 
 End Props.
-
-
