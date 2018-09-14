@@ -1,10 +1,13 @@
 From hahn Require Import Hahn.
-From imm Require Import Events Execution TraversalConfig Traversal.
+From imm Require Import Events Execution TraversalConfig Traversal
+     Prog ProgToExecutionProperties.
 Require Import AuxRel EventStructure Construction Consistency.
 
 Section SimRel.
+  Variable prog : Prog.t.
   Variable S : ES.t.
   Variable G  : execution.
+  Variable GPROG : program_execution prog G.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable f  : actid -> EventId.t.
