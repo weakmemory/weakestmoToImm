@@ -35,7 +35,7 @@ Definition extracted : Prop :=
     ⟪ ESBPRCL : dom_rel (Ssb ⨾ ⦗ f ∘₁ GE ⦘) ⊆₁ f ∘₁ GE ⟫ /\
     ⟪ ESBMAX  : 
       ⦗ f ∘₁ GE ⦘ ⨾ Ssb ⨾ ⦗ SE \₁ (f ∘₁ GE) ⦘ ⊆
-      ⦗ f ∘₁ GE ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ GE ⦘ ;; Scf 
+      ⦗ f ∘₁ GE ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ GE ⦘ ⨾ Scf 
     ⟫ /\
     ⟪ ESB     : f ∘ Gsb  ≡ ⦗ f ∘₁ GE ⦘ ⨾ Ssb  ⨾ ⦗ f ∘₁ GE ⦘ ⟫ /\
     ⟪ ERMW    : f ∘ Grmw ≡ ⦗ f ∘₁ GE ⦘ ⨾ Srmw ⨾ ⦗ f ∘₁ GE ⦘ ⟫ /\
