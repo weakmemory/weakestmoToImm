@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal.
-Require Import AuxRel EventStructure.
+Require Import AuxRel EventStructure Construction Consistency.
 
 Section SimRel.
   Variable S : ES.t.
@@ -24,6 +24,8 @@ Section SimRel.
   (* TODO. Probably, we need the following condition:
              s is injective on C ∪₁ I
    *)
+  (* TODO. Should state smth about `execs` used in Construction.v.
+     Probably, in terms of a program. *)
   Record simrel_common :=
     { labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
@@ -98,3 +100,11 @@ Proof.
   { admit. }
  
 Admitted.
+
+(* Lemma 2 from notes. *)
+Lemma simstep_exists_forward execs S G TC f
+      (SRC : simrel_common S G TC f) :
+  exists e (e' : EventId.t) S' f',
+    ⟪ EST : ESstep.t weakestmo execs S S' ⟫ /\
+    ⟪ SRC : simrel_common S' G (mkTC (covered TC ∪₁ eq e) (issued TC)) f' ⟫.
+Proof. Admitted.
