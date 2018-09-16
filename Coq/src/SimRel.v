@@ -26,6 +26,14 @@ Section SimRel.
 
   (* TODO. Should state smth about `execs` used in Construction.v.
      Probably, in terms of a program. *)
+  (* TODO. Probably, finj should become deducible from
+     simrel_common since it looks like it's not strong enough
+     to show that it's preserved.
+
+     Probably, we want to state that `f` maps anything from
+     `actid \ (C ∪ I)` to `<0, Afence Opln, []>`, i.e.
+     something impossible.
+   *)
   Record simrel_common :=
     { finj  : inj_dom (C ∪₁ I) f;
       labEq : forall e (CI : (C ∪₁ I) e),
