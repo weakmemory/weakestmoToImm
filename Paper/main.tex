@@ -33,112 +33,51 @@
 {\center \LARGE Compiling Event Structures to the Intermediate Memory Model }
 \end{center}
 
-%% \begin{definition}
-%%   \label{def:exec}
-  
-%%   An execution graph $X$ is a tuple $\tup{\lE, \lLAB, \lRF, \lMO}$ where:
-%%   \begin{itemize}
-
-%%   \item $\lE$ is a set of events. 
-%%     Execution events have different representation comparing to the event structure events. 
-%%     That is, an event is either:
-%%     \begin{itemize}
-%%       \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
-%%       \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
-%%     \end{itemize}
-%%     Given this representation one could derive the following notions:
-%%     \begin{itemize}
-
-%%       \item $\lEo \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
-
-%%       \item $\lTID : \lX \fun \Tid$ s.t. \\
-%%         \begin{equation*}
-%%           \begin{split}
-%%             \forall{e} ~.~
-%%             & (\exists{x \in \Loc} ~.~ e = \tup{\lINIT~x} \Rightarrow \lTID(e) = 0) \wedge \\ \wedge
-%%             & (\exists{i \in \Tid, n \in \N} ~.~ e = \tup{i, n} \Rightarrow \lTID(e) = i)
-%%           \end{split}
-%%         \end{equation*}
-        
-%%       \item $\lPO \subseteq \lE \times \lE$ s.t. \\
-%%         \begin{equation*}
-%%           \begin{split}
-%%             & \tup{e_1, e_2} \in \lPO \Leftrightarrow \\
-%%             & \Leftrightarrow (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
-%%               (e_1, e_2 \not\in \lEo \wedge \lTID(e_1) = \lTID(e_2) \wedge
-%%               \lSN(e_1) < \lSN(e_2))
-%%           \end{split}
-%%         \end{equation*}
-%%         where $\lSN(\tup{i, n}) = n$.
-
-%%         Note that $\lPO$ totally orders all events within a thread.
-%%     \end{itemize}
-
-%%   \end{itemize}
-%% \end{definition}
-
-%% \begin{definition}
-%%   Given an event structure $S$ we will a call an execution graph $X$
-%%   extracted from $S$, denoted as $S \rhd X$,
-%%   if there exists a function $s : X.\lE \fun S.\lE$, called \emph{source event mapping},
-%%   such that the following conditions are met.
-%%   \begin{itemize}
-%%     \item $s(X.\lE) \subseteq \lVIS(S)$;
-%%     \item $[s(X.\lE)];S.\lCF;[s(X.\lE)] = \emptyset$;
-%%     \item $S.\lPO;[s(X.\lE)] \subseteq s(X.\lE) \times s(X.\lE)$;
-%%     \item $\forall{\tup{e, e'}} \in [s(X.\lE)];S.\lPO;[S.\lE \setminus s(X.\lE)] ~.~ 
-%%       \exists{e''} \in s(X.\lE) ~.~ \tup{e', e''} \in S.\lCF$;
-%%     \item $X.\lPO = [s(X.\lE)];S.\lPO;[s(X.\lE)]$;
-%%     \item $X.\lRMW = [s(X.\lE)];S.\lRMW;[s(X.\lE)]$;
-%%     \item $X.\lRF = [s(X.\lE)];S.\lRF;[s(X.\lE)]$;
-%%     \item $X.\lMO = [s(X.\lE)];S.\lMO;[s(X.\lE)]$;
-%%   \end{itemize}
-%% \end{definition}
-
-%% \begin{definition}
-%%   We will call an execution graph $X$ \emph{consistent} if the following properties hold:
-%%   \begin{itemize}
-%%     \item $X.\lMO^= = [X.\lW];=_{\lLOC};[X.\lW]$
-%%     \item $X.\lRMW \cap (X.\lRB;X.\lMO) = \emptyset$
-%%     \item $X.\lHB;X.\lECO^?$ is irreflexive.
-%%   \end{itemize}
-%% \end{definition}
-
-%% \begin{definition}
-%%   A function $O : \Loc \fun \Val$ is an \emph{outcome} 
-%%   of a consistent execution graph $X$
-%%   if for every $x \in \Loc$ either $O(x) = X.\lVALW(w)$ 
-%%   for some $X.\lMO$-maximal write event $w$, 
-%%   or $O(x) = 0$ and $X.\lW_x = \emptyset$.
-%% \end{definition}
-
-\section{Event Structure Model}
+\section{Executions}
 
 \begin{definition}
-  \label{def:es}
+  \label{def:exec}
   
-  An \emph{event structure} $S$ is a tuple
-  $\tup{\lEs, \lJF, \lEW, \lMO}$ where:
+  An execution graph $X$ is a tuple $\tup{\lE, \lLAB, \lRF, \lMO}$ where:
   \begin{itemize}
-    \item $\lEs$ is a set of \emph{s-events}.
-    An s-event $\hat{e} \in \lEs$ is a tuple $\tup{i, \Path}$
-    where $i \in \Tid$ and $\Path = (l_1, \dots, l_n)$ is a finite sequence of labels.
-    Giving $\lEs$ we will also derive the following definitions:
-    \item $\lTID : \lE \fun \Tid$ --- function that assigns a thread id to every event.
+
+    \item $\lE$ is a set of events. 
+    An event is either:
+    \begin{itemize}
+      \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
+      \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
+    \end{itemize}
+    Given this representation one could derive the following notions:
+    \begin{itemize}
+
+      \item $\lEo \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$ ---
+      a set of \emph{initialization events};
+
+      \item $\lTID : \lX \fun \Tid$ ---
+      a function, that assigns a \emph{thread identifier} to every event, s.t. \\
       \begin{equation*}
-        \lTID(\tup{i, \Path}) \defeq i
+        \begin{split}
+          \forall{e} ~.~
+          & (\exists{x \in \Loc} ~.~ e = \tup{\lINIT~x} \Rightarrow \lTID(e) = 0) \wedge \\ \wedge
+          & (\exists{i \in \Tid, n \in \N} ~.~ e = \tup{i, n} \Rightarrow \lTID(e) = i)
+        \end{split}
       \end{equation*}
-      Given thread id $i \in \Tid$ we will denote by $\lEi{i}$ the set of all events belonging 
-      to $i^{th}$ thread, that is $\lEi{i} \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
-      We assume that if $e \in \lEo$ then $\lTID(e) = 0$.
-    
-  \item $\lE \subseteq \N$ --- finite set of s-events. 
-  \item $\lEo \subseteq \lE$ --- initialization events.
-  \item $\lTID \defeq \lE \fun \Tid$ --- function that assigns a thread id to every event.
-    Given thread id $i \in \Tid$ we will denote by $\lEi{i}$ the set of all events belonging 
-    to $i^{th}$ thread, that is $\lEi{i} \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
-    We assume that if $e \in \lEo$ then $\lTID(e) = 0$.
-  \item $\lLAB \defeq \lE \fun \Lab$ --- function that assigns a label to every event.
+      
+      \item $\lPO \subseteq \lE \times \lE$ a \emph{program order} relation s.t. \\
+      \begin{equation*}
+        \begin{split}
+          & \tup{e_1, e_2} \in \lPO \Leftrightarrow \\
+          & \Leftrightarrow (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
+          (e_1, e_2 \not\in \lEo \wedge \lTID(e_1) = \lTID(e_2) \wedge
+          \lSN(e_1) < \lSN(e_2))
+        \end{split}
+      \end{equation*}
+      where $\lSN(\tup{i, n}) = n$.
+
+      Note that $\lPO$ totally orders all events within a thread.
+    \end{itemize}
+
+    \item $\lLAB \defeq \lE \fun \Lab$ --- function that assigns a label to every event.
     Labels are of one of the following forms:
     \begin{itemize}
       \item $\rlabExExpl{o}{x}{v}{\mathtt{f}}$ --- a read, where
@@ -165,169 +104,49 @@
         \item $e \in \lF \Rightarrow \lMOD(e) \in \{ \rlx, \acqrel, \sco \}$.
         \end{itemize}
     \end{itemize}
-  \item $\lCONT$ --- a list of \emph{continuations}.
-  \item $\lPO \subseteq \lE \times \lE$ --- \emph{program order},
-    which is a strict partial order.
-    It orders all initialization events before all other events,
-    that is $\lEo \times (\lE \setminus \lEo) \subseteq \lPO$.
-  \item $\lCF \subseteq [\lE];=_{\lTID};[\lE]$ --- \emph{conflict relation},
-    which binds two events whenever they are issued from the same thread but
-    in different execution branches.    
-  \item $\lRMW \subseteq [\lR];(\lPO_{imm} \cap =_{\lLOC});[\lW]$ ---
-    \emph{read-modify-write pairs}.
-  \item $\lJF \subseteq [\lW];=_{\lLOC};[\lR]$ --- \emph{reads-from} relation, which the following
-    hold for:
-    \begin{itemize}
-    \item $\forall{\tup{a, b}} \in \lJF. \; \lVALW(a) = \lVALR(b)$;
-    \item $\forall{a_1, a_2, b}. \;
-      \tup{a_1, b} \in \lJF \wedge \tup{a_2, b} \in \lJF \Rightarrow a_1 = a_2.$
-    \end{itemize}
-  \item $\lEW \subseteq \lW \times \lW$ --- is the \emph{equal write} relation, 
-    which is an irreflexive, symmetric and transitive relation between conflicting writes on the
-    same location writing same values 
-    (that is $\lEW(e_1, e_2) \Rightarrow \lVALW(e_1) = \lVALW(e_2)$).
-    Given $\lJF$, $\lEW$ and $\lCF$ we will also define a derived \emph{read from} relation:
-    \begin{itemize}
-      \item $\lRF \defeq \lEW^?;\lJF \setminus \lCF$
-    \end{itemize}
-  \item $\lMO \subseteq \lW \times \lW$ --- \emph{modification order},
-    which is a strict partial order.
-  \end{itemize}
-\end{definition}
 
-\begin{definition}
-  Using the primitive relations of an event structure $\lES$,
-  we define following derived relations:
+    Pairs of events, consisting of an exclusive read followed by exclusive write in $\lPO_{imm}$,
+    that operate on the same location,
+    form a \emph{read-modify-write} relation:
+    \begin{itemize}
+      \item $\lRMW \defeq [\lR_{\Ex}];(\lPO_{imm} \cap =_{\lLOC});[\lW_{\Ex}]$.
+    \end{itemize}
+
+    \item $\lRF \subseteq [\lW];=_{\lLOC};[\lR]$ --- \emph{reads-from} relation,
+    which the following hold for:
+    \begin{itemize}
+      \item $\forall{\tup{a, b}} \in \lRF. \; \lVALW(a) = \lVALR(b)$;
+      \item $\forall{a_1, a_2, b}. \;
+        \tup{a_1, b} \in \lRF \wedge \tup{a_2, b} \in \lRF \Rightarrow a_1 = a_2.$
+    \end{itemize}
+    
+    \item $\lMO \subseteq \lW \times \lW$ --- \emph{modification order},
+    which is a strict partial order among write operations.
+
+  \end{itemize}
+
+  Using the definition of relations given above,
+  we will also derive the following relations:
   \begin{itemize}
-    \item $\lES.\lRB \defeq (\lES.\lRF^{-1};\lES.\lMO) \setminus \lES.\lCF^?$ --- 
-      \emph{reads before};
-    \item $\lES.\lECO \defeq (\lES.\lRF \cup \lES.\lRB \cup \lES.\lMO)^+$ --- 
-      \emph{extended coherence order}.
+    \item $lRB \defeq (\lRF^{-1};\lMO)$ --- \emph{reads before};
+    \item $\lECO \defeq (\lRF \cup \lRB \cup \lMO)^+$ --- \emph{extended coherence order}.
   \end{itemize}
+
 \end{definition}
 
+
 \begin{definition}
-  Giving an event structure $\lES$ we define the \emph{happens-before} relation $\lHB$
+  Giving an execution $X$ we define the \emph{happens-before} relation $\lHB$
   using auxililarly relations: 
   $\lRSEQ$ --- release sequence,
   $\lRELP$ --- release prefix and
   $\lSW$ --- synchronize-with.
   \begin{itemize}
   \item $\lRSEQ \defeq [\lWsqeq{rlx}];(\lmakeLoc{\lPO};[\lWsqeq{rlx}] \cup 
-    (\lmakeLoc{\lPO^?};[\lWsqeq{\rlx}];\lJF;\lRMW)^*)$;
+    (\lmakeLoc{\lPO^?};[\lWsqeq{\rlx}];\lRF;\lRMW)^*)$;
   \item $\lRELP \defeq [\lEsqeq{rel}];([\lW] \cup [\lF];\lPO);\lRSEQ$;
-  \item $\lSW \defeq \lRELP; (\lRFI \cup \lmakeLoc{\lPO^?};\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$;
+  \item $\lSW \defeq \lRELP; (\lRFI \cup \lmakeLoc{\lPO^?};\lRFE); ([\lR] \cup \lPO;[\lF]);[\lEsqeq{\acq}]$;
   \item $\lHB \defeq (\lPO \cup \lSW)^+$.
-  \end{itemize}
-\end{definition}
-
-%% \begin{definition}
-%%   For an event $e$ from an event structure $\lES$
-%%   the \emph{masking set} of $e$, denoted as $\lMASK(\lES, e)$,
-%%   is a set of conflicting write events that $e$ depends on.
-%%   This set is called masking, because its elements might make an event $e$ \emph{invisible}.
-%%   \begin{itemize}
-%%   \item $\lMASK(\lES, e) \defeq
-%%     \{w \in \lES.\lW ~|~ \tup{w, e} \in \lES.\lCF \cap (\lES.\lPO \cup \lES.\lRF)^+ \}$
-%%   \end{itemize}
-%% \end{definition}
-
-\begin{definition}
-  For an event structure $S$ the set of its visible events $\lVIS(S)$ defined as follow:
-  \begin{itemize}
-    \item $\lVIS(S) \defeq 
-      \{ e \in S ~|~ S.\lW;(S.\lCF \cap (S.\lPO \cup S.\lJF)^+);[e] \subseteq 
-         S.\lEW;S.\lPO^=
-      \}$,
-  \end{itemize}
-  %% or equivalently:
-  %% \begin{itemize}
-  %%   \item $\lVIS(\lES) \defeq 
-  %%     \{ e \in \lES ~|~ \forall{w \in \lMASK(\lES, e)} ~.~ \tup{w, e} \in \lES.\lEW;\lES.\lPO^=\}$.
-  %% \end{itemize}
-\end{definition}
-
-\begin{definition}
-  Event structure $S$ is called \emph{consistent} if the following conditions hold:
-  
-  \begin{itemize}
-
-    \item $S.\lJF \subseteq S.\lPO \cup (\lVIS(S) \times S.\lE)$;
-
-    \item $S.\lJF \cap S.\lCF = \emptyset$;
-
-    \item $(S.\lHB;S.\lJF^{-1}) \cap S.\lCF = \emptyset$;
-
-    \item $S.\lHB;S.\lECO^?$ is irreflexive.
-  \end{itemize}
-\end{definition}
-
-\section{Executions}
-
-\begin{definition}
-  \label{def:exec}
-  
-  An execution graph $X$ is a tuple $\tup{\lE, \lLAB, \lRMW, \lRF, \lMO}$ where:
-  \begin{itemize}
-
-  \item $\lE$ is a set of events. 
-    Execution events have different representation comparing to the event structure events. 
-    That is, an event is either:
-    \begin{itemize}
-      \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
-      \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
-    \end{itemize}
-    Given this representation one could restore some piece of the event structure notation, 
-    in particular:
-    \begin{itemize}
-
-      \item $\lEo \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
-
-      \item $\lTID : \lX \fun \Tid$ s.t. \\
-        \begin{equation*}
-          \begin{split}
-            \forall{e} ~.~
-            & (\exists{x \in \Loc} ~.~ e = \tup{\lINIT~x} \Rightarrow \lTID(e) = 0) \wedge \\ \wedge
-            & (\exists{i \in \Tid, n \in \N} ~.~ e = \tup{i, n} \Rightarrow \lTID(e) = i)
-          \end{split}
-        \end{equation*}
-        
-      \item $\lPO \subseteq \lE \times \lE$ s.t. \\
-        \begin{equation*}
-          \begin{split}
-            & \tup{e_1, e_2} \in \lPO \Leftrightarrow \\
-            & \Leftrightarrow (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
-              (e_1, e_2 \not\in \lEo \wedge \lTID(e_1) = \lTID(e_2) \wedge
-              \lSN(e_1) < \lSN(e_2))
-          \end{split}
-        \end{equation*}
-        where $\lSN(\tup{i, n}) = n$.
-
-        Note that in case of executions $\lPO$ is a total order.
-    \end{itemize}
-    
-  \item $\lLAB, \lRMW, \lRF, \lMO$ have definitions similar to those given
-    in the definition \ref{def:es} of event structure,
-    except that they are defined on a set $X.\lE$.
-
-  \end{itemize}
-\end{definition}
-
-\begin{definition}
-  Given an event structure $S$ we will a call an execution graph $X$
-  extracted from $S$, denoted as $S \rhd X$,
-  if there exists a function $s : X.\lE \fun S.\lE$, called \emph{source event mapping},
-  such that the following conditions are met.
-  \begin{itemize}
-    \item $s(X.\lE) \subseteq \lVIS(S)$;
-    \item $[s(X.\lE)];S.\lCF;[s(X.\lE)] = \emptyset$;
-    \item $S.\lPO;[s(X.\lE)] \subseteq s(X.\lE) \times s(X.\lE)$;
-    \item $\forall{\tup{e, e'}} \in [s(X.\lE)];S.\lPO;[S.\lE \setminus s(X.\lE)] ~.~ 
-      \exists{e''} \in s(X.\lE) ~.~ \tup{e', e''} \in S.\lCF$;
-    \item $X.\lPO = [s(X.\lE)];S.\lPO;[s(X.\lE)]$;
-    \item $X.\lRMW = [s(X.\lE)];S.\lRMW;[s(X.\lE)]$;
-    \item $X.\lRF = [s(X.\lE)];S.\lRF;[s(X.\lE)]$;
-    \item $X.\lMO = [s(X.\lE)];S.\lMO;[s(X.\lE)]$;
   \end{itemize}
 \end{definition}
 
@@ -379,6 +198,159 @@
   \begin{itemize}
     \item $G.X$ is a consistent execution;
     \item $G.\lRFE \cup G.\lBOB \cup G.\lPPO \cup G.\lDETOUR$ is acyclic.
+  \end{itemize}
+\end{definition}
+
+\section{Event Structure Model}
+
+\begin{definition}
+  \label{def:es}
+  
+  An \emph{event structure} $S$ is a tuple
+  $\tup{\lEs, \lJF, \lEW, \lMO}$ where:
+  \begin{itemize}
+    \item $\lEs$ is a set of \emph{s-events}.
+    An s-event $\hat{e} \in \lEs$ is a tuple $\tup{i, \Path}$
+    where $i \in \Tid$ and $\Path = (l_1, \dots, l_n)$ is a finite non-empty sequence of labels.
+    We will also distinguish a set of initialization s-events $\lEo$.
+    For these events thread identifier is equal to 0 and
+    sequence of labels consists of single label, which is a relaxed write:
+    \begin{equation*}
+      \forall{\hat{e} \in \lEo} ~.~ \exists{x \in \Loc} ~.~ \hat{e} = \tup{0, \wlab{\rlx}{x}{0}}
+    \end{equation*}
+    Giving $\lEs$ we will also derive the following definitions:
+
+    \begin{itemize}
+      
+      \item $\lTID : \lE \fun \Tid$ --- function that assigns a thread id to every s-event.
+      \begin{equation*}
+        \lTID(\tup{i, \Path}) \defeq i
+      \end{equation*}
+      Given thread id $i \in \Tid$ we will denote by $\lEi{i}$ the set of all events belonging 
+      to $i^{th}$ thread, that is $\lEi{i} \defeq \{e \in \lE ~|~ \lTID(e) = i\}$.
+      We will also distinguish a set of initialization events $\lEo$.
+      For these events thread identifier is equal to 0 and
+      sequence of labels consists of single label, which is a relaxed write:
+      \begin{equation*}
+        \forall{\hat{e} \in \lEo} ~.~ \exists{x \in \Loc} ~.~ \hat{e} = \tup{0, \wlab{\rlx}{x}{0}}
+      \end{equation*}
+
+      \item $\lLAB \defeq \lE \fun \Lab$ --- function that assigns a label to every s-event,
+      defined as follow:
+      \begin{equation*}
+        \lLAB(\tup{i, (l_1, \dots, l_n)}) \defeq l_n
+      \end{equation*}
+      This function iduces $\lTYP$, $\lLOC$, $\lVALR$, $\lVALW$ and $\lMOD$
+      as in the definition \ref{def:exec} of execution graph.
+
+      \item Program order defined as follows:
+      \begin{equation*}
+        \tup{\hat{e_1}, \hat{e_2}} \in \lPO \Leftrightarrow
+      \end{equation*}
+
+      \item $\lCF \subseteq [\lE];=_{\lTID};[\lE]$ --- \emph{conflict relation},
+      which binds two events whenever they are issued from the same thread but
+      in different execution branches.
+      More formally:
+      \begin{equation*}
+        \tup{\hat{e_1}, \hat{e_2}} \in \lCF \Leftrightarrow
+      \end{equation*}
+
+      \item $\lRMW \subseteq [\lR_{\Ex}];(\lPO_{imm} \cap =_{\lLOC});[\lW_{\Ex}]$ ---
+      \emph{read-modify-write pairs}.
+
+    \end{itemize}
+     
+
+    \item $\lJF \subseteq [\lW];=_{\lLOC};[\lR]$ --- \emph{justified-from} relation,
+    which the following
+    hold for:
+    \begin{itemize}
+    \item $\forall{\tup{a, b}} \in \lJF. \; \lVALW(a) = \lVALR(b)$;
+    \item $\forall{a_1, a_2, b}. \;
+      \tup{a_1, b} \in \lJF \wedge \tup{a_2, b} \in \lJF \Rightarrow a_1 = a_2.$
+    \end{itemize}
+    
+  \item $\lEW \subseteq \lW \times \lW$ --- is the \emph{equal write} relation, 
+    which is an irreflexive, symmetric and transitive relation between conflicting writes on the
+    same location writing same values 
+    (that is $\lEW(e_1, e_2) \Rightarrow \lVALW(e_1) = \lVALW(e_2)$).
+    Given $\lJF$, $\lEW$ and $\lCF$ we will also define a derived \emph{read from} relation:
+    \begin{itemize}
+      \item $\lRF \defeq \lEW^?;\lJF \setminus \lCF$
+    \end{itemize}
+  \item $\lMO \subseteq \lW \times \lW$ --- \emph{modification order},
+    which is a strict partial order.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Using the primitive relations of an event structure $\lES$,
+  we define following derived relations:
+  \begin{itemize}
+    \item $\lES.\lRB \defeq (\lES.\lRF^{-1};\lES.\lMO) \setminus \lES.\lCF^?$ --- 
+      \emph{reads before};
+    \item $\lES.\lECO \defeq (\lES.\lRF \cup \lES.\lRB \cup \lES.\lMO)^+$ --- 
+      \emph{extended coherence order}.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Giving an event structure $\lES$ we define the \emph{happens-before} relation $\lHB$
+  using auxililarly relations: 
+  $\lRSEQ$ --- release sequence,
+  $\lRELP$ --- release prefix and
+  $\lSW$ --- synchronize-with.
+  \begin{itemize}
+  \item $\lRSEQ \defeq [\lWsqeq{rlx}];(\lmakeLoc{\lPO};[\lWsqeq{rlx}] \cup 
+    (\lmakeLoc{\lPO^?};[\lWsqeq{\rlx}];\lJF;\lRMW)^*)$;
+  \item $\lRELP \defeq [\lEsqeq{rel}];([\lW] \cup [\lF];\lPO);\lRSEQ$;
+  \item $\lSW \defeq \lRELP; (\lRFI \cup \lmakeLoc{\lPO^?};\lRFE); [\lR \cup \lPO;[\lF]);[\lEsqeq{\acq}]$;
+  \item $\lHB \defeq (\lPO \cup \lSW)^+$.
+  \end{itemize}
+\end{definition}
+
+
+\begin{definition}
+  For an event structure $S$ the set of its visible events $\lVIS(S)$ defined as follow:
+  \begin{itemize}
+    \item $\lVIS(S) \defeq 
+      \{ e \in S ~|~ S.\lW;(S.\lCF \cap (S.\lPO \cup S.\lJF)^+);[e] \subseteq 
+         S.\lEW;S.\lPO^=
+      \}$,
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Event structure $S$ is called \emph{consistent} if the following conditions hold:
+  
+  \begin{itemize}
+
+    \item $S.\lJF \subseteq S.\lPO \cup (\lVIS(S) \times S.\lE)$;
+
+    \item $S.\lJF \cap S.\lCF = \emptyset$;
+
+    \item $(S.\lHB;S.\lJF^{-1}) \cap S.\lCF = \emptyset$;
+
+    \item $S.\lHB;S.\lECO^?$ is irreflexive.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Given an event structure $S$ we will a call an execution graph $X$
+  extracted from $S$, denoted as $S \rhd X$,
+  if there exists a function $f : X.\lE \fun S.\lE$, called \emph{source event mapping},
+  such that the following conditions are met.
+  \begin{itemize}
+    \item $f(X.\lE) \subseteq \lVIS(S)$;
+    \item $[f(X.\lE)];S.\lCF;[f(X.\lE)] = \emptyset$;
+    \item $S.\lPO;[f(X.\lE)] \subseteq f(X.\lE) \times f(X.\lE)$;
+    \item $[f(X.\lE)];S.\lPO;[S.\lE \setminus f(X.\lE)] \subseteq
+           [f(X.\lE)];S.\lPO;[f(X.\lE)];S.\lCF$;
+    \item $f(X.\lPO)  = [f(X.\lE)];S.\lPO; [f(X.\lE)]$;
+    \item $f(X.\lRMW) = [f(X.\lE)];S.\lRMW;[f(X.\lE)]$;
+    \item $f(X.\lRF)  = [f(X.\lE)];S.\lRF; [f(X.\lE)]$;
+    \item $f(X.\lMO)  = [f(X.\lE)];S.\lMO; [f(X.\lE)]$;
   \end{itemize}
 \end{definition}
 
@@ -761,7 +733,7 @@
 
 \begin{lemma}
   Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $G \vdash \Execs{\Prog}$,
+  s.t. $\Execs{\Prog} \vdash G$,
   if the relation $\simR(S, G, \tup{C, I}, f)$ holds
   and there exists $e$ s.t. $G \vdash \tup{C, I} \trstep \tup{C', I'}$
   then there exists $S'$ and $f'$ s.t.
