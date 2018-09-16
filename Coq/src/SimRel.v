@@ -24,28 +24,26 @@ Section SimRel.
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
 
-  (* TODO. Probably, we need the following condition:
-             s is injective on C ∪₁ I
-   *)
   (* TODO. Should state smth about `execs` used in Construction.v.
      Probably, in terms of a program. *)
   Record simrel_common :=
-    { labEq : forall e (CI : (C ∪₁ I) e),
+    { finj  : inj_dom (C ∪₁ I) f;
+      labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
       sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      sbF : f ∘ (⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘) ≡
+      sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
             ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘;
       cimgNcf : ⦗ f ∘₁ C ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ C ⦘ ≡ ∅₂;
-      imgrf : f ∘ (⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘) ≡
+      imgrf : f ∘ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
               ⦗ f ∘₁ I ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ C ⦘;
-      imgco : f ∘ (⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘) ⊆
+      imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
               ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
     }.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
       fp_labEq : Slab e' = Glab e;
-      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ (f ∘ ⦗ C ⦘) ⨾ Ssb; 
+      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb; 
       fp_imgrf : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
@@ -68,9 +66,14 @@ Proof.
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
   { by rewrite set_collect_updo. } 
 
+  assert (inj_dom (covered TC ∪₁ eq e ∪₁ issued TC) (upd f e e'))
+    as FINJ.
+  { admit. }
+
   destruct FP.
   set (SRC' := SRC).
   destruct SRC'.
+
   exists (upd f e e').
   constructor; ins.
   (* labEq *)
@@ -92,34 +95,39 @@ Proof.
     rewrite seq_union_r.
     rewrite seq_union_l.
     apply inclusion_union_l.
-    { rewrite sbPrcl; eauto. by unionR left. }
-    apply inclusion_union_r1_search.
-      by rewrite <- set_collect_eqv. }
+    2: by apply inclusion_union_r1_search.
+    rewrite sbPrcl; eauto. by unionR left. }
   (* sbF *)
-  { repeat rewrite collect_rel_seq.
-    {
-      repeat rewrite set_collect_eqv.
-      repeat rewrite set_collect_union.
-      repeat rewrite id_union.
-      repeat rewrite seq_union_l.
-      repeat rewrite seq_union_r.
-      split.
-      { unionL.
-        { apply inclusion_union_r. left. apply inclusion_union_r. left.
-          repeat rewrite <- set_collect_eqv.   
-          repeat rewrite <- collect_rel_seq.
-          
-          rewrite <- (set_collect_restr G.(sb) FupdCOV).
-          rewrite <- restr_relE.
-          assert (H: set_collect_restr FupdCOV). as Hh. 
-          rewrite <- (set_collect_restr FupdCOV).
-        }
-      }
-    }
-  }
-  { }
+  { repeat rewrite <- restr_relE.
+    rewrite set_collect_restr.
+    2: admit.
+    rewrite set_collect_union.
+    rewrite set_collect_eq; rewrite upds.
+    rewrite set_collect_updo; auto.
     admit. }
-  { admit. }
+  (*   repeat rewrite collect_rel_seq. *)
+  (*   { *)
+  (*     repeat rewrite set_collect_eqv. *)
+  (*     repeat rewrite set_collect_union. *)
+  (*     repeat rewrite id_union. *)
+  (*     repeat rewrite seq_union_l. *)
+  (*     repeat rewrite seq_union_r. *)
+  (*     split. *)
+  (*     { unionL. *)
+  (*       { apply inclusion_union_r. left. apply inclusion_union_r. left. *)
+  (*         repeat rewrite <- set_collect_eqv.    *)
+  (*         repeat rewrite <- collect_rel_seq. *)
+          
+  (*         rewrite <- (set_collect_restr_eq G.(sb) FupdCOV). *)
+  (*         rewrite <- restr_relE. *)
+  (*         assert (H: set_collect_restr_eq FupdCOV). as Hh.  *)
+  (*         rewrite <- (set_collect_restr_eq FupdCOV). *)
+  (*       } *)
+  (*     } *)
+  (*   } *)
+  (* } *)
+
+  (* cimgNcf *)
   { split; [|basic_solver].
     rewrite set_collect_union.
     rewrite set_collect_eq. rewrite upds.
@@ -134,7 +142,6 @@ Proof.
          basic_solver. }
     all: admit. }
   { admit. }
- 
 Admitted.
 
 
