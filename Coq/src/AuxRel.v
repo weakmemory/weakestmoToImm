@@ -14,7 +14,9 @@ Section AuxRel.
     
 End AuxRel.
 
-Definition injective {A B} (f: A -> B) := forall x y: A, f(x) = f(y) -> x = y.
+Definition injective {A B} (f: A -> B) :=
+  forall (x y : A) (EQ : f(x) = f(y)),
+    x = y.
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
@@ -26,7 +28,6 @@ Hint Unfold eq_class_rel : unfolderDb.
 Section Props.
 
 Variables A B : Type.
-(* Variable cond : A -> Prop. *)
 Variable f g : A -> B.
 Variable a : A.
 Variable b : B.
@@ -51,9 +52,8 @@ Proof.
   splits; eauto.
 Qed.
 
-Lemma collect_rel_seq
-  (INJ: injective f) : 
-  (f ∘ (r ;; r') ≡ (f ∘ r) ;; (f ∘ r')).
+Lemma collect_rel_seq (INJ: injective f) : 
+  f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
 Proof.
   autounfold with unfolderDb.
   split; ins; desf; eauto.
@@ -61,11 +61,8 @@ Proof.
   apply INJ in H1. desf.
 Qed.
 
-Lemma eqv_rel_union : <| s ∪₁ s' |> ≡ <| s |> ∪ <| s' |>.
-Proof. clear. admit. 
-Admitted.
-
-Lemma set_collect_restr : f ∘₁ s ≡₁ g ∘₁ s -> f ∘ (restr_rel s r) ≡ g ∘ (restr_rel s r).
+Lemma set_collect_restr (HH : f ∘₁ s ≡₁ g ∘₁ s) :
+  f ∘ (restr_rel s r) ≡ g ∘ (restr_rel s r).
 Proof. clear. admit. 
 Admitted.
 

@@ -45,7 +45,7 @@ Section SimRel.
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
       fp_labEq : Slab e' = Glab e;
-      fp_covsb : Ssb ;; <| eq e' |> ⊆ (f ∘ <| C |>) ;; Ssb; 
+      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ (f ∘ ⦗ C ⦘) ⨾ Ssb; 
       fp_imgrf : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
@@ -66,7 +66,7 @@ Proof.
     apply NISS. apply ISSEQ. by right. }
 
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
-  { admit. } 
+  { by rewrite set_collect_updo. } 
 
   destruct FP.
   set (SRC' := SRC).
@@ -94,14 +94,13 @@ Proof.
     apply inclusion_union_l.
     { rewrite sbPrcl; eauto. by unionR left. }
     apply inclusion_union_r1_search.
-    rewrite <- set_collect_eqv.
-    apply fp_covsb0. }
+      by rewrite <- set_collect_eqv. }
   (* sbF *)
   { repeat rewrite collect_rel_seq.
     {
       repeat rewrite set_collect_eqv.
       repeat rewrite set_collect_union.
-      repeat rewrite eqv_rel_union.
+      repeat rewrite id_union.
       repeat rewrite seq_union_l.
       repeat rewrite seq_union_r.
       split.
