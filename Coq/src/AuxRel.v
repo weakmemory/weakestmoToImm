@@ -14,8 +14,8 @@ Section AuxRel.
     
 End AuxRel.
 
-Definition injective {A B} (f: A -> B) :=
-  forall (x y : A) (EQ : f(x) = f(y)),
+Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
+  forall (x y : A) (SX : s y) (EQ : f x = f y),
     x = y.
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
@@ -52,18 +52,31 @@ Proof.
   splits; eauto.
 Qed.
 
-Lemma collect_rel_seq (INJ: injective f) : 
+Lemma collect_rel_seq
+      (INJ : inj_dom (codom_rel r) f) : 
   f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
 Proof.
   autounfold with unfolderDb.
   split; ins; desf; eauto.
   all: repeat eexists; eauto.
-  apply INJ in H1. desf.
+  apply INJ in H1; desf.
+  red. eauto.
 Qed.
 
-Lemma set_collect_restr (HH : f ∘₁ s ≡₁ g ∘₁ s) :
+Lemma set_collect_restr (INJ: inj_dom s f) :
+  f ∘ (restr_rel s r) ≡ restr_rel (f ∘₁ s) (f ∘ r).
+Proof.
+  autounfold with unfolderDb.
+  splits; ins; desf; splits; eauto.
+  assert (x' = y1) by (apply INJ; auto). subst.
+  assert (y' = y0) by (apply INJ; auto). subst.
+  eexists. eexists.
+  splits; eauto.
+Qed.
+
+Lemma set_collect_restr_eq (HH : f ∘₁ s ≡₁ g ∘₁ s) :
   f ∘ (restr_rel s r) ≡ g ∘ (restr_rel s r).
-Proof. clear. admit. 
+Proof.
 Admitted.
 
 End Props.
