@@ -639,12 +639,12 @@
 \end{proof}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $f$ and $\execs$
-  s.t. $\execs \vdash G$,
+  Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
+  s.t. $\Execs{\Prog} \vdash G$,
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
   there exists $e$ s.t. $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$ then
   there exists $\hat{e}, S', f'$ such that
-  $\execs \vdash S \esstep{\hat{e}} S'$
+  $\Execs \vdash S \esstep{\hat{e}} S'$
   and $\simRb(S', G, \tup{C \uplus \{e\}, I}, f')$ holds.
 \end{lemma}
 
@@ -711,129 +711,10 @@
   %% \end{itemize}
 \end{proof}
 
-%% \begin{lemma}
-%%   Given $S$, $G$, $\tup{C, I}$, $s$, $t$
-%%   if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and
-%%   $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$ then
-%%   there exists $S', s', t'$ such that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
-%% \end{lemma}
-
-%% \begin{proof}
-%%   Let $i = \lTID(e)$, $c = \front(C, i)$.
-%%   Consider there exists $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$
-%%   (that is \ref{item:frwd-front} holds for $\hat{e}$).
-%%   From \ref{item:sim-ts-id} and \ref{item:sim-po-imm}
-%%   follows that $\tup{c, t(\hat{e})} \in G.\lPO$.
-%%   Because of that and the fact that $e \in \nextset(G, C, I)$
-%%   we can conclude that $t(\hat{e}) = e$,
-%%   and since $G \vdash \tup{C, I} \rightarrow \tup{C \uplus \{e\}, I}$
-%%   also \ref{item:frwd-coverable} holds.
-  
-%%   Next, let us consider different subcases.  
-
-%%   \begin{itemize}
-%%     \item $e \in G.\lW \cup G.\lF$ \\
-%%       Then from \ref{item:sim-lab-wf} follows \ref{item:frwd-descr}.
-%%       Since $\hat{e}$ is not a read event, there is no incoming $S.\lRF$ edges
-%%       and thus \ref{item:frwd-rf} holds.
-%%       Let $s' = s[e \mapsto \hat{e}]$.
-%%       Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
-%%       To sum up, we have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
-%%       If $\simRb(S, G, \tup{C, I}, s', t)$ holds then 
-%%       we can apply Lemma \ref{lemma:sim-forward}
-%%       and thus show that $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t)$ holds.
-%%       We know that $e \in \nextset(G, C, I)$ and thus $e \not\in C$ and $s'_{|C} = s_{|C}$.
-%%       If $e \in G.\lF$ then $e \not\in I$ by the definition,
-%%       and thus also $s'_{|I} = s_{|I}$.
-%%       If $e \in G.\lW$ then by the definition of coverable event follows that $e \in I$.
-%%       In this case $s'_{|I \setminus \{e\}} = s_{|I \setminus \{e\}}$
-%%       Then it is easy to see that for $\simRb(S, G, \tup{C, I}, s', t)$
-%%       all items except \ref{item:sim-lab} and \ref{item:sim-rf} holds.
-%%       If $e \not\in I$ then this two items also holds trivially.
-%%       Otherwise $e \in I$ and we have to prove that
-%%       \ref{item:sim-lab} and \ref{item:sim-rf} hold.
-%%       \ref{item:sim-lab} follows from the \ref{item:frwd-descr}.
-%%       Next, consider $s(e)$ and $s'(e)$. We know that $t(s(e)) = t(s'(e)) = e$
-%%       and thus from \ref{item:sim-ew} follows that $\tup{s(e), s'(e)} \in S.\lEW$.
-%%       This leads to 
-%%       $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
-%%       and thus \ref{item:sim-rf} holds.
-      
-%%     \item $e \in G.\lR$ and \ref{item:frwd-descr}, \ref{item:frwd-rf} hold for $\hat{e}$. \\
-%%       Let $s' = s[e \mapsto \hat{e}]$.
-%%       Giving that \ref{item:frwd-dom-s} and \ref{item:frwd-ts-id} hold.
-%%       We have shown that $e \in \forward(S, G, \tup{C, I}, s', t)$.
-%%       It is easy to see that $s'_{|C \cup I} = s_{|C \cup I}$
-%%       (since $e \not\in C \cup I$) and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds.
-%%       By Lemma \ref{lemma:sim-forward} $\simRb(S, G, \tup{C \uplus \{e\}, I}, s', t)$ holds.
-      
-%%       Then $\hat{e} \in \forward(S, G, \tup{C, I}, s, t)$.
-%%       We can apply Lemma \ref{lemma:sim-forward}
-%%       and thus $\simRb(S, G, \tup{C, I}, s', t)$ holds.
-
-%%     \item $e \in G.\lR$ and either \ref{item:frwd-descr} or \ref{item:frwd-rf}
-%%       does not hold for $\hat{e}$. \\
-%%       This case is similar to the case when there is no
-%%       $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$,
-%%       that we will consider next.
-%%       \note{perhaps, we need a separate proof for this case}.
-%%   \end{itemize}
-  
-%%   Now, let us suppose that there is no $\hat{e}$ s.t. $\tup{s(c), \hat{e}} \in S.\lPO_{imm}$.
-  
-%%   Let $G \vdash (s, t, S) \ESstep{e} (s', t', S')$.
-%%   If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
-%%   $\hat{e} \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
-%%   it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
-
-%%   First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
-
-%%   \begin{itemize}
-
-%%   \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
-
-%%   \item \ref{item:sim-ts-id}-\ref{item:sim-lab-wf} follows trivially from [BASIC-STEP].
-
-%%   \item \ref{item:sim-cf}-\ref{item:sim-po} holds, because
-%%     $e \in \nextset(G, C, I)$,
-%%     %(thus $e \not\in C$ and $\forall{a \in C}~.~\tup{a, e} \in G.\lPO$),
-%%     $s'_{|C} = s_{|C}$ and $\simRb(S, G, \tup{C, I}, s, t)$.
-
-%%   \item \ref{item:sim-po-imm} holds, because we have added to $S$
-%%     one single $\lPO_{imm}$ edge, that is $\tup{s(c), \hat{e}}$.
-%%     We also know that $t(\hat{e}) = e$ and since $e \in \nextset(G, C, I)$
-%%     there is a corresponding $\lPO_{imm}$ edge in $G$ ($\tup{c, e} \in G.\lPO_{imm}$).
-
-%%   \item \ref{item:sim-rf} \\
-%%     If $e \not\in G.\lW$ then it holds trivially
-%%     (since in this case $s'_{|C \cup I} = s_{|C \cup I}$).
-%%     Otherwise consider $s(e)$ and $s'(e)$.
-%%     From [WRITE-STEP] we know that $\tup{s(e), s'(e)} \in S.\lEW$.
-%%     This leads to 
-%%     $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
-%%     and thus \ref{item:sim-rf} holds.
-
-%%   \item \ref{item:sim-ew} \\
-%%     If $e \not\in G.\lW$ then it holds trivially.
-%%     Otherwise, from \ref{item:sim-ew} of $\simRb(S, G, \tup{C, I}, s, t)$ we know that
-%%     $\forall{\hat{w_1}, \hat{w_2} \in S.\lW} ~.~ t(\hat{w_1}) = t(\hat{w_2}) = e
-%%     \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$.
-%%     Also, we know that $e \in I$ (because $e \in G.\lW \cap \coverable(G, C, I)$)
-%%     and thus $t(s(e)) = e$.
-%%     From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
-%%     $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
-%%     That means \ref{item:sim-ew} holds.
-      
-  
-%%   \end{itemize}
-  
-  
-%% \end{proof}
-
-\subsection{Weak simulation}
+\subsubsection{Weak simulation}
 
 \begin{definition}
-  Relation $\simRw(S, G, \tup{C, I}, s, t, \lPC)$, that binds an 
+  Relation $\simRw(S, G, \tup{C, I}, f, F)$, that binds an 
   event structure $S$, an \imm execution graph $G$,
   a traversal configuration $\tup{C, I}$,
   a source $s : G.\lE \fun S.\lE$ and target $t : S.\lE \fun G.\lE$ event mappings,
@@ -853,7 +734,6 @@
   \end{enumerate}
 \end{definition}
 
-
 \begin{lemma}
   Given $\lES$, $G$, $\tup{\lC, I}$, $s$, $t$ and $\lPC$
   if the relation $\simRw(S, G, \tup{\lC, I}, s, t, \lPC)$ holds and 
@@ -864,294 +744,46 @@
 \end{lemma}
 
 \begin{proof}
-  Note that $\lPC$ 
-  
-  First, suppose that 
-  $G \vdash \tup{\lC, I} \rightarrow \tup{\lC \uplus \{e\}, I}$ for some $e$.
-  Let $i = G.\lTID(e)$.
-  If there exists $\hat{e} \in S$ s.t. $S.\lLAB(\hat{e}) = G.\lLAB(e)$ and 
-  $\tup{s(\front(C, i)), \hat{e}} \in S.\lPO_{imm}$
-  then the premises of Lemma \ref{lemma:sim-basic} are met and we can apply it.
-  From Lemma \ref{lemma:sim-basic} follows that $\simRb(S, G, \tup{C', I}, s')$,
-  where $s' = s[e \mapsto \hat{e}]$ holds.
-  Let $t' = t$.
-  Obviously \ref{item:sim-pc}-\ref{item:sim-po-imm} holds,
-  because neither $S$, nor $t$ nor $\lPC$ was modified. 
-  We need to show that \ref{item:sim-jf}-\ref{item:sim-vis-weak} holds.
-  Let us consider different subcases:
-  \begin{itemize}
-  \item $e \in G.\lW$.
-    \begin{itemize}
 
-    \item \ref{item:sim-jf} \\
-
-    \item \ref{item:sim-rf} \\
-      We need to show that
-      $\forall{\tup{w, r} \in [I];G.\lRF;[\lC \uplus\{e\}]} ~.~
-      \tup{s(w), s(r)} \in \lES.\lJF
-      $.
-      
-      $\tup{w, r} \in [I];G.\lRF;[\lC \uplus\{e\}] \iff
-      \tup{w, r} \in [I];G.\lRF;[\lC] \cup  [I];G.\lRF;[e]
-      $.
-      
-      For the first subset it follows from the $\simRw(S, G, \tup{\lC, I}, s, t, \lPC)$,
-      the second subset is empty, since $e \in G.\lW$
-
-    \item \ref{item:sim-mo} \\
-      Since $e$ is a coverable write, it should be issued, that is $e \in I$.
-      From that follows $e \in \dom{s}$.
-      It is sufficient to show then that $\forall{w \in I} ~.~ s'(w) = s(w)$.
-      Since $s' = s[e \mapsto \hat{e}]$ we only have to show that $s'(e) = s(e) = \hat{e}$.
-      
-      
-      %% $\tup{s(\front(C, i)), \hat{e}} \in S.\lPO_{imm}$ by \ref{item:sim-po-imm}
-      %% we have $\tup{\front(C, i), e} \in G.\lPO_{imm}$ and as we 
-      
-      
-      %% Since $s' = s[e \mapsto \hat{e}]$ it sufficient to show that $s'(e) = s(e)$.
-      %% Since $e$ is a coverable write, it should be issued, that is $e \in \issued(G, C, I)$.
-      %% From that follows $e \in \dom{s}$ and $G.\lLAB(e) = $
-      %% Holds trivially, since we did not modify $I$ on this step.
-
-    \item \ref{item:sim-vis-weak} \\
-      Let us show that $e \not\in \dom{G.\lPO^?;[\lPC(i)]}$.
-      By the definition of $e \in \nextset(G, C)$ $\tup{\front(C, i), e} \in G.\lPO_{imm}$.
-      By \ref{item:sim-pc} $\tup{\lPC(i), \front(C, i)} \in G.\lPO$.
-      Thus $\tup{\lPC(i), e} \in G.\lPO$ and \ref{item:sim-vis-weak} holds.
-
-    \end{itemize}
-
-  \item $e \in G.\lR$.
-    \begin{itemize}
-
-    \item \ref{item:sim-jf} \\
-      This property follows immediately from $\simRw(S, G, \tup{C, I}, s, t, \lPC)$
-      because $s' = s[e \mapsto \hat{e}]$ and $e \in S.\lR$.
-
-      \begin{equation*}
-        \begin{split}
-          & \forall{\tup{\hat{w}, \hat{r}} \in S.\lJF} ~.~
-            \exists{w' \in I} ~.~ \tup{s'(w'), \hat{r}} \in S.\lJF \iff \\
-          & \iff \forall{\tup{\hat{w}, \hat{r}} \in S.\lJF} ~.~
-            \exists{w' \in I} ~.~ \tup{s(w'), \hat{r}} \in S.\lJF
-        \end{split}
-      \end{equation*}
-
-    \end{itemize}  
-    
-  \end{itemize}
-  
-  
-  %% Let us consider different cases:
-  %% \begin{itemize}
-  %% \item $e \in G.\lW$. \\
-  %%   Note that, from the definition of $\coverable$ follows that $e \in I$.
-  %%   In this case we say that $\lES' = \lES$ and $\lM' = \lM$.
-  %%   We need to show that \ref{item:sim-lab} - \ref{item:sim-vis}
-  %%   holds for $\lES$, $G$, $\tup{\lC \uplus \{e\}, I}$, $\lM$.
-  %%   \begin{itemize}
-  %%   \item \ref{item:sim-lab} \\
-  %%     From the \ref{item:sim-lab} of $\simRb(\lES, G, \tup{\lC, I}, \lM)$
-  %%     and $e \in I$ follows that $G.\lLAB(e) = \lES.\lLAB(\lM(e))$
-  %%   \item \ref{item:sim-cf} \\
-      
-  %%   \item \ref{item:sim-po-prfx} \\
-
-  %%   \item \ref{item:sim-po} \\
-
-  %%   \item \ref{item:sim-rf} \\
-  %%     Since $e \in G.\lW$ there is no incoming $G.\lRF$ edges into $e$.
-  %%     Thus the property follows trivially from the $\simRb(\lES, G, \tup{\lC, I}, \lM)$.
-
-  %%   \item \ref{item:sim-mo} \\
-  %%     As we did not modify $I$ on this step the property trivially follows
-  %%     from the $\simRb(\lES, G, \tup{\lC, I}, \lM)$.
-
-  %%   \item \ref{item:sim-vis} \\
-      
-      
-  %%   \end{itemize}
-    
-
-    
-
-  %% \end{itemize}
- 
 \end{proof}
 
-%% \begin{proof}                   
+\subsubsection{Simulation}
+
+\begin{definition}
+  Given $S$, $G$, $\tup{C, I}$, $f$ a relation $\simR(S, G, \tup{C, I}, f)$ holds
+  whenever $\simRb(S, G, \tup{C, I}, f)$ holds and additionally
+  the following conditions are met:
+  \begin{enumerate}[label=\textbf{S.\arabic*},start=7]
+    \item \label{item:sim-vis}
+       $f(C \cup I) \subseteq \lVIS(S)$
+  \end{enumerate}
+\end{definition}
+
+\begin{lemma}
+  Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
+  s.t. $G \vdash \Execs{\Prog}$,
+  if the relation $\simR(S, G, \tup{C, I}, f)$ holds
+  and there exists $e$ s.t. $G \vdash \tup{C, I} \trstep \tup{C', I'}$
+  then there exists $S'$ and $f'$ s.t.
+  $\Execs{\Prog} \vdash S \esstepstar S'$ and
+  $\simR(S, G, \tup{C, I}, f)$ holds.
+\end{lemma}
+
+\begin{proof}
   
-  %% Note, that according to rules of traversal step relation (fig.~\ref{fig:traversal-rules})
-  %% the traversal adds one covered or one issued event at one step.
-  %% In order to build an updated event mappings $\lMC'$, $\lMI'$ 
-  %% and event structure $\lES'$ 
-  %% when traversing a new event $e$ in the configuration $\tup{\lC, \lI}$
-  %% we will define simulation step relation 
-  %% $\tup{\lMC, \lMI, \lES} \xrightarrow{G, \lC, \lI, e} \tup{\lMC', \lMI', \lES'}$.
-  %% Simulation step relation is defined according to rules in fig.~\ref{fig:simrules}.
-  %% Auxiliary relation 
-  %% $(\lM, \lES_{base}) \xRightarrow{G, e} (\lM', \lES'_{base})$,
-  %% called basic simulation step, 
-  %% is used to update event mapping and some components of event structure
-  %% (fig.~\ref{fig:simrules-base}).
-  %% Our goal then is to prove that $\simR(\lES', G, \tup{\lC', \lI'})$ holds.
-  %% Again, as the traversal adds one covered or one issued event at one step,
-  %% we basically need to show that \ref{item:sim-lab}-\ref{item:sim-mo} hold
-  %% for that added event.
+\end{proof}
 
-  %% First, suppose that 
-  %% $G \vdash \tup{\lC, \lI} \rightarrow \tup{\lC \uplus \{e\}, \lI}$ for some $e$.
-  %% In this case we use basic construction step (fig.~\ref{fig:esstep-base})
-  %% in order to build updated mapping $\lM'$ as well as
-  %% updated components of event structure: $\lES', \lTID', \lLAB', \lMOD'$,
-  %% and updated program order relation $\lPO'$.
-  %% Giving that we already can prove
-  %% \ref{item:sim-lab}, \ref{item:sim-cf} and \ref{item:sim-po}.
+\begin{lemma}
+  Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
+  s.t. $\Execs{\Prog} \vdash G$ and $\simR(S, G, \tup{C, I}, f)$ hold
+  then there exists $G^{\cert} \in \certify(\Execs{\Prog}, G, C, I)$ s.t.
+  $S \rhd G^{\cert}$ holds.
+\end{lemma}
 
-  %% \begin{itemize}
-  %% \item \ref{item:sim-lab}
-  %%   \begin{equation}
-  %%     \begin{split}
-  %%       & \forall{a \in (\lC \uplus \{e\}) \cup \lI} ~.~ G.\lLAB(a) = \lES.\lLAB(\lM(a)) \iff \\
-  %%       & \forall{a \in \lC \cup \lI} ~.~ G.\lLAB(a) = \lES.\lLAB(\lM(a)) \wedge
-  %%       G.\lLAB(e) = \lES.\lLAB(\lM(e))
-  %%     \end{split}
-  %%   \end{equation}
-  %%   First conjunct follows from the $\simR(\lES, G, \tup{\lC, \lI}, \lM)$;
-  %%   second conjunct follows from the definition of basic event structure construction step.
-
-  %% \item \ref{item:sim-cf} \\
-  %%   We need to show that
-  %%   $\forall{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \not\in \lES'.\lCF$.
-  %%   Assume it is not true, that is
-  %%   $\exists{a, b \in \lC \uplus \{e\}} ~.~ \tup{\lM'(a), \lM'(b)} \in \lES'.\lCF$.
-  %%   Giving that $\simR(\lES, G, \tup{\lC, \lI}, \lM)$ holds,
-  %%   we can conclude that $a = e \vee b = e$.
-  %%   Let us say $a = e$ and $c = \lca(\lM'(e), \lM'(b))$.
-  %%   From the definition of [BASIC-STEP] and 
-  %%   $\tup{\lM'(c), \lM'(e)} \in \lES'.\lPO$ follows that $\tup{c, e} \in G.\lPO$.
-  %%   From the definition of $\coverable$ we know that $\dom{G.\lPO;[e]} \subseteq \lC$;
-  %%   giving that and $\tup{c, e} \in G.\lPO$ we can conclude that $c \in \lC$.
-  %%   \note{Next, show that $\tup{c, b} \in G.\lPO$ and using the fact that
-  %%     $G.\lPO$ is total order on events from same thread show a contradiction.
-  %%     BTW We need additional condition for $\lPO$ in simulation relation.
-  %%   }
-    
-    
-    
-  %% \end{itemize}
+\begin{proof}
   
-  %% \ref{item:sim-lab} follows trivially from the definition of basic construction step.
-  %% \ref{item:sim-cf} 
+\end{proof}
   
-  
-  %% \ref{item:sim-lab} follow from the definition of the basic simulation step.
-  %% In order to prove other properties of simulation relation,
-  %% we have to consider different cases.
-  
-
-  %% \begin{itemize}
-  %% \item
-  %%   $e$ is a non-sc fence event, that is $e \in G.\lF^{\sqsubset\sco}$.
-  %%   In this case we use [ADD-FENCE] rule in order to build $\lES'$ and $\lM'$.
-  %%   \ref{item:sim-lab} follows from the definition of the basic simulation step.
-  %%   \ref{item:sim-cf} 
-    
-  %%     \ref{item:sim-po} follows from the $\simR(\lES, G, \tup{\lC, \lI})$ 
-  %%     and the definition of $\coverable$.
-  %%     \ref{item:sim-ew} follows from the fact that
-  %%     we did not modify the set of covered writes on this step.
-  %%     As fences do not contribute neither to the $\lRF$ relation, neither to the $\lMO$, 
-  %%     \ref{item:sim-rf}, and \ref{item:sim-mo} follows immediately.
-  %%     Since $e$ is a fence event, $\hat{e}$ cannot have incoming $\lRF$ edges,
-  %%     and thus for any conflicting write $\hat{w}$ that $\hat{e}$ depend on
-  %%     the last edge in a $\lPO \cup \lRF$ dependency path is a $\lPO$ edge.
-  %%     But since $\simR(\lES, G, \lC, \lI)$ holds we know that 
-  %%     any $\lPO$-predcessor of $\hat{e}$ is visible, and thus $\hat{e}$ is also visible.
-  %%     We have proven \ref{item:sim-vis}.
-
-  %%   \item $e$ is a write event, that is $e \in G.\lW$.
-  %%     \ref{item:sim-po} and \ref{item:sim-vis} can be proven similarly 
-  %%     to the case when $e$ is a non-sc fence.
-  %%     Since $e$ is a write, it cannot have any incoming $\lRF$ edges and thus
-  %%     the \ref{item:sim-rf} follows directly from 
-  %%     the fact that $\simR(\lES, G, \tup{\lC, \lI})$ holds.
-  %%     \ref{item:sim-ew} and \ref{item:sim-mo} follow from the construction
-  %%     of $\lEW'$ and $\lMO'$ in (COVER-WRITE) rule.
-  
-      %% To prove \ref{item:sim-rf-c} consider a read $r \in \lC$ that reads from $e$,
-      %% that is $\tup{e, r} \in G.\lRF$.
-      %% From the definition of $\coverable$ we know that $e \in I$,
-      %% and thus $\tup{e, r} \in [\lI];G.\lRF;[\lC]$.
-      %% Then from \ref{item:sim-rf-i} we can conclude that $\tup{\lMI(e), \lMC(r)} \in \lES.\lRF$.
-      %% According to (COVER-WRITE) rule\footnote{\note{ask Anton how to make reference to rules}}
-      %% $\tup{\hat{e}, \lMI(e)} \in \lEW'$
-      %% and thus $\tup{\hat{e}, \lMC(r)} \in \lES'.\lJF$.
-      
-    %% \item $e$ is a read event, that is $e \in G.\lR$.
-    %%   Again \ref{item:sim-po} can be proven similarly to the previous cases.
-    %%   \ref{item:sim-ew} follows from the fact that
-    %%   we did not modify the set of covered writes on this step.
-    %%   \ref{item:sim-mo} holds because read events do not contribute to the $\lMO$.
-    %%   From the definition of $\coverable$ we know that for write $w \in G.\lW$
-    %%   that $e$ read from, that is $\tup{w, e} \in G.\lRF$, $w \in I$.
-    %%   From that and the (COVER-READ) rule we can conclude that \ref{item:sim-rf} holds.
-    %%   \note{further go my speculations}.
-    %%   As for \ref{item:sim-vis} note that after we added $e$ into $\lC$,
-    %%   new conflicting writes that $e$ depends on may appear.
-    %%   Unlike the cases when $e$ is a write or a fence,
-    %%   the last edge in a dependency path not necessary a $\lPO$ edge,
-    %%   it might be an $\lRFE$ edge.
-    %%   That is, we might have events $w, w'$, such that
-    %%   $\tup{w, w'} \in (\lPO \cup \lRF)^+$,
-    %%   $\tup{w', e} \in \lRFE$ and $\tup{w, e} \in \lCF$.
-    %%   If $w$ not covered, that is $w \in \lI \setminus \lC$,
-    %%   then we can conclude that $\tup{e, w} \in \lPO$ in execution graph,
-    %%   that is the read $e$ reads from a write that depends on some promised write
-    %%   from the same thread.
-    %%   In order to support invariant \ref{item:sim-vis} we have to
-    %%   cover all events up to $w$ at this step.
-    %%   Alternatively we can give up on maintaining this property
-    %%   and use Lemma \ref{lemma:2} instead.
-
-
-%    \item $e \in G.\lF^{\sco} \wedge \dom{G.\lSC;[e]} \subseteq \lC$
-
-  %%   \end{itemize}
-%% \end{proof}
-
-%% \begin{lemma}
-%%   \label{lemma:2}
-%%   Given an event structure $\lES$, an \imm execution graph $G$ 
-%%   and its traversal configuration $\tup{\lC, \lI}$
-%%   if the relation $\simR(\lES, G, \tup{\lC, \lI})$ holds
-%%   then for any covered event $e \in \lC$ and any
-%%   write from its masking set $w \in \lMASK(G, \hat{e})$
-%%   there exist $\lES', \lC', \lI'$ such that
-%%   $G \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$, 
-%%   $\simR(\lES', G, \tup{\lC', \lI'})$
-%%   and $\tup{w, \hat{e}} \in \lES'.\lEW;\lES'.\lPO^=$.
-%%   \note{Probably, $\lI = \lI'$ ?}
-%% \end{lemma}
-
-%% \begin{lemma}
-%%   \label{lemma:3}
-%%   Given an event structure $\lES$, an \imm execution graph $G$ 
-%%   and its traversal configuration $\tup{\lC, \lI}$
-%%   if the relation $\simR(\lES, G, \tup{\lC, \lI})$ holds
-%%   then there exists $\lES', \lC', \lI'$ and event structure execution $\lE$ such that
-%%   $G \vdash \tup{\lC, \lI} \rightarrow^* \tup{\lC', \lI'}$
-%%   and $\lE$ satisfies the following conditions.
-%%   \begin{itemize}
-%%   \item $\lE.\lE = \lMC(C')$
-%%   \item $\lE.\lPO = \lMC([\lC'];G.\lPO;[\lC'])$
-%%   \item $\lE.\lRMW = \lMC([\lC'];G.\lRMW;[\lC'])$
-%%   \item $\lE.\lRF = \lMC([\lC'];G.\lRF;[\lC'])$
-%%   \item $\lE.\lMO = \lMC([\lC'];G.\lMO;[\lC'])$    
-%%   \end{itemize}
-%% \end{lemma}
-
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
 \bibliographystyle{acm}
 \bibliography{main.bib}
