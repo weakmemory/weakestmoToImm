@@ -33,6 +33,85 @@
 {\center \LARGE Compiling Event Structures to the Intermediate Memory Model }
 \end{center}
 
+%% \begin{definition}
+%%   \label{def:exec}
+  
+%%   An execution graph $X$ is a tuple $\tup{\lE, \lLAB, \lRF, \lMO}$ where:
+%%   \begin{itemize}
+
+%%   \item $\lE$ is a set of events. 
+%%     Execution events have different representation comparing to the event structure events. 
+%%     That is, an event is either:
+%%     \begin{itemize}
+%%       \item an \emph{initialization} event $\tup{\lINIT~x}$ where $x \in \Loc$;
+%%       \item a \emph{non-initialization} event $\tup{i, n}$ where $i \in \Tid$ and $n \in \Q$.
+%%     \end{itemize}
+%%     Given this representation one could derive the following notions:
+%%     \begin{itemize}
+
+%%       \item $\lEo \defeq \{e \in E ~|~ \exists{x} \in \Loc ~.~ e = \tup{\lINIT~x}\}$;
+
+%%       \item $\lTID : \lX \fun \Tid$ s.t. \\
+%%         \begin{equation*}
+%%           \begin{split}
+%%             \forall{e} ~.~
+%%             & (\exists{x \in \Loc} ~.~ e = \tup{\lINIT~x} \Rightarrow \lTID(e) = 0) \wedge \\ \wedge
+%%             & (\exists{i \in \Tid, n \in \N} ~.~ e = \tup{i, n} \Rightarrow \lTID(e) = i)
+%%           \end{split}
+%%         \end{equation*}
+        
+%%       \item $\lPO \subseteq \lE \times \lE$ s.t. \\
+%%         \begin{equation*}
+%%           \begin{split}
+%%             & \tup{e_1, e_2} \in \lPO \Leftrightarrow \\
+%%             & \Leftrightarrow (e_1 \in \lEo \wedge e_2 \not\in \lEo) \vee 
+%%               (e_1, e_2 \not\in \lEo \wedge \lTID(e_1) = \lTID(e_2) \wedge
+%%               \lSN(e_1) < \lSN(e_2))
+%%           \end{split}
+%%         \end{equation*}
+%%         where $\lSN(\tup{i, n}) = n$.
+
+%%         Note that $\lPO$ totally orders all events within a thread.
+%%     \end{itemize}
+
+%%   \end{itemize}
+%% \end{definition}
+
+%% \begin{definition}
+%%   Given an event structure $S$ we will a call an execution graph $X$
+%%   extracted from $S$, denoted as $S \rhd X$,
+%%   if there exists a function $s : X.\lE \fun S.\lE$, called \emph{source event mapping},
+%%   such that the following conditions are met.
+%%   \begin{itemize}
+%%     \item $s(X.\lE) \subseteq \lVIS(S)$;
+%%     \item $[s(X.\lE)];S.\lCF;[s(X.\lE)] = \emptyset$;
+%%     \item $S.\lPO;[s(X.\lE)] \subseteq s(X.\lE) \times s(X.\lE)$;
+%%     \item $\forall{\tup{e, e'}} \in [s(X.\lE)];S.\lPO;[S.\lE \setminus s(X.\lE)] ~.~ 
+%%       \exists{e''} \in s(X.\lE) ~.~ \tup{e', e''} \in S.\lCF$;
+%%     \item $X.\lPO = [s(X.\lE)];S.\lPO;[s(X.\lE)]$;
+%%     \item $X.\lRMW = [s(X.\lE)];S.\lRMW;[s(X.\lE)]$;
+%%     \item $X.\lRF = [s(X.\lE)];S.\lRF;[s(X.\lE)]$;
+%%     \item $X.\lMO = [s(X.\lE)];S.\lMO;[s(X.\lE)]$;
+%%   \end{itemize}
+%% \end{definition}
+
+%% \begin{definition}
+%%   We will call an execution graph $X$ \emph{consistent} if the following properties hold:
+%%   \begin{itemize}
+%%     \item $X.\lMO^= = [X.\lW];=_{\lLOC};[X.\lW]$
+%%     \item $X.\lRMW \cap (X.\lRB;X.\lMO) = \emptyset$
+%%     \item $X.\lHB;X.\lECO^?$ is irreflexive.
+%%   \end{itemize}
+%% \end{definition}
+
+%% \begin{definition}
+%%   A function $O : \Loc \fun \Val$ is an \emph{outcome} 
+%%   of a consistent execution graph $X$
+%%   if for every $x \in \Loc$ either $O(x) = X.\lVALW(w)$ 
+%%   for some $X.\lMO$-maximal write event $w$, 
+%%   or $O(x) = 0$ and $X.\lW_x = \emptyset$.
+%% \end{definition}
+
 \section{Event Structure Model}
 
 \begin{definition}
@@ -395,111 +474,65 @@
   An pair of events $\tup{e, \hat{e}}$ where $e \in G.\lE$ and $\hat{e} \in S.\lE$
   is a \emph{forwarding pair} in
   the traversal configuration $\tup{C, I}$ of the \imm execution graph $G$,
-  denoted as $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, s)$, if the following is true:
+  denoted as $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$, if the following is true:
   \begin{enumerate}[label=\textbf{F.\arabic*}]
 
     \item \label{item:frwd-coverable}
       $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$;
-
-    \item \label{item:frwd-front}
-      $s(\front(C) \cap G.\lEi{\lTID(e)}) \times \{\hat{e}\} \subseteq S.\lPO_{imm}$;
-      
+     
     \item \label{item:frwd-lab}
       $G.\lLAB(e) = S.\lLAB(\hat{e})$;
 
+    \item \label{item:frwd-front}
+      $S.\lPO;[\hat{e}] \subseteq [f(C)];S.\lPO$
+
     \item \label{item:frwd-rf}
-      $\forall{w \in G.\lW} ~.~ \tup{w, e} \in G.\lRF \Rightarrow \tup{s(w), \hat{e}} \in S.\lRF$.
+      $\forall{w \in G.\lW} ~.~ \tup{w, e} \in G.\lRF \Rightarrow \tup{f(w), \hat{e}} \in S.\lRF$.
 
   \end{enumerate}
 \end{definition}
 
 \begin{definition}
-  Relation $\simRb(S, G, \tup{C, I}, s)$, that binds an 
+  Relation $\simRb(S, G, \tup{C, I}, f)$, that binds an 
   event structure $S$, an \imm execution graph $G$,
-  a traversal configuration $\tup{C, I}$,
-  a source $s : G.\lE \fun S.\lE$ 
+  a traversal configuration $\tup{C, I}$
+  and an event mapping $f : G.\lE \fun S.\lE$ 
   holds if the following conditions are met:
   \begin{enumerate}[label=\textbf{S.\arabic*}]
 
   \item \label{item:sim-lab}
-    $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(s(e))$;
+    $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(f(e))$;
 
   \item \label{item:sim-po-prfx} 
-    $S.\lPO;[s(C)] \subseteq [s(C)];S.\lPO$;
+    $S.\lPO;[f(C)] \subseteq [f(C)];S.\lPO$;
 
   \item \label{item:sim-po}
-    $\forall{e_1, e_2 \in C} ~.~ \tup{e_1, e_2} \in G.\lPO \Leftrightarrow \tup{s(e_1), s(e_2)} \in S.\lPO$;
+    $f([C];G.\lPO;[C]) = [f(C)];S.\lPO;[f(C)]$;
     
   \item \label{item:sim-cf}
-    $\forall{e_1, e_2 \in C} ~.~ \tup{s(e_1), s(e_2)} \not\in S.\lCF$;
+    $[f(C)];S.\lCF;[f(C)] = \emptyset$;
 
-  \item \label{item:sim-rf} 
-    $\forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lRF$;
+  \item \label{item:sim-rf}
+    $f([I];G.\lRF;[C]) = [f(I)];S.\lRF;[f(C)]$;
 
-  \item \label{item:sim-jf}
-    $\forall{\tup{\hat{w}, \hat{r}} \in S.\lRF} ~.~ \exists{w' \in I} ~.~ \tup{s(w'), \hat{w}} \in S.\lEW$;
-
-    \item \label{item:sim-mo}
-      $\forall{\tup{w, w'} \in [I];G.\lMO;[I]} ~.~ \tup{s(w), s(w')} \in S.\lMO$;
-
+  \item \label{item:sim-mo}
+    $f([I];G.\lMO;[I]) = [f(I)];S.\lMO;[f(I)]$.
     
   \end{enumerate}
 \end{definition}
 
-%% \begin{prop}
-%%   If $\simRb(S, G, \tup{C, I}, s, t)$ holds and
-%%   there exists $\hat{w} \in S.\lW \cup S.\lF$ s.t.
-%%   $\tup{s(\front(C, i)), \hat{w}} \in S.\lPO_{imm}$,
-%%   where $i = S.\lTID(w)$
-%%   then there is no $\hat{e} \in S.\lE$ s.t.
-%%   $\tup{s(\front(C, i)), \hat{e}} \in S.\lPO_{imm}$.
-%% \end{prop}
-
 \begin{lemma}
   \label{lemma:sim-forward}
-  Given $S$, $G$, $\tup{C, I}$, $s$, $t$
-  if the relation $\simRb(S, G, \tup{C, I}, s, t)$ holds and 
-  there exists forwarding event $e \in \forward(S, G, \tup{C, I}, s, t)$
-  then $\simRb(S, G, \tup{C \uplus \{e\}, I}, s, t)$ holds. 
+  Given $S$, $G$, $\tup{C, I}$, $f$
+  if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and 
+  there exists forwarding pair $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$
+  then $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ holds. 
 \end{lemma}
 
 \begin{proof}
-  %% First, let us show that $s'_{|C \cup I} = s_{|C \cup I}$.
-  %% We will use that fact later in the proof.
-  %% By the definition $s' = s[t(\hat{e}) \mapsto \hat{e}]$.
-  %% Since $t(\hat{e}) \in \nextset(G, C, I)$ we know that $t(\hat{e}) \not\in C$.
-  %% Thus $s'_{|C} = s_{|C}$.
-  %% Suppose $t(\hat{e}) \in I$. Then by \ref{item:sim-st-id}
-  %% we know that $s(t(\hat{e})) = \hat{e}$ and thus $s'_{|I} = s_{|I}$.
-  
-  Let us prove that all conditions for $\simRb(S, G, \tup{C \uplus \{e\}, I}, s, t)$ are met.
+  Let us prove that all conditions for $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ are met.
+
   \begin{itemize}
-
-  \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
-
-  \item \ref{item:sim-ts-id} \\
-    \begin{equation*}
-      \begin{split}
-        & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ t(s(a)) = a \iff \\
-        & (\forall{a \in C \cup I} ~.~ t(s(a)) = a) \wedge t(s(e)) = e
-      \end{split}
-    \end{equation*}
-    First conjunct follows from $\simRb(S, G, \tup{C, I}, s, t)$.
-    Second conjunct follows from \ref{item:frwd-ts-id}.
-
-  %% \item \ref{item:sim-st-id} \\
-  %%   \begin{equation*}
-  %%     \begin{split}
-  %%       & \forall{\hat{a} \in S.\lE} ~.~ t(\hat{a}) \in (C \uplus \{e\}) \cup I \Rightarrow
-  %%         s(t(\hat{a})) = \hat{a} \iff \\
-  %%       & \iff
-  %%         \forall{\hat{a} \in S.\lE} ~.~ (t(\hat{a}) \in C \cup I \Rightarrow
-  %%           s(t(\hat{a})) = \hat{a}) \wedge
-  %%           (t(\hat{a}) = e \Rightarrow s(t(\hat{a})) = \hat{a}) 
-  %%     \end{split}
-  %%   \end{equation*}
-
-  %%   First conjunct follows from $\simRb(S, G, \tup{C, I}, s, t)$.
 
   \item \ref{item:sim-lab} \\
     \begin{equation}
@@ -512,9 +545,6 @@
     First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
     Second conjunct follows from the \ref{item:frwd-descr}.
 
-  \item \ref{item:sim-typ-tid} and \ref{item:sim-lab-wf}
-    follows trivially from $\simRb(S, G, \tup{C, I}, s, t)$.
-    
   \item \ref{item:sim-cf} \\
     We need to show that
     $\forall{a, b \in C \uplus \{e\}} ~.~ \tup{s(a), s(b)} \not\in S.\lCF$.
@@ -590,8 +620,6 @@
     $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[c]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$.
     The second conjunct follows directly from the later fact and the transitivity of $\lPO$.
 
-  \item \ref{item:sim-po-imm} follows trivially from $\simRb(S, G, \tup{C, I}, s, t)$.
-    
   \item \ref{item:sim-rf} \\
     
     \begin{equation*}
@@ -611,75 +639,76 @@
 \end{proof}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $s$
-  if the relation $\simRb(S, G, \tup{C, I}, s)$ holds and
+  Given $S$, $G$, $\tup{C, I}$, $f$ and $\execs$
+  s.t. $\execs \vdash G$,
+  if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
   there exists $e$ s.t. $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$ then
-  there exists $S', s'$ such that
-  $G \vdash (S, s, t) \ESstep{e} (S', s', t')$
-  and $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+  there exists $\hat{e}, S', f'$ such that
+  $\execs \vdash S \esstep{\hat{e}} S'$
+  and $\simRb(S', G, \tup{C \uplus \{e\}, I}, f')$ holds.
 \end{lemma}
 
 \begin{proof}
-  If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
-  $e \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
-  it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+  %% If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
+  %% $e \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
+  %% it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
 
-  First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
+  %% First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
 
-  \begin{itemize}
+  %% \begin{itemize}
 
-  \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
+  %% \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
 
-  \item \ref{item:sim-ts-id}-\ref{item:sim-lab-wf} follows trivially from [BASIC-STEP].
+  %% \item \ref{item:sim-ts-id}-\ref{item:sim-lab-wf} follows trivially from [BASIC-STEP].
 
-  \item \ref{item:sim-cf}-\ref{item:sim-po} holds, because
-    $e \in \nextset(G, C, I)$,
-    %(thus $e \not\in C$ and $\forall{a \in C}~.~\tup{a, e} \in G.\lPO$),
-    $s'_{|C} = s_{|C}$ and $\simRb(S, G, \tup{C, I}, s, t)$.
+  %% \item \ref{item:sim-cf}-\ref{item:sim-po} holds, because
+  %%   $e \in \nextset(G, C, I)$,
+  %%   %(thus $e \not\in C$ and $\forall{a \in C}~.~\tup{a, e} \in G.\lPO$),
+  %%   $s'_{|C} = s_{|C}$ and $\simRb(S, G, \tup{C, I}, s, t)$.
 
-  \item \ref{item:sim-po-imm} holds, because we have added to $S$
-    one single $\lPO_{imm}$ edge, that is $\tup{s(c), \hat{e}}$.
-    We also know that $t(\hat{e}) = e$ and since $e \in \nextset(G, C, I)$
-    there is a corresponding $\lPO_{imm}$ edge in $G$ ($\tup{c, e} \in G.\lPO_{imm}$).
+  %% \item \ref{item:sim-po-imm} holds, because we have added to $S$
+  %%   one single $\lPO_{imm}$ edge, that is $\tup{s(c), \hat{e}}$.
+  %%   We also know that $t(\hat{e}) = e$ and since $e \in \nextset(G, C, I)$
+  %%   there is a corresponding $\lPO_{imm}$ edge in $G$ ($\tup{c, e} \in G.\lPO_{imm}$).
 
-  \item \ref{item:sim-rf} \\
-    If $e \not\in G.\lW$ then it holds trivially
-    (since in this case $s'_{|C \cup I} = s_{|C \cup I}$).
-    Otherwise consider $s(e)$ and $s'(e)$.
-    From [WRITE-STEP] we know that $\tup{s(e), s'(e)} \in S.\lEW$.
-    This leads to 
-    $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
-    and thus \ref{item:sim-rf} holds.
+  %% \item \ref{item:sim-rf} \\
+  %%   If $e \not\in G.\lW$ then it holds trivially
+  %%   (since in this case $s'_{|C \cup I} = s_{|C \cup I}$).
+  %%   Otherwise consider $s(e)$ and $s'(e)$.
+  %%   From [WRITE-STEP] we know that $\tup{s(e), s'(e)} \in S.\lEW$.
+  %%   This leads to 
+  %%   $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
+  %%   and thus \ref{item:sim-rf} holds.
 
-  \item \ref{item:sim-ew} \\
-    If $e \not\in G.\lW$ then it holds trivially.
-    Otherwise, from \ref{item:sim-ew} of $\simRb(S, G, \tup{C, I}, s, t)$ we know that
-    $\forall{\hat{w_1}, \hat{w_2} \in S.\lW} ~.~ t(\hat{w_1}) = t(\hat{w_2}) = e
-    \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$.
-    Also, we know that $e \in I$ (because $e \in G.\lW \cap \coverable(G, C, I)$)
-    and thus $t(s(e)) = e$.
-    From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
-    $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
-    That means \ref{item:sim-ew} holds.
+  %% \item \ref{item:sim-ew} \\
+  %%   If $e \not\in G.\lW$ then it holds trivially.
+  %%   Otherwise, from \ref{item:sim-ew} of $\simRb(S, G, \tup{C, I}, s, t)$ we know that
+  %%   $\forall{\hat{w_1}, \hat{w_2} \in S.\lW} ~.~ t(\hat{w_1}) = t(\hat{w_2}) = e
+  %%   \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$.
+  %%   Also, we know that $e \in I$ (because $e \in G.\lW \cap \coverable(G, C, I)$)
+  %%   and thus $t(s(e)) = e$.
+  %%   From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
+  %%   $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
+  %%   That means \ref{item:sim-ew} holds.
   
-  \end{itemize}
+  %% \end{itemize}
 
-  Now, let us show that $e \in \forward(S', G, \tup{C, I}, s', t')$.
+  %% Now, let us show that $e \in \forward(S', G, \tup{C, I}, s', t')$.
 
-  \begin{itemize}
+  %% \begin{itemize}
 
-    \item \ref{item:frwd-coverable} is a Lemma primise;
+  %%   \item \ref{item:frwd-coverable} is a Lemma primise;
 
-    \item \ref{item:frwd-dom-s}, \ref{item:frwd-ts-id} and \ref{item:frwd-descr}
-      follows trivially from [BASIC-STEP];
+  %%   \item \ref{item:frwd-dom-s}, \ref{item:frwd-ts-id} and \ref{item:frwd-descr}
+  %%     follows trivially from [BASIC-STEP];
 
-    \item \ref{item:frwd-front}
-      $\tup{s(\front(C, \lTID(\hat{e}))), s(e)} \in S.\lPO_{imm}$;
+  %%   \item \ref{item:frwd-front}
+  %%     $\tup{s(\front(C, \lTID(\hat{e}))), s(e)} \in S.\lPO_{imm}$;
 
-    \item \ref{item:frwd-rf}
-      $\tup{\hat{w}, s(e)} \in S.\lRF \Leftrightarrow \tup{t(\hat{w}), e} \in G.\lRF$.
+  %%   \item \ref{item:frwd-rf}
+  %%     $\tup{\hat{w}, s(e)} \in S.\lRF \Leftrightarrow \tup{t(\hat{w}), e} \in G.\lRF$.
     
-  \end{itemize}
+  %% \end{itemize}
 \end{proof}
 
 %% \begin{lemma}
@@ -800,124 +829,6 @@
   
   
 %% \end{proof}
-
-
-Here is a \ref{rule:bstep}
-
-\begin{figure}[thb]
-
-  \begin{subfigure}{1\textwidth}
-    \labelAxiom{BASIC-STEP}{rule:bstep}
-  
-    \begin{center}
-      \AxiomC{$e = max(\lE) + 1$}
-      \noLine
-      \UnaryInfC{$E' = \lE \cup \{e\}$}
-
-      \AxiomC{$\Cont \in \lCONT$}
-      \AxiomC{$\Cont \contstep{l} \Cont'$}
-      \noLine
-      \BinaryInfC{$\lCONT' = (\lCONT \setminus \{\Cont\}) \cup \{\Cont'\}$}
-
-      \AxiomC{$\lLAB' = \lLAB[e \mapsto l]$}
-      \noLine
-      \UnaryInfC{$\lTID' = \lTID[e' \mapsto \Cont.\lTID]$}
-      \noLine
-      \UnaryInfC{$\lPO' = (\lPO \cup \tup{\Cont.\lPREV, e})^+$}
-      \noLine
-      \UnaryInfC{$\lCF' = \lCF \cup \{e\} \times \codom{[\Cont.\lPREV];\lPO}$}
-
-      \TrinaryInfC{$
-        \tup{\lE, \lEo, \lTID, \lLAB, \lCONT, \lPO, \lCF}
-        \ebstep{e}
-        \tup{\lE', \lEo, \lTID', \lLAB', \lCONT', \lPO', \lCF'}
-        $}
-      \DisplayProof
-    \end{center}
-
-  \end{subfigure}
-  \rulevspace
-
-  \begin{subfigure}{1\textwidth}
-    \labelAxiom{FENCE-STEP}{rule:fstep}
-  
-    \begin{center}
-      \AxiomC{$e \in \lF$}
-      \noLine
-      \UnaryInfC{$S_{base} \ebstep{e} S'_{base}$}
-
-      \UnaryInfC{$
-        \tup{S_{base}, \lRMW, \lJF, \lEW, \lMO}
-        \estep{e}
-        \tup{S'_{base}, \lRMW, \lJF, \lEW, \lMO}
-        $}
-      \DisplayProof
-    \end{center}
-
-  \end{subfigure}
-  \rulevspace
-
-  \begin{subfigure}{1\textwidth}
-    \labelAxiom{READ-STEP}{rule:rstep}
-  
-    \begin{center}
-      \AxiomC{$e \in \lR$}
-      \noLine
-      \UnaryInfC{$S_{base} \ebstep{e} S'_{base}$}
-
-      \AxiomC{$\exists{w \in \lW}$}
-      \noLine
-      \UnaryInfC{$\lLOC'(w) = \lLOC'(e)$}
-      \noLine
-      \UnaryInfC{$\lVALW'(w) = \lVALR'(e)$}
-      \noLine
-      \UnaryInfC{$\lJF' = \lJF \cup \tup{w, e}$}
-
-      \BinaryInfC{$
-        \tup{S_{base}, \lRMW, \lJF, \lEW, \lMO}
-        \estep{e}
-        \tup{S'_{base}, \lRMW, \lJF', \lEW, \lMO}
-        $}
-      \DisplayProof
-    \end{center}
-    
-  \end{subfigure}
-  \rulevspace
-
-  \begin{subfigure}{1\textwidth}
-    \labelAxiom{WRITE-STEP}{rule:wstep}
-  
-    \begin{center}
-      \AxiomC{$e \in \lW$}
-      \noLine
-      \UnaryInfC{$S_{base} \ebstep{e} S'_{base}$}
-      \noLine
-      \UnaryInfC{$\exists{\lW_{ew} \subseteq \lW}$}
-      \noLine
-      \UnaryInfC{$\exists{w \in \lW_{X}}$}
-      \noLine
-      \UnaryInfC{$\exists{\lW_{X} \subseteq \dom{[\lW];=_{\lLOC};[e] \setminus \lCF'^{?}}}$}
-
-      
-      \AxiomC{$\forall{w \in \lW_{ew}} ~.~ \tup{e, w} \in \lCF'_{|\lLOC}$}
-      \noLine
-      \UnaryInfC{$\forall{w \in \lW_{ew}} ~.~ \lVALW(e) = \lVALW(w)$}
-      \noLine
-      \UnaryInfC{$\lEW' = (\lEW \cup \lW_{ew} \times \{e\})^=$}
-      \noLine
-      \UnaryInfC{$\lMO' = \lMO \cup \dom{(\lMO;[w])^?} \times \{e\} \cup \{e\} \times \codom{[w];\lMO}$}
-
-      \BinaryInfC{$
-        \tup{S_{base}, \lRMW, \lJF, \lEW, \lMO}
-        \estep{e}
-        \tup{S'_{base}, \lRMW, \lJF, \lEW', \lMO'}
-        $}
-      \DisplayProof
-    \end{center}
-    
-  \end{subfigure}  
-
-\end{figure}
 
 \subsection{Weak simulation}
 
