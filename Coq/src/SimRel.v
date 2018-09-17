@@ -1,7 +1,7 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecutionProperties.
-Require Import AuxRel EventStructure Construction Consistency.
+Require Import AuxRel AuxDef EventStructure Construction Consistency.
 Require Import Coq.Logic.FunctionalExtensionality.
 
 Section SimRel.
@@ -29,10 +29,15 @@ Section SimRel.
   (* TODO. Should state smth about `execs` used in Construction.v.
      Probably, in terms of a program. *)
   Record simrel_common :=
-    { finj  : inj_dom (C ∪₁ I) f;
-      foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
+    { fdef  : forall e (COV : C e),
+        f e = act_to_event G e;
+
+      finj  : inj_dom (C ∪₁ I) f;
       labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
+
+      foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
+
       sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
       sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
             ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘;
