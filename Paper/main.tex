@@ -346,15 +346,15 @@
   if there exists a function $f : X.\lE \fun S.\lE$, called \emph{source event mapping},
   such that the following conditions are met.
   \begin{itemize}
-    \item $\lf(X.\lE) \subseteq \lVIS(S)$;
-    \item $[\lf(X.\lE)];S.\lCF;[\lf(X.\lE)] = \emptyset$;
-    \item $S.\lPO;[\lf(X.\lE)] \subseteq \lf(X.\lE) \times \lf(X.\lE)$;
-    \item $[\lf(X.\lE)];S.\lPO;[S.\lE \setminus \lf(X.\lE)] \subseteq
-           [\lf(X.\lE)];S.\lPO;[\lf(X.\lE)];S.\lCF$;
-    \item $\lf(X.\lPO)  = [\lf(X.\lE)];S.\lPO; [\lf(X.\lE)]$;
-    \item $\lf(X.\lRMW) = [\lf(X.\lE)];S.\lRMW;[\lf(X.\lE)]$;
-    \item $\lf(X.\lRF)  = [\lf(X.\lE)];S.\lRF; [\lf(X.\lE)]$;
-    \item $\lf(X.\lMO)  = [\lf(X.\lE)];S.\lMO; [\lf(X.\lE)]$;
+    \item $\f(X.\lE) \subseteq \lVIS(S)$;
+    \item $[\f(X.\lE)];S.\lCF;[\f(X.\lE)] = \emptyset$;
+    \item $S.\lPO;[\f(X.\lE)] \subseteq \f(X.\lE) \times \f(X.\lE)$;
+    \item $[\f(X.\lE)];S.\lPO;[S.\lE \setminus \f(X.\lE)] \subseteq
+           [\f(X.\lE)];S.\lPO;[\f(X.\lE)];S.\lCF$;
+    \item $\f(X.\lPO)  = [\f(X.\lE)];S.\lPO; [\f(X.\lE)]$;
+    \item $\f(X.\lRMW) = [\f(X.\lE)];S.\lRMW;[\f(X.\lE)]$;
+    \item $\f(X.\lRF)  = [\f(X.\lE)];S.\lRF; [\f(X.\lE)]$;
+    \item $\f(X.\lMO)  = [\f(X.\lE)];S.\lMO; [\f(X.\lE)]$;
   \end{itemize}
 \end{definition}
 
@@ -463,10 +463,10 @@
       $G.\lLAB(e) = S.\lLAB(\hat{e})$;
 
     \item \label{item:frwd-front}
-      $S.\lPO;[\hat{e}] \subseteq [\lf(C)];S.\lPO$
+      $S.\lPO;[\hat{e}] \subseteq [\f(C)];S.\lPO$
 
     \item \label{item:frwd-rf}
-      $\forall{w \in G.\lW} ~.~ \tup{w, e} \in G.\lRF \Rightarrow \tup{\lf(w), \hat{e}} \in S.\lRF$.
+      $\forall{w \in G.\lW} ~.~ \tup{w, e} \in G.\lRF \Rightarrow \tup{\f(w), \hat{e}} \in S.\lRF$.
 
   \end{enumerate}
 \end{definition}
@@ -480,358 +480,325 @@
   \begin{enumerate}[label=\textbf{S.\arabic*}]
 
     \item \label{item:sim-inj}
-      $\forall{e_1, e_2 \in C \cup I} ~.~ \lf(e_1) = \lf(e_2) \Rightarrow e_1 = e_2$;
+      $\forall{e_1, e_2 \in C \cup I} ~.~ \f(e_1) = \f(e_2) \Rightarrow e_1 = e_2$;
 
     \item \label{item:sim-lab}
-      $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(\lf(e))$;
+      $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(\f(e))$;
 
     \item \label{item:sim-po-prfx} 
-      $S.\lPO;[\lf(C)] \subseteq [\lf(C)];S.\lPO$;
+      $S.\lPO;[\f(C)] \subseteq [\f(C)];S.\lPO$;
 
     \item \label{item:sim-po}
-      $\lf([C];G.\lPO;[C]) = [\lf(C)];S.\lPO;[\lf(C)]$;
+      $\f([C];G.\lPO;[C]) = [\f(C)];S.\lPO;[\f(C)]$;
     
     \item \label{item:sim-cf}
-      $[\lf(C)];S.\lCF;[\lf(C)] = \emptyset$;
+      $[\f(C)];S.\lCF;[\f(C)] = \emptyset$;
 
     \item \label{item:sim-rf}
-      $\lf([I];G.\lRF;[C]) = [\lf(I)];S.\lRF;[\lf(C)]$;
+      $\f([I];G.\lRF;[C]) = [\f(I)];S.\lRF;[\f(C)]$;
 
     \item \label{item:sim-mo}
-      $\lf([I];G.\lMO;[I]) = [\lf(I)];S.\lMO;[\lf(I)]$.
+      $\f([I];G.\lMO;[I]) = [\f(I)];S.\lMO;[\f(I)]$.
     
   \end{enumerate}
 \end{definition}
 
 \begin{lemma}
   \label{lemma:simb-forward}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$
+  Given $S$, $G$, $\tup{C, I}$, $\f$
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and 
   there exists forwarding pair $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$
   then $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ holds. 
 \end{lemma}
 
-\begin{proof}
-  % Let us prove that all conditions for $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ are met.
+% \begin{proof}
+%   % Let us prove that all conditions for $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ are met.
 
-  % \begin{itemize}
+%   % \begin{itemize}
 
-  % \item \ref{item:sim-lab} \\
-  %   \begin{equation}
-  %     \begin{split}
-  %       & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(\lf(a)) \iff \\
-  %       & \forall{a \in C \cup I} ~.~
-  %         G.\lLAB(a) = S.\lLAB(\lf(a)) \wedge G.\lLAB(e) = S.\lLAB(\lf(e))
-  %     \end{split}
-  %   \end{equation}
-  %   First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
-  %   Second conjunct follows from the \ref{item:frwd-descr}.
+%   % \item \ref{item:sim-lab} \\
+%   %   \begin{equation}
+%   %     \begin{split}
+%   %       & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(\f(a)) \iff \\
+%   %       & \forall{a \in C \cup I} ~.~
+%   %         G.\lLAB(a) = S.\lLAB(\f(a)) \wedge G.\lLAB(e) = S.\lLAB(\f(e))
+%   %     \end{split}
+%   %   \end{equation}
+%   %   First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
+%   %   Second conjunct follows from the \ref{item:frwd-descr}.
 
-  % \item \ref{item:sim-cf} \\
-  %   We need to show that
-  %   $\forall{a, b \in C \uplus \{e\}} ~.~ \tup{s(a), s(b)} \not\in S.\lCF$.
-  %   Let us consider the opposite, that is
-  %   $\exists{a, b \in C \uplus \{e\}} ~.~ \tup{s(a), s(b)} \in S.\lCF$.
-  %   Giving that $\simRb(S, G, \tup{C, I}, s, t)$ holds,
-  %   we can conclude that \mbox{$a = e \vee b = e$}.
-  %   Let us suppose that $a = e$.
-  %   Consider $c$ such that $\tup{c, e} \in G.\lPO_{imm}$.
-  %   Because $e \in \coverable(G, C, I)$ we know that $c \in C$.
-  %   From that and $\simRb(S, G, \tup{C, I}, s, t)$
-  %   we can conclude that $\tup{s(b), s(c)} \not\in S.\lCF$.
-  %   If $\tup{s(b), s(c)} \in S.\lPO$ then by transitivity of $S.\lPO$
-  %   $\tup{s(b), s(e)} \in S.\lPO$
-  %   which contradicts the fact that $\tup{s(b), s(e)} \in S.\lCF$.
-  %   Otherwise \mbox{$\tup{s(c), s(b)} \in S.\lPO$}.
-  %   From \ref{item:sim-po-imm} follows that $\tup{c, b} \in G.\lPO$
-  %   and thus $\tup{e, b} \in G.\lPO$.
-  %   But since $b \in C$ and thus $b \in \coverable(G, C, I)$,
-  %   we can conclude that it shoud be the case that $e \in C$.
-  %   But that contradicts $e \in \nextset(G, C, I)$.
+%   % \item \ref{item:sim-cf} \\
+%   %   We need to show that
+%   %   $\forall{a, b \in C \uplus \{e\}} ~.~ \tup{s(a), s(b)} \not\in S.\lCF$.
+%   %   Let us consider the opposite, that is
+%   %   $\exists{a, b \in C \uplus \{e\}} ~.~ \tup{s(a), s(b)} \in S.\lCF$.
+%   %   Giving that $\simRb(S, G, \tup{C, I}, s, t)$ holds,
+%   %   we can conclude that \mbox{$a = e \vee b = e$}.
+%   %   Let us suppose that $a = e$.
+%   %   Consider $c$ such that $\tup{c, e} \in G.\lPO_{imm}$.
+%   %   Because $e \in \coverable(G, C, I)$ we know that $c \in C$.
+%   %   From that and $\simRb(S, G, \tup{C, I}, s, t)$
+%   %   we can conclude that $\tup{s(b), s(c)} \not\in S.\lCF$.
+%   %   If $\tup{s(b), s(c)} \in S.\lPO$ then by transitivity of $S.\lPO$
+%   %   $\tup{s(b), s(e)} \in S.\lPO$
+%   %   which contradicts the fact that $\tup{s(b), s(e)} \in S.\lCF$.
+%   %   Otherwise \mbox{$\tup{s(c), s(b)} \in S.\lPO$}.
+%   %   From \ref{item:sim-po-imm} follows that $\tup{c, b} \in G.\lPO$
+%   %   and thus $\tup{e, b} \in G.\lPO$.
+%   %   But since $b \in C$ and thus $b \in \coverable(G, C, I)$,
+%   %   we can conclude that it shoud be the case that $e \in C$.
+%   %   But that contradicts $e \in \nextset(G, C, I)$.
 
-  % \item \ref{item:sim-po-prfx} \\
+%   % \item \ref{item:sim-po-prfx} \\
 
-  %   \begin{equation*}
-  %     \begin{split}
-  %       &     S.\lPO;[s(C \uplus \{e\})] \subseteq [s(C \uplus \{e\})];S.\lPO \iff \\
-  %       &\iff S.\lPO;[s(C)] \cup S.\lPO;[s(e)] \subseteq [s(C)];S.\lPO \cup [s(e)];S.\lPO
-  %     \end{split}
-  %   \end{equation*}
+%   %   \begin{equation*}
+%   %     \begin{split}
+%   %       &     S.\lPO;[s(C \uplus \{e\})] \subseteq [s(C \uplus \{e\})];S.\lPO \iff \\
+%   %       &\iff S.\lPO;[s(C)] \cup S.\lPO;[s(e)] \subseteq [s(C)];S.\lPO \cup [s(e)];S.\lPO
+%   %     \end{split}
+%   %   \end{equation*}
 
-  %   $S.\lPO;[s(C)] \subseteq [s(C)];S.\lPO$ because $\simRb(S, G, \tup{C, I}, s, t)$ holds.
-  %   Let us show that $S.\lPO;[s(e)] \subseteq [s(C)];S.\lPO$.
-  %   Suppose there exists $\hat{a}$ s.t. $\tup{\hat{a}, s(e)} \in S.\lPO$ but
-  %   $\hat{a} \not\in s(C)$.
-  %   Because of \ref{item:frwd-front}
-  %   it must be the case that $\tup{\hat{a}, s(\front(C, \lTID(e))} \in S.\lPO$.
-  %   But $\front(C, \lTID(e)) \in C$ and thus from $\ref{item:sim-po-prfx}$
-  %   of $\simRb(S, G, \tup{C, I}, s, t)$ follows that $\hat{a} \in s(C)$. Contradiction.
+%   %   $S.\lPO;[s(C)] \subseteq [s(C)];S.\lPO$ because $\simRb(S, G, \tup{C, I}, s, t)$ holds.
+%   %   Let us show that $S.\lPO;[s(e)] \subseteq [s(C)];S.\lPO$.
+%   %   Suppose there exists $\hat{a}$ s.t. $\tup{\hat{a}, s(e)} \in S.\lPO$ but
+%   %   $\hat{a} \not\in s(C)$.
+%   %   Because of \ref{item:frwd-front}
+%   %   it must be the case that $\tup{\hat{a}, s(\front(C, \lTID(e))} \in S.\lPO$.
+%   %   But $\front(C, \lTID(e)) \in C$ and thus from $\ref{item:sim-po-prfx}$
+%   %   of $\simRb(S, G, \tup{C, I}, s, t)$ follows that $\hat{a} \in s(C)$. Contradiction.
 
-  % \item \ref{item:sim-po} \\
-  %   First, note that 
+%   % \item \ref{item:sim-po} \\
+%   %   First, note that 
     
-  %   \begin{equation*}
-  %     \begin{split}
-  %       [C \uplus \{e\}];G.\lPO;[C \uplus \{e\}] =
-  %         [C];G.\lPO;[C] \cup [C];G.\lPO;[e] \cup [e];G.\lPO;[C]
-  %     \end{split}
-  %   \end{equation*}
+%   %   \begin{equation*}
+%   %     \begin{split}
+%   %       [C \uplus \{e\}];G.\lPO;[C \uplus \{e\}] =
+%   %         [C];G.\lPO;[C] \cup [C];G.\lPO;[e] \cup [e];G.\lPO;[C]
+%   %     \end{split}
+%   %   \end{equation*}
 
-  %   Also, as $e \in \nextset(G, C, I)$, $e \not\in C$ and
-  %   because $C$ is $G.\lPO$ prefix closed, $[e];G.\lPO;[C]$ is empty.
-  %   Thus we only have to show that
+%   %   Also, as $e \in \nextset(G, C, I)$, $e \not\in C$ and
+%   %   because $C$ is $G.\lPO$ prefix closed, $[e];G.\lPO;[C]$ is empty.
+%   %   Thus we only have to show that
 
-  %   \begin{equation*}
-  %     \begin{split}
-  %       & \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C] \cup [C];G.\lPO;[e]} ~.~
-  %           \tup{s(e_1), s(e_2)} \in S.\lPO \iff \\
-  %       & \iff
-  %         \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO ~ \wedge \\
-  %       & \wedge
-  %         \forall{\tup{e_1, e_2} \in [C];G.\lPO;[e]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO
-  %     \end{split}
-  %   \end{equation*}
+%   %   \begin{equation*}
+%   %     \begin{split}
+%   %       & \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C] \cup [C];G.\lPO;[e]} ~.~
+%   %           \tup{s(e_1), s(e_2)} \in S.\lPO \iff \\
+%   %       & \iff
+%   %         \forall{\tup{e_1, e_2} \in [C];G.\lPO;[C]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO ~ \wedge \\
+%   %       & \wedge
+%   %         \forall{\tup{e_1, e_2} \in [C];G.\lPO;[e]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO
+%   %     \end{split}
+%   %   \end{equation*}
 
-  %   First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
-  %   Let $c = \front(C, \lTID(\hat{e}))$. 
-  %   From \ref{item:frwd-front} we know that $\tup{s(c), s(e)} \in S.\lPO_{imm}$.
-  %   Thus, from \ref{item:sim-po-imm} of $\simRb(S, G, \tup{C, I}, s, t)$
-  %   follows that $\tup{c, e} \in G.\lPO_{imm}$ and $c \in C$.
-  %   From that and \ref{item:sim-po} of $\simRb(S, G, \tup{C, I}, s, t)$
-  %   we can conclude that \\
-  %   $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[c]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$.
-  %   The second conjunct follows directly from the later fact and the transitivity of $\lPO$.
+%   %   First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
+%   %   Let $c = \front(C, \lTID(\hat{e}))$. 
+%   %   From \ref{item:frwd-front} we know that $\tup{s(c), s(e)} \in S.\lPO_{imm}$.
+%   %   Thus, from \ref{item:sim-po-imm} of $\simRb(S, G, \tup{C, I}, s, t)$
+%   %   follows that $\tup{c, e} \in G.\lPO_{imm}$ and $c \in C$.
+%   %   From that and \ref{item:sim-po} of $\simRb(S, G, \tup{C, I}, s, t)$
+%   %   we can conclude that \\
+%   %   $\forall{\tup{e_1, e_2} \in [C];G.\lPO;[c]} ~.~ \tup{s(e_1), s(e_2)} \in S.\lPO$.
+%   %   The second conjunct follows directly from the later fact and the transitivity of $\lPO$.
 
-  % \item \ref{item:sim-rf} \\
+%   % \item \ref{item:sim-rf} \\
     
-  %   \begin{equation*}
-  %     \begin{split}
-  %       & \forall{\tup{w, r} \in [I];G.\lRF;[C \uplus \{e\}]} ~.~
-  %         \tup{s'(w), s'(r)} \in S.\lRF \iff \\
-  %       & \iff \forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lRF ~ \wedge \\
-  %       & \wedge \forall{w \in I}. \tup{w, e} \in G.\lRF \Rightarrow \tup{s(w), \hat{e}} \in S.\lRF
-  %     \end{split}
-  %   \end{equation*}
+%   %   \begin{equation*}
+%   %     \begin{split}
+%   %       & \forall{\tup{w, r} \in [I];G.\lRF;[C \uplus \{e\}]} ~.~
+%   %         \tup{s'(w), s'(r)} \in S.\lRF \iff \\
+%   %       & \iff \forall{\tup{w, r} \in [I];G.\lRF;[C]} ~.~ \tup{s(w), s(r)} \in S.\lRF ~ \wedge \\
+%   %       & \wedge \forall{w \in I}. \tup{w, e} \in G.\lRF \Rightarrow \tup{s(w), \hat{e}} \in S.\lRF
+%   %     \end{split}
+%   %   \end{equation*}
 
-  %   Left conjunct follows immediately from $\simRb(S, G, \tup{C, I}, s, t)$.
-  %   Right conjunct follows from the \ref{item:frwd-rf}.
-                                %   
-  \end{itemize}
+%   %   Left conjunct follows immediately from $\simRb(S, G, \tup{C, I}, s, t)$.
+%   %   Right conjunct follows from the \ref{item:frwd-rf}.
+%                                 %   
+%   \end{itemize}
   
-\end{proof}
+% \end{proof}
 
 \begin{lemma}
   \label{lemma:simb-step}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$,
+  Given $S$, $G$, $\tup{C, I}$, $\f$ and $\Prog$
+  s.t. $\Prog \vdash G$,
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
   there exists $e$ s.t. $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$ then
-  there exists $\hat{e}, S', f'$ such that
-  $\Execs{\Prog} \vdash S \esstep{\hat{e}} S'$
+  there exists $\hat{e}, S', \f'$ such that
+  $\Prog \vdash S \esstep{\hat{e}} S'$
   and $\simRb(S', G, \tup{C \uplus \{e\}, I}, f')$ holds.
 \end{lemma}
 
-\begin{proof}
-  %% If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
-  %% $e \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
-  %% it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
+% \begin{proof}
+%   %% If we can show that $\simRb(S', G, \tup{C, I}, s', t')$ holds and
+%   %% $e \in \forward(S', G, \tup{C, I}, s', t')$ then by Lemma \ref{lemma:sim-forward}
+%   %% it follows that $\simRb(S', G, \tup{C \uplus \{e\}, I}, s', t')$ holds.
 
-  %% First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
+%   %% First, let us show that $\simRb(S', G, \tup{C, I}, s', t')$ holds.
 
-  %% \begin{itemize}
+%   %% \begin{itemize}
 
-  %% \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
+%   %% \item \ref{item:sim-dom-s} and \ref{item:sim-dom-t} holds trivially.
 
-  %% \item \ref{item:sim-ts-id}-\ref{item:sim-lab-wf} follows trivially from [BASIC-STEP].
+%   %% \item \ref{item:sim-ts-id}-\ref{item:sim-lab-wf} follows trivially from [BASIC-STEP].
 
-  %% \item \ref{item:sim-cf}-\ref{item:sim-po} holds, because
-  %%   $e \in \nextset(G, C, I)$,
-  %%   %(thus $e \not\in C$ and $\forall{a \in C}~.~\tup{a, e} \in G.\lPO$),
-  %%   $s'_{|C} = s_{|C}$ and $\simRb(S, G, \tup{C, I}, s, t)$.
+%   %% \item \ref{item:sim-cf}-\ref{item:sim-po} holds, because
+%   %%   $e \in \nextset(G, C, I)$,
+%   %%   %(thus $e \not\in C$ and $\forall{a \in C}~.~\tup{a, e} \in G.\lPO$),
+%   %%   $s'_{|C} = s_{|C}$ and $\simRb(S, G, \tup{C, I}, s, t)$.
 
-  %% \item \ref{item:sim-po-imm} holds, because we have added to $S$
-  %%   one single $\lPO_{imm}$ edge, that is $\tup{s(c), \hat{e}}$.
-  %%   We also know that $t(\hat{e}) = e$ and since $e \in \nextset(G, C, I)$
-  %%   there is a corresponding $\lPO_{imm}$ edge in $G$ ($\tup{c, e} \in G.\lPO_{imm}$).
+%   %% \item \ref{item:sim-po-imm} holds, because we have added to $S$
+%   %%   one single $\lPO_{imm}$ edge, that is $\tup{s(c), \hat{e}}$.
+%   %%   We also know that $t(\hat{e}) = e$ and since $e \in \nextset(G, C, I)$
+%   %%   there is a corresponding $\lPO_{imm}$ edge in $G$ ($\tup{c, e} \in G.\lPO_{imm}$).
 
-  %% \item \ref{item:sim-rf} \\
-  %%   If $e \not\in G.\lW$ then it holds trivially
-  %%   (since in this case $s'_{|C \cup I} = s_{|C \cup I}$).
-  %%   Otherwise consider $s(e)$ and $s'(e)$.
-  %%   From [WRITE-STEP] we know that $\tup{s(e), s'(e)} \in S.\lEW$.
-  %%   This leads to 
-  %%   $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
-  %%   and thus \ref{item:sim-rf} holds.
+%   %% \item \ref{item:sim-rf} \\
+%   %%   If $e \not\in G.\lW$ then it holds trivially
+%   %%   (since in this case $s'_{|C \cup I} = s_{|C \cup I}$).
+%   %%   Otherwise consider $s(e)$ and $s'(e)$.
+%   %%   From [WRITE-STEP] we know that $\tup{s(e), s'(e)} \in S.\lEW$.
+%   %%   This leads to 
+%   %%   $\forall{\tup{w, r} \in [e];G.\lRF;[C]} ~.~ \tup{s'(w), s'(r)} \in S.\lJF$,
+%   %%   and thus \ref{item:sim-rf} holds.
 
-  %% \item \ref{item:sim-ew} \\
-  %%   If $e \not\in G.\lW$ then it holds trivially.
-  %%   Otherwise, from \ref{item:sim-ew} of $\simRb(S, G, \tup{C, I}, s, t)$ we know that
-  %%   $\forall{\hat{w_1}, \hat{w_2} \in S.\lW} ~.~ t(\hat{w_1}) = t(\hat{w_2}) = e
-  %%   \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$.
-  %%   Also, we know that $e \in I$ (because $e \in G.\lW \cap \coverable(G, C, I)$)
-  %%   and thus $t(s(e)) = e$.
-  %%   From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
-  %%   $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
-  %%   That means \ref{item:sim-ew} holds.
+%   %% \item \ref{item:sim-ew} \\
+%   %%   If $e \not\in G.\lW$ then it holds trivially.
+%   %%   Otherwise, from \ref{item:sim-ew} of $\simRb(S, G, \tup{C, I}, s, t)$ we know that
+%   %%   $\forall{\hat{w_1}, \hat{w_2} \in S.\lW} ~.~ t(\hat{w_1}) = t(\hat{w_2}) = e
+%   %%   \Rightarrow \tup{\hat{w_1}, \hat{w_2}} \in S.\lEW$.
+%   %%   Also, we know that $e \in I$ (because $e \in G.\lW \cap \coverable(G, C, I)$)
+%   %%   and thus $t(s(e)) = e$.
+%   %%   From [WRITE-STEP] $\tup{s(e), s'(e)} \in S.\lEW$ and thus
+%   %%   $\forall{\hat{w} \in S.\lW}~.~ t(\hat{w}) = e \Rightarrow \tup{\hat{w}, s'(e)} \in S.\lEW$.
+%   %%   That means \ref{item:sim-ew} holds.
   
-  %% \end{itemize}
+%   %% \end{itemize}
 
-  %% Now, let us show that $e \in \forward(S', G, \tup{C, I}, s', t')$.
+%   %% Now, let us show that $e \in \forward(S', G, \tup{C, I}, s', t')$.
 
-  %% \begin{itemize}
+%   %% \begin{itemize}
 
-  %%   \item \ref{item:frwd-coverable} is a Lemma primise;
+%   %%   \item \ref{item:frwd-coverable} is a Lemma primise;
 
-  %%   \item \ref{item:frwd-dom-s}, \ref{item:frwd-ts-id} and \ref{item:frwd-descr}
-  %%     follows trivially from [BASIC-STEP];
+%   %%   \item \ref{item:frwd-dom-s}, \ref{item:frwd-ts-id} and \ref{item:frwd-descr}
+%   %%     follows trivially from [BASIC-STEP];
 
-  %%   \item \ref{item:frwd-front}
-  %%     $\tup{s(\front(C, \lTID(\hat{e}))), s(e)} \in S.\lPO_{imm}$;
+%   %%   \item \ref{item:frwd-front}
+%   %%     $\tup{s(\front(C, \lTID(\hat{e}))), s(e)} \in S.\lPO_{imm}$;
 
-  %%   \item \ref{item:frwd-rf}
-  %%     $\tup{\hat{w}, s(e)} \in S.\lRF \Leftrightarrow \tup{t(\hat{w}), e} \in G.\lRF$.
+%   %%   \item \ref{item:frwd-rf}
+%   %%     $\tup{\hat{w}, s(e)} \in S.\lRF \Leftrightarrow \tup{t(\hat{w}), e} \in G.\lRF$.
     
-  %% \end{itemize}
-\end{proof}
+%   %% \end{itemize}
+% \end{proof}
 
-\begin{lemma}
-  \label{lemma:simb-issue-step}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$,
-  if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
-  there exists $w$ s.t. $G \vdash \tup{C, I} \trstep \tup{C, I \uplus \{w\}}$
-  and $w \in \coverable(G, C, I \uplus \{w\})$
-  then there exists $\hat{e}, S', f'$ such that
-  $\Execs{\Prog} \vdash S \esstep{\hat{e}} S'$
-  and $\simRb(S', G, \tup{C, I \uplus \{w\}}, f')$ holds.
-\end{lemma}
-
-\subsubsection{Weak and strong simulation}
+\subsubsection{Certification}
 
 \begin{definition}
-  Relation $\simRw(S, G, \tup{C, I}, \lf, \phi)$, that binds an 
-  event structure $S$, an \imm execution graph $G$,
-  a traversal configuration $\tup{C, I}$,
-  an event mapping $f : G.\lE \fun S.\lE$,
-  and an event $\phi \in C$,
-  holds whenever $\simRb(S, G, \tup{C, I}, \lf)$ holds and
-  additionally the following condition is met:
-  \begin{enumerate}[label=\textbf{S$_{weak}$.\arabic*},start=8]
-     
-    \item \label{item:sim-vis-weak}
-      $\lf(C \cup I \setminus \codom{[\phi];\lPO}) \subseteq \lVIS(S)$
-
-  \end{enumerate}
+  Given $S$, $G$, $\tup{C, I}$, $\f$, $G^{\cert}$, $\g$ and $q \in G^{cert}$
+  relation $\simRc(S, G, \tup{C, I}, \f, G^{\cert}, \g, q)$ holds 
+  whenever $\simR(S, G, \tup{C, I}, \f)$ holds and additionally 
+  the following constraint is met:
+  \begin{itemize}
+    \item $\forall{w \in G.\lW} ~.~ \tup{w, q} \in \lPO^? \Rightarrow 
+      \tup{f(w), g(w)} \in S.\lEW$
+  \end{itemize}
 \end{definition}
 
+\begin{lemma}
+  Given $S$, $G$, $\tup{C, I}$, $\f$, $\Prog$,
+  $\g$, $G^{\cert} \in \certify(G, C, I)$, and $q \in G^{cert}.\lE$
+  s.t. $\Prog \vdash G$,
+  if $\simRc(S, G, \cup{C, I}, \f, G^{\cert}, \g, q)$ holds 
+  and there exists $q'$ s.t. $\tup{q, q'} \in G^{\cert}.\lPO_{imm}$
+  then there exists $S'$ s.t. $\Prog \vdash S \esstep{} S'$ and
+  $\simRc(S', G, \cup{C, I}, \f, G^{\cert}, \g, q')$
+\end{lemma}
+
+\begin{lemma}
+  Given $S$, $G$, $\tup{C, I}$, $\f$, 
+  $G^{\cert} \in \certify(G, C, I)$, $\g$ and $q \in G^{cert}$
+  s.t. $\Prog \vdash G$, if $G \vdash \tup{C, I} \trstep_{\lTID(q)} \tup{C', I'}$, 
+  $\simRc(S, G, \cup{C, I}, \f, G^{\cert}, \g, q)$ holds 
+  and $[q];G_{i}^{\cert}.\lPO = \emptyset$ then there exists
+  $\f'$ s.t. $\simR(S, G, \tup{C', I'}, \f')$ holds.
+\end{lemma}
+
 \begin{definition}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$ a relation $\simR(S, G, \tup{C, I}, \lf)$ holds
-  whenever $\simRb(S, G, \tup{C, I}, \lf)$ holds and additionally
+  Given $S$, $G$, $\tup{C, I}$, $\f$ a relation $\simR(S, G, \tup{C, I}, \f)$ holds
+  whenever $\simRb(S, G, \tup{C, I}, \f)$ holds and additionally
   the following condition is met:
   \begin{enumerate}[label=\textbf{S.\arabic*},start=8]
     \item \label{item:sim-vis}
-       $\lf(C \cup I) \subseteq \lVIS(S)$
+       $\f(C \cup \dom{G.\lPO^?;[I]}) \subseteq \lVIS(S)$
   \end{enumerate}
 \end{definition}
 
-\begin{definition}
-  A traversal configuration $\tup{C, I}$ is called \emph{strict}
-  if for every configuration $\tup{C', I'}$ reachable from it,
-  that is $G \vdash \tup{C, I} \trstepstar \tup{C', I'}$,
-  and every $w \in G.\lW$ s.t.
-  $G \vdash \tup{C', I'} \trstep \tup{C', I' \cup \{w\}}$
-  $w$ might be covered in a next step, that is
-  $w \in \coverable(G, C', I' \cup \{w\})$.
-\end{definition}
-
 \begin{lemma}
-  \label{lemma:simw-finite}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\phi$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$, $\tup{C, I}$ is strict
-  and $\simRw(S, G, \tup{C, I}, \lf, \phi)$ holds
-  if $G \vdash \tup{C, I} \trstep \tup{C', I'}$ then
-  there exists $S', \lf'$ such that
-  $\Execs{\Prog} \vdash S \esstepstar S'$ s.t.
-  $\simR(S', G, \tup{C', I'}, \lf')$ hold.
-\end{lemma}
-
-\begin{proof}
-  Starting from $\tup{C, I}$ we will traverse events in $G$
-  and add new events into $S$.
-  Because $\tup{C, I}$ is strict, for all issue steps
-  $G \vdash \tup{C, I} \trstep \tup{C, I \uplus \{w\}}$
-  we can immediately make a cover step
-  $G \vdash \tup{C, I \uplus \{w\}} \trstep \tup{C \uplus \{w\}, I \uplus \{w\}}$.
-  Thus, using \ref{lemma:simb-step}, it is easy to show that $\simRb$
-  is preserved on each step.
-  Obviously, $\simRw$ is also preserved, since 
-  
-  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\phi$ s.t. 
-\end{proof}
-
-\begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$,
-  if the relation $\simR(S, G, \tup{C, I}, \lf)$ holds
+  Given $S$, $G$, $\tup{C, I}$, $\f$, and $\Prog$ 
+  s.t. $\Prog \vdash G$,
+  if the relation $\simR(S, G, \tup{C, I}, \f)$ holds
   and $G \vdash \tup{C, I} \trstep \tup{C', I'}$
-  then there exists $S'$ and $\lf'$ s.t.
-  $\Execs{\Prog} \vdash S \esstepstar S'$ and
-  $\simR(S, G, \tup{C, I}, \lf)$ holds.
+  then there exists $S'$ and $\f'$ s.t.
+  $\Prog \vdash S \esstepstar S'$ and
+  $\simR(S, G, \tup{C, I}, \f)$ holds.
 \end{lemma}
 
-\begin{proof}
-  First, suppose that $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$.
-  Consider $c$ s.t. $\tup{c, e} \in G.\lPO_{imm}$.
-  Since $e \in \coverable(G, C, I)$ we know that $c \in C$.
-  Let us consider different subcases:
-  \begin{itemize}
+% \begin{proof}
+  
+%   % First, suppose that $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$.
+%   % Consider $c$ s.t. $\tup{c, e} \in G.\lPO_{imm}$.
+%   % Since $e \in \coverable(G, C, I)$ we know that $c \in C$.
+%   % Let us consider different subcases:
+%   % \begin{itemize}
 
-    \item $e \in G.lF$
+%   %   \item $e \in G.lF$
 
-    \item $e \in G.\lW$ \\
-      In this case from the definition of $\coverable$ follows that $e \in I$.
-      Let us show that $\tup{e, \lf(e)} \in \forward(S, G, \tup{C, I}, \lf)$.
-      \begin{itemize}
-        \item \ref{item:frwd-coverable} is among our assumptions.
+%   %   \item $e \in G.\lW$ \\
+%   %     In this case from the definition of $\coverable$ follows that $e \in I$.
+%   %     Let us show that $\tup{e, \f(e)} \in \forward(S, G, \tup{C, I}, \f)$.
+%   %     \begin{itemize}
+%   %       \item \ref{item:frwd-coverable} is among our assumptions.
 
-        \item \ref{item:frwd-issued} holds trivially.
+%   %       \item \ref{item:frwd-issued} holds trivially.
 
-        \item \ref{item:frwd-lab} follows from \ref{item:sim-lab} 
-          of $\simR(S, G, \tup{C, I}, \lf)$
+%   %       \item \ref{item:frwd-lab} follows from \ref{item:sim-lab} 
+%   %         of $\simR(S, G, \tup{C, I}, \f)$
           
-        \item \ref{item:frwd-front}
-          $S.\lPO;[\hat{e}] \subseteq [\lf(C)];S.\lPO$
+%   %       \item \ref{item:frwd-front}
+%   %         $S.\lPO;[\hat{e}] \subseteq [\f(C)];S.\lPO$
 
-        \item \label{item:frwd-rf} \\
-          Since $e \in G.\lW$ there is no incoming $\lRF$ edges 
-          and thus this item holds trivially.
+%   %       \item \label{item:frwd-rf} \\
+%   %         Since $e \in G.\lW$ there is no incoming $\lRF$ edges 
+%   %         and thus this item holds trivially.
 
-      \end{itemize}
+%   %     \end{itemize}
 
-      It means that $$
-      Since $e \in \coverable(G, C, I)$ 
+%   %     It means that $$
+%   %     Since $e \in \coverable(G, C, I)$ 
 
-    \item $$
+%   %   \item $$
 
-  \end{itemize}
+%   % \end{itemize}
   
-  Suppose there exists $\hat{e} \in S.\lE$ s.t. $\tup{\lf(c), \hat{e}} \in S.\lPO_{imm}$.
-  
-  
-\end{proof}
+%   % Suppose there exists $\hat{e} \in S.\lE$ s.t. $\tup{\f(c), \hat{e}} \in S.\lPO_{imm}$.
+    
+% \end{proof}
 
 \subsubsection{Execution extraction}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$ and $\simR(S, G, \tup{C, I}, \lf)$ hold
-  then there exists $G^{\cert} \in \certify(\Execs{\Prog}, G, C, I)$ s.t.
+  Given $S$, $G$, $\tup{C, I}$, $\f$, and $\Prog$ 
+  s.t. $\Prog \vdash G$ and $\simR(S, G, \tup{C, I}, \f)$ hold
+  then there exists $G^{\cert} \in \certify(\Prog, G, C, I)$ s.t.
   $S \rhd G^{\cert}$ holds.
 \end{lemma}
 
-\begin{proof}
+% \begin{proof}
   
-\end{proof}
+% \end{proof}
   
 \setmonofont[Mapping=tex-text]{CMU Typewriter Text}
 \bibliographystyle{acm}
