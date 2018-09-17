@@ -2,6 +2,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecutionProperties.
 Require Import AuxRel EventStructure Construction Consistency.
+Require Import Coq.Logic.FunctionalExtensionality.
 
 Section SimRel.
   Variable prog : Prog.t.
@@ -12,8 +13,9 @@ Section SimRel.
   Variable TC : trav_config.
   Variable f  : actid -> EventId.t.
 
-  Notation "'C'" := (covered TC).
-  Notation "'I'" := (issued TC).
+  Notation "'SE'" := S.(ES.acts_set).
+  Notation "'C'"  := (covered TC).
+  Notation "'I'"  := (issued TC).
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Grf'" := (G.(rf)).
@@ -26,16 +28,9 @@ Section SimRel.
 
   (* TODO. Should state smth about `execs` used in Construction.v.
      Probably, in terms of a program. *)
-  (* TODO. Probably, finj should become deducible from
-     simrel_common since it looks like it's not strong enough
-     to show that it's preserved.
-
-     Probably, we want to state that `f` maps anything from
-     `actid \ (C ∪ I)` to `<0, Afence Opln, []>`, i.e.
-     something impossible.
-   *)
   Record simrel_common :=
     { finj  : inj_dom (C ∪₁ I) f;
+      foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
       labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
       sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
@@ -73,10 +68,47 @@ Proof.
 
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
   { by rewrite set_collect_updo. } 
+  
+  assert (issued TC e -> f e = e') as NN.
+  { admit. }
+
+  assert (issued TC e -> upd f e e' = f) as YY.
+  { intros II. apply NN in II.
+    apply functional_extensionality.
+    ins.
+    destruct (classic (x = e)) as [|NEQ]; subst.
+    { by rewrite upds. }
+      by rewrite updo. }
+  
+  assert (((upd f e e') ∘₁ set_compl (covered TC ∪₁ eq e ∪₁ issued TC))
+            ∩₁ S.(ES.acts_set) ≡₁ ∅)
+    as FOTH.
+  { split; [|basic_solver].
+    destruct (classic (issued TC e)) as [ISS|NISS].
+    { rewrite YY; auto.
+      rewrite set_unionA.
+      arewrite (eq e ∪₁ issued TC ≡₁ issued TC).
+      2: by apply SRC.
+      generalize ISS. basic_solver. }
+    rewrite set_collect_updo.
+    2: { intros HH. apply HH. basic_solver. }
+    arewrite (set_compl (covered TC ∪₁ eq e ∪₁ issued TC) ⊆₁
+              set_compl (covered TC ∪₁ issued TC)).
+    2: by apply SRC.
+    apply set_subset_compl. basic_solver. }
 
   assert (inj_dom (covered TC ∪₁ eq e ∪₁ issued TC) (upd f e e'))
     as FINJ.
-  { admit. }
+  { destruct (classic (issued TC e)) as [ISS|NISS].
+    { admit. }
+    red. ins.
+    unfold set_union in *. desf.
+    { admit. }
+    { rewrite upds in *.
+      destruct (classic (x = y)) as [|NEQ]; auto.
+      rewrite updo in *; auto.
+
+    admit. }
 
   destruct FP.
   set (SRC' := SRC).

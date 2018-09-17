@@ -28,6 +28,8 @@ Record init (e : EventId.t) :=
     ilab : exists l, e.(lab) = Astore Xpln Opln l 0;
     ipre : e.(prefix) = [];
   }.
+
+Definition same_tid := fun x y => tid x = tid y.
 End EventId.
 
 Hint Unfold EventId.path EventId.ext_sb
@@ -59,7 +61,7 @@ Definition acts_ninit_set ES := ES.(acts_set) \₁ EventId.init.
 Definition sb ES := ES.(acts_init_set) × ES.(acts_ninit_set) ∪
                     EventId.ext_sb ⨾ ⦗ ES.(acts_set) ⦘.
 Definition cf ES := ⦗ ES.(acts_set) ⦘ ⨾
-                    compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹) ⨾
+                    (EventId.same_tid ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
                     ⦗ ES.(acts_set) ⦘.
 Definition rf ES := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 End ES.

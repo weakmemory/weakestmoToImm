@@ -80,3 +80,9 @@ Proof.
 Admitted.
 
 End Props.
+
+Require Import Setoid.
+
+Add Parametric Morphism A : (@set_compl A) with signature 
+  set_equiv ==> set_equiv as set_compl_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
