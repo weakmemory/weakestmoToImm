@@ -245,15 +245,17 @@
 
       \item Program order defined as follows:
       \begin{equation*}
-        \tup{\hat{e_1}, \hat{e_2}} \in \lPO \Leftrightarrow
+        & \tup{\hat{e_1}, \hat{e_2}} \in \lPO \Leftrightarrow \\
+        &   \Leftrightarrow (\hat{e_1} \in \lEso \wedge \hat{e_2} \not\in \lEso) \vee (\Path(\hat{e_1}) \prec \Path(\hat{e_2}))
       \end{equation*}
+      where $\prec$ is a lexicographical order.
 
       \item $\lCF \subseteq [\lE];=_{\lTID};[\lE]$ --- \emph{conflict relation},
       which binds two events whenever they are issued from the same thread but
       in different execution branches.
       More formally:
       \begin{equation*}
-        \tup{\hat{e_1}, \hat{e_2}} \in \lCF \Leftrightarrow
+        % \tup{\hat{e_1}, \hat{e_2}} \in \lCF \Leftrightarrow
       \end{equation*}
 
       \item $\lRMW \subseteq [\lR_{\Ex}];(\lPO_{imm} \cap =_{\lLOC});[\lW_{\Ex}]$ ---
