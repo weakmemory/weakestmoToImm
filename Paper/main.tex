@@ -128,7 +128,7 @@
   Using the definition of relations given above,
   we will also derive the following relations:
   \begin{itemize}
-    \item $lRB \defeq (\lRF^{-1};\lMO)$ --- \emph{reads before};
+    \item $\lRB \defeq (\lRF^{-1};\lMO)$ --- \emph{reads before};
     \item $\lECO \defeq (\lRF \cup \lRB \cup \lMO)^+$ --- \emph{extended coherence order}.
   \end{itemize}
 
@@ -245,15 +245,19 @@
 
       \item Program order defined as follows:
       \begin{equation*}
-        \tup{\hat{e_1}, \hat{e_2}} \in \lPO \Leftrightarrow
+        \begin{split}
+        & \tup{\hat{e_1}, \hat{e_2}} \in \lPO \Leftrightarrow \\
+        &   \Leftrightarrow (\hat{e_1} \in \lEso \wedge \hat{e_2} \not\in \lEso) \vee (\Path(\hat{e_1}) \prec \Path(\hat{e_2}))
+        \end{split}
       \end{equation*}
+      where $\prec$ is a lexicographical order.
 
       \item $\lCF \subseteq [\lE];=_{\lTID};[\lE]$ --- \emph{conflict relation},
       which binds two events whenever they are issued from the same thread but
       in different execution branches.
       More formally:
       \begin{equation*}
-        \tup{\hat{e_1}, \hat{e_2}} \in \lCF \Leftrightarrow
+        % \tup{\hat{e_1}, \hat{e_2}} \in \lCF \Leftrightarrow
       \end{equation*}
 
       \item $\lRMW \subseteq [\lR_{\Ex}];(\lPO_{imm} \cap =_{\lLOC});[\lW_{\Ex}]$ ---
@@ -342,15 +346,15 @@
   if there exists a function $f : X.\lE \fun S.\lE$, called \emph{source event mapping},
   such that the following conditions are met.
   \begin{itemize}
-    \item $f(X.\lE) \subseteq \lVIS(S)$;
-    \item $[f(X.\lE)];S.\lCF;[f(X.\lE)] = \emptyset$;
-    \item $S.\lPO;[f(X.\lE)] \subseteq f(X.\lE) \times f(X.\lE)$;
-    \item $[f(X.\lE)];S.\lPO;[S.\lE \setminus f(X.\lE)] \subseteq
-           [f(X.\lE)];S.\lPO;[f(X.\lE)];S.\lCF$;
-    \item $f(X.\lPO)  = [f(X.\lE)];S.\lPO; [f(X.\lE)]$;
-    \item $f(X.\lRMW) = [f(X.\lE)];S.\lRMW;[f(X.\lE)]$;
-    \item $f(X.\lRF)  = [f(X.\lE)];S.\lRF; [f(X.\lE)]$;
-    \item $f(X.\lMO)  = [f(X.\lE)];S.\lMO; [f(X.\lE)]$;
+    \item $\lf(X.\lE) \subseteq \lVIS(S)$;
+    \item $[\lf(X.\lE)];S.\lCF;[\lf(X.\lE)] = \emptyset$;
+    \item $S.\lPO;[\lf(X.\lE)] \subseteq \lf(X.\lE) \times \lf(X.\lE)$;
+    \item $[\lf(X.\lE)];S.\lPO;[S.\lE \setminus \lf(X.\lE)] \subseteq
+           [\lf(X.\lE)];S.\lPO;[\lf(X.\lE)];S.\lCF$;
+    \item $\lf(X.\lPO)  = [\lf(X.\lE)];S.\lPO; [\lf(X.\lE)]$;
+    \item $\lf(X.\lRMW) = [\lf(X.\lE)];S.\lRMW;[\lf(X.\lE)]$;
+    \item $\lf(X.\lRF)  = [\lf(X.\lE)];S.\lRF; [\lf(X.\lE)]$;
+    \item $\lf(X.\lMO)  = [\lf(X.\lE)];S.\lMO; [\lf(X.\lE)]$;
   \end{itemize}
 \end{definition}
 
@@ -451,15 +455,18 @@
 
     \item \label{item:frwd-coverable}
       $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$;
-     
+    
+    \item \label{item:frwd-issued}
+      $e \in I \Rightarrow f(e) = \hat{e}$;
+
     \item \label{item:frwd-lab}
       $G.\lLAB(e) = S.\lLAB(\hat{e})$;
 
     \item \label{item:frwd-front}
-      $S.\lPO;[\hat{e}] \subseteq [f(C)];S.\lPO$
+      $S.\lPO;[\hat{e}] \subseteq [\lf(C)];S.\lPO$
 
     \item \label{item:frwd-rf}
-      $\forall{w \in G.\lW} ~.~ \tup{w, e} \in G.\lRF \Rightarrow \tup{f(w), \hat{e}} \in S.\lRF$.
+      $\forall{w \in G.\lW} ~.~ \tup{w, e} \in G.\lRF \Rightarrow \tup{\lf(w), \hat{e}} \in S.\lRF$.
 
   \end{enumerate}
 \end{definition}
@@ -473,32 +480,32 @@
   \begin{enumerate}[label=\textbf{S.\arabic*}]
 
     \item \label{item:sim-inj}
-      $\forall{e_1, e_2 \in C \cup I} ~.~ f(e_1) = f(e_2) \Rightarrow e_1 = e_2$;
+      $\forall{e_1, e_2 \in C \cup I} ~.~ \lf(e_1) = \lf(e_2) \Rightarrow e_1 = e_2$;
 
     \item \label{item:sim-lab}
-      $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(f(e))$;
+      $\forall{e \in C \cup I} ~.~ G.\lLAB(e) = S.\lLAB(\lf(e))$;
 
     \item \label{item:sim-po-prfx} 
-      $S.\lPO;[f(C)] \subseteq [f(C)];S.\lPO$;
+      $S.\lPO;[\lf(C)] \subseteq [\lf(C)];S.\lPO$;
 
     \item \label{item:sim-po}
-      $f([C];G.\lPO;[C]) = [f(C)];S.\lPO;[f(C)]$;
+      $\lf([C];G.\lPO;[C]) = [\lf(C)];S.\lPO;[\lf(C)]$;
     
     \item \label{item:sim-cf}
-      $[f(C)];S.\lCF;[f(C)] = \emptyset$;
+      $[\lf(C)];S.\lCF;[\lf(C)] = \emptyset$;
 
     \item \label{item:sim-rf}
-      $f([I];G.\lRF;[C]) = [f(I)];S.\lRF;[f(C)]$;
+      $\lf([I];G.\lRF;[C]) = [\lf(I)];S.\lRF;[\lf(C)]$;
 
     \item \label{item:sim-mo}
-      $f([I];G.\lMO;[I]) = [f(I)];S.\lMO;[f(I)]$.
+      $\lf([I];G.\lMO;[I]) = [\lf(I)];S.\lMO;[\lf(I)]$.
     
   \end{enumerate}
 \end{definition}
 
 \begin{lemma}
-  \label{lemma:sim-forward}
-  Given $S$, $G$, $\tup{C, I}$, $f$
+  \label{lemma:simb-forward}
+  Given $S$, $G$, $\tup{C, I}$, $\lf$
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and 
   there exists forwarding pair $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$
   then $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ holds. 
@@ -512,9 +519,9 @@
   % \item \ref{item:sim-lab} \\
   %   \begin{equation}
   %     \begin{split}
-  %       & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(s(a)) \iff \\
+  %       & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(\lf(a)) \iff \\
   %       & \forall{a \in C \cup I} ~.~
-  %         G.\lLAB(a) = S.\lLAB(s(a)) \wedge G.\lLAB(e) = S.\lLAB(s(e))
+  %         G.\lLAB(a) = S.\lLAB(\lf(a)) \wedge G.\lLAB(e) = S.\lLAB(\lf(e))
   %     \end{split}
   %   \end{equation}
   %   First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
@@ -608,13 +615,14 @@
 
   %   Left conjunct follows immediately from $\simRb(S, G, \tup{C, I}, s, t)$.
   %   Right conjunct follows from the \ref{item:frwd-rf}.
-    
-  % \end{itemize}
+                                %   
+  \end{itemize}
   
 \end{proof}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
+  \label{lemma:simb-step}
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
   s.t. $\Execs{\Prog} \vdash G$,
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
   there exists $e$ s.t. $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$ then
@@ -686,31 +694,43 @@
   %% \end{itemize}
 \end{proof}
 
+\begin{lemma}
+  \label{lemma:simb-issue-step}
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
+  s.t. $\Execs{\Prog} \vdash G$,
+  if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
+  there exists $w$ s.t. $G \vdash \tup{C, I} \trstep \tup{C, I \uplus \{w\}}$
+  and $w \in \coverable(G, C, I \uplus \{w\})$
+  then there exists $\hat{e}, S', f'$ such that
+  $\Execs{\Prog} \vdash S \esstep{\hat{e}} S'$
+  and $\simRb(S', G, \tup{C, I \uplus \{w\}}, f')$ holds.
+\end{lemma}
+
 \subsubsection{Weak and strong simulation}
 
 \begin{definition}
-  Relation $\simRw(S, G, \tup{C, I}, f, \phi)$, that binds an 
+  Relation $\simRw(S, G, \tup{C, I}, \lf, \phi)$, that binds an 
   event structure $S$, an \imm execution graph $G$,
   a traversal configuration $\tup{C, I}$,
   an event mapping $f : G.\lE \fun S.\lE$,
   and an event $\phi \in C$,
-  holds whenever $\simRb(S, G, \tup{C, I}, s)$ holds and
+  holds whenever $\simRb(S, G, \tup{C, I}, \lf)$ holds and
   additionally the following condition is met:
   \begin{enumerate}[label=\textbf{S$_{weak}$.\arabic*},start=8]
      
     \item \label{item:sim-vis-weak}
-      $f(C \cup I \setminus \codom{[\phi];\lPO}) \subseteq \lVIS(S)$
+      $\lf(C \cup I \setminus \codom{[\phi];\lPO}) \subseteq \lVIS(S)$
 
   \end{enumerate}
 \end{definition}
 
 \begin{definition}
-  Given $S$, $G$, $\tup{C, I}$, $f$ a relation $\simR(S, G, \tup{C, I}, f)$ holds
-  whenever $\simRb(S, G, \tup{C, I}, f)$ holds and additionally
+  Given $S$, $G$, $\tup{C, I}$, $\lf$ a relation $\simR(S, G, \tup{C, I}, \lf)$ holds
+  whenever $\simRb(S, G, \tup{C, I}, \lf)$ holds and additionally
   the following condition is met:
   \begin{enumerate}[label=\textbf{S.\arabic*},start=8]
     \item \label{item:sim-vis}
-       $f(C \cup I) \subseteq \lVIS(S)$
+       $\lf(C \cup I) \subseteq \lVIS(S)$
   \end{enumerate}
 \end{definition}
 
@@ -725,39 +745,86 @@
 \end{definition}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{\lC, I}$, $f$, $\phi$, $\Prog$ and $\Execs{\Prog}$
+  \label{lemma:simw-finite}
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\phi$, $\Prog$ and $\Execs{\Prog}$
   s.t. $\Execs{\Prog} \vdash G$, $\tup{C, I}$ is strict
-  and $\simRw(S, G, \tup{C, I}, f, \phi)$ holds
+  and $\simRw(S, G, \tup{C, I}, \lf, \phi)$ holds
   if $G \vdash \tup{C, I} \trstep \tup{C', I'}$ then
-  there exists $S', f'$ such that
-  $\Execs{\Prog} \vdash S \esstep{} S'$
-  and either $\simRw(S', G, \tup{C', I'}, f')$
-  or $\simR(S', G, \tup{C', I'}, f')$ hold.
+  there exists $S', \lf'$ such that
+  $\Execs{\Prog} \vdash S \esstepstar S'$ s.t.
+  $\simR(S', G, \tup{C', I'}, \lf')$ hold.
 \end{lemma}
 
 \begin{proof}
-
+  Starting from $\tup{C, I}$ we will traverse events in $G$
+  and add new events into $S$.
+  Because $\tup{C, I}$ is strict, for all issue steps
+  $G \vdash \tup{C, I} \trstep \tup{C, I \uplus \{w\}}$
+  we can immediately make a cover step
+  $G \vdash \tup{C, I \uplus \{w\}} \trstep \tup{C \uplus \{w\}, I \uplus \{w\}}$.
+  Thus, using \ref{lemma:simb-step}, it is easy to show that $\simRb$
+  is preserved on each step.
+  Obviously, $\simRw$ is also preserved, since 
+  
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\phi$ s.t. 
 \end{proof}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
   s.t. $\Execs{\Prog} \vdash G$,
-  if the relation $\simR(S, G, \tup{C, I}, f)$ holds
+  if the relation $\simR(S, G, \tup{C, I}, \lf)$ holds
   and $G \vdash \tup{C, I} \trstep \tup{C', I'}$
-  then there exists $S'$ and $f'$ s.t.
+  then there exists $S'$ and $\lf'$ s.t.
   $\Execs{\Prog} \vdash S \esstepstar S'$ and
-  $\simR(S, G, \tup{C, I}, f)$ holds.
+  $\simR(S, G, \tup{C, I}, \lf)$ holds.
 \end{lemma}
 
 \begin{proof}
+  First, suppose that $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$.
+  Consider $c$ s.t. $\tup{c, e} \in G.\lPO_{imm}$.
+  Since $e \in \coverable(G, C, I)$ we know that $c \in C$.
+  Let us consider different subcases:
+  \begin{itemize}
+
+    \item $e \in G.lF$
+
+    \item $e \in G.\lW$ \\
+      In this case from the definition of $\coverable$ follows that $e \in I$.
+      Let us show that $\tup{e, \lf(e)} \in \forward(S, G, \tup{C, I}, \lf)$.
+      \begin{itemize}
+        \item \ref{item:frwd-coverable} is among our assumptions.
+
+        \item \ref{item:frwd-issued} holds trivially.
+
+        \item \ref{item:frwd-lab} follows from \ref{item:sim-lab} 
+          of $\simR(S, G, \tup{C, I}, \lf)$
+          
+        \item \ref{item:frwd-front}
+          $S.\lPO;[\hat{e}] \subseteq [\lf(C)];S.\lPO$
+
+        \item \label{item:frwd-rf} \\
+          Since $e \in G.\lW$ there is no incoming $\lRF$ edges 
+          and thus this item holds trivially.
+
+      \end{itemize}
+
+      It means that $$
+      Since $e \in \coverable(G, C, I)$ 
+
+    \item $$
+
+  \end{itemize}
+  
+  Suppose there exists $\hat{e} \in S.\lE$ s.t. $\tup{\lf(c), \hat{e}} \in S.\lPO_{imm}$.
+  
   
 \end{proof}
 
 \subsubsection{Execution extraction}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{C, I}$, $f$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$ and $\simR(S, G, \tup{C, I}, f)$ hold
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
+  s.t. $\Execs{\Prog} \vdash G$ and $\simR(S, G, \tup{C, I}, \lf)$ hold
   then there exists $G^{\cert} \in \certify(\Execs{\Prog}, G, C, I)$ s.t.
   $S \rhd G^{\cert}$ holds.
 \end{lemma}
