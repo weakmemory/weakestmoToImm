@@ -455,7 +455,10 @@
 
     \item \label{item:frwd-coverable}
       $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$;
-     
+    
+    \item \label{item:frwd-issued}
+      $e \in I \Rightarrow f(e) = \hat{e}$;
+
     \item \label{item:frwd-lab}
       $G.\lLAB(e) = S.\lLAB(\hat{e})$;
 
@@ -501,7 +504,7 @@
 \end{definition}
 
 \begin{lemma}
-  \label{lemma:sim-forward}
+  \label{lemma:simb-forward}
   Given $S$, $G$, $\tup{C, I}$, $\lf$
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and 
   there exists forwarding pair $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$
@@ -516,9 +519,9 @@
   % \item \ref{item:sim-lab} \\
   %   \begin{equation}
   %     \begin{split}
-  %       & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(s(a)) \iff \\
+  %       & \forall{a \in (C \uplus \{e\}) \cup I} ~.~ G.\lLAB(a) = S.\lLAB(\lf(a)) \iff \\
   %       & \forall{a \in C \cup I} ~.~
-  %         G.\lLAB(a) = S.\lLAB(s(a)) \wedge G.\lLAB(e) = S.\lLAB(s(e))
+  %         G.\lLAB(a) = S.\lLAB(\lf(a)) \wedge G.\lLAB(e) = S.\lLAB(\lf(e))
   %     \end{split}
   %   \end{equation}
   %   First conjunct follows from the $\simRb(S, G, \tup{C, I}, s, t)$.
@@ -612,12 +615,13 @@
 
   %   Left conjunct follows immediately from $\simRb(S, G, \tup{C, I}, s, t)$.
   %   Right conjunct follows from the \ref{item:frwd-rf}.
-    
-  % \end{itemize}
+                                %   
+  \end{itemize}
   
 \end{proof}
 
 \begin{lemma}
+  \label{lemma:simb-step}
   Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
   s.t. $\Execs{\Prog} \vdash G$,
   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
@@ -690,6 +694,18 @@
   %% \end{itemize}
 \end{proof}
 
+\begin{lemma}
+  \label{lemma:simb-issue-step}
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
+  s.t. $\Execs{\Prog} \vdash G$,
+  if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and
+  there exists $w$ s.t. $G \vdash \tup{C, I} \trstep \tup{C, I \uplus \{w\}}$
+  and $w \in \coverable(G, C, I \uplus \{w\})$
+  then there exists $\hat{e}, S', f'$ such that
+  $\Execs{\Prog} \vdash S \esstep{\hat{e}} S'$
+  and $\simRb(S', G, \tup{C, I \uplus \{w\}}, f')$ holds.
+\end{lemma}
+
 \subsubsection{Weak and strong simulation}
 
 \begin{definition}
@@ -698,7 +714,7 @@
   a traversal configuration $\tup{C, I}$,
   an event mapping $f : G.\lE \fun S.\lE$,
   and an event $\phi \in C$,
-  holds whenever $\simRb(S, G, \tup{C, I}, s)$ holds and
+  holds whenever $\simRb(S, G, \tup{C, I}, \lf)$ holds and
   additionally the following condition is met:
   \begin{enumerate}[label=\textbf{S$_{weak}$.\arabic*},start=8]
      
@@ -709,8 +725,8 @@
 \end{definition}
 
 \begin{definition}
-  Given $S$, $G$, $\tup{C, I}$, $\lf$ a relation $\simR(S, G, \tup{C, I}, f)$ holds
-  whenever $\simRb(S, G, \tup{C, I}, f)$ holds and additionally
+  Given $S$, $G$, $\tup{C, I}$, $\lf$ a relation $\simR(S, G, \tup{C, I}, \lf)$ holds
+  whenever $\simRb(S, G, \tup{C, I}, \lf)$ holds and additionally
   the following condition is met:
   \begin{enumerate}[label=\textbf{S.\arabic*},start=8]
     \item \label{item:sim-vis}
@@ -729,30 +745,78 @@
 \end{definition}
 
 \begin{lemma}
-  Given $S$, $G$, $\tup{\lC, I}$, $\lf$, $\phi$, $\Prog$ and $\Execs{\Prog}$
+  \label{lemma:simw-finite}
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\phi$, $\Prog$ and $\Execs{\Prog}$
   s.t. $\Execs{\Prog} \vdash G$, $\tup{C, I}$ is strict
   and $\simRw(S, G, \tup{C, I}, \lf, \phi)$ holds
   if $G \vdash \tup{C, I} \trstep \tup{C', I'}$ then
-  there exists $S', f'$ such that
+  there exists $S', \lf'$ such that
   $\Execs{\Prog} \vdash S \esstepstar S'$ s.t.
-  $\simR(S', G, \tup{C', I'}, f')$ hold.
+  $\simR(S', G, \tup{C', I'}, \lf')$ hold.
 \end{lemma}
 
 \begin{proof}
-
+  Starting from $\tup{C, I}$ we will traverse events in $G$
+  and add new events into $S$.
+  Because $\tup{C, I}$ is strict, for all issue steps
+  $G \vdash \tup{C, I} \trstep \tup{C, I \uplus \{w\}}$
+  we can immediately make a cover step
+  $G \vdash \tup{C, I \uplus \{w\}} \trstep \tup{C \uplus \{w\}, I \uplus \{w\}}$.
+  Thus, using \ref{lemma:simb-step}, it is easy to show that $\simRb$
+  is preserved on each step.
+  Obviously, $\simRw$ is also preserved, since 
+  
+  Given $S$, $G$, $\tup{C, I}$, $\lf$, $\phi$ s.t. 
 \end{proof}
 
 \begin{lemma}
   Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
   s.t. $\Execs{\Prog} \vdash G$,
-  if the relation $\simR(S, G, \tup{C, I}, f)$ holds
+  if the relation $\simR(S, G, \tup{C, I}, \lf)$ holds
   and $G \vdash \tup{C, I} \trstep \tup{C', I'}$
-  then there exists $S'$ and $f'$ s.t.
+  then there exists $S'$ and $\lf'$ s.t.
   $\Execs{\Prog} \vdash S \esstepstar S'$ and
-  $\simR(S, G, \tup{C, I}, f)$ holds.
+  $\simR(S, G, \tup{C, I}, \lf)$ holds.
 \end{lemma}
 
 \begin{proof}
+  First, suppose that $G \vdash \tup{C, I} \trstep \tup{C \uplus \{e\}, I}$.
+  Consider $c$ s.t. $\tup{c, e} \in G.\lPO_{imm}$.
+  Since $e \in \coverable(G, C, I)$ we know that $c \in C$.
+  Let us consider different subcases:
+  \begin{itemize}
+
+    \item $e \in G.lF$
+
+    \item $e \in G.\lW$ \\
+      In this case from the definition of $\coverable$ follows that $e \in I$.
+      Let us show that $\tup{e, \lf(e)} \in \forward(S, G, \tup{C, I}, \lf)$.
+      \begin{itemize}
+        \item \ref{item:frwd-coverable} is among our assumptions.
+
+        \item \ref{item:frwd-issued} holds trivially.
+
+        \item \ref{item:frwd-lab} follows from \ref{item:sim-lab} 
+          of $\simR(S, G, \tup{C, I}, \lf)$
+          
+        \item \ref{item:frwd-front}
+          $S.\lPO;[\hat{e}] \subseteq [\lf(C)];S.\lPO$
+
+        \item \label{item:frwd-rf} \\
+          Since $e \in G.\lW$ there is no incoming $\lRF$ edges 
+          and thus this item holds trivially.
+
+      \end{itemize}
+
+      It means that $$
+      Since $e \in \coverable(G, C, I)$ 
+
+    \item $$
+
+  \end{itemize}
+  
+  Suppose there exists $\hat{e} \in S.\lE$ s.t. $\tup{\lf(c), \hat{e}} \in S.\lPO_{imm}$.
+  
   
 \end{proof}
 
@@ -760,7 +824,7 @@
 
 \begin{lemma}
   Given $S$, $G$, $\tup{C, I}$, $\lf$, $\Prog$ and $\Execs{\Prog}$
-  s.t. $\Execs{\Prog} \vdash G$ and $\simR(S, G, \tup{C, I}, f)$ hold
+  s.t. $\Execs{\Prog} \vdash G$ and $\simR(S, G, \tup{C, I}, \lf)$ hold
   then there exists $G^{\cert} \in \certify(\Execs{\Prog}, G, C, I)$ s.t.
   $S \rhd G^{\cert}$ holds.
 \end{lemma}
