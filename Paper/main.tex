@@ -366,7 +366,35 @@
   s.t. $S \rhd G.X$.
 \end{theorem}
 
+\begin{proof}
+  The proof has the following structure.
+  Starting from an initial event structure,
+  we will traverse the graph $G$ with a certain strategy (sec.~\ref{sec:traversal}),
+  and at each traversal step we will modify the event structure.
+  At each step of the traversal we will maintain a two sets of events:
+  covered $C$ and issued $I$ events.
+  We will also define a relation $\simR(S, G, \tup{C, I}, \f)$ (def.~\ref{def:sim-rel}),
+  where $\f : G.\lE \rightarrow S.\lE$ --- a mapping from events of execution 
+  to events of event structure.
+  Then, in Lemma \ref{lemma:sim-step} we will show that $\simR$ is a simulation relation,
+  that is whenever $\simR(S, G, \tup{C, I}, \f)$ holds and 
+  we can make a step in a traversal 
+  $G \vdash \tup{C, I} \trstep \tup{C', I'}$,
+  there are several event structure constructions steps (possibly zero)
+  $\Prog \vdash S \esstepstar S'$ and there exists $f'$
+  such that $\simR(S', G, \tup{C', I'}, \f')$ holds.
+  Finally, in Lemma~\ref{lemma:sim-extract} we will show that
+  assuming $\simR(S, G, \tup{C, I}, \f)$ holds, 
+  we can construct a certain execution graph $G'$, 
+  consisting of the events from $C \cup \dom{G.\lPO^?;[I]}$, 
+  such that $G'$ is extracted from $S$, that is $S \rhd G'$.
+  The fact that at the end of the traversal $C = G.\lE$ and $I = G.\lW$
+  and thus an extracted graph $G'$ can only be the original graph $G$ 
+  completes our proof.
+\end{proof}
+
 \subsection{Traversal}
+\label{sec:traversal}
 
 \begin{definition}
   An event $e \in G.\lE$ is \emph{coverable} in \imm execution graph $G$ and $\tup{C, I}$,
@@ -727,6 +755,7 @@
 \end{lemma}
 
 \begin{definition}
+  \label{def:sim-rel}
   Given $S$, $G$, $\tup{C, I}$, $\f$ a relation $\simR(S, G, \tup{C, I}, \f)$ holds
   whenever $\simRb(S, G, \tup{C, I}, \f)$ holds and additionally
   the following condition is met:
@@ -737,6 +766,7 @@
 \end{definition}
 
 \begin{lemma}
+  \label{lemma:sim-step}
   Given $S$, $G$, $\tup{C, I}$, $\f$, and $\Prog$ 
   s.t. $\Prog \vdash G$,
   if the relation $\simR(S, G, \tup{C, I}, \f)$ holds
@@ -790,6 +820,7 @@
 \subsubsection{Execution extraction}
 
 \begin{lemma}
+  \label{lemma:sim-extract}
   Given $S$, $G$, $\tup{C, I}$, $\f$, and $\Prog$ 
   s.t. $\Prog \vdash G$ and $\simR(S, G, \tup{C, I}, \f)$ hold
   then there exists $G^{\cert} \in \certify(\Prog, G, C, I)$ s.t.
