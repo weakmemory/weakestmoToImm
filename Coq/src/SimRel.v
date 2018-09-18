@@ -47,6 +47,11 @@ Section SimRel.
       imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
               ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
     }.
+
+  Record simrel :=
+    { comm : simrel_common;
+      vis  : f ∘₁ (C ∪₁ dom_rel (Gsb^? ;; <| I |>)) ⊆₁ vis S;
+    }.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
@@ -197,3 +202,4 @@ Lemma simstep_exists_forward execs S G TC f
     ⟪ EST : ESstep.t weakestmo execs S S' ⟫ /\
     ⟪ SRC : simrel_common S' G (mkTC (covered TC ∪₁ eq e) (issued TC)) f' ⟫.
 Proof. Admitted.
+
