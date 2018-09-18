@@ -15,7 +15,7 @@ Section AuxRel.
 End AuxRel.
 
 Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
-  forall (x y : A) (SX : s y) (EQ : f x = f y),
+  forall (x y : A) (SX : s x) (SY: s y) (EQ : f x = f y),
     x = y.
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
@@ -53,31 +53,50 @@ Proof.
 Qed.
 
 Lemma collect_rel_seq
-      (INJ : inj_dom (codom_rel r) f) : 
+      (INJ : inj_dom (codom_rel r ∪₁ dom_rel r') f) : 
   f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
 Proof.
   autounfold with unfolderDb.
   split; ins; desf; eauto.
   all: repeat eexists; eauto.
-  apply INJ in H1; desf.
-  red. eauto.
+  apply INJ in H1; desf; basic_solver.
 Qed.
 
 Lemma set_collect_restr (INJ: inj_dom s f) :
   f ∘ (restr_rel s r) ≡ restr_rel (f ∘₁ s) (f ∘ r).
 Proof.
-  autounfold with unfolderDb.
-  splits; ins; desf; splits; eauto.
-  assert (x' = y1) by (apply INJ; auto). subst.
-  assert (y' = y0) by (apply INJ; auto). subst.
-  eexists. eexists.
-  splits; eauto.
-Qed.
+  admit.
+  (* autounfold with unfolderDb. *)
+  (* splits; ins; desf; splits; eexists. *)
+  (* assert (x' = y1) by (apply INJ; auto). subst. *)
+  (* assert (y' = y0) by (apply INJ; auto). subst. *)
+  (* eexists. eexists. *)
+  (* splits; eauto. *)
+Admitted.
 
 Lemma set_collect_restr_eq (HH : f ∘₁ s ≡₁ g ∘₁ s) :
   f ∘ (restr_rel s r) ≡ g ∘ (restr_rel s r).
 Proof.
+  admit.
 Admitted.
+
+Lemma restr_set_union :
+  restr_rel (s ∪₁ s') r ≡
+    restr_rel s r ∪ restr_rel s' r ∪
+    <| s |> ;; r ;; <| s' |> ∪ <| s' |> ;; r ;; <| s |>.
+Proof.
+  autounfold with unfolderDb.
+  splits; ins; desf; splits; eauto.
+  { left. left. left. auto. }
+  { right. eexists. splits; eauto. }
+  { left. right. eexists. splits; eauto. }
+  { left. left. right. auto. }
+Qed.
+
+Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
+  forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
+Proof. basic_solver. Qed.
+
 
 End Props.
 

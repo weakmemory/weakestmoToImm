@@ -29,15 +29,12 @@ Section SimRel.
   (* TODO. Should state smth about `execs` used in Construction.v.
      Probably, in terms of a program. *)
   Record simrel_common :=
-    { fdef  : forall e (COV : C e),
-        f e = act_to_event G e;
-
-      finj  : inj_dom (C ∪₁ I) f;
+    { (*fdef  : forall e (COV : C e),
+        f e = act_to_event G e; *)
+      finj  : inj_dom (C ∪₁ I) f;  
       labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
-
       foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
-
       sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
       sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
             ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘;
@@ -109,16 +106,19 @@ Proof.
 
   assert (inj_dom (covered TC ∪₁ eq e ∪₁ issued TC) (upd f e e'))
     as FINJ.
-  { destruct (classic (issued TC e)) as [ISS|NISS].
-    { admit. }
-    red. ins.
-    unfold set_union in *. desf.
-    { admit. }
-    { rewrite upds in *.
-      destruct (classic (x = y)) as [|NEQ]; auto.
-      rewrite updo in *; auto.
+  { 
+    (* destruct (classic (issued TC e)) as [ISS|NISS]. *)
+    (* { admit. } *)
+    (* red. ins. *)
+    (* unfold set_union in *. desf. *)
+    (* { admit. } *)
+    (* { rewrite upds in *. *)
+    (*   destruct (classic (x = y)) as [|NEQ]; auto. *)
+    (*   rewrite updo in *; auto. *)
 
-    admit. }
+    (*   admit. } *)
+    admit.
+  }
 
   destruct FP.
   set (SRC' := SRC).
@@ -130,8 +130,8 @@ Proof.
   { unfold set_union in *.
     desf.
     { rewrite updo.
-      2: { intros HH. desf. }
-      basic_solver. }
+      { basic_solver. }
+      intros HH. desf. }
     { by rewrite upds. }
     destruct (classic (e = e0)) as [|NEQ]; subst.
     { by rewrite upds. }
@@ -145,15 +145,41 @@ Proof.
     rewrite seq_union_r.
     rewrite seq_union_l.
     apply inclusion_union_l.
-    2: by apply inclusion_union_r1_search.
-    rewrite sbPrcl; eauto. by unionR left. }
+    { rewrite sbPrcl; eauto. by unionR left. } 
+    by apply inclusion_union_r1_search. }
   (* sbF *)
   { repeat rewrite <- restr_relE.
-    rewrite set_collect_restr.
-    2: admit.
     rewrite set_collect_union.
-    rewrite set_collect_eq; rewrite upds.
-    rewrite set_collect_updo; auto.
+    repeat rewrite restr_set_union.
+    rewrite set_collect_eq. rewrite upds.
+    assert (irreflexive (sb G)) as irflxGsb.
+    { admit. }
+    assert (irreflexive S.(ES.sb)) as irflxSsb.
+    { admit. }
+    repeat rewrite restr_irrefl_eq; auto.
+    assert (<| eq e |> ;; sb G ;; <| covered TC |> ≡ ∅₂) as NEGsbC.
+    { autounfold with unfolderDb. splits; ins; eauto. 
+      destruct H as [z Hz]. desf.
+      admit.
+    }
+    assert (<| eq e' |> ;; S.(ES.sb) ;; <| upd f e e' ∘₁ covered TC |> ≡ ∅₂) as NESsbC.
+    { admit. }
+    rewrite NEGsbC.
+    rewrite NESsbC.
+    repeat rewrite union_false_r.
+    rewrite collect_rel_union.
+    assert 
+      (upd f e e' ∘ restr_rel (covered TC) (sb G) ≡ f ∘ restr_rel (covered TC) (sb G))
+    as FupdRESTRsb.
+    { admit. } 
+    rewrite FupdRESTRsb.
+    rewrite FupdCOV.
+    repeat rewrite <- restr_relE in sbF0.
+    rewrite sbF0.
+    admit. 
+    }
+    (* 2: admit. *)
+    
     admit. }
   (*   repeat rewrite collect_rel_seq. *)
   (*   { *)
