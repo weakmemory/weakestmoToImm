@@ -152,25 +152,21 @@ Proof.
     rewrite set_collect_union.
     repeat rewrite restr_set_union.
     rewrite set_collect_eq. rewrite upds.
-    assert (irreflexive (sb G)) as irflxGsb.
-    { admit. }
-    assert (irreflexive S.(ES.sb)) as irflxSsb.
-    { admit. }
-    repeat rewrite restr_irrefl_eq; auto.
-    assert (<| eq e |> ;; sb G ;; <| covered TC |> ≡ ∅₂) as NEGsbC.
+    rewrite restr_irrefl_eq; [|by apply Execution.sb_irr].
+    rewrite restr_irrefl_eq; [|by apply sb_irr].
+    arewrite_false (<| eq e |> ;; sb G ;; <| covered TC |>).
     { autounfold with unfolderDb. splits; ins; eauto. 
       destruct H as [z Hz]. desf.
       admit.
     }
-    assert (<| eq e' |> ;; S.(ES.sb) ;; <| upd f e e' ∘₁ covered TC |> ≡ ∅₂) as NESsbC.
+    arewrite_false (<| eq e' |> ;; S.(ES.sb) ;; <| upd f e e' ∘₁ covered TC |>).
     { admit. }
-    rewrite NEGsbC.
-    rewrite NESsbC.
     repeat rewrite union_false_r.
     rewrite collect_rel_union.
-    assert 
-      (upd f e e' ∘ restr_rel (covered TC) (sb G) ≡ f ∘ restr_rel (covered TC) (sb G))
-    as FupdRESTRsb.
+    apply union_more.
+
+    arewrite 
+      (upd f e e' ∘ restr_rel (covered TC) (sb G) ≡ f ∘ restr_rel (covered TC) (sb G)).
     { admit. } 
     rewrite FupdRESTRsb.
     rewrite FupdCOV.
