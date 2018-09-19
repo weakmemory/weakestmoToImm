@@ -189,6 +189,12 @@ Proof.
     repeat rewrite seq_union_l.
     unionL.
     { apply SRC. }
+    { autounfold with unfolderDb. 
+      ins. destruct H. desf.
+      apply H7.
+      right.
+      admit. 
+    }
     3: { autounfold with unfolderDb.
          ins. desf. apply H3.
          basic_solver. }
