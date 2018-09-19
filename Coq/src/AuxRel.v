@@ -14,8 +14,11 @@ Section AuxRel.
     
 End AuxRel.
 
+Definition eq_dom {A B} (s : A -> Prop) (f g: A -> B) := 
+  forall (x: A) (SX: s x), f x = g x. 
+
 Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
-  forall (x y : A) (SX : s x) (SY: s y) (EQ : f x = f y),
+  forall (x y : A) (SY: s y) (EQ : f x = f y),
     x = y.
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
@@ -52,33 +55,57 @@ Proof.
   splits; eauto.
 Qed.
 
-Lemma collect_rel_seq
-      (INJ : inj_dom (codom_rel r ∪₁ dom_rel r') f) : 
+Lemma collect_rel_seq_l
+      (INJ : inj_dom (codom_rel r) f) : 
   f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
 Proof.
   autounfold with unfolderDb.
   split; ins; desf; eauto.
   all: repeat eexists; eauto.
-  apply INJ in H1; desf; basic_solver.
+  apply INJ in H1; desf.
+  red. eauto.
 Qed.
 
-Lemma set_collect_restr (INJ: inj_dom s f) :
+Lemma collect_rel_seq_r
+      (INJ : inj_dom (dom_rel r') f) : 
+  f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
+Proof.
+  autounfold with unfolderDb.
+  split; ins; desf; eauto.
+  all: repeat eexists; eauto.
+  symmetry in H1.
+  apply INJ in H1; desf.
+  red. eexists. eauto.
+Qed.     
+
+Lemma set_collect_restr : 
+  forall (s: A -> Prop) (f: A -> B), inj_dom s f ->
   f ∘ (restr_rel s r) ≡ restr_rel (f ∘₁ s) (f ∘ r).
 Proof.
-  admit.
-  (* autounfold with unfolderDb. *)
-  (* splits; ins; desf; splits; eexists. *)
-  (* assert (x' = y1) by (apply INJ; auto). subst. *)
-  (* assert (y' = y0) by (apply INJ; auto). subst. *)
-  (* eexists. eexists. *)
-  (* splits; eauto. *)
-Admitted.
+  ins.
+  autounfold with unfolderDb.
+  splits; ins; desf; splits; eauto.
+  assert (x' = y1) by (apply H; auto). subst.
+  assert (y' = y0) by (apply H; auto). subst.
+  eexists. eexists.
+  splits; eauto.
+Qed.
 
-Lemma set_collect_restr_eq (HH : f ∘₁ s ≡₁ g ∘₁ s) :
+Lemma collect_rel_eq_dom : forall (s s': A -> Prop) (EQs: eq_dom s f g) (EQs': eq_dom s' f g),
+  f ∘ (<| s |> ;; r ;; <| s' |>) ≡ g ∘ (<| s |> ;; r ;; <| s' |>).
+Proof.
+  ins.
+  autounfold with unfolderDb.
+  splits; ins; desf; repeat eexists; eauto; 
+  symmetry; [apply (EQs z) | apply (EQs' y')]; auto.
+Qed.
+
+Lemma collect_rel_restr_eq_dom (HH : eq_dom s f g) :
   f ∘ (restr_rel s r) ≡ g ∘ (restr_rel s r).
 Proof.
-  admit.
-Admitted.
+  rewrite restr_relE.
+  apply collect_rel_eq_dom; auto.
+Qed.
 
 Lemma restr_set_union :
   restr_rel (s ∪₁ s') r ≡

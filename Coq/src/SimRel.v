@@ -163,42 +163,22 @@ Proof.
     { admit. }
     repeat rewrite union_false_r.
     rewrite collect_rel_union.
-    apply union_more.
-
-    arewrite 
-      (upd f e e' ∘ restr_rel (covered TC) (sb G) ≡ f ∘ restr_rel (covered TC) (sb G)).
+    assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
     { admit. } 
-    rewrite FupdRESTRsb.
-    rewrite FupdCOV.
-    repeat rewrite <- restr_relE in sbF0.
-    rewrite sbF0.
-    admit. 
-    }
-    (* 2: admit. *)
-    
-    admit. }
-  (*   repeat rewrite collect_rel_seq. *)
-  (*   { *)
-  (*     repeat rewrite set_collect_eqv. *)
-  (*     repeat rewrite set_collect_union. *)
-  (*     repeat rewrite id_union. *)
-  (*     repeat rewrite seq_union_l. *)
-  (*     repeat rewrite seq_union_r. *)
-  (*     split. *)
-  (*     { unionL. *)
-  (*       { apply inclusion_union_r. left. apply inclusion_union_r. left. *)
-  (*         repeat rewrite <- set_collect_eqv.    *)
-  (*         repeat rewrite <- collect_rel_seq. *)
-          
-  (*         rewrite <- (set_collect_restr_eq G.(sb) FupdCOV). *)
-  (*         rewrite <- restr_relE. *)
-  (*         assert (H: set_collect_restr_eq FupdCOV). as Hh.  *)
-  (*         rewrite <- (set_collect_restr_eq FupdCOV). *)
-  (*       } *)
-  (*     } *)
-  (*   } *)
-  (* } *)
-
+    apply union_more.
+    { rewrite (collect_rel_restr_eq_dom (sb G) FupdEQCOV). 
+      rewrite FupdCOV. 
+      repeat rewrite restr_relE.
+      apply sbF0. }
+    { rewrite collect_rel_seq_l. 
+      repeat rewrite set_collect_eqv.
+      repeat rewrite FupdCOV.
+      assert (upd f e e' ∘ (sb G) ;; <| eq e |> ≡ S.(ES.sb) ;; <| eq e' |> ) as FupdGsbE.
+      { admit. } 
+      rewrite FupdGsbE.
+      reflexivity.
+      (* inj_dom (s ∪ s') f => inj_dom s f *)
+      admit. } }
   (* cimgNcf *)
   { split; [|basic_solver].
     rewrite set_collect_union.
