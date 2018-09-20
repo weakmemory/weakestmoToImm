@@ -73,14 +73,21 @@ Lemma simstep_forward S G sc TC f e e'
   exists f',
     simrel_common S G (mkTC (covered TC ∪₁ eq e) (issued TC)) f'.
 Proof.
-  assert (~ covered TC e) as NCOV.
-  { intros COV.
-    edestruct fp_tcstep as [a ST]; eauto.
-    red in ST. desf; simpls.
-    { assert ((covered TC ∪₁ eq e) a ) as HH.
-      { apply COVEQ. by right. }
-      unfold set_union in *. desf. }
-    apply NISS. apply ISSEQ. by right. }
+  exists (upd f e e').
+
+  (* extract (NEXT e) and (COVERABLE e) from fp_tcstep *)
+  edestruct fp_tcstep as [a ST]; eauto.
+  red in ST. desf; simpls.
+  2 : { exfalso.
+        apply NISS.
+        unfold set_equiv in ISSEQ. desf. 
+        apply set_subset_union_l in ISSEQ0. desf.
+        by apply (hahn_subset_exp ISSEQ1). }
+  assert (a = e); subst.
+  { autounfold with unfolderDb in COVEQ. desf. 
+    unfold set_subset in *.
+    destruct (COVEQ0 a); auto.
+    exfalso. by apply NEXT. }
 
   assert (~ is_init e) as NINITE.
   { admit. }
@@ -141,7 +148,7 @@ Proof.
     assert (sb G a e) as GpoYE.
     { apply (same_thread G e a) in Hsametid; desf.
       autounfold with unfolderDb in Hsametid; desf.
-      exfalso. apply NCOV. 
+      exfalso. apply NEXT. 
       assert (tc_coherent G sc TC) as TRCOH. 
       { admit. }
       apply (dom_sb_covered TRCOH).
@@ -173,8 +180,7 @@ Proof.
   destruct FP.
   set (SRC' := SRC).
   destruct SRC'.
-
-  exists (upd f e e').
+  
   constructor; ins.
   (* finE *)
   { admit. } 
