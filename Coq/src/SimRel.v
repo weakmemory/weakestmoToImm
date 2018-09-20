@@ -271,12 +271,15 @@ Proof.
       apply imgrf0. }
     rewrite set_collect_eq.
     rewrite upds.
-    destruct fp_tcstep0. destruct H.
-    { destruct H. desf. admit. }
+    destruct COV as [Hact HCASES].
+    destruct HCASES as [[Hw | Hr] | Hf].
+    { autounfold with unfolderDb in Hw. destruct Hw as [Hlabw Hiss]. 
+      (* no incoming rf edges to write event *)
+      admit. }
+    { admit. }
     admit. }
-  admit. 
+  admit.
 Admitted.
-
 
 (* Lemma 2 from notes. *)
 Lemma simstep_exists_forward execs S G TC f
