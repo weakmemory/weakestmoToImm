@@ -3,7 +3,7 @@ From promising Require Import Basic.
 From imm Require Import Events.
 Require Import AuxRel EventStructure.
 
-Inductive model := weakest | weakestmo.
+Inductive model := Weakest | Weakestmo.
 
 Section Consistency.
 
@@ -52,8 +52,8 @@ Definition co_strong : relation EventId.t :=
 
 Definition mco (m : model) : relation EventId.t :=
   match m with
-  | weakest   => co_strong 
-  | weakestmo => co
+  | Weakest   => co_strong 
+  | Weakestmo => co
   end.
 
 Definition fr : relation EventId.t := rf⁻¹ ⨾ co \ cf^?.

@@ -272,7 +272,7 @@ Admitted.
 Lemma simstep_exists_forward execs S G TC f
       (SRC : simrel_common S G TC f) :
   exists e (e' : EventId.t) S' f',
-    ⟪ EST : ESstep.t weakestmo execs S S' ⟫ /\
+    ⟪ EST : ESstep.t Weakestmo execs S S' ⟫ /\
     ⟪ SRC : simrel_common S' G (mkTC (covered TC ∪₁ eq e) (issued TC)) f' ⟫.
 Proof. Admitted.
 
