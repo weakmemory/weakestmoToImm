@@ -90,6 +90,9 @@ Proof.
 
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
   { by rewrite set_collect_updo. } 
+
+  assert ((upd f e e') ∘₁ (issued TC) ≡₁ f ∘₁ (issued TC)) as FupdISS.
+  { admit. } 
   
   assert (issued TC e -> f e = e') as NN.
   { admit. }
@@ -120,6 +123,9 @@ Proof.
     apply set_subset_compl. basic_solver. }
 
   assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
+  { admit. } 
+
+  assert (eq_dom (issued TC) (upd f e e') f) as FupdEQISS.
   { admit. } 
   
   assert (forall a 
@@ -246,9 +252,23 @@ Proof.
        left. right.
        apply FCOVimgEsb; auto. }
     { rewrite <- restr_relE. 
-      apply (restr_irrefl_eq (cf_irr S)). }
-    all: admit. }
-  { admit. }
+      apply (restr_irrefl_eq (cf_irr S)). } }
+  (* imgrf *)
+  { rewrite set_collect_union.
+    repeat rewrite id_union.
+    repeat rewrite seq_union_r. 
+    rewrite collect_rel_union.
+    rewrite FupdCOV. 
+    rewrite FupdISS. 
+    apply union_more.
+    { rewrite (collect_rel_eq_dom (rf G) FupdEQISS FupdEQCOV).
+      apply imgrf0. }
+    rewrite set_collect_eq.
+    rewrite upds.
+    destruct fp_tcstep0. destruct H.
+    { destruct H. desf. admit. }
+    admit. }
+  admit. 
 Admitted.
 
 
