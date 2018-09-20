@@ -23,7 +23,7 @@ Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
-Notation "f ∘₁ s" := (set_collect f s) (at level 45).
+Notation "f ∘₁ s" := (set_collect f s) (at level 39).
 Notation "f ∘ r"  := (collect_rel f r) (at level 45).
 
 Hint Unfold eq_class_rel : unfolderDb. 
@@ -131,4 +131,16 @@ Require Import Setoid.
 
 Add Parametric Morphism A : (@set_compl A) with signature 
   set_equiv ==> set_equiv as set_compl_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@set_compl A) with signature 
+  set_subset --> set_subset as set_compl_mori.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A B : (@set_collect A B) with signature 
+  eq ==> set_equiv ==> set_equiv as set_collect_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A B : (@set_collect A B) with signature 
+  eq ==> set_subset ==> set_subset as set_collect_mori.
 Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.

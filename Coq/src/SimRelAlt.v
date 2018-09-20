@@ -2,9 +2,11 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecutionProperties.
 Require Import AuxRel AuxDef EventStructure Construction Consistency.
-Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
-Section SimRel.
+Set Implicit Arguments.
+
+Section SimRelAlt.
   Variable prog : Prog.t.
   Variable S : ES.t.
   Variable G  : execution.
@@ -16,56 +18,103 @@ Section SimRel.
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
-  Notation "'GE'" := G.(acts_set).
-  Notation "'Gtid'" := (tid).
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
-  Notation "'Stid'" := (EventId.tid).
   Notation "'Slab'" := (EventId.lab).
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Srf'" := (S.(ES.rf)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
+  Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
+  Notation "'Stid_' t" := (fun x => EventId.tid x = t) (at level 1).
 
-  (* TODO. Should state smth about `execs` used in Construction.v.
-     Probably, in terms of a program. *)
-  Record simrel_common :=
+  Definition pc thread :=
+    f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ;; <| f ∘₁ C |>).
+
+  Record simrel (P : thread_id -> Prop) :=
     { tccoh : tc_coherent G sc TC;
-      (*fdef  : forall e (COV : C e),
-        f e = act_to_event G e; *)
-      finj  : inj_dom (C ∪₁ I) f;  
-      tidEq : forall e (CpoI : (C ∪₁ dom_rel (Gsb ;; <| I |>)) e),
-        Stid e.(f) = Gtid e;
-      labEq : forall e (CI : (C ∪₁ I) e),
+      swf   : ES.Wf S;
+      scons : es_consistent S Weakestmo;
+
+      finj : inj_dom (C ∪₁ I) f;  
+      foth : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
+      flab : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
-      foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
-      sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
-            ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘;
-      cimgNcf : ⦗ f ∘₁ C ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ C ⦘ ≡ ∅₂;
-      imgrf : f ∘ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
-              ⦗ f ∘₁ I ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ C ⦘;
-      imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
-              ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
+      ftid : forall e, EventId.tid (f e) = tid e;
+      fdef : forall e (COV : C e),
+          f e = act_to_event G e;
+      
+      sbtot_cov : forall thread,
+          is_total (f ∘₁ C ∩₁ Stid_ thread) Ssb;
+
+      sbtot_ci : forall thread (NP : ~ P thread),
+          is_total (f ∘₁ (C ∪₁ I) ∩₁ Stid_ thread) Ssb;
+      
+      (* sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb; *)
+      (* sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡ *)
+      (*       ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘; *)
+      (* cimgNcf : ⦗ f ∘₁ C ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ C ⦘ ≡ ∅₂; *)
+      (* imgrf : f ∘ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡ *)
+      (*         ⦗ f ∘₁ I ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ C ⦘; *)
+      (* imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ *)
+      (*         ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘; *)
     }.
   
-  Implicit Type SRC : simrel_common.
+  Section SRCprop.
+    Variable P : thread_id -> Prop.
+    Variable SRC : simrel P.
+  
+    Lemma sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb.
+    Proof.
+      arewrite (Ssb ⊆ <| f ∘₁ C ∪₁ set_compl (f ∘₁ C) |> ;; Ssb) at 1.
+      { arewrite (f ∘₁ C ∪₁ set_compl (f ∘₁ C) ≡₁ fun _ => True).
+        2: by relsf.
+        split; [basic_solver|].
+        intros x _. apply classic. }
+      rewrite id_union. rewrite seq_union_l.
+      arewrite_false (⦗set_compl (f ∘₁ C)⦘ ⨾ Ssb ⨾ ⦗f ∘₁ C⦘).
+      2: { arewrite_id ⦗f ∘₁ C⦘ at 2. relsf. }
+      rewrite SRC.(swf).(ES.sbE).
+      rewrite !seqA.
 
-  Lemma finE SRC e (SEE : SE (f e)) : GE e.
-  Proof.
-    destruct (classic (GE e)) as [|NGE]; auto.
-    exfalso.
-    eapply foth; auto.
-    split; eauto.
-    autounfold with unfolderDb.
-    eexists. split; eauto.
-    intros [AA|AA]; apply NGE.
-    2: eapply issuedE; eauto.
-    eapply coveredE; eauto.
-    all: apply SRC.
-  Qed.
+      assert ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C) as YY.
+      { admit. }
+      rewrite <- YY at 1.
+
+Tactic Notation "brewrite" uconstr(EQ) :=
+  let H := fresh in
+  first [assert (H: EQ) |
+    let typ1 := fresh in let binder1 := fresh in
+    evar (typ1 : Type); evar (binder1 : typ1);
+    first [assert (H: EQ binder1); subst binder1 typ1 |
+      let typ2 := fresh in let binder2 := fresh in
+      evar (typ2 : Type); evar (binder2 : typ2);
+      assert (H: EQ binder1 binder2); subst binder1 typ1 binder2 typ2]]; cycle 1;
+  [ first [rewrite <- H|seq_rewrite <- H|sin_rewrite H]; clear H; rewrite ?seqA
+  | eauto 4 with hahn hahn_full; try done ]; cycle 1.
+
+      arewrite (⦗set_compl (f ∘₁ C)⦘ ⨾ ⦗SE⦘ ⊆ ⦗f ∘₁ I⦘).
+      { brewrite ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C).
+
+      { rewrite <- AuxRel.id_inter.
+        arewrite ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C).
+
+        apply eqv_rel_mori.
+        erewrite set_compl_mori.
+        2: { red.
+             apply set_collect_mori.
+             arewrite ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C).
+
+
+        assert ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C) as XX.
+
+        assert (set_compl (f ∘₁ C) ∩₁ SE ⊆₁ set_compl ((C ∪₁ I) ∪₁ set_compl I) ∩₁ SE) as HH.
+
+    Admitted.
+  End SRCprop.
+
 
   Record simrel :=
     { comm : simrel_common;
@@ -74,11 +123,8 @@ Section SimRel.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
-      fp_inE   : GE e /\ SE e'; 
-      fp_tidEq : Stid e' = Gtid e;
       fp_labEq : Slab e' = Glab e;
-      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      fp_sbEq  : upd f e e' ∘ (Gsb ;; <| eq e |>) ≡ Ssb ;; <| eq e' |>;
+      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb; 
       fp_imgrf : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
@@ -89,33 +135,17 @@ Lemma simstep_forward S G sc TC f e e'
   exists f',
     simrel_common S G (mkTC (covered TC ∪₁ eq e) (issued TC)) f'.
 Proof.
-  exists (upd f e e').
-
-  (* extract (NEXT e) and (COVERABLE e) from fp_tcstep *)
-  edestruct fp_tcstep as [a ST]; eauto.
-  red in ST. desf; simpls.
-  2 : { exfalso.
-        apply NISS.
-        unfold set_equiv in ISSEQ. desf. 
-        apply set_subset_union_l in ISSEQ0. desf.
-        by apply (hahn_subset_exp ISSEQ1). }
-  assert (a = e); subst.
-  { autounfold with unfolderDb in COVEQ. desf. 
-    unfold set_subset in *.
-    destruct (COVEQ0 a); auto.
-    exfalso. by apply NEXT. }
-
-  assert (~ is_init e) as NINITE.
-  { admit. }
-
-  assert (sb G ;; <| eq e |> ⊆ <| covered TC |> ;; sb G) as EPrclCOV.
-  { admit. } 
+  assert (~ covered TC e) as NCOV.
+  { intros COV.
+    edestruct fp_tcstep as [a ST]; eauto.
+    red in ST. desf; simpls.
+    { assert ((covered TC ∪₁ eq e) a ) as HH.
+      { apply COVEQ. by right. }
+      unfold set_union in *. desf. }
+    apply NISS. apply ISSEQ. by right. }
 
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
   { by rewrite set_collect_updo. } 
-
-  assert ((upd f e e') ∘₁ (issued TC) ≡₁ f ∘₁ (issued TC)) as FupdISS.
-  { admit. } 
   
   assert (issued TC e -> f e = e') as NN.
   { admit. }
@@ -145,38 +175,6 @@ Proof.
     2: by apply SRC.
     apply set_subset_compl. basic_solver. }
 
-  assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
-  { admit. } 
-
-  assert (eq_dom (issued TC) (upd f e e') f) as FupdEQISS.
-  { admit. } 
-  
-  assert (forall a 
-    (COVa: covered TC a) (Fimga: S.(ES.acts_set) (f a)) (tidEQ: EventId.same_tid (f a) e'),
-       S.(ES.sb) (f a) e')
-  as FCOVimgEsb.
-  { ins.
-    destruct FP. destruct SRC.
-    assert (tid e = tid a) as Hsametid.
-    { rewrite <- fp_tidEq0. 
-      rewrite <- (tidEq0 a); auto. 
-      autounfold with unfolderDb. auto. }
-    assert (sb G a e) as GpoYE.
-    { apply (same_thread G e a) in Hsametid; desf.
-      autounfold with unfolderDb in Hsametid; desf.
-      exfalso. apply NEXT. 
-      assert (tc_coherent G sc TC) as TRCOH. 
-      { admit. }
-      apply (dom_sb_covered TRCOH).
-      autounfold with unfolderDb.
-      eexists. eexists. eauto. 
-      apply finE0. auto. }
-    unfold same_relation in fp_sbEq0. desf.
-    repeat rewrite seq_eqv_r in fp_sbEq0.
-    apply fp_sbEq0.
-    unfold collect_rel. eexists. eexists. splits; eauto.
-    apply upds. } 
-  
   assert (inj_dom (covered TC ∪₁ eq e ∪₁ issued TC) (upd f e e'))
     as FINJ.
   { 
@@ -196,12 +194,9 @@ Proof.
   destruct FP.
   set (SRC' := SRC).
   destruct SRC'.
-  
+
+  exists (upd f e e').
   constructor; ins.
-  (* finE *)
-  { admit. } 
-  (* tidEq *)
-  { admit. }
   (* labEq *)
   { unfold set_union in *.
     desf.
@@ -239,7 +234,8 @@ Proof.
     { admit. }
     repeat rewrite union_false_r.
     rewrite collect_rel_union.
-
+    assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
+    { admit. } 
     apply union_more.
     { rewrite (collect_rel_restr_eq_dom (sb G) FupdEQCOV). 
       rewrite FupdCOV. 
@@ -265,37 +261,18 @@ Proof.
     unionL.
     { apply SRC. }
     { autounfold with unfolderDb. 
-      ins. desf. apply H7.
+      ins. destruct H. desf.
+      apply H7.
       right.
-      apply FCOVimgEsb; auto.
-      symmetry. auto. }
-    {  autounfold with unfolderDb.
-       ins. desf. apply H6.
-       left. right.
-       apply FCOVimgEsb; auto. }
-    { rewrite <- restr_relE. 
-      apply (restr_irrefl_eq (cf_irr S)). } }
-  (* imgrf *)
-  { rewrite set_collect_union.
-    repeat rewrite id_union.
-    repeat rewrite seq_union_r. 
-    rewrite collect_rel_union.
-    rewrite FupdCOV. 
-    rewrite FupdISS. 
-    apply union_more.
-    { rewrite (collect_rel_eq_dom (rf G) FupdEQISS FupdEQCOV).
-      apply imgrf0. }
-    rewrite set_collect_eq.
-    rewrite upds.
-    destruct COV as [Hact HCASES].
-    destruct HCASES as [[Hw | Hr] | Hf].
-    { autounfold with unfolderDb in Hw. destruct Hw as [Hlabw Hiss]. 
-      (* no incoming rf edges to write event *)
-      admit. }
-    { admit. }
-    admit. }
-  admit.
+      admit. 
+    }
+    3: { autounfold with unfolderDb.
+         ins. desf. apply H3.
+         basic_solver. }
+    all: admit. }
+  { admit. }
 Admitted.
+
 
 (* Lemma 2 from notes. *)
 Lemma simstep_exists_forward execs S G TC f
@@ -305,3 +282,4 @@ Lemma simstep_exists_forward execs S G TC f
     ⟪ SRC : simrel_common S' G (mkTC (covered TC ∪₁ eq e) (issued TC)) f' ⟫.
 Proof. Admitted.
 
+End SimRelAlt.

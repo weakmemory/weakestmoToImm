@@ -4,6 +4,7 @@ From promising Require Import Basic.
 From imm Require Import Events.
 Require Import AuxRel.
 
+Set Implicit Arguments.
 Export ListNotations.
 
 Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
@@ -64,7 +65,6 @@ Definition cf ES := ⦗ ES.(acts_set) ⦘ ⨾
                     (EventId.same_tid ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
                     ⦗ ES.(acts_set) ⦘.
 Definition rf ES := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
-End ES.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.acts_ninit_set
      ES.sb ES.cf : unfolderDb.
@@ -157,3 +157,4 @@ Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 (* TODO: rfE, rfD, rfl, rfv.
    However, `functional rf⁻¹` doesn't hold. *)
 End EventStructure.
+End ES.
