@@ -16,10 +16,13 @@ Section SimRel.
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
+  Notation "'GE'" := G.(acts_set).
+  Notation "'Gtid'" := (tid).
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
+  Notation "'Stid'" := (EventId.tid).
   Notation "'Slab'" := (EventId.lab).
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Srf'" := (S.(ES.rf)).
@@ -31,7 +34,10 @@ Section SimRel.
   Record simrel_common :=
     { (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
+      finE  : forall e, SE (f e) -> GE e; 
       finj  : inj_dom (C ∪₁ I) f;  
+      tidEq : forall e (CpoI : (C ∪₁ dom_rel (Gsb ;; <| I |>)) e),
+        Stid e.(f) = Gtid e;
       labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
       foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
@@ -52,8 +58,11 @@ Section SimRel.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
+      fp_inE   : GE e /\ SE e'; 
+      fp_tidEq : Stid e' = Gtid e;
       fp_labEq : Slab e' = Glab e;
-      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb; 
+      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
+      fp_sbEq  : upd f e e' ∘ (Gsb ;; <| eq e |>) ≡ Ssb ;; <| eq e' |>;
       fp_imgrf : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
@@ -72,6 +81,12 @@ Proof.
       { apply COVEQ. by right. }
       unfold set_union in *. desf. }
     apply NISS. apply ISSEQ. by right. }
+
+  assert (~ is_init e) as NINITE.
+  { admit. }
+
+  assert (sb G ;; <| eq e |> ⊆ <| covered TC |> ;; sb G) as EPrclCOV.
+  { admit. } 
 
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
   { by rewrite set_collect_updo. } 
@@ -104,6 +119,9 @@ Proof.
     2: by apply SRC.
     apply set_subset_compl. basic_solver. }
 
+  assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
+  { admit. } 
+
   assert (inj_dom (covered TC ∪₁ eq e ∪₁ issued TC) (upd f e e'))
     as FINJ.
   { 
@@ -126,6 +144,10 @@ Proof.
 
   exists (upd f e e').
   constructor; ins.
+  (* finE *)
+  { admit. } 
+  (* tidEq *)
+  { admit. }
   (* labEq *)
   { unfold set_union in *.
     desf.
@@ -163,8 +185,7 @@ Proof.
     { admit. }
     repeat rewrite union_false_r.
     rewrite collect_rel_union.
-    assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
-    { admit. } 
+
     apply union_more.
     { rewrite (collect_rel_restr_eq_dom (sb G) FupdEQCOV). 
       rewrite FupdCOV. 
@@ -192,12 +213,49 @@ Proof.
     { autounfold with unfolderDb. 
       ins. destruct H. desf.
       apply H7.
+      apply finE0 in H6.
       right.
-      admit. 
-    }
-    3: { autounfold with unfolderDb.
-         ins. desf. apply H3.
-         basic_solver. }
+      assert (tid e = tid y0) as Hsametid.
+      { rewrite <- fp_tidEq0. 
+        rewrite <- (tidEq0 y0); auto. 
+        autounfold with unfolderDb. auto. }
+      assert (sb G y0 e) as GpoYE.
+      { apply (same_thread G e y0) in Hsametid; desf.
+        autounfold with unfolderDb in Hsametid; desf.
+        exfalso. apply NCOV. 
+        assert (tc_coherent G sc TC) as TRCOH. 
+        { admit. }
+        apply (dom_sb_covered TRCOH).
+        autounfold with unfolderDb.
+        eexists. eexists. eauto. }
+      unfold same_relation in fp_sbEq0. desf.
+      repeat rewrite seq_eqv_r in fp_sbEq0.
+      apply fp_sbEq0.
+      unfold collect_rel. eexists. eexists. splits; eauto.
+      apply upds. }
+    {  autounfold with unfolderDb.
+       ins. desf. apply H6.
+       left. right.
+       assert (tid e = tid y0) as Hsametid.
+      { rewrite <- fp_tidEq0. 
+        rewrite <- (tidEq0 y0); auto. 
+        autounfold with unfolderDb. auto. }
+      assert (sb G y0 e) as GpoYE.
+      { apply (same_thread G e y0) in Hsametid; desf.
+        autounfold with unfolderDb in Hsametid; desf.
+        exfalso. apply NCOV. 
+        assert (tc_coherent G sc TC) as TRCOH. 
+        { admit. }
+        apply (dom_sb_covered TRCOH).
+        autounfold with unfolderDb.
+        eexists. eexists. eauto. apply finE0. auto. }
+      unfold same_relation in fp_sbEq0. desf.
+      repeat rewrite seq_eqv_r in fp_sbEq0.
+      apply fp_sbEq0.
+      unfold collect_rel. eexists. eexists. splits; eauto.
+      apply upds. }
+    { rewrite <- restr_relE. 
+      apply (restr_irrefl_eq (cf_irr S)). }
     all: admit. }
   { admit. }
 Admitted.
