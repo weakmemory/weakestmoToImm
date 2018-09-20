@@ -52,8 +52,8 @@ Definition co_strong : relation EventId.t :=
 
 Definition mco (m : model) : relation EventId.t :=
   match m with
-  | weakest   => co
-  | weakestmo => co_strong 
+  | weakest   => co_strong 
+  | weakestmo => co
   end.
 
 Definition fr : relation EventId.t := rf⁻¹ ⨾ co \ cf^?.

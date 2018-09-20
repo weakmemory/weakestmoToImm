@@ -32,9 +32,9 @@ Section SimRel.
   (* TODO. Should state smth about `execs` used in Construction.v.
      Probably, in terms of a program. *)
   Record simrel_common :=
-    { (*fdef  : forall e (COV : C e),
+    { tccoh : tc_coherent G sc TC;
+      (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
-      finE  : forall e, SE (f e) -> GE e; 
       finj  : inj_dom (C ∪₁ I) f;  
       tidEq : forall e (CpoI : (C ∪₁ dom_rel (Gsb ;; <| I |>)) e),
         Stid e.(f) = Gtid e;
@@ -50,6 +50,22 @@ Section SimRel.
       imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
               ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
     }.
+  
+  Implicit Type SRC : simrel_common.
+
+  Lemma finE SRC e (SEE : SE (f e)) : GE e.
+  Proof.
+    destruct (classic (GE e)) as [|NGE]; auto.
+    exfalso.
+    eapply foth; auto.
+    split; eauto.
+    autounfold with unfolderDb.
+    eexists. split; eauto.
+    intros [AA|AA]; apply NGE.
+    2: eapply issuedE; eauto.
+    eapply coveredE; eauto.
+    all: apply SRC.
+  Qed.
 
   Record simrel :=
     { comm : simrel_common;

@@ -23,7 +23,7 @@ Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
-Notation "f ∘₁ s" := (set_collect f s) (at level 45).
+Notation "f ∘₁ s" := (set_collect f s) (at level 39).
 Notation "f ∘ r"  := (collect_rel f r) (at level 45).
 
 Hint Unfold eq_class_rel : unfolderDb. 
