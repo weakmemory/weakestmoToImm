@@ -43,7 +43,7 @@ Section SimRelAlt.
       flab : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
       ftid : forall e, EventId.tid (f e) = tid e;
-      fdef  : forall e (COV : C e),
+      fdef : forall e (COV : C e),
           f e = act_to_event G e;
       
       sbtot_cov : forall thread,
