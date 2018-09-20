@@ -121,7 +121,33 @@ Proof.
 
   assert (eq_dom (covered TC) (upd f e e') f) as FupdEQCOV.
   { admit. } 
-
+  
+  assert (forall a 
+    (COVa: covered TC a) (Fimga: S.(ES.acts_set) (f a)) (tidEQ: EventId.same_tid (f a) e'),
+       S.(ES.sb) (f a) e')
+  as FCOVimgEsb.
+  { ins.
+    destruct FP. destruct SRC.
+    assert (tid e = tid a) as Hsametid.
+    { rewrite <- fp_tidEq0. 
+      rewrite <- (tidEq0 a); auto. 
+      autounfold with unfolderDb. auto. }
+    assert (sb G a e) as GpoYE.
+    { apply (same_thread G e a) in Hsametid; desf.
+      autounfold with unfolderDb in Hsametid; desf.
+      exfalso. apply NCOV. 
+      assert (tc_coherent G sc TC) as TRCOH. 
+      { admit. }
+      apply (dom_sb_covered TRCOH).
+      autounfold with unfolderDb.
+      eexists. eexists. eauto. 
+      apply finE0. auto. }
+    unfold same_relation in fp_sbEq0. desf.
+    repeat rewrite seq_eqv_r in fp_sbEq0.
+    apply fp_sbEq0.
+    unfold collect_rel. eexists. eexists. splits; eauto.
+    apply upds. } 
+  
   assert (inj_dom (covered TC ∪₁ eq e ∪₁ issued TC) (upd f e e'))
     as FINJ.
   { 
@@ -211,49 +237,14 @@ Proof.
     unionL.
     { apply SRC. }
     { autounfold with unfolderDb. 
-      ins. destruct H. desf.
-      apply H7.
-      apply finE0 in H6.
+      ins. desf. apply H7.
       right.
-      assert (tid e = tid y0) as Hsametid.
-      { rewrite <- fp_tidEq0. 
-        rewrite <- (tidEq0 y0); auto. 
-        autounfold with unfolderDb. auto. }
-      assert (sb G y0 e) as GpoYE.
-      { apply (same_thread G e y0) in Hsametid; desf.
-        autounfold with unfolderDb in Hsametid; desf.
-        exfalso. apply NCOV. 
-        assert (tc_coherent G sc TC) as TRCOH. 
-        { admit. }
-        apply (dom_sb_covered TRCOH).
-        autounfold with unfolderDb.
-        eexists. eexists. eauto. }
-      unfold same_relation in fp_sbEq0. desf.
-      repeat rewrite seq_eqv_r in fp_sbEq0.
-      apply fp_sbEq0.
-      unfold collect_rel. eexists. eexists. splits; eauto.
-      apply upds. }
+      apply FCOVimgEsb; auto.
+      symmetry. auto. }
     {  autounfold with unfolderDb.
        ins. desf. apply H6.
        left. right.
-       assert (tid e = tid y0) as Hsametid.
-      { rewrite <- fp_tidEq0. 
-        rewrite <- (tidEq0 y0); auto. 
-        autounfold with unfolderDb. auto. }
-      assert (sb G y0 e) as GpoYE.
-      { apply (same_thread G e y0) in Hsametid; desf.
-        autounfold with unfolderDb in Hsametid; desf.
-        exfalso. apply NCOV. 
-        assert (tc_coherent G sc TC) as TRCOH. 
-        { admit. }
-        apply (dom_sb_covered TRCOH).
-        autounfold with unfolderDb.
-        eexists. eexists. eauto. apply finE0. auto. }
-      unfold same_relation in fp_sbEq0. desf.
-      repeat rewrite seq_eqv_r in fp_sbEq0.
-      apply fp_sbEq0.
-      unfold collect_rel. eexists. eexists. splits; eauto.
-      apply upds. }
+       apply FCOVimgEsb; auto. }
     { rewrite <- restr_relE. 
       apply (restr_irrefl_eq (cf_irr S)). }
     all: admit. }
