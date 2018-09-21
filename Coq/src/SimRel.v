@@ -74,39 +74,39 @@ Section SimRel.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
-      fp_inE   : GE e /\ SE e'; 
-      fp_tidEq : Stid e' = Gtid e;
-      fp_labEq : Slab e' = Glab e;
-      fp_covsb : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      fp_sbEq  : upd f e e' ∘ (Gsb ;; <| eq e |>) ≡ Ssb ;; <| eq e' |>;
-      fp_imgrf : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
+      fp_inGE   : GE e;
+      fp_inSE   : SE e'; 
+      fp_tidEq  : Stid e' = Gtid e;
+      fp_labEq  : Slab e' = Glab e;
+      fp_covsb  : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
+      fp_sbEq   : upd f e e' ∘ (Gsb ;; <| eq e |>) ≡ Ssb ;; <| eq e' |>;
+      fp_imgrf  : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
 
 Lemma simstep_forward S G sc TC f e e'
-      (SRC : simrel_common S G TC f)
+      (SRC : simrel_common S G sc TC f)
       (FP  : forward_pair S G sc TC f e e') :
   exists f',
-    simrel_common S G (mkTC (covered TC ∪₁ eq e) (issued TC)) f'.
+    simrel_common S G sc (mkTC (covered TC ∪₁ eq e) (issued TC)) f'.
 Proof.
   exists (upd f e e').
 
   (* extract (NEXT e) and (COVERABLE e) from fp_tcstep *)
   edestruct fp_tcstep as [a ST]; eauto.
   red in ST. desf; simpls.
-  2 : { exfalso.
-        apply NISS.
-        unfold set_equiv in ISSEQ. desf. 
-        apply set_subset_union_l in ISSEQ0. desf.
-        by apply (hahn_subset_exp ISSEQ1). }
-  assert (a = e); subst.
-  { autounfold with unfolderDb in COVEQ. desf. 
-    unfold set_subset in *.
-    destruct (COVEQ0 a); auto.
-    exfalso. by apply NEXT. }
+  2 : { exfalso. apply NISS. apply ISSEQ. by right. }
+  destruct (classic (a = e)) as [|NEQ]; subst.
+  2: { destruct COVEQ as [CC CC'].
+       specialize (CC a).
+       destruct (CC' a); auto; desf.
+         by right. }
 
   assert (~ is_init e) as NINITE.
-  { admit. }
+  { destruct SRC. destruct FP.
+    intros HH. apply NEXT.
+    eapply init_covered; eauto.
+    desf. }
 
   assert (sb G ;; <| eq e |> ⊆ <| covered TC |> ;; sb G) as EPrclCOV.
   { admit. } 
@@ -151,8 +151,9 @@ Proof.
   assert (eq_dom (issued TC) (upd f e e') f) as FupdEQISS.
   { admit. } 
   
-  assert (forall a 
-    (COVa: covered TC a) (Fimga: S.(ES.acts_set) (f a)) (tidEQ: EventId.same_tid (f a) e'),
+  assert (forall a (COVa: covered TC a)
+                 (Fimga: S.(ES.acts_set) (f a))
+                 (tidEQ: EventId.same_tid (f a) e'),
        S.(ES.sb) (f a) e')
   as FCOVimgEsb.
   { ins.
@@ -170,7 +171,8 @@ Proof.
       apply (dom_sb_covered TRCOH).
       autounfold with unfolderDb.
       eexists. eexists. eauto. 
-      apply finE0. auto. }
+      admit. }
+      (* apply finE0. auto. } *)
     unfold same_relation in fp_sbEq0. desf.
     repeat rewrite seq_eqv_r in fp_sbEq0.
     apply fp_sbEq0.
@@ -229,7 +231,7 @@ Proof.
     repeat rewrite restr_set_union.
     rewrite set_collect_eq. rewrite upds.
     rewrite restr_irrefl_eq; [|by apply Execution.sb_irr].
-    rewrite restr_irrefl_eq; [|by apply sb_irr].
+    rewrite restr_irrefl_eq; [|by apply ES.sb_irr].
     arewrite_false (<| eq e |> ;; sb G ;; <| covered TC |>).
     { autounfold with unfolderDb. splits; ins; eauto. 
       destruct H as [z Hz]. desf.
@@ -273,8 +275,10 @@ Proof.
        ins. desf. apply H6.
        left. right.
        apply FCOVimgEsb; auto. }
-    { rewrite <- restr_relE. 
-      apply (restr_irrefl_eq (cf_irr S)). } }
+    rewrite <- restr_relE. 
+    erewrite restr_irrefl_eq.
+    { basic_solver. }
+    apply ES.cf_irr. }
   (* imgrf *)
   { rewrite set_collect_union.
     repeat rewrite id_union.
@@ -283,16 +287,11 @@ Proof.
     rewrite FupdCOV. 
     rewrite FupdISS. 
     apply union_more.
-    { rewrite (collect_rel_eq_dom (rf G) FupdEQISS FupdEQCOV).
-      apply imgrf0. }
+    { rewrite collect_rel_eq_dom; eauto. }
     rewrite set_collect_eq.
     rewrite upds.
-    destruct COV as [Hact HCASES].
-    destruct HCASES as [[Hw | Hr] | Hf].
-    { autounfold with unfolderDb in Hw. destruct Hw as [Hlabw Hiss]. 
-      (* no incoming rf edges to write event *)
-      admit. }
-    { admit. }
+    rewrite wf_rfD; [|admit].
+    rewrite ES.rfD; [|admit].
     admit. }
   admit.
 Admitted.
