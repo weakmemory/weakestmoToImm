@@ -35,7 +35,18 @@ Variable f g : A -> B.
 Variable a : A.
 Variable b : B.
 Variables s s' : A -> Prop.
+Variables q q' : A -> Prop.
 Variables r r' : relation A.
+
+Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
+Proof. basic_solver. Qed.
+Lemma seq_eqv_cross_r : s × s' ⨾ ⦗q'⦘ ≡ s × (q' ∩₁ s').
+Proof. basic_solver. Qed.
+Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
+Proof. basic_solver. Qed.
+
+Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
+Proof. basic_solver. Qed.
 
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) ∘₁ s ≡₁ f ∘₁ s.
 Proof.
