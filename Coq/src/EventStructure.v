@@ -19,8 +19,9 @@ Record t :=
 Definition path e := e.(lab) :: e.(prefix).
 
 Definition ext_sb (a b : EventId.t) : Prop :=
-  exists hd tl,
-    b.(path) = (hd :: tl) ++ a.(path).
+  << STID : tid a = tid b >> /\
+  << REPR : exists hd tl,
+      b.(path) = (hd :: tl) ++ a.(path) >>.
 
 Definition init_tid := xH.
 
@@ -31,6 +32,18 @@ Record init (e : EventId.t) :=
   }.
 
 Definition same_tid := fun x y => tid x = tid y.
+
+Lemma ext_sb_trans : transitive ext_sb.
+Proof.
+  red. unfold ext_sb.
+  ins; desf.
+  splits.
+  { etransitivity; eauto. }
+  rewrite REPR0 in REPR.
+  rewrite REPR.
+  exists hd. exists (tl ++ hd0 :: tl0).
+    by rewrite <- app_assoc.
+Qed.
 End EventId.
 
 Hint Unfold EventId.path EventId.ext_sb
@@ -141,7 +154,7 @@ Lemma sb_irr : irreflexive sb.
 Proof.
   repeat autounfold with unfolderDb.
   ins. desf.
-  generalize H. clear H.
+  generalize H0. clear H0.
   set (ll := EventId.prefix x).
   intros HH.
   assert (length ll = length tl + 1 + length ll) as LL.

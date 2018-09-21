@@ -16,6 +16,7 @@ Section SimRelAlt.
   Variable f  : actid -> EventId.t.
 
   Notation "'SE'" := S.(ES.acts_set).
+  Notation "'GE'" := G.(acts_set).
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
   Notation "'Glab'" := (G.(lab)).
@@ -34,17 +35,23 @@ Section SimRelAlt.
     f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ;; <| f ∘₁ C |>).
 
   Record simrel (P : thread_id -> Prop) :=
-    { tccoh : tc_coherent G sc TC;
+    { gwf   : Execution.Wf G;
+      gprclos : forall thread m n (LT : m < n)
+                       (EE : GE (ThreadEvent thread n)),
+          GE (ThreadEvent thread m);
+      tccoh : tc_coherent G sc TC;
       swf   : ES.Wf S;
       scons : es_consistent S Weakestmo;
 
       finj : inj_dom (C ∪₁ I) f;  
+      fimg : f ∘₁ (C ∪₁ I) ⊆₁ SE;
       foth : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
       flab : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
       ftid : forall e, EventId.tid (f e) = tid e;
       fdef : forall e (COV : C e),
           f e = act_to_event G e;
+      finitIncl : S.(ES.acts_init_set) ⊆₁ f ∘₁ (is_init ∩₁ GE);
       
       sbtot_cov : forall thread,
           is_total (f ∘₁ C ∩₁ Stid_ thread) Ssb;
@@ -52,7 +59,6 @@ Section SimRelAlt.
       sbtot_ci : forall thread (NP : ~ P thread),
           is_total (f ∘₁ (C ∪₁ I) ∩₁ Stid_ thread) Ssb;
       
-      (* sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb; *)
       (* sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡ *)
       (*       ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘; *)
       (* cimgNcf : ⦗ f ∘₁ C ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ C ⦘ ≡ ∅₂; *)
@@ -61,11 +67,33 @@ Section SimRelAlt.
       (* imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ *)
       (*         ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘; *)
     }.
-  
+
   Section SRCprop.
     Variable P : thread_id -> Prop.
     Variable SRC : simrel P.
-  
+    
+    Lemma finit : S.(ES.acts_init_set) ≡₁ f ∘₁ (is_init ∩₁ GE).
+    Proof.
+      set (SRC' := SRC).
+      destruct SRC'.
+      split; [eapply finitIncl; eauto|].
+      unfold ES.acts_init_set.
+      apply set_subset_inter_r; split.
+      { rewrite init_covered; eauto.
+          by arewrite (C ⊆₁ C ∪₁ I). }
+      unfold is_init.
+      intros x [y [[AA CC] BB]]; desf.
+      rewrite SRC.(fdef).
+      2: { eapply init_covered; eauto. by split. }
+      simpls.
+      constructor; auto.
+      eexists. simpls.
+      rewrite wf_init_lab; auto.
+    Qed.
+
+    Lemma finitC : S.(ES.acts_init_set) ⊆₁ f ∘₁ C.
+    Proof. rewrite finit. erewrite init_covered; eauto. apply SRC. Qed.
+
     Lemma sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb.
     Proof.
       arewrite (Ssb ⊆ <| f ∘₁ C ∪₁ set_compl (f ∘₁ C) |> ;; Ssb) at 1.
@@ -76,45 +104,38 @@ Section SimRelAlt.
       rewrite id_union. rewrite seq_union_l.
       arewrite_false (⦗set_compl (f ∘₁ C)⦘ ⨾ Ssb ⨾ ⦗f ∘₁ C⦘).
       2: { arewrite_id ⦗f ∘₁ C⦘ at 2. relsf. }
-      rewrite SRC.(swf).(ES.sbE).
-      rewrite !seqA.
-
-      assert ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C) as YY.
-      { admit. }
-      rewrite <- YY at 1.
-
-Tactic Notation "brewrite" uconstr(EQ) :=
-  let H := fresh in
-  first [assert (H: EQ) |
-    let typ1 := fresh in let binder1 := fresh in
-    evar (typ1 : Type); evar (binder1 : typ1);
-    first [assert (H: EQ binder1); subst binder1 typ1 |
-      let typ2 := fresh in let binder2 := fresh in
-      evar (typ2 : Type); evar (binder2 : typ2);
-      assert (H: EQ binder1 binder2); subst binder1 typ1 binder2 typ2]]; cycle 1;
-  [ first [rewrite <- H|seq_rewrite <- H|sin_rewrite H]; clear H; rewrite ?seqA
-  | eauto 4 with hahn hahn_full; try done ]; cycle 1.
-
-      arewrite (⦗set_compl (f ∘₁ C)⦘ ⨾ ⦗SE⦘ ⊆ ⦗f ∘₁ I⦘).
-      { brewrite ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C).
-
-      { rewrite <- AuxRel.id_inter.
-        arewrite ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C).
-
-        apply eqv_rel_mori.
-        erewrite set_compl_mori.
-        2: { red.
-             apply set_collect_mori.
-             arewrite ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C).
-
-
-        assert ((C ∪₁ I) ∪₁ set_compl I ⊆₁ C) as XX.
-
-        assert (set_compl (f ∘₁ C) ∩₁ SE ⊆₁ set_compl ((C ∪₁ I) ∪₁ set_compl I) ∩₁ SE) as HH.
-
-    Admitted.
+      unfold ES.sb.
+      rewrite seq_union_l. rewrite seq_union_r.
+      rewrite seq_eqv_cross.
+      rewrite finitC.
+      rewrite set_compl_inter_id.
+      rewrite cross_false_l.
+      apply inclusion_union_l; [done|].
+      red. intros x y HH.
+      destruct_seq HH as [XX YY].
+      destruct YY as [z [COVZ ZZ]]; subst.
+      erewrite fdef in *; eauto.
+      apply XX.
+      apply seq_eqv_r in HH. destruct HH as [HH SEE].
+      assert (dom_rel (EventId.ext_sb ⨾ ⦗eq (act_to_event G z)⦘) x) as AA.
+      { eexists. apply seq_eqv_r. eauto. }
+      apply act_to_event_ext_sb_dom in AA.
+      desf. desf.
+      assert (C (ThreadEvent thread m)) as MM.
+      2: { red. eexists. by split; [|eapply fdef; eauto]. }
+      destruct SRC.
+      eapply dom_sb_covered; eauto.
+      eexists. apply seq_eqv_r. split; eauto.
+      assert (GE (ThreadEvent thread index)) as EE.
+      { eapply coveredE; eauto. }
+      red. apply seq_eqv_l. split.
+      { eapply SRC.(gprclos); eauto. }
+      apply seq_eqv_r. splits; auto.
+      red. by splits.
+    Qed.
   End SRCprop.
-
+  
+  (* TODO: Continue from here *)
 
   Record simrel :=
     { comm : simrel_common;
