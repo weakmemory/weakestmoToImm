@@ -79,6 +79,7 @@ Notation "'sb'" := EG.(ES.sb).
 Notation "'rmw'" := EG.(ES.rmw).
 Notation "'ew'" := EG.(ES.ew).
 Notation "'jf'" := EG.(ES.jf).
+Notation "'rf'" := EG.(ES.rf).
 Notation "'co'" := EG.(ES.co).
 Notation "'lab'" := EventId.lab.
 Notation "'cf'" := EG.(ES.cf).
@@ -154,7 +155,61 @@ Proof. basic_solver. Qed.
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 
-(* TODO: rfE, rfD, rfl, rfv.
-   However, `functional rf⁻¹` doesn't hold. *)
+Lemma rfE WF : rf ≡ ⦗E⦘ ⨾ rf ⨾ ⦗E⦘.
+Proof.
+  unfold ES.rf.
+  arewrite (ew^? ⨾ jf ≡ ⦗E⦘ ⨾ ew^? ⨾ jf ⨾ ⦗E⦘) at 1.
+  2: { assert (⦗E⦘ ⨾ ew^? ⨾ jf ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (ew^? ⨾ jf) ⨾ ⦗E⦘) as HH
+         by basic_solver. rewrite HH.
+         by rewrite <- minus_eqv_rel_helper. }
+  rewrite crE.
+  rewrite !seq_union_l.
+  rewrite !seq_union_r.
+  relsf.
+  apply union_more.
+  { apply WF.(jfE). }
+  rewrite WF.(ewE).
+  rewrite WF.(jfE).
+  rewrite !seqA.
+  relsf.
+Qed.
+
+Lemma rfD WF : rf ≡ ⦗W⦘ ⨾ rf ⨾ ⦗R⦘.
+Proof.
+  unfold ES.rf.
+  arewrite (ew^? ⨾ jf ≡ ⦗W⦘ ⨾ ew^? ⨾ jf ⨾ ⦗R⦘) at 1.
+  2: { assert (⦗W⦘ ⨾ ew^? ⨾ jf ⨾ ⦗R⦘ ≡ ⦗W⦘ ⨾ (ew^? ⨾ jf) ⨾ ⦗R⦘) as HH
+         by basic_solver. rewrite HH.
+         by rewrite <- minus_eqv_rel_helper. }
+  rewrite crE.
+  rewrite !seq_union_l.
+  rewrite !seq_union_r.
+  relsf.
+  apply union_more.
+  { apply WF.(jfD). }
+  rewrite WF.(ewD).
+  rewrite WF.(jfD).
+  rewrite !seqA.
+  relsf.
+Qed.
+    
+Lemma rfl WF : rf ⊆ same_loc.
+Proof.
+  unfold ES.rf.
+  rewrite inclusion_minus_rel.
+  rewrite WF.(jfl).
+  rewrite WF.(ewl).
+  generalize same_loc_trans.
+  basic_solver.
+Qed.
+
+Lemma rfv WF : funeq val rf.
+Proof.
+  unfold ES.rf.
+  apply funeq_minus.
+  generalize WF.(jfv) WF.(ewv) funeq_seq.
+  basic_solver.
+Qed.
+
 End EventStructure.
 End ES.
