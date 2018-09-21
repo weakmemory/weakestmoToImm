@@ -129,6 +129,14 @@ End Props.
 
 Require Import Setoid.
 
+Add Parametric Morphism A B : (@inj_dom A B) with signature 
+  set_equiv ==> eq ==> iff as inj_dom_more.
+Proof. 
+  intros s s' Heq f. red. 
+  unfold inj_dom in *.
+  splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
+Qed.
+
 Add Parametric Morphism A : (@set_compl A) with signature 
   set_equiv ==> set_equiv as set_compl_more.
 Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
