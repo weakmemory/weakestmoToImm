@@ -49,6 +49,11 @@ Section SimRel.
               ⦗ f ∘₁ I ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ C ⦘;
       imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
               ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
+      
+      (* Highly likely, we need that *)
+      (* or it should be deducable from SimRelAlt and (WF S) *)
+      (* ⦗ f ∘₁ I ⦘ ⨾ Sew ⨾ ⦗ f ∘₁ I ⦘ ⊆ f ∘ ⦗ I ⦘ *)
+      
     }.
   
   Implicit Type SRC : simrel_common.
@@ -195,6 +200,9 @@ Proof.
     admit.
   }
 
+  assert (inj_dom (eq e) (upd f e e')) as FINJE. 
+  { admit. } 
+
   destruct FP.
   set (SRC' := SRC).
   destruct SRC'.
@@ -290,9 +298,39 @@ Proof.
     { rewrite collect_rel_eq_dom; eauto. }
     rewrite set_collect_eq.
     rewrite upds.
-    rewrite wf_rfD; [|admit].
-    rewrite ES.rfD; [|admit].
-    admit. }
+    unfold same_relation. splits. 
+    { autounfold with unfolderDb.
+      ins. desf. 
+      eexists. splits; eexists; splits; eauto. 
+      { symmetry. apply (FupdEQISS z). auto. } 
+      { apply fp_imgrf0.
+        apply collect_rel_seq_r.
+        { rewrite dom_eqv. auto. } 
+        rewrite upds.
+        autounfold with unfolderDb.
+        eexists. splits; eexists; eexists; splits; eauto.
+        apply upds. }
+      symmetry. apply upds. }
+    { assert (ES.Wf S). 
+      { admit. }
+      autounfold with unfolderDb. 
+      ins. desf. repeat eexists; eauto; [| apply upds].
+      assert (ES.acts_set S (f y0)) as InY.
+      { apply (ES.rfE H) in H1. 
+        apply restr_relE in H1.
+        by apply restr_doma in H1. } 
+      assert (~ ES.cf S (f y0) y) as NcfY. 
+      { (* If (f y0) y in different threads - they are not in cf
+         * If (f y0) y in the same thread - y should be sb-after (f y0) (???) 
+         * or it just follows from the consistency of S (???)
+         *)
+        admit. } 
+      unfold ES.rf in H1.
+      apply inclusion_minus_rel in H1.
+      autounfold with unfolderDb in H1. desf.
+      { (* In well-formed G/S for each read there should be incoming rf-edge ! *) 
+        admit. }
+      { admit. } } }
   admit.
 Admitted.
 
