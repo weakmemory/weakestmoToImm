@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecutionProperties.
+     Prog ProgToExecutionProperties imm_hb.
 Require Import AuxRel AuxDef EventStructure Construction Consistency.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
@@ -21,6 +21,7 @@ Section SimRelAlt.
   Notation "'I'"  := (issued TC).
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gsb'" := (G.(sb)).
+  Notation "'Ghb'" := (G.(imm_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
   Notation "'Slab'" := (EventId.lab).
@@ -30,6 +31,8 @@ Section SimRelAlt.
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'Stid_' t" := (fun x => EventId.tid x = t) (at level 1).
+
+  Notation "'GR'" := (fun a => is_true (is_r Glab a)).
 
   Definition pc thread :=
     f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ;; <| f ∘₁ C |>).
