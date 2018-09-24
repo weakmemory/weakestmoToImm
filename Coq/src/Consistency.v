@@ -11,7 +11,7 @@ Variable S : ES.t.
 
 Notation "'E'" := S.(ES.acts_set).
 Notation "'E_init'" := S.(ES.acts_init_set).
-Notation "'lab'" := EventId.lab.
+Notation "'lab'" := S.(ES.lab).
 Notation "'sb'" := S.(ES.sb).
 Notation "'rmw'" := S.(ES.rmw).
 Notation "'ew'" := S.(ES.ew).
@@ -43,30 +43,29 @@ Notation "'Sc'" := (is_sc lab).
 Definition vis :=
   codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ⨾ sb ⁼)).
 
-Definition sw : relation EventId.t := fun x y => True. (* TODO: define *)
+Definition sw : relation event_id := fun x y => True. (* TODO: define *)
 
-Definition hb : relation EventId.t := (sb ∪ sw)⁺.
+Definition hb : relation event_id := (sb ∪ sw)⁺.
 
-Definition co_strong : relation EventId.t :=
+Definition co_strong : relation event_id :=
   ⦗ W ⦘ ⨾ hb ⨾ ⦗ W ⦘ ∩ same_loc.
 
-Definition mco (m : model) : relation EventId.t :=
+Definition mco (m : model) : relation event_id :=
   match m with
   | Weakest   => co_strong 
   | Weakestmo => co
   end.
 
-Definition fr : relation EventId.t := rf⁻¹ ⨾ co \ cf^?.
+Definition fr : relation event_id := rf⁻¹ ⨾ co \ cf^?.
 
-Definition mfr (m : model) : relation EventId.t :=
+Definition mfr (m : model) : relation event_id :=
   (rf⁻¹ ⨾ mco m) \ cf^?.
 
-Definition eco (m : model) : relation EventId.t :=
+Definition eco (m : model) : relation event_id :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
 
 Record es_consistent m :=
   { esc_vis : jf ⊆ sb ∪ vis × E;
-    esc_cf  : jf ∩ cf ≡ ∅₂;
     esc_hb  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂;
     esc_coh : irreflexive (hb ⨾ (eco m)^?);
   }.

@@ -9,45 +9,8 @@ Export ListNotations.
 
 Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
 
-Module EventId.
-Record t :=
-  mk {
-      tid    : thread_id;
-      lab    : label;
-      prefix : list label;
-    }.
-Definition path e := e.(lab) :: e.(prefix).
-
-Definition ext_sb (a b : EventId.t) : Prop :=
-  << STID : tid a = tid b >> /\
-  << REPR : exists hd tl,
-      b.(path) = (hd :: tl) ++ a.(path) >>.
-
-Definition init_tid := xH.
-
-Record init (e : EventId.t) :=
-  { itid : e.(tid) = init_tid ;
-    ilab : exists l, e.(lab) = Astore Xpln Opln l 0;
-    ipre : e.(prefix) = [];
-  }.
-
-Definition same_tid := fun x y => tid x = tid y.
-
-Lemma ext_sb_trans : transitive ext_sb.
-Proof.
-  red. unfold ext_sb.
-  ins; desf.
-  splits.
-  { etransitivity; eauto. }
-  rewrite REPR0 in REPR.
-  rewrite REPR.
-  exists hd. exists (tl ++ hd0 :: tl0).
-    by rewrite <- app_assoc.
-Qed.
-End EventId.
-
-Hint Unfold EventId.path EventId.ext_sb
-     EventId.init_tid : unfolderDb.
+Definition event_id := Ident.t.
+Definition tid_init := xH.
 
 Module Language.
 Record t :=
@@ -60,42 +23,58 @@ Record t :=
 End Language.
 
 Module ES.
+
+Inductive cont_label :=
+| CInit  (tid : thread_id)
+| CEvent (eid : event_id).
+
 Record t :=
-  mk { acts : list EventId.t;
-       rmw  : EventId.t -> EventId.t -> Prop ;
-       jf : EventId.t -> EventId.t -> Prop ;
-       co : EventId.t -> EventId.t -> Prop ;
-       ew : EventId.t -> EventId.t -> Prop ;
+  mk { acts : list event_id;
+       lab  : event_id -> label; 
+       tid  : event_id -> thread_id;
+       sb   : event_id -> event_id -> Prop ;
+       rmw  : event_id -> event_id -> Prop ;
+       jf   : event_id -> event_id -> Prop ;
+       co   : event_id -> event_id -> Prop ;
+       ew   : event_id -> event_id -> Prop ;
+
+       lang : Language.t;
+       cont : list (cont_label * lang.(Language.state));
      }.
 
 Definition acts_set ES := fun x => In x ES.(acts).
-Definition acts_init_set  ES := ES.(acts_set) ∩₁ EventId.init.
-Definition acts_ninit_set ES := ES.(acts_set) \₁ EventId.init.
+Definition acts_init_set  ES := ES.(acts_set)
+                                     ∩₁ (fun x => ES.(tid) x = tid_init).
+Definition acts_ninit_set ES := ES.(acts_set) \₁ ES.(acts_init_set).
+Definition cont_set ES := fun x => In x ES.(cont).
 
-Definition sb ES := ES.(acts_init_set) × ES.(acts_ninit_set) ∪
-                    EventId.ext_sb ⨾ ⦗ ES.(acts_set) ⦘.
+Definition same_tid ES := fun x y => ES.(tid) x = ES.(tid) y.
+
 Definition cf ES := ⦗ ES.(acts_set) ⦘ ⨾
-                    (EventId.same_tid ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
+                    (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
                     ⦗ ES.(acts_set) ⦘.
 Definition rf ES := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 
-Hint Unfold ES.acts_set ES.acts_init_set ES.acts_ninit_set
-     ES.sb ES.cf : unfolderDb.
+Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
 Section EventStructure.
 
 Variable EG : ES.t.
 
-Notation "'E'"     := EG.(ES.acts_set).
-Notation "'Einit'" := EG.(ES.acts_init_set).
-Notation "'sb'" := EG.(ES.sb).
-Notation "'rmw'" := EG.(ES.rmw).
-Notation "'ew'" := EG.(ES.ew).
-Notation "'jf'" := EG.(ES.jf).
-Notation "'rf'" := EG.(ES.rf).
-Notation "'co'" := EG.(ES.co).
-Notation "'lab'" := EventId.lab.
-Notation "'cf'" := EG.(ES.cf).
+Notation "'E'"      := EG.(ES.acts_set).
+Notation "'Einit'"  := EG.(ES.acts_init_set).
+Notation "'Eninit'" := EG.(ES.acts_ninit_set).
+Notation "'tid'"   := EG.(ES.tid).
+Notation "'sb'"    := EG.(ES.sb).
+Notation "'rmw'"   := EG.(ES.rmw).
+Notation "'ew'"    := EG.(ES.ew).
+Notation "'jf'"    := EG.(ES.jf).
+Notation "'rf'"    := EG.(ES.rf).
+Notation "'co'"    := EG.(ES.co).
+Notation "'lab'"   := EG.(ES.lab).
+Notation "'cf'"    := EG.(ES.cf).
+Notation "'K'"     := EG.(ES.cont_set).
+Notation "'lang'"  := EG.(ES.lang).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
@@ -117,11 +96,14 @@ Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
 Record Wf :=
-  { init_tidI : forall e (EE : E e) (ITID : e.(EventId.tid) = EventId.init_tid),
-      Einit e;
-    initL : forall l, (exists b, E b /\ loc b = Some l) ->
+  { initL : forall l, (exists b, E b /\ loc b = Some l) ->
                       exists a, Einit a /\ loc a = Some l ;
+    init_lab : forall e (INIT : Einit e),
+        exists l, lab l = Astore Xpln Opln l 0 ;
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
+    sb_irr   : irreflexive sb;
+    sb_trans : transitive sb;
+    sb_init  : Einit × Eninit ⊆ sb;
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
@@ -130,6 +112,9 @@ Record Wf :=
     jfl : jf ⊆ same_loc ;
     jfv : funeq val jf ;
     jff : functional jf⁻¹ ;
+    jf_complete : E ∩₁ R ⊆₁ codom_rel jf;
+    jf_not_cf : jf ∩ cf ≡ ∅₂;
+
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
@@ -146,21 +131,17 @@ Record Wf :=
     ewc : ew ⊆ cf ;
     ew_trans : transitive ew ;
     ew_sym : symmetric ew ;
+
+    term_def_K : forall state (TERM : lang.(Language.is_terminal) state),
+        ~ (exists lbl state', lang.(Language.step) lbl state state');
+    init_tid_K : ~ (exists c, K (CInit tid_init, c));
+    unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
+        snd c = snd c';
+    event_K  : forall e (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
+        exists c, K (CEvent e, c);
   }.
 
 Implicit Type WF : Wf.
-
-Lemma sb_irr : irreflexive sb.
-Proof.
-  repeat autounfold with unfolderDb.
-  ins. desf.
-  generalize H0. clear H0.
-  set (ll := EventId.prefix x).
-  intros HH.
-  assert (length ll = length tl + 1 + length ll) as LL.
-  2: omega.
-  rewrite HH at 1. rewrite length_app. simpls. omega.
-Qed.
 
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
@@ -223,6 +204,16 @@ Proof.
   generalize WF.(jfv) WF.(ewv) funeq_seq.
   basic_solver.
 Qed.
+
+Lemma jf_in_rf WF : jf ⊆ rf.
+Proof.
+  unfold ES.rf.
+  generalize WF.(jf_not_cf).
+  basic_solver.
+Qed.
+
+Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
+Proof. rewrite <- WF.(jf_in_rf). apply WF. Qed.
 
 End EventStructure.
 End ES.

@@ -15,10 +15,10 @@ Notation "'same_val'" := (same_val EventId.lab).
 
 Definition t_basic
            (execs : thread_id -> state -> Prop)
-           (event  : EventId.t)
-           (event' : option EventId.t)
+           (event  : event_id)
+           (event' : option event_id)
            (s s' : ES.t) : Prop :=
-  let thread := event.(EventId.tid) in
+  let thread := event.(event_idid) in
   let event_list := opt_to_list event' ++ [event] in
   let label_list := map EventId.lab event_list in
   let rmw_edge a b :=
@@ -45,7 +45,7 @@ Definition t_basic
                        s.(ES.jf) s.(ES.co) s.(ES.ew)
   ⟫.
   
-Definition add_jf (r : EventId.t) (s s' : ES.t) : Prop :=
+Definition add_jf (r : event_id) (s s' : ES.t) : Prop :=
   ⟪ RR : R r ⟫ /\
   exists w,
     ⟪ EW   : s.(ES.acts_set) w ⟫ /\
@@ -58,9 +58,9 @@ Definition add_jf (r : EventId.t) (s s' : ES.t) : Prop :=
                  s.(ES.co) s.(ES.ew)
     ⟫.
 
-Definition add_ew (w : EventId.t) (s s' : ES.t) : Prop :=
+Definition add_ew (w : event_id) (s s' : ES.t) : Prop :=
   ⟪ WW : W w ⟫ /\
-  exists (ws : EventId.t -> Prop),
+  exists (ws : event_id -> Prop),
     ⟪ WWS   : ws ⊆₁ W ⟫ /\
     ⟪ LOCWS : ws ⊆₁ same_loc w ⟫ /\
     ⟪ VALWS : ws ⊆₁ same_val w ⟫ /\
@@ -71,10 +71,10 @@ Definition add_ew (w : EventId.t) (s s' : ES.t) : Prop :=
                  (ws × eq w ∪ eq w × ws ∪ s.(ES.ew))
     ⟫.
 
-Definition add_co (w : EventId.t) (s s' : ES.t) : Prop :=
+Definition add_co (w : event_id) (s s' : ES.t) : Prop :=
   let A := s.(ES.acts_set) ∩₁ W ∩₁ (same_loc w) \₁ (s.(ES.cf)^? w) in
   ⟪ WW : W w ⟫ /\
-  exists (ws : EventId.t -> Prop),
+  exists (ws : event_id -> Prop),
     ⟪ WWS : ws ⊆₁ A ⟫ /\
     ⟪ REPR :
       s' = ES.mk s.(ES.acts) s.(ES.rmw)

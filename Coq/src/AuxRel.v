@@ -163,3 +163,19 @@ Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
 Add Parametric Morphism A B : (@set_collect A B) with signature 
   eq ==> set_subset ==> set_subset as set_collect_mori.
 Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@dom_rel A) with signature
+   inclusion ==> set_subset as dom_rel_mori.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@dom_rel A) with signature
+   same_relation ==> set_equiv as dom_rel_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@codom_rel A) with signature
+   inclusion ==> set_subset as codom_rel_mori.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@codom_rel A) with signature
+   same_relation ==> set_equiv as codom_rel_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.

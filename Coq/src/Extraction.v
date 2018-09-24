@@ -10,7 +10,7 @@ Variable G : execution.
 Variable S : ES.t.
 
 Notation "'SE'" := S.(ES.acts_set).
-Notation "'Slab'" := EventId.lab.
+Notation "'Slab'" := S.(ES.lab).
 Notation "'Ssb'" := S.(ES.sb).
 Notation "'Srmw'" := S.(ES.rmw).
 Notation "'Sew'" := S.(ES.ew).
@@ -29,7 +29,7 @@ Notation "'Gaddr'" := G.(addr).
 Notation "'Gctrl'" := G.(ctrl).
 
 Definition extracted : Prop :=
-  exists f : actid -> EventId.t, 
+  exists f : actid -> event_id, 
     ⟪ EVIS    : f ∘₁ GE ⊆₁ vis S ⟫ /\
     ⟪ ENCF    : ⦗ f ∘₁ GE ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ GE ⦘ ≡ ∅₂ ⟫ /\
     ⟪ ESBPRCL : dom_rel (Ssb ⨾ ⦗ f ∘₁ GE ⦘) ⊆₁ f ∘₁ GE ⟫ /\
