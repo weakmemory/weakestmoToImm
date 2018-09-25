@@ -103,7 +103,7 @@ Definition add_jf (r : event_id) (S S' : ES.t) : Prop :=
     ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
 
 Definition add_ew (w : event_id) (S S' : ES.t) : Prop :=
-  ⟪ WW : W S w ⟫ /\
+  ⟪ WW : W S' w ⟫ /\
   exists (ws : event_id -> Prop),
     ⟪ WWS   : ws ⊆₁ W S ⟫ /\
     ⟪ LOCWS : ws ⊆₁ same_loc S w ⟫ /\
@@ -114,7 +114,7 @@ Definition add_ew (w : event_id) (S S' : ES.t) : Prop :=
 
 Definition add_co (w : event_id) (S S' : ES.t) : Prop :=
   let A := S.(ES.acts_set) ∩₁ W S ∩₁ (same_loc S w) \₁ (S.(ES.cf)^? w) in
-  ⟪ WW : W S w ⟫ /\
+  ⟪ WW : W S' w ⟫ /\
   exists (ws : event_id -> Prop),
     ⟪ WWS : ws ⊆₁ A ⟫ /\
     ⟪ REPR :
