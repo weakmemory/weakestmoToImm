@@ -827,6 +827,195 @@
   $S \rhd G^{\cert}$ holds.
 \end{lemma}
 
+\subsection{Notes}
+
+\subsubsection{Read-from relation may differ}
+
+\begin{figure}
+\centering
+\begin{subfigure}{1\textwidth}
+\[\inarrII{
+  \readInst{\rlx}{r1}{x}; ~\valueRead{0} \\
+  \writeInst{\rlx}{y}{1};
+}
+{
+  \writeInst{\rlx}{x}{0};
+}\]
+\end{subfigure}
+% \vspace{10em}
+\par\bigskip
+\begin{subfigure}{0.45\textwidth}
+  \begin{tikzpicture}[yscale=1.5,xscale=1.5]
+
+    \node (xi) at (0.3,2) {$\rlab{\rlx}{x}{0}$};
+    \node (yi) at (1.8,2) {$\wlab{\rlx}{y}{0}$};
+    
+    \node (rx) at (0,1) {$\rlab{\rlx}{x}{0}$};
+    \node (wy) at (0,0) {$\wlab{\rlx}{y}{1}$};
+
+    \node (wx) at (2,1) {$\wlab{\rlx}{x}{0}$};
+
+    \draw[po] (xi)  edge  (rx);
+    \draw[po] (yi)  edge  (wx);
+    \draw[po] (rx)  edge  (wy);
+    
+    \draw[rf] (wx) edge node[below] {$\lRF$} (rx);
+\end{tikzpicture}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+  \begin{tikzpicture}[yscale=1.5,xscale=2.5]
+
+    \node (xi) at (0.5,2) {$\rlab{\rlx}{x}{0}$};
+    \node (yi) at (1.5,2) {$\wlab{\rlx}{y}{0}$};
+
+    \node (rxa) at (0,1) {$\rlab{\rlx}{x}{0}$};
+    \node (wya) at (0,0) {$\wlab{\rlx}{y}{1}$};
+
+    \node (rxb) at (1,1) {$\rlab{\rlx}{x}{0}$};
+    \node (wyb) at (1,0) {$\wlab{\rlx}{y}{1}$};
+
+    \node (xcf) at (0.5,1) {$\sim$};
+
+    \node (wx) at (2,1) {$\wlab{\rlx}{x}{0}$};
+
+    \draw[po] (xi)  edge  (rxa);
+    \draw[po] (yi)  edge  (wx);
+    
+    \draw[po] (rxa)  edge  (wya);
+    \draw[po] (rxb)  edge  (wyb);
+
+    \draw[rf] (xi) edge [bend left=20] node[below] {$\lJF$} (rxa);
+    \draw[rf] (wx) edge node[below] {$\lJF$} (rxb);
+\end{tikzpicture}
+\end{subfigure}
+\label{fig:rf-diff}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{1\textwidth}
+\[\inarrIII{
+  \incInst{\rlx}{\rlx}{r1}{x}{1}; ~\valueRead{0} \\
+  \writeInst{\rlx}{y}{1};
+}
+{
+  \readInst{\rlx}{r2}{z}; ~\valueRead{1} \\
+  \writeInst{\rel}{x}{0};
+}
+{
+  \incInst{\acq}{\rlx}{r3}{x}{1}; ~\valueRead{0} \\
+  \writeInst{\rlx}{z}{1};
+}\]
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{1\textwidth}
+  \begin{tikzpicture}[yscale=1.5,xscale=1.5]
+
+    \node (ai) at (0.5,3) {$\rlab{\rlx}{x}{0}$};
+    \node (bi) at (2.0,3) {$\wlab{\rlx}{y}{0}$};
+    \node (ci) at (3.5,3) {$\wlab{\rlx}{y}{0}$};
+    
+    \node (aa) at (0,2) {$\rlab{\rlx}{x}{0}$};
+    \node (ab) at (0,1) {$\wlab{\rlx}{x}{1}$};
+    \node (ac) at (0,0) {$\wlab{\rlx}{y}{1}$};
+
+    \node (ba) at (2,2) {$\rlab{\rlx}{z}{1}$};
+    \node (bb) at (2,1) {$\wlab{\rel}{x}{0}$};
+
+    \node (ca) at (4,2) {$\rlab{\acq}{x}{0}$};
+    \node (cb) at (4,1) {$\wlab{\rlx}{x}{1}$};
+    \node (cc) at (4,0) {$\wlab{\rlx}{z}{1}$};
+    
+
+    \draw[po] (ai)  edge  (aa);
+    \draw[po] (bi)  edge  (ba);
+    \draw[po] (ci)  edge  (ca);
+
+    \draw[po]  (aa)  edge  (ab);
+    \draw[po]  (ab)  edge  (ac);
+
+    \draw[po] (ba)  edge  (bb);
+
+    \draw[po] (ca)  edge  (cb);
+    \draw[po] (cb)  edge  (cc);
+
+    \draw[rmw] (aa)  edge[bend right=20] node[left] {$\lRMW$}  (ab);
+    \draw[rmw] (ca)  edge[bend left=20] node[right] {$\lRMW$}  (cb);
+
+    \draw[po] (cb)  edge  (cc);
+    
+    \draw[rf] (bb) edge node[below] {$\lRF$} (aa);
+    \draw[rf] (ai) edge node[above] {$\lRF$} (ca);
+    \draw[rf] (cc) edge node[below] {$\lRF$} (ba);
+\end{tikzpicture}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{1\textwidth}
+  \begin{tikzpicture}[yscale=1.5,xscale=1.5]
+
+    \node (ai) at (2,3) {$\rlab{\rlx}{x}{0}$};
+    \node (bi) at (4,3) {$\wlab{\rlx}{y}{0}$};
+    \node (ci) at (6,3) {$\wlab{\rlx}{y}{0}$};
+    
+    \node (aa) at (0,2) {$\rlab{\rlx}{x}{0}$};
+    \node (ab) at (0,1) {$\wlab{\rlx}{x}{1}$};
+    \node (ac) at (0,0) {$\wlab{\rlx}{y}{1}$};
+
+    \node (abcf) at (1,2) {$\sim$};
+
+    \node (ba) at (2,2) {$\rlab{\rlx}{x}{0}$};
+    \node (bb) at (2,1) {$\wlab{\rlx}{x}{1}$};
+    \node (bc) at (2,0) {$\wlab{\rlx}{y}{1}$};
+
+    \node (ca) at (4,2) {$\rlab{\rlx}{z}{1}$};
+    \node (cb) at (4,1) {$\wlab{\rel}{x}{0}$};
+
+    \node (da) at (6,2) {$\rlab{\acq}{x}{1}$};
+    \node (db) at (6,1) {$\wlab{\rlx}{x}{2}$};
+    \node (dc) at (6,0) {$\wlab{\rlx}{z}{1}$};
+
+    \node (decf) at (7,2) {$\sim$};
+
+    \node (ea) at (8,2) {$\rlab{\acq}{x}{0}$};
+    \node (eb) at (8,1) {$\wlab{\rlx}{x}{1}$};
+    \node (ec) at (8,0) {$\wlab{\rlx}{z}{1}$};
+    
+
+    \draw[po] (ai)  edge  (aa);
+    \draw[po] (bi)  edge  (ca);
+    \draw[po] (ci)  edge  (ea);
+
+    \draw[po] (aa)  edge  (ab);
+    \draw[po] (ab)  edge  (ac);
+
+    \draw[po] (ba)  edge  (bb);
+    \draw[po] (bb)  edge  (bc);
+
+    \draw[po] (ca)  edge  (cb);
+
+    \draw[po] (da)  edge  (db);
+    \draw[po] (db)  edge  (dc);
+
+    \draw[po] (ea)  edge  (eb);
+    \draw[po] (eb)  edge  (ec);
+
+    \draw[rmw] (aa)  edge[bend right=20] node[left] {$\lRMW$}  (ab);
+    \draw[rmw] (ba)  edge[bend right=20] node[left] {$\lRMW$}  (bb);
+    \draw[rmw] (da)  edge[bend left=20] node[right] {$\lRMW$}  (db);
+    \draw[rmw] (ea)  edge[bend left=20] node[right] {$\lRMW$}  (eb);
+
+    \draw[rf] (ai) edge[bend right=20] node[below] {$\lJF$} (aa);
+    \draw[rf] (ab) edge node[below] {$\lJF$} (da);
+    \draw[rf] (ai) edge node[above] {$\lJF$} (ea);
+    \draw[rf] (cb) edge node[below] {$\lJF$} (ba);
+    \draw[rf] (dc) edge node[below] {$\lJF$} (ca);
+\end{tikzpicture}
+\end{subfigure}
+\label{fig:rf-rmw-diff}
+\end{figure}
+
+
 % \begin{proof}
   
 % \end{proof}
