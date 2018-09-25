@@ -3,6 +3,8 @@ From promising Require Import Basic.
 From imm Require Import Events.
 Require Import AuxRel EventStructure.
 
+Set Implict Arguments.
+
 Inductive model := Weakest | Weakestmo.
 
 Section Consistency.
@@ -40,6 +42,11 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
+Definition jfe := jf \ sb.
+Definition rfe := rf \ sb.
+
+Definition same_lab x y := lab x = lab y.
+
 Definition vis :=
   codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ⨾ sb ⁼)).
 
@@ -64,10 +71,37 @@ Definition mfr (m : model) : relation event_id :=
 Definition eco (m : model) : relation event_id :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
 
-Record es_consistent m :=
-  { esc_vis : jf ⊆ sb ∪ vis × E;
-    esc_hb  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂;
-    esc_coh : irreflexive (hb ⨾ (eco m)^?);
+Definition cf_imm : relation event_id :=
+  cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb⁻¹).
+
+Record es_consistent {m} :=
+  { jf_vis : jf ⊆ sb ∪ vis × E;
+    hb_jf_not_cf  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂;
+    es_coherent : irreflexive (hb ⨾ (eco m)^?);
+    jf_not_cf : jf ∩ cf ≡ ∅₂;
+    jfpo_irr :
+      irreflexive (jfe ⨾ (sb ∪ jf)^* ⨾ sb ⨾
+                   jfe⁻¹ ⨾ ((sb ∪ jf)^*)⁻¹ ⨾
+                   (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew)));
+    labeq : dom_rel (cf_imm ∩ same_lab) ⊆₁ R;
+    labeq_jf_irr : irreflexive (jf ⨾ cf_imm ⨾ jf⁻¹ ⨾ ew^?);
   }.
+
+Section Properties.
+Variable WF : ES.Wf S.
+Variable m : model.
+Variable ESC : @es_consistent m.
+
+Lemma jf_in_rf : jf ⊆ rf.
+Proof.
+  unfold ES.rf.
+  generalize ESC.(jf_not_cf).
+  basic_solver.
+Qed.
+
+Lemma rf_complete : E ∩₁ R ⊆₁ codom_rel rf.
+Proof. rewrite <- jf_in_rf. apply WF. Qed.
+
+End Properties.
 
 End Consistency.

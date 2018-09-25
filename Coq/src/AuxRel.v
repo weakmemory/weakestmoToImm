@@ -103,7 +103,7 @@ Proof.
 Qed.
 
 Lemma collect_rel_eq_dom : forall (s s': A -> Prop) (EQs: eq_dom s f g) (EQs': eq_dom s' f g),
-  f ∘ (<| s |> ;; r ;; <| s' |>) ≡ g ∘ (<| s |> ;; r ;; <| s' |>).
+  f ∘ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g ∘ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘).
 Proof.
   ins.
   autounfold with unfolderDb.
@@ -121,7 +121,7 @@ Qed.
 Lemma restr_set_union :
   restr_rel (s ∪₁ s') r ≡
     restr_rel s r ∪ restr_rel s' r ∪
-    <| s |> ;; r ;; <| s' |> ∪ <| s' |> ;; r ;; <| s |>.
+    ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ∪ ⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘.
 Proof.
   autounfold with unfolderDb.
   splits; ins; desf; splits; eauto.

@@ -9,7 +9,7 @@ Export ListNotations.
 
 Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
 
-Definition event_id := Ident.t.
+Definition event_id := nat.
 Definition tid_init := xH.
 
 Module Language.
@@ -29,7 +29,7 @@ Inductive cont_label :=
 | CEvent (eid : event_id).
 
 Record t :=
-  mk { acts : list event_id;
+  mk { next_act : nat;
        lab  : event_id -> label; 
        tid  : event_id -> thread_id;
        sb   : event_id -> event_id -> Prop ;
@@ -37,23 +37,23 @@ Record t :=
        jf   : event_id -> event_id -> Prop ;
        co   : event_id -> event_id -> Prop ;
        ew   : event_id -> event_id -> Prop ;
-
-       lang : Language.t;
-       cont : list (cont_label * lang.(Language.state));
+       cont : list (cont_label *
+                    { lang : Language.t &
+                      lang.(Language.state) });
      }.
 
-Definition acts_set ES := fun x => In x ES.(acts).
-Definition acts_init_set  ES := ES.(acts_set)
-                                     ∩₁ (fun x => ES.(tid) x = tid_init).
-Definition acts_ninit_set ES := ES.(acts_set) \₁ ES.(acts_init_set).
-Definition cont_set ES := fun x => In x ES.(cont).
+Definition acts_set (ES : t) := fun x => x < ES.(next_act).
+Definition acts_init_set (ES : t) :=
+  ES.(acts_set) ∩₁ (fun x => ES.(tid) x = tid_init).
+Definition acts_ninit_set (ES : t) := ES.(acts_set) \₁ ES.(acts_init_set).
+Definition cont_set (ES : t) := fun x => In x ES.(cont).
 
-Definition same_tid ES := fun x y => ES.(tid) x = ES.(tid) y.
+Definition same_tid (ES : t) := fun x y => ES.(tid) x = ES.(tid) y.
 
-Definition cf ES := ⦗ ES.(acts_set) ⦘ ⨾
-                    (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
-                    ⦗ ES.(acts_set) ⦘.
-Definition rf ES := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
+Definition cf (ES : t) :=
+  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
+  ⦗ ES.(acts_set) ⦘.
+Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
@@ -74,7 +74,6 @@ Notation "'co'"    := EG.(ES.co).
 Notation "'lab'"   := EG.(ES.lab).
 Notation "'cf'"    := EG.(ES.cf).
 Notation "'K'"     := EG.(ES.cont_set).
-Notation "'lang'"  := EG.(ES.lang).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
@@ -99,7 +98,7 @@ Record Wf :=
   { initL : forall l, (exists b, E b /\ loc b = Some l) ->
                       exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
-        exists l, lab l = Astore Xpln Opln l 0 ;
+        exists l, lab e = Astore Xpln Opln l 0 ;
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_irr   : irreflexive sb;
     sb_trans : transitive sb;
@@ -113,7 +112,6 @@ Record Wf :=
     jfv : funeq val jf ;
     jff : functional jf⁻¹ ;
     jf_complete : E ∩₁ R ⊆₁ codom_rel jf;
-    jf_not_cf : jf ∩ cf ≡ ∅₂;
 
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
@@ -132,8 +130,8 @@ Record Wf :=
     ew_trans : transitive ew ;
     ew_sym : symmetric ew ;
 
-    term_def_K : forall state (TERM : lang.(Language.is_terminal) state),
-        ~ (exists lbl state', lang.(Language.step) lbl state state');
+    (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
+    (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
     init_tid_K : ~ (exists c, K (CInit tid_init, c));
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
@@ -204,16 +202,6 @@ Proof.
   generalize WF.(jfv) WF.(ewv) funeq_seq.
   basic_solver.
 Qed.
-
-Lemma jf_in_rf WF : jf ⊆ rf.
-Proof.
-  unfold ES.rf.
-  generalize WF.(jf_not_cf).
-  basic_solver.
-Qed.
-
-Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
-Proof. rewrite <- WF.(jf_in_rf). apply WF. Qed.
 
 End EventStructure.
 End ES.

@@ -36,7 +36,7 @@ Section SimRel.
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
       finj  : inj_dom (C ∪₁ I) f;  
-      tidEq : forall e (CpoI : (C ∪₁ dom_rel (Gsb ;; <| I |>)) e),
+      tidEq : forall e (CpoI : (C ∪₁ dom_rel (Gsb ⨾ ⦗ I ⦘)) e),
         Stid e.(f) = Gtid e;
       labEq : forall e (CI : (C ∪₁ I) e),
         Slab e.(f) = Glab e;
@@ -74,7 +74,7 @@ Section SimRel.
 
   Record simrel :=
     { comm : simrel_common;
-      vis  : f ∘₁ (C ∪₁ dom_rel (Gsb^? ;; <| I |>)) ⊆₁ vis S;
+      vis  : f ∘₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ vis S;
     }.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
@@ -84,7 +84,7 @@ Section SimRel.
       fp_tidEq  : Stid e' = Gtid e;
       fp_labEq  : Slab e' = Glab e;
       fp_covsb  : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      fp_sbEq   : upd f e e' ∘ (Gsb ;; <| eq e |>) ≡ Ssb ;; <| eq e' |>;
+      fp_sbEq   : upd f e e' ∘ (Gsb ⨾ ⦗ eq e ⦘) ≡ Ssb ⨾ ⦗ eq e' ⦘;
       fp_imgrf  : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 End SimRel.
@@ -113,7 +113,7 @@ Proof.
     eapply init_covered; eauto.
     desf. }
 
-  assert (sb G ;; <| eq e |> ⊆ <| covered TC |> ;; sb G) as EPrclCOV.
+  assert (sb G ⨾ ⦗ eq e ⦘ ⊆ ⦗ covered TC ⦘ ⨾ sb G) as EPrclCOV.
   { admit. } 
 
   assert ((upd f e e') ∘₁ (covered TC) ≡₁ f ∘₁ (covered TC)) as FupdCOV.
@@ -240,12 +240,12 @@ Proof.
     rewrite set_collect_eq. rewrite upds.
     rewrite restr_irrefl_eq; [|by apply Execution.sb_irr].
     rewrite restr_irrefl_eq; [|by apply ES.sb_irr].
-    arewrite_false (<| eq e |> ;; sb G ;; <| covered TC |>).
+    arewrite_false (⦗ eq e ⦘ ⨾ sb G ⨾ ⦗ covered TC ⦘).
     { autounfold with unfolderDb. splits; ins; eauto. 
       destruct H as [z Hz]. desf.
       admit.
     }
-    arewrite_false (<| eq e' |> ;; S.(ES.sb) ;; <| upd f e e' ∘₁ covered TC |>).
+    arewrite_false (⦗ eq e' ⦘ ⨾ S.(ES.sb) ⨾ ⦗ upd f e e' ∘₁ covered TC ⦘).
     { admit. }
     repeat rewrite union_false_r.
     rewrite collect_rel_union.
@@ -258,7 +258,7 @@ Proof.
     { rewrite collect_rel_seq_l. 
       repeat rewrite set_collect_eqv.
       repeat rewrite FupdCOV.
-      assert (upd f e e' ∘ (sb G) ;; <| eq e |> ≡ S.(ES.sb) ;; <| eq e' |> ) as FupdGsbE.
+      assert (upd f e e' ∘ (sb G) ⨾ ⦗ eq e ⦘ ≡ S.(ES.sb) ⨾ ⦗ eq e' ⦘ ) as FupdGsbE.
       { admit. } 
       rewrite FupdGsbE.
       reflexivity.

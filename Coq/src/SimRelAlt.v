@@ -35,7 +35,7 @@ Section SimRelAlt.
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
 
   Definition pc thread :=
-    f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ;; <| f ∘₁ C |>).
+    f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ⨾ ⦗ f ∘₁ C ⦘).
 
   Record simrel (P : thread_id -> Prop) :=
     { gwf   : Execution.Wf G;
@@ -99,7 +99,7 @@ Section SimRelAlt.
 
     Lemma sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb.
     Proof.
-      arewrite (Ssb ⊆ <| f ∘₁ C ∪₁ set_compl (f ∘₁ C) |> ;; Ssb) at 1.
+      arewrite (Ssb ⊆ ⦗ f ∘₁ C ∪₁ set_compl (f ∘₁ C) ⦘ ⨾ Ssb) at 1.
       { arewrite (f ∘₁ C ∪₁ set_compl (f ∘₁ C) ≡₁ fun _ => True).
         2: by relsf.
         split; [basic_solver|].
@@ -142,7 +142,7 @@ Section SimRelAlt.
 
   Record simrel :=
     { comm : simrel_common;
-      vis  : f ∘₁ (C ∪₁ dom_rel (Gsb^? ;; <| I |>)) ⊆₁ vis S;
+      vis  : f ∘₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ vis S;
     }.
   
   Record forward_pair (e : actid) (e' : EventId.t) :=
@@ -249,12 +249,12 @@ Proof.
     rewrite set_collect_eq. rewrite upds.
     rewrite restr_irrefl_eq; [|by apply Execution.sb_irr].
     rewrite restr_irrefl_eq; [|by apply sb_irr].
-    arewrite_false (<| eq e |> ;; sb G ;; <| covered TC |>).
+    arewrite_false (⦗ eq e ⦘ ⨾ sb G ⨾ ⦗ covered TC ⦘).
     { autounfold with unfolderDb. splits; ins; eauto. 
       destruct H as [z Hz]. desf.
       admit.
     }
-    arewrite_false (<| eq e' |> ;; S.(ES.sb) ;; <| upd f e e' ∘₁ covered TC |>).
+    arewrite_false (⦗ eq e' ⦘ ⨾ S.(ES.sb) ⨾ ⦗ upd f e e' ∘₁ covered TC ⦘).
     { admit. }
     repeat rewrite union_false_r.
     rewrite collect_rel_union.
@@ -268,7 +268,7 @@ Proof.
     { rewrite collect_rel_seq_l. 
       repeat rewrite set_collect_eqv.
       repeat rewrite FupdCOV.
-      assert (upd f e e' ∘ (sb G) ;; <| eq e |> ≡ S.(ES.sb) ;; <| eq e' |> ) as FupdGsbE.
+      assert (upd f e e' ∘ (sb G) ⨾ ⦗ eq e ⦘ ≡ S.(ES.sb) ⨾ ⦗ eq e' ⦘ ) as FupdGsbE.
       { admit. } 
       rewrite FupdGsbE.
       reflexivity.

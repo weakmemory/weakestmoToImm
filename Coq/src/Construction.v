@@ -6,96 +6,140 @@ Require Import AuxRel AuxDef EventStructure Consistency.
 Export ListNotations.
 
 Module ESstep.
-  
-Notation "'R'" := (fun a => is_true (is_r EventId.lab a)).
-Notation "'W'" := (fun a => is_true (is_w EventId.lab a)).
-Notation "'F'" := (fun a => is_true (is_f EventId.lab a)).
-Notation "'same_loc'" := (same_loc EventId.lab).
-Notation "'same_val'" := (same_val EventId.lab).
+
+Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
+Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
+Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
+Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
+Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
+
+Definition cont_thread S (cont : ES.cont_label) : thread_id :=
+  match cont with
+  | ES.CInit thread => thread
+  | ES.CEvent e => S.(ES.tid) e
+  end.
 
 Definition t_basic
-           (execs : thread_id -> state -> Prop)
            (event  : event_id)
            (event' : option event_id)
-           (s s' : ES.t) : Prop :=
-  let thread := event.(event_idid) in
-  let event_list := opt_to_list event' ++ [event] in
-  let label_list := map EventId.lab event_list in
-  let rmw_edge a b :=
-      ⟪ EQA : eq a event ⟫ /\
-      ⟪ EQB : In b (opt_to_list event') ⟫
-  in
-  ⟪ TRE  : exists state state',
-      let new_act  := (ThreadEvent thread state.(eindex)) in
-      let new_act' := (ThreadEvent thread (1 + state.(eindex))) in
-      ⟪ SS    : execs thread state  ⟫ /\
-      ⟪ SS'   : execs thread state' ⟫ /\
-      ⟪ ISTEP : istep thread label_list state state' ⟫ /\
-      ⟪ EREP1 : event = act_to_event state'.(G) new_act ⟫ /\
-      ⟪ EREP2 :
+           (S S' : ES.t) : Prop :=
+  ⟪ EVENT  : event = S.(ES.next_act) ⟫ /\
+  ⟪ EVENT' :
+    exists next_shift,
+      ⟪ NEXT_SHIFT :
         match event' with
-        | None => True
-        | Some event' => event' = act_to_event state'.(G) new_act'
-        end ⟫
+        | None => next_shift = 1
+        | Some _ =>
+          next_shift = 2 /\
+          ⟪ EVENT' : event' = Some (1 + event) ⟫
+        end
+      ⟫ /\
+      ⟪ NEXT_ACT :
+          S'.(ES.next_act) = next_shift + S.(ES.next_act) ⟫
   ⟫ /\
-  ⟪ EVN  : ~ s.(ES.acts_set) event ⟫ /\
-  ⟪ PRCL : s'.(ES.sb) ≡ ⦗ s'.(ES.acts_set) ⦘ ⨾ s'.(ES.sb) ⟫ /\
-  ⟪ REP  : s' = ES.mk (event_list ++ s.(ES.acts))
-                       (rmw_edge ∪ s.(ES.rmw))
-                       s.(ES.jf) s.(ES.co) s.(ES.ew)
-  ⟫.
+  exists cont lang (state state' : lang.(Language.state))
+         label label',
+    let label_list := opt_to_list label' ++ [label] in
+    let thread := cont_thread S cont in
+    let set_event' : event_id -> Prop :=
+        match event' with
+        | None => ∅
+        | Some event'' => eq event''
+        end
+    in
+    ⟪ CONT  : K S (cont, existT _ lang state) ⟫ /\
+    ⟪ CONT' :
+      let event'' :=
+          match event' with
+          | None => event
+          | Some event'' => event''
+          end
+      in
+      S'.(ES.cont) = (ES.CEvent event'', existT _ lang state') :: S.(ES.cont)
+    ⟫ /\
+    ⟪ STEP : lang.(Language.step) label_list state state' ⟫ /\
+    ⟪ LABEL' :
+      match event', label' with
+      | None, None
+      | Some _, Some _ => True
+      | _, _ => False
+      end
+    ⟫ /\
+    ⟪ LAB' :
+      let lab' := upd S.(ES.lab) event label in
+      S'.(ES.lab) =
+      match event', label' with
+      | Some event'', Some label'' => upd lab' event'' label''
+      | _, _ => lab'
+      end
+    ⟫ /\
+    ⟪ TID' :
+      let tid' := upd S.(ES.tid) event thread in
+      S'.(ES.tid) =
+      match event' with
+      | Some event'' => upd tid' event'' thread
+      | None => tid'
+      end
+    ⟫ /\
+    ⟪ SB' :
+      let prev_set :=
+          match cont with
+          | ES.CInit thread => S.(ES.acts_init_set)
+          | ES.CEvent event_prev => dom_rel (S.(ES.sb)^? ⨾ ⦗ eq event_prev ⦘)
+          end
+      in
+      S'.(ES.sb) ≡ S.(ES.sb) ∪ prev_set × eq event ∪
+                             (prev_set ∪₁ eq event) × set_event' ⟫ /\
+    ⟪ RMW' : S'.(ES.rmw) ≡ S.(ES.rmw) ∪ eq event × set_event' ⟫.
   
-Definition add_jf (r : event_id) (s s' : ES.t) : Prop :=
-  ⟪ RR : R r ⟫ /\
+Definition add_jf (r : event_id) (S S' : ES.t) : Prop :=
+  ⟪ RR : R S' r ⟫ /\
   exists w,
-    ⟪ EW   : s.(ES.acts_set) w ⟫ /\
-    ⟪ WW   : W w ⟫ /\
-    ⟪ LOC  : same_loc w r ⟫ /\
-    ⟪ VAL  : same_val w r ⟫ /\
-    ⟪ REPR :
-      s' = ES.mk s.(ES.acts) s.(ES.rmw)
-                 (singl_rel w r ∪ s.(ES.jf))
-                 s.(ES.co) s.(ES.ew)
-    ⟫.
+    ⟪ EW  : S.(ES.acts_set) w ⟫ /\
+    ⟪ WW  : W S' w ⟫ /\
+    ⟪ LOC : same_loc S' w r ⟫ /\
+    ⟪ VAL : same_val S' w r ⟫ /\
+    ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
 
-Definition add_ew (w : event_id) (s s' : ES.t) : Prop :=
-  ⟪ WW : W w ⟫ /\
+Definition add_ew (w : event_id) (S S' : ES.t) : Prop :=
+  ⟪ WW : W S w ⟫ /\
   exists (ws : event_id -> Prop),
-    ⟪ WWS   : ws ⊆₁ W ⟫ /\
-    ⟪ LOCWS : ws ⊆₁ same_loc w ⟫ /\
-    ⟪ VALWS : ws ⊆₁ same_val w ⟫ /\
-    ⟪ CFWS  : ws ⊆₁ s.(ES.cf) w ⟫ /\
+    ⟪ WWS   : ws ⊆₁ W S ⟫ /\
+    ⟪ LOCWS : ws ⊆₁ same_loc S w ⟫ /\
+    ⟪ VALWS : ws ⊆₁ same_val S w ⟫ /\
+    ⟪ CFWS  : ws ⊆₁ S.(ES.cf) w ⟫ /\
     ⟪ REPR :
-      s' = ES.mk s.(ES.acts) s.(ES.rmw)
-                 s.(ES.jf) s.(ES.co)
-                 (ws × eq w ∪ eq w × ws ∪ s.(ES.ew))
-    ⟫.
+      S'.(ES.ew) ≡ S'.(ES.ew) ∪ ws × eq w ∪ eq w × ws ⟫.
 
-Definition add_co (w : event_id) (s s' : ES.t) : Prop :=
-  let A := s.(ES.acts_set) ∩₁ W ∩₁ (same_loc w) \₁ (s.(ES.cf)^? w) in
-  ⟪ WW : W w ⟫ /\
+Definition add_co (w : event_id) (S S' : ES.t) : Prop :=
+  let A := S.(ES.acts_set) ∩₁ W S ∩₁ (same_loc S w) \₁ (S.(ES.cf)^? w) in
+  ⟪ WW : W S w ⟫ /\
   exists (ws : event_id -> Prop),
     ⟪ WWS : ws ⊆₁ A ⟫ /\
     ⟪ REPR :
-      s' = ES.mk s.(ES.acts) s.(ES.rmw)
-                 s.(ES.jf)
-                 (ws × eq w ∪ eq w × (A \₁ ws) ∪ s.(ES.co))
-                 s.(ES.ew)
-    ⟫.
+      S'.(ES.co) ≡ S.(ES.co) ∪ S.(ES.ew) ∪ ws × eq w ∪ eq w × (A \₁ ws) ⟫.
 
-Inductive t_ (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
-| t_fence  e  (FF : F e) (BS : t_basic execs e None s s')
-| t_load   e s1          (BS : t_basic execs e None s s1)
-           (JF : add_jf e s1 s')
-| t_store  e s1 s2       (BS : t_basic execs e None s s1)
-           (EW : add_ew e s1 s2)
-           (CO : add_co e s2 s')
-| t_update e e' s1 s2 s3 (BS : t_basic execs e (Some e') s s1)
-           (JF : add_jf e  s1 s2)
-           (EW : add_ew e' s2 s3)
-           (CO : add_co e' s3 s').
+Inductive t_ (S S' : ES.t) : Prop :=
+| t_fence  e    (BS  : t_basic e None S S')
+                (FF  : F S' e)
+                (JF' : S'.(ES.jf) ≡ S.(ES.jf))
+                (EW' : S'.(ES.ew) ≡ S.(ES.ew))
+                (CO' : S'.(ES.co) ≡ S.(ES.co))
+| t_load   e    (BS  : t_basic e None S S')
+                (JF' : add_jf e S S')
+                (EW' : S'.(ES.ew) ≡ S.(ES.ew))
+                (CO' : S'.(ES.co) ≡ S.(ES.co))
+| t_store  e    (BS  : t_basic e None S S')
+                (JF' : S'.(ES.jf) ≡ S.(ES.jf))
+                (EW' : add_ew e S S')
+                (CO' : add_co e S S')
+| t_update e e' (BS  : t_basic e (Some e') S S')
+                (JF' : add_jf e  S S')
+                (EW' : add_ew e' S S')
+                (CO' : add_co e' S S').
 
-Definition t (m : model) (execs : thread_id -> state -> Prop) (s s' : ES.t) : Prop :=
-  ⟪ TT  : t_ execs s s' ⟫ /\
-  ⟪ CON : es_consistent s' m ⟫.
+Definition t (m : model) (S S' : ES.t) : Prop :=
+  ⟪ TT  : t_ S S' ⟫ /\
+  ⟪ CON : @es_consistent S' m ⟫.
 End ESstep.
