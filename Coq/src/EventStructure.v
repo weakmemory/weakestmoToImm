@@ -42,6 +42,12 @@ Record t :=
                       lang.(Language.state) });
      }.
 
+Definition cont_thread S (cont : cont_label) : thread_id :=
+  match cont with
+  | CInit thread => thread
+  | CEvent e => S.(ES.tid) e
+  end.
+
 Definition acts_set (ES : t) := fun x => x < ES.(next_act).
 Definition acts_init_set (ES : t) :=
   ES.(acts_set) ∩₁ (fun x => ES.(tid) x = tid_init).

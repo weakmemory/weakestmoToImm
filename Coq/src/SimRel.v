@@ -1,6 +1,7 @@
 From hahn Require Import Hahn.
+From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecutionProperties imm_hb.
+     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
@@ -16,6 +17,7 @@ Section SimRel.
   Variable f  : actid -> eventid.
 
   Notation "'SE'" := S.(ES.acts_set).
+  Notation "'K'"  := S.(ES.cont_set).
   Notation "'GE'" := G.(acts_set).
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
@@ -39,6 +41,32 @@ Section SimRel.
   Definition pc thread :=
     f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ⨾ ⦗ f ∘₁ C ⦘).
 
+  Definition thread_lts (tid : thread_id) : Language.t :=
+    @Language.mk
+      (list Instr.t) state
+      init
+      is_terminal
+      (istep tid).
+  
+  Record simrel_cont :=
+    { contlang : forall cont lang (state : lang.(Language.state))
+                        (INK : K (cont, existT _ lang state)),
+        lang = thread_lts (ES.cont_thread S cont);
+
+      continit : forall thread (state : (thread_lts thread).(Language.state))
+                        (INK : K (ES.CInit thread, existT _ _ state)),
+          exists lprog,
+            << INPROG : IdentMap.find thread prog = Some lprog >> /\
+            << INITST : state = (thread_lts thread).(Language.init) lprog >>;
+
+      contpc : forall e (state : (thread_lts (Stid e)).(Language.state))
+                      (PC : pc (Stid e) e)
+                      (INK : K (ES.CEvent e, existT _ _ state)),
+                @sim_state G sim_normal C (Stid e) state;
+      
+      (* TODO: for a certification graph will need smth close to `contpc`. *)
+    }.
+
   Record simrel_common (P : thread_id -> Prop) :=
     { gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
@@ -47,6 +75,8 @@ Section SimRel.
       tccoh : tc_coherent G sc TC;
       swf   : ES.Wf S;
       scons : @es_consistent S Weakestmo;
+      
+      scont : simrel_cont;
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
