@@ -14,12 +14,6 @@ Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-Definition cont_thread S (cont : ES.cont_label) : thread_id :=
-  match cont with
-  | ES.CInit thread => thread
-  | ES.CEvent e => S.(ES.tid) e
-  end.
-
 Definition t_basic
            (event  : eventid)
            (event' : option eventid)
@@ -41,7 +35,7 @@ Definition t_basic
   exists cont lang (state state' : lang.(Language.state))
          label label',
     let label_list := opt_to_list label' ++ [label] in
-    let thread := cont_thread S cont in
+    let thread := ES.cont_thread S cont in
     let set_event' : eventid -> Prop :=
         match event' with
         | None => ∅
