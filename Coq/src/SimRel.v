@@ -39,6 +39,8 @@ Section SimRel.
   Definition pc thread :=
     f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ⨾ ⦗ f ∘₁ C ⦘).
 
+  
+
   Record simrel_common (P : thread_id -> Prop) :=
     { gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
@@ -50,9 +52,9 @@ Section SimRel.
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
-      finj  : inj_dom (C ∪₁ I) f;  
-      fimg : f ∘₁ (C ∪₁ I) ⊆₁ SE;
-      foth  : (f ∘₁ set_compl (C ∪₁ I)) ∩₁ SE ≡₁ ∅;
+      finj : inj_dom (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) f;  
+      fimg : f ∘₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ SE;
+      foth : (f ∘₁ set_compl (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘))) ∩₁ SE ≡₁ ∅;
       flab : forall e (CI : (C ∪₁ I) e),
           Slab e.(f) = Glab e;
       ftid : forall e, Stid (f e) = Gtid e;
