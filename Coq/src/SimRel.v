@@ -56,8 +56,8 @@ Section SimRel.
       continit : forall thread (state : (thread_lts thread).(Language.state))
                         (INK : K (ES.CInit thread, existT _ _ state)),
           exists lprog,
-            << INPROG : IdentMap.find thread prog = Some lprog >> /\
-            << INITST : state = (thread_lts thread).(Language.init) lprog >>;
+            ⟪ INPROG : IdentMap.find thread prog = Some lprog ⟫ /\
+            ⟪ INITST : state = (thread_lts thread).(Language.init) lprog ⟫;
 
       contpc : forall e (state : (thread_lts (Stid e)).(Language.state))
                       (PC : pc (Stid e) e)
@@ -137,10 +137,12 @@ Section SimRel.
       autounfold with unfolderDb.
       eexists. split; eauto.
       intros [AA|AA]; apply NGE.
-      2: eapply issuedE; eauto.
+      2: { admit.
+           (* destruct SRC. eapply issuedE; eauto. *)
+      }
       eapply coveredE; eauto.
       all: apply SRC.
-    Qed.
+    Admitted.
   End Properties.
 
   (* Section SRCprop. *)
