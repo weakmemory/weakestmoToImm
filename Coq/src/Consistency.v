@@ -50,28 +50,28 @@ Definition same_lab x y := lab x = lab y.
 Definition vis :=
   codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ⨾ sb ⁼)).
 
-Definition sw : relation event_id := fun x y => True. (* TODO: define *)
+Definition sw : relation eventid := fun x y => True. (* TODO: define *)
 
-Definition hb : relation event_id := (sb ∪ sw)⁺.
+Definition hb : relation eventid := (sb ∪ sw)⁺.
 
-Definition co_strong : relation event_id :=
+Definition co_strong : relation eventid :=
   ⦗ W ⦘ ⨾ hb ⨾ ⦗ W ⦘ ∩ same_loc.
 
-Definition mco (m : model) : relation event_id :=
+Definition mco (m : model) : relation eventid :=
   match m with
   | Weakest   => co_strong 
   | Weakestmo => co
   end.
 
-Definition fr : relation event_id := rf⁻¹ ⨾ co \ cf^?.
+Definition fr : relation eventid := rf⁻¹ ⨾ co \ cf^?.
 
-Definition mfr (m : model) : relation event_id :=
+Definition mfr (m : model) : relation eventid :=
   (rf⁻¹ ⨾ mco m) \ cf^?.
 
-Definition eco (m : model) : relation event_id :=
+Definition eco (m : model) : relation eventid :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
 
-Definition cf_imm : relation event_id :=
+Definition cf_imm : relation eventid :=
   cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb⁻¹).
 
 Record es_consistent {m} :=

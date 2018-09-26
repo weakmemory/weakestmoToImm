@@ -9,7 +9,7 @@ Export ListNotations.
 
 Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
 
-Definition event_id := nat.
+Definition eventid := nat.
 Definition tid_init := xH.
 
 Module Language.
@@ -26,17 +26,17 @@ Module ES.
 
 Inductive cont_label :=
 | CInit  (tid : thread_id)
-| CEvent (eid : event_id).
+| CEvent (eid : eventid).
 
 Record t :=
-  mk { next_act : nat;
-       lab  : event_id -> label; 
-       tid  : event_id -> thread_id;
-       sb   : event_id -> event_id -> Prop ;
-       rmw  : event_id -> event_id -> Prop ;
-       jf   : event_id -> event_id -> Prop ;
-       co   : event_id -> event_id -> Prop ;
-       ew   : event_id -> event_id -> Prop ;
+  mk { next_act : eventid;
+       lab  : eventid -> label; 
+       tid  : eventid -> thread_id;
+       sb   : eventid -> eventid -> Prop ;
+       rmw  : eventid -> eventid -> Prop ;
+       jf   : eventid -> eventid -> Prop ;
+       co   : eventid -> eventid -> Prop ;
+       ew   : eventid -> eventid -> Prop ;
        cont : list (cont_label *
                     { lang : Language.t &
                       lang.(Language.state) });

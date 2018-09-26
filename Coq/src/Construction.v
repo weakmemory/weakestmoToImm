@@ -21,8 +21,8 @@ Definition cont_thread S (cont : ES.cont_label) : thread_id :=
   end.
 
 Definition t_basic
-           (event  : event_id)
-           (event' : option event_id)
+           (event  : eventid)
+           (event' : option eventid)
            (S S' : ES.t) : Prop :=
   ⟪ EVENT  : event = S.(ES.next_act) ⟫ /\
   ⟪ EVENT' :
@@ -42,7 +42,7 @@ Definition t_basic
          label label',
     let label_list := opt_to_list label' ++ [label] in
     let thread := cont_thread S cont in
-    let set_event' : event_id -> Prop :=
+    let set_event' : eventid -> Prop :=
         match event' with
         | None => ∅
         | Some event'' => eq event''
@@ -93,7 +93,7 @@ Definition t_basic
                              (prev_set ∪₁ eq event) × set_event' ⟫ /\
     ⟪ RMW' : S'.(ES.rmw) ≡ S.(ES.rmw) ∪ eq event × set_event' ⟫.
   
-Definition add_jf (r : event_id) (S S' : ES.t) : Prop :=
+Definition add_jf (r : eventid) (S S' : ES.t) : Prop :=
   ⟪ RR : R S' r ⟫ /\
   exists w,
     ⟪ EW  : S.(ES.acts_set) w ⟫ /\
@@ -102,9 +102,9 @@ Definition add_jf (r : event_id) (S S' : ES.t) : Prop :=
     ⟪ VAL : same_val S' w r ⟫ /\
     ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
 
-Definition add_ew (w : event_id) (S S' : ES.t) : Prop :=
+Definition add_ew (w : eventid) (S S' : ES.t) : Prop :=
   ⟪ WW : W S' w ⟫ /\
-  exists (ws : event_id -> Prop),
+  exists (ws : eventid -> Prop),
     ⟪ WWS   : ws ⊆₁ W S ⟫ /\
     ⟪ LOCWS : ws ⊆₁ same_loc S w ⟫ /\
     ⟪ VALWS : ws ⊆₁ same_val S w ⟫ /\
@@ -112,10 +112,10 @@ Definition add_ew (w : event_id) (S S' : ES.t) : Prop :=
     ⟪ REPR :
       S'.(ES.ew) ≡ S'.(ES.ew) ∪ ws × eq w ∪ eq w × ws ⟫.
 
-Definition add_co (w : event_id) (S S' : ES.t) : Prop :=
+Definition add_co (w : eventid) (S S' : ES.t) : Prop :=
   let A := S.(ES.acts_set) ∩₁ W S ∩₁ (same_loc S w) \₁ (S.(ES.cf)^? w) in
   ⟪ WW : W S' w ⟫ /\
-  exists (ws : event_id -> Prop),
+  exists (ws : eventid -> Prop),
     ⟪ WWS : ws ⊆₁ A ⟫ /\
     ⟪ REPR :
       S'.(ES.co) ≡ S.(ES.co) ∪ S.(ES.ew) ∪ ws × eq w ∪ eq w × (A \₁ ws) ⟫.

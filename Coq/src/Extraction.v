@@ -29,7 +29,7 @@ Notation "'Gaddr'" := G.(addr).
 Notation "'Gctrl'" := G.(ctrl).
 
 Definition extracted : Prop :=
-  exists f : actid -> event_id, 
+  exists f : actid -> eventid, 
     ⟪ EVIS    : f ∘₁ GE ⊆₁ vis S ⟫ /\
     ⟪ ENCF    : ⦗ f ∘₁ GE ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ GE ⦘ ≡ ∅₂ ⟫ /\
     ⟪ ESBPRCL : dom_rel (Ssb ⨾ ⦗ f ∘₁ GE ⦘) ⊆₁ f ∘₁ GE ⟫ /\
