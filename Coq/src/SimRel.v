@@ -17,6 +17,7 @@ Section SimRel.
   Variable f  : actid -> eventid.
 
   Notation "'SE'" := S.(ES.acts_set).
+  Notation "'SEinit'" := S.(ES.acts_init_set).
   Notation "'K'"  := S.(ES.cont_set).
   Notation "'GE'" := G.(acts_set).
   Notation "'C'"  := (covered TC).
@@ -29,10 +30,12 @@ Section SimRel.
   Notation "'Gco'" := (G.(co)).
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
+  Notation "'Sloc'" := (loc S.(ES.lab)).
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Srf'" := (S.(ES.rf)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
+  Notation "'Sew'" := (S.(ES.ew)).
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
@@ -66,6 +69,20 @@ Section SimRel.
       
       (* TODO: for a certification graph will need smth close to `contpc`. *)
     }.
+  
+  Definition event_to_act (e : eventid) : actid :=
+    if excluded_middle_informative (SEinit e)
+    then
+      match Sloc e with
+      | Some l => InitEvent l
+      | _      => InitEvent BinNums.xH
+      end
+    else
+      let thread := Stid e in
+      ThreadEvent thread
+                  (countNatP (dom_rel (<| Stid_ thread |>;; Ssb ;; <| eq e |>))
+                             S.(ES.next_act)).
+  Notation "'g'" := (event_to_act).
 
   Record simrel_common (P : thread_id -> Prop) :=
     { gwf   : Execution.Wf G;
@@ -77,6 +94,9 @@ Section SimRel.
       scons : @es_consistent S Weakestmo;
       
       scont : simrel_cont;
+
+      gew : g ∘ Sew ⊆ eq;
+      gco : g ∘ Sco ⊆ Gco;
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
