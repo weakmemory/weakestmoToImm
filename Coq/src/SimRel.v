@@ -2,7 +2,8 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel.
+     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel
+     CombRelations.
 Require Import AuxRel AuxDef EventStructure Construction Consistency.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
@@ -37,6 +38,7 @@ Section SimRel.
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Sew'" := (S.(ES.ew)).
+  Notation "'Sjf'" := (S.(ES.jf)).
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
@@ -100,6 +102,14 @@ Section SimRel.
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (compose g f) ⊆ eq;
       gew : g □ Sew ⊆ eq;
       gco : g □ Sco ⊆ Gco;
+      (* gjf : g □ Sjf ⊆ G.(urr); *)
+
+      fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
+
+      cimgNcf : ⦗ f □₁ fdom ⦘ ⨾ Scf ⨾ ⦗ f □₁ fdom ⦘ ≡ ∅₂;
+
+      imgrf : f □ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
+              ⦗ f □₁ I ⦘ ⨾ Srf  ⨾ ⦗ f □₁ C ⦘;
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
@@ -120,11 +130,7 @@ Section SimRel.
       sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb;
       sbF : f □ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
             ⦗ f □₁ C ⦘ ⨾ Ssb ⨾ ⦗ f □₁ C ⦘;
-      cimgNcf : ⦗ f □₁ C ⦘ ⨾ Scf ⨾ ⦗ f □₁ C ⦘ ≡ ∅₂;
-      imgrf : f □ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
-              ⦗ f □₁ I ⦘ ⨾ Srf  ⨾ ⦗ f □₁ C ⦘;
-      imgco : f □ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
-              ⦗ f □₁ I ⦘ ⨾ Sco  ⨾ ⦗ f □₁ I ⦘;
+
       
       (* Highly likely, we need that *)
       (* or it should be deducable from SimRelAlt and (WF S) *)
@@ -150,6 +156,11 @@ Section SimRel.
   Section Properties.
     Variable P : thread_id -> Prop.
     Variable SRC : simrel_common P.
+    
+    Lemma grf : g □ Srf ≡ g □ Sjf.
+    Proof.
+      (* TODO. It should follow from SRC.gew. *)
+    Admitted.
 
     Lemma finE e (SEE : SE (f e)) : GE e.
     Proof.
