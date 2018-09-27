@@ -23,8 +23,9 @@ Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
 
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
-Notation "f ∘₁ s" := (set_collect f s) (at level 39).
-Notation "f ∘ r"  := (collect_rel f r) (at level 45).
+Notation "f □₁ s" := (set_collect f s) (at level 39).
+Notation "f □ r"  := (collect_rel f r) (at level 45).
+Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
 Hint Unfold eq_class_rel : unfolderDb. 
 
@@ -48,7 +49,7 @@ Proof. basic_solver. Qed.
 Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
 Proof. basic_solver. Qed.
 
-Lemma set_collect_updo (NC : ~ s a) : (upd f a b) ∘₁ s ≡₁ f ∘₁ s.
+Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
 Proof.
   assert (forall x: A, s x -> x <> a). 
   { ins. intros HH. by subst. }
@@ -58,7 +59,7 @@ Proof.
   all: rewrite updo; auto.
 Qed.
 
-Lemma set_collect_eqv : f ∘ ⦗ s ⦘ ≡ ⦗ f ∘₁ s ⦘.
+Lemma set_collect_eqv : f □ ⦗ s ⦘ ≡ ⦗ f □₁ s ⦘.
 Proof.
   autounfold with unfolderDb.
   splits; ins; desf; eauto.
@@ -68,7 +69,7 @@ Qed.
 
 Lemma collect_rel_seq_l
       (INJ : inj_dom (codom_rel r) f) : 
-  f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
+  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   autounfold with unfolderDb.
   split; ins; desf; eauto.
@@ -79,7 +80,7 @@ Qed.
 
 Lemma collect_rel_seq_r
       (INJ : inj_dom (dom_rel r') f) : 
-  f ∘ (r ⨾ r') ≡ (f ∘ r) ⨾ (f ∘ r').
+  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   autounfold with unfolderDb.
   split; ins; desf; eauto.
@@ -91,7 +92,7 @@ Qed.
 
 Lemma set_collect_restr : 
   forall (s: A -> Prop) (f: A -> B), inj_dom s f ->
-  f ∘ (restr_rel s r) ≡ restr_rel (f ∘₁ s) (f ∘ r).
+  f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).
 Proof.
   ins.
   autounfold with unfolderDb.
@@ -103,7 +104,7 @@ Proof.
 Qed.
 
 Lemma collect_rel_eq_dom : forall (s s': A -> Prop) (EQs: eq_dom s f g) (EQs': eq_dom s' f g),
-  f ∘ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g ∘ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘).
+  f □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘).
 Proof.
   ins.
   autounfold with unfolderDb.
@@ -112,7 +113,7 @@ Proof.
 Qed.
 
 Lemma collect_rel_restr_eq_dom (HH : eq_dom s f g) :
-  f ∘ (restr_rel s r) ≡ g ∘ (restr_rel s r).
+  f □ (restr_rel s r) ≡ g □ (restr_rel s r).
 Proof.
   rewrite restr_relE.
   apply collect_rel_eq_dom; auto.

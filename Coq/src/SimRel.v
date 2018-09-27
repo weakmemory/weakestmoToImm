@@ -42,7 +42,7 @@ Section SimRel.
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
 
   Definition pc thread :=
-    f ∘₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ⨾ ⦗ f ∘₁ C ⦘).
+    f □₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ⨾ ⦗ f □₁ C ⦘).
 
   Definition thread_lts (tid : thread_id) : Language.t :=
     @Language.mk
@@ -95,42 +95,42 @@ Section SimRel.
       
       scont : simrel_cont;
 
-      gew : g ∘ Sew ⊆ eq;
-      gco : g ∘ Sco ⊆ Gco;
+      gew : g □ Sew ⊆ eq;
+      gco : g □ Sco ⊆ Gco;
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
       finj : inj_dom (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) f;  
-      fimg : f ∘₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ SE;
-      foth : (f ∘₁ set_compl (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘))) ∩₁ SE ≡₁ ∅;
+      fimg : f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ SE;
+      foth : (f □₁ set_compl (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘))) ∩₁ SE ≡₁ ∅;
       flab : forall e (CI : (C ∪₁ I) e),
           Slab e.(f) = Glab e;
       ftid : forall e, Stid (f e) = Gtid e;
-      finitIncl : S.(ES.acts_init_set) ⊆₁ f ∘₁ (is_init ∩₁ GE);
+      finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
       sbtot_cov : forall thread,
-          is_total (f ∘₁ C ∩₁ Stid_ thread) Ssb;
+          is_total (f □₁ C ∩₁ Stid_ thread) Ssb;
 
       sbtot_ci : forall thread (NP : ~ P thread),
-          is_total (f ∘₁ (C ∪₁ I) ∩₁ Stid_ thread) Ssb;
+          is_total (f □₁ (C ∪₁ I) ∩₁ Stid_ thread) Ssb;
 
-      sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      sbF : f ∘ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
-            ⦗ f ∘₁ C ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ C ⦘;
-      cimgNcf : ⦗ f ∘₁ C ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ C ⦘ ≡ ∅₂;
-      imgrf : f ∘ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
-              ⦗ f ∘₁ I ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ C ⦘;
-      imgco : f ∘ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
-              ⦗ f ∘₁ I ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ I ⦘;
+      sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb;
+      sbF : f □ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
+            ⦗ f □₁ C ⦘ ⨾ Ssb ⨾ ⦗ f □₁ C ⦘;
+      cimgNcf : ⦗ f □₁ C ⦘ ⨾ Scf ⨾ ⦗ f □₁ C ⦘ ≡ ∅₂;
+      imgrf : f □ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
+              ⦗ f □₁ I ⦘ ⨾ Srf  ⨾ ⦗ f □₁ C ⦘;
+      imgco : f □ ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆
+              ⦗ f □₁ I ⦘ ⨾ Sco  ⨾ ⦗ f □₁ I ⦘;
       
       (* Highly likely, we need that *)
       (* or it should be deducable from SimRelAlt and (WF S) *)
-      (* ⦗ f ∘₁ I ⦘ ⨾ Sew ⨾ ⦗ f ∘₁ I ⦘ ⊆ f ∘ ⦗ I ⦘ *)
+      (* ⦗ f □₁ I ⦘ ⨾ Sew ⨾ ⦗ f □₁ I ⦘ ⊆ f □ ⦗ I ⦘ *)
     }.
 
   Record simrel :=
     { comm : simrel_common ∅;
-      vis  : f ∘₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ vis S;
+      vis  : f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ vis S;
     }.
   
   Record forward_pair (e : actid) (e' : eventid) :=
@@ -139,9 +139,9 @@ Section SimRel.
       fp_inSE   : SE e'; 
       fp_tidEq  : Stid e' = Gtid e;
       fp_labEq  : Slab e' = Glab e;
-      fp_covsb  : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb;
-      fp_sbEq   : upd f e e' ∘ (Gsb ⨾ ⦗ eq e ⦘) ≡ Ssb ⨾ ⦗ eq e' ⦘;
-      fp_imgrf  : upd f e e' ∘ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
+      fp_covsb  : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb;
+      fp_sbEq   : upd f e e' □ (Gsb ⨾ ⦗ eq e ⦘) ≡ Ssb ⨾ ⦗ eq e' ⦘;
+      fp_imgrf  : upd f e e' □ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 
   Section Properties.
@@ -169,7 +169,7 @@ Section SimRel.
   (*   Variable P : thread_id -> Prop. *)
   (*   Variable SRC : simrel P. *)
     
-  (*   Lemma finit : S.(ES.acts_init_set) ≡₁ f ∘₁ (is_init ∩₁ GE). *)
+  (*   Lemma finit : S.(ES.acts_init_set) ≡₁ f □₁ (is_init ∩₁ GE). *)
   (*   Proof. *)
   (*     set (SRC' := SRC). *)
   (*     destruct SRC'. *)
@@ -188,19 +188,19 @@ Section SimRel.
   (*     rewrite wf_init_lab; auto. *)
   (*   Qed. *)
 
-  (*   Lemma finitC : S.(ES.acts_init_set) ⊆₁ f ∘₁ C. *)
+  (*   Lemma finitC : S.(ES.acts_init_set) ⊆₁ f □₁ C. *)
   (*   Proof. rewrite finit. erewrite init_covered; eauto. apply SRC. Qed. *)
 
-  (*   Lemma sbPrcl : Ssb ⨾ ⦗ f ∘₁ C ⦘ ⊆ ⦗ f ∘₁ C ⦘ ⨾ Ssb. *)
+  (*   Lemma sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb. *)
   (*   Proof. *)
-  (*     arewrite (Ssb ⊆ ⦗ f ∘₁ C ∪₁ set_compl (f ∘₁ C) ⦘ ⨾ Ssb) at 1. *)
-  (*     { arewrite (f ∘₁ C ∪₁ set_compl (f ∘₁ C) ≡₁ fun _ => True). *)
+  (*     arewrite (Ssb ⊆ ⦗ f □₁ C ∪₁ set_compl (f □₁ C) ⦘ ⨾ Ssb) at 1. *)
+  (*     { arewrite (f □₁ C ∪₁ set_compl (f □₁ C) ≡₁ fun _ => True). *)
   (*       2: by relsf. *)
   (*       split; [basic_solver|]. *)
   (*       intros x _. apply classic. } *)
   (*     rewrite id_union. rewrite seq_union_l. *)
-  (*     arewrite_false (⦗set_compl (f ∘₁ C)⦘ ⨾ Ssb ⨾ ⦗f ∘₁ C⦘). *)
-  (*     2: { arewrite_id ⦗f ∘₁ C⦘ at 2. relsf. } *)
+  (*     arewrite_false (⦗set_compl (f □₁ C)⦘ ⨾ Ssb ⨾ ⦗f □₁ C⦘). *)
+  (*     2: { arewrite_id ⦗f □₁ C⦘ at 2. relsf. } *)
   (*     unfold ES.sb. *)
   (*     rewrite seq_union_l. rewrite seq_union_r. *)
   (*     rewrite seq_eqv_cross. *)
