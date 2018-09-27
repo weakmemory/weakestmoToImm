@@ -81,10 +81,10 @@ Section SimRel.
     else
       let thread := Stid e in
       ThreadEvent thread
-                  (countNatP (dom_rel (<| Stid_ thread |>;; Ssb ;; <| eq e |>))
+                  (countNatP (dom_rel (⦗ Stid_ thread ⦘⨾ Ssb ⨾ ⦗ eq e ⦘))
                              S.(ES.next_act)).
   Notation "'g'" := (event_to_act).
-  Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ;; <| I |>)) (only parsing).
+  Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
   Record simrel_common (P : thread_id -> Prop) :=
     { gwf   : Execution.Wf G;
@@ -97,7 +97,7 @@ Section SimRel.
       
       scont : simrel_cont;
 
-      fgtrip : <| fdom |> ;; ↑ (compose g f) ⊆ eq;
+      fgtrip : ⦗ fdom ⦘ ⨾ ↑ (compose g f) ⊆ eq;
       gew : g □ Sew ⊆ eq;
       gco : g □ Sco ⊆ Gco;
 
