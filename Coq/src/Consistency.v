@@ -21,6 +21,14 @@ Notation "'jf'" := S.(ES.jf).
 Notation "'rf'" := S.(ES.rf).
 Notation "'co'" := S.(ES.co).
 Notation "'cf'" := S.(ES.cf).
+Notation "'cc'" := S.(ES.cc).
+
+Notation "'jfe'" := S.(ES.jfe).
+Notation "'rfe'" := S.(ES.rfe).
+Notation "'coe'" := S.(ES.coe).
+Notation "'jfi'" := S.(ES.jfi).
+Notation "'rfi'" := S.(ES.rfi).
+Notation "'coi'" := S.(ES.coi).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
@@ -42,13 +50,10 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
-Definition jfe := jf \ sb.
-Definition rfe := rf \ sb.
-
 Definition same_lab x y := lab x = lab y.
 
 Definition vis :=
-  codom_rel (cf ∩ (sb ∪ jf)⁺ ∩ (ew ⨾ sb ⁼)).
+  codom_rel (cc ∩ (ew ⨾ sb ⁼)).
 
 Definition sw : relation eventid := fun x y => True. (* TODO: define *)
 

@@ -133,7 +133,7 @@ Section SimRel.
 
   Record simrel :=
     { comm : simrel_common ∅;
-      vis  : f □₁ fdom) ⊆₁ vis S;
+      vis  : f □₁ fdom ⊆₁ vis S;
     }.
   
   Record forward_pair (e : actid) (e' : eventid) :=

@@ -56,10 +56,22 @@ Definition cont_set (ES : t) := fun x => In x ES.(cont).
 
 Definition same_tid (ES : t) := fun x y => ES.(tid) x = ES.(tid) y.
 
+Definition jfe (ES : t) := ES.(jf) \ ES.(sb).
+Definition coe (ES : t) := ES.(co) \ ES.(sb).
+Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
+Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
+
 Definition cf (ES : t) :=
   ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
   ⦗ ES.(acts_set) ⦘.
+
+Definition cc (ES : t) := 
+  ES.(cf) ∩ ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))^* ⨾ ES.(jfe) ⨾ ES.(sb)^?. 
+
 Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
+
+Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
+Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
