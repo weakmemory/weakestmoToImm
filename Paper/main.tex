@@ -498,12 +498,23 @@
 % \end{definition}
 
 \begin{definition}
-  Relation $\simRb(S, G, \tup{C, I}, \f, \g)$, that binds a 
+  Relation $\simR(S, G, \tup{C, I}, \f, \g)$, that binds a 
   consistent event structure $S$, an \imm-consistent execution graph $G$,
   a traversal configuration $\tup{C, I}$
   and an event mappings $\f : G.\lE \fun S.\lE$ and $\g : S.\lE \fun G.\lE$
   holds if the following conditions are met
-  \begin{enumerate}[label={$\boldsymbol{\simR}_{\arabic*}$.},align=left]
+  \begin{enumerate}[label={$\boldsymbol{\simR_{\arabic*}}$.},align=left]
+
+    \item \label{item:sim-g-def}
+    $\forall{\hat{e} \in S.\lE} ~.~ g(\hat{e}) = \tup{i, n}$
+    where 
+    \begin{itemize}
+      \item $i = S.\lTID(\hat{e})$
+      \item $n = |\dom{S.\lPO;[\hat{e}]} \setminus S.\lEo|$
+    \end{itemize}
+    
+    \item \label{item:sim-fg-id}
+    $\forall{e \in C \cup \dom{G.\lPO^?;[I]}} ~.~ g(f(e)) = e$
 
     \item \label{item:sim-finj}
     $\forall{e_1, e_2 \in C \cup I} ~.~ \f(e_1) = \f(e_2) \Rightarrow e_1 = e_2$
@@ -516,22 +527,25 @@
 
     \item \label{item:sim-po-tot}
     $\forall{i \in \Tid}$
-    $S.\lPO$ is total on $\f(C \cup I) \cap S.\lEi{i}$
+    $S.\lPO$ is total on $S.\lEi{i} \cap \f(C \cup I)$
 
     \item \label{item:sim-po-in}
-    $\f(G.\lPO;[C]) \subseteq S.\lPO$
+    $\f(G.\lPO;[C \cup I]) \subseteq S.\lPO$
     
     \item \label{item:sim-rf-in}
     $\f(G.\lRF;[C]) \subseteq S.\lRF$
 
     \item \label{item:sim-mo-in}
-    $\f([I];G.\lMO;[I]) \subseteq S.\lMO$
+    $[\f(\dom{G.\lPO^?;[I]})];G.\lMO;[\f(\dom{G.\lPO^?;[I]})]) \subseteq S.\lMO$
 
     \item \label{item:sim-mo-pre}
     $\g(S.\lMO) \subseteq G.\lMO$
 
     \item \label{item:sim-ew-id}
     $\g(S.\lEW) \subseteq [G.\lW]$
+
+    \item \label{item:sim-vis}
+    $\f(C \cup \dom{G.\lPO^?;[I]}) \subseteq \lVIS(S)$
     
   \end{enumerate}
 \end{definition}
@@ -557,7 +571,8 @@
     $\f([I];G.\lRF;[C]) = [\f(I)];S.\lRF;[\f(C)]$
     
     \item \label{item:sim-mo-eq}
-    $\f([I];G.\lMO;[I]) = [\f(I)];S.\lMO;[\f(I)]$
+    $\f([\f(\dom{G.\lPO^?;[I]})];G.\lMO;[\f(\dom{G.\lPO^?;[I]})]) =
+        [\f(\dom{G.\lPO^?;[I]})];S.\lMO;[\f(\dom{G.\lPO^?;[I]})]$
     
   \end{enumerate}
 \end{prop}
@@ -575,25 +590,47 @@
 %   \end{itemize}
 % \end{definition}
 
-\begin{lemma}
-  \label{lemma:simb-forward}
-  Given $S$, $G$, $\tup{C, I}$, $\f$
-  if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and 
-  there exists forwarding pair $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$
-  then $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ holds. 
-\end{lemma}
+% \begin{lemma}
+%   \label{lemma:simb-forward}
+%   Given $S$, $G$, $\tup{C, I}$, $\f$
+%   if the relation $\simRb(S, G, \tup{C, I}, f)$ holds and 
+%   there exists forwarding pair $\tup{e, \hat{e}} \in \forward(S, G, \tup{C, I}, f)$
+%   then $\simRb(S, G, \tup{C \uplus \{e\}, I}, f)$ holds. 
+% \end{lemma}
 
 \subsubsection{Certification}
 
 \begin{definition}
-  Given $S$, $G$, $\tup{C, I}$, $\f$, $G^{\cert}$, $\g$ and $q \in G^{cert}$
-  relation $\simRc(S, G, \tup{C, I}, \f, G^{\cert}, \g, q)$ holds 
+  Given a consistent event structure $S$,
+  two \imm-consistent execution graphs $G$ and $G^{\cert}$,
+  two traversal configurations $\tup{C, I}$ and $\tup{C', I'}$,
+  event mappings $\f : G.\lE \fun S.\lE$ and $\g : S.\lE \fun G.\lE$,
+  an event $\hat{q} \in S.\lE$ 
+  relation $\simRc(S, G, \tup{C, I}, \f, \g, G^{\cert}, \tup{C', I'}, \hat{q})$ holds 
   whenever $\simR(S, G, \tup{C, I}, \f)$ holds and additionally 
-  the following constraint is met:
-  \begin{itemize}
-    \item $\forall{w \in G.\lW} ~.~ \tup{w, q} \in \lPO^? \Rightarrow 
-      \tup{f(w), g(w)} \in S.\lEW$
-  \end{itemize}
+  the following constraints are met:
+  \begin{enumerate}[label={$\boldsymbol{\simRc_{\arabic*}}$.},align=left]
+
+    \item \label{item:simc-tr}
+    $G \vdash \tup{C, I} \trstep_{i} \tup{C', I'}$
+
+    \item \label{item:simc-cert}
+    $G^{\cert} = \certify(G, \tup{C', I'}, i)$
+
+    \item \label{item:simc-q}
+    $\f(q) = \hat{q} \vee \tup{\f(q), \hat{q}} \in S.\lCF$ 
+    
+    \item \label{item:simc-po-q}
+    $\f(q) \neq \hat{q} \Rightarrow \codom{[\hat{q}];S.\lPO} = \emptyset$
+
+    \item \label{item:simc-cc}
+    $[\f(\dom{G.\lPO^?;[q]})];S.\lCC;[S.\lEi{i}] \subseteq
+      [\f(G.\lW)];S.\lEW;S.\lPO^=
+    $
+    
+  \end{enumerate}
+
+  where $i = S.\lTID(\hat{q})$ and $q = \g(\hat{q})$.
 \end{definition}
 
 \begin{lemma}
