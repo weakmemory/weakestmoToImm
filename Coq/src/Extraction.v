@@ -30,16 +30,16 @@ Notation "'Gctrl'" := G.(ctrl).
 
 Definition extracted : Prop :=
   exists f : actid -> eventid, 
-    ⟪ EVIS    : f ∘₁ GE ⊆₁ vis S ⟫ /\
-    ⟪ ENCF    : ⦗ f ∘₁ GE ⦘ ⨾ Scf ⨾ ⦗ f ∘₁ GE ⦘ ≡ ∅₂ ⟫ /\
-    ⟪ ESBPRCL : dom_rel (Ssb ⨾ ⦗ f ∘₁ GE ⦘) ⊆₁ f ∘₁ GE ⟫ /\
+    ⟪ EVIS    : f □₁ GE ⊆₁ vis S ⟫ /\
+    ⟪ ENCF    : ⦗ f □₁ GE ⦘ ⨾ Scf ⨾ ⦗ f □₁ GE ⦘ ≡ ∅₂ ⟫ /\
+    ⟪ ESBPRCL : dom_rel (Ssb ⨾ ⦗ f □₁ GE ⦘) ⊆₁ f □₁ GE ⟫ /\
     ⟪ ESBMAX  : 
-      ⦗ f ∘₁ GE ⦘ ⨾ Ssb ⨾ ⦗ SE \₁ (f ∘₁ GE) ⦘ ⊆
-      ⦗ f ∘₁ GE ⦘ ⨾ Ssb ⨾ ⦗ f ∘₁ GE ⦘ ⨾ Scf 
+      ⦗ f □₁ GE ⦘ ⨾ Ssb ⨾ ⦗ SE \₁ (f □₁ GE) ⦘ ⊆
+      ⦗ f □₁ GE ⦘ ⨾ Ssb ⨾ ⦗ f □₁ GE ⦘ ⨾ Scf 
     ⟫ /\
-    ⟪ ESB     : f ∘ Gsb  ≡ ⦗ f ∘₁ GE ⦘ ⨾ Ssb  ⨾ ⦗ f ∘₁ GE ⦘ ⟫ /\
-    ⟪ ERMW    : f ∘ Grmw ≡ ⦗ f ∘₁ GE ⦘ ⨾ Srmw ⨾ ⦗ f ∘₁ GE ⦘ ⟫ /\
-    ⟪ ERF     : f ∘ Grf  ≡ ⦗ f ∘₁ GE ⦘ ⨾ Srf  ⨾ ⦗ f ∘₁ GE ⦘ ⟫ /\
-    ⟪ ECO     : f ∘ Gco  ≡ ⦗ f ∘₁ GE ⦘ ⨾ Sco  ⨾ ⦗ f ∘₁ GE ⦘ ⟫.              
+    ⟪ ESB     : f □ Gsb  ≡ ⦗ f □₁ GE ⦘ ⨾ Ssb  ⨾ ⦗ f □₁ GE ⦘ ⟫ /\
+    ⟪ ERMW    : f □ Grmw ≡ ⦗ f □₁ GE ⦘ ⨾ Srmw ⨾ ⦗ f □₁ GE ⦘ ⟫ /\
+    ⟪ ERF     : f □ Grf  ≡ ⦗ f □₁ GE ⦘ ⨾ Srf  ⨾ ⦗ f □₁ GE ⦘ ⟫ /\
+    ⟪ ECO     : f □ Gco  ≡ ⦗ f □₁ GE ⦘ ⨾ Sco  ⨾ ⦗ f □₁ GE ⦘ ⟫.              
   
 End Extraction.
