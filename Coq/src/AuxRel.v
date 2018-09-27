@@ -11,7 +11,9 @@ Section AuxRel.
   Variables r r' : relation A.
 
   Definition eq_class_rel : relation A := (r ∪ r⁻¹) ^?.
-    
+  
+  Definition img_rel : A -> B -> Prop :=
+    fun x y => y = f x.
 End AuxRel.
 
 Definition eq_dom {A B} (s : A -> Prop) (f g: A -> B) := 

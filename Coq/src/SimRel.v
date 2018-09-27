@@ -1,3 +1,4 @@
+Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
@@ -83,6 +84,7 @@ Section SimRel.
                   (countNatP (dom_rel (<| Stid_ thread |>;; Ssb ;; <| eq e |>))
                              S.(ES.next_act)).
   Notation "'g'" := (event_to_act).
+  Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ;; <| I |>)) (only parsing).
 
   Record simrel_common (P : thread_id -> Prop) :=
     { gwf   : Execution.Wf G;
@@ -95,14 +97,15 @@ Section SimRel.
       
       scont : simrel_cont;
 
+      fgtrip : <| fdom |> ;; ↑ (compose g f) ⊆ eq;
       gew : g □ Sew ⊆ eq;
       gco : g □ Sco ⊆ Gco;
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)
-      finj : inj_dom (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) f;  
-      fimg : f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ SE;
-      foth : (f □₁ set_compl (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘))) ∩₁ SE ≡₁ ∅;
+      finj : inj_dom fdom f;  
+      fimg : f □₁ fdom ⊆₁ SE;
+      foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : forall e (CI : (C ∪₁ I) e),
           Slab e.(f) = Glab e;
       ftid : forall e, Stid (f e) = Gtid e;
@@ -130,7 +133,7 @@ Section SimRel.
 
   Record simrel :=
     { comm : simrel_common ∅;
-      vis  : f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ⊆₁ vis S;
+      vis  : f □₁ fdom) ⊆₁ vis S;
     }.
   
   Record forward_pair (e : actid) (e' : eventid) :=
