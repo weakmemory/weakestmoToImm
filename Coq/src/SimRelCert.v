@@ -58,8 +58,8 @@ Section SimRelCert.
   Notation "'I'"  := (issued TC).
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
-
-  Definition tid_trav_step i TC TC' :=
+    
+  Definition tid_trav_step i :=
     exists e, Gtid e = i /\ itrav_step G sc e TC TC'.
       
   Record simrel_cert :=
@@ -67,7 +67,7 @@ Section SimRelCert.
 
       (* TODO: state that certG is a certification graph *)
          
-      tr_step : tid_trav_step (Gtid q) TC TC';
+      tr_step : tid_trav_step (Gtid q);
       
       q_branch : f(q) = q' \/ Scf (f q) q';
       
@@ -78,3 +78,35 @@ Section SimRelCert.
     }.
 
 End SimRelCert.
+
+
+Lemma simrel_cert_start prog S G sc TC TC' f (*certG*) i 
+      (SR : simrel prog S G sc TC f)
+      (TR_STEP : tid_trav_step G sc TC TC' i) : 
+  exists q', 
+    pc S TC f i q' /\
+    simrel_cert prog S G sc TC TC' f q'.
+Proof.
+  admit.
+Admitted.
+
+Lemma simrel_cert_end prog S G sc TC TC' f (*certG*) (i:thread_id) q'
+      (* TODO: state that q' is sb-max wrt G.Ei *)
+      (SRcert: simrel_cert prog S G sc TC TC' f q') : 
+  exists f', 
+    simrel prog S G sc TC' f'.
+Proof.
+  admit.
+Admitted.
+
+Lemma simrel_cert_step prog S G sc TC TC' f (*certG*) (i:thread_id) q' 
+      (* TODO: state that q' is not sb-max wrt G.Ei *)
+      (SRcert: simrel_cert prog S G sc TC TC' f q') : 
+  exists S' qnext',
+    (ESstep.t Weakestmo)^? S S' /\
+    simrel_cert prog S' G sc TC TC' f qnext'.
+Proof.
+  admit.
+Admitted.
+    
+    
