@@ -1,11 +1,11 @@
 Require Import Program.Basics.
+Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel
      CombRelations.
-Require Import AuxRel AuxDef EventStructure Construction Consistency.
-Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
+Require Import AuxRel AuxDef EventStructure Construction Consistency Vf.
 
 Set Implicit Arguments.
 
@@ -29,6 +29,7 @@ Section SimRel.
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Ghb'" := (G.(imm_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
+  Notation "'Gvf'" := (G.(Gvf)).
   Notation "'Gco'" := (G.(co)).
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
@@ -39,10 +40,12 @@ Section SimRel.
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Sew'" := (S.(ES.ew)).
   Notation "'Sjf'" := (S.(ES.jf)).
+  Notation "'Svf'" := (Svf S Weakestmo).
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
+  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
 
   Definition pc thread :=
     f □₁ C ∩₁ Stid_ thread \₁ dom_rel (Ssb ⨾ ⦗ f □₁ C ⦘).
@@ -102,14 +105,14 @@ Section SimRel.
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (compose g f) ⊆ eq;
       gew : g □ Sew ⊆ eq;
       gco : g □ Sco ⊆ Gco;
-      (* gjf : g □ Sjf ⊆ G.(urr); *)
+      gjf : g □ Sjf ⊆ Gvf;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
       cimgNcf : ⦗ f □₁ fdom ⦘ ⨾ Scf ⨾ ⦗ f □₁ fdom ⦘ ≡ ∅₂;
-
-      imgrf : f □ ⦗ I ⦘ ⨾ Grf ⨾ ⦗ C ⦘ ≡
-              ⦗ f □₁ I ⦘ ⨾ Srf  ⨾ ⦗ f □₁ C ⦘;
+      
+      complete_fdom :
+        (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
       (*fdef  : forall e (COV : C e),
         f e = act_to_event G e; *)

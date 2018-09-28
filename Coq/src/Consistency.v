@@ -68,13 +68,14 @@ Definition mco (m : model) : relation eventid :=
   | Weakestmo => co
   end.
 
-Definition fr : relation eventid := rf⁻¹ ⨾ co \ cf^?.
-
 Definition mfr (m : model) : relation eventid :=
   (rf⁻¹ ⨾ mco m) \ cf^?.
 
 Definition eco (m : model) : relation eventid :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
+
+Definition psc (m : model) : relation eventid :=
+  ⦗ Sc ⦘ ⨾ hb ⨾ eco m ⨾ hb ⨾ ⦗ Sc ⦘.
 
 Definition cf_imm : relation eventid :=
   cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb⁻¹).

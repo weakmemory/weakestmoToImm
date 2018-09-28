@@ -73,6 +73,8 @@ Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
 Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
 
+Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf)^?.
+
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
 Section EventStructure.
