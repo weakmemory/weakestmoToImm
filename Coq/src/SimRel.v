@@ -91,7 +91,7 @@ Section SimRel.
   Notation "'g'" := (event_to_act).
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
-  Record simrel_common (P : thread_id -> Prop) :=
+  Record simrel_common :=
     { gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
                        (EE : GE (ThreadEvent thread n)),
@@ -114,34 +114,24 @@ Section SimRel.
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      (*fdef  : forall e (COV : C e),
-        f e = act_to_event G e; *)
       finj : inj_dom fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : forall e (CI : (C ∪₁ I) e),
           Slab e.(f) = Glab e;
-      ftid : forall e, Stid (f e) = Gtid e;
+
+      (* To be able to show that `ftid` holds after a simulation step,
+         we use Logic.FunctionalExtensionality. *)
+      ftid : compose Stid f = Gtid;
+
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
-      sbtot_cov : forall thread,
-          is_total (f □₁ C ∩₁ Stid_ thread) Ssb;
-
-      sbtot_ci : forall thread (NP : ~ P thread),
-          is_total (f □₁ (C ∪₁ I) ∩₁ Stid_ thread) Ssb;
-
-      sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb;
-      sbF : f □ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
-            ⦗ f □₁ C ⦘ ⨾ Ssb ⨾ ⦗ f □₁ C ⦘;
-
-      
-      (* Highly likely, we need that *)
-      (* or it should be deducable from SimRelAlt and (WF S) *)
-      (* ⦗ f □₁ I ⦘ ⨾ Sew ⨾ ⦗ f □₁ I ⦘ ⊆ f □ ⦗ I ⦘ *)
+      (* sbF : f □ Gsb ⨾ ⦗ C ⦘ ⊆ Ssb; *)
+      (* sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb; *)
     }.
 
   Record simrel :=
-    { comm : simrel_common ∅;
+    { comm : simrel_common;
       vis  : f □₁ fdom ⊆₁ vis S;
     }.
   
@@ -159,6 +149,15 @@ Section SimRel.
   Section Properties.
     Variable P : thread_id -> Prop.
     Variable SRC : simrel_common P.
+
+    Lemma sbtot_fdom thread :
+      is_total (f □₁ fdom ∩₁ Stid_ thread) Ssb.
+    Proof. (* TODO: It should follow from cimgNcf. *) Admitted.
+
+    Lemma gsb : g □ Ssb ⊆ Gsb.
+    Proof.
+      (* TODO. It should follow from definition of g. *)
+    Admitted.
     
     Lemma grf : g □ Srf ≡ g □ Sjf.
     Proof.
