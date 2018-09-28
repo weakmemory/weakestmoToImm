@@ -91,7 +91,7 @@ Section SimRel.
   Notation "'g'" := (event_to_act).
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
-  Record simrel_common (P : thread_id -> Prop) :=
+  Record simrel_common :=
     { gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
                        (EE : GE (ThreadEvent thread n)),
@@ -114,34 +114,27 @@ Section SimRel.
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      (*fdef  : forall e (COV : C e),
-        f e = act_to_event G e; *)
       finj : inj_dom fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : forall e (CI : (C ∪₁ I) e),
           Slab e.(f) = Glab e;
-      ftid : forall e, Stid (f e) = Gtid e;
+      
+      glab : forall e,
+          same_label_up_to_value (Slab e) (Glab (g e));
+
+      (* To be able to show that `ftid` holds after a simulation step,
+         we use Logic.FunctionalExtensionality. *)
+      ftid : compose Stid f = Gtid;
+
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
-      sbtot_cov : forall thread,
-          is_total (f □₁ C ∩₁ Stid_ thread) Ssb;
-
-      sbtot_ci : forall thread (NP : ~ P thread),
-          is_total (f □₁ (C ∪₁ I) ∩₁ Stid_ thread) Ssb;
-
-      sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb;
-      sbF : f □ ⦗ C ⦘ ⨾ Gsb ⨾ ⦗ C ⦘ ≡
-            ⦗ f □₁ C ⦘ ⨾ Ssb ⨾ ⦗ f □₁ C ⦘;
-
-      
-      (* Highly likely, we need that *)
-      (* or it should be deducable from SimRelAlt and (WF S) *)
-      (* ⦗ f □₁ I ⦘ ⨾ Sew ⨾ ⦗ f □₁ I ⦘ ⊆ f □ ⦗ I ⦘ *)
+      (* sbF : f □ Gsb ⨾ ⦗ C ⦘ ⊆ Ssb; *)
+      (* sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb; *)
     }.
 
   Record simrel :=
-    { comm : simrel_common ∅;
+    { comm : simrel_common;
       vis  : f □₁ fdom ⊆₁ vis S;
     }.
   
@@ -157,95 +150,90 @@ Section SimRel.
     }.
 
   Section Properties.
-    Variable P : thread_id -> Prop.
-    Variable SRC : simrel_common P.
-    
-    Lemma grf : g □ Srf ≡ g □ Sjf.
+    Variable SRC : simrel_common.
+
+    Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
     Proof.
-      (* TODO. It should follow from SRC.gew. *)
-    Admitted.
+      rewrite (dom_l G.(wf_sbE)).
+      rewrite issuedE; [|by apply SRC].
+      basic_solver.
+    Qed.
+    
+    Lemma fdomE : fdom ⊆₁ GE.
+    Proof.
+      destruct SRC.
+      erewrite coveredE; eauto.
+      apply set_subset_union_l; split; auto.
+      apply issuedSbE.
+    Qed.
 
     Lemma finE e (SEE : SE (f e)) : GE e.
     Proof.
-      destruct (classic (GE e)) as [|NGE]; auto.
-      exfalso.
-      eapply foth; eauto.
+      apply fdomE.
+      apply NNPP. intros NN.
+      eapply SRC.(foth).
       split; eauto.
+      red. eexists. splits; eauto.
+    Qed.
+
+    Lemma grf : g □ Srf ≡ g □ Sjf.
+    Proof.
+      destruct SRC.
+      split.
+      2: by rewrite jf_in_rf; eauto.
+      unfold ES.rf.
+      arewrite (Sew^? ⨾ Sjf \ Scf ⊆ Sew^? ⨾ Sjf).
+      rewrite crE.
+      rewrite seq_union_l.
+      rewrite collect_rel_union.
+      apply inclusion_union_l.
+      { by rewrite seq_id_l. }
       autounfold with unfolderDb.
-      eexists. split; eauto.
-      intros [AA|AA]; apply NGE.
-      2: { admit.
-           (* destruct SRC. eapply issuedE; eauto. *)
-      }
-      eapply coveredE; eauto.
-      all: apply SRC.
+      ins. desf.
+      eexists. eexists. splits; eauto.
+      apply SRC.(gew).
+      eexists. eexists.
+      splits.
+      { eapply ES.ew_sym; eauto. }
+      all: by eauto.
+    Qed.
+    
+    Lemma sbtot_fdom thread :
+      is_total (f □₁ fdom ∩₁ Stid_ thread) Ssb.
+    Proof.
+      red. ins.
+      apply NNPP. intros NN.
+      eapply SRC.(cimgNcf).
+      apply seq_eqv_l; split.
+      { apply IWa. }
+      apply seq_eqv_r; split.
+      2: { apply IWb. }
+      red.
+      apply seq_eqv_l; split.
+      { apply SRC.(fimg). apply IWa. }
+      apply seq_eqv_r; split.
+      2: { apply SRC.(fimg). apply IWb. }
+      split.
+      { red. red in IWa. red in IWb.
+        desf. }
+      red. intros [[AA|AA]|AA]; desf.
+      all: apply NN; auto.
+    Qed.
+
+    Lemma gE : g □₁ SE ⊆₁ GE.
+    Proof.
+      (* TODO. It should follow from definition of g. *)
+    Admitted.
+
+    Lemma gsb : g □ Ssb ⊆ Gsb.
+    Proof.
+      (* TODO. It should follow from definition of g. *)
+    Admitted.
+
+    Lemma flaboth e :
+          same_label_up_to_value (Slab e.(f)) (Glab e).
+    Proof.
+      (* TODO. It should follow from glab and definition of g. *)
     Admitted.
   End Properties.
-
-  (* Section SRCprop. *)
-  (*   Variable P : thread_id -> Prop. *)
-  (*   Variable SRC : simrel P. *)
-    
-  (*   Lemma finit : S.(ES.acts_init_set) ≡₁ f □₁ (is_init ∩₁ GE). *)
-  (*   Proof. *)
-  (*     set (SRC' := SRC). *)
-  (*     destruct SRC'. *)
-  (*     split; [eapply finitIncl; eauto|]. *)
-  (*     unfold ES.acts_init_set. *)
-  (*     apply set_subset_inter_r; split. *)
-  (*     { rewrite init_covered; eauto. *)
-  (*         by arewrite (C ⊆₁ C ∪₁ I). } *)
-  (*     unfold is_init. *)
-  (*     intros x [y [[AA CC] BB]]; desf. *)
-  (*     rewrite SRC.(fdef). *)
-  (*     2: { eapply init_covered; eauto. by split. } *)
-  (*     simpls. *)
-  (*     constructor; auto. *)
-  (*     eexists. simpls. *)
-  (*     rewrite wf_init_lab; auto. *)
-  (*   Qed. *)
-
-  (*   Lemma finitC : S.(ES.acts_init_set) ⊆₁ f □₁ C. *)
-  (*   Proof. rewrite finit. erewrite init_covered; eauto. apply SRC. Qed. *)
-
-  (*   Lemma sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb. *)
-  (*   Proof. *)
-  (*     arewrite (Ssb ⊆ ⦗ f □₁ C ∪₁ set_compl (f □₁ C) ⦘ ⨾ Ssb) at 1. *)
-  (*     { arewrite (f □₁ C ∪₁ set_compl (f □₁ C) ≡₁ fun _ => True). *)
-  (*       2: by relsf. *)
-  (*       split; [basic_solver|]. *)
-  (*       intros x _. apply classic. } *)
-  (*     rewrite id_union. rewrite seq_union_l. *)
-  (*     arewrite_false (⦗set_compl (f □₁ C)⦘ ⨾ Ssb ⨾ ⦗f □₁ C⦘). *)
-  (*     2: { arewrite_id ⦗f □₁ C⦘ at 2. relsf. } *)
-  (*     unfold ES.sb. *)
-  (*     rewrite seq_union_l. rewrite seq_union_r. *)
-  (*     rewrite seq_eqv_cross. *)
-  (*     rewrite finitC. *)
-  (*     rewrite set_compl_inter_id. *)
-  (*     rewrite cross_false_l. *)
-  (*     apply inclusion_union_l; [done|]. *)
-  (*     red. intros x y HH. *)
-  (*     destruct_seq HH as [XX YY]. *)
-  (*     destruct YY as [z [COVZ ZZ]]; subst. *)
-  (*     erewrite fdef in *; eauto. *)
-  (*     apply XX. *)
-  (*     apply seq_eqv_r in HH. destruct HH as [HH SEE]. *)
-  (*     assert (dom_rel (EventId.ext_sb ⨾ ⦗eq (act_to_event G z)⦘) x) as AA. *)
-  (*     { eexists. apply seq_eqv_r. eauto. } *)
-  (*     apply act_to_event_ext_sb_dom in AA. *)
-  (*     desf. desf. *)
-  (*     assert (C (ThreadEvent thread m)) as MM. *)
-  (*     2: { red. eexists. by split; [|eapply fdef; eauto]. } *)
-  (*     destruct SRC. *)
-  (*     eapply dom_sb_covered; eauto. *)
-  (*     eexists. apply seq_eqv_r. split; eauto. *)
-  (*     assert (GE (ThreadEvent thread index)) as EE. *)
-  (*     { eapply coveredE; eauto. } *)
-  (*     red. apply seq_eqv_l. split. *)
-  (*     { eapply SRC.(gprclos); eauto. } *)
-  (*     apply seq_eqv_r. splits; auto. *)
-  (*     red. by splits. *)
-  (*   Qed. *)
-  (* End SRCprop. *)
 End SimRel.
