@@ -56,7 +56,7 @@ Section SimRel.
       init
       is_terminal
       (istep tid).
-  
+
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
                         (INK : K (cont, existT _ lang state)),

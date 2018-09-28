@@ -17,11 +17,13 @@ Section SimRelCert.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable TC': trav_config.
-  Variable f  : actid -> eventid.
-  Variable q' : eventid.
+  
+  Variable f : actid -> eventid.
+  Variable h : actid -> eventid.
+  Variable q : actid.
 
-  Notation "'g'" := (event_to_act).
-  Notation "'q'" := (g S q').
+  Notation "'g'" := (event_to_act S).
+
   Notation "'qtid'" := (tid q).
 
   Notation "'SE'" := S.(ES.acts_set).
@@ -39,6 +41,9 @@ Section SimRelCert.
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Scc'" := (S.(ES.cc)).
   Notation "'Sew'" := (S.(ES.ew)).
+
+  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
+  Notation "'SW'" := (fun a => is_true (is_w Slab a)).
   
   Notation "'GE'" := G.(acts_set).
   Notation "'Glab'" := (G.(lab)).
@@ -53,28 +58,52 @@ Section SimRelCert.
   Notation "'Ghb'" := (G.(imm_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
+
+  Notation "'certGE'" := G.(acts_set).
+  Notation "'certGlab'" := (G.(lab)).
   
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
+
+  Record cert_graph thread :=
+    { same_lab : eq_dom ((Gtid_ thread) ∩₁ (C' ∪₁ I')) Glab certGlab; }.
+
+  Record sb_max i e :=
+    { inGi  : Gtid_ i e;
+      sbMAX : forall e', Gtid_ i e' -> Gsb^? e' e
+    }.
     
-  Definition tid_trav_step i :=
-    exists e, Gtid e = i /\ itrav_step G sc e TC TC'.
+  Definition tid_trav_step thread :=
+    exists e, Gtid e = thread /\ itrav_step G sc e TC TC'.
+
+  Notation "'hdom'" := (Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘)) (only parsing).
       
   Record simrel_cert :=
     { sim : simrel prog S G sc TC f;
 
-      (* TODO: state that certG is a certification graph *)
-         
-      tr_step : tid_trav_step (Gtid q);
+      cert : cert_graph qtid; 
+
+      tr_step : tid_trav_step qtid;
+
+      hgtrip : ⦗ hdom ⦘ ⨾ ↑ (compose g h) ⊆ eq;
+
+      hinj : inj_dom hdom h;  
+      himg : h □₁ hdom ⊆₁ SE;
+      hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
+      hlab : eq_dom hdom certGlab (compose Slab h);
+      htid : eq_dom hdom Gtid (compose Stid h); 
+
+      hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
+
+      cimgNcf : ⦗ h □₁ hdom ⦘ ⨾ Scf ⨾ ⦗ h □₁ hdom ⦘ ≡ ∅₂;
       
-      q_branch : f(q) = q' \/ Scf (f q) q';
-      
-      q_last : f(q) <> q' -> ⦗ eq q' ⦘ ⨾ Ssb = ∅₂; 
+      complete_fdom :
+        (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
       imgcc : ⦗ f □₁ dom_rel (Gsb^? ⨾ ⦗ eq q ⦘) ⦘ ⨾ Scc ⨾ ⦗ Stid_ qtid ⦘ ⊆ 
-              ⦗ f □₁ GW ⦘ ⨾ Sew ⨾ Ssb^= ;
+              ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb^= ;
     }.
 
 End SimRelCert.
@@ -83,28 +112,28 @@ End SimRelCert.
 Lemma simrel_cert_start prog S G sc TC TC' f (*certG*) i 
       (SR : simrel prog S G sc TC f)
       (TR_STEP : tid_trav_step G sc TC TC' i) : 
-  exists q', 
+  exists q q', 
     pc S TC f i q' /\
-    simrel_cert prog S G sc TC TC' f q'.
+    simrel_cert prog S G sc TC TC' f f q.
 Proof.
   admit.
 Admitted.
 
-Lemma simrel_cert_end prog S G sc TC TC' f (*certG*) (i:thread_id) q'
-      (* TODO: state that q' is sb-max wrt G.Ei *)
-      (SRcert: simrel_cert prog S G sc TC TC' f q') : 
+Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q
+      (sbMAX: sb_max G i q)
+      (SRcert: simrel_cert prog S G sc TC TC' f h q) : 
   exists f', 
     simrel prog S G sc TC' f'.
 Proof.
   admit.
 Admitted.
 
-Lemma simrel_cert_step prog S G sc TC TC' f (*certG*) (i:thread_id) q' 
-      (* TODO: state that q' is not sb-max wrt G.Ei *)
-      (SRcert: simrel_cert prog S G sc TC TC' f q') : 
-  exists S' qnext',
+Lemma simrel_cert_step prog S G sc TC TC' f h (*certG*) i q
+      (NsbMAX : ~ sb_max G i q)
+      (SRcert: simrel_cert prog S G sc TC TC' f h q) : 
+  exists S' h' q',
     (ESstep.t Weakestmo)^? S S' /\
-    simrel_cert prog S' G sc TC TC' f qnext'.
+    simrel_cert prog S' G sc TC TC' f h' q'.
 Proof.
   admit.
 Admitted.
