@@ -147,38 +147,81 @@ Section SimRel.
     }.
 
   Section Properties.
-    Variable P : thread_id -> Prop.
-    Variable SRC : simrel_common P.
+    Variable SRC : simrel_common.
 
+    Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
+    Proof.
+      rewrite (dom_l G.(wf_sbE)).
+      rewrite issuedE; [|by apply SRC].
+      basic_solver.
+    Qed.
+    
+    Lemma fdomE : fdom ⊆₁ GE.
+    Proof.
+      destruct SRC.
+      erewrite coveredE; eauto.
+      apply set_subset_union_l; split; auto.
+      apply issuedSbE.
+    Qed.
+
+    Lemma finE e (SEE : SE (f e)) : GE e.
+    Proof.
+      apply fdomE.
+      apply NNPP. intros NN.
+      eapply SRC.(foth).
+      split; eauto.
+      red. eexists. splits; eauto.
+    Qed.
+
+    Lemma grf : g □ Srf ≡ g □ Sjf.
+    Proof.
+      destruct SRC.
+      split.
+      2: by rewrite jf_in_rf; eauto.
+      unfold ES.rf.
+      arewrite (Sew^? ⨾ Sjf \ Scf ⊆ Sew^? ⨾ Sjf).
+      rewrite crE.
+      rewrite seq_union_l.
+      rewrite collect_rel_union.
+      apply inclusion_union_l.
+      { by rewrite seq_id_l. }
+      autounfold with unfolderDb.
+      ins. desf.
+      eexists. eexists. splits; eauto.
+      apply SRC.(gew).
+      eexists. eexists.
+      splits.
+      { eapply ES.ew_sym; eauto. }
+      all: by eauto.
+    Qed.
+    
     Lemma sbtot_fdom thread :
       is_total (f □₁ fdom ∩₁ Stid_ thread) Ssb.
-    Proof. (* TODO: It should follow from cimgNcf. *) Admitted.
+    Proof.
+      red. ins.
+      apply NNPP. intros NN.
+      eapply SRC.(cimgNcf).
+      apply seq_eqv_l; split.
+      { apply IWa. }
+      apply seq_eqv_r; split.
+      2: { apply IWb. }
+      red.
+      apply seq_eqv_l; split.
+      { apply SRC.(fimg). apply IWa. }
+      apply seq_eqv_r; split.
+      2: { apply SRC.(fimg). apply IWb. }
+      split.
+      { red. red in IWa. red in IWb.
+        desf. }
+      red. intros [[AA|AA]|AA]; desf.
+      all: apply NN; auto.
+    Qed.
 
     Lemma gsb : g □ Ssb ⊆ Gsb.
     Proof.
       (* TODO. It should follow from definition of g. *)
     Admitted.
     
-    Lemma grf : g □ Srf ≡ g □ Sjf.
-    Proof.
-      (* TODO. It should follow from SRC.gew. *)
-    Admitted.
-
-    Lemma finE e (SEE : SE (f e)) : GE e.
-    Proof.
-      destruct (classic (GE e)) as [|NGE]; auto.
-      exfalso.
-      eapply foth; eauto.
-      split; eauto.
-      autounfold with unfolderDb.
-      eexists. split; eauto.
-      intros [AA|AA]; apply NGE.
-      2: { admit.
-           (* destruct SRC. eapply issuedE; eauto. *)
-      }
-      eapply coveredE; eauto.
-      all: apply SRC.
-    Admitted.
   End Properties.
 
   (* Section SRCprop. *)
