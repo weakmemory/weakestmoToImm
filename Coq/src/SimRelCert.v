@@ -77,15 +77,15 @@ Section SimRelCert.
   Record sim_cert_graph :=
     { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
       cuplab : forall e (TIDE : Gtid_ qtid e)
-                      (DOMI : dom_rel (Gsb ;; <| I' |>) e),
+                      (DOMI : dom_rel (Gsb ⨾ ⦗ I' ⦘) e),
           same_label_up_to_value (certLab e) (Glab e);
       cstate_reachable :
         forall (state : (thread_lts qtid).(Language.state))
                (KK : K (q, existT _ _ state)),
           (step qtid)^* state state';
       
-      dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ;; <| C' ∪₁ I' |>);
-      dcertRMW : certRmw ≡ <| certE |> ;; Grmw ;; <| certE |>;
+      dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ C' ∪₁ I' ⦘);
+      dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
 
       (* TODO. Reflect the following properties of the certification graph: *)
       (* ⟪ NEW_VAL1 : forall r w (RF: new_rfi w r), *)
@@ -108,7 +108,7 @@ Section SimRelCert.
   Definition sbq_dom :=
     match q with
     | ES.CInit  _ => ∅
-    | ES.CEvent e => Gtid_ qtid ∩₁ dom_rel (Gsb^? ;; <| eq (g e) |>)
+    | ES.CEvent e => Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ eq (g e) ⦘)
     end.
     
   Notation "'hdom'" := (C ∪₁ (I ∩₁ GNtid_ qtid) ∪₁ sbq_dom) (only parsing).
@@ -120,8 +120,8 @@ Section SimRelCert.
 
       tr_step :
         exists e,
-          << TIDE : Gtid e = qtid >> /\
-          << TCSTEP : itrav_step G sc e TC TC' >>;
+          ⟪ TIDE : Gtid e = qtid ⟫ /\
+          ⟪ TCSTEP : itrav_step G sc e TC TC' ⟫;
 
       hgtrip : ⦗ hdom ⦘ ⨾ ↑ (compose g h) ⊆ eq;
 
@@ -199,15 +199,15 @@ Variable SRC : simrel prog S G sc TC f.
 Lemma sim_cert_graph_start TC' e
       (TR_STEP : itrav_step G sc e TC TC') : 
   exists q state',
-    << QTID : ES.cont_thread S q = tid e >> /\
-    << SRCG : sim_cert_graph S G TC' q state' >>.
+    ⟪ QTID : ES.cont_thread S q = tid e ⟫ /\
+    ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
 Admitted.
 
 Lemma simrel_cert_start TC' e
       (TR_STEP : itrav_step G sc e TC TC') : 
   exists q state',
-    << SRCC : simrel_cert prog S G sc TC TC' f f q state' >>.
+    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
 Proof.
   edestruct sim_cert_graph_start as [q [state' HH]]; eauto.
   desf.
