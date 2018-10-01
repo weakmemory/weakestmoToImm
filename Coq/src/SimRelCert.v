@@ -112,7 +112,7 @@ Section SimRelCert.
     | ES.CEvent e => Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ eq (g e) ⦘)
     end.
     
-  Notation "'hdom'" := (C ∪₁ (I ∩₁ GNtid_ qtid) ∪₁ sbq_dom) (only parsing).
+  Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ qtid) ∪₁ sbq_dom) (only parsing).
       
   Record simrel_cert :=
     { sim : simrel prog S G sc TC f;
@@ -201,18 +201,19 @@ Lemma sim_cert_graph_start TC' e
       (TR_STEP : itrav_step G sc e TC TC') : 
   exists q state',
     ⟪ QTID : ES.cont_thread S q = tid e ⟫ /\
+    ⟪ CsbqDOM : sbq_dom S G q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
   set (E0 := Tid_ (tid e) ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ;; <| issued TC' |>))).
   set (G0 := restrict G E0).
-  assert (exists state'',
-             ⟪ STEPS'' : (step thread)＊ state state'' ⟫ /\
-             ⟪ TEH''   : thread_restricted_execution G0 thread state''.(ProgToExecution.G) ⟫).
+  (* assert (exists state'', *)
+  (*            ⟪ STEPS'' : (step thread)＊ state state'' ⟫ /\ *)
+  (*            ⟪ TEH''   : thread_restricted_execution G0 thread state''.(ProgToExecution.G) ⟫). *)
 
 
 
-  destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN].
-  2: { exists (ES.CInit (tid e)).
+  (* destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN]. *)
+  (* 2: { exists (ES.CInit (tid e)). *)
 
 Admitted.
 
@@ -221,10 +222,32 @@ Lemma simrel_cert_start TC' e
   exists q state',
     ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
 Proof.
+
+  assert (forall A (s s': A -> Prop), s ∪₁ s' ≡₁ s' ∪₁ s) as set_union_comm.
+  { basic_solver. } 
+  assert (forall A (s s' s'': A -> Prop), s ∪₁ (s' ∪₁ s'') ≡₁ (s ∪₁ s') ∪₁ s'') as set_union_assoc.
+  { basic_solver. } 
+
   edestruct sim_cert_graph_start as [q [state' HH]]; eauto.
   desf.
   exists q. exists state'.
   constructor; auto.
+  { eexists; eauto. }
+  (* TODO: get rid of repetition *)
+  { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
+    rewrite set_inter_full_r.
+    rewrite CsbqDOM.
+    rewrite set_union_comm.
+    rewrite set_union_assoc.
+    rewrite set_unionK.
+    apply SRC. }
+  { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
+    rewrite set_inter_full_r.
+    rewrite CsbqDOM.
+    rewrite set_union_comm.
+    rewrite set_union_assoc.
+    rewrite set_unionK.
+    apply SRC. } 
 Admitted.
 
 Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q

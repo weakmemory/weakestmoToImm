@@ -1,3 +1,4 @@
+Require Import Program.Basics.
 From hahn Require Import Hahn.
 
 Set Implicit Arguments.
@@ -149,6 +150,14 @@ Proof.
   intros s s' Heq f. red. 
   unfold inj_dom in *.
   splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
+Qed.
+
+Add Parametric Morphism A B : (@inj_dom A B) with signature 
+  set_subset --> eq ==> impl as inj_dom_mori.
+Proof. 
+  intros s s' Heq f Hinj. 
+  unfold inj_dom in *. ins.
+  apply Hinj; auto.
 Qed.
 
 Add Parametric Morphism A : (@set_compl A) with signature 

@@ -91,7 +91,7 @@ Section SimRel.
   Notation "'g'" := (event_to_act).
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
-  Record simrel_common :=
+  Record simrel :=
     { gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
                        (EE : GE (ThreadEvent thread n)),
@@ -131,14 +131,16 @@ Section SimRel.
 
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
+      vis  : f □₁ fdom ⊆₁ vis S;
+
       (* sbF : f □ Gsb ⨾ ⦗ C ⦘ ⊆ Ssb; *)
       (* sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb; *)
     }.
 
-  Record simrel :=
-    { comm : simrel_common;
-      vis  : f □₁ fdom ⊆₁ vis S;
-    }.
+  (* Record simrel := *)
+  (*   { comm : simrel_common; *)
+  (*     vis  : f □₁ fdom ⊆₁ vis S; *)
+  (*   }. *)
   
   Record forward_pair (e : actid) (e' : eventid) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
@@ -152,7 +154,7 @@ Section SimRel.
     }.
 
   Section Properties.
-    Variable SRC : simrel_common.
+    Variable SRC : simrel.
 
     Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
     Proof.
