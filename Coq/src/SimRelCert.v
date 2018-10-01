@@ -2,7 +2,8 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel.
+     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel
+     SubExecution.
 Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
@@ -180,8 +181,8 @@ Notation "'Glab'" := (G.(lab)).
 Notation "'Gtid'" := (tid).
 Notation "'Grmw'" := G.(rmw).
 
-Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
-Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
+Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
+Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
 
 Notation "'GR'" := (fun a => is_true (is_r Glab a)).
 Notation "'GW'" := (fun a => is_true (is_w Glab a)).
@@ -202,6 +203,17 @@ Lemma sim_cert_graph_start TC' e
     ⟪ QTID : ES.cont_thread S q = tid e ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
+  set (E0 := Tid_ (tid e) ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ;; <| issued TC' |>))).
+  set (G0 := restrict G E0).
+  assert (exists state'',
+             ⟪ STEPS'' : (step thread)＊ state state'' ⟫ /\
+             ⟪ TEH''   : thread_restricted_execution G0 thread state''.(ProgToExecution.G) ⟫).
+
+
+
+  destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN].
+  2: { exists (ES.CInit (tid e)).
+
 Admitted.
 
 Lemma simrel_cert_start TC' e
