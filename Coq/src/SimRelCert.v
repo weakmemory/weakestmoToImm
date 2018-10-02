@@ -1,10 +1,13 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events Execution TraversalConfig SimTraversal
-     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel
+From imm Require Import Events Execution
+     TraversalConfig SimTraversal SimTraversalProperties
+     Prog ProgToExecution ProgToExecutionProperties Receptiveness
+     imm_hb SimulationRel
+     CertExecution2
      SubExecution.
-Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel.
+Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
@@ -185,6 +188,7 @@ Notation "'Gsb'" := (G.(sb)).
 Notation "'Ghb'" := (G.(imm_hb.hb)).
 Notation "'Grf'" := (G.(rf)).
 Notation "'Gco'" := (G.(co)).
+Notation "'Gvf'" := (G.(Gvf)).
 
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
@@ -198,18 +202,93 @@ Lemma sim_cert_graph_start TC' thread
     ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
-  set (E0 := Tid_ thread ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
-  set (G0 := restrict G E0).
+  assert (tc_coherent G sc TC') as TCCOH'.
+  { eapply sim_trav_step_coherence.
+    2: by apply SRC.
+    red. eauto. }
+
   edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
   { admit. }
   desf.
-  (* assert (exists state'', *)
-  (*            ⟪ STEPS'' : (step (tid e))＊ state state'' ⟫ /\ *)
-  (*            ⟪ TEH''   : thread_restricted_execution *)
-  (*                          G0 (tid e) state''.(ProgToExecution.G) ⟫). *)
+  assert (exists state', sim_cert_graph S G TC' q state') as [state' HH].
+  2: { eexists. eexists. splits; eauto. }
+  cdes SSTATE. cdes SSTATE1.
+  set (E0 := Tid_ (ES.cont_thread S q) ∩₁
+             (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
 
-  (* destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN]. *)
-  (* 2: { exists (CInit (tid e)). *)
+  assert (acts_set (ProgToExecution.G state) ⊆₁ E0) as EEI.
+  { unfold E0.
+    admit. }
+
+  assert (E0 ⊆₁ acts_set (ProgToExecution.G state')) as EEI'.
+  { unfold E0.
+    rewrite tr_acts_set; eauto.
+    rewrite set_interC.
+    apply set_subset_inter; auto.
+    rewrite coveredE; eauto.
+    rewrite issuedE; eauto.
+    rewrite wf_sbE.
+    basic_solver. }
+
+  edestruct steps_middle_set with
+      (thread:=ES.cont_thread S q)
+      (state0:=state) (state':=state') as [state''].
+  3: by apply EEI'.
+  all: eauto.
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
+  desf.
+
+  
+  set (thread := ES.cont_thread S q).
+  set (new_rf:= Gvf ∩ same_loc Glab ;; <| (GE \₁ D G TC' thread) ∩₁ GR |>
+                    \ Gco ;; Gvf).
+  set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
+  set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
+
+  assert (new_rfef : functional new_rfe⁻¹).
+  { admit. }
+    (* arewrite  (new_rfe ⊆ new_rf G Gsc T thread). *)
+    (* unfold new_rfe; basic_solver. *)
+    (*   by apply wf_new_rff. } *)
+
+  set (new_rfe_ex := new_rfe ∪ ⦗ set_compl (codom_rel new_rfe) ⦘).
+
+  assert (forall r, exists ! w, new_rfe_ex⁻¹ r w) as new_rfe_unique.
+  { ins.
+    destruct (classic ((codom_rel new_rfe) r)) as [X|X].
+    { unfolder in X; desf.
+      exists x; red; splits.
+      unfold new_rfe_ex; basic_solver 12.
+      unfold new_rfe_ex; unfolder; ins; desf.
+      eapply new_rfef; basic_solver.
+      exfalso; eauto. }
+    exists r; red; splits.
+    unfold new_rfe_ex; basic_solver 12.
+    unfold new_rfe_ex; unfolder; ins; desf.
+    unfolder in X; exfalso; eauto. }
+
+  assert (exists new_value, forall x, (new_rfe_ex)⁻¹ x (new_value x)) as HH; desc.
+  { apply (unique_choice (new_rfe_ex)⁻¹ (new_rfe_unique)). }
+
+  set (get_val (v: option value) :=  match v with | Some v => v | _ => 0 end).
+
+  set (new_val := fun r => get_val (val G.(lab) (new_value r))).
+  
+  edestruct receptiveness_full with
+      (tid:=ES.cont_thread S q)
+      (s_init:=state) (s:=state'')
+      (new_val:=new_val)
+      (new_rfi:=new_rfi)
+      (MOD:=E0 \₁ D G TC' thread) as [cert_state].
+  1-14: admit.
+
+  desf.
+  exists cert_state.
+  constructor.
+  all: admit.
 Admitted.
 
 Lemma simrel_cert_start TC' thread
