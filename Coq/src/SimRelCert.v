@@ -223,21 +223,16 @@ Proof.
   constructor; auto.
   { admit. }
     (* eexists. eauto. } *)
-  (* TODO: get rid of repetition *)
-  { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
-    rewrite set_inter_full_r.
-    rewrite CsbqDOM.
-    rewrite set_unionC.
-    rewrite <- set_unionA.
-    rewrite set_unionK.
-    apply SRC. }
-  { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
-    rewrite set_inter_full_r.
-    rewrite CsbqDOM.
-    rewrite set_unionC.
-    rewrite <- set_unionA.
-    rewrite set_unionK.
-    apply SRC. } 
+  
+  Ltac aaa q CsbqDOM :=
+    arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True);
+    rewrite set_inter_full_r;
+    rewrite CsbqDOM;
+    rewrite set_unionC;
+    rewrite <- set_unionA;
+    rewrite set_unionK;
+    apply SRC.
+  1-2: by aaa q CsbqDOM.
 Admitted.
 
 Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q
