@@ -20,7 +20,7 @@ Section SimRelCert.
   
   Variable f : actid -> eventid.
   Variable h : actid -> eventid.
-  Variable q : ES.cont_label.
+  Variable q : cont_label.
   Notation "'qtid'" := (ES.cont_thread S q) (only parsing).
 
   (* A state, which is reachable from a state in a continuation related to (h q) in S
@@ -106,7 +106,9 @@ Section SimRelCert.
       sbMAX : forall e', Gtid_ i e' -> Gsb^? e' e
     }.
   
-  Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ qtid) ∪₁ sbq_dom) (only parsing).
+  Notation "'sbq_dom'" := (g □₁ ES.cont_sb_dom S q) (only parsing).
+  Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ qtid) ∪₁ sbq_dom)
+                         (only parsing).
       
   Record simrel_cert :=
     { sim : simrel prog S G sc TC f;
@@ -193,7 +195,7 @@ Lemma sim_cert_graph_start TC' thread
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
   exists q state',
     ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
-    ⟪ CsbqDOM : g □₁ cont_sb_dom S q ⊆₁ covered TC ⟫ /\
+    ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
   set (E0 := Tid_ thread ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
