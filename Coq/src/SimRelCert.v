@@ -126,8 +126,10 @@ Section SimRelCert.
       hinj : inj_dom hdom h;
       himg : h □₁ hdom ⊆₁ SE;
       hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
-      hlab : eq_dom hdom certLab (compose Slab h);
       htid : compose Stid h = Gtid;
+
+      hlabCI : eq_dom (C ∪₁ I) Glab (compose Slab h);
+      hlabTHRD : eq_dom sbq_dom certLab (compose Slab h);
 
       hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
 
@@ -178,6 +180,9 @@ Notation "'Glab'" := (G.(lab)).
 Notation "'Gtid'" := (tid).
 Notation "'Grmw'" := G.(rmw).
 
+Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
+Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
+
 Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
 Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
 
@@ -212,6 +217,11 @@ Proof.
   (* 2: { exists (ES.CInit (tid e)). *)
 Admitted.
 
+(* Lemma sbq_dom_incl_qtidTC' TC' q state' (SRCG: sim_cert_graph S G TC' q state') : *)
+(*   sbq_dom S G q ⊆₁ (Gtid_ (ES.cont_thread S q)) ∩₁ (covered TC' ∪₁ issued TC'). *)
+(* Proof.  *)
+  
+
 Lemma simrel_cert_start TC' thread
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
   exists q state',
@@ -221,10 +231,8 @@ Proof.
   desf.
   exists q. exists state'.
   constructor; auto.
-  { admit. }
-    (* eexists. eauto. } *)
-  
-  Ltac aaa q CsbqDOM :=
+
+  Ltac narrow_hdom q CsbqDOM :=
     arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True);
     rewrite set_inter_full_r;
     rewrite CsbqDOM;
@@ -232,7 +240,14 @@ Proof.
     rewrite <- set_unionA;
     rewrite set_unionK;
     apply SRC.
-  1-2: by aaa q CsbqDOM.
+
+  1-3: by narrow_hdom q CsbqDOM.
+  { admit. }
+  { apply SRC.(ftid). } 
+  { apply SRC.(flab). }
+  { admit. }
+  admit. 
+
 Admitted.
 
 Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q

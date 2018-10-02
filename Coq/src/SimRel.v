@@ -119,8 +119,7 @@ Section SimRel.
       finj : inj_dom fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
-      flab : forall e (CI : (C ∪₁ I) e),
-          Slab e.(f) = Glab e;
+      flab : eq_dom (C ∪₁ I) Glab (compose Slab f);
       
       glab : forall e,
           same_label_up_to_value (Slab e) (Glab (g e));

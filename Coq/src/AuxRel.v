@@ -24,6 +24,9 @@ Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
   forall (x y : A) (SY: s y) (EQ : f x = f y),
     x = y.
 
+Definition restr_fun {A B} (s : A -> Prop) (f : A -> B) (g : A -> B) := fun x =>
+  if excluded_middle_informative (s x) then f x else g x.
+
 Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
 Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
@@ -139,6 +142,16 @@ Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
   forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
 Proof. basic_solver. Qed.
 
+Lemma eq_dom_union: eq_dom (s ∪₁ s') f g <-> eq_dom s f g /\ eq_dom s' f g.
+Proof. 
+  split.
+  { ins. unfold eq_dom in *. 
+    splits; ins; apply (H x); basic_solver. }
+  intros [Hs Hs'].
+  unfold eq_dom in *. ins. 
+  unfold set_union in SX. 
+  desf; basic_solver.
+Qed.  
 
 End Props.
 
