@@ -339,6 +339,13 @@ Proof.
     all: basic_solver. }
 Admitted.
 
+Lemma simrel_cert_cc_dom TC' h q state'
+  (SRCC: simrel_cert prog S G sc TC TC' f h q state') : 
+  dom_rel (Scc ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
+Proof. 
+  admit.
+Admitted.
+
 Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q
       (sbMAX: sb_max G i q)
       (SRcert: simrel_cert prog S G sc TC TC' f h q) : 
