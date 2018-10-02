@@ -242,8 +242,8 @@ Section SimRel.
     
     Lemma cont_tid_state e (EE : GE e) (NINIT : ~ is_init e) :
       exists (state : (thread_lts (tid e)).(Language.state)) c,
-        << QQ : K (c, existT _ _ state) >> /\
-        << SSTATE : @sim_state G sim_normal C (tid e) state >>.
+        ⟪ QQ : K (c, existT _ _ state) ⟫ /\
+        ⟪ SSTATE : @sim_state G sim_normal C (tid e) state ⟫.
     Proof.
       set (HH := EE).
       apply GPROG in HH. desf.

@@ -201,7 +201,7 @@ Lemma sim_cert_graph_start TC' thread
     ⟪ CsbqDOM : sbq_dom S G q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
-  set (E0 := Tid_ thread ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ;; <| issued TC' |>))).
+  set (E0 := Tid_ thread ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
   set (G0 := restrict G E0).
   (* assert (exists state'', *)
   (*            ⟪ STEPS'' : (step (tid e))＊ state state'' ⟫ /\ *)
