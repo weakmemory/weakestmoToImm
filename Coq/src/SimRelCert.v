@@ -129,12 +129,12 @@ Section SimRelCert.
 
       hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
 
-      cimgNcf : ⦗ h □₁ hdom ⦘ ⨾ Scf ⨾ ⦗ h □₁ hdom ⦘ ≡ ∅₂;
+      himgNcf : ⦗ h □₁ hdom ⦘ ⨾ Scf ⨾ ⦗ h □₁ hdom ⦘ ≡ ∅₂;
       
       complete_fdom :
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
-      imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ Stid_ qtid ⦘ ⊆
+      imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb^= ;
     }.
 End SimRelCert.
@@ -246,8 +246,18 @@ Proof.
   { apply SRC.(ftid). } 
   { apply SRC.(flab). }
   { admit. }
-  admit. 
-
+  { by narrow_hdom q CsbqDOM. } 
+  { admit. }
+  { admit. }
+  { rewrite CsbqDOM. 
+    unfold ES.cc.
+    rewrite <- restr_relE.
+    rewrite restr_inter.
+    rewrite restr_rel_mori.
+    { rewrite (restr_relE _ Scf). 
+      rewrite SRC.(fimgNcf). 
+      by rewrite inter_false_l. } 
+    all: basic_solver. }
 Admitted.
 
 Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q

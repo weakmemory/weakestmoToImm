@@ -113,7 +113,7 @@ Section SimRel.
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
-      cimgNcf : ⦗ f □₁ fdom ⦘ ⨾ Scf ⨾ ⦗ f □₁ fdom ⦘ ≡ ∅₂;
+      fimgNcf : ⦗ f □₁ fdom ⦘ ⨾ Scf ⨾ ⦗ f □₁ fdom ⦘ ≡ ∅₂;
       
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
@@ -203,7 +203,7 @@ Section SimRel.
     Proof.
       red. ins.
       apply NNPP. intros NN.
-      eapply SRC.(cimgNcf).
+      eapply SRC.(fimgNcf).
       apply seq_eqv_l; split.
       { apply IWa. }
       apply seq_eqv_r; split.
