@@ -210,11 +210,8 @@ Proof.
   (*            ⟪ STEPS'' : (step thread)＊ state state'' ⟫ /\ *)
   (*            ⟪ TEH''   : thread_restricted_execution G0 thread state''.(ProgToExecution.G) ⟫). *)
 
-
-
   (* destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN]. *)
   (* 2: { exists (ES.CInit (tid e)). *)
-
 Admitted.
 
 Lemma simrel_cert_start TC' e
@@ -222,30 +219,24 @@ Lemma simrel_cert_start TC' e
   exists q state',
     ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
 Proof.
-
-  assert (forall A (s s': A -> Prop), s ∪₁ s' ≡₁ s' ∪₁ s) as set_union_comm.
-  { basic_solver. } 
-  assert (forall A (s s' s'': A -> Prop), s ∪₁ (s' ∪₁ s'') ≡₁ (s ∪₁ s') ∪₁ s'') as set_union_assoc.
-  { basic_solver. } 
-
   edestruct sim_cert_graph_start as [q [state' HH]]; eauto.
   desf.
   exists q. exists state'.
   constructor; auto.
-  { eexists; eauto. }
+  { eexists. eauto. }
   (* TODO: get rid of repetition *)
   { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
     rewrite set_inter_full_r.
     rewrite CsbqDOM.
-    rewrite set_union_comm.
-    rewrite set_union_assoc.
+    rewrite set_unionC.
+    rewrite <- set_unionA.
     rewrite set_unionK.
     apply SRC. }
   { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
     rewrite set_inter_full_r.
     rewrite CsbqDOM.
-    rewrite set_union_comm.
-    rewrite set_union_assoc.
+    rewrite set_unionC.
+    rewrite <- set_unionA.
     rewrite set_unionK.
     apply SRC. } 
 Admitted.
