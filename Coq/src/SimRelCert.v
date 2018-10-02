@@ -106,12 +106,6 @@ Section SimRelCert.
       sbMAX : forall e', Gtid_ i e' -> Gsb^? e' e
     }.
   
-  Definition sbq_dom :=
-    match q with
-    | ES.CInit  _ => ∅
-    | ES.CEvent e => Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ eq (g e) ⦘)
-    end.
-    
   Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ qtid) ∪₁ sbq_dom) (only parsing).
       
   Record simrel_cert :=
@@ -144,6 +138,7 @@ End SimRelCert.
 Section SimRelLemmas.
 
 Variable prog : Prog.t.
+Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
 Variable S : ES.t.
 Variable G  : execution.
 Variable GPROG : program_execution prog G.
@@ -198,18 +193,21 @@ Lemma sim_cert_graph_start TC' thread
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
   exists q state',
     ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
-    ⟪ CsbqDOM : sbq_dom S G q ⊆₁ covered TC ⟫ /\
+    ⟪ CsbqDOM : g □₁ cont_sb_dom S q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
   set (E0 := Tid_ thread ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
   set (G0 := restrict G E0).
+  edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
+  { admit. }
+  desf.
   (* assert (exists state'', *)
   (*            ⟪ STEPS'' : (step (tid e))＊ state state'' ⟫ /\ *)
   (*            ⟪ TEH''   : thread_restricted_execution *)
   (*                          G0 (tid e) state''.(ProgToExecution.G) ⟫). *)
 
   (* destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN]. *)
-  (* 2: { exists (ES.CInit (tid e)). *)
+  (* 2: { exists (CInit (tid e)). *)
 Admitted.
 
 Lemma simrel_cert_start TC' thread

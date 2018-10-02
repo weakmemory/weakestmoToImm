@@ -70,6 +70,35 @@ Proof.
   splits; eauto.
 Qed.
 
+Lemma set_collect_dom : f □₁ dom_rel r ≡₁ dom_rel (f □ r).
+Proof.
+  autounfold with unfolderDb.
+  split; intros x HH; desf; eauto.
+  repeat eexists. eauto.
+Qed.
+
+Lemma collect_seq_eqv_l rr : f □ ⦗ s ⦘ ⨾ rr ⊆ ⦗ f □₁ s ⦘ ⨾ (f □ rr).
+Proof.
+  autounfold with unfolderDb.
+  intros x y HH; desf; eauto.
+  eexists; splits; eauto.
+Qed.
+
+Lemma collect_seq_eqv_r rr : f □ rr ⨾ ⦗ s' ⦘ ⊆ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
+Proof.
+  autounfold with unfolderDb.
+  intros x y HH; desf; eauto.
+  eexists; splits; eauto.
+Qed.
+
+Lemma collect_seq_eqv_lr rr :
+  f □ ⦗ s ⦘ ⨾ rr ⨾ ⦗ s' ⦘ ⊆
+  ⦗ f □₁ s ⦘ ⨾ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
+Proof. rewrite collect_seq_eqv_l. by rewrite collect_seq_eqv_r. Qed.
+
+Lemma collect_eq e :f □₁ eq e ≡₁ eq (f e).
+Proof. basic_solver. Qed.
+
 Lemma collect_rel_seq_l
       (INJ : inj_dom (codom_rel r) f) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
@@ -138,7 +167,6 @@ Qed.
 Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
   forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
 Proof. basic_solver. Qed.
-
 
 End Props.
 

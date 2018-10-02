@@ -50,7 +50,7 @@ Definition t_basic
           | Some event'' => event''
           end
       in
-      S'.(ES.cont) = (ES.CEvent event'', existT _ lang state') :: S.(ES.cont)
+      S'.(ES.cont) = (CEvent event'', existT _ lang state') :: S.(ES.cont)
     ⟫ /\
     ⟪ STEP : lang.(Language.step) label_list state state' ⟫ /\
     ⟪ LABEL' :
@@ -79,8 +79,8 @@ Definition t_basic
     ⟪ SB' :
       let prev_set :=
           match cont with
-          | ES.CInit thread => S.(ES.acts_init_set)
-          | ES.CEvent event_prev => dom_rel (S.(ES.sb)^? ⨾ ⦗ eq event_prev ⦘)
+          | CInit thread => S.(ES.acts_init_set)
+          | CEvent event_prev => dom_rel (S.(ES.sb)^? ⨾ ⦗ eq event_prev ⦘)
           end
       in
       S'.(ES.sb) ≡ S.(ES.sb) ∪ prev_set × eq event ∪

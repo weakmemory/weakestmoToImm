@@ -69,12 +69,12 @@ Section SimRel.
       continit : forall thread lprog
                         (INPROG : IdentMap.find thread prog = Some lprog),
           exists (state : (thread_lts thread).(Language.state)),
-            ⟪ INK : K (ES.CInit thread, existT _ _ state) ⟫ /\
+            ⟪ INK : K (CInit thread, existT _ _ state) ⟫ /\
             ⟪ INITST : state = (thread_lts thread).(Language.init) lprog ⟫;
 
       contpc : forall e (state : (thread_lts (Gtid e)).(Language.state))
                       (PC : pc (Gtid e) e)
-                      (INK : K (ES.CEvent (f e), existT _ _ state)),
+                      (INK : K (CEvent (f e), existT _ _ state)),
                 @sim_state G sim_normal C (Gtid e) state;
     }.
   
@@ -240,6 +240,8 @@ Section SimRel.
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
       exists (state : (thread_lts thread).(Language.state)) c,
         ⟪ QQ : K (c, existT _ _ state) ⟫ /\
+        ⟪ QTID : thread = ES.cont_thread S c  ⟫ /\
+        ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S c ⊆₁ covered TC ⟫ /\
         ⟪ SSTATE : @sim_state G sim_normal C thread state ⟫.
     Proof.
       destruct SRC.
@@ -250,6 +252,7 @@ Section SimRel.
            desf.
            eexists. eexists.
            splits; eauto.
+           { red. ins. red in H. desf. }
            red. splits; ins.
            2: { symmetry in AA.
                 eapply GPROG in AA. desf.
@@ -288,12 +291,33 @@ Section SimRel.
         apply SRC.(finj); auto. by left. }
       eapply ES.event_K in NSRMW; eauto.
       destruct NSRMW as [[lang state] KK].
-      assert (lang = thread_lts (ES.cont_thread S (ES.CEvent (f e)))); subst.
+      assert (lang = thread_lts (ES.cont_thread S (CEvent (f e)))); subst.
       { eapply contlang; eauto. }
       assert (Stid (f e) = Gtid e) as TT.
       { by rewrite <- SRC.(ftid). }
       simpls. rewrite TT in KK.
       eapply contpc in PC; eauto.
+      eexists. eexists.
+      splits; eauto.
+      unfold ES.cont_sb_dom. simpls.
+      arewrite (Stid_ (Stid (f e)) ⊆₁ fun _ => True).
+      rewrite set_inter_full_l.
+      rewrite set_collect_dom.
+      rewrite collect_seq_eqv_r.
+      rewrite collect_eq.
+      arewrite (g (f e) = e).
+      { symmetry. apply SRC.(fgtrip).
+        apply seq_eqv_l. by split; [left|]. }
+      rewrite crE.
+      rewrite collect_rel_union.
+      rewrite seq_union_l.
+      rewrite dom_union.
+      apply set_subset_union_l.
+      split; [basic_solver|].
+      rewrite gsb.
+      arewrite (eq e ⊆₁ C).
+      { intros x HH. desf. }
+      eapply dom_sb_covered; eauto.
    Admitted.
 
   End Properties.

@@ -22,11 +22,11 @@ Record t :=
      }.
 End Language.
 
-Module ES.
-
 Inductive cont_label :=
 | CInit  (tid : thread_id)
 | CEvent (eid : eventid).
+
+Module ES.
 
 Record t :=
   mk { next_act : eventid;
@@ -46,6 +46,12 @@ Definition cont_thread S (cont : cont_label) : thread_id :=
   match cont with
   | CInit thread => thread
   | CEvent e => S.(ES.tid) e
+  end.
+
+Definition cont_sb_dom S c :=
+  match c with
+  | CInit  _ => ∅
+  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ dom_rel (S.(sb)^? ⨾ ⦗ eq e ⦘)
   end.
 
 Definition acts_set (ES : t) := fun x => x < ES.(next_act).
