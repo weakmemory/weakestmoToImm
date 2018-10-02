@@ -11,6 +11,7 @@ Set Implicit Arguments.
 
 Section SimRel.
   Variable prog : Prog.t.
+  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
   Variable S : ES.t.
   Variable G  : execution.
   Variable GPROG : program_execution prog G.
@@ -22,6 +23,7 @@ Section SimRel.
   Notation "'SEinit'" := S.(ES.acts_init_set).
   Notation "'K'"  := S.(ES.cont_set).
   Notation "'GE'" := G.(acts_set).
+  Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
   Notation "'Glab'" := (G.(lab)).
@@ -137,11 +139,6 @@ Section SimRel.
       (* sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb; *)
     }.
 
-  (* Record simrel := *)
-  (*   { comm : simrel_common; *)
-  (*     vis  : f □₁ fdom ⊆₁ vis S; *)
-  (*   }. *)
-  
   Record forward_pair (e : actid) (e' : eventid) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
       fp_inGE   : GE e;
@@ -240,18 +237,14 @@ Section SimRel.
       (* TODO. It should follow from glab and definition of g. *)
     Admitted.
     
-    Lemma cont_tid_state e (EE : GE e) (NINIT : ~ is_init e) :
-      exists (state : (thread_lts (tid e)).(Language.state)) c,
+    Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
+      exists (state : (thread_lts thread).(Language.state)) c,
         ⟪ QQ : K (c, existT _ _ state) ⟫ /\
-        ⟪ SSTATE : @sim_state G sim_normal C (tid e) state ⟫.
+        ⟪ SSTATE : @sim_state G sim_normal C thread state ⟫.
     Proof.
-      set (HH := EE).
-      apply GPROG in HH. desf.
-      destruct (IdentMap.find (Gtid e) prog) as [lprog|] eqn:AA.
-      2: { apply IdentMap.Facts.in_find_iff in HH. desf. }
-      generalize AA. generalize (Gtid e).
-      clear e EE NINIT HH AA.
-      intros thread AA.
+      destruct SRC.
+      destruct (IdentMap.find thread prog) as [lprog|] eqn:AA.
+      2: { apply IdentMap.Facts.in_find_iff in INP. desf. }
       destruct (classic (exists e, pc thread e)) as [[e PC]|NPC].
       2: { edestruct (continit (scont SRC)) as [state]; eauto.
            desf.
@@ -264,8 +257,10 @@ Section SimRel.
                 red. splits; auto.
                   by rewrite PEQ. }
            split; intros XX; [|omega].
-           exfalso. apply NPC.
+           exfalso. apply NPC. clear NPC.
            admit. }
+      assert (thread <> tid_init) as NTINIT.
+      { intros HH; subst. by apply PROG_NINIT. }
       assert (thread = Gtid e); subst.
       { red in PC. generalize PC. basic_solver. }
       assert (C e) as CE by apply PC.
@@ -273,7 +268,7 @@ Section SimRel.
       { intros [w RMW].
         eapply PC. exists w.
         apply seq_eqv_r. split.
-        { apply rmw_in_sb; auto. apply SRC. }
+        { apply rmw_in_sb; auto. }
           by apply rmwclos with (r:=e) (w:=w). }
       assert (~ dom_rel Srmw (f e)) as NSRMW.
       { intros [w RMW].
@@ -282,11 +277,23 @@ Section SimRel.
         arewrite (e = g (f e)).
         { apply SRC.(fgtrip). apply seq_eqv_l.
             by split; [left|]. }
-        (* TODO: simplify *)
-        eexists. eexists. splits; eauto. }
-      admit.
-      (* eapply contpc in PC. *)
-      (* 2: by apply SRC. *)
+        autounfold with unfolderDb. eauto. }
+      assert (~ GEinit e) as NINIT.
+      { intros [BB]. unfold is_init in BB. desf. }
+      assert (~ SEinit (f e)) as NSINIT.
+      { intros BB. apply NINIT.
+        apply SRC.(finitIncl) in BB.
+        red in BB. desf.
+        assert (y = e); desf.
+        apply SRC.(finj); auto. by left. }
+      eapply ES.event_K in NSRMW; eauto.
+      destruct NSRMW as [[lang state] KK].
+      assert (lang = thread_lts (ES.cont_thread S (ES.CEvent (f e)))); subst.
+      { eapply contlang; eauto. }
+      assert (Stid (f e) = Gtid e) as TT.
+      { by rewrite <- SRC.(ftid). }
+      simpls. rewrite TT in KK.
+      eapply contpc in PC; eauto.
    Admitted.
 
   End Properties.
