@@ -1,7 +1,7 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events Execution TraversalConfig Traversal
+From imm Require Import Events Execution TraversalConfig SimTraversal
      Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel
      SubExecution.
 Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel.
@@ -119,10 +119,7 @@ Section SimRelCert.
 
       cert : sim_cert_graph;
 
-      tr_step :
-        exists e,
-          ⟪ TIDE : Gtid e = qtid ⟫ /\
-          ⟪ TCSTEP : itrav_step G sc e TC TC' ⟫;
+      tr_step : isim_trav_step G sc qtid TC TC';
 
       hgtrip : ⦗ hdom ⦘ ⨾ ↑ (compose g h) ⊆ eq;
 
@@ -197,25 +194,26 @@ Notation "'I'"  := (issued TC).
 
 Variable SRC : simrel prog S G sc TC f.
 
-Lemma sim_cert_graph_start TC' e
-      (TR_STEP : itrav_step G sc e TC TC') : 
+Lemma sim_cert_graph_start TC' thread
+      (TR_STEP : isim_trav_step G sc thread TC TC') : 
   exists q state',
-    ⟪ QTID : ES.cont_thread S q = tid e ⟫ /\
+    ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
     ⟪ CsbqDOM : sbq_dom S G q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
 Proof.
-  set (E0 := Tid_ (tid e) ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ;; <| issued TC' |>))).
+  set (E0 := Tid_ thread ∩₁ (covered TC' ∪₁ dom_rel (Gsb^? ;; <| issued TC' |>))).
   set (G0 := restrict G E0).
   (* assert (exists state'', *)
-  (*            ⟪ STEPS'' : (step thread)＊ state state'' ⟫ /\ *)
-  (*            ⟪ TEH''   : thread_restricted_execution G0 thread state''.(ProgToExecution.G) ⟫). *)
+  (*            ⟪ STEPS'' : (step (tid e))＊ state state'' ⟫ /\ *)
+  (*            ⟪ TEH''   : thread_restricted_execution *)
+  (*                          G0 (tid e) state''.(ProgToExecution.G) ⟫). *)
 
   (* destruct (classic (exists e'', (C ∩₁ Tid_ (tid e)) e'')) as [[e'' [CC' TIDE']]|NN]. *)
   (* 2: { exists (ES.CInit (tid e)). *)
 Admitted.
 
-Lemma simrel_cert_start TC' e
-      (TR_STEP : itrav_step G sc e TC TC') : 
+Lemma simrel_cert_start TC' thread
+      (TR_STEP : isim_trav_step G sc thread TC TC') : 
   exists q state',
     ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
 Proof.
@@ -223,7 +221,8 @@ Proof.
   desf.
   exists q. exists state'.
   constructor; auto.
-  { eexists. eauto. }
+  { admit. }
+    (* eexists. eauto. } *)
   (* TODO: get rid of repetition *)
   { arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True).
     rewrite set_inter_full_r.
