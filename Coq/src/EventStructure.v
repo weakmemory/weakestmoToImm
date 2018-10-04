@@ -84,7 +84,7 @@ Definition cf (ES : t) :=
   ⦗ ES.(acts_set) ⦘.
 
 Definition cc (ES : t) := 
-  ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))^* ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
+  ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
 
 Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 

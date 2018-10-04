@@ -32,4 +32,4 @@ tounicode:
 	sed -i 's/;;/⨾/g' $(COQTHEORIES)
 	sed -i 's/<|/⦗/g' $(COQTHEORIES)
 	sed -i 's/|>/⦘/g' $(COQTHEORIES)
-	sed -i 's/^*/＊/g' $(COQTHEORIES)
+	sed -i 's/\^\*/＊/g' $(COQTHEORIES)

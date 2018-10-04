@@ -2,7 +2,7 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution
-     TraversalConfig SimTraversal SimTraversalProperties
+     Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_hb SimulationRel
      CertExecution2
@@ -87,7 +87,7 @@ Section SimRelCert.
       cstate_reachable :
         forall (state : (thread_lts qtid).(Language.state))
                (KK : K (q, existT _ _ state)),
-          (step qtid)^* state state';
+          (step qtid)＊ state state';
       
       dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ C' ∪₁ I' ⦘);
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
@@ -224,19 +224,28 @@ Proof.
   { eapply sim_trav_step_coherence.
     2: by apply SRC.
     red. eauto. }
+  
+  assert (IdentMap.In thread prog) as PROGI.
+  { apply sim_trav_step_to_step in TR_STEP. desf.
+    assert (GE e) as EE.
+    { cdes TR_STEP. desf.
+      { apply COV. }
+      apply ISS. }
+    set (BB := EE).
+    apply GPROG in BB.
+    desf. exfalso.
+    destruct SRC.
+    cdes TR_STEP. desf.
+    { apply NEXT. by eapply init_covered; eauto. }
+    apply NISS. by eapply init_issued; eauto. }
 
   edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
-  { admit. }
   desf.
   assert (exists state', sim_cert_graph S G TC' q state') as [state' HH].
   2: { eexists. eexists. splits; eauto. }
   cdes SSTATE. cdes SSTATE1.
   set (E0 := Tid_ (ES.cont_thread S q) ∩₁
              (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
-
-  assert (acts_set (ProgToExecution.G state) ⊆₁ E0) as EEI.
-  { unfold E0.
-    admit. }
 
   assert (E0 ⊆₁ acts_set (ProgToExecution.G state')) as EEI'.
   { unfold E0.
@@ -247,6 +256,24 @@ Proof.
     rewrite issuedE; eauto.
     rewrite wf_sbE.
     basic_solver. }
+  
+  assert (acts_set (ProgToExecution.G state) ⊆₁ E0) as EEI.
+  { etransitivity.
+    { eapply contstateE; eauto. apply SRC. }
+    unfold E0.
+    apply set_subset_inter_r. split.
+    { unfold ES.cont_sb_dom.
+      desf.
+      { autounfold with unfolderDb. basic_solver. }
+      rewrite set_collect_inter.
+      apply set_subset_inter_l.
+      left.
+      eapply gtid_; eauto. }
+    unionR left.
+    assert (covered TC ⊆₁ covered TC') as AA.
+    { eapply sim_trav_step_covered_le.
+      red. eauto. }
+    etransitivity; eauto. }
 
   edestruct steps_middle_set with
       (thread:=ES.cont_thread S q)
@@ -258,11 +285,10 @@ Proof.
   { admit. }
   { admit. }
   desf.
-
   
   set (thread := ES.cont_thread S q).
-  set (new_rf:= Gvf ∩ same_loc Glab ;; <| (GE \₁ D G TC' thread) ∩₁ GR |>
-                    \ Gco ;; Gvf).
+  set (new_rf := Gvf ∩ same_loc Glab ⨾ ⦗ (GE \₁ D G TC' thread) ∩₁ GR ⦘
+                     \ Gco ⨾ Gvf).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
 

@@ -41,7 +41,7 @@ Variables A B : Type.
 Variable f g : A -> B.
 Variable a : A.
 Variable b : B.
-Variables s s' : A -> Prop.
+Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
 Variables r r' : relation A.
 
@@ -54,6 +54,14 @@ Proof. basic_solver. Qed.
 
 Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
 Proof. basic_solver. Qed.
+
+Lemma set_subset_inter_l (LL : s ⊆₁ s'' \/ s' ⊆₁ s'') :
+  s ∩₁ s' ⊆₁ s''.
+Proof.
+  desf.
+  all: rewrite LL.
+  all: basic_solver.
+Qed.
 
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
 Proof.
@@ -79,6 +87,13 @@ Proof.
   split; intros x HH; desf; eauto.
   repeat eexists. eauto.
 Qed.
+
+(* Note that inclusion in other direction doesn't hold.
+   For example, if `f` is constant and `a <> b`, then
+   `f □₁ (eq a ∩₁ eq b) ≡₁ ∅` and `f □₁ eq a ∩₁ f □₁ eq b ≡₁ f □₁ eq a`.
+ *)
+Lemma set_collect_inter : f □₁ (s ∩₁ s') ⊆₁ f □₁ s ∩₁ f □₁ s'.
+Proof. basic_solver. Qed.
 
 Lemma collect_seq_eqv_l rr : f □ ⦗ s ⦘ ⨾ rr ⊆ ⦗ f □₁ s ⦘ ⨾ (f □ rr).
 Proof.
