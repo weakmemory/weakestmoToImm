@@ -252,14 +252,15 @@ Proof.
     { unfold ES.cont_sb_dom.
       desf.
       { autounfold with unfolderDb. basic_solver. }
-      (* TODO: continue from here. *)
-      admit. }
+      rewrite set_collect_inter.
+      apply set_subset_inter_l.
+      left.
+      eapply gtid_; eauto. }
     unionR left.
     assert (covered TC ⊆₁ covered TC') as AA.
     { eapply sim_trav_step_covered_le.
       red. eauto. }
-    etransitivity; [|by apply AA].
-    admit. }
+    etransitivity; eauto. }
 
   edestruct steps_middle_set with
       (thread:=ES.cont_thread S q)
@@ -271,7 +272,6 @@ Proof.
   { admit. }
   { admit. }
   desf.
-
   
   set (thread := ES.cont_thread S q).
   set (new_rf:= Gvf ∩ same_loc Glab ;; <| (GE \₁ D G TC' thread) ∩₁ GR |>

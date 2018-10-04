@@ -235,6 +235,17 @@ Section SimRel.
       (* TODO. It should follow from definition of g. *)
     Admitted.
 
+    Lemma gtid e : Stid e = Gtid (g e).
+    Proof.
+      assert (SEinit e -> Stid e = tid_init) as HH.
+      { admit. }
+      unfold event_to_act. desf; simpls.
+      all: by apply HH.
+    Admitted.
+
+    Lemma gtid_ thread : g □₁ Stid_ thread ⊆₁ Gtid_ thread.
+    Proof. generalize gtid. basic_solver. Qed.
+
     Lemma flaboth e :
           same_label_up_to_value (Slab e.(f)) (Glab e).
     Proof.
