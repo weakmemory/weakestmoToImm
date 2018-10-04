@@ -71,6 +71,7 @@ Section SimRelCert.
 
   Notation "'certE'" := certG.(acts_set).
   Notation "'certLab'" := (certG.(lab)).
+  Notation "'certTid'" := (tid).
   Notation "'certRmw'" := (certG.(rmw)).
   
   Notation "'C'"  := (covered TC).
@@ -140,6 +141,18 @@ Section SimRelCert.
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb^= ;
     }.
+
+  Record forward_pair (e : actid) (e' : eventid) 
+         (state : (thread_lts (ES.cont_thread S (CEvent e'))).(Language.state)) :=
+    { fp_Kq      : K (CEvent e', existT _ _ state);
+      fp_inCertE : certE e;
+      fp_tidEq   : certTid e = Stid e';
+      fp_labEq   : certLab e = Slab e';
+      fp_sbEq    : upd h e e' □ (Gsb ⨾ ⦗ eq e ⦘) ≡ Ssb ⨾ ⦗ eq e' ⦘;
+      (* need to declare cert_rf ??? *)
+      (* fp_imgrf   : upd h e e' □ (cert_rf ⨾ ⦗ eq e ⦘) ⊆ Srf; *)
+    }.
+
 End SimRelCert.
 
 Section SimRelLemmas.
@@ -339,8 +352,37 @@ Proof.
     all: basic_solver. }
 Admitted.
 
+Lemma simrel_cert_step TC' h q state'' 
+      (state : (thread_lts (ES.cont_thread S q)).(Language.state))
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
+      (KK : K (q, existT _ _ state))
+      (KNEQ : state <> state'') :
+  exists (state' : (thread_lts (ES.cont_thread S q)).(Language.state)) q' S' h',
+    ⟪ KSTEP : (step (ES.cont_thread S q)) state state' ⟫ /\
+    ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
+    ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
+    ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' ⟫.
+Proof.
+  eapply cstate_reachable in KK; [|by apply SRCC].
+  apply rtE in KK.
+  destruct KK as [Tr|TCSTEP]; [ red in Tr; desf | ].
+  apply t_step_rt in TCSTEP.
+  destruct TCSTEP as [state' [STEP _]].
+  edestruct STEP as [lbls ISTEP].
+  destruct ISTEP as [INSTRSEQ [instr [INSTR ISTEP_]]].
+  exists state'.
+  destruct ISTEP_.
+  { exists q, S, h. 
+    splits; auto. 
+    admit. } 
+  { exists q, S, h. 
+    splits; auto. 
+    admit. }
+  { admit. }
+Admitted.
+
 Lemma simrel_cert_cc_dom TC' h q state'
-  (SRCC: simrel_cert prog S G sc TC TC' f h q state') : 
+  (SRCC : simrel_cert prog S G sc TC TC' f h q state') : 
   dom_rel (Scc ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
 Proof. 
   admit.
@@ -351,15 +393,6 @@ Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q
       (SRcert: simrel_cert prog S G sc TC TC' f h q) : 
   exists f', 
     simrel prog S G sc TC' f'.
-Proof.
-Admitted.
-
-Lemma simrel_cert_step prog S G sc TC TC' f h (*certG*) i q
-      (NsbMAX : ~ sb_max G i q)
-      (SRcert: simrel_cert prog S G sc TC TC' f h q) : 
-  exists S' h' q',
-    (ESstep.t Weakestmo)^? S S' /\
-    simrel_cert prog S' G sc TC TC' f h' q'.
 Proof.
 Admitted.
 

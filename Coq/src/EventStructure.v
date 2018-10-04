@@ -48,10 +48,22 @@ Definition cont_thread S (cont : cont_label) : thread_id :=
   | CEvent e => S.(ES.tid) e
   end.
 
+Definition cont_lab S (cont : cont_label) : option label := 
+  match cont with
+  | CInit thread => None
+  | CEvent e => Some (S.(ES.lab) e)
+  end.
+
 Definition cont_sb_dom S c :=
   match c with
   | CInit  _ => ∅
   | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ dom_rel (S.(sb)^? ⨾ ⦗ eq e ⦘)
+  end.
+
+Definition cont_sb_codom S c := 
+  match c with
+  | CInit _ => (fun x => tid S x = (cont_thread S c))
+  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
   end.
 
 Definition acts_set (ES : t) := fun x => x < ES.(next_act).

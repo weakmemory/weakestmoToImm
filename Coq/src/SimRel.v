@@ -140,7 +140,7 @@ Section SimRel.
 
   Record forward_pair (e : actid) (e' : eventid) :=
     { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
-      fp_inGE   : GE e;
+      fp_inGE   : GE e ;
       fp_inSE   : SE e'; 
       fp_tidEq  : Stid e' = Gtid e;
       fp_labEq  : Slab e' = Glab e;
