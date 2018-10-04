@@ -7,7 +7,7 @@ From imm Require Import Events Execution
      imm_hb SimulationRel
      CertExecution2
      SubExecution.
-Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf.
+Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf LblStep.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
@@ -84,6 +84,7 @@ Section SimRelCert.
       cuplab : forall e (TIDE : Gtid_ qtid e)
                       (DOMI : dom_rel (Gsb ⨾ ⦗ I' ⦘) e),
           same_label_up_to_value (certLab e) (Glab e);
+      cstate_stable : stable_state qtid state';
       cstate_reachable :
         forall (state : (thread_lts qtid).(Language.state))
                (KK : K (q, existT _ _ state)),
