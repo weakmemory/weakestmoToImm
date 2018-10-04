@@ -61,23 +61,6 @@ Section SimRel.
       is_terminal
       (istep tid).
 
-  Record simrel_cont :=
-    { contlang : forall cont lang (state : lang.(Language.state))
-                        (INK : K (cont, existT _ lang state)),
-        lang = thread_lts (ES.cont_thread S cont);
-
-      continit : forall thread lprog
-                        (INPROG : IdentMap.find thread prog = Some lprog),
-          exists (state : (thread_lts thread).(Language.state)),
-            ⟪ INK : K (CInit thread, existT _ _ state) ⟫ /\
-            ⟪ INITST : state = (thread_lts thread).(Language.init) lprog ⟫;
-
-      contpc : forall e (state : (thread_lts (Gtid e)).(Language.state))
-                      (PC : pc (Gtid e) e)
-                      (INK : K (CEvent (f e), existT _ _ state)),
-                @sim_state G sim_normal C (Gtid e) state;
-    }.
-  
   Definition event_to_act (e : eventid) : actid :=
     if excluded_middle_informative (SEinit e)
     then
@@ -91,6 +74,28 @@ Section SimRel.
                   (countNatP (dom_rel (⦗ Stid_ thread ⦘⨾ Ssb ⨾ ⦗ eq e ⦘))
                              S.(ES.next_act)).
   Notation "'g'" := (event_to_act).
+
+  Record simrel_cont :=
+    { contlang : forall cont lang (state : lang.(Language.state))
+                        (INK : K (cont, existT _ lang state)),
+        lang = thread_lts (ES.cont_thread S cont);
+      
+      contstateE : forall cont thread (state : (thread_lts thread).(Language.state))
+                        (INK : K (cont, existT _ _ state)), 
+          state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont;
+
+      continit : forall thread lprog
+                        (INPROG : IdentMap.find thread prog = Some lprog),
+          exists (state : (thread_lts thread).(Language.state)),
+            ⟪ INK : K (CInit thread, existT _ _ state) ⟫ /\
+            ⟪ INITST : state = (thread_lts thread).(Language.init) lprog ⟫;
+
+      contpc : forall e (state : (thread_lts (Gtid e)).(Language.state))
+                      (PC : pc (Gtid e) e)
+                      (INK : K (CEvent (f e), existT _ _ state)),
+                @sim_state G sim_normal C (Gtid e) state;
+    }.
+  
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
   Record simrel :=
