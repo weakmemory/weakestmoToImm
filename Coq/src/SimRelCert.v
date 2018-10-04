@@ -385,27 +385,42 @@ Lemma simrel_cert_step TC' h q state''
       (KK : K (q, existT _ _ state))
       (KNEQ : state <> state'') :
   exists (state' : (thread_lts (ES.cont_thread S q)).(Language.state)) q' S' h',
-    ⟪ KSTEP : (step (ES.cont_thread S q)) state state' ⟫ /\
-    ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
+    ⟪ KSTEP : (lbl_step (ES.cont_thread S q)) state state' ⟫ /\
     ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
+    ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' ⟫.
 Proof.
-  eapply cstate_reachable in KK; [|by apply SRCC].
-  apply rtE in KK.
-  destruct KK as [Tr|TCSTEP]; [ red in Tr; desf | ].
+  set (KK' := KK).
+  set (thread := (ES.cont_thread S q)).
+  eapply cstate_reachable in KK'; [|by apply SRCC].
+  assert ((lbl_step thread)^* state state'') as LSTEPS.
+  { apply (steps_stable_lbl_steps thread). 
+    apply restr_relE.
+    unfold restr_rel.
+    splits; auto.
+    { apply (SRC.(scont)).(contstable) in KK. auto. } 
+    apply SRCC. } 
+  apply rtE in LSTEPS.
+  destruct LSTEPS as [Tr|TCSTEP]; [ red in Tr; desf | ].
   apply t_step_rt in TCSTEP.
   destruct TCSTEP as [state' [STEP _]].
   edestruct STEP as [lbls ISTEP].
-  destruct ISTEP as [INSTRSEQ [instr [INSTR ISTEP_]]].
+  destruct ISTEP. desf.
   exists state'.
-  destruct ISTEP_.
-  { exists q, S, h. 
-    splits; auto. 
-    admit. } 
-  { exists q, S, h. 
-    splits; auto. 
+  destruct LBL_STEP as [INSTRSEQ [instr [INSTR ISTEP_]]].
+  destruct ISTEP_; try destruct (NNIL LABELS).
+  { set (e := ThreadEvent thread (eindex state)).
+    set (e' := S.(ES.next_act)).
+    set (q' := CEvent S.(ES.next_act)).
+    exists q'. 
+    eexists. 
+    exists (upd h e e').
+    splits.
+    { auto. } 
+    admit. 
+    admit. 
     admit. }
-  { admit. }
+
 Admitted.
 
 Lemma simrel_cert_cc_dom TC' h q state'
