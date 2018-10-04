@@ -274,8 +274,8 @@ Proof.
   desf.
   
   set (thread := ES.cont_thread S q).
-  set (new_rf:= Gvf ∩ same_loc Glab ;; <| (GE \₁ D G TC' thread) ∩₁ GR |>
-                    \ Gco ;; Gvf).
+  set (new_rf := Gvf ∩ same_loc Glab ⨾ ⦗ (GE \₁ D G TC' thread) ∩₁ GR ⦘
+                     \ Gco ⨾ Gvf).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
 
