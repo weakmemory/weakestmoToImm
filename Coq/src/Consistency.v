@@ -86,8 +86,8 @@ Record es_consistent {m} :=
     es_coherent : irreflexive (hb ⨾ (eco m)^?);
     jf_not_cf : jf ∩ cf ≡ ∅₂;
     jfpo_irr :
-      irreflexive (jfe ⨾ (sb ∪ jf)^* ⨾ sb ⨾
-                   jfe⁻¹ ⨾ ((sb ∪ jf)^*)⁻¹ ⨾
+      irreflexive (jfe ⨾ (sb ∪ jf)＊ ⨾ sb ⨾
+                   jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾
                    (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew)));
     labeq : dom_rel (cf_imm ∩ same_lab) ⊆₁ R;
     labeq_jf_irr : irreflexive (jf ⨾ cf_imm ⨾ jf⁻¹ ⨾ ew^?);

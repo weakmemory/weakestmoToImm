@@ -26,22 +26,22 @@ Definition lbl_step thread (state state' : state) :=
   exists lbls state'',
     ⟪ NNIL      : lbls <> [] ⟫ /\
     ⟪ LBL_STEP  : istep thread lbls state state'' ⟫ /\
-    ⟪ EPS_STEPS : (istep thread [])^* state'' state' ⟫ /\
+    ⟪ EPS_STEPS : (istep thread [])＊ state'' state' ⟫ /\
     ⟪ STABLE    : stable_state thread state' ⟫.
 
 Definition stable_lprog thread lprog :=
   forall state (INSTR : state.(instrs) = lprog)
-         (REACH : (step thread)^* (init lprog) state),
+         (REACH : (step thread)＊ (init lprog) state),
     exists state',
-      ⟪ STEPS : (istep thread [])^* state state' ⟫ /\
+      ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
       ⟪ STABLE : stable_state thread state' ⟫.
 
 Lemma get_stable thread lprog state
       (LPST : stable_lprog thread lprog)
       (INSTR : state.(instrs) = lprog)
-      (REACH : (step thread)^* (init lprog) state) :
+      (REACH : (step thread)＊ (init lprog) state) :
   exists ! state',
-    ⟪ STEPS : (istep thread [])^* state state' ⟫ /\
+    ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
     ⟪ STABLE : stable_state thread state' ⟫.
 Proof.
   edestruct LPST as [state']; eauto.
@@ -71,4 +71,6 @@ Proof.
 Admitted.
 
 Lemma steps_stable_lbl_steps thread :
-  ⦗ stable_state thread ⦘ ⨾ (step thread)^* ⨾ ⦗ stable_state thread ⦘ ⊆ ()^*.
+  ⦗ stable_state thread ⦘ ⨾ (step thread)＊ ⨾ ⦗ stable_state thread ⦘ ⊆ (lbl_step thread)＊.
+Proof.
+Admitted.

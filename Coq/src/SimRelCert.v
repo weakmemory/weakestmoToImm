@@ -86,7 +86,7 @@ Section SimRelCert.
       cstate_reachable :
         forall (state : (thread_lts qtid).(Language.state))
                (KK : K (q, existT _ _ state)),
-          (step qtid)^* state state';
+          (step qtid)＊ state state';
       
       dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ C' ∪₁ I' ⦘);
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
