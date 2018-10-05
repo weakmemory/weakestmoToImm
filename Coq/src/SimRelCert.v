@@ -13,6 +13,14 @@ Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 Set Implicit Arguments.
 Local Open Scope program_scope.
 
+Definition cert_rf G TC thread :=
+  G.(Gvf) ∩ same_loc G.(lab) ⨾ ⦗ (G.(acts_set) \₁ D G TC thread) ∩₁ is_r G.(lab) ⦘
+                             \ G.(co) ⨾ G.(Gvf).
+Definition cert_rfi G TC thread :=
+  ⦗ fun x => tid x = thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
+Definition cert_rfe G TC thread :=
+  ⦗ fun x => tid x <> thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
+
 Section SimRelCert.
   Variable prog : Prog.t.
   Variable S : ES.t.
@@ -80,6 +88,10 @@ Section SimRelCert.
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
 
+  Notation "'cert_rf'"  := (cert_rf  G TC' qtid).
+  Notation "'cert_rfi'" := (cert_rfi G TC' qtid).
+  Notation "'cert_rfe'" := (cert_rfe G TC' qtid).
+
   Record sim_cert_graph :=
     { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
       cuplab : forall e (TIDE : Gtid_ qtid e)
@@ -93,15 +105,9 @@ Section SimRelCert.
       
       dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ C' ∪₁ I' ⦘);
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
-
-      (* TODO. Reflect the following properties of the certification graph: *)
-      (* ⟪ NEW_VAL1 : forall r w (RF: new_rfi w r), *)
-      (*     val (s'.(G).(lab)) r = val (s'.(G).(lab)) w ⟫ /\ *)
-      (* ⟪ NEW_VAL2 : forall r (RR : is_r s'.(G).(lab) r) (IN: MOD r) *)
-      (*                     (NIN: ~ (codom_rel new_rfi) r), *)
-      (*     val (s'.(G).(lab)) r = Some (new_val r) ⟫ /\ *)
-      (* ⟪ OLD_VAL : forall a (NIN: ~ MOD a), *)
-      (*     val (s'.(G).(lab)) a = val (s.(G).(lab)) a ⟫. *)
+      
+      rval : cert_rf ⊆ same_val certLab;
+      oval : eq_dom (D G TC' qtid) (val certLab) (val Glab);
     }.
 
   Record sb_max i e :=
