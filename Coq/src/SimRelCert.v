@@ -187,11 +187,13 @@ Notation "'K'"  := S.(ES.cont_set).
 Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
 Notation "'Ssb'" := (S.(ES.sb)).
+Notation "'Sjf'" := (S.(ES.jf)).
 Notation "'Srf'" := (S.(ES.rf)).
 Notation "'Sco'" := (S.(ES.co)).
 Notation "'Scf'" := (S.(ES.cf)).
 Notation "'Scc'" := (S.(ES.cc)).
 Notation "'Sew'" := (S.(ES.ew)).
+Notation "'Srmw'" := (S.(ES.rmw)).
 
 Notation "'SR'" := (fun a => is_true (is_r Slab a)).
 Notation "'SW'" := (fun a => is_true (is_w Slab a)).
@@ -397,10 +399,10 @@ Lemma simrel_cert_step TC' h q state''
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' ⟫.
 Proof.
-  set (KK' := KK).
   set (thread := (ES.cont_thread S q)).
-  eapply cstate_reachable in KK'; [|by apply SRCC].
-  assert ((lbl_step thread)＊ state state'') as LSTEPS.
+  set (REACHABLE := KK).
+  eapply cstate_reachable in REACHABLE; [|by apply SRCC].
+  assert ((lbl_step thread)^* state state'') as LSTEPS.
   { apply (steps_stable_lbl_steps thread). 
     apply restr_relE.
     unfold restr_rel.
@@ -412,22 +414,62 @@ Proof.
   apply t_step_rt in TCSTEP.
   destruct TCSTEP as [state' [STEP _]].
   edestruct STEP as [lbls ISTEP].
-  destruct ISTEP. desf.
+  edestruct ISTEP as [state_ [LBL_STEP [state__ H]]].
+  destruct H as [EPS_STEPS H].
+  unfold eqv_rel in H. destruct H as [H STABLE']. desf. 
   exists state'.
-  destruct LBL_STEP as [INSTRSEQ [instr [INSTR ISTEP_]]].
-  destruct ISTEP_; try destruct (NNIL LABELS).
+  edestruct LBL_STEP as [LB_NEQ [INSTRSEQ [instr [INSTR ISTEP_]]]].
+  edestruct ISTEP_; try destruct (LB_NEQ LABELS).
   { set (e := ThreadEvent thread (eindex state)).
     set (e' := S.(ES.next_act)).
     set (q' := CEvent S.(ES.next_act)).
-    exists q'. 
-    eexists. 
-    exists (upd h e e').
-    splits.
-    { auto. } 
-    admit. 
-    admit. 
-    admit. }
+    set (lbl := Aload false ord l val).
 
+    assert (Glab e = lbl) as eLab.
+    { admit. } 
+        
+    exists q'. 
+    destruct (excluded_middle_informative 
+      (ES.cont_set S (q', existT _ (thread_lts thread) state'))
+    ) as [EExists | ENExists ].
+    { assert (SE e') as e'inSE. 
+      { edestruct SRC. edestruct swf. 
+        apply (K_inE e' (existT _ (thread_lts thread) state')). 
+        apply EExists. }
+
+      assert (Glab e = Slab e') as e'Lab.
+      { admit. }
+
+      admit. }
+    
+    eexists (ES.mk _ _ _ _ _ _ _ _ _).
+    exists (upd h e e').
+    splits; [by apply STEP | | |].
+    { unfold "^?". right. 
+      unfold ESstep.t.  
+      splits. 
+      { eapply ESstep.t_load. 
+        { unfold ESstep.t_basic. 
+          splits; eauto.
+          { exists 1. splits; simpl; eauto. }
+          do 2 eexists. 
+          exists state, state', lbl, None.
+          splits; simpl; eauto. 
+          assert (lbls = [lbl]) as LBL_EQ. 
+          { admit. }
+          subst. 
+          apply ISTEP. }
+        { admit. } 
+        admit.
+        admit. } 
+      admit. }
+      admit. 
+    admit. } 
+  admit. 
+  admit. 
+  admit. 
+  admit. 
+  admit. 
 Admitted.
 
 Lemma simrel_cert_cc_dom TC' h q state'
