@@ -94,7 +94,7 @@ Section SimRel.
           exists (state : (thread_lts thread).(Language.state)),
             ⟪ INK : K (CInit thread, existT _ _ state) ⟫ /\
             ⟪ INITST :
-                (istep thread [])^* ((thread_lts thread).(Language.init) lprog)
+                (istep thread [])＊ ((thread_lts thread).(Language.init) lprog)
                                  state⟫;
 
       contpc : forall e (state : (thread_lts (Gtid e)).(Language.state))

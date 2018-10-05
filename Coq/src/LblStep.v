@@ -29,10 +29,9 @@ Definition stable_lprog thread lprog :=
       ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
       ⟪ STABLE : stable_state thread state' ⟫.
 
-Lemma get_stable thread lprog state
-      (LPST : stable_lprog thread lprog)
-      (INSTR : state.(instrs) = lprog)
-      (REACH : (step thread)＊ (init lprog) state) :
+Lemma get_stable thread state
+      (LPST : stable_lprog thread state.(instrs))
+      (REACH : (step thread)＊ (init state.(instrs)) state) :
   exists ! state',
     ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
     ⟪ STABLE : stable_state thread state' ⟫.
@@ -42,8 +41,22 @@ Proof.
   exists state'.
   red. splits; auto.
   clear -STEPS STABLE.
-  (* TODO: follows from unique_eps_step and definition of stable_state. *)
-Admitted.
+  apply clos_rt_rt1n in STEPS.
+  intros y [AA BB].
+  apply clos_rt_rt1n in AA.
+  generalize dependent y.
+  induction STEPS.
+  { ins. destruct AA; auto.
+    exfalso. apply STABLE.
+    eexists. eauto. }
+  ins.
+  apply IHSTEPS; auto.
+  destruct AA.
+  { exfalso. apply BB.
+    eexists. eauto. }
+  assert (y = y0); desf.
+  eapply unique_eps_step; eauto.
+Qed.
 
 Lemma terminal_stable thread : is_terminal ⊆₁ stable_state thread.
 Proof.
@@ -58,29 +71,35 @@ Proof.
   all: omega.
 Qed.
 
-Definition ilbl_step thread lbls (state state' : state) :=
-  exists state'',
-    ⟪ NNIL      : lbls <> [] ⟫ /\
-    ⟪ LBL_STEP  : istep thread lbls state state'' ⟫ /\
-    ⟪ EPS_STEPS : (istep thread [])＊ state'' state' ⟫ /\
-    ⟪ STABLE    : stable_state thread state' ⟫.
+Definition neps_step thread lbls (state state' : state) :=
+  ⟪ NNIL : lbls <> [] ⟫ /\
+  ⟪ STEP : istep thread lbls state state' ⟫.
+
+Definition ilbl_step thread lbls :=
+  neps_step thread lbls ⨾ (istep thread [])＊ ⨾ ⦗ stable_state thread ⦘.
 
 Definition lbl_step thread (state state' : state) :=
   exists lbls, ilbl_step thread lbls state state'.
 
+Lemma ilbl_step_in_steps thread lbls : ilbl_step thread lbls ⊆ (step thread)⁺.
+Proof.
+  unfold ilbl_step.
+  arewrite ((istep thread [])＊ ⊆ (step thread)＊).
+  { apply clos_refl_trans_mori. unfold step. basic_solver. }
+  arewrite (neps_step thread lbls ⊆ step thread).
+  { unfold step, neps_step. basic_solver. }
+  rewrite <- seqA.
+  rewrite <- ct_begin.
+  basic_solver.
+Qed.
+
 Lemma lbl_step_in_steps thread : lbl_step thread ⊆ (step thread)⁺.
 Proof.
   intros x y [lbl HH]. cdes HH.
-  apply ct_begin. eexists.
-  split.
-  { eexists. eauto. }
-  clear -EPS_STEPS.
-  assert ((istep thread [])^* ⊆ (step thread)^*) as AA.
-  2: by apply AA.
-  apply clos_refl_trans_mori. unfold step. basic_solver.
+  eapply ilbl_step_in_steps. eauto.
 Qed.
 
-Lemma ilbl_steps_in_steps thread : (lbl_step thread)^* ⊆ (step thread)^*.
+Lemma ilbl_steps_in_steps thread : (lbl_step thread)＊ ⊆ (step thread)＊.
 Proof. rewrite lbl_step_in_steps. apply rt_of_ct. Qed.
 
 Lemma steps_stable_lbl_steps thread :

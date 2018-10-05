@@ -394,7 +394,7 @@ Proof.
   set (KK' := KK).
   set (thread := (ES.cont_thread S q)).
   eapply cstate_reachable in KK'; [|by apply SRCC].
-  assert ((lbl_step thread)^* state state'') as LSTEPS.
+  assert ((lbl_step thread)＊ state state'') as LSTEPS.
   { apply (steps_stable_lbl_steps thread). 
     apply restr_relE.
     unfold restr_rel.
