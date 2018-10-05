@@ -11,6 +11,7 @@ Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf L
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
+Local Open Scope program_scope.
 
 Section SimRelCert.
   Variable prog : Prog.t.
@@ -122,15 +123,15 @@ Section SimRelCert.
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
-      hgtrip : ⦗ hdom ⦘ ⨾ ↑ (compose g h) ⊆ eq;
+      hgtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
 
       hinj : inj_dom hdom h;
       himg : h □₁ hdom ⊆₁ SE;
       hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
-      htid : compose Stid h = Gtid;
+      htid : Stid ∘ h = Gtid;
 
-      hlabCI : eq_dom (C ∪₁ I) Glab (compose Slab h);
-      hlabTHRD : eq_dom sbq_dom certLab (compose Slab h);
+      hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
+      hlabTHRD : eq_dom sbq_dom certLab (Slab ∘ h);
 
       hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
 

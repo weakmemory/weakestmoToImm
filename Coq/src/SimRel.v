@@ -8,6 +8,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
 Require Import AuxRel AuxDef EventStructure Construction Consistency Vf LblStep.
 
 Set Implicit Arguments.
+Local Open Scope program_scope.
 
 Section SimRel.
   Variable prog : Prog.t.
@@ -116,7 +117,7 @@ Section SimRel.
       
       scont : simrel_cont;
 
-      fgtrip : ⦗ fdom ⦘ ⨾ ↑ (compose g f) ⊆ eq;
+      fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
       gew  : g □ Sew  ⊆ eq;
       gco  : g □ Sco  ⊆ Gco;
       gjf  : g □ Sjf  ⊆ Gvf;
@@ -132,14 +133,14 @@ Section SimRel.
       finj : inj_dom fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
-      flab : eq_dom (C ∪₁ I) Glab (compose Slab f);
+      flab : eq_dom (C ∪₁ I) Glab (Slab ∘ f);
       
       glab : forall e,
           same_label_up_to_value (Slab e) (Glab (g e));
 
       (* To be able to show that `ftid` holds after a simulation step,
          we use Logic.FunctionalExtensionality. *)
-      ftid : compose Stid f = Gtid;
+      ftid : Stid ∘ f = Gtid;
 
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
