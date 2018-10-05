@@ -3,7 +3,7 @@ Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecution ProgToExecutionProperties imm_hb SimulationRel
+     Prog ProgToExecution ProgToExecutionProperties imm imm_hb SimulationRel
      CombRelations.
 Require Import AuxRel AuxDef EventStructure Construction Consistency Vf LblStep.
 
@@ -113,6 +113,8 @@ Section SimRel.
       tccoh : tc_coherent G sc TC;
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
       swf   : ES.Wf S;
+      
+      gcons : imm_consistent G;
       scons : @es_consistent S Weakestmo;
       
       scont : simrel_cont;

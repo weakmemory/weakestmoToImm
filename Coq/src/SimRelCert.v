@@ -4,7 +4,7 @@ From promising Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
-     imm_hb SimulationRel
+     imm imm_hb SimulationRel
      CertExecution2
      SubExecution.
 Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf LblStep.
@@ -20,6 +20,16 @@ Definition cert_rfi G TC thread :=
   ⦗ fun x => tid x = thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
 Definition cert_rfe G TC thread :=
   ⦗ fun x => tid x <> thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
+
+Lemma rf_w G (Wf : Execution.Wf G) (IMMC : imm_consistent G) 
+      r (rInE : In r G.(acts)) (rInR : is_true (is_r G.(lab) r)) : 
+  exists! w, 
+    ⟪ wInE : In w G.(acts) ⟫ /\
+    ⟪ wInW : is_true (is_w G.(lab) w) ⟫ /\
+    ⟪ wrInRF : G.(rf) w r ⟫.
+Proof. 
+  admit.
+Admitted.
 
 Section SimRelCert.
   Variable prog : Prog.t.
@@ -88,7 +98,7 @@ Section SimRelCert.
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
 
-  Notation "'cert_rf'"  := (cert_rf  G TC' qtid).
+  Notation "'cert_rf'"  := (cert_rf G TC' qtid).
 
   Record sim_cert_graph :=
     { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
@@ -386,6 +396,13 @@ Proof.
     all: basic_solver. }
 Admitted.
 
+Lemma simrel_cert_rfD TC' h q state 
+  (SRCC : simrel_cert prog S G sc TC TC' f h q state) :
+  f □₁ (dom_rel (Grf ⨾ ⦗ D G TC' (ES.cont_thread S q) ⦘)) ⊆₁ SE . 
+Proof. 
+  admit.
+Admitted.
+
 Lemma simrel_cert_step TC' h q state'' 
       (state : (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
@@ -423,6 +440,12 @@ Proof.
     set (q' := CEvent S.(ES.next_act)).
     set (lbl := Aload false ord l val).
 
+    assert (GE e) as eInGE.
+    { admit. }
+
+    assert (GR e) as eInGR.
+    { admit. }
+
     assert (Glab e = lbl) as eLab.
     { admit. } 
         
@@ -445,8 +468,9 @@ Proof.
     splits; [by apply STEP | | |].
     { unfold "^?". right. 
       unfold ESstep.t.  
-      splits. 
+      splits.
       { eapply ESstep.t_load. 
+        3-4: simpl; eauto. 
         { unfold ESstep.t_basic. 
           splits; eauto.
           { exists 1. splits; simpl; eauto. }
@@ -457,17 +481,28 @@ Proof.
           { admit. }
           subst. 
           apply ISTEP. }
-        { admit. } 
-        admit.
-        admit. } 
-      admit. }
-      admit. 
-    admit. } 
-  admit. 
-  admit. 
-  admit. 
-  admit. 
-  admit. 
+        { unfold ESstep.add_jf.
+          splits.
+          { simpl. unfold is_r. rewrite upds. simpl. auto. } 
+          { destruct (excluded_middle_informative (D G TC' thread e)) as [De | NDe]. 
+            { set (myq := q).
+              destruct (rf_w SRC.(gwf) SRC.(gcons) e eInGE eInGR) as [w [H _]]. desf. 
+              exists (f w). 
+              splits. 
+              { apply (simrel_cert_rfD SRCC). 
+                autounfold with unfolderDb. 
+                eexists. splits; eauto. }
+              { simpl. 
+                unfold is_w. 
+                rewrite updo. 
+                { admit. }  
+                admit. }
+              all: admit. }
+            admit. } } }
+      all: admit. } 
+    admit. 
+    admit. }
+  all: admit. 
 Admitted.
 
 Lemma simrel_cert_cc_dom TC' h q state'
