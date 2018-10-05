@@ -173,8 +173,9 @@ Record Wf :=
     init_tid_K : ~ (exists c, K (CInit tid_init, c));
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
-    event_K  : forall e (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
+    event_K  : forall e (EE: E e) (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
         exists c, K (CEvent e, c);
+    K_inE : forall e c (inK: K (CEvent e, c)), E e;  
   }.
 
 Implicit Type WF : Wf.
