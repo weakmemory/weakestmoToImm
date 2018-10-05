@@ -89,8 +89,6 @@ Section SimRelCert.
   Notation "'I''"  := (issued TC').
 
   Notation "'cert_rf'"  := (cert_rf  G TC' qtid).
-  Notation "'cert_rfi'" := (cert_rfi G TC' qtid).
-  Notation "'cert_rfe'" := (cert_rfe G TC' qtid).
 
   Record sim_cert_graph :=
     { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;

@@ -11,10 +11,11 @@ Section Vf.
   Variable hb : relation A.
   Variable sc : relation A.
 
+  Notation "'W'" := (fun a => is_true (is_w lab a)).
   Notation "'F'" := (fun a => is_true (is_f lab a)).
   Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
   
-  Definition vf : relation A := rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)^? ⨾ sc^? ⨾ hb^?.
+  Definition vf : relation A := ⦗ W ⦘ ⨾ rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)^? ⨾ sc^? ⨾ hb^?.
 End Vf.
 
 Definition Gvf (G : execution) :=
