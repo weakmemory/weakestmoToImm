@@ -408,10 +408,12 @@ Proof.
   apply t_step_rt in TCSTEP.
   destruct TCSTEP as [state' [STEP _]].
   edestruct STEP as [lbls ISTEP].
-  edestruct ISTEP. desf.
+  edestruct ISTEP as [state_ [LBL_STEP [state__ H]]].
+  destruct H as [EPS_STEPS H].
+  unfold eqv_rel in H. destruct H as [H STABLE']. desf. 
   exists state'.
-  edestruct LBL_STEP as [INSTRSEQ [instr [INSTR ISTEP_]]].
-  edestruct ISTEP_; try destruct (NNIL LABELS).
+  edestruct LBL_STEP as [LB_NEQ [INSTRSEQ [instr [INSTR ISTEP_]]]].
+  edestruct ISTEP_; try destruct (LB_NEQ LABELS).
   { set (e := ThreadEvent thread (eindex state)).
     set (e' := S.(ES.next_act)).
     set (q' := CEvent S.(ES.next_act)).

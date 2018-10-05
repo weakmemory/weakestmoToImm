@@ -197,6 +197,19 @@ Proof.
   desf; basic_solver.
 Qed.  
 
+Lemma rt_dom_ri (HH : r ⊆ <| s |> ;; r) : r^* ;; <| s |> ⊆ (r ;; <| s |>)^*.
+Proof.
+  rewrite rtE at 1.
+  rewrite seq_union_l.
+  apply inclusion_union_l; [basic_solver|].
+  rewrite HH at 1.
+  rewrite clos_trans_rotl.
+  rewrite !seqA.
+  rewrite <- ct_end.
+  rewrite inclusion_t_rt.
+  basic_solver.
+Qed.
+
 End Props.
 
 Require Import Setoid.
