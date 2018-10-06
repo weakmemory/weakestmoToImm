@@ -7,19 +7,11 @@ From imm Require Import Events Execution
      imm imm_hb SimulationRel
      CertExecution2
      SubExecution.
-Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf LblStep.
+Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf LblStep CertRf.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
-
-Definition cert_rf G TC thread :=
-  G.(Gvf) ∩ same_loc G.(lab) ⨾ ⦗ (G.(acts_set) \₁ D G TC thread) ∩₁ is_r G.(lab) ⦘
-                             \ G.(co) ⨾ G.(Gvf).
-Definition cert_rfi G TC thread :=
-  ⦗ fun x => tid x = thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
-Definition cert_rfe G TC thread :=
-  ⦗ fun x => tid x <> thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
 
 Section SimRelCert.
   Variable prog : Prog.t.
