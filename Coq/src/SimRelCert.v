@@ -402,17 +402,27 @@ Lemma simrel_cert_lbl_step TC' h q
     ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' ⟫.
-Proof. 
-  edestruct LBL_STEP as [lbls ILBL_STEP].
-  edestruct ILBL_STEP as [state_ [INEPS_STEP [state__ H]]].
+Proof.
+  destruct LBL_STEP as [lbls ILBL_STEP].
+  (* Anton: It's better not to use name `H` as it's the name
+     Coq uses for new variables, which don't have a specific name.
+     Using of `H` might introduce problems if the code is preceeded
+     by something generating such variables.
+     For that reason, I usually use `HH` (`AA`, `BB` etc)
+     for my temporary variables.
+   *)
+  destruct ILBL_STEP as [state_ [INEPS_STEP [state__ H]]].
   destruct H as [EPS_STEPS H].
   unfold eqv_rel in H. destruct H as [H STABLE']. desf. 
-  edestruct INEPS_STEP as [LB_NEQ [INSTRSEQ [instr [INSTR ISTEP_]]]].
-  edestruct ISTEP_; try destruct (LB_NEQ LABELS).
+  (* Anton: Here it's better to use `cdes INEPS_STEP`.
+     When you would't need to provide names. *)
+  destruct INEPS_STEP as [LB_NEQ [INSTRSEQ [instr [INSTR ISTEP_]]]].
+  edestruct ISTEP_; desf.
   { set (thread := (ES.cont_thread S q)).
-    set (e := ThreadEvent thread (eindex state)).
-    set (e' := S.(ES.next_act)).
-    set (q' := CEvent S.(ES.next_act)).
+    set (e   := ThreadEvent thread (eindex state)).
+    set (e'  := S.(ES.next_act)).
+    set (q'  := CEvent S.(ES.next_act)).
+    set (l   := (RegFile.eval_lexpr (regf state) lexpr)).
     set (lbl := Aload false ord l val).
 
     assert (GE e) as eInGE.
