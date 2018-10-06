@@ -155,7 +155,7 @@ Section SimRelCert.
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
-              ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb^= ;
+              ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
     }.
 
   Record forward_pair (e : actid) (e' : eventid) 
@@ -501,7 +501,7 @@ Proof.
   set (thread := (ES.cont_thread S q)).
   set (REACHABLE := KK).
   eapply cstate_reachable in REACHABLE; [|by apply SRCC].
-  assert ((lbl_step thread)^* state state'') as LSTEPS.
+  assert ((lbl_step thread)＊ state state'') as LSTEPS.
   { apply (steps_stable_lbl_steps thread). 
     apply restr_relE.
     unfold restr_rel.

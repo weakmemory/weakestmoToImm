@@ -197,7 +197,7 @@ Proof.
   desf; basic_solver.
 Qed.  
 
-Lemma rt_dom_ri (HH : r ⊆ <| s |> ;; r) : r^* ;; <| s |> ⊆ (r ;; <| s |>)^*.
+Lemma rt_dom_ri (HH : r ⊆ ⦗ s ⦘ ⨾ r) : r＊ ⨾ ⦗ s ⦘ ⊆ (r ⨾ ⦗ s ⦘)＊.
 Proof.
   rewrite rtE at 1.
   rewrite seq_union_l.
