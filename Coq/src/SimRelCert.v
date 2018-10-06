@@ -438,7 +438,9 @@ Proof.
     destruct (excluded_middle_informative 
       (ES.cont_set S (q', existT _ (thread_lts thread) state'))
     ) as [EExists | ENExists ].
-    { assert (SE e') as e'inSE. 
+    { (* Anton: this branch is impossible, i.e. there are no
+         continuations in S for events, which are not there. *)
+      assert (SE e') as e'inSE. 
       { edestruct SRC. edestruct swf. 
         apply (K_inE e' (existT _ (thread_lts thread) state')). 
         apply EExists. }
