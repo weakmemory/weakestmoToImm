@@ -21,16 +21,6 @@ Definition cert_rfi G TC thread :=
 Definition cert_rfe G TC thread :=
   ⦗ fun x => tid x <> thread ⦘ ⨾ cert_rf G TC thread ⨾ ⦗ fun x => tid x = thread ⦘.
 
-Lemma rf_w G (Wf : Execution.Wf G) (IMMC : imm_consistent G) 
-      r (rInE : In r G.(acts)) (rInR : is_true (is_r G.(lab) r)) : 
-  exists! w, 
-    ⟪ wInE : In w G.(acts) ⟫ /\
-    ⟪ wInW : is_true (is_w G.(lab) w) ⟫ /\
-    ⟪ wrInRF : G.(rf) w r ⟫.
-Proof. 
-  admit.
-Admitted.
-
 Section SimRelCert.
   Variable prog : Prog.t.
   Variable S : ES.t.
@@ -471,7 +461,10 @@ Proof.
           { simpl. unfold is_r. rewrite upds. simpl. auto. } 
           { destruct (excluded_middle_informative (D G TC' thread e)) as [De | NDe]. 
             { set (myq := q).
-              destruct (rf_w SRC.(gwf) SRC.(gcons) e eInGE eInGR) as [w [H _]]. desf. 
+              simpls.
+              assert (complete G) as CC by apply SRC.
+              edestruct CC as [w HH].
+              { by split; eauto. }
               exists (f w). 
               splits. 
               { apply (simrel_cert_rfD SRCC). 
