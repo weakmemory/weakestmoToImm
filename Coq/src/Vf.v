@@ -20,6 +20,19 @@ Definition Avf : relation A := ⦗ W ⦘ ⨾ rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)
 
 Lemma Avf_dom : Avf ≡ ⦗ W ⦘ ⨾ Avf.
 Proof. unfold Avf. seq_rewrite seq_eqvK. done. Qed.
+
+Lemma AvfE (RF : rf ≡ <| E |> ;; rf)
+      (HB : hb ≡ <| E |> ;; hb)
+      (SC : sc ≡ <| E |> ;; sc)
+  : Avf ≡ ⦗ E ⦘ ⨾ Avf ⨾ ⦗ E ⦘.
+Proof.
+  split; [|basic_solver].
+  unfold Avf.
+  rewrite RF at 1.
+  rewrite HB at 1 2.
+  rewrite SC at 1.
+  basic_solver 21.
+Qed.
 End Vf.
 
 Definition Gvf (G : execution) :=
@@ -28,29 +41,29 @@ Definition Gvf (G : execution) :=
 Definition Svf (m : model) (S : ES.t) :=
   Avf S.(ES.acts_set) S.(ES.lab) S.(ES.jf) S.(Consistency.hb) (Consistency.psc S m).
 
-Section GvfProperties.
-Variable G : execution.
-Variable WF : Wf G.
+(* Section GvfProperties. *)
+(* Variable G : execution. *)
+(* Variable WF : Wf G. *)
 
-Notation "'E'" := G.(acts_set).
-Notation "'psc'" := G.(imm.psc).
-Notation "'hb'" := G.(imm_hb.hb).
-Notation "'rf'" := G.(rf).
-Notation "'lab'" := G.(lab).
-Notation "'vf'" := (Gvf G).
-Notation "'W'" := (fun a => is_true (is_w lab a)).
-Notation "'F'" := (fun a => is_true (is_f lab a)).
-Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
+(* Notation "'E'" := G.(acts_set). *)
+(* Notation "'psc'" := G.(imm.psc). *)
+(* Notation "'hb'" := G.(imm_hb.hb). *)
+(* Notation "'rf'" := G.(rf). *)
+(* Notation "'lab'" := G.(lab). *)
+(* Notation "'vf'" := (Gvf G). *)
+(* Notation "'W'" := (fun a => is_true (is_w lab a)). *)
+(* Notation "'F'" := (fun a => is_true (is_f lab a)). *)
+(* Notation "'Sc'" := (fun a => is_true (is_sc lab a)). *)
 
-Lemma GvfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
-Proof.
-  split; [|basic_solver].
-  unfold Gvf, Avf.
-  rewrite (wf_rfE WF) at 1.
-  rewrite (wf_hbE WF) at 1 2.
-  rewrite (wf_pscE WF) at 1.
-  basic_solver 21.
-Qed.
+(* Lemma GvfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘. *)
+(* Proof. *)
+(*   split; [|basic_solver]. *)
+(*   unfold Gvf, Avf. *)
+(*   rewrite (wf_rfE WF) at 1. *)
+(*   rewrite (wf_hbE WF) at 1 2. *)
+(*   rewrite (wf_pscE WF) at 1. *)
+(*   basic_solver 21. *)
+(* Qed. *)
 
 (* Lemma vf_hb_irr l WF WF_SC CSC COH ACYC_EXT: irreflexive (vf ⨾ hb). *)
 (* Proof. *)
@@ -92,4 +105,4 @@ Qed.
 (* apply (vf_hb_irr WF WF_SC CSC COH ACYC_EXT). *)
 (* Qed. *)
 
-End GvfProperties.
+(* End GvfProperties. *)

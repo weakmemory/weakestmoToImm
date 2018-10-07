@@ -1,7 +1,7 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
-     imm imm_hb CertExecution2.
+     imm imm_hb CertExecution2 AuxRel.
 Require Import Vf.
 
 Section CertRf.
@@ -15,7 +15,7 @@ Notation "'I'"  := (issued TC).
 
 Notation "'D'" := (D G TC thread).
 
-Notation "'E'" := G.(acts_set).
+Notation "'E'"  := G.(acts_set).
 Notation "'lab'" := (G.(lab)).
 Notation "'rmw'" := G.(rmw).
 
@@ -30,28 +30,47 @@ Notation "'hb'" := (G.(imm_hb.hb)).
 Notation "'psc'" := (G.(imm.psc)).
 Notation "'rf'" := (G.(rf)).
 Notation "'co'" := (G.(co)).
-Notation "'vf'" := (G.(Gvf)).
 Notation "'loc'" := (loc lab).
 
 Notation "'Loc_' l" := (fun x => loc x = Some l) (at level 1).
 Notation "'W_' l" := (W ∩₁ Loc_ l) (at level 1).
 Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 
+Notation "'E0'" := (Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘))).
+Notation "'vf'" := (Avf E lab (rf ;; <| D |>) hb psc).
+
 Definition cert_rf :=
-  vf ∩ same_loc lab ⨾ ⦗ (E \₁ D) ∩₁ R ⦘ \ co ⨾ vf.
+  vf ∩ same_loc lab ⨾ ⦗ (E0 \₁ D) ∩₁ R ⦘ \ co ⨾ vf.
 Definition cert_rfi := ⦗  Tid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 Definition cert_rfe := ⦗ NTid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 
 Section Properties.
 Variable WF  : Wf G.
 Variable COH : imm_consistent G.
+Variable TCCOH : tc_coherent G sc TC.
   
-Lemma cert_rfE : cert_rf ≡ ⦗E⦘ ⨾ cert_rf ⨾ ⦗E \₁ D⦘.
+Lemma cert_rfE : cert_rf ≡ ⦗E⦘ ⨾ cert_rf ⨾ ⦗E⦘.
 Proof.
   apply dom_helper_3.
   unfold cert_rf.
-  rewrite (GvfE WF).
-  basic_solver 21.
+  rewrite AvfE.
+  { basic_solver 21. }
+  { rewrite (dom_l WF.(wf_rfE)) at 1.
+      by rewrite seqA. }
+  all: eapply dom_l.
+  { by apply wf_hbE. }
+    by apply wf_pscE.
+Qed.
+
+Lemma cert_rf_codom : cert_rf ≡ cert_rf ;; <| E0 \₁ D |>.
+Proof.
+  unfold cert_rf.
+  rewrite AuxRel.seq_eqv_minus_lr.
+  rewrite seqA.
+  rewrite <- id_inter.
+  arewrite ((E0 \₁ D) ∩₁ R ∩₁ (E0 \₁ D) ≡₁ (E0 \₁ D) ∩₁ R).
+  2: done.
+  basic_solver 20.
 Qed.
 
 Lemma cert_rfD : cert_rf ≡ ⦗W⦘ ⨾ cert_rf ⨾ ⦗R⦘.
@@ -89,11 +108,19 @@ Proof.
   unfold cert_rf in *. desf; unfolder in *; basic_solver 40.
 Qed.
 
-Lemma cert_rf_comp : forall b (IN: ((E \₁ D) ∩₁ R) b), exists a, cert_rf a b.
+Lemma cert_rf_comp : forall b (IN: ((E0 \₁ D) ∩₁ R) b), exists a, cert_rf a b.
 Proof.
-  ins; unfolder in *; desf.
+  ins; unfolder in *; desc.
   assert (exists l, loc b = Some l); desc.
   { by generalize (is_r_loc lab); unfolder in *; basic_solver 12. }
+
+  assert (E b) as UU.
+  { desf.
+    { eapply coveredE; eauto. }
+    { eapply issuedE; eauto. }
+    apply (dom_l G.(wf_sbE)) in IN2.
+    apply seq_eqv_l in IN2. desf. }
+
   assert (E (InitEvent l)).
   { by apply WF; eauto. }
   assert (lab (InitEvent l) = Astore Xpln Opln l 0).
@@ -106,7 +133,7 @@ Proof.
   { by apply init_ninit_sb; eauto; eapply read_or_fence_is_not_init; eauto. }
   assert (vf (InitEvent l) b).
   { exists (InitEvent l); splits.
-    { red. splits; desf. by apply WF.(init_w). }
+    { red. splits; desf; by apply WF.(init_w). }
     unfold eqv_rel; eauto.
     hahn_rewrite <- sb_in_hb.
     basic_solver 21. }
@@ -119,8 +146,13 @@ Proof.
   { ins.
     assert (A: (co ⨾ ⦗fun x : actid => vf x b⦘)^? (InitEvent l) c).
     { apply rt_of_trans; try done.
-      apply transitiveI; unfolder; ins; desf; splits; eauto.
+      apply transitiveI.
+      arewrite_id ⦗fun x : actid => vf x b⦘ at 1.
+      rewrite seq_id_l.
+      arewrite (co ⨾ co ⊆ co); [|done].
+      apply transitiveI.
       eapply co_trans; eauto. }
+    clear IN2.
     unfolder in A; desf.
     { by apply in_filterP_iff; split; auto. }
     apply in_filterP_iff.
@@ -128,13 +160,18 @@ Proof.
     hahn_rewrite WF.(wf_coD) in A.
     hahn_rewrite WF.(wf_col) in A.
     unfold same_loc in *; unfolder in *; desf; splits; eauto; congruence. }
-  ins; desf.
+  ins; desc.
   assert (A: (co ⨾ ⦗fun x : actid => vf x b⦘)^? (InitEvent l) b0).
-  { apply rt_of_trans; try done.
-    apply transitiveI; unfolder; ins; desf; splits; eauto.
+  { apply rt_of_trans; [|by subst].
+    apply transitiveI.
+    arewrite_id ⦗fun x : actid => vf x b⦘ at 1.
+    rewrite seq_id_l.
+    arewrite (co ⨾ co ⊆ co); [|done].
+    apply transitiveI.
     eapply co_trans; eauto. }
   assert (loc b0 = Some l).
-  { unfolder in A; desf.
+  { clear IN2.
+    unfolder in A; desf.
     hahn_rewrite WF.(wf_col) in A.
     unfold same_loc in *; desf; unfolder in *; congruence. }
   exists b0; red; split.
@@ -144,12 +181,16 @@ Proof.
   unfolder in *; ins; desf; intro; desf; basic_solver 11.
 Qed.
 
-Lemma cert_rf_mod: (E \₁ D) ∩₁ R ≡₁ codom_rel cert_rf.
+Lemma cert_rf_mod: (E0 \₁ D) ∩₁ R ≡₁ codom_rel cert_rf.
 Proof.
   split.
-  unfolder; ins; desf.
-  apply cert_rf_comp; basic_solver.
-  unfold cert_rf; basic_solver.
+  { intros x HH.
+    apply cert_rf_comp in HH.
+    desc. eexists. eauto. }
+  rewrite (dom_r cert_rfD).
+  rewrite cert_rf_codom.
+  rewrite !codom_eqv1.
+  basic_solver 10.
 Qed.
 
 Lemma cert_rf_in_vf: cert_rf ⊆ vf.

@@ -87,6 +87,7 @@ Section SimRelCert.
   Notation "'I''"  := (issued TC').
 
   Notation "'cert_rf'"  := (cert_rf G TC' qtid).
+  Notation "'E0'" := (Gtid_ qtid ∩₁ (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘))).
 
   Record sim_cert_graph :=
     { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
@@ -98,7 +99,7 @@ Section SimRelCert.
                (KK : K (q, existT _ _ state)),
           (step qtid)＊ state state';
       
-      dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘);
+      dcertE : certE ≡₁ E0;
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
       
       new_rfv : new_rf ⊆ same_val certLab;
