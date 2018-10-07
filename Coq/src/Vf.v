@@ -17,6 +17,9 @@ Notation "'F'" := (fun a => is_true (is_f lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
   
 Definition Avf : relation A := ⦗ W ⦘ ⨾ rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)^? ⨾ sc^? ⨾ hb^? ;; <| E |>.
+
+Lemma Avf_dom : Avf ≡ <| W |>;; Avf.
+Proof. unfold Avf. seq_rewrite seq_eqvK. done. Qed.
 End Vf.
 
 Definition Gvf (G : execution) :=

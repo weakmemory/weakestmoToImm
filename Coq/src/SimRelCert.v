@@ -30,6 +30,7 @@ Section SimRelCert.
   (* A state, which is reachable from a state in a continuation related to (h q) in S
      and which represents a graph certification. *)
   Variable state' : state.
+  Variable new_rf : relation actid.
   
   Notation "'certG'" := state'.(ProgToExecution.G).
 
@@ -58,6 +59,7 @@ Section SimRelCert.
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gtid'" := (tid).
   Notation "'Grmw'" := G.(rmw).
+  Notation "'Gvf'" := G.(Gvf).
 
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
@@ -96,9 +98,28 @@ Section SimRelCert.
       dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ C' ∪₁ I' ⦘);
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
       
-      rval : cert_rf ⊆ same_val certLab;
+      new_rfv : new_rf ⊆ same_val certLab;
+      new_rfl : new_rf ⊆ same_loc certLab;
+      new_rf_in_vf  : new_rf ⊆ Gvf;
+      new_rf_iss_sb : new_rf ⊆ <| I |> ;; new_rf ∪ Gsb;
+      new_rf_complete : GR ∩₁ certE ⊆₁ codom_rel new_rf;
+      new_rff : functional new_rf⁻¹;
+
       oval : eq_dom (D G TC' qtid) (val certLab) (val Glab);
     }.
+  
+  Section CertGraphProperties.
+    Variable SCG : sim_cert_graph.
+    
+    Lemma new_rf_w : new_rf ≡ <| GW |> ;; new_rf.
+    Proof.
+      split; [|basic_solver].
+      intros w r HH. apply seq_eqv_l. split; [|done].
+      apply SCG.(new_rf_in_vf) in HH.
+      apply Avf_dom in HH. apply seq_eqv_l in HH.
+      desf.
+    Qed.
+  End CertGraphProperties.
 
   Record sb_max i e :=
     (* TODO. It looks too strong. Shouldn't e' be in GE at very least?
@@ -215,10 +236,10 @@ Variable SRC : simrel prog S G sc TC f.
 
 Lemma sim_cert_graph_start TC' thread
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
-  exists q state',
+  exists q state' new_rf,
     ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
     ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
-    ⟪ SRCG : sim_cert_graph S G TC' q state' ⟫.
+    ⟪ SRCG : sim_cert_graph S G TC TC' q state' new_rf ⟫.
 Proof.
   assert (tc_coherent G sc TC') as TCCOH'.
   { eapply sim_trav_step_coherence.
@@ -241,7 +262,8 @@ Proof.
 
   edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
   desf.
-  assert (exists state', sim_cert_graph S G TC' q state') as [state' HH].
+  assert (exists state' new_rf, sim_cert_graph S G TC TC' q state' new_rf)
+    as [state' [new_rf HH]].
   2: { eexists. eexists. splits; eauto. }
   cdes SSTATE. cdes SSTATE1.
   set (E0 := Tid_ (ES.cont_thread S q) ∩₁
@@ -330,7 +352,7 @@ Proof.
   1-14: admit.
 
   desf.
-  exists cert_state.
+  exists cert_state. eexists.
   constructor.
   all: admit.
 Admitted.
@@ -338,16 +360,15 @@ Admitted.
 (* Lemma sbq_dom_incl_qtidTC' TC' q state' (SRCG: sim_cert_graph S G TC' q state') : *)
 (*   sbq_dom S G q ⊆₁ (Gtid_ (ES.cont_thread S q)) ∩₁ (covered TC' ∪₁ issued TC'). *)
 (* Proof.  *)
-  
 
 Lemma simrel_cert_start TC' thread
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
-  exists q state',
-    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
+  exists q state' new_rf,
+    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' new_rf ⟫.
 Proof.
-  edestruct sim_cert_graph_start as [q [state' HH]]; eauto.
+  edestruct sim_cert_graph_start as [q [state' [new_rf HH]]]; eauto.
   desf.
-  exists q. exists state'.
+  exists q. exists state'. exists new_rf.
   constructor; auto.
 
   Ltac narrow_hdom q CsbqDOM :=
@@ -378,22 +399,22 @@ Proof.
     all: basic_solver. }
 Admitted.
 
-Lemma simrel_cert_rfD TC' h q state 
-  (SRCC : simrel_cert prog S G sc TC TC' f h q state) :
+Lemma simrel_cert_rfD TC' h q state' new_rf
+  (SRCC : simrel_cert prog S G sc TC TC' f h q state' new_rf) :
   f □₁ (dom_rel (Grf ⨾ ⦗ D G TC' (ES.cont_thread S q) ⦘)) ⊆₁ SE . 
 Proof. 
   admit.
 Admitted.
 
-Lemma simrel_cert_lbl_step TC' h q
+Lemma simrel_cert_lbl_step TC' h q new_rf
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
       (KK : K (q, existT _ _ state))
       (LBL_STEP : lbl_step (ES.cont_thread S q) state state') :
   exists  q' S' h',
     ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
-    ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' ⟫.
+    ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' new_rf ⟫.
 Proof.
   destruct LBL_STEP as [lbls ILBL_STEP].
   (* Anton: It's better not to use name `H` as it's the name
