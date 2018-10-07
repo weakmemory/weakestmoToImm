@@ -196,88 +196,97 @@ Qed.
 Lemma cert_rf_in_vf: cert_rf ⊆ vf.
 Proof. unfold cert_rf; basic_solver. Qed.
 
-(* Lemma cert_rf_hb: irreflexive (cert_rf ⨾ hb ⨾ (psc ⨾ hb)^?). *)
-(* Proof. *)
-(*   rewrite cert_rf_in_vf. *)
-(*   apply furr_hb_sc_hb_irr; done. *)
-(* Qed. *)
+Lemma Cvf_in_Gvf : vf ⊆ G.(Gvf).
+Proof.
+  unfold Gvf, Avf.
+  arewrite_id ⦗D⦘. by rewrite seq_id_r.
+Qed.
 
-(* Lemma non_I_cert_rf: ⦗E \₁ I⦘ ⨾ cert_rf ⊆ Gsb. *)
-(* Proof. *)
-(* assert (cert_rf_hb: irreflexive (cert_rf ⨾ Ghb ⨾ (sc ⨾ Ghb)^?)). *)
-(* by apply cert_rf_hb. (* Coq bug ?! *) *)
+Lemma cert_rf_hb: irreflexive (cert_rf ⨾ hb).
+Proof.
+  rewrite cert_rf_in_vf.
+  rewrite Cvf_in_Gvf.
+  cdes COH. by apply Gvf_hb_irr.
+Qed.
 
-(* rewrite (cert_rfD). *)
-(* arewrite (⦗E \₁ I⦘ ⨾ ⦗W⦘ ⊆ ⦗E \₁ I⦘ ⨾ ⦗Tid_ thread⦘ ⨾ ⦗W⦘). *)
-(* by revert IT_new_co; unfolder; firstorder. *)
-(* rewrite (cert_rfE). *)
-(* arewrite (E \₁ D ⊆₁ E ∩₁ Tid_ thread). *)
-(* by unfold D; unfolder; ins; desf; tauto. *)
-(* unfolder; ins; desf. *)
-(* eapply (@same_thread G) in H3; desf. *)
-(* destruct H3; [subst x; type_solver|]. *)
-(* 2: by intro K; apply (init_w WF) in K; type_solver. *)
-(* exfalso; generalize cert_rf_hb. *)
-(* generalize (@sb_in_hb G); basic_solver 12. *)
+Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
+Proof.
+  assert (cert_rf_hb: irreflexive (cert_rf ⨾ hb))
+    by apply cert_rf_hb.
+  (* TODO: continue from here *)
+Admitted.
+
+  (* rewrite (cert_rfD). *)
+  (* arewrite (⦗E0 \₁ I⦘ ⨾ ⦗W⦘ ⊆ ⦗E0 \₁ I⦘ ⨾ ⦗Tid_ thread⦘ ⨾ ⦗W⦘). *)
+  (* { by revert IT_new_co; unfolder; firstorder. } *)
+  (* rewrite (cert_rfE). *)
+  (* arewrite (E \₁ D ⊆₁ E ∩₁ Tid_ thread). *)
+  (* { by unfold D; unfolder; ins; desf; tauto. } *)
+  (* unfolder; ins; desf. *)
+  (* eapply (@same_thread G) in H3; desf. *)
+  (* destruct H3; [subst x; type_solver|]. *)
+  (* 2: by intro K; apply (init_w WF) in K; type_solver. *)
+  (* exfalso; generalize cert_rf_hb. *)
+  (* generalize (@sb_in_hb G); basic_solver 12. *)
 (* Qed. *)
 
 (* Lemma cert_rfe_Acq : (cert_rf \ Gsb) ⨾ ⦗R∩₁Acq⦘ ⊆ ∅₂. *)
 (* Proof. *)
-(* rewrite cert_rfE. *)
-(* arewrite (⦗E⦘ ⊆ ⦗E \₁ I⦘ ∪ ⦗E ∩₁ I⦘). *)
-(* unfolder; ins; desf; tauto. *)
-(* relsf. *)
-(* rewrite minus_union_l. *)
-(* relsf; unionL. *)
-(* sin_rewrite non_I_cert_rf. *)
-(* basic_solver. *)
-(* rewrite cert_rfD. *)
-(* arewrite (cert_rf ⊆ cert_rf ∩ Gsame_loc). *)
-(* generalize (cert_rfl); basic_solver. *)
+(*   rewrite cert_rfE. *)
+(*   arewrite (⦗E⦘ ⊆ ⦗E \₁ I⦘ ∪ ⦗E ∩₁ I⦘). *)
+(*   unfolder; ins; desf; tauto. *)
+(*   relsf. *)
+(*   rewrite minus_union_l. *)
+(*   relsf; unionL. *)
+(*   sin_rewrite non_I_cert_rf. *)
+(*   basic_solver. *)
+(*   rewrite cert_rfD. *)
+(*   arewrite (cert_rf ⊆ cert_rf ∩ Gsame_loc). *)
+(*   generalize (cert_rfl); basic_solver. *)
 
-(* unfolder; ins; desf. *)
+(*   unfolder; ins; desf. *)
 
-(* assert (Lx:exists l, Gloc x = Some l); desc. *)
-(* by apply is_w_loc. *)
+(*   assert (Lx:exists l, Gloc x = Some l); desc. *)
+(*     by apply is_w_loc. *)
 
-(* assert (Ly:Gloc y = Some l). *)
-(* unfold same_loc in *; congruence. *)
+(*     assert (Ly:Gloc y = Some l). *)
+(*     unfold same_loc in *; congruence. *)
 
-(* forward (apply COMP_ACQ). *)
-(* by basic_solver. *)
+(*     forward (apply COMP_ACQ). *)
+(*       by basic_solver. *)
 
-(* ins; desc. *)
+(*       ins; desc. *)
 
-(* apply rfi_union_rfe in H10; unfolder in H10; desf; cycle 1. *)
-(* by generalize R_Acq_codom_rfe; basic_solver 12. *)
+(*       apply rfi_union_rfe in H10; unfolder in H10; desf; cycle 1. *)
+(*         by generalize R_Acq_codom_rfe; basic_solver 12. *)
 
-(* ie_unfolder; unfolder in H10; desf. *)
+(*         ie_unfolder; unfolder in H10; desf. *)
 
-(* hahn_rewrite (wf_rfD WF) in H10. *)
-(* hahn_rewrite (wf_rfE WF) in H10. *)
+(*         hahn_rewrite (wf_rfD WF) in H10. *)
+(*         hahn_rewrite (wf_rfE WF) in H10. *)
 
-(* unfolder in H10; desf. *)
+(*         unfolder in H10; desf. *)
 
-(* assert (Lz:Gloc z = Some l). *)
-(* by apply (wf_rfl WF) in H14; unfold same_loc in *; congruence. *)
+(*         assert (Lz:Gloc z = Some l). *)
+(*           by apply (wf_rfl WF) in H14; unfold same_loc in *; congruence. *)
 
-(* forward (apply ((wf_co_total WF) (Some l) z)). *)
-(* basic_solver. *)
-(* instantiate (1 := x). *)
-(* basic_solver. *)
+(*           forward (apply ((wf_co_total WF) (Some l) z)). *)
+(*           basic_solver. *)
+(*           instantiate (1 := x). *)
+(*           basic_solver. *)
 
-(* intro; desf. *)
+(*           intro; desf. *)
 
-(* intro; desf. *)
+(*           intro; desf. *)
 
-(* - *)
-(* eapply eco_furr_irr; try edone. *)
-(* eexists; splits; [|eby apply cert_rf_in_furr]. *)
-(* unfold eco, fr. *)
-(* basic_solver 12. *)
-(* - eapply H3. *)
-(* exists z; split; [| apply furr_alt; basic_solver 12]. *)
-(* apply I_co_in_cert_co; basic_solver. *)
+(*   - *)
+(*     eapply eco_furr_irr; try edone. *)
+(*     eexists; splits; [|eby apply cert_rf_in_furr]. *)
+(*     unfold eco, fr. *)
+(*     basic_solver 12. *)
+(*   - eapply H3. *)
+(*     exists z; split; [| apply furr_alt; basic_solver 12]. *)
+(*     apply I_co_in_cert_co; basic_solver. *)
 (* Qed. *)
 
 End Properties.
