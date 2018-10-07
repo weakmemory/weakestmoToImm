@@ -73,9 +73,13 @@ Section SimRelCert.
   Notation "'Gco'" := (G.(co)).
 
   Notation "'certE'" := certG.(acts_set).
-  Notation "'certLab'" := (certG.(lab)).
   Notation "'certTid'" := (tid).
   Notation "'certRmw'" := (certG.(rmw)).
+
+  Definition certLab (e : actid) : label :=
+    if excluded_middle_informative (certE e)
+    then certG.(lab) e
+    else Glab e.
   
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
@@ -86,22 +90,21 @@ Section SimRelCert.
 
   Record sim_cert_graph :=
     { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
-      cuplab : forall e (TIDE : Gtid_ qtid e)
-                      (DOMI : dom_rel (Gsb ⨾ ⦗ I' ⦘) e),
-          same_label_up_to_value (certLab e) (Glab e);
+      cuplab_cert : forall e (EE : certE e),
+          same_label_up_to_value (certG.(lab) e) (Glab e);
       cstate_stable : stable_state qtid state';
       cstate_reachable :
         forall (state : (thread_lts qtid).(Language.state))
                (KK : K (q, existT _ _ state)),
           (step qtid)＊ state state';
       
-      dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ C' ∪₁ I' ⦘);
+      dcertE : certE ≡₁ Gtid_ qtid ∩₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘);
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ Grmw ⨾ ⦗ certE ⦘;
       
       new_rfv : new_rf ⊆ same_val certLab;
       new_rfl : new_rf ⊆ same_loc certLab;
       new_rf_in_vf  : new_rf ⊆ Gvf;
-      new_rf_iss_sb : new_rf ⊆ <| I |> ;; new_rf ∪ Gsb;
+      new_rf_iss_sb : new_rf ⊆ ⦗ I ⦘ ⨾ new_rf ∪ Gsb;
       new_rf_complete : GR ∩₁ certE ⊆₁ codom_rel new_rf;
       new_rff : functional new_rf⁻¹;
 
@@ -111,13 +114,36 @@ Section SimRelCert.
   Section CertGraphProperties.
     Variable SCG : sim_cert_graph.
     
-    Lemma new_rf_w : new_rf ≡ <| GW |> ;; new_rf.
+    Lemma new_rf_w : new_rf ≡ ⦗ GW ⦘ ⨾ new_rf.
     Proof.
       split; [|basic_solver].
       intros w r HH. apply seq_eqv_l. split; [|done].
       apply SCG.(new_rf_in_vf) in HH.
       apply Avf_dom in HH. apply seq_eqv_l in HH.
       desf.
+    Qed.
+
+    Lemma cuplab e :
+        same_label_up_to_value (certLab e) (Glab e).
+    Proof.
+      unfold certLab. desf.
+      { by apply SCG. }
+      red. desf.
+    Qed.
+    
+    Lemma new_rfl_g : new_rf ⊆ same_loc Glab.
+    Proof.
+      intros w r HH.
+      apply SCG.(new_rfl) in HH.
+      red. red in HH.
+      assert (same_label_up_to_value (certLab w) (Glab w)) as AA
+          by apply cuplab.
+      assert (same_label_up_to_value (certLab r) (Glab r)) as BB
+          by apply cuplab.
+      red in AA. red in BB.
+      unfold loc in *.
+      destruct (certLab r); destruct (Glab r);
+        destruct (certLab w); destruct (Glab w); desf.
     Qed.
   End CertGraphProperties.
 

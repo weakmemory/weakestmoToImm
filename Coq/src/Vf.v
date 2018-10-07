@@ -16,9 +16,9 @@ Notation "'W'" := (fun a => is_true (is_w lab a)).
 Notation "'F'" := (fun a => is_true (is_f lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
   
-Definition Avf : relation A := ⦗ W ⦘ ⨾ rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)^? ⨾ sc^? ⨾ hb^? ;; <| E |>.
+Definition Avf : relation A := ⦗ W ⦘ ⨾ rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)^? ⨾ sc^? ⨾ hb^? ⨾ ⦗ E ⦘.
 
-Lemma Avf_dom : Avf ≡ <| W |>;; Avf.
+Lemma Avf_dom : Avf ≡ ⦗ W ⦘ ⨾ Avf.
 Proof. unfold Avf. seq_rewrite seq_eqvK. done. Qed.
 End Vf.
 
@@ -42,7 +42,7 @@ Notation "'W'" := (fun a => is_true (is_w lab a)).
 Notation "'F'" := (fun a => is_true (is_f lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
 
-Lemma GvfE : vf ≡ <| E |> ;; vf ;; <| E |>.
+Lemma GvfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
 Proof.
   split; [|basic_solver].
   unfold Gvf, Avf.
