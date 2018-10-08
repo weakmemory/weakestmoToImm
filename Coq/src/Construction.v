@@ -1,3 +1,4 @@
+Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events ProgToExecution Execution.
@@ -136,4 +137,121 @@ Inductive t_ (S S' : ES.t) : Prop :=
 Definition t (m : model) (S S' : ES.t) : Prop :=
   ⟪ TT  : t_ S S' ⟫ /\
   ⟪ CON : @es_consistent S' m ⟫.
+
+Lemma basic_step_acts_set 
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BASIC_STEP : t_basic e e' S S') :
+  S'.(ES.acts_set) ≡₁ S.(ES.acts_set) ∪₁ eq e ∪₁ eq_opt e'.
+Proof. 
+  cdes BASIC_STEP. 
+  edestruct e';
+    desf; 
+    unfold ES.acts_set; 
+    rewrite NEXT_ACT;
+    autounfold with unfolderDb;
+    splits; unfold set_subset; intros; by omega.
+Qed.
+
+Lemma basic_step_tid_eq_dom
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BASIC_STEP : t_basic e e' S S') :
+  eq_dom S.(ES.acts_set) S.(ES.tid) S'.(ES.tid).
+Proof. 
+  unfold eq_dom. ins. 
+  unfold ES.acts_set in SX.
+  cdes BASIC_STEP. 
+  rewrite TID'.
+  desf; rewrite updo; try rewrite updo; desf; omega. 
+Qed.
+
+Lemma basic_step_same_tid
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BASIC_STEP : t_basic e e' S S') :
+  restr_rel S.(ES.acts_set) S.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S'.(ES.same_tid).
+Proof. 
+  autounfold with unfolderDb. 
+  unfold ES.same_tid.
+  splits; ins; desf; splits; auto;
+    [erewrite <- basic_step_tid_eq_dom | erewrite basic_step_tid_eq_dom];
+    eauto;
+    rewrite H;
+    [|symmetry];
+    eapply basic_step_tid_eq_dom; eauto. 
+Qed.
+
+Lemma step_cf_monotone S S' (STEP_: t_ S S') :
+  S.(ES.cf) ⊆ S'.(ES.cf).
+Proof.
+  unfold ES.cf.
+  edestruct STEP_.
+  { cdes BS.
+    edestruct cont. 
+    { rewrite cross_false_r in *.
+      rewrite union_false_r in *. 
+      rewrite SB'.
+      rewrite (basic_step_acts_set e None S S'); [| by apply BS].
+      unfold eq_opt. 
+      rewrite set_union_empty_r. 
+      repeat rewrite <- restr_relE.
+      repeat rewrite restr_inter.
+      admit. }
+    all: admit.
+Admitted.
+      (* apply inter_rel_mori. *)
+      (* { rewrite restr_set_union.  *)
+      (*   repeat apply inclusion_union_r1_search.  *)
+      (*   eapply basic_step_same_tid; by apply BS. }  *)
+      (* autounfold with unfolderDb. ins. *)
+      (* splits.  *)
+      (* { unfold not. ins. desf; auto; omega. } *)
+      (* { exfalso. apply H. }  *)
+      (*   omega. omega.  *)
+      (*   inversion H2. inversion H5.  *)
+      (*   apply H. left. right.  *)
+        
+        
+      (* }  *)
+      (* unfold not.  *)
+      
+      (* ins.  *)
+
+Lemma step_cc_monotone S S' (STEP_: t_ S S') :
+  S.(ES.cc) ⊆ S'.(ES.cc).
+Proof.
+  (* unfold ES.cc. *)
+  (* unfold ES.cf. *)
+  (* edestruct STEP_. *)
+  (* { rewrite JF'. *)
+  (*   cdes BS. *)
+  (*   edestruct cont. *)
+  (*   { rewrite cross_false_r in *. *)
+  (*     rewrite union_false_r in *. *)
+Admitted.
+      
+Lemma step_vis_monotone S S' (STEP_: t_ S S') :
+  vis S ⊆₁ vis S'.
+Proof.
+  (* unfold vis. *)
+  (* unfold ES.cc. *)
+  (* unfold ES.cf. *)
+  (* edestruct STEP_. *)
+  (* { rewrite JF'. rewrite EW'. *)
+  (*   cdes BS. *)
+  (*   edestruct cont. *)
+  (*   { rewrite cross_false_r in *. *)
+  (*     rewrite union_false_r in *. *)
+      
+  (*     rewrite SB'. *)
+  (*   ed *)
+  (*   desf; eauto. *)
+  (*   { simpl in H1. desf. } *)
+  (*   { simpl in H1. desf. } *)
+Admitted.
+
 End ESstep.

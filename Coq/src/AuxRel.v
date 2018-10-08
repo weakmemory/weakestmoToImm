@@ -17,6 +17,12 @@ Section AuxRel.
     fun x y => y = f x.
 End AuxRel.
 
+Definition eq_opt {A} (a: option A) : A -> Prop := fun b => 
+  match a with
+  | None => False
+  | Some a => eq a b
+  end.
+  
 Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
 
 Definition eq_dom {A B} (s : A -> Prop) (f g: A -> B) := 
@@ -35,7 +41,7 @@ Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold compl_rel eq_class_rel : unfolderDb. 
+Hint Unfold eq_opt compl_rel eq_class_rel : unfolderDb. 
 
 Section Props.
 
@@ -182,6 +188,14 @@ Proof.
   { right. eexists. splits; eauto. }
   { left. right. eexists. splits; eauto. }
   { left. left. right. auto. }
+Qed.
+
+Lemma restr_set_inter :
+  restr_rel (s ∩₁ s') r ≡
+    restr_rel s r ∩ restr_rel s' r.
+Proof.
+  autounfold with unfolderDb.
+  splits; ins; desf. 
 Qed.
 
 Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
