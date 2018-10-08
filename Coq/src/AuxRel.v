@@ -17,6 +17,8 @@ Section AuxRel.
     fun x y => y = f x.
 End AuxRel.
 
+Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
+
 Definition eq_dom {A B} (s : A -> Prop) (f g: A -> B) := 
   forall (x: A) (SX: s x), f x = g x. 
 
@@ -33,7 +35,7 @@ Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold eq_class_rel : unfolderDb. 
+Hint Unfold compl_rel eq_class_rel : unfolderDb. 
 
 Section Props.
 
@@ -213,6 +215,14 @@ Qed.
 End Props.
 
 Require Import Setoid.
+
+Add Parametric Morphism A : (@compl_rel A) with signature 
+  inclusion --> inclusion as compl_mori.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@compl_rel A) with signature 
+  same_relation ==> same_relation as compl_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_equiv ==> eq ==> iff as inj_dom_more.

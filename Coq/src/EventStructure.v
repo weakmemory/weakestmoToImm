@@ -7,8 +7,6 @@ Require Import AuxRel.
 Set Implicit Arguments.
 Export ListNotations.
 
-Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
-
 Definition eventid := nat.
 Definition tid_init := xH.
 
