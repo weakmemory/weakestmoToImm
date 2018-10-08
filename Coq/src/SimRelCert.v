@@ -6,7 +6,7 @@ From imm Require Import Events Execution
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_s imm_s_hb SimulationRel
      CertExecution2
-     SubExecution.
+     SubExecution CombRelations.
 Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel LblStep CertRf.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
@@ -59,7 +59,7 @@ Section SimRelCert.
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gtid'" := (tid).
   Notation "'Grmw'" := G.(rmw).
-  Notation "'Gvf'" := G.(Gvf).
+  Notation "'Gvf'" := (furr G sc).
 
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).

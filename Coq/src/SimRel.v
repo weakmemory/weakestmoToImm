@@ -30,9 +30,9 @@ Section SimRel.
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gtid'" := (tid).
   Notation "'Gsb'" := (G.(sb)).
-  Notation "'Ghb'" := (G.(imm_hb.hb)).
+  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
-  Notation "'Gvf'" := (G.(Gvf)).
+  Notation "'Gvf'" := (furr G sc).
   Notation "'Gco'" := (G.(co)).
   Notation "'Grmw'" := (G.(rmw)).
   Notation "'Stid'" := (S.(ES.tid)).
@@ -45,7 +45,6 @@ Section SimRel.
   Notation "'Sew'" := (S.(ES.ew)).
   Notation "'Sjf'" := (S.(ES.jf)).
   Notation "'Srmw'" := (S.(ES.rmw)).
-  Notation "'Svf'" := (Svf S Weakestmo).
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 

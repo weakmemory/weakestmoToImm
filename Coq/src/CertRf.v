@@ -3,6 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
      imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
      CombRelations.
+Require Import Vf.
 
 Section CertRf.
 Variable G  : execution.
@@ -42,11 +43,11 @@ Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 Notation "'furr'" := (furr G sc).
 
 Definition E0 := (Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘))).
-
-Hint Unfold E0 : unfolderDb.
+Definition vf := <| W |> ;; (rf ;; <| D |>)^? ;; hb^? ;;
+                    sc^? ;; hb^? ;; <| E |>.
 
 Definition cert_rf :=
-  furr ∩ same_loc lab ⨾ ⦗ (E0 \₁ D) ∩₁ R ⦘ \ co ⨾ furr.
+  vf ∩ same_loc lab ⨾ ⦗ (E0 \₁ D) ∩₁ R ⦘ \ co ⨾ vf.
 Definition cert_rfi := ⦗  Tid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 Definition cert_rfe := ⦗ NTid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 
@@ -56,6 +57,23 @@ Variable COH : imm_consistent G sc.
 Variable TCCOH : tc_coherent G sc TC.
 Variable RELCOH : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
+Lemma vfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
+Proof.
+  apply dom_helper_3.
+  unfold vf.
+  rewrite (dom_l WF.(wf_rfE)).
+  rewrite (dom_l WF.(wf_hbE)).
+  cdes COH.
+  rewrite (dom_l (wf_scE Wf_sc)).
+  basic_solver.
+Qed.
+
+Lemma vf_dom : vf ≡ ⦗ W ⦘ ⨾ vf.
+Proof.
+  split; [|basic_solver].
+    by unfold vf; seq_rewrite seq_eqvK.
+Qed.
+
 Lemma E0_in_E : E0 ⊆₁ E.
 Proof.
   unfold E0.
@@ -63,23 +81,25 @@ Proof.
   rewrite (dom_l (@wf_sbE G)).
   basic_solver.
 Qed.
+
+Lemma vf_in_furr : vf ⊆ furr.
+Proof.
+  cdes COH.
+  unfold vf.
+  arewrite_id ⦗D⦘. arewrite_id ⦗E⦘. rewrite !seq_id_r.
+    by rewrite furr_alt; auto.
+Qed.
+
+Lemma cert_rf_in_vf : cert_rf ⊆ vf.
+Proof. unfold cert_rf. basic_solver. Qed.
   
 Lemma cert_rfE : cert_rf ≡ ⦗E⦘ ⨾ cert_rf ⨾ ⦗E⦘.
 Proof.
   cdes COH.
   apply dom_helper_3.
-  unfold cert_rf.
-  rewrite inclusion_minus_rel.
-  rewrite inter_inclusion.
-  rewrite wf_furrE; auto.
-  rewrite seq_union_l.
-  arewrite_id ⦗W⦘. rewrite seq_id_l.
-  arewrite ((E0 \₁ D) ∩₁ R ⊆₁ E).
-  2: { unionL; [basic_solver|]. 
-       rewrite seq_eqvK. rewrite  dom_helper_3.
-       rewrite !seqA. by seq_rewrite !seq_eqvK. }
-  sin_rewrite E0_in_E.
-  basic_solver.
+  rewrite cert_rf_in_vf.
+  apply dom_helper_3.
+  apply vfE.
 Qed.
 
 Lemma cert_rf_codom : cert_rf ≡ cert_rf ;; <| E0 \₁ D |>.
@@ -99,7 +119,7 @@ Proof.
   unfold cert_rf.
   rewrite inclusion_minus_rel.
   rewrite inter_inclusion.
-  unfold CombRelations.furr, urr.
+  rewrite vf_dom.
   basic_solver.
 Qed.
 
@@ -137,7 +157,7 @@ Proof.
   { by generalize (is_r_loc lab); unfolder in *; basic_solver 12. }
 
   assert (E b) as UU.
-  { apply E0_in_E. red. split; eauto. }
+  { by apply E0_in_E. }
 
   assert (E (InitEvent l)).
   { by apply WF; eauto. }
@@ -149,29 +169,28 @@ Proof.
   { by unfolder; unfold is_w, Events.loc; desf; eauto. }
   assert (sb (InitEvent l) b).
   { by apply init_ninit_sb; eauto; eapply read_or_fence_is_not_init; eauto. }
-  assert (furr (InitEvent l) b).
-  { red. exists l.
+  assert (vf (InitEvent l) b).
+  { red.
     exists (InitEvent l); splits.
     { red. splits; desf; by apply WF.(init_w). }
     unfold eqv_rel; eauto.
     hahn_rewrite <- sb_in_hb.
     basic_solver 21. }
 
-  forward (eapply last_exists with (s:=co ⨾ ⦗fun x => furr x b⦘) 
+  forward (eapply last_exists with (s:=co ⨾ ⦗fun x => vf x b⦘) 
                                    (dom:= filterP (W_ l) G.(acts)) (a:=(InitEvent l))).
   { eapply acyclic_mon.
     apply trans_irr_acyclic; [apply co_irr| apply co_trans]; eauto.
     basic_solver. }
   { ins.
-    assert (A: (co ⨾ ⦗fun x : actid => furr x b⦘)^? (InitEvent l) c).
+    assert (A: (co ⨾ ⦗fun x : actid => vf x b⦘)^? (InitEvent l) c).
     { apply rt_of_trans; try done.
       apply transitiveI.
-      arewrite_id ⦗fun x : actid => furr x b⦘ at 1.
+      arewrite_id ⦗fun x : actid => vf x b⦘ at 1.
       rewrite seq_id_l.
       arewrite (co ⨾ co ⊆ co); [|done].
       apply transitiveI.
       eapply co_trans; eauto. }
-    clear IN2.
     unfolder in A; desf.
     { by apply in_filterP_iff; split; auto. }
     apply in_filterP_iff.
@@ -180,17 +199,16 @@ Proof.
     hahn_rewrite WF.(wf_col) in A.
     unfold same_loc in *; unfolder in *; desf; splits; eauto; congruence. }
   ins; desc.
-  assert (A: (co ⨾ ⦗fun x : actid => furr x b⦘)^? (InitEvent l) b0).
+  assert (A: (co ⨾ ⦗fun x : actid => vf x b⦘)^? (InitEvent l) b0).
   { apply rt_of_trans; [|by subst].
     apply transitiveI.
-    arewrite_id ⦗fun x : actid => furr x b⦘ at 1.
+    arewrite_id ⦗fun x : actid => vf x b⦘ at 1.
     rewrite seq_id_l.
     arewrite (co ⨾ co ⊆ co); [|done].
     apply transitiveI.
     eapply co_trans; eauto. }
   assert (loc b0 = Some l).
-  { clear IN2.
-    unfolder in A; desf.
+  { unfolder in A; desf.
     hahn_rewrite WF.(wf_col) in A.
     unfold same_loc in *; desf; unfolder in *; congruence. }
   exists b0; red; split.
@@ -213,7 +231,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_in_furr: cert_rf ⊆ furr.
-Proof. unfold cert_rf; basic_solver. Qed.
+Proof. rewrite cert_rf_in_vf. apply vf_in_furr. Qed.
 
 Lemma cert_rf_hb_sc_hb_irr: irreflexive (cert_rf ⨾ hb ⨾ (sc ⨾ hb)^?).
 Proof.
@@ -222,25 +240,13 @@ Proof.
   all: apply COH.
 Qed.
 
-(* (* TODO : move to AuxRel.v *) *)
-(* Lemma seq_dom_rel_i {A} (r r' r'' : relation A) : *)
-(*   r ;; <| dom_rel r' |> ⊆ r'' <-> r ;; r' ⊆ r'' ;; r'. *)
-(* Proof. *)
-(*   split. *)
-(*   { basic_solver 20. } *)
-(*   unfolder. *)
-(*   ins; desf. *)
-(*   edestruct H; eauto. *)
-  
-(* Qed. *)
-
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
   cdes COH.
   rewrite cert_rf_codom.
-  rewrite cert_rf_in_furr.
-  rewrite furr_alt; auto.
-  rewrite !seqA.
+  rewrite cert_rf_in_vf.
+  unfold vf.
+  arewrite_id ⦗E⦘. rewrite seq_id_l.
   arewrite (E0 \₁ D ⊆₁ C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)).
   { unfold E0. basic_solver 10. }
   rewrite id_union. rewrite !seq_union_r.
@@ -249,15 +255,16 @@ Proof.
     all: rewrite crE; relsf; apply inclusion_union_mon; [done|].
     { eapply hb_covered; eauto. }
     eapply sc_covered; eauto. }
-  assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ rf^? ⨾ ⦗C⦘ ⊆ ∅₂) as QQ.
-  { rewrite crE. relsf.
+  assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ (rf ⨾ ⦗D⦘)^? ⨾ ⦗C⦘ ⊆ ∅₂) as QQ.
+  { arewrite_id ⦗D⦘.
+    rewrite crE. relsf.
     unionL.
     { generalize (w_covered_issued TCCOH).
       basic_solver. }
     rewrite rf_covered; eauto. basic_solver. }
-  assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ rf^? ⨾ hb^? ⨾ ⦗C⦘ ⊆ ∅₂) as YY.
+  assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ (rf ⨾ ⦗D⦘)^? ⨾ hb^? ⨾ ⦗C⦘ ⊆ ∅₂) as YY.
   { sin_rewrite AA. sin_rewrite QQ. basic_solver. }
-  assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ rf^? ⨾ hb^? ⨾ sc^? ⨾ ⦗C⦘ ⊆ ∅₂) as CC.
+  assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ (rf ⨾ ⦗D⦘)^? ⨾ hb^? ⨾ sc^? ⨾ ⦗C⦘ ⊆ ∅₂) as CC.
   { sin_rewrite BB. sin_rewrite YY. basic_solver. }
   unionL.
   { sin_rewrite AA. sin_rewrite CC. basic_solver. }
