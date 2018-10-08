@@ -4,10 +4,10 @@ From promising Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
-     imm imm_hb SimulationRel
+     imm_s imm_s_hb SimulationRel
      CertExecution2
      SubExecution.
-Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel Vf LblStep CertRf.
+Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel LblStep CertRf.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
