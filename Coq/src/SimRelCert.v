@@ -146,6 +146,12 @@ Section SimRelCert.
       destruct (certLab r); destruct (Glab r);
         destruct (certLab w); destruct (Glab w); desf.
     Qed.
+
+    Lemma new_rf_dom_f : f □₁ (dom_rel (new_rf ⨾ ⦗ certE ⦘)) ⊆₁ SE.
+    Proof. 
+      admit.
+    Admitted.
+
   End CertGraphProperties.
 
   Record sb_max i e :=
@@ -426,13 +432,6 @@ Proof.
     all: basic_solver. }
 Admitted.
 
-Lemma simrel_cert_rfD TC' h q state' new_rf
-  (SRCC : simrel_cert prog S G sc TC TC' f h q state' new_rf) :
-  f □₁ (dom_rel (Grf ⨾ ⦗ D G TC' (ES.cont_thread S q) ⦘)) ⊆₁ SE . 
-Proof. 
-  admit.
-Admitted.
-
 Lemma simrel_cert_lbl_step TC' h q new_rf
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
@@ -451,12 +450,13 @@ Proof.
      For that reason, I usually use `HH` (`AA`, `BB` etc)
      for my temporary variables.
    *)
-  destruct ILBL_STEP as [state_ [INEPS_STEP [state__ H]]].
-  destruct H as [EPS_STEPS H].
+  edestruct ILBL_STEP as [state_ [INEPS_STEP [state__ HH]]].
+  destruct HH as [EPS_STEPS H].
   unfold eqv_rel in H. destruct H as [H STABLE']. desf. 
   (* Anton: Here it's better to use `cdes INEPS_STEP`.
      When you would't need to provide names. *)
-  destruct INEPS_STEP as [LB_NEQ [INSTRSEQ [instr [INSTR ISTEP_]]]].
+  cdes INEPS_STEP.
+  destruct STEP as [INSTREQ [instr [INSTR ISTEP_]]].
   edestruct ISTEP_; desf.
   { set (thread := (ES.cont_thread S q)).
     set (e   := ThreadEvent thread (eindex state)).
@@ -468,28 +468,30 @@ Proof.
     assert (GE e) as eInGE.
     { admit. }
 
+    assert (acts_set (ProgToExecution.G state'') e) as eInCertG.
+    { admit. } 
+
     assert (GR e) as eInGR.
     { admit. }
 
     assert (Glab e = lbl) as eLab.
     { admit. } 
-        
-    exists q'. 
-    destruct (excluded_middle_informative 
-      (ES.cont_set S (q', existT _ (thread_lts thread) state'))
-    ) as [EExists | ENExists ].
-    { (* Anton: this branch is impossible, i.e. there are no
-         continuations in S for events, which are not there. *)
-      assert (SE e') as e'inSE. 
-      { edestruct SRC. edestruct swf. 
-        apply (K_inE e' (existT _ (thread_lts thread) state')). 
-        apply EExists. }
 
-      assert (Glab e = Slab e') as e'Lab.
-      { admit. }
+    assert (complete G) as CC by apply SRC.
 
+    edestruct new_rf_complete as [w RFwe].
+    { apply SRCC. } 
+    { unfold set_inter. splits.  
+      { apply eInGR. }
+      eapply preserve_event.
+      { eapply cstate_reachable. 
+        (* Here we probably have to show that simrel_cert holds for S' *)
+        { admit. }
+        (* Then this should follow trivially *)
+        admit. }
       admit. }
-    
+        
+    exists q'.     
     eexists (ES.mk _ _ _ _ _ _ _ _ _).
     exists (upd h e e').
     splits. 
@@ -503,35 +505,28 @@ Proof.
           { exists 1. splits; simpl; eauto. }
           do 2 eexists. 
           exists state, state', lbl, None.
-          splits; simpl; eauto. 
-          assert (lbls = [lbl]) as LBL_EQ. 
-          { admit. }
-          subst. 
-          apply ILBL_STEP. }
+          splits; simpl; eauto. }
         { unfold ESstep.add_jf.
           splits.
-          { simpl. unfold is_r. rewrite upds. simpl. auto. } 
-          { destruct (excluded_middle_informative (D G TC' thread e)) as [De | NDe]. 
-            { set (myq := q).
-              simpls.
-              assert (complete G) as CC by apply SRC.
-              edestruct CC as [w HH].
-              { by split; eauto. }
-              exists (f w). 
-              splits. 
-              { apply (simrel_cert_rfD SRCC). 
-                autounfold with unfolderDb. 
-                eexists. splits; eauto. }
-              { simpl. 
-                unfold is_w. 
-                rewrite updo. 
-                { admit. }  
-                admit. }
-              all: admit. }
-            admit. } } }
-      all: admit. } 
-    admit. 
-    admit. }
+          { simpl. unfold is_r. rewrite upds. by simpl. } 
+          { exists (f w). 
+            splits. 
+            { eapply new_rf_dom_f; eauto; [by apply SRCC|].
+              autounfold with unfolderDb. 
+              do 4 eexists. splits; eauto. } 
+            { simpl. unfold is_w. rewrite updo. 
+              { admit. }
+              admit. }
+            { admit. }
+            { admit. }
+            simpl. eauto. } } }
+
+      (* es_consistent *)
+      econstructor; simpl.
+      { simpls. apply inclusion_union_l.
+        all: admit. }
+      all: admit. }
+    all: admit. }
   all: admit. 
 Admitted.
 
