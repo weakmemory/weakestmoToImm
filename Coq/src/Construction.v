@@ -105,7 +105,7 @@ Definition add_ew (w : eventid) (S S' : ES.t) : Prop :=
     ⟪ VALWS : ws ⊆₁ same_val S w ⟫ /\
     ⟪ CFWS  : ws ⊆₁ S.(ES.cf) w ⟫ /\
     ⟪ REPR :
-      S'.(ES.ew) ≡ S'.(ES.ew) ∪ ws × eq w ∪ eq w × ws ⟫.
+      S'.(ES.ew) ≡ S.(ES.ew) ∪ ws × eq w ∪ eq w × ws ⟫.
 
 Definition add_co (w : eventid) (S S' : ES.t) : Prop :=
   let A := S.(ES.acts_set) ∩₁ W S ∩₁ (same_loc S w) \₁ (S.(ES.cf)^? w) in
@@ -122,17 +122,17 @@ Inductive t_ (S S' : ES.t) : Prop :=
                 (EW' : S'.(ES.ew) ≡ S.(ES.ew))
                 (CO' : S'.(ES.co) ≡ S.(ES.co))
 | t_load   e    (BS  : t_basic e None S S')
-                (JF' : add_jf e S S')
+                (AJF : add_jf e S S')
                 (EW' : S'.(ES.ew) ≡ S.(ES.ew))
                 (CO' : S'.(ES.co) ≡ S.(ES.co))
 | t_store  e    (BS  : t_basic e None S S')
                 (JF' : S'.(ES.jf) ≡ S.(ES.jf))
-                (EW' : add_ew e S S')
-                (CO' : add_co e S S')
+                (AEW : add_ew e S S')
+                (ACO : add_co e S S')
 | t_update e e' (BS  : t_basic e (Some e') S S')
-                (JF' : add_jf e  S S')
-                (EW' : add_ew e' S S')
-                (CO' : add_co e' S S').
+                (AJF : add_jf e  S S')
+                (AEW : add_ew e' S S')
+                (ACO : add_co e' S S').
 
 Definition t (m : model) (S S' : ES.t) : Prop :=
   ⟪ TT  : t_ S S' ⟫ /\
@@ -185,7 +185,18 @@ Proof.
     eapply basic_step_tid_eq_dom; eauto. 
 Qed.
 
-Lemma step_cf_monotone 
+Lemma basic_step_sb_mon
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BSTEP : t_basic e e' S S') :
+  S.(ES.sb) ⊆ S'.(ES.sb).
+Proof.
+  cdes BSTEP.
+  desf; rewrite SB'; basic_solver. 
+Qed.
+
+Lemma basic_step_cf_mon 
       (e  : eventid)
       (e' : option eventid)
       (S S' : ES.t) 
@@ -204,39 +215,75 @@ Proof.
   autounfold with unfolderDb.
   ins; desf; splits; auto; 
     unfold not; ins; desf; auto; omega. 
-Qed. 
+Qed.
 
-Lemma step_cc_monotone S S' (STEP_: t_ S S') :
+Lemma step_jf_mon S S' (STEP_: t_ S S') :
+  S.(ES.jf) ⊆ S'.(ES.jf).
+Proof. 
+  destruct STEP_; try (by rewrite JF'; apply inclusion_refl2); 
+    cdes AJF; rewrite JF'; basic_solver.  
+Qed.
+
+Lemma step_ew_mon S S' (STEP_: t_ S S') :
+  S.(ES.ew) ⊆ S'.(ES.ew).
+Proof. 
+  destruct STEP_; try (by rewrite EW');
+    cdes AEW; rewrite REPR; basic_solver. 
+Qed.
+
+Lemma step_jfe_mon S S' (STEP_: t_ S S') (wfE: ES.Wf S) :
+  S.(ES.jfe) ⊆ S'.(ES.jfe).
+Proof. 
+  unfold ES.jfe.
+  edestruct STEP_; 
+    cdes BS; 
+    rewrite SB';
+    try (cdes AJF);
+    rewrite JF';
+    rewrite wfE.(ES.jfE).
+  1,3:
+    autounfold with unfolderDb;
+    ins; desf; splits;
+    try (by eexists; splits; eauto);
+    unfold not; ins; desf; omega.
+  all:
+    autounfold with unfolderDb;
+    ins; desf; splits;
+    try (by left; eexists; splits; eauto);
+    unfold not; ins; desf; omega.
+Qed.
+
+Lemma step_cc_mon S S' (STEP_: t_ S S') (wfE: ES.Wf S) :
   S.(ES.cc) ⊆ S'.(ES.cc).
 Proof.
-  (* unfold ES.cc. *)
-  (* unfold ES.cf. *)
-  (* edestruct STEP_. *)
-  (* { rewrite JF'. *)
-  (*   cdes BS. *)
-  (*   edestruct cont. *)
-  (*   { rewrite cross_false_r in *. *)
-  (*     rewrite union_false_r in *. *)
-Admitted.
+  unfold ES.cc. 
+  apply inclusion_inter_mon.
+  { edestruct STEP_; eapply basic_step_cf_mon; apply BS. } 
+  apply inclusion_seq_mon.
+  { by eapply step_jfe_mon. }
+  apply inclusion_seq_mon.
+  { unfold inclusion. ins. eapply clos_refl_trans_mon.
+    { apply H. }
+    apply inclusion_union_mon.
+    { edestruct STEP_; eapply basic_step_sb_mon; apply BS. }
+    by eapply step_jf_mon. } 
+  apply inclusion_seq_mon. 
+  { by eapply step_jfe_mon. }
+  apply clos_refl_mori. 
+  edestruct STEP_; eapply basic_step_sb_mon; apply BS. 
+Qed.
       
-Lemma step_vis_monotone S S' (STEP_: t_ S S') :
+Lemma step_vis_mon S S' (STEP_: t_ S S') (wfE: ES.Wf S) :
   vis S ⊆₁ vis S'.
 Proof.
-  (* unfold vis. *)
-  (* unfold ES.cc. *)
-  (* unfold ES.cf. *)
-  (* edestruct STEP_. *)
-  (* { rewrite JF'. rewrite EW'. *)
-  (*   cdes BS. *)
-  (*   edestruct cont. *)
-  (*   { rewrite cross_false_r in *. *)
-  (*     rewrite union_false_r in *. *)
-      
-  (*     rewrite SB'. *)
-  (*   ed *)
-  (*   desf; eauto. *)
-  (*   { simpl in H1. desf. } *)
-  (*   { simpl in H1. desf. } *)
-Admitted.
+  unfold vis. 
+  apply codom_rel_mori. 
+  apply inclusion_inter_mon.
+  { by apply step_cc_mon. }
+  apply inclusion_seq_mon.
+  { by apply step_ew_mon. }
+  apply eq_class_mori.
+  edestruct STEP_; eapply basic_step_sb_mon; apply BS.
+Qed.
 
 End ESstep.

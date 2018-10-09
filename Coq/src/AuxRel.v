@@ -224,18 +224,30 @@ Proof.
   rewrite <- ct_end.
   rewrite inclusion_t_rt.
   basic_solver.
-Qed.
+Qed. 
 
 End Props.
 
 Require Import Setoid.
 
-Add Parametric Morphism A : (@compl_rel A) with signature 
-  inclusion --> inclusion as compl_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Add Parametric Morphism A : (@eq_class_rel A) with signature 
+  inclusion ==> inclusion as eq_class_mori.
+Proof.
+  red; ins; do 2 autounfold with unfolderDb in *; basic_solver.
+Qed.
+
+Add Parametric Morphism A : (@eq_class_rel A) with signature 
+  same_relation ==> same_relation as eq_class_more.
+Proof.
+  red; ins; do 2 autounfold with unfolderDb in *; basic_solver.
+Qed.
 
 Add Parametric Morphism A : (@compl_rel A) with signature 
   same_relation ==> same_relation as compl_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@compl_rel A) with signature 
+  inclusion --> inclusion as compl_mori.
 Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
