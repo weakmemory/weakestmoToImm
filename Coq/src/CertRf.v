@@ -44,8 +44,8 @@ Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 Notation "'furr'" := (furr G sc).
 
 Definition E0 := (Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘))).
-Definition vf := <| W |> ;; (rf ;; <| D |>)^? ;; hb^? ;;
-                    sc^? ;; hb^? ;; <| E |>.
+Definition vf := ⦗ W ⦘ ⨾ (rf ⨾ ⦗ D ⦘)^? ⨾ hb^? ⨾
+                    sc^? ⨾ hb^? ⨾ ⦗ E ⦘.
 
 Definition cert_rf :=
   vf ∩ same_loc lab ⨾ ⦗ (E0 \₁ D) ∩₁ R ⦘ \ co ⨾ vf.
@@ -103,7 +103,7 @@ Proof.
   apply vfE.
 Qed.
 
-Lemma cert_rf_codom : cert_rf ≡ cert_rf ;; <| E0 \₁ D |>.
+Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗ E0 \₁ D ⦘.
 Proof.
   unfold cert_rf.
   rewrite AuxRel.seq_eqv_minus_lr.
@@ -274,7 +274,7 @@ Proof.
   rewrite seq_eqvC with (doma:=R).
 
   assert (hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
-          <| C |> ;; hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪
+          ⦗ C ⦘ ⨾ hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪
             sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) as PP.
   { admit. } 
   sin_rewrite PP.
@@ -287,7 +287,7 @@ Proof.
   sin_rewrite XX.
   arewrite (sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ sb^?).
   arewrite (sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
-            <| C |> ;; sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘).
+            ⦗ C ⦘ ⨾ sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘).
   { admit. } 
   rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.

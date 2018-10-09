@@ -21,9 +21,9 @@ Definition Avf : relation A := ⦗ W ⦘ ⨾ rf^? ⨾ (hb ⨾ ⦗ F∩₁Sc ⦘)
 Lemma Avf_dom : Avf ≡ ⦗ W ⦘ ⨾ Avf.
 Proof. unfold Avf. seq_rewrite seq_eqvK. done. Qed.
 
-Lemma AvfE (RF : rf ≡ <| E |> ;; rf)
-      (HB : hb ≡ <| E |> ;; hb)
-      (SC : sc ≡ <| E |> ;; sc)
+Lemma AvfE (RF : rf ≡ ⦗ E ⦘ ⨾ rf)
+      (HB : hb ≡ ⦗ E ⦘ ⨾ hb)
+      (SC : sc ≡ ⦗ E ⦘ ⨾ sc)
   : Avf ≡ ⦗ E ⦘ ⨾ Avf ⨾ ⦗ E ⦘.
 Proof.
   split; [|basic_solver].
@@ -84,7 +84,7 @@ Proof.
   generalize (@hb_trans G); ins; relsf.
 
   assert (irreflexive hb) by (by apply hb_irr).
-  assert (irreflexive (eco ;; hb)).
+  assert (irreflexive (eco ⨾ hb)).
   { rotate 1. apply COH. }
   assert (irreflexive (eco ⨾ psc ⨾ hb)).
   { rewrite (wf_pscD), !seqA.
