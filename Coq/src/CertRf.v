@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
      imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
      CombRelations.
-Require Import Vf.
+Require Import Vf AuxRel.
 
 Section CertRf.
 Variable G  : execution.
@@ -14,14 +14,14 @@ Variable thread : thread_id.
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
 
-Notation "'D'" := (D G TC thread).
-
 Notation "'E'"  := G.(acts_set).
 Notation "'lab'" := (G.(lab)).
 Notation "'rmw'" := G.(rmw).
 
 Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
 Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
+
+Notation "'D'" := (Tid_ thread ∩₁ D G TC thread).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
@@ -243,8 +243,8 @@ Qed.
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
   cdes COH.
-  rewrite cert_rf_codom.
-  rewrite cert_rf_in_vf.
+  rewrite cert_rf_codom. rewrite (dom_r cert_rfD).
+  rewrite cert_rf_in_vf. rewrite !seqA.
   unfold vf.
   arewrite_id ⦗E⦘. rewrite seq_id_l.
   arewrite (E0 \₁ D ⊆₁ C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)).
@@ -267,14 +267,17 @@ Proof.
   assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ (rf ⨾ ⦗D⦘)^? ⨾ hb^? ⨾ sc^? ⨾ ⦗C⦘ ⊆ ∅₂) as CC.
   { sin_rewrite BB. sin_rewrite YY. basic_solver. }
   unionL.
-  { sin_rewrite AA. sin_rewrite CC. basic_solver. }
+  { arewrite_id ⦗R⦘. rewrite seq_id_l.
+    sin_rewrite AA. sin_rewrite CC. basic_solver. }
+
+  rewrite seq_eqvC with (doma:=R).
 
   assert (hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
           <| C |> ;; hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪
             sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) as PP.
   { admit. } 
   sin_rewrite PP.
-  rewrite !seq_union_r.
+  rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.
   { sin_rewrite CC. basic_solver. }
   assert (sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
@@ -292,32 +295,60 @@ Proof.
   rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.
   { sin_rewrite QQ. basic_solver. }
-
-  (* arewrite (hb^? ⨾ ⦗(E0 \₁ D) ∩₁ R⦘ ⊆ ⦗E0 \₁ D ∪₁ C⦘ ;; hb^? ⨾ ⦗(E0 \₁ D) ∩₁ R⦘). *)
-  (* { rewrite crE. rewrite !seq_union_l, !seq_union_r. *)
-  (*   rewrite !seq_id_l. *)
-  (*   apply inclusion_union_mon. *)
-  (*   { basic_solver 10. } *)
-  (*   admit. } *)
-
-  (* TODO: continue from here *)
-
-  (* arewrite ((hb ⨾ ⦗F ∩₁ Sc⦘)^? ⨾ psc^? ⨾ hb^? ⨾ ⦗(E0 \₁ D) ∩₁ R⦘ ⊆ *)
-  (*           ⦗E0 \₁ D ∪₁ C⦘ ⨾ *)
-  (*           (hb ⨾ ⦗F ∩₁ Sc⦘)^? ⨾ psc^? ⨾ hb^? ⨾ ⦗(E0 \₁ D) ∩₁ R⦘). *)
-
-  (* rewrite crE at 1. *)
-  (* rewrite !seq_union_l. rewrite !seq_union_r. *)
-  (* rewrite !seq_id_l. *)
-  (* unionL. *)
-  (* 2: { rewrite !seqA. *)
-  (*      arewrite (⦗set_compl I ∩₁ W⦘ ⨾ rf ⨾ ⦗D⦘ ⊆ ∅₂). *)
-  (*      2: basic_solver. *)
-
-
-
-  (* assert (cert_rf_hb: irreflexive (cert_rf ⨾ hb)) *)
-  (*   by apply cert_rf_hb. *)
+  
+  rewrite crE at 1.
+  rewrite !seq_union_l, !seq_union_r, !seq_id_l, !seqA.
+  unionL.
+  { rewrite !crE.
+    rewrite !seq_union_l, !seq_union_r, !seq_id_l.
+    unionL.
+    { type_solver. }
+    2,3: generalize (@sb_trans G).
+    all: basic_solver. }
+  arewrite (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ sb).
+  2: { generalize (@sb_trans G). basic_solver. }
+  
+  (* Proving ⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ sb *)
+  unfold CertExecution2.D.
+  relsf.
+  rewrite !id_union.
+  rewrite !seq_union_l, !seq_union_r.
+  unionL.
+  { arewrite (Tid_ thread ∩₁ C ⊆₁ C).
+    { basic_solver. }
+    arewrite (rf ⨾ ⦗C⦘ ⊆ ⦗I⦘ ⨾ rf ⨾ ⦗C⦘).
+    { eapply rf_covered; eauto. }
+    basic_solver. }
+  { rewrite (dom_r WF.(wf_rfD)), !seqA.
+    arewrite (⦗R⦘ ⨾ ⦗Tid_ thread ∩₁ I⦘ ⊆ ∅₂).
+    2: basic_solver.
+    arewrite (I ⊆₁ W).
+    2: type_solver.
+    eapply issuedW; eauto. }
+  { basic_solver. }
+  { rewrite rfi_union_rfe.
+    rewrite !seq_union_l, !seq_union_r.
+    unionL.
+    { generalize (@sb_trans G). unfold Execution.rfi. basic_solver. }
+    arewrite (rfe G ⨾ ⦗Tid_ thread ∩₁ dom_rel ((rfi G)^? ⨾ imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
+              rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
+    2: { arewrite (rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
+                   ⦗I⦘ ⨾ rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
+         { generalize (dom_rfe_ppo_issued TCCOH). basic_solver 20. }
+         basic_solver. }
+    erewrite set_subset_inter_l.
+    2: right; reflexivity.
+    rewrite crE. relsf.
+    rewrite id_union, !seq_union_r.
+    unionL; [done|].
+    rewrite (dom_l WF.(wf_rfiD)), (dom_r WF.(wf_rfeD)), !seqA, dom_eqv1.
+    type_solver. }
+  { arewrite (rf ⨾ ⦗Tid_ thread ∩₁ codom_rel (⦗I⦘ ⨾ rfi G)⦘ ⊆ sb).
+    2: { generalize (@sb_trans G). basic_solver. }
+    unfolder; ins; desf.
+    destruct H2.
+    eapply wf_rff in H; eauto.
+    apply H in H0. desf. }
 Admitted.
 
   (* rewrite (cert_rfD). *)
