@@ -27,6 +27,7 @@ Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
 Notation "'F'" := (fun a => is_true (is_f lab a)).
 
+Notation "'Acq'" := (fun a => is_true (is_acq lab a)).
 Notation "'Rel'" := (fun a => is_true (is_rel lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
 
@@ -349,6 +350,38 @@ Proof.
     destruct H2.
     eapply wf_rff in H; eauto.
     apply H in H0. desf. }
+  unfolder; ins; desf.
+  { apply (dom_r WF.(wf_rfeD)) in H6.
+    eapply issuedW in H5; eauto.
+    type_solver. }
+  { exfalso. apply H.
+    eapply dom_rfe_acq_sb_issued; eauto.
+    eexists. exists z. split.
+    { assert (x0 = x); desf.
+      eapply WF.(wf_rff); eauto.
+      apply H6. }
+    eexists. split.
+    { split; eauto. by split. }
+    apply seq_eqv_r. eauto. }
+  { exfalso. apply H.
+    eapply dom_rfe_acq_sb_issued; eauto.
+    eexists. exists y. split.
+    { assert (x0 = x); desf.
+      eapply WF.(wf_rff); eauto.
+      apply H6. }
+    eexists. split.
+    { split; eauto. by split. }
+    apply seq_eqv_r. eauto. }
+  exfalso. apply H.
+  eapply dom_rfe_acq_sb_issued; eauto.
+  eexists. exists z. split.
+  { assert (x0 = x); desf.
+    eapply WF.(wf_rff); eauto.
+    apply H6. }
+  eexists. split.
+  { split; eauto. by split. }
+  apply seq_eqv_r. split; [|by eauto].
+  eapply sb_trans; eauto.
 Admitted.
 
   (* rewrite (cert_rfD). *)
