@@ -158,12 +158,12 @@ Lemma basic_step_tid_eq_dom
       (e  : eventid)
       (e' : option eventid)
       (S S' : ES.t) 
-      (BASIC_STEP : t_basic e e' S S') :
+      (BSTEP : t_basic e e' S S') :
   eq_dom S.(ES.acts_set) S.(ES.tid) S'.(ES.tid).
 Proof. 
   unfold eq_dom. ins. 
   unfold ES.acts_set in SX.
-  cdes BASIC_STEP. 
+  cdes BSTEP. 
   rewrite TID'.
   desf; rewrite updo; try rewrite updo; desf; omega. 
 Qed.
@@ -172,7 +172,7 @@ Lemma basic_step_same_tid
       (e  : eventid)
       (e' : option eventid)
       (S S' : ES.t) 
-      (BASIC_STEP : t_basic e e' S S') :
+      (BSTEP : t_basic e e' S S') :
   restr_rel S.(ES.acts_set) S.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S'.(ES.same_tid).
 Proof. 
   autounfold with unfolderDb. 
@@ -185,41 +185,26 @@ Proof.
     eapply basic_step_tid_eq_dom; eauto. 
 Qed.
 
-Lemma step_cf_monotone S S' (STEP_: t_ S S') :
+Lemma step_cf_monotone 
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BSTEP : t_basic e e' S S') :
   S.(ES.cf) ⊆ S'.(ES.cf).
 Proof.
+  edestruct basic_step_same_tid as [STIDL STIDR]; [by apply BSTEP|].
   unfold ES.cf.
-  edestruct STEP_.
-  { cdes BS.
-    edestruct cont. 
-    { rewrite cross_false_r in *.
-      rewrite union_false_r in *. 
-      rewrite SB'.
-      rewrite (basic_step_acts_set e None S S'); [| by apply BS].
-      unfold eq_opt. 
-      rewrite set_union_empty_r. 
-      repeat rewrite <- restr_relE.
-      repeat rewrite restr_inter.
-      admit. }
-    all: admit.
-Admitted.
-      (* apply inter_rel_mori. *)
-      (* { rewrite restr_set_union.  *)
-      (*   repeat apply inclusion_union_r1_search.  *)
-      (*   eapply basic_step_same_tid; by apply BS. }  *)
-      (* autounfold with unfolderDb. ins. *)
-      (* splits.  *)
-      (* { unfold not. ins. desf; auto; omega. } *)
-      (* { exfalso. apply H. }  *)
-      (*   omega. omega.  *)
-      (*   inversion H2. inversion H5.  *)
-      (*   apply H. left. right.  *)
-        
-        
-      (* }  *)
-      (* unfold not.  *)
-      
-      (* ins.  *)
+  cdes BSTEP. 
+  rewrite SB'. 
+  rewrite (basic_step_acts_set e e' S S'); [| apply BSTEP].
+  unfold eq_opt. 
+  repeat rewrite <- restr_relE.
+  repeat rewrite restr_inter.
+  rewrite STIDL. 
+  autounfold with unfolderDb.
+  ins; desf; splits; auto; 
+    unfold not; ins; desf; auto; omega. 
+Qed. 
 
 Lemma step_cc_monotone S S' (STEP_: t_ S S') :
   S.(ES.cc) ⊆ S'.(ES.cc).
