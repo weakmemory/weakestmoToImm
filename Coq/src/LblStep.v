@@ -176,3 +176,18 @@ Proof.
   rewrite <- lbl_step_alt.
   basic_solver.
 Qed.
+
+Lemma ilbl_step_alt thread lbls (state state'' : state) 
+      (ILBL_STEP : ilbl_step thread lbls state state'') :
+  exists state', 
+    ⟪ NNIL     : lbls <> [] ⟫ /\
+    ⟪ ISTEP    : istep thread lbls state state' ⟫ /\
+    ⟪ EPS_STEP : (istep thread [])＊ state' state'' ⟫ /\
+    ⟪ STABLE   : stable_state thread state'' ⟫.
+Proof. 
+  edestruct ILBL_STEP. 
+  unfold seq in *. 
+  unfold ineps_step in *. 
+  unfold eqv_rel in *.
+  desf. eexists. splits; eauto. 
+Qed. 

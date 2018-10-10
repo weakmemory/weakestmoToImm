@@ -1,3 +1,4 @@
+Require Import Omega.
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
@@ -432,6 +433,50 @@ Proof.
     all: basic_solver. }
 Admitted.
 
+Lemma simrel_cert_basic_step TC' h q new_rf lbls jf ew co
+      (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
+      (KK : K (q, existT _ _ state))
+      (ILBL_STEP : ilbl_step (ES.cont_thread S q) lbls state state') :
+  exists e e' lbl lbl' S',
+    ⟪ ES_BSTEP : (ESstep.t_basic e e') S S' ⟫ /\
+    ⟪ LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
+    ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
+    ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
+    ⟪ JF' : S'.(ES.jf) ≡ jf ⟫ /\
+    ⟪ EW' : S'.(ES.ew) ≡ ew ⟫ /\
+    ⟪ CO' : S'.(ES.co) ≡ co ⟫.
+Proof.
+  set (ILBL_STEP_ALT := ILBL_STEP).
+  eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
+  cdes ISTEP. 
+  edestruct ISTEP0; desf.
+
+  Ltac solve_nupd state state' :=
+    exists S.(ES.next_act); exists None;
+    eexists; eexists None; eexists (ES.mk _ _ _ _ _ _ _ _ _);
+    splits; simpl; eauto;  
+    [ econstructor; eauto; splits;
+      [ exists 1; splits; simpl; eauto 
+      | do 2 eexists; exists state, state' ; eexists; exists None; 
+        splits; simpl; eauto ] 
+    | by rewrite upds ].
+
+  Ltac solve_upd state state' :=
+    exists S.(ES.next_act); exists (Some (1 + S.(ES.next_act)));
+    eexists; eexists (Some _); eexists (ES.mk _ _ _ _ _ _ _ _ _);
+    splits; simpl; eauto; 
+    [ econstructor; eauto; splits;
+      [ exists 2; splits; simpl; eauto 
+      | do 2 eexists; exists state, state' ; eexists; eexists (Some _); 
+          splits; simpl; eauto ] 
+      | rewrite updo; [by rewrite upds | by omega]
+      | by rewrite upds ].
+  
+  1-4: by (solve_nupd state state').
+  all: by (solve_upd state state').
+Qed. 
+
 Lemma simrel_cert_lbl_step TC' h q new_rf
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
@@ -443,46 +488,28 @@ Lemma simrel_cert_lbl_step TC' h q new_rf
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' new_rf ⟫.
 Proof.
   destruct LBL_STEP as [lbls ILBL_STEP].
-  (* Anton: It's better not to use name `H` as it's the name
-     Coq uses for new variables, which don't have a specific name.
-     Using of `H` might introduce problems if the code is preceeded
-     by something generating such variables.
-     For that reason, I usually use `HH` (`AA`, `BB` etc)
-     for my temporary variables.
-   *)
-  edestruct ILBL_STEP as [state_ [INEPS_STEP [state__ HH]]].
-  destruct HH as [EPS_STEPS H].
-  unfold eqv_rel in H. destruct H as [H STABLE']. desf. 
-  (* Anton: Here it's better to use `cdes INEPS_STEP`.
-     When you would't need to provide names. *)
-  cdes INEPS_STEP.
-  destruct STEP as [INSTREQ [instr [INSTR ISTEP_]]].
-  edestruct ISTEP_; desf.
+  set (ILBL_STEP_ALT := ILBL_STEP).
+  eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
+  cdes ISTEP. 
+  edestruct ISTEP0; desf.
   { set (thread := (ES.cont_thread S q)).
-    set (e   := ThreadEvent thread (eindex state)).
-    set (e'  := S.(ES.next_act)).
+    set (a   := ThreadEvent thread (eindex state)).
     set (q'  := CEvent S.(ES.next_act)).
     set (l   := (RegFile.eval_lexpr (regf state) lexpr)).
-    set (lbl := Aload false ord l val).
 
-    assert (GE e) as eInGE.
+    assert (GE a) as aInGE.
     { admit. }
 
-    assert (acts_set (ProgToExecution.G state'') e) as eInCertG.
-    { admit. } 
-
-    assert (GR e) as eInGR.
+    assert (GR a) as aInGR.
     { admit. }
 
-    assert (Glab e = lbl) as eLab.
+    assert (acts_set (ProgToExecution.G state'') a) as aInCertG.
     { admit. } 
 
-    assert (complete G) as CC by apply SRC.
-
-    edestruct new_rf_complete as [w RFwe].
-    { apply SRCC. } 
+    edestruct new_rf_complete as [w RFwa].
+    { by apply SRCC. }
     { unfold set_inter. splits.  
-      { apply eInGR. }
+      { apply aInGR. }
       eapply preserve_event.
       { eapply cstate_reachable. 
         (* Here we probably have to show that simrel_cert holds for S' *)
@@ -490,41 +517,42 @@ Proof.
         (* Then this should follow trivially *)
         admit. }
       admit. }
-        
-    exists q'.     
-    eexists (ES.mk _ _ _ _ _ _ _ _ _).
-    exists (upd h e e').
-    splits. 
+
+    edestruct simrel_cert_basic_step as [e [e' [lbl [lbl' [S' HH]]]]]; eauto; desf.
+    
+    assert (e' = None) as e'NONE.
+    { cdes ES_BSTEP. desf. }
+    
+    rewrite e'NONE in LBLS_EQ.
+    simpl in LBLS_EQ.
+    inversion LBLS_EQ as [eSLAB].
+    symmetry in eSLAB.
+
+    exists q', S', (upd h a e).
+    desf; splits. 
     { unfold "^?". right. 
       unfold ESstep.t.  
       splits.
-      { eapply ESstep.t_load. 
-        3-4: simpl; eauto. 
-        { unfold ESstep.t_basic. 
-          splits; eauto.
-          { exists 1. splits; simpl; eauto. }
-          do 2 eexists. 
-          exists state, state', lbl, None.
-          splits; simpl; eauto. }
-        { unfold ESstep.add_jf.
-          splits.
-          { simpl. unfold is_r. rewrite upds. by simpl. } 
-          { exists (f w). 
-            splits. 
-            { eapply new_rf_dom_f; eauto; [by apply SRCC|].
-              autounfold with unfolderDb. 
-              do 4 eexists. splits; eauto. } 
-            { simpl. unfold is_w. rewrite updo. 
-              { admit. }
-              admit. }
-            { admit. }
-            { admit. }
-            simpl. eauto. } } }
-
+      { eapply ESstep.t_load; simpl; eauto. 
+        unfold ESstep.add_jf.
+        splits.
+        { simpl. unfold is_r. by rewrite eSLAB. } 
+        { exists (f w). 
+          splits. 
+          { eapply new_rf_dom_f; eauto; [by apply SRCC|].
+            autounfold with unfolderDb. 
+            do 4 eexists. splits; eauto. } 
+          { simpl. unfold is_w. admit. }
+          admit. 
+          admit. 
+          cdes ES_BSTEP; rewrite EVENT; eauto. } }
+      
       (* es_consistent *)
       econstructor; simpl.
-      { simpls. apply inclusion_union_l.
-        all: admit. }
+      { rewrite JF'. 
+        apply inclusion_union_l.
+        { (* erewrite ESstep.step_vis_mon. *) admit. }
+        admit. } 
       all: admit. }
     all: admit. }
   all: admit. 
