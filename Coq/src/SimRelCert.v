@@ -538,7 +538,8 @@ Proof.
         unfold ESstep.add_jf.
         splits.
         { simpl. unfold is_r. by rewrite eSLAB. }
-        { exists (f w).
+        { (* probably, we need (h w) ??? *)
+          exists (f w).
           splits.
           { eapply new_rf_dom_f; eauto; [by apply SRCC|].
             autounfold with unfolderDb.
@@ -553,6 +554,8 @@ Proof.
                   
       (* es_consistent *)
       econstructor; simpl.
+      
+      (* jf_vis *)
       { rewrite JF'. 
         apply inclusion_union_l.
         { etransitivity.
@@ -562,7 +565,16 @@ Proof.
           apply cross_mori. 
           { eapply ESstep.step_vis_mon. eauto. apply SRC. }
           eapply ESstep.basic_step_acts_set_mon; eauto. }
-        admit. }
+        apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa.
+        unfold union in RFwa; desf. 
+        { apply inclusion_union_r; right. 
+          autounfold with unfolderDb; ins; splits; desf.
+          { eapply ESstep.step_vis_mon; eauto; apply SRC. 
+            autounfold with unfolderDb in *. 
+            eexists; splits; eauto; right; repeat eexists; splits; eauto; desf. } 
+          cdes ES_BSTEP. omega. }
+        apply inclusion_union_r; left. 
+        autounfold with unfolderDb; ins; splits; desf. admit. }
       all: admit. }
     all: admit. }
   all: admit. 
