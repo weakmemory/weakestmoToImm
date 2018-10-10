@@ -529,30 +529,40 @@ Proof.
     symmetry in eSLAB.
 
     exists q', S', (upd h a e).
+
     desf; splits. 
-    { unfold "^?". right. 
-      unfold ESstep.t.  
-      splits.
-      { eapply ESstep.t_load; simpl; eauto. 
+    { unfold "^?". right.
+
+      assert (ESstep.t_ S S') as ES_STEP_.
+      { eapply ESstep.t_load; simpl; eauto.
         unfold ESstep.add_jf.
         splits.
-        { simpl. unfold is_r. by rewrite eSLAB. } 
-        { exists (f w). 
-          splits. 
+        { simpl. unfold is_r. by rewrite eSLAB. }
+        { exists (f w).
+          splits.
           { eapply new_rf_dom_f; eauto; [by apply SRCC|].
-            autounfold with unfolderDb. 
-            do 4 eexists. splits; eauto. } 
+            autounfold with unfolderDb.
+            do 4 eexists. splits; eauto. }
           { simpl. unfold is_w. admit. }
-          admit. 
-          admit. 
+          admit.
+          admit.
           cdes ES_BSTEP; rewrite EVENT; eauto. } }
-      
+
+      unfold ESstep.t.  
+      splits; auto. 
+                  
       (* es_consistent *)
       econstructor; simpl.
       { rewrite JF'. 
         apply inclusion_union_l.
-        { (* erewrite ESstep.step_vis_mon. *) admit. }
-        admit. } 
+        { etransitivity.
+          { apply SRC.(scons). }
+          apply union_mori.
+          { eapply ESstep.basic_step_sb_mon. eauto. }
+          apply cross_mori. 
+          { eapply ESstep.step_vis_mon. eauto. apply SRC. }
+          eapply ESstep.basic_step_acts_set_mon; eauto. }
+        admit. }
       all: admit. }
     all: admit. }
   all: admit. 
