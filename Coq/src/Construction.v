@@ -297,4 +297,9 @@ Proof.
   edestruct STEP_; eapply basic_step_sb_mon; apply BS.
 Qed.
 
+Lemma step_event_to_act S S' (STEP_: t_ S S') (wfE: ES.Wf S) : 
+  eq_dom (ES.acts_set S) (ES.event_to_act S) (ES.event_to_act S').
+Proof.
+Admitted. 
+
 End ESstep.

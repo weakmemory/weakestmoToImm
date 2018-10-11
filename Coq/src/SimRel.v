@@ -61,19 +61,7 @@ Section SimRel.
       init
       is_terminal
       (ilbl_step tid).
-
-  Definition event_to_act (e : eventid) : actid :=
-    if excluded_middle_informative (SEinit e)
-    then
-      match Sloc e with
-      | Some l => InitEvent l
-      | _      => InitEvent BinNums.xH
-      end
-    else
-      let thread := Stid e in
-      ThreadEvent thread
-                  (countNatP (dom_rel (⦗ Stid_ thread ⦘⨾ Ssb ⨾ ⦗ eq e ⦘))
-                             S.(ES.next_act)).
+  
   Notation "'g'" := (event_to_act).
 
   Record simrel_cont :=
@@ -120,10 +108,10 @@ Section SimRel.
       scont : simrel_cont;
 
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
+      grmw : g □ Srmw ⊆ Grmw;
+      gjf  : g □ Sjf  ⊆ Gvf;
       gew  : g □ Sew  ⊆ eq;
       gco  : g □ Sco  ⊆ Gco;
-      gjf  : g □ Sjf  ⊆ Gvf;
-      grmw : g □ Srmw ⊆ Grmw;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
@@ -242,6 +230,15 @@ Section SimRel.
     Lemma gsb : g □ Ssb ⊆ Gsb.
     Proof.
       (* TODO. It should follow from definition of g. *)
+    Admitted.
+
+    Lemma fsb : f □ (⦗ fdom ⦘ ⨾ Gsb ⨾ ⦗ fdom ⦘) ⊆ Ssb. 
+    Proof.
+      rewrite <- restr_relE.
+      unfold restr_rel, collect_rel, inclusion.
+      intros x' y' [x [y HH]].
+      destruct HH as [[GSB [FDOMx FDOMy]] [Fx Fy]].
+      admit. 
     Admitted.
 
     Lemma gtid e : Stid e = Gtid (g e).

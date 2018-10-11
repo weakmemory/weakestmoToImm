@@ -2,7 +2,7 @@ Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events.
-Require Import AuxRel.
+Require Import AuxDef AuxRel.
 
 Set Implicit Arguments.
 Export ListNotations.
@@ -40,6 +40,14 @@ Record t :=
                       lang.(Language.state) });
      }.
 
+Definition acts_set (ES : t) := fun x => x < ES.(next_act).
+Definition acts_init_set (ES : t) :=
+  ES.(acts_set) ∩₁ (fun x => ES.(tid) x = tid_init).
+Definition acts_ninit_set (ES : t) := ES.(acts_set) \₁ ES.(acts_init_set).
+Definition cont_set (ES : t) := fun x => In x ES.(cont).
+
+Definition same_tid (ES : t) := fun x y => ES.(tid) x = ES.(tid) y.
+
 Definition cont_thread S (cont : cont_label) : thread_id :=
   match cont with
   | CInit thread => thread
@@ -63,14 +71,6 @@ Definition cont_sb_codom S c :=
   | CInit _ => (fun x => tid S x = (cont_thread S c))
   | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
   end.
-
-Definition acts_set (ES : t) := fun x => x < ES.(next_act).
-Definition acts_init_set (ES : t) :=
-  ES.(acts_set) ∩₁ (fun x => ES.(tid) x = tid_init).
-Definition acts_ninit_set (ES : t) := ES.(acts_set) \₁ ES.(acts_init_set).
-Definition cont_set (ES : t) := fun x => In x ES.(cont).
-
-Definition same_tid (ES : t) := fun x y => ES.(tid) x = ES.(tid) y.
 
 Definition jfe (ES : t) := ES.(jf) \ ES.(sb).
 Definition coe (ES : t) := ES.(co) \ ES.(sb).
@@ -115,6 +115,8 @@ Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
 Notation "'same_loc'" := (same_loc lab).
 
+Notation "'tid_' t" := (fun x => tid x = t) (at level 1).
+
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
 Notation "'F'" := (fun a => is_true (is_f lab a)).
@@ -129,6 +131,19 @@ Notation "'Rel'" := (is_rel lab).
 Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
+
+Definition event_to_act (e : eventid) : actid :=
+    if excluded_middle_informative (Einit e)
+    then
+      match loc e with
+      | Some l => InitEvent l
+      | _      => InitEvent BinNums.xH
+      end
+    else
+      let thread := tid e in
+      ThreadEvent thread
+                  (countNatP (dom_rel (⦗ tid_ thread ⦘⨾ sb ⨾ ⦗ eq e ⦘))
+                             (next_act EG)).
 
 Record Wf :=
   { initL : forall l, (exists b, E b /\ loc b = Some l) ->
@@ -241,4 +256,4 @@ Proof.
 Qed.
 
 End EventStructure.
-End ES.
+End ES.b
