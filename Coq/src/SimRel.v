@@ -62,7 +62,7 @@ Section SimRel.
       is_terminal
       (ilbl_step tid).
   
-  Notation "'g'" := (event_to_act).
+  Notation "'g'" := (ES.event_to_act S).
 
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
@@ -245,7 +245,7 @@ Section SimRel.
     Proof.
       assert (SEinit e -> Stid e = tid_init) as HH.
       { admit. }
-      unfold event_to_act. desf; simpls.
+      unfold ES.event_to_act. desf; simpls.
       all: by apply HH.
     Admitted.
 

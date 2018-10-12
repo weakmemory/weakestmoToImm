@@ -35,7 +35,7 @@ Section SimRelCert.
   
   Notation "'certG'" := state'.(ProgToExecution.G).
 
-  Notation "'g'" := (event_to_act S).
+  Notation "'g'" := (ES.event_to_act S).
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -227,7 +227,7 @@ Variable TC : trav_config.
 
 Variable f : actid -> eventid.
 
-Notation "'g'" := (event_to_act S).
+Notation "'g'" := (ES.event_to_act S).
 
 Notation "'SE'" := S.(ES.acts_set).
 Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -528,7 +528,7 @@ Proof.
 
     edestruct simrel_cert_basic_step as [e [e' [lbl [lbl' [S' HH]]]]]; eauto; desf.
 
-    assert (event_to_act S' e = a) as g'eaEQ.
+    assert (ES.event_to_act S' e = a) as g'eaEQ.
     { admit. } 
     
     assert (e' = None) as e'NONE.
@@ -609,9 +609,9 @@ Proof.
   all: admit. 
 Admitted.
 
-Lemma simrel_cert_step TC' h q state'' 
+Lemma simrel_cert_step TC' h q state'' new_rf
       (state : (thread_lts (ES.cont_thread S q)).(Language.state))
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
       (KK : K (q, existT _ _ state))
       (KNEQ : state <> state'') :
   exists (state' : (thread_lts (ES.cont_thread S q)).(Language.state)),
@@ -635,19 +635,11 @@ Proof.
   splits; auto. 
 Qed.
 
-Lemma simrel_cert_cc_dom TC' h q state'
-  (SRCC : simrel_cert prog S G sc TC TC' f h q state') : 
+Lemma simrel_cert_cc_dom TC' h q state' new_rf
+  (SRCC : simrel_cert prog S G sc TC TC' f h q state' new_rf) : 
   dom_rel (Scc ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
 Proof. 
   admit.
-Admitted.
-
-Lemma simrel_cert_end prog S G sc TC TC' f h (*certG*) i q
-      (sbMAX: sb_max G i q)
-      (SRcert: simrel_cert prog S G sc TC TC' f h q) : 
-  exists f', 
-    simrel prog S G sc TC' f'.
-Proof.
 Admitted.
 
 End SimRelLemmas.

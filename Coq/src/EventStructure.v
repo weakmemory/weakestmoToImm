@@ -256,4 +256,4 @@ Proof.
 Qed.
 
 End EventStructure.
-End ES.b
+End ES.
