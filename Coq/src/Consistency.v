@@ -55,7 +55,13 @@ Definition same_lab x y := lab x = lab y.
 Definition vis :=
   codom_rel (cc ∩ (ew ⨾ sb ⁼)).
 
-Definition sw : relation eventid := fun x y => True. (* TODO: define *)
+(* release sequence *)
+Definition rs := ⦗W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
+
+Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
+
+(* synchronizes with *)
+Definition sw := release ⨾ rf  ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 
 Definition hb : relation eventid := (sb ∪ sw)⁺.
 
