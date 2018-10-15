@@ -209,8 +209,6 @@ Section SimRelCert.
       fp_tidEq   : certTid e = Stid e';
       fp_labEq   : certLab e = Slab e';
       fp_sbEq    : upd h e e' □ (Gsb ⨾ ⦗ eq e ⦘) ≡ Ssb ⨾ ⦗ eq e' ⦘;
-      (* need to declare cert_rf ??? *)
-      (* fp_imgrf   : upd h e e' □ (cert_rf ⨾ ⦗ eq e ⦘) ⊆ Srf; *)
     }.
 
 End SimRelCert.
@@ -534,36 +532,29 @@ Proof.
     assert (e' = None) as e'NONE.
     { cdes ES_BSTEP. desf. }
     
+    rewrite e'NONE in ES_BSTEP. 
     rewrite e'NONE in LBLS_EQ.
     simpl in LBLS_EQ.
     inversion LBLS_EQ as [eSLAB].
     symmetry in eSLAB.
 
-    exists q', S', (upd h a e).
-
-    desf; splits. 
-    { unfold "^?". right.
-
-      assert (ESstep.t_ S S') as ES_STEP_.
-      { eapply ESstep.t_load; simpl; eauto.
-        unfold ESstep.add_jf.
+    assert (ESstep.t_ S S') as ES_STEP_.
+    { eapply ESstep.t_load; simpl; eauto.
+      unfold ESstep.add_jf.
+      splits.
+      { simpl. unfold is_r. by rewrite eSLAB. }
+      { exists (h w).
         splits.
-        { simpl. unfold is_r. by rewrite eSLAB. }
-        { exists (h w).
-          splits.
-          { eapply new_rf_dom_f; eauto; [by apply SRCC|].
-            autounfold with unfolderDb.
-            do 4 eexists. splits; eauto. }
-          { simpl. unfold is_w. admit. }
-          admit.
-          admit.
-          cdes ES_BSTEP; rewrite EVENT; eauto. } }
+        { eapply new_rf_dom_f; eauto; [by apply SRCC|].
+          autounfold with unfolderDb.
+          do 4 eexists. splits; eauto. }
+        { simpl. unfold is_w. admit. }
+        admit.
+        admit.
+        cdes ES_BSTEP; rewrite EVENT; eauto. } }
 
-      unfold ESstep.t.  
-      splits; auto. 
-                  
-      (* es_consistent *)
-      econstructor; simpl.
+    assert (@es_consistent S' Weakestmo) as ES'CONS.
+    { econstructor; simpl.
       
       (* jf_vis *)
       { rewrite JF'. 
@@ -604,8 +595,20 @@ Proof.
             destruct ySBDOM as [y' yy'SBrefl].
             admit. }
           edestruct ES_BSTEP; desf; omega. } }
-      all: admit. }
-    all: admit. }
+      all: admit. } 
+
+    exists q', S', (upd h a e).
+
+    desf; splits. 
+    { unfold "^?". right.
+      unfold ESstep.t.  
+      splits; auto. }
+                 
+    { admit. }
+
+    { econstructor. 
+      all: admit. } }
+
   all: admit. 
 Admitted.
 
