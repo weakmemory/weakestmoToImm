@@ -325,11 +325,12 @@ Proof.
     apply set_subset_inter_r. split.
     { unfold ES.cont_sb_dom.
       desf.
-      { autounfold with unfolderDb. basic_solver. }
-      rewrite set_collect_inter.
-      apply set_subset_inter_l.
-      left.
-      eapply gtid_; eauto. }
+      { admit. (* autounfold with unfolderDb. basic_solver. *) }
+      admit.
+      (* rewrite set_collect_inter. *)
+      (* apply set_subset_inter_l. *)
+      (* left. *)
+      (* eapply gtid_; eauto. *) }
     unionR left.
     assert (covered TC ⊆₁ covered TC') as AA.
     { eapply sim_trav_step_covered_le.
@@ -439,16 +440,17 @@ Proof.
     all: basic_solver. }
 Admitted.
 
-Lemma simrel_cert_basic_step TC' h q new_rf lbls jf ew co
-      (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
-      (KK : K (q, existT _ _ state))
-      (ILBL_STEP : ilbl_step (ES.cont_thread S q) lbls state state') :
-  exists e e' lbl lbl' S',
-    ⟪ ES_BSTEP : (ESstep.t_basic e e') S S' ⟫ /\
+Lemma simrel_cert_basic_step k lbls jf ew co
+      (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
+      (* (SRCC : simrel_cert prog S G sc TC TC' f h k st'' new_rf) *)
+      (KK : K (k, existT _ _ st))
+      (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') :
+  exists k' e e' lbl lbl' S',
+    ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
     ⟪ LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
     ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
     ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
+    ⟪ TID  : ES.cont_thread S k  = S'.(ES.tid) e ⟫ /\
     ⟪ JF' : S'.(ES.jf) ≡ jf ⟫ /\
     ⟪ EW' : S'.(ES.ew) ≡ ew ⟫ /\
     ⟪ CO' : S'.(ES.co) ≡ co ⟫.
@@ -458,30 +460,29 @@ Proof.
   cdes ISTEP. 
   edestruct ISTEP0; desf.
 
-  Ltac solve_nupd state state' :=
+  1-4 :  
+    exists (CEvent S.(ES.next_act)); 
     exists S.(ES.next_act); exists None;
     eexists; eexists None; eexists (ES.mk _ _ _ _ _ _ _ _ _);
-    splits; simpl; eauto;  
-    [ econstructor; eauto; splits;
-      [ exists 1; splits; simpl; eauto 
-      | do 2 eexists; exists state, state' ; eexists; exists None; 
-        splits; simpl; eauto ] 
+    splits; simpl; eauto;
+    [ econstructor; splits; simpl; eauto; 
+        eexists; exists None; 
+        splits; simpl; eauto
+    | by rewrite upds 
     | by rewrite upds ].
 
-  Ltac solve_upd state state' :=
+  all : 
+    exists (CEvent (1 + S.(ES.next_act))); 
     exists S.(ES.next_act); exists (Some (1 + S.(ES.next_act)));
     eexists; eexists (Some _); eexists (ES.mk _ _ _ _ _ _ _ _ _);
-    splits; simpl; eauto; 
-    [ econstructor; eauto; splits;
-      [ exists 2; splits; simpl; eauto 
-      | do 2 eexists; exists state, state' ; eexists; eexists (Some _); 
-          splits; simpl; eauto ] 
-      | rewrite updo; [by rewrite upds | by omega]
-      | by rewrite upds ].
-  
-  1-4: by (solve_nupd state state').
-  all: by (solve_upd state state').
-Qed. 
+    splits; simpl; eauto;
+    [ econstructor; splits; simpl; eauto; 
+        eexists; eexists (Some _); 
+        splits; simpl; eauto
+    | rewrite updo; [by rewrite upds | by omega]
+    | by rewrite upds
+    | rewrite updo; [by rewrite upds | by omega] ].
+Qed.  
 
 Lemma simrel_cert_lbl_step TC' h q new_rf
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
@@ -500,7 +501,6 @@ Proof.
   edestruct ISTEP0; desf.
   { set (thread := (ES.cont_thread S q)).
     set (a   := ThreadEvent thread (eindex state)).
-    set (q'  := CEvent S.(ES.next_act)).
     set (l   := (RegFile.eval_lexpr (regf state) lexpr)).
 
     assert (GE a) as aInGE.
@@ -524,25 +524,30 @@ Proof.
         admit. }
       admit. }
 
-    edestruct simrel_cert_basic_step as [e [e' [lbl [lbl' [S' HH]]]]]; eauto; desf.
+    edestruct simrel_cert_basic_step as [q' [e [e' [lbl [lbl' [S' HH]]]]]]; eauto; desf.
+
+    assert (ESstep.t_basic e e' S S') as ES_BSTEP.
+    { econstructor. do 4 eexists. apply ES_BSTEP_. }
 
     assert (ES.event_to_act S' e = a) as g'eaEQ.
     { admit. } 
     
     assert (e' = None) as e'NONE.
-    { cdes ES_BSTEP. desf. }
+    { admit. }
     
-    rewrite e'NONE in ES_BSTEP. 
+    rewrite e'NONE in ES_BSTEP_. 
+    (* rewrite e'NONE in ES_BSTEP.  *)
     rewrite e'NONE in LBLS_EQ.
     simpl in LBLS_EQ.
     inversion LBLS_EQ as [eSLAB].
     symmetry in eSLAB.
 
-    assert (ESstep.t_ S S') as ES_STEP_.
+    assert (ESstep.t_incons e None S S') as ES_STEP_.
     { eapply ESstep.t_load; simpl; eauto.
+      { admit. } 
       unfold ESstep.add_jf.
       splits.
-      { simpl. unfold is_r. by rewrite eSLAB. }
+      { simpl. unfold is_r. auto. by rewrite eSLAB. }
       { exists (h w).
         splits.
         { eapply new_rf_dom_f; eauto; [by apply SRCC|].
@@ -551,7 +556,7 @@ Proof.
         { simpl. unfold is_w. admit. }
         admit.
         admit.
-        cdes ES_BSTEP; rewrite EVENT; eauto. } }
+        cdes ES_BSTEP_; rewrite EVENT; eauto. } }
 
     assert (@es_consistent S' Weakestmo) as ES'CONS.
     { econstructor; simpl.
@@ -589,12 +594,13 @@ Proof.
               [ by eauto | by eauto | admit | ]. 
             autounfold with unfolderDb; repeat eexists; splits; eauto. 
             unfold ES.cont_sb_dom in SBqdom; desf.
+            { admit. }
             unfold set_inter in SBqdom.
             destruct SBqdom as [yTID ySBDOM].
             unfold dom_rel in ySBDOM. 
             destruct ySBDOM as [y' yy'SBrefl].
             admit. }
-          edestruct ES_BSTEP; desf; omega. } }
+          cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega. } }
       
       (* hb_jf_not_cf *)
       { unfold same_relation; splits; [|by basic_solver]. 
@@ -612,7 +618,8 @@ Proof.
     desf; splits. 
     { unfold "^?". right.
       unfold ESstep.t.  
-      splits; auto. }
+      do 2 eexists. 
+      splits; eauto. }
                  
     { admit. }
 

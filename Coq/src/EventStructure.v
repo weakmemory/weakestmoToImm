@@ -62,8 +62,8 @@ Definition cont_lab S (cont : cont_label) : option label :=
 
 Definition cont_sb_dom S c :=
   match c with
-  | CInit  _ => ∅
-  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ dom_rel (S.(sb)^? ⨾ ⦗ eq e ⦘)
+  | CInit  _ => S.(ES.acts_init_set)
+  | CEvent e => dom_rel (S.(sb)^? ⨾ ⦗ eq e ⦘)
   end.
 
 Definition cont_sb_codom S c := 

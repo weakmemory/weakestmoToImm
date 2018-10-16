@@ -273,7 +273,7 @@ Section SimRel.
            desf.
            eexists. eexists.
            splits; eauto.
-           { red. ins. red in H. desf. }
+           { red. ins. admit. (* red in H. desf. *) }
            red. splits; ins.
            2: { symmetry in AA.
                 eapply GPROG in AA. desf.
@@ -322,8 +322,6 @@ Section SimRel.
       eexists. eexists.
       splits; eauto.
       unfold ES.cont_sb_dom. simpls.
-      arewrite (Stid_ (Stid (f e)) ⊆₁ fun _ => True).
-      rewrite set_inter_full_l.
       rewrite set_collect_dom.
       rewrite collect_seq_eqv_r.
       rewrite collect_eq.
