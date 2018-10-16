@@ -595,6 +595,16 @@ Proof.
             destruct ySBDOM as [y' yy'SBrefl].
             admit. }
           edestruct ES_BSTEP; desf; omega. } }
+      
+      (* hb_jf_not_cf *)
+      { unfold same_relation; splits; [|by basic_solver]. 
+        assert 
+          (hb S' ≡ hb S ∪ hb S ;; ES.sb S' ;; <| eq e |> ∪ hb S ;; sw S' ;; <| eq e |>)
+        as HB'EQ.
+        { admit. } 
+        admit. }
+
+
       all: admit. } 
 
     exists q', S', (upd h a e).

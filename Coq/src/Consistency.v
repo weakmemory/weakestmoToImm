@@ -61,7 +61,7 @@ Definition rs := ⦗W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊
 Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
 
 (* synchronizes with *)
-Definition sw := release ⨾ rf  ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
+Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 
 Definition hb : relation eventid := (sb ∪ sw)⁺.
 
