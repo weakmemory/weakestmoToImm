@@ -226,6 +226,33 @@ Proof.
   basic_solver.
 Qed. 
 
+(* Lemma clos_trans_union_ext (Hrr : r' ⨾ r' ≡ ∅₂) (Hrr' : r' ⨾ r ≡ ∅₂) :  *)
+(*   (r ∪ r')⁺ ≡ r'⁺ ∪ r＊ ⨾ r'. *)
+
+Lemma clos_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
+  (r ∪ r')⁺ ≡ r'⁺ ∪ r'＊ ⨾ r.
+Proof. 
+  rewrite ct_unionE.
+  arewrite ((r ⨾ r'＊)⁺ ≡ r); auto. 
+  unfold same_relation; splits.
+  { unfold inclusion; ins. 
+    induction H. 
+    { eapply seq_rtE_r in H. 
+      unfold union in H; desf.
+      repeat unfold seq in *; desf. 
+      exfalso. 
+      eapply Hrr'. 
+      eexists; splits; eauto. }
+    exfalso. 
+    eapply Hrr. 
+    unfold seq; exists y; splits; eauto. }
+  rewrite seq_rtE_r.
+  unfold inclusion; ins. 
+  eapply clos_trans_mori.
+  2: { eapply t_step. eauto. }
+  apply inclusion_union_r1.
+Qed.   
+
 End Props.
 
 Require Import Setoid.
