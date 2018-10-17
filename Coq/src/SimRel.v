@@ -108,6 +108,7 @@ Section SimRel.
       scont : simrel_cont;
 
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
+
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
       gew  : g □ Sew  ⊆ eq;
@@ -136,8 +137,6 @@ Section SimRel.
 
       vis  : f □₁ fdom ⊆₁ vis S;
 
-      (* sbF : f □ Gsb ⨾ ⦗ C ⦘ ⊆ Ssb; *)
-      (* sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb; *)
     }.
 
   Record forward_pair (e : actid) (e' : eventid) :=

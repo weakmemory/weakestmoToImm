@@ -257,14 +257,12 @@ Qed.
 Lemma step_vis_mon e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) :
   vis S ⊆₁ vis S'.
 Proof.
+  assert (ES.sb S ⊆ ES.sb S') as HH.
+  { edestruct STEP_; eapply basic_step_sb_mon; apply BS. }
   unfold vis. 
-  apply codom_rel_mori. 
-  apply inclusion_inter_mon.
-  { eapply step_cc_mon; eauto. }
-  apply inclusion_seq_mon.
-  { eapply step_ew_mon; eauto. }
-  apply eq_class_mori.
-  edestruct STEP_; eapply basic_step_sb_mon; apply BS.
+  eauto 10 using 
+        inclusion_seq_mon, codom_rel_mori, inclusion_inter_mon, 
+        step_cc_mon, step_ew_mon,  eq_class_mori.
 Qed.
 
 Lemma step_event_to_act e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) : 

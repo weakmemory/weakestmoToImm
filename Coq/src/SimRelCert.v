@@ -604,6 +604,7 @@ Proof.
       
       (* hb_jf_not_cf *)
       { unfold same_relation; splits; [|by basic_solver]. 
+        
         assert 
           (hb S' ≡ hb S ∪ hb S ;; ES.sb S' ;; <| eq e |> ∪ hb S ;; sw S' ;; <| eq e |>)
         as HB'EQ.
