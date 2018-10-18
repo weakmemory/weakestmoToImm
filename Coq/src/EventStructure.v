@@ -199,6 +199,16 @@ Proof. basic_solver. Qed.
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 
+Lemma rmwE WF : rmw ≡ ⦗E⦘ ⨾ rmw ⨾ ⦗E⦘.
+Proof.
+split; [|basic_solver].
+arewrite (rmw ⊆ rmw ∩ rmw) at 1.
+rewrite (rmwi WF) at 1.
+arewrite (immediate sb ⊆ sb).
+rewrite (sbE WF).
+basic_solver.
+Qed.
+
 Lemma rfE WF : rf ≡ ⦗E⦘ ⨾ rf ⨾ ⦗E⦘.
 Proof.
   unfold ES.rf.

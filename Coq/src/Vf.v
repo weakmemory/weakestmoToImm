@@ -81,7 +81,7 @@ Proof.
   arewrite (rf ⊆ eco).
   generalize (eco_trans WF); ins; relsf.
 
-  generalize (@hb_trans G); ins; relsf.
+  generalize (@imm_hb.hb_trans G); ins; relsf.
 
   assert (irreflexive hb) by (by apply hb_irr).
   assert (irreflexive (eco ;; hb)).
@@ -94,10 +94,10 @@ Proof.
     arewrite_id ⦗F ∩₁ Sc⦘.
     relsf.
     rotate 2.
-    generalize (@hb_trans G); ins; relsf. }
+    generalize (@imm_hb.hb_trans G); ins; relsf. }
   assert (irreflexive (hb ⨾ psc ⨾ hb)).
   { rotate 2.
-    generalize (@hb_trans G); ins; relsf. }
+    generalize (@imm_hb.hb_trans G); ins; relsf. }
 
   repeat (rewrite crE; relsf; apply irreflexive_union; split; auto).
   rewrite wf_pscD, !seqA.

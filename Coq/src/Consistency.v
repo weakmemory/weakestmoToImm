@@ -63,6 +63,7 @@ Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
 (* synchronizes with *)
 Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 
+(* happens before *)
 Definition hb : relation eventid := (sb ∪ sw)⁺.
 
 Definition co_strong : relation eventid :=
@@ -83,6 +84,7 @@ Definition eco (m : model) : relation eventid :=
 Definition psc (m : model) : relation eventid :=
   ⦗ Sc ⦘ ⨾ hb ⨾ eco m ⨾ hb ⨾ ⦗ Sc ⦘.
 
+(* TODO : prbly just `sb` in the second disjunct *)
 Definition cf_imm : relation eventid :=
   cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb⁻¹).
 
@@ -99,10 +101,105 @@ Record es_consistent {m} :=
     labeq_jf_irr : irreflexive (jf ⨾ cf_imm ⨾ jf⁻¹ ⨾ ew^?);
   }.
 
+(******************************************************************************)
+(** ** Properties *)
+(******************************************************************************)
+
 Section Properties.
 Variable WF : ES.Wf S.
 Variable m : model.
 Variable ESC : @es_consistent m.
+
+(******************************************************************************)
+(** ** Basic properties *)
+(******************************************************************************)
+
+Lemma hb_trans : transitive hb.
+Proof. vauto. Qed.
+
+Lemma sb_in_hb : sb ⊆ hb.
+Proof. vauto. Qed.
+
+Lemma sw_in_hb : sw ⊆ hb.
+Proof. vauto. Qed.
+
+Lemma cr_hb_hb : hb^? ⨾ hb ≡ hb.
+Proof. generalize hb_trans; basic_solver. Qed.
+
+Lemma cr_hb_cr_hb : hb^? ⨾ hb^? ≡ hb^?.
+Proof. generalize hb_trans; basic_solver 20. Qed.
+
+Lemma hb_sb_sw : hb ≡ hb^? ⨾ (sb ∪ sw).
+Proof.
+unfold hb; rewrite ct_end at 1; rels.
+Qed.
+
+(******************************************************************************)
+(** ** Relations in graph *)
+(******************************************************************************)
+
+Lemma rsE : rs ≡ ⦗W⦘ ∪ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
+Proof.
+unfold rs.
+split; [|basic_solver 12].
+rewrite rtE; relsf; unionL.
+rewrite (ES.sbE WF); basic_solver 21.
+unionR right -> right.
+rewrite (dom_r (ES.rmwE WF)) at 1.
+rewrite <- !seqA.
+sin_rewrite inclusion_ct_seq_eqv_r.
+rewrite !seqA.
+arewrite (⦗E⦘ ⨾ ⦗W⦘ ≡ ⦗W⦘ ⨾ ⦗E⦘) by basic_solver.
+hahn_frame.
+rewrite ct_begin.
+rewrite (dom_l (ES.sbE WF)) at 1.
+rewrite (dom_l (ES.rfE WF)) at 1.
+basic_solver 21.
+Qed.
+
+Lemma releaseE : release ≡ ⦗W ∩₁ Rel⦘ ∪ ⦗E⦘ ⨾ release ⨾ ⦗E⦘.
+Proof.
+unfold release.
+rewrite rsE.
+rewrite (ES.sbE WF) at 1.
+basic_solver 42.
+Qed.
+
+Lemma swE_right : sw ≡ sw ⨾ ⦗E⦘.
+Proof.
+split; [|basic_solver].
+unfold sw.
+rewrite (ES.sbE WF) at 1 2.
+rewrite (ES.rfE WF) at 1.
+basic_solver 42.
+Qed.
+
+Lemma swE : sw ≡ ⦗E⦘ ⨾ sw ⨾ ⦗E⦘.
+Proof.
+split; [|basic_solver].
+rewrite swE_right at 1.
+hahn_frame.
+unfold sw.
+rewrite releaseE.
+rewrite (dom_l (ES.rfE WF)).
+rewrite (dom_l (ES.sbE WF)).
+basic_solver 40.
+Qed.
+
+Lemma hbE : hb ≡ ⦗E⦘ ⨾ hb ⨾ ⦗E⦘.
+Proof.
+split; [|basic_solver].
+unfold hb.
+rewrite <- inclusion_ct_seq_eqv_r, <- inclusion_ct_seq_eqv_l.
+apply inclusion_t_t.
+rewrite (ES.sbE WF) at 1.
+rewrite swE at 1.
+basic_solver 42.
+Qed.
+
+(******************************************************************************)
+(** ** Consistent rf properties *)
+(******************************************************************************)
 
 Lemma jf_in_rf : jf ⊆ rf.
 Proof.
@@ -113,6 +210,7 @@ Qed.
 
 Lemma rf_complete : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf. apply WF. Qed.
+
 
 End Properties.
 
