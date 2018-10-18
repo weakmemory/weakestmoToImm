@@ -227,26 +227,42 @@ Variable f : actid -> eventid.
 
 Notation "'g'" := (ES.event_to_act S).
 
-Notation "'SE'" := S.(ES.acts_set).
-Notation "'SEinit'" := S.(ES.acts_init_set).
-Notation "'Stid'" := (S.(ES.tid)).
-Notation "'Slab'" := (S.(ES.lab)).
-Notation "'Sloc'" := (loc S.(ES.lab)).
-Notation "'K'"  := S.(ES.cont_set).
+Notation "'SE' S" := S.(ES.acts_set) (at level 10).
+Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
+Notation "'Stid' S" := (S.(ES.tid)) (at level 10).
+Notation "'Slab' S" := S.(ES.lab) (at level 10).
+Notation "'Ssb' S" := S.(ES.sb) (at level 10).
+Notation "'Srmw' S" := S.(ES.rmw) (at level 10).
+Notation "'Sew' S" := S.(ES.ew) (at level 10).
+Notation "'Sjf' S" := S.(ES.jf) (at level 10).
+Notation "'Srf' S" := S.(ES.rf) (at level 10).
+Notation "'Sco' S" := S.(ES.co) (at level 10).
+Notation "'Scf' S" := S.(ES.cf) (at level 10).
+Notation "'Scc' S" := S.(ES.cc) (at level 10).
+
+Notation "'Sjfe' S" := S.(ES.jfe) (at level 10).
+Notation "'Srfe' S" := S.(ES.rfe) (at level 10).
+Notation "'Scoe' S" := S.(ES.coe) (at level 10).
+Notation "'Sjfi' S" := S.(ES.jfi) (at level 10).
+Notation "'Srfi' S" := S.(ES.rfi) (at level 10).
+Notation "'Scoi' S" := S.(ES.coi) (at level 10).
+
+Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
+Notation "'SF' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
+
+Notation "'SPln' S" := (is_only_pln S.(ES.lab)) (at level 10).
+Notation "'SRlx' S" := (is_rlx S.(ES.lab)) (at level 10).
+Notation "'SRel' S" := (is_rel S.(ES.lab)) (at level 10).
+Notation "'SAcq' S" := (is_acq S.(ES.lab)) (at level 10).
+Notation "'SAcqrel' S" := (is_acqrel S.(ES.lab)) (at level 10).
+Notation "'SSc' S" := (is_sc S.(ES.lab)) (at level 10).
+
+Notation "'Ssame_loc' S" := (same_loc S.(ES.lab)) (at level 10).
+Notation "'Ssame_val' S" := (same_val S.(ES.lab)) (at level 10).
+Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
-
-Notation "'Ssb'" := (S.(ES.sb)).
-Notation "'Sjf'" := (S.(ES.jf)).
-Notation "'Srf'" := (S.(ES.rf)).
-Notation "'Sco'" := (S.(ES.co)).
-Notation "'Scf'" := (S.(ES.cf)).
-Notation "'Scc'" := (S.(ES.cc)).
-Notation "'Sew'" := (S.(ES.ew)).
-Notation "'Srmw'" := (S.(ES.rmw)).
-
-Notation "'SR'" := (fun a => is_true (is_r Slab a)).
-Notation "'SW'" := (fun a => is_true (is_w Slab a)).
 
 Notation "'GE'" := G.(acts_set).
 Notation "'Glab'" := (G.(lab)).
@@ -434,7 +450,7 @@ Proof.
     rewrite <- restr_relE.
     rewrite restr_inter.
     rewrite restr_rel_mori.
-    { rewrite (restr_relE _ Scf). 
+    { rewrite (restr_relE _ (Scf S)). 
       rewrite SRC.(fimgNcf). 
       by rewrite inter_false_l. } 
     all: basic_solver. }
@@ -443,7 +459,7 @@ Admitted.
 Lemma simrel_cert_basic_step k lbls jf ew co
       (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
       (* (SRCC : simrel_cert prog S G sc TC TC' f h k st'' new_rf) *)
-      (KK : K (k, existT _ _ st))
+      (KK : K S (k, existT _ _ st))
       (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') :
   exists k' e e' lbl lbl' S',
     ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
@@ -487,7 +503,7 @@ Qed.
 Lemma simrel_cert_lbl_step TC' h q new_rf
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
-      (KK : K (q, existT _ _ state))
+      (KK : K S (q, existT _ _ state))
       (LBL_STEP : lbl_step (ES.cont_thread S q) state state') :
   exists  q' S' h',
     ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
@@ -604,14 +620,59 @@ Proof.
       
       (* hb_jf_not_cf *)
       { unfold same_relation; splits; [|by basic_solver]. 
-        
-        assert 
-          (hb S' ≡ hb S ∪ hb S ;; ES.sb S' ;; <| eq e |> ∪ hb S ;; sw S' ;; <| eq e |>)
-        as HB'EQ.
-        { admit. } 
+        unfold hb. 
+        cdes ES_BSTEP. cdes BSTEP_. 
+        rewrite SB'.
+        rewrite e'NONE. 
+        unfold eq_opt.
+        rewrite cross_false_r.
+        rewrite union_false_r.
+        erewrite ESstep.step_read_sw; eauto;
+          [| by apply SRC | unfold is_r; by rewrite eSLAB ].
+        arewrite 
+          (Ssb S ∪ ES.cont_sb_dom S k × eq e ∪ 
+               (sw S ∪ release S ⨾ Srf S' ⨾ ⦗ SAcq S'⦘ ⨾ ⦗eq e⦘) ≡
+          Ssb S ∪ sw S ∪ 
+          ES.cont_sb_dom S k × eq e ∪ release S ⨾ Srf S' ⨾ ⦗ SAcq S'⦘ ⨾ ⦗eq e⦘).
+        { rewrite unionA. 
+          rewrite <- (unionA (ES.cont_sb_dom S k × eq e) _ _). 
+          rewrite (unionC (ES.cont_sb_dom S k × eq e) (sw S)).
+          rewrite (unionA (sw S) _).
+          rewrite <- unionA. 
+          rewrite <- unionA. 
+          auto. }
+        rewrite unionA.
+        rewrite unionC.
+        erewrite clos_trans_union_ext.
+        2-3: admit.
+        rewrite <- cr_of_ct.
+        fold (hb S). 
+        rewrite seq_union_l.
+        rewrite inter_union_l.
+        apply inclusion_union_l.
+        { rewrite JF'. 
+          rewrite transp_union.
+          rewrite seq_union_r.
+          rewrite inter_union_l.
+          apply inclusion_union_l.
+          { admit. } 
+          admit. }
+        rewrite seq_union_r.
+        rewrite seq_union_l.
+        rewrite inter_union_l.
+        apply inclusion_union_l.
+        { rewrite JF'.  
+          rewrite transp_union.
+          rewrite seq_union_r.
+          rewrite inter_union_l.
+          apply inclusion_union_l.
+          { admit. }
+          rewrite seqA.
+          admit. }
+        rewrite seq_eqv.
+        destruct (SAcq S' e) eqn:eMODE.
+        { admit. }
         admit. }
-
-
       all: admit. } 
 
     exists q', S', (upd h a e).

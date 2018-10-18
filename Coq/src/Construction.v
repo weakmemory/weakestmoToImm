@@ -1,16 +1,43 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events ProgToExecution Execution.
+From imm Require Import Events. 
 Require Import AuxRel AuxDef EventStructure Consistency.
 
 Export ListNotations.
 
 Module ESstep.
 
+Notation "'E' S" := S.(ES.acts_set) (at level 10).
+Notation "'E_init' S" := S.(ES.acts_init_set) (at level 10).
+Notation "'lab' S" := S.(ES.lab) (at level 10).
+Notation "'sb' S" := S.(ES.sb) (at level 10).
+Notation "'rmw' S" := S.(ES.rmw) (at level 10).
+Notation "'ew' S" := S.(ES.ew) (at level 10).
+Notation "'jf' S" := S.(ES.jf) (at level 10).
+Notation "'rf' S" := S.(ES.rf) (at level 10).
+Notation "'co' S" := S.(ES.co) (at level 10).
+Notation "'cf' S" := S.(ES.cf) (at level 10).
+Notation "'cc' S" := S.(ES.cc) (at level 10).
+
+Notation "'jfe' S" := S.(ES.jfe) (at level 10).
+Notation "'rfe' S" := S.(ES.rfe) (at level 10).
+Notation "'coe' S" := S.(ES.coe) (at level 10).
+Notation "'jfi' S" := S.(ES.jfi) (at level 10).
+Notation "'rfi' S" := S.(ES.rfi) (at level 10).
+Notation "'coi' S" := S.(ES.coi) (at level 10).
+
 Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
 Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
+
+Notation "'Pln' S" := (is_only_pln S.(ES.lab)) (at level 10).
+Notation "'Rlx' S" := (is_rlx S.(ES.lab)) (at level 10).
+Notation "'Rel' S" := (is_rel S.(ES.lab)) (at level 10).
+Notation "'Acq' S" := (is_acq S.(ES.lab)) (at level 10).
+Notation "'Acqrel' S" := (is_acqrel S.(ES.lab)) (at level 10).
+Notation "'Sc' S" := (is_sc S.(ES.lab)) (at level 10).
+
 Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
@@ -269,5 +296,36 @@ Lemma step_event_to_act e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) :
   eq_dom (ES.acts_set S) (ES.event_to_act S) (ES.event_to_act S').
 Proof.
 Admitted. 
+
+Lemma step_fence_rf e e' S S' 
+      (STEP_: t_incons e e' S S') 
+      (wfE: ES.Wf S) 
+      (EF : F S' e) :
+  rf S' ≡ rf S.
+Proof.
+Admitted.
+
+Lemma step_read_sw e e' S S' 
+      (STEP_: t_incons e e' S S') 
+      (wfE: ES.Wf S) 
+      (eR : R S' e): 
+  sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗ Acq S' ⦘ ⨾ ⦗ eq e ⦘.
+Proof.
+Admitted.
+
+Lemma step_sw e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) : 
+  sw S' ≡ sw S ∪ 
+     release S ⨾ rf S' ⨾ ⦗ Acq S' ⦘ ⨾ ⦗ eq e ⦘ ∪ 
+     release S ⨾ rf S  ⨾ sb S' ⨾ ⦗ F S' ⦘ ⨾ ⦗ Acq S' ⦘ ⨾ ⦗ eq e ⦘. 
+Proof.
+  unfold sw.
+  edestruct STEP_.
+  { rewrite step_fence_rf; eauto. 
+    unfold ES.rf. 
+    (* rewrite JF'. *)
+    (* rewrite EW'. *)
+    admit.
+  }
+Admitted.
 
 End ESstep.
