@@ -675,7 +675,7 @@ Proof.
         admit. }
       all: admit. } 
 
-    exists q', S', (upd h a e).
+   exists q', S', (upd h a e).
 
     desf; splits. 
     { unfold "^?". right.
@@ -694,7 +694,7 @@ Admitted.
 Lemma simrel_cert_step TC' h q state'' new_rf
       (state : (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
-      (KK : K (q, existT _ _ state))
+      (KK : K S (q, existT _ _ state))
       (KNEQ : state <> state'') :
   exists (state' : (thread_lts (ES.cont_thread S q)).(Language.state)),
     lbl_step (ES.cont_thread S q) state state'.
@@ -719,7 +719,7 @@ Qed.
 
 Lemma simrel_cert_cc_dom TC' h q state' new_rf
   (SRCC : simrel_cert prog S G sc TC TC' f h q state' new_rf) : 
-  dom_rel (Scc ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
+  dom_rel (Scc S ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
 Proof. 
   admit.
 Admitted.
