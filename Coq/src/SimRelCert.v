@@ -644,36 +644,53 @@ Proof.
         rewrite unionA.
         rewrite unionC.
         erewrite clos_trans_union_ext.
-        2-3: admit.
-        rewrite <- cr_of_ct.
-        fold (hb S). 
-        rewrite seq_union_l.
-        rewrite inter_union_l.
-        apply inclusion_union_l.
-        { rewrite JF'. 
-          rewrite transp_union.
-          rewrite seq_union_r.
+        { rewrite <- cr_of_ct.
+          fold (hb S). 
+          rewrite seq_union_l.
           rewrite inter_union_l.
           apply inclusion_union_l.
-          { admit. } 
-          admit. }
-        rewrite seq_union_r.
-        rewrite seq_union_l.
-        rewrite inter_union_l.
-        apply inclusion_union_l.
-        { rewrite JF'.  
-          rewrite transp_union.
+          { rewrite JF'. 
+            rewrite transp_union.
+            rewrite seq_union_r.
+            rewrite inter_union_l.
+            apply inclusion_union_l.
+            { admit. } 
+            admit. }
           rewrite seq_union_r.
+          rewrite seq_union_l.
           rewrite inter_union_l.
           apply inclusion_union_l.
+          { rewrite JF'.  
+            rewrite transp_union.
+            rewrite seq_union_r.
+            rewrite inter_union_l.
+            apply inclusion_union_l.
+            { admit. }
+            rewrite seqA.
+            admit. }
+          rewrite seq_eqv.
+          destruct (SAcq S' e) eqn:eMODE.
           { admit. }
-          rewrite seqA.
           admit. }
-        rewrite seq_eqv.
-        destruct (SAcq S' e) eqn:eMODE.
-        { admit. }
-        admit. }
-      all: admit. } 
+        { eapply seq_max.
+          { eapply max_elt_union. 
+            { eapply max_elt_cross.
+              unfold set_compl, not; ins. 
+              eapply ES.cont_sb_domE in H; eauto; [|apply SRC].
+              eapply ESstep.basic_step_acts_set_NE; eauto. }
+            eapply max_elt_seq1.
+            erewrite releaseE; [|apply SRC].
+            apply max_elt_union.
+            { apply max_elt_eqv_rel.
+              unfold set_compl, not; ins.
+              admit. }
+            eapply max_elt_seq1.
+            apply max_elt_eqv_rel.
+            unfold set_compl, not; ins. 
+            eapply ESstep.basic_step_acts_set_NE; eauto. }
+          admit. }
+        all: admit. } 
+      all: admit. }
 
    exists q', S', (upd h a e).
 
