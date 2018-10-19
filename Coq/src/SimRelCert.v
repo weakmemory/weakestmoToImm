@@ -251,12 +251,12 @@ Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
 Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'SF' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
-Notation "'SPln' S" := (is_only_pln S.(ES.lab)) (at level 10).
-Notation "'SRlx' S" := (is_rlx S.(ES.lab)) (at level 10).
-Notation "'SRel' S" := (is_rel S.(ES.lab)) (at level 10).
-Notation "'SAcq' S" := (is_acq S.(ES.lab)) (at level 10).
-Notation "'SAcqrel' S" := (is_acqrel S.(ES.lab)) (at level 10).
-Notation "'SSc' S" := (is_sc S.(ES.lab)) (at level 10).
+Notation "'SPln' S" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
+Notation "'SRlx' S" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
+Notation "'SRel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
+Notation "'SAcq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
+Notation "'SAcqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
+Notation "'SSc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 Notation "'Ssame_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'Ssame_val' S" := (same_val S.(ES.lab)) (at level 10).
@@ -669,8 +669,6 @@ Proof.
             rewrite seqA.
             admit. }
           rewrite seq_eqv.
-          destruct (SAcq S' e) eqn:eMODE.
-          { admit. }
           admit. }
         { eapply seq_max.
           { eapply max_elt_union. 
