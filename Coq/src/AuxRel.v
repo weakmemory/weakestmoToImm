@@ -55,8 +55,10 @@ Variables r r' : relation A.
 
 Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
 Proof. basic_solver. Qed.
+
 Lemma seq_eqv_cross_r : s × s' ⨾ ⦗q'⦘ ≡ s × (q' ∩₁ s').
 Proof. basic_solver. Qed.
+
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
 Proof. basic_solver. Qed.
 
@@ -66,6 +68,12 @@ Proof. basic_solver. Qed.
 Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
 Proof. basic_solver. Qed.
 
+Lemma max_elt_eqv_rel : set_compl s ⊆₁ max_elt ⦗s⦘.
+Proof. basic_solver. Qed.
+
+Lemma max_elt_cross : set_compl s ⊆₁ max_elt (s × s'). 
+Proof. basic_solver. Qed.
+  
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
 Proof.
   unfold set_equiv, set_subset; ins; desf. 

@@ -95,21 +95,21 @@ Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
 Section EventStructure.
 
-Variable EG : ES.t.
+Variable S : ES.t.
 
-Notation "'E'"      := EG.(ES.acts_set).
-Notation "'Einit'"  := EG.(ES.acts_init_set).
-Notation "'Eninit'" := EG.(ES.acts_ninit_set).
-Notation "'tid'"   := EG.(ES.tid).
-Notation "'sb'"    := EG.(ES.sb).
-Notation "'rmw'"   := EG.(ES.rmw).
-Notation "'ew'"    := EG.(ES.ew).
-Notation "'jf'"    := EG.(ES.jf).
-Notation "'rf'"    := EG.(ES.rf).
-Notation "'co'"    := EG.(ES.co).
-Notation "'lab'"   := EG.(ES.lab).
-Notation "'cf'"    := EG.(ES.cf).
-Notation "'K'"     := EG.(ES.cont_set).
+Notation "'E'"      := S.(ES.acts_set).
+Notation "'Einit'"  := S.(ES.acts_init_set).
+Notation "'Eninit'" := S.(ES.acts_ninit_set).
+Notation "'tid'"   := S.(ES.tid).
+Notation "'sb'"    := S.(ES.sb).
+Notation "'rmw'"   := S.(ES.rmw).
+Notation "'ew'"    := S.(ES.ew).
+Notation "'jf'"    := S.(ES.jf).
+Notation "'rf'"    := S.(ES.rf).
+Notation "'co'"    := S.(ES.co).
+Notation "'lab'"   := S.(ES.lab).
+Notation "'cf'"    := S.(ES.cf).
+Notation "'K'"     := S.(ES.cont_set).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
@@ -143,7 +143,7 @@ Definition event_to_act (e : eventid) : actid :=
       let thread := tid e in
       ThreadEvent thread
                   (countNatP (dom_rel (⦗ tid_ thread ⦘⨾ sb ⨾ ⦗ eq e ⦘))
-                             (next_act EG)).
+                             (next_act S)).
 
 Record Wf :=
   { initL : forall l, (exists b, E b /\ loc b = Some l) ->
@@ -263,6 +263,22 @@ Proof.
   apply funeq_minus.
   generalize WF.(jfv) WF.(ewv) funeq_seq.
   basic_solver.
+Qed.
+
+(******************************************************************************)
+(** ** Continuation properites *)
+(******************************************************************************)
+
+Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : cont_sb_dom S k ⊆₁ E.
+Proof. 
+  autounfold with unfolderDb. 
+  unfold cont_sb_dom.
+  ins; desf.
+  { unfold acts_init_set, set_inter in H; desf. }
+  autounfold with unfolderDb in H; desf.
+  { eapply WF.(K_inE). apply KK. }
+  apply WF.(sbE) in H.
+  autounfold with unfolderDb in H; desf.
 Qed.
 
 End EventStructure.

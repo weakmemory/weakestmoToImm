@@ -156,6 +156,19 @@ Proof.
   do 2 (apply set_subset_union_l in INCL_R; desf). 
 Qed.
 
+Lemma basic_step_acts_set_NE  
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BASIC_STEP : t_basic e e' S S') :
+  ~ S.(ES.acts_set) e.
+Proof. 
+  unfold not, ES.acts_set; ins.
+  cdes BASIC_STEP.
+  cdes BSTEP_.
+  omega.
+Qed.
+
 Lemma basic_step_tid_eq_dom
       (e  : eventid)
       (e' : option eventid)
