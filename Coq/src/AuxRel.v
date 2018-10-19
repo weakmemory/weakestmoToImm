@@ -60,8 +60,22 @@ Proof. basic_solver. Qed.
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
 Proof. basic_solver. Qed.
 
+Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
+Proof. basic_solver. Qed.
+
 Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
 Proof. basic_solver. Qed.
+
+Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
+Proof.
+  unfold set_equiv, set_subset; ins; desf. 
+  unfold same_relation; splits; [|basic_solver].
+  unfold seq, inclusion. 
+  intros x y [z HH]. 
+  specialize (H z).
+  apply H. 
+  basic_solver.
+Qed.
 
 Lemma set_subset_inter_l (LL : s ⊆₁ s'' \/ s' ⊆₁ s'') :
   s ∩₁ s' ⊆₁ s''.
@@ -225,9 +239,6 @@ Proof.
   rewrite inclusion_t_rt.
   basic_solver.
 Qed. 
-
-(* Lemma clos_trans_union_ext (Hrr : r' ⨾ r' ≡ ∅₂) (Hrr' : r' ⨾ r ≡ ∅₂) :  *)
-(*   (r ∪ r')⁺ ≡ r'⁺ ∪ r＊ ⨾ r'. *)
 
 Lemma clos_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')⁺ ≡ r'⁺ ∪ r'＊ ⨾ r.
