@@ -552,15 +552,14 @@ Proof.
     { admit. }
     
     rewrite e'NONE in ES_BSTEP_. 
-    (* rewrite e'NONE in ES_BSTEP.  *)
+    rewrite e'NONE in ES_BSTEP.
     rewrite e'NONE in LBLS_EQ.
     simpl in LBLS_EQ.
     inversion LBLS_EQ as [eSLAB].
     symmetry in eSLAB.
 
     assert (ESstep.t_incons e None S S') as ES_STEP_.
-    { eapply ESstep.t_load; simpl; eauto.
-      { admit. } 
+    { unfold ESstep.t_incons. right. left. unfold ESstep.t_load. splits; eauto.
       unfold ESstep.add_jf.
       splits.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
@@ -620,10 +619,9 @@ Proof.
       
       (* hb_jf_not_cf *)
       { unfold same_relation; splits; [|by basic_solver]. 
-        unfold hb. 
+        unfold hb.
         cdes ES_BSTEP. cdes BSTEP_. 
         rewrite SB'.
-        rewrite e'NONE. 
         unfold eq_opt.
         rewrite cross_false_r.
         rewrite union_false_r.
