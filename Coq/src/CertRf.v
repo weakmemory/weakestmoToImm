@@ -32,6 +32,7 @@ Notation "'Rel'" := (fun a => is_true (is_rel lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
 
 Notation "'sb'" := (G.(sb)).
+Notation "'sw'" := (G.(imm_s_hb.sw)).
 Notation "'hb'" := (G.(imm_s_hb.hb)).
 Notation "'rf'" := (G.(rf)).
 Notation "'co'" := (G.(co)).
@@ -276,7 +277,31 @@ Proof.
   assert (hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
           ⦗ C ⦘ ⨾ hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪
             sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) as PP.
-  { admit. } 
+  { arewrite (hb^? ⊆ <| C ∪₁ set_compl C |> ;; hb^?) at 1. 
+    { rewrite set_compl_union_id. by rewrite seq_id_l. }
+    rewrite id_union, seq_union_l.
+    apply union_mori; [done|].
+    unfold imm_s_hb.hb.
+    rewrite cr_of_ct.
+    rewrite unionC.
+    rewrite path_ut.
+    2: by apply sb_trans.
+    rewrite !seqA.
+    rewrite !rtE.
+    rewrite !seq_union_l, !seq_union_r.
+    rewrite !seq_id_l.
+    unionL.
+    { arewrite_id ⦗set_compl C⦘. by rewrite seq_id_l. }
+
+    
+
+    rewrite crE at 1.
+    rewrite !seq_union_l, !seq_union_r.
+    rewrite seq_id_l.
+    unionL.
+    { basic_solver 20. }
+    rewrite hb_sb_sw.
+    admit. } 
   sin_rewrite PP.
   rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.
