@@ -53,6 +53,9 @@ Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
 Variables r r' : relation A.
 
+Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
+Proof. basic_solver. Qed.
+
 Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
 Proof. basic_solver. Qed.
 
@@ -213,16 +216,29 @@ Proof.
 Qed.
 
 Lemma restr_set_inter :
-  restr_rel (s ∩₁ s') r ≡
-    restr_rel s r ∩ restr_rel s' r.
+  restr_rel (s ∩₁ s') r ≡ restr_rel s r ∩ restr_rel s' r.
 Proof.
   autounfold with unfolderDb.
   splits; ins; desf. 
 Qed.
 
+Lemma restr_inter_absorb_l :
+  restr_rel s r ∩ restr_rel s r' ≡ r ∩ restr_rel s r'.
+Proof. basic_solver. Qed.
+
+Lemma restr_inter_absorb_r :
+  restr_rel s r ∩ restr_rel s r' ≡ restr_rel s r ∩ r'.
+Proof. basic_solver. Qed.
+
 Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
   forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
 Proof. basic_solver. Qed.
+
+Lemma restr_clos_trans : (restr_rel s r)⁺ ⊆ restr_rel s r⁺.
+Proof.
+  unfold inclusion, restr_rel; ins. 
+  induction H; desf; splits; eauto using t_step, t_trans. 
+Qed.
 
 Lemma eq_dom_union: eq_dom (s ∪₁ s') f g <-> eq_dom s f g /\ eq_dom s' f g.
 Proof. 

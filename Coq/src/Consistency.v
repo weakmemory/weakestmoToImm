@@ -157,6 +157,9 @@ rewrite (dom_l (ES.rfE WF)) at 1.
 basic_solver 21.
 Qed.
 
+Lemma rsEE : rs ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
+Proof. rewrite rsE. basic_solver 42. Qed.
+
 Lemma releaseE : release ≡ ⦗W ∩₁ Rel⦘ ∪ ⦗E⦘ ⨾ release ⨾ ⦗E⦘.
 Proof.
 unfold release.
