@@ -51,9 +51,15 @@ Variable a : A.
 Variable b : B.
 Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
-Variables r r' : relation A.
+Variables r r' r'': relation A.
 
 Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
+Proof. basic_solver. Qed.
+
+Lemma cross_union_l : s × (s' ∪₁ s'')  ≡ s × s' ∪ s × s''.
+Proof. basic_solver. Qed.
+
+Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
 Proof. basic_solver. Qed.
 
 Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
@@ -80,6 +86,20 @@ Proof. basic_solver. Qed.
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
 Proof. basic_solver. Qed.
   
+Lemma compl_top_minus : forall (r : relation A), compl_rel r ≡ (fun _ _ => True) \ r.
+Proof. basic_solver. Qed.
+
+Lemma minus_union_r : forall (r r' r'': relation A), r \ (r' ∪ r'') ≡ (r \ r') ∩ (r \ r'').
+Proof. 
+  autounfold with unfolderDb; splits; ins; desf; splits; auto.
+  unfold not; basic_solver.
+Qed.
+
+Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
+Proof. 
+  repeat rewrite compl_top_minus; by apply minus_union_r.
+Qed.
+
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
 Proof.
   unfold set_equiv, set_subset; ins; desf. 
