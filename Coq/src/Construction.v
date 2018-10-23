@@ -538,17 +538,24 @@ Proof.
   admit.
 Admitted.
 
-(*   unfold is_w. *)
-(*   rewrite LAB'. *)
-  
-(*   unfold upd, set_equiv, set_subset; split; ins. *)
-(*   { destruct (excluded_middle_informative (x = e)) as [Heq |]; [|apply H]. *)
-(*     (* Here we need a property like `forall x, ~ S.E x -> lab x = trash` *) *)
-(*     admit. } *)
-(*   destruct (excluded_middle_informative (x = e)) as [Heq |]; [|apply H]. *)
-(*   (* Same here *) *)
-(*   admit. *)
-(* Admitted. *)
+Lemma load_step_rf e e' S S'
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) : 
+  rf S' ≡ rf S ∪ (ew S)^? ⨾ jf S' ⨾ ⦗eq e⦘ \ cf S'.
+Proof.
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  unfold "rf" at 1.
+  rewrite EW', JF'.
+  autorewrite with hahn hahn_full.
+  rewrite minus_union_l.
+  arewrite ((ew S)^? ⨾ jf S \ cf S' ≡ rf S).
+  { admit. }
+  arewrite ((ew S)^? ⨾ jf S ⨾ ⦗eq e⦘ ≡ ∅₂).
+  { admit. }
+  arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e).
+  { basic_solver. }
+  basic_solver 10.
+Admitted.
 
 Lemma load_step_rf_rmw e e' S S'
       (LSTEP: t_load e e' S S') 
@@ -704,35 +711,59 @@ Proof.
   by rewrite <- wfE.(ES.sbE).
 Qed.
 
-Lemma step_fence_rf e e' S S' 
-      (STEP_: t_incons e e' S S') 
-      (wfE: ES.Wf S) 
-      (EF : F S' e) :
-  rf S' ≡ rf S.
+Lemma load_step_sw e e' S S' 
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) :
+  sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗eq e⦘ ⨾ ⦗Acq S'⦘. 
 Proof.
-Admitted.
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
+  
+  assert (ES.Wf S') as wfE'.
+  { eapply step_wf; eauto; right; left; eauto. }
 
-Lemma step_read_sw e e' S S' 
-      (STEP_: t_incons e e' S S') 
-      (wfE: ES.Wf S) 
-      (eR : R S' e): 
-  sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗ Acq S' ⦘ ⨾ ⦗ eq e ⦘.
-Proof.
-Admitted.
-
-Lemma step_sw e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) : 
-  sw S' ≡ sw S ∪ 
-     release S ⨾ rf S' ⨾ ⦗ Acq S' ⦘ ⨾ ⦗ eq e ⦘ ∪ 
-     release S ⨾ rf S  ⨾ sb S' ⨾ ⦗ F S' ⦘ ⨾ ⦗ Acq S' ⦘ ⨾ ⦗ eq e ⦘. 
-Proof.
   unfold sw.
-  edestruct STEP_.
-  { rewrite step_fence_rf; eauto. 
-    unfold ES.rf. 
-    (* rewrite JF'. *)
-    (* rewrite EW'. *)
-    all: admit.
-  }
-Admitted.
+  erewrite wfE'.(ES.rfE).
+  rewrite seqA.
+  rewrite <- (seqA (release S')).
+  rewrite load_step_release; eauto.
+  do 2 rewrite crE. 
+  rewrite load_step_rf, basic_step_nupd_sb; eauto.
+  autorewrite with hahn hahn_full.
+  repeat rewrite seqA.
+  repeat rewrite unionA.
 
+  (* apply union_more. *)
+  (* { rewrite (basic_step_nupd_acts_set e S S'); eauto. *)
+    
+  (*   rewrite wfE.(ES.rfE). *)
+  (*   repeat rewrite seqA. *)
+  (*   arewrite (⦗E S⦘ ⨾ ⦗Acq S'⦘ ≡ ⦗E S⦘ ⨾ ⦗Acq S⦘). *)
+  (*   { admit. } *)
+  (*   rewrite <- seqA. *)
+  (*   arewrite (release S' ⨾ ⦗E S⦘ ≡ release S ⨾ ⦗E S⦘); auto. *)
+  (*   admit. } *)
+
+  (* apply union_more. *)
+  (* { admit. } *)
+
+  (* arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗F S'⦘ ≡ ∅₂). *)
+  (* { autounfold with unfolderDb; splits; desf; ins; desf. *)
+  (*   unfold is_f in H1. *)
+  (*   unfold is_r in RR. *)
+  (*   rewrite LAB' in H1, RR. *)
+  (*   erewrite upds in H1, RR. *)
+  (*   destruct lbl eqn:Heq; auto. } *)
+  
+  (* rewrite <- (seqA ((ew S)^? ⨾ jf S' ⨾ ⦗eq e⦘ \ cf S')).  *)
+  (* arewrite ((((ew S)^? ⨾ jf S' ⨾ ⦗eq e⦘ \ cf S') ⨾ sb S) ≡ ∅₂). *)
+  (* { admit. } *)
+
+  (* arewrite (rf S ⨾ ⦗eq e⦘ ≡ ∅₂). *)
+  (* { admit. } *)
+
+  (* autorewrite with hahn hahn_full. *)
+Admitted.  
+
+
+    
 End ESstep.
