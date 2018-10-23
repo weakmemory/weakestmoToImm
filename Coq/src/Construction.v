@@ -154,9 +154,6 @@ Definition t (m : model) (S S' : ES.t) : Prop := exists e e',
 (** ** Basic step properites *)
 (******************************************************************************)
 
-Ltac lift_basic_step H L := 
-  unfold_t_incons H; eapply L; eauto.
-
 Lemma basic_step_acts_set 
       (e  : eventid)
       (e' : option eventid)
@@ -173,14 +170,6 @@ Proof.
     splits; unfold set_subset; intros; by omega.
 Qed.
 
-Lemma step_acts_set 
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  S'.(ES.acts_set) ≡₁ S.(ES.acts_set) ∪₁ eq e ∪₁ eq_opt e'.
-Proof. lift_basic_step ISTEP basic_step_acts_set. Qed.
-
 Lemma basic_step_nupd_acts_set 
       (e  : eventid)
       (S S' : ES.t) 
@@ -193,17 +182,7 @@ Proof.
   by rewrite set_union_empty_r in BSTEP.
 Qed.
 
-Lemma step_nupd_acts_set 
-      (e  : eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e None S S') :
-  S'.(ES.acts_set) ≡₁ S.(ES.acts_set) ∪₁ eq e.
-Proof. lift_basic_step ISTEP basic_step_nupd_acts_set. Qed.
-
-Lemma basic_step_acts_set_NE  
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_acts_set_NE e e' S S'  
       (BSTEP : t_basic e e' S S') :
   ~ S.(ES.acts_set) e.
 Proof. 
@@ -211,18 +190,7 @@ Proof.
   cdes BSTEP; cdes BSTEP_; omega.
 Qed.
 
-Lemma step_acts_set_NE  
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  ~ S.(ES.acts_set) e.
-Proof. lift_basic_step ISTEP basic_step_acts_set_NE. Qed.
-
-Lemma basic_step_acts_set_mon
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_acts_set_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   S.(ES.acts_set) ⊆₁ S'.(ES.acts_set).
 Proof. 
@@ -230,18 +198,7 @@ Proof.
   do 2 (apply set_subset_union_l in INCL_R; desf). 
 Qed.
 
-Lemma step_acts_set_mon
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  S.(ES.acts_set) ⊆₁ S'.(ES.acts_set).
-Proof. lift_basic_step ISTEP basic_step_acts_set_mon. Qed.
-
-Lemma basic_step_tid_eq_dom
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_tid_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
   eq_dom S.(ES.acts_set) S.(ES.tid) S'.(ES.tid).
 Proof. 
@@ -254,18 +211,7 @@ Proof.
     desf; unfold upd_opt; rewrite updo; try rewrite updo; desf; omega.
 Qed.
 
-Lemma step_tid_eq_dom
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  eq_dom S.(ES.acts_set) S.(ES.tid) S'.(ES.tid).
-Proof. lift_basic_step ISTEP basic_step_tid_eq_dom. Qed.
-
-Lemma basic_step_same_tid
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_same_tid e e' S S'  
       (BSTEP : t_basic e e' S S') :
   restr_rel S.(ES.acts_set) S.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S'.(ES.same_tid).
 Proof. 
@@ -279,18 +225,7 @@ Proof.
     eapply basic_step_tid_eq_dom; eauto. 
 Qed.
 
-Lemma step_same_tid
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  restr_rel S.(ES.acts_set) S.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S'.(ES.same_tid).
-Proof. lift_basic_step ISTEP basic_step_same_tid. Qed.
-
-Lemma basic_step_lab_eq_dom
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_lab_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
   eq_dom S.(ES.acts_set) S.(ES.lab) S'.(ES.lab).
 Proof. 
@@ -303,18 +238,7 @@ Proof.
     desf; unfold upd_opt; rewrite updo; try rewrite updo; desf; omega.
 Qed.
 
-Lemma step_lab_eq_dom
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  eq_dom S.(ES.acts_set) S.(ES.lab) S'.(ES.lab).
-Proof. lift_basic_step ISTEP basic_step_lab_eq_dom. Qed.
-
-Lemma basic_step_loc_eq_dom
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_loc_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
   eq_dom S.(ES.acts_set) (loc S.(ES.lab)) (loc S'.(ES.lab)).
 Proof. 
@@ -322,18 +246,7 @@ Proof.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
 Qed.
 
-Lemma step_loc_eq_dom
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  eq_dom S.(ES.acts_set) (loc S.(ES.lab)) (loc S'.(ES.lab)).
-Proof. lift_basic_step ISTEP basic_step_loc_eq_dom. Qed.
-
-Lemma basic_step_same_loc 
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_same_loc e e' S S' 
       (BSTEP : t_basic e e' S S') :
   restr_rel S.(ES.acts_set) (same_loc S) ≡ restr_rel S.(ES.acts_set) (same_loc S').
 Proof. 
@@ -347,13 +260,6 @@ Proof.
     eapply basic_step_loc_eq_dom; eauto. 
 Qed.
 
-Lemma step_same_loc 
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  restr_rel S.(ES.acts_set) (same_loc S) ≡ restr_rel S.(ES.acts_set) (same_loc S').
-Proof. lift_basic_step ISTEP basic_step_same_loc. Qed.
 
 Lemma basic_step_nupd_sb lang k k' st st' e S S' 
       (BSTEP_ : t_basic_ lang k k' st st' e None S S') :
@@ -366,10 +272,7 @@ Proof.
   apply SB'.
 Qed.
 
-Lemma basic_step_sb_mon
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_sb_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   S.(ES.sb) ⊆ S'.(ES.sb).
 Proof.
@@ -377,18 +280,7 @@ Proof.
   desf; rewrite SB'; basic_solver. 
 Qed.
 
-Lemma step_sb_mon
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  S.(ES.sb) ⊆ S'.(ES.sb).
-Proof. lift_basic_step ISTEP basic_step_sb_mon. Qed.
-
-Lemma basic_step_cf_mon 
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
+Lemma basic_step_cf_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   S.(ES.cf) ⊆ S'.(ES.cf).
 Proof.
@@ -407,14 +299,6 @@ Proof.
     unfold not; ins; desf; auto; omega. 
 Qed.
 
-Lemma step_cf_mon 
-      (e  : eventid)
-      (e' : option eventid)
-      (S S' : ES.t) 
-      (ISTEP : t_incons e e' S S') :
-  S.(ES.cf) ⊆ S'.(ES.cf).
-Proof. lift_basic_step ISTEP basic_step_cf_mon. Qed.
-
 Lemma basic_step_nupd_rmw e S S' 
       (BSTEP : t_basic e None S S') :
   rmw S' ≡ rmw S.  
@@ -426,14 +310,19 @@ Proof.
   apply RMW'.
 Qed.
 
-Lemma step_nupd_rmw e S S'
-      (ISTEP : t_incons e None S S') :
-  rmw S' ≡ rmw S.  
-Proof. lift_basic_step ISTEP basic_step_nupd_rmw. Qed.
+(******************************************************************************)
+(** ** Monotonocity step lemmas *)
+(******************************************************************************)
 
-(******************************************************************************)
-(** ** Inconsistent step properites *)
-(******************************************************************************)
+Lemma step_sb_mon e e' S S' 
+      (ISTEP : t_incons e e' S S') :
+  S.(ES.sb) ⊆ S'.(ES.sb).
+Proof. eapply basic_step_sb_mon; unfold_t_incons ISTEP; eauto. Qed.
+
+Lemma step_cf_mon e e' S S' 
+      (ISTEP : t_incons e e' S S') :
+  S.(ES.cf) ⊆ S'.(ES.cf).
+Proof. eapply basic_step_cf_mon; unfold_t_incons ISTEP; eauto. Qed.
 
 Lemma step_jf_mon e e' S S' (STEP_: t_incons e e' S S') :
   S.(ES.jf) ⊆ S'.(ES.jf).

@@ -558,8 +558,8 @@ Proof.
     inversion LBLS_EQ as [eSLAB].
     symmetry in eSLAB.
 
-    assert (ESstep.t_incons e None S S') as ES_STEP_.
-    { unfold ESstep.t_incons. right. left. unfold ESstep.t_load. splits; eauto.
+    assert (ESstep.t_load e None S S') as ES_LSTEP.
+    { unfold ESstep.t_load. splits; eauto.
       unfold ESstep.add_jf.
       splits.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
@@ -572,6 +572,9 @@ Proof.
         admit.
         admit.
         cdes ES_BSTEP_; rewrite EVENT; eauto. } }
+
+    assert (ESstep.t_incons e None S S') as ES_STEP_.
+    { unfold ESstep.t_incons. auto. }
 
     assert (@es_consistent S' Weakestmo) as ES'CONS.
     { econstructor; simpl.
@@ -625,13 +628,12 @@ Proof.
         unfold eq_opt.
         rewrite cross_false_r.
         rewrite union_false_r.
-        erewrite ESstep.step_read_sw; eauto;
-          [| by apply SRC | unfold is_r; by rewrite eSLAB ].
+        erewrite ESstep.load_step_sw; eauto; [| by apply SRC].
         arewrite 
           (Ssb S ∪ ES.cont_sb_dom S k × eq e ∪ 
-               (sw S ∪ release S ⨾ Srf S' ⨾ ⦗ SAcq S'⦘ ⨾ ⦗eq e⦘) ≡
+               (sw S ∪ release S ⨾ Srf S' ⨾ ⦗eq e⦘ ⨾ ⦗ SAcq S'⦘) ≡
           Ssb S ∪ sw S ∪ 
-          ES.cont_sb_dom S k × eq e ∪ release S ⨾ Srf S' ⨾ ⦗ SAcq S'⦘ ⨾ ⦗eq e⦘).
+          ES.cont_sb_dom S k × eq e ∪ release S ⨾ Srf S' ⨾ ⦗eq e⦘ ⨾ ⦗ SAcq S'⦘ ).
         { rewrite unionA. 
           rewrite <- (unionA (ES.cont_sb_dom S k × eq e) _ _). 
           rewrite (unionC (ES.cont_sb_dom S k × eq e) (sw S)).
