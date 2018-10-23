@@ -76,6 +76,9 @@ Proof. basic_solver. Qed.
 
 Lemma max_elt_cross : set_compl s ⊆₁ max_elt (s × s'). 
 Proof. basic_solver. Qed.
+
+Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
+Proof. basic_solver. Qed.
   
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
 Proof.
