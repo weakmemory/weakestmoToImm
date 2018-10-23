@@ -48,6 +48,25 @@ Definition cont_set (ES : t) := fun x => In x ES.(cont).
 
 Definition same_tid (ES : t) := fun x y => ES.(tid) x = ES.(tid) y.
 
+Definition jfe (ES : t) := ES.(jf) \ ES.(sb).
+Definition coe (ES : t) := ES.(co) \ ES.(sb).
+Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
+Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
+
+Definition cf (ES : t) :=
+  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
+  ⦗ ES.(acts_set) ⦘.
+
+Definition cc (ES : t) := 
+  ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
+
+Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
+
+Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
+Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
+
+Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf)^?.
+
 Definition cont_thread S (cont : cont_label) : thread_id :=
   match cont with
   | CInit thread => thread
@@ -72,24 +91,11 @@ Definition cont_sb_codom S c :=
   | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
   end.
 
-Definition jfe (ES : t) := ES.(jf) \ ES.(sb).
-Definition coe (ES : t) := ES.(co) \ ES.(sb).
-Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
-Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
-
-Definition cf (ES : t) :=
-  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
-  ⦗ ES.(acts_set) ⦘.
-
-Definition cc (ES : t) := 
-  ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
-
-Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
-
-Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
-Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
-
-Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf)^?.
+Definition cont_cf_dom S c :=
+  match c with
+  | CInit  i => fun x => S.(tid) x = i 
+  | CEvent e => dom_rel (S.(cf) ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  end.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
@@ -146,17 +152,23 @@ Definition event_to_act (e : eventid) : actid :=
                              (next_act S)).
 
 Record Wf :=
-  { initL : forall l, (exists b, E b /\ loc b = Some l) ->
+  { (* initI : exists a, Einit a; *)
+    initL : forall l, (exists b, E b /\ loc b = Some l) ->
                       exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
         exists l, lab e = Astore Xpln Opln l 0 ;
+    
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
+    sb_init : Einit × Eninit ⊆ sb;
+    sb_ninit : sb ⨾ ⦗Einit⦘ ≡ ∅₂;
+    sb_tid : ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘ ⊆ same_tid S;
     sb_irr   : irreflexive sb;
     sb_trans : transitive sb;
-    sb_init  : Einit × Eninit ⊆ sb;
+
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
+
     jfE : jf ≡ ⦗E⦘ ⨾ jf ⨾ ⦗E⦘ ;
     jfD : jf ≡ ⦗W⦘ ⨾ jf ⨾ ⦗R⦘ ;
     jfl : jf ⊆ same_loc ;
@@ -173,6 +185,7 @@ Record Wf :=
              (NCF : ⦗ ws ⦘ ⨾ cf ⨾ ⦗ ws ⦘ ≡ ∅₂),
         is_total ws co;
     co_irr : irreflexive co ;
+
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
     ewl : ew ⊆ same_loc ;
@@ -192,6 +205,11 @@ Record Wf :=
   }.
 
 Implicit Type WF : Wf.
+
+Lemma cf_alt WF : cf ≡ (same_tid S ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Einit⦘ ⨾ sb)) \ sb⁼.
+Proof. 
+  admit.
+Admitted.
 
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.

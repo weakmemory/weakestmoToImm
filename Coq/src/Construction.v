@@ -280,6 +280,54 @@ Proof.
   desf; rewrite SB'; basic_solver. 
 Qed.
 
+Lemma basic_step_cf lang k k' st st' e e' S S' 
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+  cf S' ≡ cf S ∪ 
+                ES.cont_cf_dom S k × eq e ∪ eq e × ES.cont_cf_dom S k ∪
+                ES.cont_cf_dom S k × eq_opt e' ∪ eq_opt e' × ES.cont_cf_dom S k.
+Proof.
+  cdes BSTEP_.
+  unfold "cf" at 1.
+  admit.
+  
+  (* arewrite  *)
+  (*   ((sb S')^? ∪ (sb S')⁻¹ ≡  *)
+  (*           (sb S)^? ∪ (sb S)⁻¹ ∪  *)
+  (*           ES.cont_sb_dom S k × eq e ∪ eq e × ES.cont_sb_dom S k ∪  *)
+  (*           ES.cont_sb_dom S k × eq_opt e' ∪ eq_opt e' × ES.cont_sb_dom S k ∪ *)
+  (*           eq e × eq_opt e' ∪ eq_opt e' × eq e). *)
+  (* { rewrite SB'.  *)
+  (*   repeat rewrite cr_union_l. *)
+  (*   repeat rewrite transp_union.  *)
+  (*   repeat rewrite transp_cross.  *)
+  (*   rewrite cross_union_l, cross_union_r. *)
+  (*   basic_solver 10. } *)
+
+  (* repeat rewrite (unionA ((sb S)^? ∪ (sb S)⁻¹)). *)
+  (* rewrite compl_union. *)
+  (* rewrite <- interA. *)
+  (* (* rewrite <- (interK (ES.same_tid S')). *) *)
+  (* (* rewrite interA. *) *)
+  (* (* rewrite (interAC (ES.same_tid S') (compl_rel ((sb S)^? ∪ (sb S)⁻¹))). *) *)
+  (* (* rewrite <- interA. *) *)
+  (* (* rewrite seq_inter_l. *) *)
+  
+  (* rewrite basic_step_acts_set.  *)
+  (* 2: { unfold t_basic.  do 5 eexists; eapply BSTEP_. } *)
+  (* repeat rewrite id_union. *)
+  (* repeat rewrite seq_union_r. *)
+  (* repeat rewrite seq_union_l. *)
+
+  (* repeat rewrite (unionA ((sb S)^? ∪ (sb S)⁻¹)). *)
+  (* rewrite compl_union. *)
+  (* rewrite <- (interK (ES.same_tid S')). *)
+  (* rewrite interA. *)
+  (* rewrite (interAC (ES.same_tid S') (compl_rel ((sb S)^? ∪ (sb S)⁻¹))). *)
+  (* rewrite <- interA. *)
+  (* rewrite seq_inter_l. *)
+Admitted.
+
+
 Lemma basic_step_cf_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   S.(ES.cf) ⊆ S'.(ES.cf).
