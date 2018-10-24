@@ -143,12 +143,22 @@ Definition t_update
 Definition t_incons e e' S S' := 
   t_fence e e' S S' \/ t_load e e' S S' \/ t_store e e' S S' \/ t_update e e' S S'.
 
-Ltac unfold_t_incons H := 
-  unfold t_incons, t_fence, t_load, t_store, t_update in H; desf. 
-
 Definition t (m : model) (S S' : ES.t) : Prop := exists e e',
   ⟪ TT  : t_incons e e' S S' ⟫ /\
   ⟪ CON : @es_consistent S' m ⟫.
+
+
+(******************************************************************************)
+(** ** Some useful tactics *)
+(******************************************************************************)
+
+Ltac unfold_t_incons H := 
+  unfold t_incons, t_fence, t_load, t_store, t_update in H; desf. 
+
+(* Proves that `r ⨾ ⦗E⦘ ⨾ ⦗eq e⦘ ⨾ r'` or `r ⨾ ⦗eq e⦘ ⨾ ⦗E⦘ ⨾ r'` are empty. *)
+Ltac E_seq_e := 
+  apply seq_codom_dom_inter, set_disjointE;
+  autounfold with unfolderDb; ins; splits; desf; omega.
 
 (******************************************************************************)
 (** ** Basic step properites *)
@@ -521,12 +531,14 @@ Proof.
   autorewrite with hahn hahn_full.
   rewrite minus_union_l.
   arewrite ((ew S)^? ⨾ jf S \ cf S' ≡ rf S).
-  { admit. }
+  { unfold "rf".
+    admit. }
   arewrite ((ew S)^? ⨾ jf S ⨾ ⦗eq e⦘ ≡ ∅₂).
-  { admit. }
-  arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e).
-  { basic_solver. }
-  basic_solver 10.
+  { rewrite ES.jfE; auto.
+    repeat rewrite seqA.
+    by E_seq_e. }
+  arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e); 
+    basic_solver 10.
 Admitted.
 
 Lemma load_step_rf_rmw e e' S S'
@@ -598,10 +610,7 @@ Proof.
   repeat rewrite seqA.
   arewrite (ES.cont_sb_dom S k × eq e ⨾ rs S ≡ ∅₂); [|basic_solver 10].
   rewrite rsE; auto.
-  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘ ≡ ∅₂); [|basic_solver].
-  apply seq_codom_dom_inter.
-  unfold set_equiv; splits; [|basic_solver].
-  autounfold with unfolderDb; ins; splits; desf; omega.
+  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘ ≡ ∅₂); [ by E_seq_e | basic_solver ].
 Qed.
 
 Lemma load_step_sw e e' S S' 
@@ -621,28 +630,16 @@ Proof.
   repeat rewrite unionA.
   apply union_more; auto.
   apply union_more; auto.
-  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S ∩₁ F S⦘ ≡ ∅₂).
-  { apply seq_codom_dom_inter.
-    unfold set_equiv; splits; [|basic_solver].
-    autounfold with unfolderDb; ins; splits; desf; omega. }
-  arewrite (⦗E S ∩₁ F S⦘ ⨾ ⦗eq e ∩₁ Acq S'⦘ ≡ ∅₂).
-  { apply seq_codom_dom_inter.
-    unfold set_equiv; splits; [|basic_solver].
-    autounfold with unfolderDb; ins; splits; desf; omega. }
+  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S ∩₁ F S⦘ ≡ ∅₂) by E_seq_e.
+  arewrite (⦗E S ∩₁ F S⦘ ⨾ ⦗eq e ∩₁ Acq S'⦘ ≡ ∅₂) by E_seq_e.
   arewrite 
-    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ ⦗E S ∩₁ Acq S⦘ ≡ ∅₂).
-  { apply seq_codom_dom_inter.
-    unfold set_equiv; splits; [|basic_solver].
-    autounfold with unfolderDb; ins; splits; desf; omega. }
+    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ ⦗E S ∩₁ Acq S⦘ ≡ ∅₂)
+  by E_seq_e.
   rewrite <- (seqA ((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S')).
   arewrite 
-    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ sb S ≡ ∅₂).
-  { rewrite ES.sbE; auto.
-    apply seq_codom_dom_inter.
-    unfold set_equiv; splits; [|basic_solver].
-    autounfold with unfolderDb; ins; splits; desf; omega. }
-  relsf.
-  basic_solver.
+    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ sb S ≡ ∅₂) 
+    by rewrite ES.sbE; auto; E_seq_e.
+  basic_solver 21.
 Qed.
 
 Lemma load_step_hb lang k k' st st' e e' S S' 
@@ -664,11 +661,9 @@ Proof.
     fold (hb S).
     basic_solver. }
   { unfold same_relation; splits; [|basic_solver].
-    rewrite ES.cont_sb_domE, releaseE; eauto.
-    autounfold with unfolderDb; ins; splits; desf; try omega. }
+    rewrite ES.cont_sb_domE, releaseE; eauto; by E_seq_e. }
   { unfold same_relation; splits; [|basic_solver].
-    rewrite ES.cont_sb_domE, ES.sbE, swE; eauto.
-    autounfold with unfolderDb; ins; splits; desf; try omega. }
+    rewrite ES.cont_sb_domE, ES.sbE, swE; eauto; by E_seq_e. }
 Qed.
     
 End ESstep.
