@@ -197,6 +197,38 @@ basic_solver 42.
 Qed.
 
 (******************************************************************************)
+(** ** Domains and codomains  *)
+(******************************************************************************)
+
+Lemma rsD : rs ≡ ⦗W⦘ ⨾ rs ⨾ ⦗W⦘.
+Proof.
+split; [|basic_solver].
+unfold rs.
+rewrite rtE; relsf; unionL; [basic_solver 12|].
+rewrite (dom_r (ES.rmwD WF)) at 1.
+rewrite <- !seqA.
+rewrite inclusion_ct_seq_eqv_r.
+basic_solver 42.
+Qed.
+
+Lemma releaseD : release ≡ ⦗FW ∩₁ Rel⦘ ⨾ release ⨾ ⦗W⦘.
+Proof.
+split; [|basic_solver].
+unfold release.
+rewrite rsD at 1.
+basic_solver 42.
+Qed.
+
+Lemma swD : sw ≡ ⦗FW ∩₁ Rel⦘ ⨾ sw ⨾ ⦗FR ∩₁ Acq⦘.
+Proof.
+split; [|basic_solver].
+unfold sw.
+rewrite releaseD at 1.
+rewrite (ES.rfD WF) at 1.
+basic_solver 42.
+Qed.
+
+(******************************************************************************)
 (** ** Consistent rf properties *)
 (******************************************************************************)
 
