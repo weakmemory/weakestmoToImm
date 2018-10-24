@@ -455,17 +455,44 @@ Lemma load_step_w e e' S S'
 Proof. 
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
   unfold upd_opt in LAB'.
-
-  admit.
-Admitted.
+  rewrite basic_step_nupd_acts_set; eauto.
+  rewrite set_inter_union_l.
+  arewrite (E S ∩₁ W S' ≡₁ E S ∩₁ W S ).
+  { unfold is_w.
+    rewrite LAB'.
+    autounfold with unfolderDb; unfold set_subset; splits;
+      intros x [xE HH]; [rewrite updo in HH | rewrite updo];
+      splits; auto; omega. }
+  arewrite (eq e ∩₁ W S' ≡₁ ∅); [|by rewrite set_union_empty_r]. 
+  autounfold with unfolderDb; unfold set_subset; splits; [|basic_solver].
+  intros x [eEQ HH]; desf.
+  unfold is_w in HH.
+  unfold is_r in RR.
+  by rewrite LAB', upds in RR, HH; desf.
+Qed.  
 
 Lemma load_step_f e e' S S'
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
   E S' ∩₁ F S' ≡₁ E S ∩₁ F S.
-Proof.
-  admit.
-Admitted.
+Proof. 
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  unfold upd_opt in LAB'.
+  rewrite basic_step_nupd_acts_set; eauto.
+  rewrite set_inter_union_l.
+  arewrite (E S ∩₁ F S' ≡₁ E S ∩₁ F S).
+  { unfold is_f.
+    rewrite LAB'.
+    autounfold with unfolderDb; unfold set_subset; splits;
+      intros x [xE HH]; [rewrite updo in HH | rewrite updo];
+      splits; auto; omega. }
+  arewrite (eq e ∩₁ F S' ≡₁ ∅); [|by rewrite set_union_empty_r]. 
+  autounfold with unfolderDb; unfold set_subset; splits; [|basic_solver].
+  intros x [eEQ HH]; desf.
+  unfold is_f in HH.
+  unfold is_r in RR.
+  by rewrite LAB', upds in RR, HH; desf.
+Qed.  
 
 Lemma load_step_rel e e' S S'
       (LSTEP: t_load e e' S S') 

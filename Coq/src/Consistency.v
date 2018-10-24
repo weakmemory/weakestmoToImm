@@ -56,12 +56,12 @@ Definition vis :=
   codom_rel (cc ∩ (ew ⨾ sb ⁼)).
 
 (* release sequence *)
-Definition rs := ⦗W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
+Definition rs := ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (rf ⨾ rmw)＊.
 
-Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
+Definition release := ⦗E ∩₁ Rel⦘ ⨾ (⦗E ∩₁ F⦘ ⨾ sb)^? ⨾ rs.
 
 (* synchronizes with *)
-Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
+Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗E ∩₁ F⦘)^? ⨾ ⦗E ∩₁ Acq⦘.
 
 (* happens before *)
 Definition hb : relation eventid := (sb ∪ sw)⁺.
@@ -138,29 +138,25 @@ Qed.
 (** ** Relations in graph *)
 (******************************************************************************)
 
-Lemma rsE : rs ≡ ⦗W⦘ ∪ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
+Lemma rsE : rs ≡ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
 Proof.
 unfold rs.
 split; [|basic_solver 12].
 rewrite rtE; relsf; unionL.
 rewrite (ES.sbE WF); basic_solver 21.
-unionR right -> right.
 rewrite (dom_r (ES.rmwE WF)) at 1.
 rewrite <- !seqA.
 sin_rewrite inclusion_ct_seq_eqv_r.
 rewrite !seqA.
-arewrite (⦗E⦘ ⨾ ⦗W⦘ ≡ ⦗W⦘ ⨾ ⦗E⦘) by basic_solver.
+arewrite (⦗E⦘ ⨾ ⦗E ∩₁ W⦘ ≡ ⦗E ∩₁ W⦘ ⨾ ⦗E⦘) by basic_solver.
 hahn_frame.
 rewrite ct_begin.
 rewrite (dom_l (ES.sbE WF)) at 1.
 rewrite (dom_l (ES.rfE WF)) at 1.
-basic_solver 21.
+basic_solver 25.
 Qed.
 
-Lemma rsEE : rs ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
-Proof. rewrite rsE. basic_solver 42. Qed.
-
-Lemma releaseE : release ≡ ⦗W ∩₁ Rel⦘ ∪ ⦗E⦘ ⨾ release ⨾ ⦗E⦘.
+Lemma releaseE : release ≡ ⦗E⦘ ⨾ release ⨾ ⦗E⦘.
 Proof.
 unfold release.
 rewrite rsE.
@@ -213,7 +209,6 @@ Qed.
 
 Lemma rf_complete : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf. apply WF. Qed.
-
 
 End Properties.
 
