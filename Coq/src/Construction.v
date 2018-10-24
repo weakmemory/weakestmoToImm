@@ -644,5 +644,31 @@ Proof.
   relsf.
   basic_solver.
 Qed.
+
+Lemma load_step_hb lang k k' st st' e e' S S' 
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') 
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) :
+  hb S' ≡ hb S ∪ 
+     (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗eq e⦘ ⨾ ⦗Acq S'⦘). 
+Proof.
+  cdes LSTEP; cdes AJF; cdes BSTEP_; desf.
+  unfold hb at 1.
+  rewrite basic_step_nupd_sb, load_step_sw; eauto.
+  rewrite unionA.
+  rewrite (unionAC (ES.cont_sb_dom S k × eq (ES.next_act S))).
+  rewrite <- (unionA (sb S)).
+  rewrite unionC.
+  erewrite clos_trans_union_ext.
+  { rewrite <- cr_of_ct.
+    fold (hb S).
+    basic_solver. }
+  { unfold same_relation; splits; [|basic_solver].
+    rewrite ES.cont_sb_domE, releaseE; eauto.
+    autounfold with unfolderDb; ins; splits; desf; try omega. }
+  { unfold same_relation; splits; [|basic_solver].
+    rewrite ES.cont_sb_domE, ES.sbE, swE; eauto.
+    autounfold with unfolderDb; ins; splits; desf; try omega. }
+Qed.
     
 End ESstep.
