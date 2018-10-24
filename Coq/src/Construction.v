@@ -502,6 +502,14 @@ Proof.
   admit.
 Admitted.
 
+Lemma load_step_acq e e' S S'
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) :
+  E S' ∩₁ Acq S' ≡₁ (E S ∩₁ Acq S) ∪₁ (eq e ∩₁ Acq S').
+Proof. 
+  admit.
+Admitted.
+
 Lemma load_step_rf e e' S S'
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) : 
@@ -540,139 +548,60 @@ Proof.
     rewrite seq_union_l. 
     rewrite seq_id_l.
     unfold same_relation; splits; [|basic_solver].
-    apply inclusion_union_l.
-    (* Need some lemma like: `r ; r' ⊆ r'' -> (r \ a) ; r' ⊆ r''` *)
-    { admit. }
-    admit. 
+    rewrite ES.rmwE; auto.
+    apply inclusion_union_l;
+      autounfold with unfolderDb; ins; splits; desf; omega. }
+  rewrite union_false_r.
+  admit.
 Admitted.
     
 Lemma load_step_rs e e' S S' 
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
-  rs S' ⨾ ⦗ E S' ⦘ ≡ rs S ⨾ ⦗ E S ⦘.
+  rs S' ≡ rs S.
 Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
-  rewrite rsEE; [| eapply step_wf; eauto; right; left; eauto ].
-  rewrite (rsEE S); auto.
   unfold rs.
-  do 2 rewrite 
-     crE, seq_union_l, seq_union_r, seq_id_l, seq_union_l, seq_union_r.
-  do 4 rewrite <- seqA. 
-  do 2 rewrite seq_eqvK.
-  repeat rewrite seqA.
-  do 2 rewrite <- (seqA ⦗E S'⦘ ⦗W S'⦘).
-  rewrite <- imm.lib.AuxRel.id_inter.
-  rewrite load_step_w; eauto.
-  rewrite imm.lib.AuxRel.id_inter.
-  rewrite load_step_rf_rmw; eauto. 
-  repeat rewrite seqA.
-  rewrite (basic_step_nupd_acts_set e S S'); eauto. 
-  rewrite id_union.
-  repeat rewrite seq_union_r.
-  arewrite (⦗E S⦘ ⨾ ⦗W S⦘ ⨾ (rf S ⨾ rmw S)＊ ⨾ ⦗eq e⦘ ≡ ∅₂).
-  { rewrite rtE. 
-    rewrite seq_union_l.
-    repeat rewrite seq_union_r.
-    rewrite seq_id_l.
-    arewrite (⦗E S⦘ ⨾ ⦗W S⦘ ⨾ ⦗eq e⦘ ≡ ∅₂).
-    { admit. }
-    erewrite union_false_l. 
-    unfold same_relation; splits; [|basic_solver].
-    arewrite (tc (rf S ⨾ rmw S) ⊆ ⦗E S⦘ ⨾ tc (rf S ⨾ rmw S) ⨾ ⦗E S⦘ ).
-    { admit. }
-    assert (codom_rel ⦗E S⦘ ∩₁ dom_rel ⦗eq e⦘ ≡₁ ∅) as CODOM_DOM.
-    { admit. }
-    erewrite (seq_codom_dom_inter CODOM_DOM).
-    by repeat rewrite seq_false_r. } 
-  repeat rewrite union_false_r.
-  apply union_more; eauto. 
+  rewrite load_step_w, load_step_rf_rmw; eauto.
+  do 2 rewrite crE.
+  relsf.
+  apply union_more; auto.
   rewrite basic_step_nupd_sb; eauto.
-  rewrite inter_union_l.
-  rewrite seq_union_l.
-  repeat rewrite seq_union_r.
-  arewrite 
-    (ES.cont_sb_dom S k × eq e ∩ same_loc S' ⨾ ⦗W S'⦘ ⨾ (rf S ⨾ rmw S)＊ ⨾ ⦗E S⦘ ≡ ∅₂).
-  { admit. }
-  repeat rewrite seq_false_r.
-  repeat rewrite union_false_r.
-  rewrite <- (seqA (sb S ∩ same_loc S')).
-  arewrite (sb S ∩ same_loc S' ⨾ ⦗W S'⦘ ≡ sb S ∩ same_loc S ⨾ ⦗W S⦘); auto. 
-  rewrite wfE.(ES.sbE).
+  do 2 rewrite <- seqA.
+  rewrite (seqA ⦗E S ∩₁ W S⦘).
   rewrite <- restr_relE.
-  rewrite <- restr_inter_absorb_r.
-  erewrite <- basic_step_same_loc; eauto. 
-  rewrite <- restr_inter.
-  rewrite <- restr_inter_absorb_r.
-  rewrite <- restr_inter.
-  rewrite restr_relE.
-  repeat rewrite seqA.
-  arewrite (⦗E S⦘ ⨾ ⦗W S'⦘ ≡ ⦗E S⦘ ⨾ ⦗W S⦘); auto.
-  repeat rewrite <- imm.lib.AuxRel.id_inter.
-  unfold is_w.
-  autounfold with unfolderDb; splits; ins;
-    [ erewrite (basic_step_lab_eq_dom _ _ _ _ BSTEP)
-    | erewrite <- (basic_step_lab_eq_dom _ _ _ _ BSTEP) ]; 
-    desf; auto.
-Admitted.
+  rewrite restr_inter.
+  rewrite restr_union.
+  arewrite (restr_rel (E S ∩₁ W S) (ES.cont_sb_dom S k × eq e) ≡ ∅₂).
+  { rewrite restr_relE.
+    rewrite seq_eqv_cross.
+    arewrite (E S ∩₁ W S ∩₁ eq e ≡₁ ∅); [|by rewrite cross_false_r].
+    autounfold with unfolderDb; unfold set_subset; splits; ins; desf; omega. }
+  arewrite (restr_rel (E S ∩₁ W S) (same_loc S') ≡ restr_rel (E S ∩₁ W S) (same_loc S)).
+  { do 2 rewrite <- restr_restr.
+    apply restr_rel_more; auto.
+    rewrite <- basic_step_same_loc; eauto. }
+  basic_solver 21.
+Qed.
 
 Lemma load_step_release e e' S S' 
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
-  release S' ⨾ ⦗ E S' ⦘ ≡ release S ⨾ ⦗ E S ⦘. 
+  release S' ≡ release S. 
 Proof. 
-  assert (ES.Wf S') as wfE'.
-  { eapply step_wf; eauto; right; left; eauto. }
-  
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   unfold release.
+  rewrite load_step_rel, load_step_f, load_step_rs, basic_step_nupd_sb; eauto.
+  do 2 rewrite crE.
+  relsf.
+  apply union_more; auto.
   repeat rewrite seqA.
-  repeat rewrite crE, seq_union_l, seq_union_r, seq_id_l, seqA.
-  apply union_more.
-  { rewrite rsEE; eauto. 
-    do 2 rewrite <- seqA.
-    rewrite <- imm.lib.AuxRel.id_inter.
-    rewrite set_interC.
-    rewrite load_step_rel; eauto.
-    rewrite load_step_rs; eauto.
-    rewrite <- set_interC.
-    rewrite imm.lib.AuxRel.id_inter.
-    repeat rewrite seqA.
-    rewrite <- rsEE; eauto. }
-  rewrite wfE'.(ES.sbE).
-  rewrite seqA.
-  arewrite (⦗Rel S'⦘ ⨾ ⦗F S'⦘ ⨾ ⦗E S'⦘ ≡ ⦗Rel S⦘ ⨾ ⦗F S⦘ ⨾ ⦗E S⦘).
-  { repeat rewrite <- imm.lib.AuxRel.id_inter.
-    apply eqv_rel_more.
-    rewrite <- (set_interK (E S')).
-    rewrite <- (set_interA (F S')).
-    rewrite (set_interC (F S')).
-    rewrite set_interA.
-    rewrite <- (set_interA (Rel S')).
-    rewrite (set_interC (Rel S')).
-    rewrite load_step_rel; eauto.
-    rewrite (set_interC (F S')).
-    rewrite load_step_f; eauto.
-    basic_solver. }
-  rewrite <- rsEE; eauto. 
-  rewrite load_step_rs; eauto.
-  rewrite basic_step_nupd_sb; eauto.
-  rewrite seq_union_l. 
-  repeat rewrite seq_union_r.
-  arewrite (ES.cont_sb_dom S k × eq e ⨾ rs S ⨾ ⦗E S⦘ ≡ ∅₂).
-  { rewrite rsEE; eauto. 
-    rewrite seq_codom_dom_inter; auto.
-    unfold set_equiv; splits; [|basic_solver].
-    rewrite codom_cross_incl.
-    rewrite dom_seq.
-    rewrite dom_eqv.
-    autounfold with unfolderDb; ins; desf.
-    eapply basic_step_acts_set_NE; eauto. }
-  repeat rewrite seq_false_r.
-  rewrite union_false_r.
-  rewrite rsEE at 1; eauto. 
-  rewrite <- (seqA (sb S) ⦗E S⦘).
-  rewrite <- (seqA ⦗E S⦘ (sb S ⨾ ⦗E S⦘)).
-  by rewrite <- wfE.(ES.sbE).
+  arewrite (ES.cont_sb_dom S k × eq e ⨾ rs S ≡ ∅₂); [|basic_solver 10].
+  rewrite rsE; auto.
+  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘ ≡ ∅₂); [|basic_solver].
+  apply seq_codom_dom_inter.
+  unfold set_equiv; splits; [|basic_solver].
+  autounfold with unfolderDb; ins; splits; desf; omega.
 Qed.
 
 Lemma load_step_sw e e' S S' 
@@ -681,53 +610,39 @@ Lemma load_step_sw e e' S S'
   sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗eq e⦘ ⨾ ⦗Acq S'⦘. 
 Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
-  
-  assert (ES.Wf S') as wfE'.
-  { eapply step_wf; eauto; right; left; eauto. }
-
   unfold sw.
-  erewrite wfE'.(ES.rfE).
-  rewrite seqA.
-  rewrite <- (seqA (release S')).
-  rewrite load_step_release; eauto.
-  do 2 rewrite crE. 
-  rewrite load_step_rf, basic_step_nupd_sb; eauto.
-  autorewrite with hahn hahn_full.
-  repeat rewrite seqA.
+  rewrite 
+    load_step_release, load_step_rf, load_step_f, load_step_acq,
+    basic_step_nupd_sb;
+    eauto.
+  rewrite id_union.
+  repeat rewrite crE.
+  relsf.
   repeat rewrite unionA.
-
-  (* apply union_more. *)
-  (* { rewrite (basic_step_nupd_acts_set e S S'); eauto. *)
-    
-  (*   rewrite wfE.(ES.rfE). *)
-  (*   repeat rewrite seqA. *)
-  (*   arewrite (⦗E S⦘ ⨾ ⦗Acq S'⦘ ≡ ⦗E S⦘ ⨾ ⦗Acq S⦘). *)
-  (*   { admit. } *)
-  (*   rewrite <- seqA. *)
-  (*   arewrite (release S' ⨾ ⦗E S⦘ ≡ release S ⨾ ⦗E S⦘); auto. *)
-  (*   admit. } *)
-
-  (* apply union_more. *)
-  (* { admit. } *)
-
-  (* arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗F S'⦘ ≡ ∅₂). *)
-  (* { autounfold with unfolderDb; splits; desf; ins; desf. *)
-  (*   unfold is_f in H1. *)
-  (*   unfold is_r in RR. *)
-  (*   rewrite LAB' in H1, RR. *)
-  (*   erewrite upds in H1, RR. *)
-  (*   destruct lbl eqn:Heq; auto. } *)
-  
-  (* rewrite <- (seqA ((ew S)^? ⨾ jf S' ⨾ ⦗eq e⦘ \ cf S')).  *)
-  (* arewrite ((((ew S)^? ⨾ jf S' ⨾ ⦗eq e⦘ \ cf S') ⨾ sb S) ≡ ∅₂). *)
-  (* { admit. } *)
-
-  (* arewrite (rf S ⨾ ⦗eq e⦘ ≡ ∅₂). *)
-  (* { admit. } *)
-
-  (* autorewrite with hahn hahn_full. *)
-Admitted.  
-
-
+  apply union_more; auto.
+  apply union_more; auto.
+  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S ∩₁ F S⦘ ≡ ∅₂).
+  { apply seq_codom_dom_inter.
+    unfold set_equiv; splits; [|basic_solver].
+    autounfold with unfolderDb; ins; splits; desf; omega. }
+  arewrite (⦗E S ∩₁ F S⦘ ⨾ ⦗eq e ∩₁ Acq S'⦘ ≡ ∅₂).
+  { apply seq_codom_dom_inter.
+    unfold set_equiv; splits; [|basic_solver].
+    autounfold with unfolderDb; ins; splits; desf; omega. }
+  arewrite 
+    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ ⦗E S ∩₁ Acq S⦘ ≡ ∅₂).
+  { apply seq_codom_dom_inter.
+    unfold set_equiv; splits; [|basic_solver].
+    autounfold with unfolderDb; ins; splits; desf; omega. }
+  rewrite <- (seqA ((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S')).
+  arewrite 
+    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ sb S ≡ ∅₂).
+  { rewrite ES.sbE; auto.
+    apply seq_codom_dom_inter.
+    unfold set_equiv; splits; [|basic_solver].
+    autounfold with unfolderDb; ins; splits; desf; omega. }
+  relsf.
+  basic_solver.
+Qed.
     
 End ESstep.

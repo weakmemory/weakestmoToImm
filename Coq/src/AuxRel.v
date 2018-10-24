@@ -225,6 +225,18 @@ Proof.
   apply collect_rel_eq_dom; auto.
 Qed.
 
+Lemma restr_set_subset 
+      (SUBS : s' ⊆₁ s) 
+      (EQ   : restr_rel s r ≡ restr_rel s r') :
+  restr_rel s' r ≡ restr_rel s' r'.
+Proof. 
+  autounfold with unfolderDb in *.
+  destruct EQ as [INCL INCR].
+  splits; ins; splits; desf;
+    [ apply (INCL x y) | apply (INCR x y) ]; 
+    auto.
+Qed.
+
 Lemma restr_set_union :
   restr_rel (s ∪₁ s') r ≡
     restr_rel s r ∪ restr_rel s' r ∪
