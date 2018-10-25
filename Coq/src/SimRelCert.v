@@ -247,6 +247,9 @@ Notation "'Sjfi' S" := S.(ES.jfi) (at level 10).
 Notation "'Srfi' S" := S.(ES.rfi) (at level 10).
 Notation "'Scoi' S" := S.(ES.coi) (at level 10).
 
+Notation "'Ssw' S" := S.(sw) (at level 10).
+Notation "'Shb' S" := S.(hb) (at level 10).
+
 Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
 Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'SF' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
@@ -621,76 +624,28 @@ Proof.
           cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega. } }
       
       (* hb_jf_not_cf *)
-      { unfold same_relation; splits; [|by basic_solver]. 
-        unfold hb.
-        cdes ES_BSTEP. cdes BSTEP_. 
-        rewrite SB'.
-        unfold eq_opt.
-        rewrite cross_false_r.
-        rewrite union_false_r.
-        erewrite ESstep.load_step_sw; eauto; [| by apply SRC].
+      { cdes ES_BSTEP_. 
+        unfold same_relation; splits; [|by basic_solver]. 
+        erewrite ESstep.load_step_hb; eauto; [| by apply SRC].
+        rewrite JF'.
+        rewrite transp_union, transp_singl_rel, crE.
+        relsf.
+        repeat rewrite unionA.
+        repeat rewrite seqA.
         arewrite 
-          (Ssb S ∪ ES.cont_sb_dom S k × eq e ∪ 
-               (sw S ∪ release S ⨾ Srf S' ⨾ ⦗eq e⦘ ⨾ ⦗ SAcq S'⦘) ≡
-          Ssb S ∪ sw S ∪ 
-          ES.cont_sb_dom S k × eq e ∪ release S ⨾ Srf S' ⨾ ⦗eq e⦘ ⨾ ⦗ SAcq S'⦘ ).
-        { rewrite unionA. 
-          rewrite <- (unionA (ES.cont_sb_dom S k × eq e) _ _). 
-          rewrite (unionC (ES.cont_sb_dom S k × eq e) (sw S)).
-          rewrite (unionA (sw S) _).
-          rewrite <- unionA. 
-          rewrite <- unionA. 
-          auto. }
-        rewrite unionA.
-        rewrite unionC.
-        erewrite clos_trans_union_ext.
-        { rewrite <- cr_of_ct.
-          fold (hb S). 
-          rewrite seq_union_l.
-          rewrite inter_union_l.
-          apply inclusion_union_l.
-          { rewrite JF'. 
-            rewrite transp_union.
-            rewrite seq_union_r.
-            rewrite inter_union_l.
-            apply inclusion_union_l.
-            { admit. } 
-            admit. }
-          rewrite seq_union_r.
-          rewrite seq_union_l.
-          rewrite inter_union_l.
-          apply inclusion_union_l.
-          { rewrite JF'.  
-            rewrite transp_union.
-            rewrite seq_union_r.
-            rewrite inter_union_l.
-            apply inclusion_union_l.
-            { admit. }
-            rewrite seqA.
-            admit. }
-          rewrite seq_eqv.
-          admit. }
-        { eapply seq_max.
-          { eapply max_elt_union. 
-            { eapply max_elt_cross.
-              unfold set_compl, not; ins. 
-              eapply ES.cont_sb_domE in H; eauto; [|apply SRC].
-              eapply ESstep.basic_step_acts_set_NE; eauto. }
-            eapply max_elt_seq1.
-            erewrite releaseE; [|apply SRC].
-            apply max_elt_union.
-            { apply max_elt_eqv_rel.
-              unfold set_compl, not; ins.
-              admit. }
-            eapply max_elt_seq1.
-            apply max_elt_eqv_rel.
-            unfold set_compl, not; ins. 
-            eapply ESstep.basic_step_acts_set_NE; eauto. }
-          admit. }
-        all: admit. } 
+          (ES.cont_sb_dom S q × eq e ⨾ (Sjf S)⁻¹ ≡ ∅₂)
+          by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
+        arewrite 
+          (⦗eq e⦘ ⨾ ⦗SAcq S'⦘ ⨾ (Sjf S)⁻¹ ≡ ∅₂)
+          by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
+        arewrite 
+          (Shb S ⨾ singl_rel (ES.next_act S) (h w) ≡ ∅₂)
+          by rewrite hbE; [ ESstep.E_seq_e | apply SRC].
+        relsf.
+        admit. }
       all: admit. }
 
-   exists q', S', (upd h a e).
+    exists q', S', (upd h a e).
 
     desf; splits. 
     { unfold "^?". right.
