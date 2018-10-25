@@ -43,12 +43,12 @@ Notation "'FR'" := (F ∪₁ R).
 Notation "'FW'" := (F ∪₁ W).
 Notation "'R_ex'" := (fun a => is_true (R_ex lab a)).
 
-Notation "'Pln'" := (is_only_pln lab).
-Notation "'Rlx'" := (is_rlx lab).
-Notation "'Rel'" := (is_rel lab).
-Notation "'Acq'" := (is_acq lab).
-Notation "'Acqrel'" := (is_acqrel lab).
-Notation "'Sc'" := (is_sc lab).
+Notation "'Pln'" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
+Notation "'Rlx'" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
+Notation "'Rel'" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
+Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
+Notation "'Acqrel'" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
+Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 Definition same_lab x y := lab x = lab y.
 
@@ -56,12 +56,12 @@ Definition vis :=
   codom_rel (cc ∩ (ew ⨾ sb ⁼)).
 
 (* release sequence *)
-Definition rs := ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (rf ⨾ rmw)＊.
+Definition rs := ⦗E⦘ ⨾ ⦗W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
 
-Definition release := ⦗E ∩₁ Rel⦘ ⨾ (⦗E ∩₁ F⦘ ⨾ sb)^? ⨾ rs.
+Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
 
 (* synchronizes with *)
-Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗E ∩₁ F⦘)^? ⨾ ⦗E ∩₁ Acq⦘.
+Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 
 (* happens before *)
 Definition hb : relation eventid := (sb ∪ sw)⁺.
@@ -148,7 +148,7 @@ rewrite (dom_r (ES.rmwE WF)) at 1.
 rewrite <- !seqA.
 sin_rewrite inclusion_ct_seq_eqv_r.
 rewrite !seqA.
-arewrite (⦗E⦘ ⨾ ⦗E ∩₁ W⦘ ≡ ⦗E ∩₁ W⦘ ⨾ ⦗E⦘) by basic_solver.
+arewrite (⦗E⦘ ⨾ ⦗W⦘ ≡ ⦗W⦘ ⨾ ⦗E⦘) by basic_solver.
 hahn_frame.
 rewrite ct_begin.
 rewrite (dom_l (ES.sbE WF)) at 1.
@@ -226,6 +226,34 @@ unfold sw.
 rewrite releaseD at 1.
 rewrite (ES.rfD WF) at 1.
 basic_solver 42.
+Qed.
+
+(******************************************************************************)
+(** ** Alternative representations of relations *)
+(******************************************************************************)
+
+Lemma rs_alt : rs ≡ ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (rf ⨾ rmw)＊.
+Proof. 
+  unfold rs.
+  rewrite (ES.sbE WF).
+  basic_solver 42.
+Qed.
+
+Lemma release_alt : release ≡ ⦗E ∩₁ FW ∩₁ Rel⦘ ⨾ (⦗E ∩₁ F⦘ ⨾ sb)^? ⨾ rs.
+Proof. 
+  rewrite releaseE, releaseD.
+  unfold release.
+  rewrite (ES.sbE WF), rsD, rsE.
+  basic_solver 42.
+Qed.
+
+Lemma sw_alt : sw ≡ release ⨾ rf ⨾ (sb ⨾ ⦗E ∩₁ F⦘)^? ⨾ ⦗E ∩₁ FR ∩₁ Acq⦘.
+Proof.
+  rewrite swD.
+  unfold sw.
+  rewrite releaseD.
+  rewrite (ES.sbE WF), (ES.rfE WF).
+  basic_solver 42.
 Qed.
 
 (******************************************************************************)
