@@ -2,7 +2,7 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
      imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
-     CombRelations.
+     CombRelations Execution_eco.
 Require Import Vf AuxRel.
 
 Section CertRf.
@@ -49,7 +49,7 @@ Definition vf := ⦗ W ⦘ ⨾ (rf ⨾ ⦗ D ⦘)^? ⨾ hb^? ⨾
                     sc^? ⨾ hb^? ⨾ ⦗ E ⦘.
 
 Definition cert_rf :=
-  vf ∩ same_loc lab ⨾ ⦗ (E0 \₁ D) ∩₁ R ⦘ \ co ⨾ vf.
+  vf ∩ same_loc lab ⨾ ⦗ E0 ∩₁ R ⦘ \ co ⨾ vf.
 Definition cert_rfi := ⦗  Tid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 Definition cert_rfe := ⦗ NTid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 
@@ -104,13 +104,13 @@ Proof.
   apply vfE.
 Qed.
 
-Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗ E0 \₁ D ⦘.
+Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗ E0 ⦘.
 Proof.
   unfold cert_rf.
   rewrite AuxRel.seq_eqv_minus_lr.
   rewrite seqA.
   rewrite <- id_inter.
-  arewrite ((E0 \₁ D) ∩₁ R ∩₁ (E0 \₁ D) ≡₁ (E0 \₁ D) ∩₁ R).
+  arewrite (E0 ∩₁ R ∩₁ E0 ≡₁ E0 ∩₁ R).
   2: done.
   basic_solver 20.
 Qed.
@@ -152,7 +152,7 @@ Proof.
   unfold cert_rf in *. desf; unfolder in *; basic_solver 40.
 Qed.
 
-Lemma cert_rf_comp : forall b (IN: ((E0 \₁ D) ∩₁ R) b), exists a, cert_rf a b.
+Lemma cert_rf_comp : forall b (IN: (E0 ∩₁ R) b), exists a, cert_rf a b.
 Proof.
   ins; unfolder in *; desc.
   assert (exists l, loc b = Some l); desc.
@@ -220,7 +220,7 @@ Proof.
   unfolder in *; ins; desf; intro; desf; basic_solver 11.
 Qed.
 
-Lemma cert_rf_mod: (E0 \₁ D) ∩₁ R ≡₁ codom_rel cert_rf.
+Lemma cert_rf_mod: E0 ∩₁ R ≡₁ codom_rel cert_rf.
 Proof.
   split.
   { intros x HH.
@@ -241,6 +241,70 @@ Proof.
   apply furr_hb_sc_hb_irr; auto.
   all: apply COH.
 Qed.
+
+Lemma rf_D_in_vf : rf ⨾ ⦗D⦘ ⊆ vf.
+Proof.
+  rewrite (dom_l WF.(wf_rfD)).
+  arewrite (D ⊆₁ D ∩₁ E).
+  { generalize (@D_in_E G sc TC thread WF TCCOH). 
+    basic_solver. }
+  unfold vf. basic_solver 20.
+Qed.
+
+Lemma cert_rf_D_rf : cert_rf ;; <| D |> ⊆ rf.
+Proof.
+  unfold cert_rf.
+  arewrite (E0 ∩₁ R ⊆₁ R) by basic_solver.
+  unfolder. ins. desf.
+  assert ((E ∩₁ R) y) as HH.
+  { split; auto.
+    eapply D_in_E; eauto. }
+  cdes COH. edestruct Comp as [z RF]; eauto.
+  destruct (classic (x = z)) as [EQ|NEQ].
+  { by rewrite EQ. }
+  exfalso.
+  edestruct WF.(wf_co_total); eauto.
+  1,2: admit.
+  { apply H2. eexists. split; eauto.
+    apply rf_D_in_vf. apply seq_eqv_r. split; auto.
+    red. desf. }
+  clear -RF H3 H Csc Cint HH NEQ WF Wf_sc.
+  red in H. unfolder in *. desf.
+  { type_solver. }
+  { apply NEQ. eapply wf_rff; eauto. }
+  all: try by (eapply Cint; eexists; split; eauto; right;
+               apply fr_in_eco; eexists; eauto).
+  all: try (apply (dom_r Wf_sc.(wf_scD)) in H2;
+    apply seq_eqv_r in H2; type_solver).
+  all: try by (eapply Cint; eexists; split; eauto; right;
+               red; right; eexists; split; [eexists|right]; eauto).
+  { eapply Cint; eexists; split.
+    2: { right. apply fr_in_eco. eexists; eauto. }
+    eapply hb_trans; eauto. }
+  { eapply Cint; eexists; split.
+    2: { right. red. right.
+         eexists. split; [eexists|right]; eauto. }
+    eapply hb_trans; eauto. }
+  { apply (dom_l Wf_sc.(wf_scD)) in H2.
+    apply seq_eqv_l in H2.
+    apply (dom_r WF.(wf_coD)) in H3.
+    apply seq_eqv_r in H3.
+    type_solver. }
+  { apply (dom_l Wf_sc.(wf_scD)) in H2.
+    apply seq_eqv_l in H2.
+    apply (dom_r WF.(wf_rfD)) in H0.
+    apply seq_eqv_r in H0.
+    type_solver. }
+  { eapply Csc. eexists. split; eauto.
+    eexists. split; eauto. right.
+    eexists. split; eauto.
+    apply fr_in_eco. eexists; eauto. }
+  eapply Csc. eexists. split; eauto.
+  eexists. split; eauto. right.
+  eexists. split; eauto.
+  red. right. 
+  eexists. split; [eexists|right]; eauto.
+Admitted.
 
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
