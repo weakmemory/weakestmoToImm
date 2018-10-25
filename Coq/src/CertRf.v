@@ -263,8 +263,21 @@ Proof.
   destruct (classic (x = z)) as [EQ|NEQ].
   { by rewrite EQ. }
   exfalso.
+  set (AA := RF).
+  apply WF.(wf_rfl) in AA.
+  assert (exists l, loc y = Some l) as [l BB].
+  { unfold Events.loc, is_r in *. desf; eauto. }
   edestruct WF.(wf_co_total); eauto.
-  1,2: admit.
+  { red. split.
+    2: { rewrite H5. eauto. }
+    split.
+    { apply (dom_l vfE) in H. apply seq_eqv_l in H. desf. }
+    apply vf_dom in H. apply seq_eqv_l in H. desf. }
+  { red. split.
+    2: { rewrite AA. eauto. }
+    split.
+    { apply (dom_l WF.(wf_rfE)) in RF. apply seq_eqv_l in RF. desf. }
+    apply (dom_l WF.(wf_rfD)) in RF. apply seq_eqv_l in RF. desf. }
   { apply H2. eexists. split; eauto.
     apply rf_D_in_vf. apply seq_eqv_r. split; auto.
     red. desf. }
@@ -304,7 +317,7 @@ Proof.
   eexists. split; eauto.
   red. right. 
   eexists. split; [eexists|right]; eauto.
-Admitted.
+Qed.
 
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
