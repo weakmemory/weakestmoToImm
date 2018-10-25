@@ -10,7 +10,11 @@ Module ESstep.
 
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'E_init' S" := S.(ES.acts_init_set) (at level 10).
+
 Notation "'lab' S" := S.(ES.lab) (at level 10).
+Notation "'loc' S" := (Events.loc S.(ES.lab)) (at level 10).
+Notation "'mod' S" := (Events.mod S.(ES.lab)) (at level 10).
+
 Notation "'sb' S" := S.(ES.sb) (at level 10).
 Notation "'rmw' S" := S.(ES.rmw) (at level 10).
 Notation "'ew' S" := S.(ES.ew) (at level 10).
@@ -30,6 +34,10 @@ Notation "'coi' S" := S.(ES.coi) (at level 10).
 Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
 Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
+
+Notation "'RW' S" := (R S ∪₁ W S) (at level 10).
+Notation "'FR' S" := (F S ∪₁ R S) (at level 10).
+Notation "'FW' S" := (F S ∪₁ W S) (at level 10).
 
 Notation "'Pln' S" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
 Notation "'Rlx' S" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
@@ -250,9 +258,9 @@ Qed.
 
 Lemma basic_step_loc_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
-  eq_dom S.(ES.acts_set) (loc S.(ES.lab)) (loc S'.(ES.lab)).
+  eq_dom S.(ES.acts_set) (loc S) (loc S').
 Proof. 
-  unfold eq_dom, loc, ES.acts_set.
+  unfold eq_dom, Events.loc, ES.acts_set.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
 Qed.
 
@@ -270,6 +278,13 @@ Proof.
     eapply basic_step_loc_eq_dom; eauto. 
 Qed.
 
+Lemma basic_step_mod_eq_dom e e' S S' 
+      (BSTEP : t_basic e e' S S') :
+  eq_dom S.(ES.acts_set) (mod S) (mod S').
+Proof. 
+  unfold eq_dom, Events.mod, ES.acts_set.
+  ins; erewrite basic_step_lab_eq_dom; eauto. 
+Qed.
 
 Lemma basic_step_nupd_sb lang k k' st st' e S S' 
       (BSTEP_ : t_basic_ lang k k' st st' e None S S') :
@@ -507,10 +522,21 @@ Qed.
 Lemma load_step_rel e e' S S'
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
-  E S' ∩₁ Rel S' ≡₁ E S ∩₁ Rel S.
+  E S' ∩₁ FW S' ∩₁ Rel S' ≡₁ E S ∩₁ FW S ∩₁ Rel S.
 Proof. 
-  admit.
-Admitted.
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  rewrite set_inter_union_r, load_step_w, load_step_f; eauto.
+  rewrite <- set_inter_union_r.
+  rewrite (set_interC (E S)).
+  rewrite set_interA.
+  arewrite (E S ∩₁ Rel S' ≡₁ E S ∩₁ Rel S); [|basic_solver].
+  unfold is_rel, mode_le. 
+  autounfold with unfolderDb; unfold set_subset; splits;
+    intros x [xE HH];
+    [ erewrite <- basic_step_mod_eq_dom in HH
+    | erewrite basic_step_mod_eq_dom in HH ];
+    eauto. 
+Qed.
 
 Lemma load_step_acq e e' S S'
       (LSTEP: t_load e e' S S') 
@@ -550,9 +576,7 @@ Proof.
   rewrite basic_step_nupd_rmw; eauto.
   unfold "rf". 
   rewrite JF', EW'.
-  rewrite seq_union_r.
-  rewrite minus_union_l.
-  rewrite seq_union_l.
+  rewrite seq_union_r, minus_union_l, seq_union_l.
   arewrite (((ew S)^? ⨾ singl_rel w e \ cf S') ⨾ rmw S ≡ ∅₂). 
   { rewrite crE. 
     rewrite seq_union_l. 
