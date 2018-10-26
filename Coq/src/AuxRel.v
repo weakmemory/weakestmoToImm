@@ -17,6 +17,14 @@ Section AuxRel.
     fun x y => y = f x.
 End AuxRel.
 
+Definition eq_opt {A} (a: option A) : A -> Prop := fun b => 
+  match a with
+  | None => False
+  | Some a => eq a b
+  end.
+  
+Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
+
 Definition eq_dom {A B} (s : A -> Prop) (f g: A -> B) := 
   forall (x: A) (SX: s x), f x = g x. 
 
@@ -33,7 +41,7 @@ Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold eq_class_rel : unfolderDb. 
+Hint Unfold eq_opt compl_rel eq_class_rel : unfolderDb. 
 
 Section Props.
 
@@ -43,17 +51,65 @@ Variable a : A.
 Variable b : B.
 Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
-Variables r r' : relation A.
+Variables r r' r'': relation A.
+
+Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
+Proof. basic_solver. Qed.
+
+Lemma cross_union_l : s × (s' ∪₁ s'')  ≡ s × s' ∪ s × s''.
+Proof. basic_solver. Qed.
+
+Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
+Proof. basic_solver. Qed.
 
 Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
 Proof. basic_solver. Qed.
+
 Lemma seq_eqv_cross_r : s × s' ⨾ ⦗q'⦘ ≡ s × (q' ∩₁ s').
 Proof. basic_solver. Qed.
+
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
+Proof. basic_solver. Qed.
+
+Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
 Proof. basic_solver. Qed.
 
 Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
 Proof. basic_solver. Qed.
+
+Lemma max_elt_eqv_rel : set_compl s ⊆₁ max_elt ⦗s⦘.
+Proof. basic_solver. Qed.
+
+Lemma max_elt_cross : set_compl s ⊆₁ max_elt (s × s'). 
+Proof. basic_solver. Qed.
+
+Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
+Proof. basic_solver. Qed.
+  
+Lemma compl_top_minus : forall (r : relation A), compl_rel r ≡ (fun _ _ => True) \ r.
+Proof. basic_solver. Qed.
+
+Lemma minus_union_r : forall (r r' r'': relation A), r \ (r' ∪ r'') ≡ (r \ r') ∩ (r \ r'').
+Proof. 
+  autounfold with unfolderDb; splits; ins; desf; splits; auto.
+  unfold not; basic_solver.
+Qed.
+
+Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
+Proof. 
+  repeat rewrite compl_top_minus; by apply minus_union_r.
+Qed.
+
+Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
+Proof.
+  unfold set_equiv, set_subset; ins; desf. 
+  unfold same_relation; splits; [|basic_solver].
+  unfold seq, inclusion. 
+  intros x y [z HH]. 
+  specialize (H z).
+  apply H. 
+  basic_solver.
+Qed.
 
 Lemma set_subset_inter_l (LL : s ⊆₁ s'' \/ s' ⊆₁ s'') :
   s ∩₁ s' ⊆₁ s''.
@@ -169,6 +225,18 @@ Proof.
   apply collect_rel_eq_dom; auto.
 Qed.
 
+Lemma restr_set_subset 
+      (SUBS : s' ⊆₁ s) 
+      (EQ   : restr_rel s r ≡ restr_rel s r') :
+  restr_rel s' r ≡ restr_rel s' r'.
+Proof. 
+  autounfold with unfolderDb in *.
+  destruct EQ as [INCL INCR].
+  splits; ins; splits; desf;
+    [ apply (INCL x y) | apply (INCR x y) ]; 
+    auto.
+Qed.
+
 Lemma restr_set_union :
   restr_rel (s ∪₁ s') r ≡
     restr_rel s r ∪ restr_rel s' r ∪
@@ -182,9 +250,30 @@ Proof.
   { left. left. right. auto. }
 Qed.
 
+Lemma restr_set_inter :
+  restr_rel (s ∩₁ s') r ≡ restr_rel s r ∩ restr_rel s' r.
+Proof.
+  autounfold with unfolderDb.
+  splits; ins; desf. 
+Qed.
+
+Lemma restr_inter_absorb_l :
+  restr_rel s r ∩ restr_rel s r' ≡ r ∩ restr_rel s r'.
+Proof. basic_solver. Qed.
+
+Lemma restr_inter_absorb_r :
+  restr_rel s r ∩ restr_rel s r' ≡ restr_rel s r ∩ r'.
+Proof. basic_solver. Qed.
+
 Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
   forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
 Proof. basic_solver. Qed.
+
+Lemma restr_clos_trans : (restr_rel s r)⁺ ⊆ restr_rel s r⁺.
+Proof.
+  unfold inclusion, restr_rel; ins. 
+  induction H; desf; splits; eauto using t_step, t_trans. 
+Qed.
 
 Lemma eq_dom_union: eq_dom (s ∪₁ s') f g <-> eq_dom s f g /\ eq_dom s' f g.
 Proof. 
@@ -208,7 +297,31 @@ Proof.
   rewrite <- ct_end.
   rewrite inclusion_t_rt.
   basic_solver.
-Qed.
+Qed. 
+
+Lemma clos_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
+  (r ∪ r')⁺ ≡ r'⁺ ∪ r'＊ ⨾ r.
+Proof. 
+  rewrite ct_unionE.
+  arewrite ((r ⨾ r'＊)⁺ ≡ r); auto. 
+  unfold same_relation; splits.
+  { unfold inclusion; ins. 
+    induction H. 
+    { eapply seq_rtE_r in H. 
+      unfold union in H; desf.
+      repeat unfold seq in *; desf. 
+      exfalso. 
+      eapply Hrr'. 
+      eexists; splits; eauto. }
+    exfalso. 
+    eapply Hrr. 
+    unfold seq; exists y; splits; eauto. }
+  rewrite seq_rtE_r.
+  unfold inclusion; ins. 
+  eapply clos_trans_mori.
+  2: { eapply t_step. eauto. }
+  apply inclusion_union_r1.
+Qed.   
 
 Lemma set_compl_union_id : s ∪₁ set_compl s ≡₁ fun _ => True.
 Proof.
@@ -222,6 +335,26 @@ Qed.
 End Props.
 
 Require Import Setoid.
+
+Add Parametric Morphism A : (@eq_class_rel A) with signature 
+  inclusion ==> inclusion as eq_class_mori.
+Proof.
+  red; ins; do 2 autounfold with unfolderDb in *; basic_solver.
+Qed.
+
+Add Parametric Morphism A : (@eq_class_rel A) with signature 
+  same_relation ==> same_relation as eq_class_more.
+Proof.
+  red; ins; do 2 autounfold with unfolderDb in *; basic_solver.
+Qed.
+
+Add Parametric Morphism A : (@compl_rel A) with signature 
+  same_relation ==> same_relation as compl_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@compl_rel A) with signature 
+  inclusion --> inclusion as compl_mori.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_equiv ==> eq ==> iff as inj_dom_more.

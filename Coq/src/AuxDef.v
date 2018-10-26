@@ -9,10 +9,29 @@ Tactic Notation "destruct_seq" constr(x)
 
 Export ListNotations.
 
+Definition opt_same_ctor {A B} (a : option A) (b : option B) : Prop := 
+  match a, b with
+  | None  , None
+  | Some _, Some _ => True
+  | _, _ => False
+  end.
+
+Definition opt_ext {A} (def : A) (a : option A) : A := 
+  match a with
+  | None => def
+  | Some a => a
+  end.
+
 Definition opt_to_list {A} (a : option A) : list A :=
   match a with
   | None => []
   | Some a => [a]
+  end.
+
+Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) := 
+  match a, b with
+  | Some a, Some b => upd f a b
+  | _, _ => f
   end.
 
 Definition same_val {A} (lab : A -> label) : relation A :=
@@ -27,6 +46,23 @@ Fixpoint countNatP (f: nat -> Prop) (n : nat) : nat :=
     in
     shift + countNatP f n
   end.
+
+Hint Unfold upd_opt : unfolderDb.
+
+Lemma upd_opt_none_l (A B : Type) (f : A -> B) b : upd_opt f None b = f. 
+Proof. 
+  by unfold upd_opt.
+Qed.
+
+Lemma upd_opt_none_r (A B : Type) (f : A -> B) a : upd_opt f a None = f. 
+Proof. 
+  destruct a; by unfold upd_opt.
+Qed.
+
+Lemma upd_opt_some (A B : Type) (f : A -> B) a b : upd_opt f (Some a) (Some b) = upd f a b. 
+Proof. 
+  by unfold upd_opt.
+Qed.
 
 Add Parametric Morphism : countNatP with signature
     set_subset ==> eq ==> le as countP_mori.

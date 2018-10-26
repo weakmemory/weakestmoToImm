@@ -60,20 +60,8 @@ Section SimRel.
       init
       is_terminal
       (ilbl_step tid).
-
-  Definition event_to_act (e : eventid) : actid :=
-    if excluded_middle_informative (SEinit e)
-    then
-      match Sloc e with
-      | Some l => InitEvent l
-      | _      => InitEvent BinNums.xH
-      end
-    else
-      let thread := Stid e in
-      ThreadEvent thread
-                  (countNatP (dom_rel (⦗ Stid_ thread ⦘⨾ Ssb ⨾ ⦗ eq e ⦘))
-                             S.(ES.next_act)).
-  Notation "'g'" := (event_to_act).
+  
+  Notation "'g'" := (ES.event_to_act S).
 
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
@@ -119,10 +107,11 @@ Section SimRel.
       scont : simrel_cont;
 
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
+
+      grmw : g □ Srmw ⊆ Grmw;
+      gjf  : g □ Sjf  ⊆ Gvf;
       gew  : g □ Sew  ⊆ eq;
       gco  : g □ Sco  ⊆ Gco;
-      gjf  : g □ Sjf  ⊆ Gvf;
-      grmw : g □ Srmw ⊆ Grmw;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
@@ -147,8 +136,6 @@ Section SimRel.
 
       vis  : f □₁ fdom ⊆₁ vis S;
 
-      (* sbF : f □ Gsb ⨾ ⦗ C ⦘ ⊆ Ssb; *)
-      (* sbPrcl : Ssb ⨾ ⦗ f □₁ C ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb; *)
     }.
 
   Record forward_pair (e : actid) (e' : eventid) :=
@@ -243,11 +230,20 @@ Section SimRel.
       (* TODO. It should follow from definition of g. *)
     Admitted.
 
+    Lemma fsb : f □ (⦗ fdom ⦘ ⨾ Gsb ⨾ ⦗ fdom ⦘) ⊆ Ssb. 
+    Proof.
+      rewrite <- restr_relE.
+      unfold restr_rel, collect_rel, inclusion.
+      intros x' y' [x [y HH]].
+      destruct HH as [[GSB [FDOMx FDOMy]] [Fx Fy]].
+      admit. 
+    Admitted.
+
     Lemma gtid e : Stid e = Gtid (g e).
     Proof.
       assert (SEinit e -> Stid e = tid_init) as HH.
       { admit. }
-      unfold event_to_act. desf; simpls.
+      unfold ES.event_to_act. desf; simpls.
       all: by apply HH.
     Admitted.
 
@@ -275,7 +271,7 @@ Section SimRel.
            desf.
            eexists. eexists.
            splits; eauto.
-           { red. ins. red in H. desf. }
+           { red. ins. admit. (* red in H. desf. *) }
            red. splits; ins.
            2: { symmetry in AA.
                 eapply GPROG in AA. desf.
@@ -324,8 +320,6 @@ Section SimRel.
       eexists. eexists.
       splits; eauto.
       unfold ES.cont_sb_dom. simpls.
-      arewrite (Stid_ (Stid (f e)) ⊆₁ fun _ => True).
-      rewrite set_inter_full_l.
       rewrite set_collect_dom.
       rewrite collect_seq_eqv_r.
       rewrite collect_eq.

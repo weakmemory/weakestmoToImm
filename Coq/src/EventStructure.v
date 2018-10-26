@@ -2,12 +2,10 @@ Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events.
-Require Import AuxRel.
+Require Import AuxDef AuxRel.
 
 Set Implicit Arguments.
 Export ListNotations.
-
-Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
 
 Definition eventid := nat.
 Definition tid_init := xH.
@@ -42,30 +40,6 @@ Record t :=
                       lang.(Language.state) });
      }.
 
-Definition cont_thread S (cont : cont_label) : thread_id :=
-  match cont with
-  | CInit thread => thread
-  | CEvent e => S.(ES.tid) e
-  end.
-
-Definition cont_lab S (cont : cont_label) : option label := 
-  match cont with
-  | CInit thread => None
-  | CEvent e => Some (S.(ES.lab) e)
-  end.
-
-Definition cont_sb_dom S c :=
-  match c with
-  | CInit  _ => ∅
-  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ dom_rel (S.(sb)^? ⨾ ⦗ eq e ⦘)
-  end.
-
-Definition cont_sb_codom S c := 
-  match c with
-  | CInit _ => (fun x => tid S x = (cont_thread S c))
-  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
-  end.
-
 Definition acts_set (ES : t) := fun x => x < ES.(next_act).
 Definition acts_init_set (ES : t) :=
   ES.(acts_set) ∩₁ (fun x => ES.(tid) x = tid_init).
@@ -93,29 +67,61 @@ Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
 
 Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf)^?.
 
+Definition cont_thread S (cont : cont_label) : thread_id :=
+  match cont with
+  | CInit thread => thread
+  | CEvent e => S.(ES.tid) e
+  end.
+
+Definition cont_lab S (cont : cont_label) : option label := 
+  match cont with
+  | CInit thread => None
+  | CEvent e => Some (S.(ES.lab) e)
+  end.
+
+Definition cont_sb_dom S c :=
+  match c with
+  | CInit  _ => S.(ES.acts_init_set)
+  | CEvent e => dom_rel (S.(sb)^? ⨾ ⦗ eq e ⦘)
+  end.
+
+Definition cont_sb_codom S c := 
+  match c with
+  | CInit _ => (fun x => tid S x = (cont_thread S c))
+  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  end.
+
+Definition cont_cf_dom S c :=
+  match c with
+  | CInit  i => fun x => S.(tid) x = i 
+  | CEvent e => dom_rel (S.(cf) ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  end.
+
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
 Section EventStructure.
 
-Variable EG : ES.t.
+Variable S : ES.t.
 
-Notation "'E'"      := EG.(ES.acts_set).
-Notation "'Einit'"  := EG.(ES.acts_init_set).
-Notation "'Eninit'" := EG.(ES.acts_ninit_set).
-Notation "'tid'"   := EG.(ES.tid).
-Notation "'sb'"    := EG.(ES.sb).
-Notation "'rmw'"   := EG.(ES.rmw).
-Notation "'ew'"    := EG.(ES.ew).
-Notation "'jf'"    := EG.(ES.jf).
-Notation "'rf'"    := EG.(ES.rf).
-Notation "'co'"    := EG.(ES.co).
-Notation "'lab'"   := EG.(ES.lab).
-Notation "'cf'"    := EG.(ES.cf).
-Notation "'K'"     := EG.(ES.cont_set).
+Notation "'E'"      := S.(ES.acts_set).
+Notation "'Einit'"  := S.(ES.acts_init_set).
+Notation "'Eninit'" := S.(ES.acts_ninit_set).
+Notation "'tid'"   := S.(ES.tid).
+Notation "'sb'"    := S.(ES.sb).
+Notation "'rmw'"   := S.(ES.rmw).
+Notation "'ew'"    := S.(ES.ew).
+Notation "'jf'"    := S.(ES.jf).
+Notation "'rf'"    := S.(ES.rf).
+Notation "'co'"    := S.(ES.co).
+Notation "'lab'"   := S.(ES.lab).
+Notation "'cf'"    := S.(ES.cf).
+Notation "'K'"     := S.(ES.cont_set).
 
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
 Notation "'same_loc'" := (same_loc lab).
+
+Notation "'tid_' t" := (fun x => tid x = t) (at level 1).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
@@ -132,18 +138,37 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
+Definition event_to_act (e : eventid) : actid :=
+    if excluded_middle_informative (Einit e)
+    then
+      match loc e with
+      | Some l => InitEvent l
+      | _      => InitEvent BinNums.xH
+      end
+    else
+      let thread := tid e in
+      ThreadEvent thread
+                  (countNatP (dom_rel (⦗ tid_ thread ⦘⨾ sb ⨾ ⦗ eq e ⦘))
+                             (next_act S)).
+
 Record Wf :=
-  { initL : forall l, (exists b, E b /\ loc b = Some l) ->
+  { (* initI : exists a, Einit a; *)
+    initL : forall l, (exists b, E b /\ loc b = Some l) ->
                       exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
         exists l, lab e = Astore Xpln Opln l 0 ;
+    
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
+    sb_init : Einit × Eninit ⊆ sb;
+    sb_ninit : sb ⨾ ⦗Einit⦘ ≡ ∅₂;
+    sb_tid : ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘ ⊆ same_tid S;
     sb_irr   : irreflexive sb;
     sb_trans : transitive sb;
-    sb_init  : Einit × Eninit ⊆ sb;
+
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
+
     jfE : jf ≡ ⦗E⦘ ⨾ jf ⨾ ⦗E⦘ ;
     jfD : jf ≡ ⦗W⦘ ⨾ jf ⨾ ⦗R⦘ ;
     jfl : jf ⊆ same_loc ;
@@ -160,6 +185,7 @@ Record Wf :=
              (NCF : ⦗ ws ⦘ ⨾ cf ⨾ ⦗ ws ⦘ ≡ ∅₂),
         is_total ws co;
     co_irr : irreflexive co ;
+
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
     ewl : ew ⊆ same_loc ;
@@ -180,11 +206,26 @@ Record Wf :=
 
 Implicit Type WF : Wf.
 
+Lemma cf_alt WF : cf ≡ (same_tid S ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Einit⦘ ⨾ sb)) \ sb⁼.
+Proof. 
+  admit.
+Admitted.
+
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
+
+Lemma rmwE WF : rmw ≡ ⦗E⦘ ⨾ rmw ⨾ ⦗E⦘.
+Proof.
+split; [|basic_solver].
+arewrite (rmw ⊆ rmw ∩ rmw) at 1.
+rewrite (rmwi WF) at 1.
+arewrite (immediate sb ⊆ sb).
+rewrite (sbE WF).
+basic_solver.
+Qed.
 
 Lemma rfE WF : rf ≡ ⦗E⦘ ⨾ rf ⨾ ⦗E⦘.
 Proof.
@@ -240,6 +281,22 @@ Proof.
   apply funeq_minus.
   generalize WF.(jfv) WF.(ewv) funeq_seq.
   basic_solver.
+Qed.
+
+(******************************************************************************)
+(** ** Continuation properites *)
+(******************************************************************************)
+
+Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : cont_sb_dom S k ⊆₁ E.
+Proof. 
+  autounfold with unfolderDb. 
+  unfold cont_sb_dom.
+  ins; desf.
+  { unfold acts_init_set, set_inter in H; desf. }
+  autounfold with unfolderDb in H; desf.
+  { eapply WF.(K_inE). apply KK. }
+  apply WF.(sbE) in H.
+  autounfold with unfolderDb in H; desf.
 Qed.
 
 End EventStructure.
