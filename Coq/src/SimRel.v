@@ -216,7 +216,7 @@ Section SimRel.
       split.
       { red. red in IWa. red in IWb.
         desf. }
-      red. intros [[AA|AA]|AA]; desf.
+      red. intros [AA|[AA|AA]]; desf.
       all: apply NN; auto.
     Qed.
 

@@ -54,8 +54,7 @@ Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
 Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
 
 Definition cf (ES : t) :=
-  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
-  ⦗ ES.(acts_set) ⦘.
+  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) \ (ES.(sb)⁼)) ⨾ ⦗ ES.(acts_set) ⦘.
 
 Definition cc (ES : t) := 
   ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 

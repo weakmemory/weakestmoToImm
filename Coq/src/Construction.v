@@ -323,16 +323,16 @@ Proof.
   repeat rewrite seq_union_r.
   repeat rewrite seq_union_l.
   arewrite 
-    (restr_rel (eq e) (ES.same_tid S' ∩ compl_rel ((sb S')^? ∪ (sb S')⁻¹)) ≡ ∅₂)
+    (restr_rel (eq e) (ES.same_tid S' \ (sb S')⁼) ≡ ∅₂)
     by apply restr_irrefl_eq; basic_solver.
   arewrite 
-    (restr_rel (eq_opt e') (ES.same_tid S' ∩ compl_rel ((sb S')^? ∪ (sb S')⁻¹)) ≡ ∅₂)
+    (restr_rel (eq_opt e') (ES.same_tid S' \ (sb S')⁼) ≡ ∅₂)
     by unfold eq_opt; desf; [apply restr_irrefl_eq|]; basic_solver.
   arewrite 
-    (⦗eq e⦘ ⨾ ES.same_tid S' ∩ compl_rel ((sb S')^? ∪ (sb S')⁻¹) ⨾ ⦗eq_opt e'⦘ ≡ ∅₂)
+    (⦗eq e⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq_opt e'⦘ ≡ ∅₂)
     by rewrite SB'; basic_solver 42.
   arewrite 
-    (⦗eq_opt e'⦘ ⨾ ES.same_tid S' ∩ compl_rel ((sb S')^? ∪ (sb S')⁻¹) ⨾ ⦗eq e⦘ ≡ ∅₂)
+    (⦗eq_opt e'⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq e⦘ ≡ ∅₂)
     by rewrite SB'; basic_solver 42.
   relsf.
   admit.
@@ -342,14 +342,14 @@ Lemma basic_step_cf_mon e e' S S'
       (BSTEP : t_basic e e' S S') :
   S.(ES.cf) ⊆ S'.(ES.cf).
 Proof.
+  cdes BSTEP; cdes BSTEP_.
   edestruct basic_step_same_tid as [STIDL STIDR]; [by apply BSTEP|].
   unfold ES.cf.
-  cdes BSTEP. 
-  cdes BSTEP_.
   rewrite SB'. 
   rewrite (basic_step_acts_set e e' S S'); [| apply BSTEP].
   unfold eq_opt. 
   repeat rewrite <- restr_relE.
+  repeat rewrite minus_inter_compl. 
   repeat rewrite restr_inter.
   rewrite STIDL. 
   autounfold with unfolderDb.
