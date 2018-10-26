@@ -308,9 +308,7 @@ Qed.
 
 Lemma basic_step_cf lang k k' st st' e e' S S' 
       (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
-  cf S' ≡ cf S ∪ 
-                ES.cont_cf_dom S k × eq e ∪ eq e × ES.cont_cf_dom S k ∪
-                ES.cont_cf_dom S k × eq_opt e' ∪ eq_opt e' × ES.cont_cf_dom S k.
+  cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈  ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
 Proof.
   assert (t_basic e e' S S') as BSTEP.
   { unfold t_basic. do 5 eexists. eauto. }
@@ -335,7 +333,47 @@ Proof.
     (⦗eq_opt e'⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq e⦘ ≡ ∅₂)
     by rewrite SB'; basic_solver 42.
   relsf.
-  admit.
+  repeat rewrite unionA.
+  apply union_more.
+  { unfold ES.cf. 
+    rewrite <- restr_relE. 
+    repeat rewrite minus_inter_compl.
+    repeat rewrite restr_inter.
+    apply inter_rel_more.
+    { by rewrite <- basic_step_same_tid; eauto. }
+    rewrite SB'.
+    rewrite cross_union_r.
+    repeat rewrite <- unionA.
+    repeat rewrite crs_union.
+    repeat rewrite compl_union.
+    repeat rewrite restr_inter.
+    repeat rewrite restr_cross.
+    repeat rewrite <- minus_inter_compl.
+    repeat rewrite <- minus_inter_compl.
+    arewrite (E S × E S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ E S × E S \ ⦗⊤₁⦘).
+    { autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+        ins; splits; desf; auto; omega. }
+    arewrite (E S × E S \ (ES.cont_sb_dom S k × eq_opt e')⁼ ≡ E S × E S \ ⦗⊤₁⦘).
+    { autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+        ins; splits; desf; auto; omega. }
+    arewrite (E S × E S \ (eq e × eq_opt e')⁼ ≡ E S × E S \ ⦗⊤₁⦘).
+    { autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+        ins; splits; desf; auto; omega. }
+    repeat rewrite crsE.
+    basic_solver 42. }
+  rewrite <- unionA.
+  apply union_more.
+  { arewrite 
+      (⦗eq e⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗E S⦘ ≡ 
+      (⦗E S⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq e⦘)⁻¹).
+    { repeat rewrite transp_seq. 
+      repeat rewrite transp_sym; 
+        [ basic_solver | apply eqv_sym |  | apply eqv_sym ].
+      apply minus_sym; [ apply ES.same_tid_sym | apply crs_sym ]. } 
+    rewrite <- csE.
+    apply clos_sym_more.
+    admit. }
+  admit. 
 Admitted.
 
 Lemma basic_step_cf_mon e e' S S' 
