@@ -337,6 +337,15 @@ Proof.
   apply inclusion_union_r1.
 Qed.   
 
+Lemma set_compl_union_id : s ∪₁ set_compl s ≡₁ fun _ => True.
+Proof.
+  split; [basic_solver|].
+  intros x _.
+  destruct (classic (s x)).
+  { by left. }
+    by right.
+Qed.
+
 End Props.
 
 Require Import Setoid.
