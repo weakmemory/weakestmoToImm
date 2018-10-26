@@ -91,7 +91,7 @@ Section SimRelCert.
   Notation "'E0'" := (Gtid_ qtid ∩₁ (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘))).
 
   Record sim_cert_graph :=
-    { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
+    { cslab : eq_dom certLab Glab ((Gtid_ qtid) ∩₁ (C' ∪₁ I'));
       cuplab_cert : forall e (EE : certE e),
           same_label_up_to_value (certG.(lab) e) (Glab e);
       cstate_stable : stable_state qtid state';
@@ -177,13 +177,13 @@ Section SimRelCert.
 
       hgtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
 
-      hinj : inj_dom hdom h;
+      hinj : inj_dom h hdom;
       himg : h □₁ hdom ⊆₁ SE;
       hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
       htid : Stid ∘ h = Gtid;
 
-      hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
-      hlabTHRD : eq_dom sbq_dom certLab (Slab ∘ h);
+      hlabCI : eq_dom Glab (Slab ∘ h) (C ∪₁ I);
+      hlabTHRD : eq_dom certLab (Slab ∘ h) sbq_dom;
 
       hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
 
@@ -192,7 +192,7 @@ Section SimRelCert.
       complete_fdom :
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
-      hfeq  : eq_dom (fdom \₁ (sbq_dom \₁ C)) f h; 
+      hfeq  : eq_dom f h (fdom \₁ (sbq_dom \₁ C)); 
 
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
