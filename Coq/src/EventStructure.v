@@ -205,6 +205,9 @@ Record Wf :=
 
 Implicit Type WF : Wf.
 
+Lemma same_tid_sym : symmetric (same_tid S). 
+Proof. unfold same_tid. basic_solver. Qed.
+
 Lemma cf_alt WF : cf ≡ (same_tid S ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Einit⦘ ⨾ sb)) \ sb⁼.
 Proof. 
   admit.

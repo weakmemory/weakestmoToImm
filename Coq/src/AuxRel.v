@@ -67,10 +67,40 @@ Proof. basic_solver. Qed.
 Lemma crsE : r⁼ ≡ ⦗⊤₁⦘ ∪ r ∪ r⁻¹.
 Proof. basic_solver. Qed.
 
+Lemma cs_union : (r ∪ r')^⋈  ≡ r^⋈ ∪ r'^⋈.
+Proof. basic_solver. Qed.
+
+Lemma crs_union : (r ∪ r')⁼  ≡ r⁼ ∪ r'⁼.
+Proof. basic_solver. Qed.
+
+Lemma cs_cross : (s × s')^⋈ ≡ s × s' ∪ s' × s.
+Proof. basic_solver. Qed.
+
+Lemma crs_cross : (s × s')⁼ ≡ ⦗⊤₁⦘ ∪ s × s' ∪ s' × s.
+Proof. basic_solver. Qed.
+
+Lemma cs_sym : symmetric r^⋈.
+Proof. basic_solver. Qed.
+
+Lemma crs_sym : symmetric r⁼.
+Proof. basic_solver. Qed.
+
+Lemma eqv_sym : symmetric ⦗s⦘.
+Proof. basic_solver. Qed.
+
+Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
+Proof. basic_solver. Qed.
+
+Lemma transp_sym : symmetric r -> r⁻¹ ≡ r. 
+Proof. basic_solver. Qed.
+
+Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
+Proof. basic_solver. Qed.
+
 Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
 Proof. basic_solver. Qed.
 
-Lemma cross_union_l : s × (s' ∪₁ s'')  ≡ s × s' ∪ s × s''.
+Lemma cross_union_l : s × (s' ∪₁ s'') ≡ s × s' ∪ s × s''.
 Proof. basic_solver. Qed.
 
 Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
@@ -83,6 +113,9 @@ Lemma seq_eqv_cross_r : s × s' ⨾ ⦗q'⦘ ≡ s × (q' ∩₁ s').
 Proof. basic_solver. Qed.
 
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
+Proof. basic_solver. Qed.
+
+Lemma restr_cross : restr_rel s r ≡ s × s ∩ r.
 Proof. basic_solver. Qed.
 
 Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
@@ -99,6 +132,16 @@ Proof. basic_solver. Qed.
 
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
 Proof. basic_solver. Qed.
+
+Lemma cross_minus_compl_l : s × s' \ (set_compl s) × s'' ≡ s × s'.
+Proof. 
+  autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
+Qed.
+
+Lemma cross_minus_compl_r : s × s' \ s'' × (set_compl s') ≡ s × s'.
+Proof. 
+  autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
+Qed.
   
 Lemma minus_inter_compl : r \ r' ≡ r ∩ compl_rel r'.
 Proof. basic_solver. Qed.
