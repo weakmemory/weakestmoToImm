@@ -319,6 +319,32 @@ Proof.
   eexists. split; [eexists|right]; eauto.
 Qed.
 
+(* TODO: move to a more general file.*)
+Lemma dom_r2l_rt {A} (r r' : relation A) (s : A -> Prop)
+      (HH : r ⨾ ⦗s⦘ ⊆ ⦗s⦘ ⨾ r') :
+  r＊ ⨾ ⦗s⦘ ⊆ ⦗s⦘ ⨾ r'＊.
+Proof.
+  unfolder in *. ins. desf.
+  induction H.
+  { edestruct HH; eauto. split; auto.
+      by apply rt_step. }
+  { split; auto. apply rt_refl. }
+  destruct IHclos_refl_trans2; auto.
+  destruct IHclos_refl_trans1; auto.
+  split; auto.
+  eapply transitive_rt; eauto.
+Qed.
+
+(* TODO: move to a more general file.*)
+Lemma sw_sb_I_dom_C: dom_rel (sw ⨾ sb ⨾ ⦗I⦘) ⊆₁ C.
+Proof.
+  (* unfold imm_s_hb.sw, release, rs. unfolder. *)
+  (* (* unfold imm_s_hb.sw. unfolder. *) *)
+  (* ins. desf. *)
+  (* { apply rfi_union_rfe in H0. red in H0. desf. *)
+  (*   { *)
+Admitted.
+
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
   cdes COH.
@@ -326,7 +352,7 @@ Proof.
   rewrite cert_rf_in_vf. rewrite !seqA.
   unfold vf.
   arewrite_id ⦗E⦘. rewrite seq_id_l.
-  arewrite (E0 \₁ D ⊆₁ C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)).
+  arewrite (E0 ⊆₁ C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)).
   { unfold E0. basic_solver 10. }
   rewrite id_union. rewrite !seq_union_r.
   assert (hb^? ⨾ ⦗C⦘ ⊆ ⦗C⦘ ⨾ hb^? /\ sc^? ⨾ ⦗C⦘ ⊆ ⦗C⦘ ⨾ sc^?) as [AA BB].
@@ -350,6 +376,24 @@ Proof.
     sin_rewrite AA. sin_rewrite CC. basic_solver. }
 
   rewrite seq_eqvC with (doma:=R).
+  cdes TCCOH.
+  
+  assert (sw ⨾ sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
+          ⦗C⦘ ⨾ sw ⨾ sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) as JJ.
+  { intros x y TT. apply seq_eqv_l. split; auto.
+    unfolder in TT. desf.
+    { apply (dom_r WF.(wf_swD)) in TT. apply seq_eqv_r in TT.
+      eapply issuedW in TT3; eauto. type_solver. }
+    all: apply sw_sb_I_dom_C.
+    all: eexists; eexists.
+    all: split; eauto.
+    all: apply seq_eqv_r; split; [|by eauto]; eauto.
+    eapply sb_trans; eauto. }
+    
+  assert ((sb ⨾ sw＊)＊ ⨾ sb ⨾ sw＊ ⊆ hb) as VV.
+  { rewrite <- ct_end. rewrite sb_in_hb, sw_in_hb.
+    rewrite <- ct_begin. rewrite ct_of_ct.
+    apply ct_of_trans. apply hb_trans. }
 
   assert (hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
           ⦗ C ⦘ ⨾ hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪
@@ -369,16 +413,31 @@ Proof.
     rewrite !seq_id_l.
     unionL.
     { arewrite_id ⦗set_compl C⦘. by rewrite seq_id_l. }
-
-    
-
-    rewrite crE at 1.
-    rewrite !seq_union_l, !seq_union_r.
-    rewrite seq_id_l.
-    unionL.
-    { basic_solver 20. }
-    rewrite hb_sb_sw.
-    admit. } 
+    { rewrite ct_end, !seqA.
+      rewrite ct_end at 2. rewrite !seqA.
+      rewrite JJ.
+      rewrite inclusion_t_rt.
+      sin_rewrite VV.
+      sin_rewrite hb_covered; eauto.
+      rewrite !seqA.
+      arewrite (⦗set_compl C⦘ ⨾ ⦗C⦘ ⊆ ∅₂); basic_solver. }
+    { rewrite ct_end, !seqA.
+      rewrite JJ.
+      sin_rewrite dom_r2l_rt.
+      2: by eapply sw_covered; eauto.
+      rewrite !seqA.
+      arewrite (⦗set_compl C⦘ ⨾ ⦗C⦘ ⊆ ∅₂); basic_solver. }
+    rewrite ct_end with (r := sb ⨾ sw⁺).
+    rewrite ct_end at 3. rewrite !seqA.
+    rewrite JJ.
+    rewrite inclusion_t_rt.
+    sin_rewrite VV.
+    sin_rewrite hb_covered; eauto. rewrite !seqA.
+    sin_rewrite dom_r2l_rt.
+    2: by eapply sw_covered; eauto.
+    rewrite !seqA.
+    arewrite (⦗set_compl C⦘ ⨾ ⦗C⦘ ⊆ ∅₂); basic_solver. }
+      
   sin_rewrite PP.
   rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.
@@ -390,7 +449,8 @@ Proof.
   arewrite (sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ sb^?).
   arewrite (sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
             ⦗ C ⦘ ⨾ sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘).
-  { admit. } 
+  { admit.
+  } 
   rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.
   { sin_rewrite YY. basic_solver. }
