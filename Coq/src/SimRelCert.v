@@ -568,7 +568,7 @@ Proof.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
       { exists (h w).
         splits.
-        { eapply new_rf_dom_f; eauto; [by apply SRCC|].
+        { eapply new_rf_dom_f; eauto; [by apply SRC|by apply SRCC|].
           autounfold with unfolderDb.
           do 4 eexists. splits; eauto. }
         { simpl. unfold is_w. admit. }
