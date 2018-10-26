@@ -1,7 +1,7 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
-     imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
+     imm_common imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
      CombRelations Execution_eco.
 Require Import Vf AuxRel.
 
@@ -345,6 +345,26 @@ Proof.
   (*   { *)
 Admitted.
 
+(* TODO: move to a more general file.*)
+Lemma sc_sb_I_dom_C: dom_rel (sc ⨾ sb ⨾ ⦗I⦘) ⊆₁ C.
+Proof.
+  cdes COH.
+  rewrite (dom_r Wf_sc.(wf_scD)).
+  unfolder. ins. desf.
+  cdes TCCOH.
+  assert (C z) as AA.
+  2: { apply CC in AA. red in AA.
+       unfolder in AA. desf.
+       1,2: type_solver.
+       eapply AA2. eexists.
+       apply seq_eqv_r. split; eauto. }
+  eapply II; eauto.
+  eexists. apply seq_eqv_r. split; eauto.
+  apply sb_from_f_in_fwbob.
+  apply seq_eqv_l. split; [split|]; auto.
+  mode_solver.
+Qed.
+
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
   cdes COH.
@@ -448,9 +468,17 @@ Proof.
   sin_rewrite XX.
   arewrite (sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ sb^?).
   arewrite (sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
-            ⦗ C ⦘ ⨾ sc^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘).
-  { admit.
-  } 
+            ⦗ C ⦘ ⨾ sc ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘).
+  { rewrite crE. rewrite unionC, !seq_union_l.
+    apply union_mori.
+    2: by rewrite seq_id_l.
+    intros x y HH. apply seq_eqv_l. split; auto.
+    unfolder in HH. desf.
+    2: { apply sc_sb_I_dom_C. unfolder. eauto 10. } 
+    apply (dom_r Wf_sc.(wf_scD)) in HH. apply seq_eqv_r in HH.
+    eapply issuedW in HH2; eauto.
+    type_solver. }
+
   rewrite !seq_union_l, !seq_union_r, !seqA.
   unionL.
   { sin_rewrite YY. basic_solver. }
@@ -544,7 +572,7 @@ Proof.
   { split; eauto. by split. }
   apply seq_eqv_r. split; [|by eauto].
   eapply sb_trans; eauto.
-Admitted.
+Qed.
 
   (* rewrite (cert_rfD). *)
   (* arewrite (⦗E0 \₁ I⦘ ⨾ ⦗W⦘ ⊆ ⦗E0 \₁ I⦘ ⨾ ⦗Tid_ thread⦘ ⨾ ⦗W⦘). *)
