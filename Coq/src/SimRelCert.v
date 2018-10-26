@@ -113,6 +113,7 @@ Section SimRelCert.
     }.
   
   Section CertGraphProperties.
+    Variable Wf_sc : wf_sc G sc.
     Variable SCG : sim_cert_graph.
     
     Lemma new_rf_w : new_rf ≡ ⦗ GW ⦘ ⨾ new_rf.
@@ -120,8 +121,8 @@ Section SimRelCert.
       split; [|basic_solver].
       intros w r HH. apply seq_eqv_l. split; [|done].
       apply SCG.(new_rf_in_vf) in HH.
-      apply Avf_dom in HH. apply seq_eqv_l in HH.
-      desf.
+      apply furr_alt in HH; auto.
+      apply seq_eqv_l in HH. desf.
     Qed.
 
     Lemma cuplab e :
@@ -254,7 +255,7 @@ Notation "'Gsb'" := (G.(sb)).
 Notation "'Ghb'" := (G.(imm_hb.hb)).
 Notation "'Grf'" := (G.(rf)).
 Notation "'Gco'" := (G.(co)).
-Notation "'Gvf'" := (G.(Gvf)).
+Notation "'Gvf'" := (G.(furr)).
 
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
@@ -266,7 +267,7 @@ Lemma sim_cert_graph_start TC' thread
   exists q state' new_rf,
     ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
     ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
-    ⟪ SRCG : sim_cert_graph S G TC TC' q state' new_rf ⟫.
+    ⟪ SRCG : sim_cert_graph S G sc TC TC' q state' new_rf ⟫.
 Proof.
   assert (tc_coherent G sc TC') as TCCOH'.
   { eapply sim_trav_step_coherence.
@@ -289,7 +290,7 @@ Proof.
 
   edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
   desf.
-  assert (exists state' new_rf, sim_cert_graph S G TC TC' q state' new_rf)
+  assert (exists state' new_rf, sim_cert_graph S G sc TC TC' q state' new_rf)
     as [state' [new_rf HH]].
   2: { eexists. eexists. splits; eauto. }
   cdes SSTATE. cdes SSTATE1.
@@ -336,8 +337,7 @@ Proof.
   desf.
   
   set (thread := ES.cont_thread S q).
-  set (new_rf := Gvf ∩ same_loc Glab ⨾ ⦗ (GE \₁ D G TC' thread) ∩₁ GR ⦘
-                     \ Gco ⨾ Gvf).
+  set (new_rf := cert_rf G sc TC thread).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
 
