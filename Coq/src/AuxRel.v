@@ -7,7 +7,7 @@ Section AuxRel.
 
   Variables A B : Type.
   Variable cond : A -> Prop.
-  Variable f : A -> B.
+  Variable f g : A -> B.
   Variables s s' : A -> Prop.
   Variables r r' : relation A.
 
@@ -17,25 +17,27 @@ Section AuxRel.
 
   Definition img_rel : A -> B -> Prop :=
     fun x y => y = f x.
-End AuxRel.
 
-Definition eq_opt {A} (a: option A) : A -> Prop := fun b => 
+  Definition eq_opt (a: option A) : A -> Prop := fun b => 
   match a with
   | None => False
   | Some a => eq a b
   end.
   
-Definition compl_rel {A} (r : relation A) := fun a b => ~ r a b.
+  Definition compl_rel := fun a b => ~ r a b.
 
-Definition eq_dom {A B} (s : A -> Prop) (f g: A -> B) := 
-  forall (x: A) (SX: s x), f x = g x. 
+  Definition eq_dom := 
+    forall (x: A) (SX: s x), f x = g x. 
 
-Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
-  forall (x y : A) (SY: s y) (EQ : f x = f y),
-    x = y.
+  Definition inj_dom :=
+    forall (x y : A) (SY: s y) (EQ : f x = f y),
+      x = y.
 
-Definition restr_fun {A B} (s : A -> Prop) (f : A -> B) (g : A -> B) := fun x =>
-  if excluded_middle_informative (s x) then f x else g x.
+  Definition restr_fun := fun x => 
+    if excluded_middle_informative (s x) then f x else g x.
+
+End AuxRel.
+
 
 Notation "⊤₁" := set_full.
 Notation "⊤₂" := (fun _ _ => True).
@@ -186,7 +188,7 @@ Lemma collect_eq e :f □₁ eq e ≡₁ eq (f e).
 Proof. basic_solver. Qed.
 
 Lemma collect_rel_seq_l
-      (INJ : inj_dom (codom_rel r) f) : 
+      (INJ : inj_dom f (codom_rel r)) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   autounfold with unfolderDb.
@@ -197,7 +199,7 @@ Proof.
 Qed.
 
 Lemma collect_rel_seq_r
-      (INJ : inj_dom (dom_rel r') f) : 
+      (INJ : inj_dom f (dom_rel r')) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   autounfold with unfolderDb.
@@ -209,7 +211,7 @@ Proof.
 Qed.     
 
 Lemma set_collect_restr : 
-  forall (s: A -> Prop) (f: A -> B), inj_dom s f ->
+  forall (s: A -> Prop) (f: A -> B), inj_dom f s ->
   f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).
 Proof.
   ins.
@@ -221,7 +223,7 @@ Proof.
   splits; eauto.
 Qed.
 
-Lemma collect_rel_eq_dom : forall (s s': A -> Prop) (EQs: eq_dom s f g) (EQs': eq_dom s' f g),
+Lemma collect_rel_eq_dom : forall (s s': A -> Prop) (EQs: eq_dom f g s) (EQs': eq_dom f g s'),
   f □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘).
 Proof.
   ins.
@@ -230,7 +232,7 @@ Proof.
   symmetry; [apply (EQs z) | apply (EQs' y')]; auto.
 Qed.
 
-Lemma collect_rel_restr_eq_dom (HH : eq_dom s f g) :
+Lemma collect_rel_restr_eq_dom (HH : eq_dom f g s) :
   f □ (restr_rel s r) ≡ g □ (restr_rel s r).
 Proof.
   rewrite restr_relE.
@@ -287,7 +289,7 @@ Proof.
   induction H; desf; splits; eauto using t_step, t_trans. 
 Qed.
 
-Lemma eq_dom_union: eq_dom (s ∪₁ s') f g <-> eq_dom s f g /\ eq_dom s' f g.
+Lemma eq_dom_union: eq_dom f g (s ∪₁ s') <-> eq_dom f g s /\ eq_dom f g s'.
 Proof. 
   split.
   { ins. unfold eq_dom in *. 
@@ -364,17 +366,17 @@ Add Parametric Morphism A : (@compl_rel A) with signature
 Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
-  set_equiv ==> eq ==> iff as inj_dom_more.
+  eq ==> set_equiv ==> iff as inj_dom_more.
 Proof. 
-  intros s s' Heq f. red. 
+  intros f s s' Heq. red. 
   unfold inj_dom in *.
   splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
 Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
-  set_subset --> eq ==> impl as inj_dom_mori.
+  eq ==> set_subset --> impl as inj_dom_mori.
 Proof. 
-  intros s s' Heq f Hinj. 
+  intros f s s' Heq Hinj. 
   unfold inj_dom in *. ins.
   apply Hinj; auto.
 Qed.
