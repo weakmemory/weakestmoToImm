@@ -11,8 +11,10 @@ Section AuxRel.
   Variables s s' : A -> Prop.
   Variables r r' : relation A.
 
-  Definition eq_class_rel : relation A := (r ∪ r⁻¹) ^?.
-  
+  Definition clos_sym : relation A := fun x y => r x y \/ r y x. 
+
+  Definition clos_refl_sym : relation A := fun x y => x = y \/ r x y \/ r y x. 
+
   Definition img_rel : A -> B -> Prop :=
     fun x y => y = f x.
 End AuxRel.
@@ -35,13 +37,17 @@ Definition inj_dom {A B} (s : A -> Prop) (f: A -> B) :=
 Definition restr_fun {A B} (s : A -> Prop) (f : A -> B) (g : A -> B) := fun x =>
   if excluded_middle_informative (s x) then f x else g x.
 
-Notation "a ⁼" := (eq_class_rel a) (at level 1, format "a ⁼").
-Notation "a ^=" := (eq_class_rel a) (at level 1, only parsing).
+Notation "⊤₁" := set_full.
+Notation "⊤₂" := (fun _ _ => True).
+
+Notation "a ^⋈" := (clos_sym a) (at level 1).
+Notation "a ⁼" := (clos_refl_sym a) (at level 1, format "a ⁼").
+Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold eq_opt compl_rel eq_class_rel : unfolderDb. 
+Hint Unfold clos_sym clos_refl_sym eq_opt compl_rel : unfolderDb. 
 
 Section Props.
 
@@ -52,6 +58,12 @@ Variable b : B.
 Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
 Variables r r' r'': relation A.
+
+Lemma csE : r^⋈  ≡ r ∪ r⁻¹.
+Proof. basic_solver. Qed.
+
+Lemma crsE : r⁼ ≡ ⦗⊤₁⦘ ∪ r ∪ r⁻¹.
+Proof. basic_solver. Qed.
 
 Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
 Proof. basic_solver. Qed.
@@ -327,17 +339,21 @@ End Props.
 
 Require Import Setoid.
 
-Add Parametric Morphism A : (@eq_class_rel A) with signature 
-  inclusion ==> inclusion as eq_class_mori.
-Proof.
-  red; ins; do 2 autounfold with unfolderDb in *; basic_solver.
-Qed.
+Add Parametric Morphism A : (@clos_sym A) with signature 
+  inclusion ==> inclusion as clos_sym_mori.
+Proof. basic_solver. Qed.
 
-Add Parametric Morphism A : (@eq_class_rel A) with signature 
-  same_relation ==> same_relation as eq_class_more.
-Proof.
-  red; ins; do 2 autounfold with unfolderDb in *; basic_solver.
-Qed.
+Add Parametric Morphism A : (@clos_sym A) with signature 
+  same_relation  ==> same_relation as clos_sym_more.
+Proof. basic_solver. Qed.
+
+Add Parametric Morphism A : (@clos_refl_sym A) with signature 
+  inclusion ==> inclusion as clos_refl_sym_mori.
+Proof. basic_solver. Qed.
+
+Add Parametric Morphism A : (@clos_refl_sym A) with signature 
+  same_relation  ==> same_relation as clos_refl_sym_more.
+Proof. basic_solver. Qed.
 
 Add Parametric Morphism A : (@compl_rel A) with signature 
   same_relation ==> same_relation as compl_more.

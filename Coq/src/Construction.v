@@ -436,7 +436,7 @@ Proof.
   eauto 10 using 
         inclusion_seq_mon, codom_rel_mori, inclusion_inter_mon, 
         step_sb_mon, step_cc_mon, step_ew_mon,
-        eq_class_mori.
+        clos_refl_sym_mori.
 Qed.
 
 Lemma step_event_to_act e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) : 
