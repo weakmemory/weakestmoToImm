@@ -124,10 +124,10 @@ Section SimRel.
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      finj : inj_dom f fdom;  
+      finj : inj_dom fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
-      flab : eq_dom Glab (Slab ∘ f) (C ∪₁ I);
+      flab : eq_dom (C ∪₁ I) Glab (Slab ∘ f);
       
       glab : forall e,
           same_label_up_to_value (Slab e) (Glab (g e));
