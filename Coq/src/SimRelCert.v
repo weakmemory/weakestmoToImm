@@ -91,7 +91,7 @@ Section SimRelCert.
   Notation "'E0'" := (Gtid_ qtid ∩₁ (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘))).
 
   Record sim_cert_graph :=
-    { cslab : eq_dom certLab Glab ((Gtid_ qtid) ∩₁ (C' ∪₁ I'));
+    { cslab : eq_dom ((Gtid_ qtid) ∩₁ (C' ∪₁ I')) certLab Glab;
       cuplab_cert : forall e (EE : certE e),
           same_label_up_to_value (certG.(lab) e) (Glab e);
       cstate_stable : stable_state qtid state';
@@ -178,13 +178,13 @@ Section SimRelCert.
 
       hgtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
 
-      hinj : inj_dom h hdom;
+      hinj : inj_dom hdom h;
       himg : h □₁ hdom ⊆₁ SE;
       hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
       htid : Stid ∘ h = Gtid;
 
-      hlabCI : eq_dom Glab (Slab ∘ h) (C ∪₁ I);
-      hlabTHRD : eq_dom certLab (Slab ∘ h) sbq_dom;
+      hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
+      hlabTHRD : eq_dom sbq_dom certLab (Slab ∘ h);
 
       hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
 
@@ -200,8 +200,8 @@ Section SimRelCert.
     }.
 
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
-    Proof.
-    Admitted.
+  Proof.
+  Admitted.
 
   Record forward_pair (e : actid) (e' : eventid) 
          (state : (thread_lts (ES.cont_thread S (CEvent e'))).(Language.state)) :=
