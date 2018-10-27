@@ -193,7 +193,7 @@ Section SimRelCert.
       complete_fdom :
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
-      hfeq  : eq_dom f h (fdom \₁ (sbq_dom \₁ C)); 
+      hfeq  : eq_dom (fdom \₁ (sbq_dom \₁ C)) f h; 
 
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
@@ -362,7 +362,9 @@ Proof.
       (state0:=state) (state':=state') as [state''].
   3: by apply EEI'.
   all: eauto.
-  { admit. }
+  {
+
+    admit. }
   { admit. }
   { admit. }
   { admit. }

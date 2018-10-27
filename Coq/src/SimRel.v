@@ -76,6 +76,10 @@ Section SimRel.
                         (INK : K (cont, existT _ _ state)), 
           stable_state thread state;
 
+      contwf : forall cont thread (state : (thread_lts thread).(Language.state))
+                        (INK : K (cont, existT _ _ state)),
+          wf_thread_state thread state;
+
       continit : forall thread lprog
                         (INPROG : IdentMap.find thread prog = Some lprog),
           exists (state : (thread_lts thread).(Language.state)),

@@ -219,7 +219,7 @@ Qed.
 
 Lemma basic_step_tid_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
-  eq_dom (tid S) (tid S') S.(ES.acts_set).
+  eq_dom S.(ES.acts_set) (tid S) (tid S').
 Proof. 
   unfold eq_dom. ins. 
   unfold ES.acts_set in SX.
@@ -246,7 +246,7 @@ Qed.
 
 Lemma basic_step_lab_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
-  eq_dom (lab S) (lab S') S.(ES.acts_set).
+  eq_dom S.(ES.acts_set) (lab S) (lab S').
 Proof. 
   unfold eq_dom. ins. 
   unfold ES.acts_set in SX.
@@ -259,7 +259,7 @@ Qed.
 
 Lemma basic_step_loc_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
-  eq_dom (loc S) (loc S') S.(ES.acts_set).
+  eq_dom S.(ES.acts_set) (loc S) (loc S').
 Proof. 
   unfold eq_dom, Events.loc, ES.acts_set.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
@@ -281,7 +281,7 @@ Qed.
 
 Lemma basic_step_mod_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
-  eq_dom (mod S) (mod S') S.(ES.acts_set).
+  eq_dom S.(ES.acts_set) (mod S) (mod S').
 Proof. 
   unfold eq_dom, Events.mod, ES.acts_set.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
@@ -457,7 +457,7 @@ Proof.
 Qed.
 
 Lemma step_event_to_act e e' S S' (STEP_: t_incons e e' S S') (wfE: ES.Wf S) :
-  eq_dom (ES.event_to_act S) (ES.event_to_act S') (E S).
+  eq_dom (E S) (ES.event_to_act S) (ES.event_to_act S').
 Admitted.
 
 (******************************************************************************)
