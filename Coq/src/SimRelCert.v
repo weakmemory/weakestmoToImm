@@ -321,6 +321,10 @@ Proof.
 
   edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
   desf.
+
+  assert (ES.cont_thread S q <> tid_init) as NINITT.
+  { admit. }
+  
   assert (exists state' new_rf, sim_cert_graph S G sc TC TC' q state' new_rf)
     as [state' [new_rf HH]].
   2: { eexists. eexists. splits; eauto. }
@@ -357,16 +361,95 @@ Proof.
       red. eauto. }
     etransitivity; eauto. }
 
+  assert (E0 ⊆₁ acts_set G) as CTEE.
+  { unfold E0.
+    rewrite TCCOH'.(coveredE).
+    rewrite TCCOH'.(issuedE).
+    rewrite wf_sbE. basic_solver. }
+
+  assert (wf_thread_state (ES.cont_thread S q) state) as QE.
+  { eapply contwf; eauto. apply SRC. }
+
+  set (thread := ES.cont_thread S q).
+  assert (exists ctindex,
+             ⟪ CCLOS :forall index (LT : index < ctindex),
+                 E0 (ThreadEvent thread index) ⟫ /\
+             ⟪ CREP : forall e (CTE : E0 e),
+                 exists index : nat,
+                   ⟪ EREP : e = ThreadEvent thread index ⟫ /\
+                   ⟪ ILT : index < ctindex ⟫ ⟫).
+  { destruct (classic (exists e, E0 e)) as [|NCT].
+    2: { exists 0. splits.
+         { ins. inv LT. }
+         ins. exfalso. apply NCT. eauto. }
+    desc.
+    assert (acyclic (Gsb ⨾ ⦗ E0 ⦘)) as AC.
+    { arewrite (Gsb ⨾ ⦗E0⦘ ⊆ Gsb). apply sb_acyclic. }
+    set (doml := filterP E0 G.(acts)).
+    assert (forall c, (Gsb ⨾ ⦗E0⦘)＊ e c -> In c doml) as UU.
+    { intros c SCC. apply rtE in SCC. destruct SCC as [SCC|SCC].
+      { red in SCC. desf. apply in_filterP_iff. split; auto. by apply CTEE. }
+      apply inclusion_ct_seq_eqv_r in SCC. apply seq_eqv_r in SCC.
+      apply in_filterP_iff. split; auto; [apply CTEE|]; desf. }
+    edestruct (last_exists doml AC UU) as [max [MM1 MM2]].
+    assert (E0 max) as CTMAX.
+    { apply rtE in MM1. destruct MM1 as [MM1|MM1].
+      { red in MM1. desf. }
+      apply inclusion_ct_seq_eqv_r in MM1. apply seq_eqv_r in MM1. desf. }
+    assert (Tid_ thread max) as CTTID by apply CTMAX.
+    destruct max as [l|mthread mindex].
+    { simpls.
+      unfold thread in *. rewrite <- CTTID in *. desf. }
+    simpls. rewrite CTTID in *.
+    assert (acts_set G (ThreadEvent thread mindex)) as EEM.
+    { by apply CTEE. }
+    exists (1 + mindex). splits.
+    { ins. apply CTALT in CTMAX.
+      apply CTALT. split; auto. 
+      apply le_lt_or_eq in LT. destruct LT as [LT|LT].
+      2: { inv LT. apply CTMAX. }
+      assert ((ProgToExecution.G state').(acts_set) (ThreadEvent thread mindex)) as PP.
+      { apply TEH.(tr_acts_set). by split. }
+      assert (Gf.(acts_set) (ThreadEvent thread index)) as EEE.
+      { apply TEH.(tr_acts_set). eapply acts_rep in PP; eauto. desc.
+        eapply GPC'.(acts_clos). inv REP. omega. }
+      assert (Gsb (ThreadEvent thread index) (ThreadEvent thread mindex)) as QQ.
+      { red.
+        apply seq_eqv_l. split; auto.
+        apply seq_eqv_r. split; auto.
+        red. split; auto. omega. }
+      destruct CTMAX as [[AA|[z AA]] _]; [left|right].
+      { apply TCCOH in AA. apply AA. eexists.
+        apply seq_eqv_r. split; eauto. }
+      exists z. apply seq_eqv_r in AA. destruct AA as [AA1 AA2].
+      apply seq_eqv_r. split; auto.
+      apply rewrite_trans_seq_cr_cr.
+      { apply sb_trans. }
+      eexists; split; [|by eauto].
+        by apply r_step. }
+    ins. set (CTE' := CTE).
+    apply CREP_weak in CTE'. desc.
+    eexists. splits; eauto.
+    destruct (le_gt_dec index mindex) as [LL|LL].
+    { by apply le_lt_n_Sm. }
+    exfalso.
+    eapply MM2. apply seq_eqv_r. split; [|by apply CTE].
+    red.
+    apply seq_eqv_l. split; auto.
+    apply seq_eqv_r. split; auto.
+    red. rewrite EREP. by split. }
+  desc.
+
   edestruct steps_middle_set with
       (thread:=ES.cont_thread S q)
       (state0:=state) (state':=state') as [state''].
   3: by apply EEI'.
   all: eauto.
-  {
+  { ins. apply EEI.
+    eapply acts_clos; eauto. }
+  { ins.
 
-    admit. }
-  { admit. }
-  { admit. }
+admit. }
   { admit. }
   desf.
   
