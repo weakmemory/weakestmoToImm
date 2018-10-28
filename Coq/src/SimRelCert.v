@@ -460,7 +460,6 @@ Proof.
   { admit. }
   desf.
   
-  set (thread := ES.cont_thread S q).
   set (new_rf := cert_rf G sc TC thread).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
