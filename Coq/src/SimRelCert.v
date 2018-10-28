@@ -300,11 +300,18 @@ Lemma sim_cert_graph_start TC' thread
     ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
     ⟪ SRCG : sim_cert_graph S G sc TC TC' q state' new_rf ⟫.
 Proof.
+  assert (Wf G) as WF by apply SRC.
+  assert (imm_consistent G sc) as CON by apply SRC.
   assert (tc_coherent G sc TC') as TCCOH'.
   { eapply sim_trav_step_coherence.
     2: by apply SRC.
     red. eauto. }
-  
+
+  assert (forall r w, Grmw r w -> covered TC' r <-> covered TC' w) as RMWCOV.
+  { eapply sim_trav_step_rmw_covered; eauto.
+    { red. eauto. }
+    apply SRC. }
+
   assert (IdentMap.In thread prog) as PROGI.
   { apply sim_trav_step_to_step in TR_STEP. desf.
     assert (GE e) as EE.
@@ -382,7 +389,7 @@ Proof.
   { ins. unfold E0 in CTE. destruct CTE as [AA BB].
     destruct e; simpls; rewrite <- AA in *; desf.
     eauto. }
-
+  
   assert (exists ctindex,
              ⟪ CCLOS :forall index (LT : index < ctindex),
                  E0 (ThreadEvent thread index) ⟫ /\
@@ -451,24 +458,49 @@ Proof.
     apply seq_eqv_r. split; auto.
     red. rewrite EREP. by split. }
   desc.
-
+  
   edestruct steps_middle_set with
       (thread:=ES.cont_thread S q)
       (state0:=state) (state':=state') as [state''].
   3: by apply EEI'.
   all: eauto.
-  { admit. }
+  { ins.
+    eapply rmw_in_thread_restricted_rmw in RMW; eauto.
+    split; intros [TT XX]; split.
+    1,3: by apply WF.(wf_rmwt) in RMW; rewrite <- TT; red in RMW; desf.
+    all: destruct XX as [XX|XX]; [by left; eapply RMWCOV with (r:=r); eauto|right].
+    all: destruct XX as [e XX].
+    all: apply seq_eqv_r in XX; destruct XX as [SB II].
+    all: exists e; apply seq_eqv_r; split; auto.
+    2: { apply (wf_rmwi WF) in RMW.
+         generalize SB RMW (@sb_trans G). basic_solver. }
+    assert (GR r) as RR.
+    { apply WF.(wf_rmwD) in RMW. destruct_seq RMW as [AAA BBB].
+      type_solver. }
+    apply (wf_rmwi WF) in RMW.
+    destruct SB as [|SB]; subst.
+    { eapply issuedW in II; eauto. type_solver. }
+    destruct (classic (w = e)) as [|NEQ]; [by left|].
+    assert (~ is_init r) as NINIT.
+    { intros GG. eapply WF.(init_w) in GG.
+      type_solver. }
+    edestruct sb_semi_total_l with (y:=w) (z:=e); eauto.
+    { apply RMW. }
+    exfalso. eapply RMW; eauto. }
   desf.
   
   set (new_rf := cert_rf G sc TC thread).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
 
+  assert (new_rfif : functional new_rfi⁻¹).
+  { arewrite (new_rfi ⊆ new_rf).
+    { unfold new_rfi; basic_solver. }
+    apply cert_rff; auto. }
   assert (new_rfef : functional new_rfe⁻¹).
-  { admit. }
-    (* arewrite  (new_rfe ⊆ new_rf G Gsc T thread). *)
-    (* unfold new_rfe; basic_solver. *)
-    (*   by apply wf_new_rff. } *)
+  { arewrite (new_rfe ⊆ new_rf).
+    { unfold new_rfe; basic_solver. }
+    apply cert_rff; auto. }
 
   set (new_rfe_ex := new_rfe ∪ ⦗ set_compl (codom_rel new_rfe) ⦘).
 
@@ -498,8 +530,8 @@ Proof.
       (s_init:=state) (s:=state'')
       (new_val:=new_val)
       (new_rfi:=new_rfi)
-      (MOD:=E0 \₁ D G TC' thread) as [cert_state].
-  1-14: admit.
+      (MOD:=E0 \₁ D G TC' thread) as [cert_state]; eauto.
+  1-11: admit.
 
   desf.
   exists cert_state. eexists.
