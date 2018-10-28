@@ -489,18 +489,19 @@ Proof.
     exfalso. eapply RMW; eauto. }
   desf.
   
-  set (new_rf := cert_rf G sc TC thread).
+  set (new_rf := cert_rf G sc TC thread ⨾ ⦗ E0 \₁ D G TC' thread ⦘).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
 
+  assert (new_rff : functional new_rf⁻¹).
+  { arewrite (new_rf ⊆ cert_rf G sc TC thread).
+    apply cert_rff; auto. }
   assert (new_rfif : functional new_rfi⁻¹).
-  { arewrite (new_rfi ⊆ new_rf).
-    { unfold new_rfi; basic_solver. }
-    apply cert_rff; auto. }
+  { arewrite (new_rfi ⊆ new_rf); auto.
+    unfold new_rfi; basic_solver. }
   assert (new_rfef : functional new_rfe⁻¹).
-  { arewrite (new_rfe ⊆ new_rf).
-    { unfold new_rfe; basic_solver. }
-    apply cert_rff; auto. }
+  { arewrite (new_rfe ⊆ new_rf); auto.
+    unfold new_rfe; basic_solver. }
 
   set (new_rfe_ex := new_rfe ∪ ⦗ set_compl (codom_rel new_rfe) ⦘).
 
@@ -531,7 +532,21 @@ Proof.
       (new_val:=new_val)
       (new_rfi:=new_rfi)
       (MOD:=E0 \₁ D G TC' thread) as [cert_state]; eauto.
-  1-11: admit.
+  { split; [|basic_solver].
+    admit. }
+  { unfold new_rfi, new_rf. rewrite cert_rfD at 1.
+    admit. }
+  { unfold new_rfi, new_rf.
+    unfolder. ins. desf. red.
+    destruct x.
+    { simpls. exfalso. apply NINITT. simpls. }
+    destruct y.
+    { simpls. exfalso. apply NINITT. simpls. }
+    simpls. desf. split; auto.
+    admit. }
+  { unfold new_rfi, new_rf. basic_solver. }
+  { rewrite <- CACTS. basic_solver. }
+  1-6: admit.
 
   desf.
   exists cert_state. eexists.
