@@ -419,3 +419,11 @@ Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
 Add Parametric Morphism A : (@codom_rel A) with signature
    same_relation ==> set_equiv as codom_rel_more.
 Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@set_minus A) with signature 
+  set_equiv ==> set_equiv ==> set_equiv as set_minus_more.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; split; eauto. Qed.
+
+Add Parametric Morphism A : (@set_minus A) with signature 
+  set_subset ==> set_subset --> set_subset as set_minus_mori.
+Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.

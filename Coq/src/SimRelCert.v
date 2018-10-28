@@ -374,7 +374,7 @@ Proof.
     rewrite TCCOH'.(issuedE).
     rewrite wf_sbE. basic_solver. }
 
-  assert (wf_thread_state (ES.cont_thread S q) state) as QE.
+  assert (wf_thread_state (ES.cont_thread S q) state) as GPC.
   { eapply contwf; eauto. apply SRC. }
 
   set (thread := ES.cont_thread S q).
@@ -525,6 +525,15 @@ Proof.
   set (get_val (v: option value) :=  match v with | Some v => v | _ => 0 end).
 
   set (new_val := fun r => get_val (val G.(lab) (new_value r))).
+
+  assert (acts_set (ProgToExecution.G state) ⊆₁ C) as STATECOV.
+  { intros x EE. apply GPC.(acts_rep) in EE. desc. subst. by apply PCOV. }
+
+  assert (wf_thread_state (ES.cont_thread S q) state'') as GPC''.
+  { eapply wf_thread_state_steps; [|by eauto]. done. }
+
+  edestruct steps_old_restrict with (state0:=state'') (state':=state') as [ORMW]; eauto.
+  desc. unnw.
   
   edestruct receptiveness_full with
       (tid:=ES.cont_thread S q)
@@ -546,7 +555,55 @@ Proof.
     admit. }
   { unfold new_rfi, new_rf. basic_solver. }
   { rewrite <- CACTS. basic_solver. }
-  1-6: admit.
+  { rewrite STATECOV.
+    sin_rewrite sim_trav_step_covered_le.
+    2: by red; eauto.
+    rewrite <- C_in_D.
+    basic_solver. }
+  { rewrite OFAILDEP.
+    rewrite TEH.(tr_rmw_dep).
+    arewrite_id ⦗acts_set (ProgToExecution.G state'')⦘.
+    arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘.
+    rewrite !seq_id_l, !seq_id_r.
+    (* TODO: Continue from here. *)
+    rewrite (dom_frmw_in_D thread WF TCCOH'); try done.
+    basic_solver. }
+  { rewrite TEH''.(tr_addr).
+    arewrite_id ⦗Tid_ thread⦘; rels.
+    rewrite (dom_addr_in_D thread WF_G TCCOH_G); try done.
+    basic_solver. }
+  { rewrite TEH''.(tr_acts_set).
+    unfolder; ins; desc.
+    eapply H5; eauto.
+    eapply (Rex_in_D thread TCCOH_G); try done.
+    split; [|done].
+    unfold R_ex, rmwmod in *.
+    rewrite TEH''.(tr_lab) in H2; auto.
+    eapply TEH''.(tr_acts_set). by split. }
+  { rewrite TEH''.(tr_ctrl).
+    arewrite_id ⦗Tid_ thread⦘; rels.
+    rewrite (dom_ctrl_in_D thread WF_G TCCOH_G); try done.
+    basic_solver. }
+  { rewrite TEH''.(tr_data).
+    rewrite (dom_r (wf_dataE WF_G)).
+    subst G.
+    rewrite (E_E0 thread WF TCCOH).
+    unfolder; ins; desc.
+    eapply H4; splits; eauto.
+    intro.
+    apply H6.
+    apply (@dom_data_D (rstG Gf T thread) Gsc T thread WF_G RELCOV_G); try done.
+    basic_solver 12. }
+
+  { assert (C ⊆₁ D G TC' thread) as CCC.
+    { sin_rewrite sim_trav_step_covered_le.
+      2: by red; eauto.
+      apply C_in_D. }
+    rewrite <- CCC.
+    arewrite (acts_set (ProgToExecution.G state) ⊆₁ C).
+    2: basic_solver.
+    admit. }
+  1-5: admit.
 
   desf.
   exists cert_state. eexists.
