@@ -371,6 +371,18 @@ Proof.
   { eapply contwf; eauto. apply SRC. }
 
   set (thread := ES.cont_thread S q).
+
+  assert (wf_thread_state thread state') as GPC'.
+  { eapply wf_thread_state_steps; eauto. }
+
+  assert (CREP_weak :
+            forall e (CTE : E0 e),
+            exists index : nat,
+              ⟪ EREP : e = ThreadEvent thread index ⟫).
+  { ins. unfold E0 in CTE. destruct CTE as [AA BB].
+    destruct e; simpls; rewrite <- AA in *; desf.
+    eauto. }
+
   assert (exists ctindex,
              ⟪ CCLOS :forall index (LT : index < ctindex),
                  E0 (ThreadEvent thread index) ⟫ /\
@@ -404,22 +416,22 @@ Proof.
     assert (acts_set G (ThreadEvent thread mindex)) as EEM.
     { by apply CTEE. }
     exists (1 + mindex). splits.
-    { ins. apply CTALT in CTMAX.
-      apply CTALT. split; auto. 
-      apply le_lt_or_eq in LT. destruct LT as [LT|LT].
-      2: { inv LT. apply CTMAX. }
+    { ins. destruct CTMAX as [_ CTMAX].
+      split; [by ins|].
+     apply le_lt_or_eq in LT. destruct LT as [LT|LT].
+      2: { inv LT. }
       assert ((ProgToExecution.G state').(acts_set) (ThreadEvent thread mindex)) as PP.
       { apply TEH.(tr_acts_set). by split. }
-      assert (Gf.(acts_set) (ThreadEvent thread index)) as EEE.
+      assert (G.(acts_set) (ThreadEvent thread index)) as EEE.
       { apply TEH.(tr_acts_set). eapply acts_rep in PP; eauto. desc.
         eapply GPC'.(acts_clos). inv REP. omega. }
-      assert (Gsb (ThreadEvent thread index) (ThreadEvent thread mindex)) as QQ.
+      assert (Gsb (ThreadEvent thread index) (ThreadEvent thread mindex)) as QQQ.
       { red.
         apply seq_eqv_l. split; auto.
         apply seq_eqv_r. split; auto.
         red. split; auto. omega. }
-      destruct CTMAX as [[AA|[z AA]] _]; [left|right].
-      { apply TCCOH in AA. apply AA. eexists.
+      destruct CTMAX as [AA|[z AA]]; [left|right].
+      { apply TCCOH' in AA. apply AA. eexists.
         apply seq_eqv_r. split; eauto. }
       exists z. apply seq_eqv_r in AA. destruct AA as [AA1 AA2].
       apply seq_eqv_r. split; auto.
@@ -445,11 +457,6 @@ Proof.
       (state0:=state) (state':=state') as [state''].
   3: by apply EEI'.
   all: eauto.
-  { ins. apply EEI.
-    eapply acts_clos; eauto. }
-  { ins.
-
-admit. }
   { admit. }
   desf.
   
