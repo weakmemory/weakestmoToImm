@@ -9,7 +9,8 @@ Export ListNotations.
 Module ESstep.
 
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
-Notation "'E_init' S" := S.(ES.acts_init_set) (at level 10).
+Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
+Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
 
 Notation "'tid' S" := S.(ES.tid) (at level 10).
 Notation "'lab' S" := S.(ES.lab) (at level 10).
@@ -178,10 +179,9 @@ Lemma basic_step_acts_set
       (e' : option eventid)
       (S S' : ES.t) 
       (BSTEP : t_basic e e' S S') :
-  S'.(ES.acts_set) ≡₁ S.(ES.acts_set) ∪₁ eq e ∪₁ eq_opt e'.
+  E S' ≡₁ E S ∪₁ eq e ∪₁ eq_opt e'.
 Proof. 
-  cdes BSTEP.
-  cdes BSTEP_.
+  cdes BSTEP; cdes BSTEP_.
   edestruct e'; 
     unfold opt_ext in *; desf; 
     unfold ES.acts_set; 
@@ -317,6 +317,89 @@ Lemma basic_step_mod_eq_dom e e' S S'
 Proof. 
   unfold eq_dom, Events.mod, ES.acts_set.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
+Qed.
+
+Lemma basic_step_acts_ninit_set_e
+      (e  : eventid)
+      (e' : option eventid)
+      (S S' : ES.t) 
+      (BSTEP : t_basic e e' S S')
+      (wfE: ES.Wf S) :
+  ~ Einit S' e.
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  unfold ES.acts_init_set.
+  red. autounfold with unfolderDb. intros [_ TIDe].
+  apply wfE.(ES.init_tid_K).
+  do 2 eexists; splits; [by apply CONT|].
+  rewrite <- TIDe. 
+  rewrite TID'. 
+  edestruct e'; unfold upd_opt; desf.
+  { rewrite updo. by rewrite upds. 
+    unfold opt_ext in EEQ; omega. }
+    by rewrite upds. 
+Qed.
+
+Lemma basic_step_acts_ninit_set_e' e e' S S'
+      (BSTEP : t_basic e (Some e') S S')
+      (wfE: ES.Wf S) :
+  ~ Einit S' e'.
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  unfold ES.acts_init_set.
+  red. autounfold with unfolderDb. intros [_ TIDe].
+  apply wfE.(ES.init_tid_K).
+  do 2 eexists; splits; [by apply CONT|].
+  rewrite <- TIDe. 
+  rewrite TID'. 
+  unfold upd_opt.
+  by rewrite upds.
+Qed.
+
+Lemma basic_step_acts_init_set e e' S S' 
+      (BSTEP : t_basic e e' S S')
+      (wfE: ES.Wf S) :
+  Einit S' ≡₁ Einit S.
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  unfold ES.acts_init_set.
+  rewrite basic_step_acts_set; eauto. 
+  repeat rewrite set_inter_union_l.  
+  arewrite (eq e ∩₁ (fun x : nat => (tid S') x = tid_init) ≡₁ ∅). 
+  { apply set_disjointE; unfold set_disjoint; ins.
+    eapply basic_step_acts_ninit_set_e; eauto.
+    unfold ES.acts_init_set.  
+    autounfold with unfolderDb; splits; desf.
+    destruct e'; rewrite EVENT'; unfold opt_ext in *; omega. }
+  arewrite (eq_opt e' ∩₁ (fun x : nat => (tid S') x = tid_init) ≡₁ ∅). 
+  { edestruct e'. 
+    { apply set_disjointE; unfold set_disjoint; ins.
+      eapply basic_step_acts_ninit_set_e'; eauto.
+      unfold ES.acts_init_set.  
+      autounfold with unfolderDb; splits; desf; omega. }
+    unfold eq_opt. apply set_inter_empty_l. }
+  relsf.
+  autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
+  { rewrite basic_step_tid_eq_dom; eauto. }
+  rewrite <- basic_step_tid_eq_dom; eauto.
+Qed.
+
+Lemma basic_step_acts_ninit_set e e' S S' 
+      (BSTEP : t_basic e e' S S')
+      (wfE: ES.Wf S) :
+  Eninit S' ≡₁ Eninit S ∪₁ eq e ∪₁ eq_opt e'.
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  unfold ES.acts_ninit_set.
+  rewrite basic_step_acts_set, basic_step_acts_init_set; eauto.
+  repeat rewrite set_minus_union_l.
+  repeat apply set_union_Propere; auto. 
+  { autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
+    red; ins; desf; omega. }
+  edestruct e'. 
+  { autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
+    red; ins; desf; omega. }
+  unfold eq_opt; basic_solver. 
 Qed.
 
 Lemma basic_step_nupd_sb lang k k' st st' e S S' 

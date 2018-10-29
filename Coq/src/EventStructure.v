@@ -195,7 +195,7 @@ Record Wf :=
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
-    init_tid_K : ~ (exists c, K (CInit tid_init, c));
+    init_tid_K : ~ (exists c k, K (k, c) /\ cont_thread S k = tid_init);
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
     event_K  : forall e (EE: E e) (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
