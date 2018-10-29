@@ -209,6 +209,14 @@ Proof.
   cdes BSTEP; cdes BSTEP_; omega.
 Qed.
 
+Lemma basic_step_acts_set_NE' e e' S S'  
+      (BSTEP : t_basic e (Some e') S S') :
+  ~ S.(ES.acts_set) e'.
+Proof. 
+  unfold not, ES.acts_set; ins.
+  cdes BSTEP; cdes BSTEP_; unfold opt_ext in EEQ; omega.
+Qed.
+
 Lemma basic_step_acts_set_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   S.(ES.acts_set) ⊆₁ S'.(ES.acts_set).
@@ -242,6 +250,30 @@ Proof.
     rewrite H;
     [|symmetry];
     eapply basic_step_tid_eq_dom; eauto. 
+Qed.
+
+Lemma basic_step_tid_e lang k k' st st' e e' S S' 
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+  tid S' e = ES.cont_thread S k. 
+Proof. 
+  cdes BSTEP_.
+  edestruct k, e';
+    rewrite TID';
+    unfold upd_opt, ES.cont_thread;
+    unfold opt_ext in EEQ.
+  1,3: rewrite updo; [by rewrite upds | by omega].
+  all: by rewrite upds.
+Qed.
+
+Lemma basic_step_tid_e' lang k k' st st' e e' S S'
+      (BSTEP_ : t_basic_ lang k k' st st' e (Some e') S S') :
+  tid S' e' = ES.cont_thread S k. 
+Proof. 
+  cdes BSTEP_.
+  edestruct k;
+    rewrite TID';
+    unfold upd_opt, ES.cont_thread;
+    by rewrite upds.
 Qed.
 
 Lemma basic_step_lab_eq_dom e e' S S' 
@@ -307,7 +339,8 @@ Proof.
 Qed.
 
 Lemma basic_step_cf lang k k' st st' e e' S S' 
-      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S):
   cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈  ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
 Proof.
   assert (t_basic e e' S S') as BSTEP.
@@ -372,7 +405,62 @@ Proof.
       apply minus_sym; [ apply ES.same_tid_sym | apply crs_sym ]. } 
     rewrite <- csE.
     apply clos_sym_more.
-    admit. }
+    rewrite SB'.
+    rewrite cross_union_r.
+    repeat rewrite crs_union.
+    repeat rewrite <- unionA.
+    edestruct k eqn:EQk;
+      unfold ES.cont_sb_dom, ES.cont_cf_dom. 
+    { rewrite ES.sbE, <- restr_relE, crs_restr; auto.
+      rewrite seq_eqv_r, seq_eqv_l.
+      unfold union, minus_rel, cross_rel, same_relation, inclusion; splits.
+      { intros x y [Ex [[STIDxy nSBxy] EQe]].
+        splits; auto.
+        rewrite basic_step_tid_eq_dom; eauto.
+        rewrite STIDxy.
+        rewrite <- EQe.
+        erewrite basic_step_tid_e; eauto; by unfold ES.cont_thread. }
+      intros x y [[Ex TIDx] EQe].
+      splits; auto. 
+      { unfold ES.same_tid.
+        erewrite <- basic_step_tid_eq_dom; eauto.
+        rewrite TIDx.
+        rewrite <- EQe.
+        erewrite basic_step_tid_e; eauto; by unfold ES.cont_thread. }
+      { repeat rewrite or_assoc.
+        unfold not. 
+        intros HH; destruct HH as [nID | [nSB | [nINITe | [nINITe' | EE']]]].
+        { eapply basic_step_acts_set_NE; eauto.
+          unfold eqv_rel in nID; desf. }
+        { eapply basic_step_acts_set_NE; eauto.
+          unfold restr_rel in nSB; desf. }
+        { unfold clos_refl_sym in nINITe; desf.
+          1,3: eapply basic_step_acts_set_NE; eauto. 
+          unfold ES.acts_init_set, set_inter in nINITe. 
+          destruct nINITe as [_ INITx].
+          rewrite INITx in CONT.
+          eapply ES.init_tid_K; eauto. }
+        { unfold clos_refl_sym in nINITe'; desf.
+          { eapply basic_step_acts_set_NE; eauto. }
+          { unfold ES.acts_init_set, set_inter in nINITe'. 
+            destruct nINITe' as [_ INITx]. 
+            rewrite INITx in CONT.
+            eapply ES.init_tid_K; eauto. }
+          edestruct e'. 
+          { eapply basic_step_acts_set_NE'; eauto.
+            unfold eq_opt in *; desf. }
+          by unfold eq_opt in *. }
+        unfold clos_refl_sym in EE'; desf.
+        { eapply basic_step_acts_set_NE; eauto. }
+        { edestruct e'. 
+          { unfold opt_ext, eq_opt in *; omega. }
+          by unfold eq_opt in *. }
+        edestruct e'. 
+          { unfold opt_ext, eq_opt, ES.acts_set in *. 
+            eapply basic_step_acts_set_NE; eauto.
+            desf; omega. }
+          by unfold eq_opt in *. } }
+  admit.
   admit. 
 Admitted.
 

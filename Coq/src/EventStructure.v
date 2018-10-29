@@ -87,13 +87,13 @@ Definition cont_sb_dom S c :=
 Definition cont_sb_codom S c := 
   match c with
   | CInit _ => (fun x => tid S x = (cont_thread S c))
-  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
 Definition cont_cf_dom S c :=
   match c with
-  | CInit  i => fun x => S.(tid) x = i 
-  | CEvent e => dom_rel (S.(cf) ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  | CInit  i => fun x => ES.acts_set S x /\ S.(tid) x = i 
+  | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
