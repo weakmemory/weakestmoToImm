@@ -82,7 +82,10 @@ Proof. basic_solver. Qed.
 Lemma cs_restr : (restr_rel s r)^⋈ ≡ restr_rel s r^⋈.
 Proof. basic_solver. Qed.
 
-Lemma crs_restr : (restr_rel s r)⁼ ≡ ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
+Lemma crs_restr1 : (restr_rel s r)⁼ ≡ ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
+Proof. basic_solver 10. Qed.
+
+Lemma crs_restr2 : restr_rel s r⁼ ≡ restr_rel s ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
 Proof. basic_solver 10. Qed.
   
 Lemma cs_sym : symmetric r^⋈.
@@ -91,13 +94,13 @@ Proof. basic_solver. Qed.
 Lemma crs_sym : symmetric r⁼.
 Proof. basic_solver. Qed.
 
-Lemma eqv_sym : symmetric ⦗s⦘.
+Lemma eqv_sym : forall (s : A -> Prop), symmetric ⦗s⦘.
 Proof. basic_solver. Qed.
 
 Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
 Proof. basic_solver. Qed.
 
-Lemma transp_sym : symmetric r -> r⁻¹ ≡ r. 
+Lemma transp_sym : forall (r : relation A), symmetric r -> r⁻¹ ≡ r. 
 Proof. basic_solver. Qed.
 
 Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
@@ -139,6 +142,26 @@ Proof. basic_solver. Qed.
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
 Proof. basic_solver. Qed.
 
+Lemma set_subset_union_minus : s ⊆₁ s \₁ s' ∪₁ s'. 
+Proof. 
+  by unfold set_minus, set_union, set_subset; clear; intros; tauto.
+Qed.
+
+Lemma set_union_minus : s' ⊆₁s -> s ≡₁ s \₁ s' ∪₁ s'. 
+Proof. 
+  intros. 
+  unfold set_equiv; splits; 
+    [by apply set_subset_union_minus|basic_solver].
+Qed.
+
+Lemma union_minus : r' ⊆ r -> r ≡ r \ r' ∪ r'.
+Proof. 
+  intros H.
+  unfold same_relation; splits.
+  { by apply inclusion_union_minus. }
+  basic_solver.
+Qed.
+
 Lemma cross_minus_compl_l : s × s' \ (set_compl s) × s'' ≡ s × s'.
 Proof. 
   autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
@@ -164,6 +187,14 @@ Qed.
 Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
 Proof. 
   repeat rewrite compl_top_minus; by apply minus_union_r.
+Qed.
+
+Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
+Proof. 
+  ins. 
+  repeat rewrite transp_seq. 
+  repeat rewrite seqA.
+  repeat rewrite transp_sym; auto; apply eqv_sym.
 Qed.
 
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.

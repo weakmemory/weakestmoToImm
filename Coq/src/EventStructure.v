@@ -205,8 +205,57 @@ Record Wf :=
 
 Implicit Type WF : Wf.
 
+Lemma acts_set_split : E ≡₁ Einit ∪₁ Eninit.
+Proof.
+  unfold ES.acts_init_set, ES.acts_ninit_set.
+  rewrite set_unionC.
+  eapply set_union_minus.
+  basic_solver.
+Qed.
+
 Lemma same_tid_sym : symmetric (same_tid S). 
 Proof. unfold same_tid. basic_solver. Qed.
+
+Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
+Proof. unfold ES.cf. basic_solver. Qed.
+
+Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
+Proof.
+  rewrite cfE at 1.
+  repeat rewrite <- restr_relE.
+  rewrite acts_set_split.
+  rewrite restr_set_union.
+  admit.
+Admitted.
+
+Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
+Proof.
+  admit. 
+Admitted.
+(*  unfold ES.cf.
+  repeat rewrite <- restr_relE.
+  rewrite restr_minus.
+  rewrite unionC.
+  rewrite <- union_minus; auto.
+  
+  rewrite crs_restr2.
+  repe
+  unfold ES.cf.
+  repeat rewrite <- restr_relE.
+  rewrite restr_minus.
+  rewrite (sbE WF) at 1.
+  rewrite <- restr_relE.
+  rewrite crs_restr.
+  rewrite restr_union.
+  rewrite restr_restr.
+  rewrite set_interK.
+  rewrite <- restr_union.
+  rewrite csE.
+  rewrite <- unionA.
+  rewrite <- crsE.
+  repeat rewrite restr_relE.
+  rewrite <- (sbE WF) at 2.
+  rewrite  *)
 
 Lemma cf_alt WF : cf ≡ (same_tid S ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Einit⦘ ⨾ sb)) \ sb⁼.
 Proof. 
