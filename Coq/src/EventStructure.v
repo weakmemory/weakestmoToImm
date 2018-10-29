@@ -54,7 +54,7 @@ Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
 Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
 
 Definition cf (ES : t) :=
-  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) \ (ES.(sb)⁼)) ⨾ ⦗ ES.(acts_set) ⦘.
+  ⦗ ES.(acts_ninit_set) ⦘ ⨾ (ES.(same_tid) \ (ES.(sb)⁼)) ⨾ ⦗ ES.(acts_ninit_set) ⦘.
 
 Definition cc (ES : t) := 
   ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
@@ -217,15 +217,15 @@ Lemma same_tid_sym : symmetric (same_tid S).
 Proof. unfold same_tid. basic_solver. Qed.
 
 Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
-Proof. unfold ES.cf. basic_solver. Qed.
+Proof. admit. Admitted.
 
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
 Proof.
-  rewrite cfE at 1.
+  admit. 
+(*  rewrite cfE at 1.
   repeat rewrite <- restr_relE.
   rewrite acts_set_split.
-  rewrite restr_set_union.
-  admit.
+  rewrite restr_set_union.*)
 Admitted.
 
 Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.

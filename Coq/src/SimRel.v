@@ -198,7 +198,7 @@ Section SimRel.
       all: by eauto.
     Qed.
     
-    Lemma sbtot_fdom thread :
+    Lemma sbtot_fdom thread (NINIT : thread <> tid_init) :
       is_total (f □₁ fdom ∩₁ Stid_ thread) Ssb.
     Proof.
       red. ins.
@@ -210,14 +210,22 @@ Section SimRel.
       2: { apply IWb. }
       red.
       apply seq_eqv_l; split.
-      { apply SRC.(fimg). apply IWa. }
-      apply seq_eqv_r; split.
-      2: { apply SRC.(fimg). apply IWb. }
-      split.
-      { red. red in IWa. red in IWb.
+      { unfold ES.acts_ninit_set, ES.acts_init_set, set_minus; splits.
+        { apply SRC.(fimg). apply IWa. }
+        red. intros [_ INITa].
+        edestruct IWa as [_ INITa'].
         desf. }
-      red. intros [AA|[AA|AA]]; desf.
-      all: apply NN; auto.
+      apply seq_eqv_r; split.
+      { split.
+        { red. red in IWa. red in IWb.
+          desf. }
+        red. intros [AA|[AA|AA]]; desf.
+        all: apply NN; auto. }
+      unfold ES.acts_ninit_set, ES.acts_init_set, set_minus; splits.
+      { apply SRC.(fimg). apply IWb. }
+      red. intros [_ INITb].
+      edestruct IWb as [_ INITb'].
+      desf.
     Qed.
 
     Lemma gE : g □₁ SE ⊆₁ GE.

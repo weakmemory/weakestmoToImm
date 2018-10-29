@@ -348,6 +348,7 @@ Proof.
   cdes BSTEP_.
   unfold "cf" at 1.
   rewrite <- restr_relE.
+(*
   rewrite basic_step_acts_set; [|eauto].
   repeat rewrite restr_set_union.
   rewrite id_union. 
@@ -480,6 +481,8 @@ Proof.
         admit. }
       admit. } }
     admit.
+*)
+  admit.
 Admitted.
 
 Lemma basic_step_cf_mon e e' S S' 
@@ -490,6 +493,7 @@ Proof.
   edestruct basic_step_same_tid as [STIDL STIDR]; [by apply BSTEP|].
   unfold ES.cf.
   rewrite SB'. 
+(*
   rewrite (basic_step_acts_set e e' S S'); [| apply BSTEP].
   unfold eq_opt. 
   repeat rewrite <- restr_relE.
@@ -499,7 +503,9 @@ Proof.
   autounfold with unfolderDb.
   ins; desf; splits; auto; 
     unfold not; ins; desf; auto; omega. 
-Qed.
+*)
+  admit.
+Admitted.
 
 Lemma basic_step_nupd_rmw e S S' 
       (BSTEP : t_basic e None S S') :
