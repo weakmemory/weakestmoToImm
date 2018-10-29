@@ -431,8 +431,7 @@ Proof.
   cdes BSTEP_.
   unfold "cf" at 1.
   rewrite <- restr_relE.
-(*
-  rewrite basic_step_acts_set; [|eauto].
+  rewrite basic_step_acts_ninit_set; eauto.
   repeat rewrite restr_set_union.
   rewrite id_union. 
   repeat rewrite seq_union_r.
@@ -457,7 +456,10 @@ Proof.
     repeat rewrite minus_inter_compl.
     repeat rewrite restr_inter.
     apply inter_rel_more.
-    { by rewrite <- basic_step_same_tid; eauto. }
+    { unfold ES.acts_ninit_set.
+      eapply restr_set_subset.
+      { admit. }
+      erewrite <- basic_step_same_tid; eauto. }
     rewrite SB'.
     rewrite cross_union_r.
     repeat rewrite <- unionA.
@@ -467,27 +469,30 @@ Proof.
     repeat rewrite restr_cross.
     repeat rewrite <- minus_inter_compl.
     repeat rewrite <- minus_inter_compl.
-    arewrite (E S × E S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ E S × E S \ ⦗⊤₁⦘).
-    { autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+    arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
+    { unfold ES.acts_ninit_set, ES.acts_init_set.
+      autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
-    arewrite (E S × E S \ (ES.cont_sb_dom S k × eq_opt e')⁼ ≡ E S × E S \ ⦗⊤₁⦘).
-    { autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+    arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq_opt e')⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
+    { unfold ES.acts_ninit_set, ES.acts_init_set.
+      autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
-    arewrite (E S × E S \ (eq e × eq_opt e')⁼ ≡ E S × E S \ ⦗⊤₁⦘).
-    { autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+    arewrite (Eninit S × Eninit S \ (eq e × eq_opt e')⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
+    { unfold ES.acts_ninit_set, ES.acts_init_set.
+      autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
     repeat rewrite crsE.
     basic_solver 42. }
   rewrite <- unionA.
   arewrite 
-    (⦗eq e⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗E S⦘ ≡ 
-            (⦗E S⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq e⦘)⁻¹)
+    (⦗eq e⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗Eninit S⦘ ≡ 
+            (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq e⦘)⁻¹)
     by 
       rewrite seq_transp_sym; auto; 
       apply minus_sym; [ apply ES.same_tid_sym | apply crs_sym ].
   arewrite 
-    (⦗eq_opt e'⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗E S⦘ ≡ 
-                 (⦗E S⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq_opt e'⦘)⁻¹).
+    (⦗eq_opt e'⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗Eninit S⦘ ≡ 
+                 (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ (sb S')⁼) ⨾ ⦗eq_opt e'⦘)⁻¹)
     by 
       rewrite seq_transp_sym; auto; 
       apply minus_sym; [ apply ES.same_tid_sym | apply crs_sym ].
@@ -502,8 +507,9 @@ Proof.
     { rewrite seq_eqv_r, seq_eqv_l.
       edestruct k eqn:EQk;
         unfold ES.cont_sb_dom, ES.cont_cf_dom.
-    { unfold union, minus_rel, cross_rel, same_relation, inclusion; splits.
-      { intros x y [Ex [[STIDxy nSBxy] EQe]].
+    { unfold ES.acts_ninit_set, ES.acts_init_set.
+      unfold union, minus_rel, cross_rel, same_relation, inclusion; splits.
+      { intros x y [[Ex _] [[STIDxy nSBxy] EQe]].
         splits; auto.
         rewrite basic_step_tid_eq_dom; eauto.
         rewrite STIDxy.
@@ -511,6 +517,7 @@ Proof.
         erewrite basic_step_tid_e; eauto; by unfold ES.cont_thread. }
       intros x y [[Ex TIDx] EQe].
       splits; auto. 
+      { admit. }
       { unfold ES.same_tid.
         erewrite <- basic_step_tid_eq_dom; eauto.
         rewrite TIDx.
@@ -534,11 +541,12 @@ Proof.
         { edestruct e'. 
           desf; try omega. desf. } } }
     { rewrite seq_eqv_l. 
-      rewrite (seq_eqv_r (cf S) (eq eid)).
+      repeat rewrite (seq_eqv_r (cf S) (eq eid)).
       unfold union, minus_rel, cross_rel, same_relation, inclusion,
         dom_rel, codom_rel, set_union.
       splits.
-      { intros x y [Ex [[STIDxy nSBxy] EQe]]; splits; auto.
+      { unfold ES.acts_ninit_set, ES.acts_init_set.
+        intros x y [[Ex _] [[STIDxy nSBxy] EQe]]; splits; auto.
         repeat rewrite or_assoc in nSBxy.
         unfold not in nSBxy.
         destruct (excluded_middle_informative (cf S x eid)) as [CF | nCF].
@@ -546,21 +554,56 @@ Proof.
         right. exists eid. 
         unfold seq, eqv_rel.
         eexists; splits; eauto.
+        assert (ES.acts_set S eid) as Eeid.
+        { eapply ES.K_inE; eauto. }
         assert (ES.same_tid S x eid) as STIDxEID.
-        { admit. } 
-        admit. }
+        { eapply basic_step_same_tid; eauto. 
+          unfold restr_rel; splits; eauto. 
+          { eapply ES.same_tid_trans; eauto. 
+            rewrite <- EQe.
+            unfold ES.same_tid.
+            erewrite basic_step_tid_e; eauto.
+            erewrite <- basic_step_tid_eq_dom; eauto. 
+            by unfold ES.cont_thread. } }
+        admit. } 
       intros x y [[[z [CF EQz]] | SB] EQey].
       { assert (E S x) as Ex. 
-        { unfold ES.cf, seq, eqv_rel in CF; desf. }
+        { unfold ES.cf, seq, eqv_rel, ES.acts_ninit_set, set_minus in CF; desf. }
         assert (tid S' e = tid S eid) as TIDe.
         { erewrite basic_step_tid_e; eauto.
           by unfold ES.cont_thread. }
-        splits; auto. 
+        splits; auto.
+        { admit. }
         { desf. 
           unfold ES.same_tid.
           erewrite <- basic_step_tid_eq_dom; eauto.
           rewrite TIDe.
           admit. }
+        red.  
+        repeat rewrite or_assoc.
+        unfold ES.acts_init_set, seq, set_inter, eqv_rel, restr_rel, 
+          clos_refl, clos_sym, clos_refl_sym.
+        unfold opt_ext, eq_opt, ES.acts_set in *. 
+        intros [nSB | [nINITe | [nINITe' | [nID | EE']]]].
+        { eapply basic_step_acts_set_NE; eauto; desf. }
+        { destruct nINITe as [EQxy | [INITx | INITy]]; try omega.
+          destruct INITx as [[y' [z' [[EQxz' | SBxz] [EQzy' EQz']]]] _].
+          { rewrite <- EQz' in EQxz'.
+            rewrite EQxz', EQz in CF.
+            (* irreflexive CF *)
+            admit. }
+          rewrite <- EQz in CF.
+          rewrite <- EQz' in SBxz.
+          (* CF and SB -> FALSE *)
+          admit. }
+        { edestruct e'; 
+            rewrite <- EQey in nINITe';
+            desf; omega. }
+        { eapply basic_step_acts_set_NE; eauto; desf. }
+        { edestruct e'. 
+          desf; try omega. desf. } } 
+      splits; eauto. 
+
         admit. }
       admit. } }
     admit.
