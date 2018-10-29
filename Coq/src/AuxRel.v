@@ -79,6 +79,12 @@ Proof. basic_solver. Qed.
 Lemma crs_cross : (s × s')⁼ ≡ ⦗⊤₁⦘ ∪ s × s' ∪ s' × s.
 Proof. basic_solver. Qed.
 
+Lemma cs_restr : (restr_rel s r)^⋈ ≡ restr_rel s r^⋈.
+Proof. basic_solver. Qed.
+
+Lemma crs_restr : (restr_rel s r)⁼ ≡ ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
+Proof. basic_solver 10. Qed.
+  
 Lemma cs_sym : symmetric r^⋈.
 Proof. basic_solver. Qed.
 
