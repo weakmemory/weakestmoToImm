@@ -103,6 +103,9 @@ Proof. basic_solver. Qed.
 Lemma transp_sym : forall (r : relation A), symmetric r -> r⁻¹ ≡ r. 
 Proof. basic_solver. Qed.
 
+Lemma restr_sym : forall (r : relation A), symmetric r -> symmetric (restr_rel s r). 
+Proof. basic_solver. Qed.
+
 Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
 Proof. basic_solver. Qed.
 

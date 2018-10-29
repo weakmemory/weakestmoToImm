@@ -213,54 +213,47 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma same_tid_refl : reflexive (same_tid S).
+Proof. unfold same_tid. basic_solver. Qed.
+
 Lemma same_tid_sym : symmetric (same_tid S). 
 Proof. unfold same_tid. basic_solver. Qed.
 
+Lemma same_tid_trans : transitive (same_tid S). 
+Proof. unfold same_tid, transitive. ins. by rewrite H. Qed.
+
 Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
-Proof. admit. Admitted.
+Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed. 
 
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
-Proof.
-  admit. 
-(*  rewrite cfE at 1.
-  repeat rewrite <- restr_relE.
-  rewrite acts_set_split.
-  rewrite restr_set_union.*)
-Admitted.
+Proof. unfold ES.cf. basic_solver. Qed.
 
 Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
 Proof.
-  admit. 
-Admitted.
-(*  unfold ES.cf.
+  unfold ES.cf.
   repeat rewrite <- restr_relE.
   rewrite restr_minus.
   rewrite unionC.
   rewrite <- union_minus; auto.
-  
-  rewrite crs_restr2.
-  repe
-  unfold ES.cf.
-  repeat rewrite <- restr_relE.
-  rewrite restr_minus.
-  rewrite (sbE WF) at 1.
-  rewrite <- restr_relE.
-  rewrite crs_restr.
-  rewrite restr_union.
-  rewrite restr_restr.
-  rewrite set_interK.
-  rewrite <- restr_union.
-  rewrite csE.
-  rewrite <- unionA.
-  rewrite <- crsE.
-  repeat rewrite restr_relE.
-  rewrite <- (sbE WF) at 2.
-  rewrite  *)
-
-Lemma cf_alt WF : cf ≡ (same_tid S ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Einit⦘ ⨾ sb)) \ sb⁼.
-Proof. 
-  admit.
-Admitted.
+  rewrite crsE.
+  repeat rewrite restr_union.
+  rewrite unionA.
+  apply inclusion_union_l.
+  { basic_solver. } 
+  rewrite <- restr_union, <- csE.
+  rewrite <- cs_restr.
+  rewrite <- (unionK (restr_rel Eninit (same_tid S))).
+  assert (symmetric (restr_rel Eninit (same_tid S))) as SYM. 
+  { apply restr_sym. apply same_tid_sym. }
+  rewrite <- (transp_sym SYM) at 2. 
+  rewrite <- csE.
+  apply clos_sym_mori.
+  rewrite <- (set_interK Eninit) at 1.
+  rewrite <- restr_restr.
+  apply restr_rel_mori; auto.
+  rewrite restr_relE.
+  apply (sb_tid WF).
+Qed.  
 
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
