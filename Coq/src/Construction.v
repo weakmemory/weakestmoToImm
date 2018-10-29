@@ -409,10 +409,12 @@ Proof.
     rewrite cross_union_r.
     repeat rewrite crs_union.
     repeat rewrite <- unionA.
+    rewrite ES.sbE, <- restr_relE, crs_restr; auto.
+    rewrite seq_eqv_r, seq_eqv_l.
     edestruct k eqn:EQk;
       unfold ES.cont_sb_dom, ES.cont_cf_dom. 
-    { rewrite ES.sbE, <- restr_relE, crs_restr; auto.
-      rewrite seq_eqv_r, seq_eqv_l.
+    { (*rewrite ES.sbE, <- restr_relE, crs_restr; auto.*)
+      (* rewrite seq_eqv_r, seq_eqv_l. *)
       unfold union, minus_rel, cross_rel, same_relation, inclusion; splits.
       { intros x y [Ex [[STIDxy nSBxy] EQe]].
         splits; auto.
@@ -429,39 +431,53 @@ Proof.
         erewrite basic_step_tid_e; eauto; by unfold ES.cont_thread. }
       { repeat rewrite or_assoc.
         unfold not. 
+        unfold ES.acts_init_set, set_inter, eqv_rel, restr_rel, clos_sym, clos_refl_sym.
+        unfold opt_ext, eq_opt, ES.acts_set in *. 
         intros HH; destruct HH as [nID | [nSB | [nINITe | [nINITe' | EE']]]].
-        { eapply basic_step_acts_set_NE; eauto.
-          unfold eqv_rel in nID; desf. }
-        { eapply basic_step_acts_set_NE; eauto.
-          unfold restr_rel in nSB; desf. }
-        { unfold clos_refl_sym in nINITe; desf.
-          1,3: eapply basic_step_acts_set_NE; eauto. 
-          unfold ES.acts_init_set, set_inter in nINITe. 
-          destruct nINITe as [_ INITx].
-          rewrite INITx in CONT.
+        { eapply basic_step_acts_set_NE; eauto; desf. }
+        { eapply basic_step_acts_set_NE; eauto; desf. }
+        { destruct nINITe as [EQxy | [INITx | INITy]]; try omega.
+          destruct INITx as [[_ TIDinit] EQy].
+          rewrite TIDinit in TIDx.
+          rewrite <- TIDx in CONT.
           eapply ES.init_tid_K; eauto. }
-        { unfold clos_refl_sym in nINITe'; desf.
-          { eapply basic_step_acts_set_NE; eauto. }
-          { unfold ES.acts_init_set, set_inter in nINITe'. 
-            destruct nINITe' as [_ INITx]. 
-            rewrite INITx in CONT.
-            eapply ES.init_tid_K; eauto. }
-          edestruct e'. 
-          { eapply basic_step_acts_set_NE'; eauto.
-            unfold eq_opt in *; desf. }
-          by unfold eq_opt in *. }
-        unfold clos_refl_sym in EE'; desf.
-        { eapply basic_step_acts_set_NE; eauto. }
         { edestruct e'. 
-          { unfold opt_ext, eq_opt in *; omega. }
-          by unfold eq_opt in *. }
-        edestruct e'. 
-          { unfold opt_ext, eq_opt, ES.acts_set in *. 
-            eapply basic_step_acts_set_NE; eauto.
-            desf; omega. }
-          by unfold eq_opt in *. } }
+          desf; try omega. 
+          destruct nINITe' as [EQxy | [INITx | INITy]]; omega. }
+        { edestruct e'. 
+          desf; try omega. 
+          destruct EE' as [EQxy | [HA | HB]]; desf; omega. } } }
+    { rewrite seq_eqv_l. 
+      rewrite (seq_eqv_r (cf S) (eq eid)).
+      unfold union, minus_rel, cross_rel, same_relation, inclusion,
+        dom_rel, codom_rel, set_union.
+      splits.
+      { intros x y [Ex [[STIDxy nSBxy] EQe]]; splits; auto.
+        repeat rewrite or_assoc in nSBxy.
+        unfold not in nSBxy.
+        destruct (excluded_middle_informative (cf S x eid)) as [CF | nCF].
+        { left. exists eid. basic_solver. }
+        right. exists eid. 
+        unfold seq, eqv_rel.
+        eexists; splits; eauto.
+        assert (ES.same_tid S x eid) as STIDxEID.
+        { admit. } 
+        admit. }
+      intros x y [[[z [CF EQz]] | SB] EQey].
+      { assert (E S x) as Ex. 
+        { unfold ES.cf, seq, eqv_rel in CF; desf. }
+        assert (tid S' e = tid S eid) as TIDe.
+        { erewrite basic_step_tid_e; eauto.
+          by unfold ES.cont_thread. }
+        splits; auto. 
+        { desf. 
+          unfold ES.same_tid.
+          erewrite <- basic_step_tid_eq_dom; eauto.
+          rewrite TIDe.
+          admit. }
+        admit. }
+      admit. } }
   admit.
-  admit. 
 Admitted.
 
 Lemma basic_step_cf_mon e e' S S' 
