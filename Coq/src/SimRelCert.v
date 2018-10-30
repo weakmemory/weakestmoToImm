@@ -673,18 +673,28 @@ Proof.
   { _ltt q thread E0 OFAILDEP TEH.(tr_rmw_dep) CACTS dom_rmw_depE_in_D. }
   { _ltt q thread E0 OADDR TEH.(tr_addr) CACTS dom_addrE_in_D. }
   2: { _ltt q thread E0 OCTRL TEH.(tr_ctrl) CACTS dom_ctrlE_in_D. }
-  (* TODO: continue from here *)
 
-  2: { rewrite ODATA, CACTS, !seqA.
-
-  { rewrite TEH''.(tr_acts_set).
+  { rewrite CACTS.
     unfolder; ins; desc.
-    eapply H5; eauto.
-    eapply (Rex_in_D thread TCCOH_G); try done.
-    split; [|done].
-    unfold R_ex, rmwmod in *.
-    rewrite TEH''.(tr_lab) in H2; auto.
-    eapply TEH''.(tr_acts_set). by split. }
+    apply H2.
+    destruct H as [TT [AA|AA]].
+    { by apply C_in_D. }
+    unfolder in AA. desf.
+    { by apply I_in_D. }
+    red. left. left. right.
+    eexists. eexists. split.
+    { by left. }
+    apply seq_eqv_r. split; eauto.
+    assert (R_ex Glab x) as UU.
+    { admit. }
+    red. apply seq_eqv_l. split.
+    { by apply R_ex_in_R. }
+    apply seq_eqv_r. split.
+    2: by eapply issuedW; eauto.
+    apply ct_step. left. right.
+    apply seq_eqv_l. by split. }
+
+  (* TODO: continue from here *)
   { rewrite TEH''.(tr_data).
     rewrite (dom_r (wf_dataE WF_G)).
     subst G.
