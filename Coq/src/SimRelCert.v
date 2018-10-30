@@ -755,12 +755,25 @@ Proof.
     erewrite <- steps_preserve_lab; try rewrite BB; eauto.
     eapply tr_lab; eauto.
     eapply steps_preserve_E; eauto. }
-  { admit. }
-  { admit. }
+  { (* TODO: most likely, it requires to extended the receptiveness property. *)
+    admit. }
+  { ins.
+    eapply ES.unique_K in KK.
+    3: by apply QQ.
+    all: eauto.
+    2: apply SRC.
+    simpls. inv KK. }
   { unfold acts_set. by rewrite <- RACTS. }
+  { rewrite <- RRMW, SS. rewrite ORMW, !CACTS.
+    rewrite TEH.(tr_rmw), !seqA.
+    rewrite seq_eqvC. seq_rewrite <- !id_inter.
+    arewrite (E0 ∩₁ Gtid_ (ES.cont_thread S q) ≡₁ E0).
+    2: done.
+    rewrite set_interC. unfold E0. rewrite <- !set_interA. 
+      by rewrite set_interK. }
   { admit. }
-  { admit. }
-  { admit. }
+  { erewrite same_label_same_loc; eauto.
+    admit. }
   { by etransitivity; [apply cert_rf_in_vf|apply vf_in_furr]. }
   { arewrite (cert_rf G sc TC' thread ⊆
               ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾ cert_rf G sc TC' thread) at 1
