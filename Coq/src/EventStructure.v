@@ -228,6 +228,24 @@ Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
 Proof. unfold ES.cf. basic_solver. Qed.
 
+Lemma ncfEinit_l : ⦗Einit⦘ ⨾ cf ≡ ∅₂.
+Proof. 
+  unfold ES.cf, ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
+Lemma ncfEinit_r : cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. 
+  unfold ES.cf, ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
+Lemma ncfEinit_lr : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. 
+  unfold ES.cf, ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
 
@@ -257,6 +275,36 @@ Proof.
   rewrite restr_relE.
   apply (sb_tid WF).
 Qed.  
+
+Lemma n_sb_cf x y (Ex : E x) (Ey : E y) : ~ (sb x y /\ cf x y).
+Proof. 
+  red. intros [SB CF].
+  destruct 
+    (excluded_middle_informative (Einit x), excluded_middle_informative (Einit y)) 
+    as [[INITx | nINITx]  [INITy | nINITy]].
+  { eapply ncfEinit_lr.
+    eapply seq_eqv_lr.
+    splits; [|by apply CF|]; auto. }
+  { eapply ncfEinit_l.
+    eapply seq_eqv_l.
+    splits; eauto. }
+  { eapply ncfEinit_r.
+    eapply seq_eqv_r.
+    splits; eauto. }
+  assert (Eninit x) as EnINITx.
+  { unfold ES.acts_ninit_set.
+    basic_solver. }
+  assert (Eninit y) as EnINITy.
+  { unfold ES.acts_ninit_set.
+    basic_solver. }
+  unfold ES.cf in CF.
+  assert ((same_tid S \ sb⁼) x y) as HH.
+  { autounfold with unfolderDb in CF; desf. }
+  unfold minus_rel in HH.
+  destruct HH as [STID nSBcrs].
+  apply nSBcrs.
+  unfold clos_refl_sym; auto.
+Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
