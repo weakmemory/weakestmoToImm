@@ -380,8 +380,8 @@ Proof.
     unfold eq_opt. apply set_inter_empty_l. }
   relsf.
   autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
-  { rewrite basic_step_tid_eq_dom; eauto. }
-  rewrite <- basic_step_tid_eq_dom; eauto.
+  { erewrite basic_step_tid_eq_dom; eauto. }
+  erewrite <- basic_step_tid_eq_dom; eauto.
 Qed.
 
 Lemma basic_step_acts_ninit_set e e' S S' 
@@ -585,7 +585,7 @@ Proof.
         unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
         edestruct k eqn:EQk. 
         { splits; auto.
-          rewrite basic_step_tid_eq_dom; eauto.
+          erewrite basic_step_tid_eq_dom; eauto.
           unfold ES.same_tid in STIDxy.
           rewrite STIDxy.
           erewrite basic_step_tid_e; desf; eauto; by unfold ES.cont_thread. }
@@ -749,7 +749,7 @@ Proof.
         unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
         edestruct k eqn:EQk. 
         { splits; auto.
-          rewrite basic_step_tid_eq_dom; eauto.
+          erewrite basic_step_tid_eq_dom; eauto.
           unfold ES.same_tid in STIDxy.
           rewrite STIDxy.
           erewrite basic_step_tid_e'; desf; eauto; by unfold ES.cont_thread. }

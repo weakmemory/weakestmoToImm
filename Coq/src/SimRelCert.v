@@ -773,7 +773,7 @@ Proof.
       by rewrite set_interK. }
   { admit. }
   { erewrite same_label_same_loc; eauto.
-    admit. }
+    all: admit. }
   { by etransitivity; [apply cert_rf_in_vf|apply vf_in_furr]. }
   { arewrite (cert_rf G sc TC' thread ⊆
               ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾ cert_rf G sc TC' thread) at 1
@@ -974,7 +974,8 @@ Proof.
         (* unfold union in RFwa; desf.  *)
         { assert (I w) as Iw.
           { apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa.
-            autounfold with unfolderDb in RFwa; desf. }
+            autounfold with unfolderDb in RFwa; desf. 
+            admit. }
           apply inclusion_union_r; right. 
           autounfold with unfolderDb; ins; splits; desf.
           { erewrite <- SRCC.(hfeq). 
