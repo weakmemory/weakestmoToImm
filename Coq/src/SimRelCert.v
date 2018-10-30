@@ -6,7 +6,7 @@ From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_common imm_s imm_s_hb SimulationRel
-     CertExecution2
+     CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel LblStep CertRf.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
@@ -732,11 +732,44 @@ Proof.
     arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘. rewrite !seq_id_l.
     unfold thread.
     generalize (dom_dataD_in_D q TCCOH'). basic_solver 10. }
-
   desf.
-  exists cert_state. eexists.
+
+  assert (acts_set (ProgToExecution.G cert_state) =
+          acts_set (ProgToExecution.G state'')) as SS.
+  { unfold acts_set. by rewrite RACTS. }
+
+  exists cert_state. exists (cert_rf G sc TC thread).
   constructor.
-  all: admit.
+  { red. ins. unfold certLab. desf.
+    admit. }
+  { ins.
+    eapply same_label_up_to_value_trans; eauto.
+    assert (Gtid e = (ES.cont_thread S q)) as BB.
+    { red in EE. rewrite <- RACTS in EE. by apply CACTS. }
+    assert (acts_set (ProgToExecution.G state'') e) as CC.
+    { by red; rewrite RACTS. }
+
+    assert (lab (ProgToExecution.G state'') e = Glab e) as AA. 
+    2: { rewrite AA. red. desf. }
+    erewrite <- steps_preserve_lab; try rewrite BB; eauto.
+    eapply tr_lab; eauto.
+    eapply steps_preserve_E; eauto. }
+  { admit. }
+  { admit. }
+  { unfold acts_set. by rewrite <- RACTS. }
+  { admit. }
+  { admit. }
+  { admit. }
+  { by etransitivity; [apply cert_rf_in_vf|apply vf_in_furr]. }
+  { arewrite (cert_rf G sc TC thread ⊆ ⦗I ∪₁ set_compl I⦘ ⨾ cert_rf G sc TC thread) at 1
+      by rewrite set_compl_union_id, seq_id_l.
+    rewrite id_union, seq_union_l.
+    rewrite non_I_cert_rf; auto.
+    done.
+    all: apply SRC. }
+  { admit. }
+  { by apply cert_rff. }
+  admit.
 Admitted.
 
 (* Lemma sbq_dom_incl_qtidTC' TC' q state' (SRCG: sim_cert_graph S G TC' q state') : *)

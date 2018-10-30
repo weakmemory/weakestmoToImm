@@ -49,7 +49,11 @@ Section SimRel.
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
+  Notation "'GW'" := (fun a => is_true (is_w Glab a)).
+
   Notation "'SR'" := (fun a => is_true (is_r Slab a)).
+
+  Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
 
   Definition pc thread :=
     C ∩₁ Gtid_ thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
@@ -103,6 +107,7 @@ Section SimRel.
           GE (ThreadEvent thread m);
       tccoh : tc_coherent G sc TC;
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
+      irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
       swf   : ES.Wf S;
       
       gcons : imm_consistent G sc;
