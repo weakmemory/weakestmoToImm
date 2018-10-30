@@ -391,6 +391,33 @@ Proof.
   unfold CertExecution2.D; basic_solver 21.
 Qed.
 
+Lemma dom_dataD_in_D : dom_rel (data G ⨾ ⦗D⦘) ⊆₁ D.
+Proof.
+  assert (Wf G) as WF by apply SRC.
+  unfold CertExecution2.D.
+  rewrite !id_union; relsf; unionL; splits.
+  { rewrite (data_in_sb WF).
+    generalize dom_sb_covered. basic_solver 21. }
+  { rewrite (data_in_ppo WF).
+    basic_solver 12. }
+  { rewrite (data_in_sb WF).
+    rewrite (dom_l (@wf_sbE G)) at 1.
+    rewrite sb_tid_init' at 1; relsf; unionL; split.
+    { unionR left -> left -> left -> right.
+      unfold same_tid; unfolder; ins; desf; eauto 20. }
+    arewrite (⦗GE⦘ ⨾ ⦗fun a : actid => is_init a⦘ ⊆ ⦗D⦘).
+    generalize D_init; basic_solver.
+    arewrite (dom_rel (⦗D⦘ ⨾ Gsb ⨾ ⦗GE ∩₁ NTid_ (ES.cont_thread S q)⦘) ⊆₁ D) by basic_solver.
+    unfold CertExecution2.D; basic_solver 12. }
+  { rewrite dom_rel_eqv_dom_rel.
+    rewrite crE at 1; relsf; unionL; splits.
+    { rewrite (dom_r (wf_dataD WF)), (dom_l (@wf_ppoD G)). type_solver. }
+    rewrite (data_in_ppo WF).
+    sin_rewrite ppo_rfi_ppo. basic_solver 21. }
+  { rewrite (dom_r (wf_dataD WF)), (dom_r (wf_rfiD WF)). type_solver. }
+  rewrite (dom_r (wf_dataD WF)), (dom_r (wf_rfeD WF)). type_solver.
+Qed.
+
 End Properties.
 
 Lemma sim_cert_graph_start TC' thread
@@ -698,11 +725,13 @@ Proof.
     arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
     rewrite <- id_inter.
     arewrite (E0 ∩₁ set_compl (E0 \₁ D G TC' thread) ⊆₁ D G TC' thread).
-    { unfolder. intros x [AA BB]. apply NNPP. intros UU.
-      apply BB. desf. }
-    (* apply (@dom_data_D (rstG Gf T thread) Gsc T thread WF_G RELCOV_G); try done. *)
-    (* basic_solver 12. } *)
-    admit. }
+    { unfolder. intros x [AA BB].
+      destruct (classic (D G TC' thread x)); auto.
+      exfalso. apply BB. desf. }
+    rewrite TEH.(tr_data), !seqA. 
+    arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘. rewrite !seq_id_l.
+    unfold thread.
+    generalize (dom_dataD_in_D q TCCOH'). basic_solver 10. }
 
   desf.
   exists cert_state. eexists.
@@ -723,7 +752,7 @@ Proof.
   desf.
   exists q. exists state'. exists new_rf.
   constructor; auto.
-
+  
   Ltac narrow_hdom q CsbqDOM :=
     arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True);
     rewrite set_inter_full_r;
