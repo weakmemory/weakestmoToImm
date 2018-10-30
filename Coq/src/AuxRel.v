@@ -67,10 +67,55 @@ Proof. basic_solver. Qed.
 Lemma crsE : r⁼ ≡ ⦗⊤₁⦘ ∪ r ∪ r⁻¹.
 Proof. basic_solver. Qed.
 
+Lemma crs_cs : r⁼ ≡ ⦗⊤₁⦘ ∪ r^⋈.
+Proof. basic_solver. Qed. 
+
+Lemma cs_union : (r ∪ r')^⋈  ≡ r^⋈ ∪ r'^⋈.
+Proof. basic_solver. Qed.
+
+Lemma crs_union : (r ∪ r')⁼  ≡ r⁼ ∪ r'⁼.
+Proof. basic_solver. Qed.
+
+Lemma cs_cross : (s × s')^⋈ ≡ s × s' ∪ s' × s.
+Proof. basic_solver. Qed.
+
+Lemma crs_cross : (s × s')⁼ ≡ ⦗⊤₁⦘ ∪ s × s' ∪ s' × s.
+Proof. basic_solver. Qed.
+
+Lemma cs_restr : (restr_rel s r)^⋈ ≡ restr_rel s r^⋈.
+Proof. basic_solver. Qed.
+
+Lemma crs_restr1 : (restr_rel s r)⁼ ≡ ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
+Proof. basic_solver 10. Qed.
+
+Lemma crs_restr2 : restr_rel s r⁼ ≡ restr_rel s ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
+Proof. basic_solver 10. Qed.
+  
+Lemma cs_sym : symmetric r^⋈.
+Proof. basic_solver. Qed.
+
+Lemma crs_sym : symmetric r⁼.
+Proof. basic_solver. Qed.
+
+Lemma eqv_sym : forall (s : A -> Prop), symmetric ⦗s⦘.
+Proof. basic_solver. Qed.
+
+Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
+Proof. basic_solver. Qed.
+
+Lemma transp_sym : forall (r : relation A), symmetric r -> r⁻¹ ≡ r. 
+Proof. basic_solver. Qed.
+
+Lemma restr_sym : forall (r : relation A), symmetric r -> symmetric (restr_rel s r). 
+Proof. basic_solver. Qed.
+
+Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
+Proof. basic_solver. Qed.
+
 Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
 Proof. basic_solver. Qed.
 
-Lemma cross_union_l : s × (s' ∪₁ s'')  ≡ s × s' ∪ s × s''.
+Lemma cross_union_l : s × (s' ∪₁ s'') ≡ s × s' ∪ s × s''.
 Proof. basic_solver. Qed.
 
 Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
@@ -83,6 +128,9 @@ Lemma seq_eqv_cross_r : s × s' ⨾ ⦗q'⦘ ≡ s × (q' ∩₁ s').
 Proof. basic_solver. Qed.
 
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
+Proof. basic_solver. Qed.
+
+Lemma restr_cross : restr_rel s r ≡ s × s ∩ r.
 Proof. basic_solver. Qed.
 
 Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
@@ -99,7 +147,66 @@ Proof. basic_solver. Qed.
 
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
 Proof. basic_solver. Qed.
+
+Lemma eq_opt_someE : eq_opt (Some a) ≡₁ eq a.
+Proof. basic_solver. Qed. 
+
+Lemma eq_opt_noneE : eq_opt (None : option A) ≡₁ ∅.
+Proof. basic_solver. Qed. 
+
+Lemma set_subset_union_minus : s ⊆₁ s \₁ s' ∪₁ s'. 
+Proof. 
+  by unfold set_minus, set_union, set_subset; clear; intros; tauto.
+Qed.
+
+Lemma set_union_minus : s' ⊆₁ s -> s ≡₁ s \₁ s' ∪₁ s'. 
+Proof. 
+  intros. 
+  unfold set_equiv; splits; 
+    [by apply set_subset_union_minus|basic_solver].
+Qed.
+
+Lemma union_minus : r' ⊆ r -> r ≡ r \ r' ∪ r'.
+Proof. 
+  intros H.
+  unfold same_relation; splits.
+  { by apply inclusion_union_minus. }
+  basic_solver.
+Qed.
+
+Lemma minus_eqv_absorb_rr : r' ⨾ ⦗ s ⦘ ≡ ∅₂ -> (r \ r') ⨾ ⦗ s ⦘ ≡ r ⨾ ⦗ s ⦘.
+Proof. 
+  autounfold with unfolderDb.
+  ins; splits; ins; desf.
+  { eexists; splits; eauto. }
+  { eexists; splits; eauto. 
+    red. ins. apply (H x y). 
+    eexists; splits; eauto. } 
+Qed.
+
+Lemma minus_eqv_absorb_rl : ⦗ s ⦘ ⨾ r' ≡ ∅₂ -> ⦗ s ⦘ ⨾ (r \ r') ≡ ⦗ s ⦘ ⨾ r.
+Proof. 
+  autounfold with unfolderDb.
+  ins; splits; ins; desf.
+  { eexists; splits; eauto. }
+  { eexists; splits; eauto. 
+    red. ins. apply (H z y). 
+    eexists; splits; eauto. } 
+Qed.
+
+Lemma cross_minus_compl_l : s × s' \ (set_compl s) × s'' ≡ s × s'.
+Proof. 
+  autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
+Qed.
+
+Lemma cross_minus_compl_r : s × s' \ s'' × (set_compl s') ≡ s × s'.
+Proof. 
+  autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
+Qed.
   
+Lemma minus_inter_compl : r \ r' ≡ r ∩ compl_rel r'.
+Proof. basic_solver. Qed.
+
 Lemma compl_top_minus : forall (r : relation A), compl_rel r ≡ (fun _ _ => True) \ r.
 Proof. basic_solver. Qed.
 
@@ -112,6 +219,22 @@ Qed.
 Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
 Proof. 
   repeat rewrite compl_top_minus; by apply minus_union_r.
+Qed.
+
+Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
+Proof. 
+  repeat rewrite seq_eqv_lr. 
+  unfold inter_rel.
+  unfold same_relation, inclusion.
+  splits; ins; splits; desf. 
+Qed.
+
+Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
+Proof. 
+  ins. 
+  repeat rewrite transp_seq. 
+  repeat rewrite seqA.
+  repeat rewrite transp_sym; auto; apply eqv_sym.
 Qed.
 
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.

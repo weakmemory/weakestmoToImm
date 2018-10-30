@@ -54,8 +54,7 @@ Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
 Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
 
 Definition cf (ES : t) :=
-  ⦗ ES.(acts_set) ⦘ ⨾ (ES.(same_tid) ∩ compl_rel (ES.(sb)^? ∪ ES.(sb)⁻¹)) ⨾
-  ⦗ ES.(acts_set) ⦘.
+  ⦗ ES.(acts_ninit_set) ⦘ ⨾ (ES.(same_tid) \ (ES.(sb)⁼)) ⨾ ⦗ ES.(acts_ninit_set) ⦘.
 
 Definition cc (ES : t) := 
   ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
@@ -88,13 +87,13 @@ Definition cont_sb_dom S c :=
 Definition cont_sb_codom S c := 
   match c with
   | CInit _ => (fun x => tid S x = (cont_thread S c))
-  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  | CEvent e => (fun x => tid S x = (cont_thread S c)) ∩₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
 Definition cont_cf_dom S c :=
   match c with
-  | CInit  i => fun x => S.(tid) x = i 
-  | CEvent e => dom_rel (S.(cf) ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ S.(sb))
+  | CInit  i => fun x => ES.acts_set S x /\ S.(tid) x = i 
+  | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
@@ -196,23 +195,168 @@ Record Wf :=
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
-    init_tid_K : ~ (exists c, K (CInit tid_init, c));
+    init_tid_K : ~ (exists c k, K (k, c) /\ cont_thread S k = tid_init);
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
     event_K  : forall e (EE: E e) (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
         exists c, K (CEvent e, c);
-    K_inE : forall e c (inK: K (CEvent e, c)), E e;  
+    K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;  
   }.
 
 Implicit Type WF : Wf.
 
-Lemma cf_alt WF : cf ≡ (same_tid S ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Einit⦘ ⨾ sb)) \ sb⁼.
+Lemma acts_set_split : E ≡₁ Einit ∪₁ Eninit.
+Proof.
+  unfold ES.acts_init_set, ES.acts_ninit_set.
+  rewrite set_unionC.
+  eapply set_union_minus.
+  basic_solver.
+Qed.
+
+Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
 Proof. 
-  admit.
-Admitted.
+  unfold ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
+Lemma same_tid_refl : reflexive (same_tid S).
+Proof. unfold same_tid. basic_solver. Qed.
+
+Lemma same_tid_sym : symmetric (same_tid S). 
+Proof. unfold same_tid. basic_solver. Qed.
+
+Lemma same_tid_trans : transitive (same_tid S). 
+Proof. unfold same_tid, transitive. ins. by rewrite H. Qed.
+
+Lemma sb_Einit_Eninit WF : sb ≡ Einit × Eninit ∪ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘. 
+Proof. 
+  unfold same_relation; split.
+  { rewrite sbE at 1; auto.
+    rewrite <- restr_relE.
+    rewrite acts_set_split.
+    rewrite restr_set_union. 
+    repeat rewrite restr_relE.
+    rewrite sb_ninit; eauto.
+    basic_solver. }
+  apply inclusion_union_l.
+  { by apply sb_init. }
+  basic_solver.
+Qed.
+
+Lemma sb_seq_Eninit_l WF : ⦗Eninit⦘ ⨾ sb ≡ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘.  
+Proof.
+  rewrite sb_Einit_Eninit; auto.
+  basic_solver 42.
+Qed.
+
+Lemma sb_seq_Eninit_r WF : sb ⨾ ⦗Eninit⦘ ≡ sb.  
+Proof.
+  unfold same_relation; splits.
+  { basic_solver. }
+  rewrite sb_Einit_Eninit; auto.
+  apply inclusion_union_l; basic_solver. 
+Qed.
+
+Lemma cf_same_tid : cf ⊆ same_tid S.
+Proof. unfold ES.cf. basic_solver. Qed.
+
+Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
+Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed. 
+
+Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
+Proof. unfold ES.cf. basic_solver. Qed.
+
+Lemma ncfEinit_l : ⦗Einit⦘ ⨾ cf ≡ ∅₂.
+Proof. 
+  unfold ES.cf, ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
+Lemma ncfEinit_r : cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. 
+  unfold ES.cf, ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
+Lemma ncfEinit_lr : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. 
+  unfold ES.cf, ES.acts_ninit_set.
+  basic_solver.
+Qed.
 
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
+
+Lemma cf_sym : symmetric cf.
+Proof. 
+  unfold ES.cf, symmetric.
+  ins. 
+  apply restr_relE. 
+  apply restr_relE in H. 
+  generalize dependent H.
+  generalize dependent y.
+  generalize dependent x.
+  fold (symmetric (restr_rel Eninit (same_tid S \ sb⁼))).
+  apply restr_sym. 
+  apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
+Qed.
+
+Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
+Proof.
+  unfold ES.cf.
+  repeat rewrite <- restr_relE.
+  rewrite restr_minus.
+  rewrite unionC.
+  rewrite <- union_minus; auto.
+  rewrite crsE.
+  repeat rewrite restr_union.
+  rewrite unionA.
+  apply inclusion_union_l.
+  { basic_solver. } 
+  rewrite <- restr_union, <- csE.
+  rewrite <- cs_restr.
+  rewrite <- (unionK (restr_rel Eninit (same_tid S))).
+  assert (symmetric (restr_rel Eninit (same_tid S))) as SYM. 
+  { apply restr_sym. apply same_tid_sym. }
+  rewrite <- (transp_sym SYM) at 2. 
+  rewrite <- csE.
+  apply clos_sym_mori.
+  rewrite <- (set_interK Eninit) at 1.
+  rewrite <- restr_restr.
+  apply restr_rel_mori; auto.
+  rewrite restr_relE.
+  apply (sb_tid WF).
+Qed.  
+
+Lemma n_sb_cf x y (Ex : E x) (Ey : E y) : ~ (sb x y /\ cf x y).
+Proof. 
+  red. intros [SB CF].
+  destruct 
+    (excluded_middle_informative (Einit x), excluded_middle_informative (Einit y)) 
+    as [[INITx | nINITx]  [INITy | nINITy]].
+  { eapply ncfEinit_lr.
+    eapply seq_eqv_lr.
+    splits; [|by apply CF|]; auto. }
+  { eapply ncfEinit_l.
+    eapply seq_eqv_l.
+    splits; eauto. }
+  { eapply ncfEinit_r.
+    eapply seq_eqv_r.
+    splits; eauto. }
+  assert (Eninit x) as EnINITx.
+  { unfold ES.acts_ninit_set.
+    basic_solver. }
+  assert (Eninit y) as EnINITy.
+  { unfold ES.acts_ninit_set.
+    basic_solver. }
+  unfold ES.cf in CF.
+  assert ((same_tid S \ sb⁼) x y) as HH.
+  { autounfold with unfolderDb in CF; desf. }
+  unfold minus_rel in HH.
+  destruct HH as [STID nSBcrs].
+  apply nSBcrs.
+  unfold clos_refl_sym; auto.
+Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
@@ -287,16 +431,54 @@ Qed.
 (** ** Continuation properites *)
 (******************************************************************************)
 
-Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : cont_sb_dom S k ⊆₁ E.
+Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_sb_dom S k ⊆₁ E.
 Proof. 
   autounfold with unfolderDb. 
   unfold cont_sb_dom.
   ins; desf.
   { unfold acts_init_set, set_inter in H; desf. }
   autounfold with unfolderDb in H; desf.
-  { eapply WF.(K_inE). apply KK. }
+  { eapply WF.(K_inEninit). apply KK. }
   apply WF.(sbE) in H.
   autounfold with unfolderDb in H; desf.
+Qed.
+
+Lemma cont_cf_domEninit k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_cf_dom S k ⊆₁ Eninit.
+Proof. 
+  autounfold with unfolderDb. 
+  unfold cont_cf_dom.
+  ins; desf.
+  { unfold acts_ninit_set, acts_init_set, set_minus; splits; desf. 
+    red. intros [_ EINITx]. 
+    apply init_tid_K; auto.
+    do 2 eexists; eauto. }
+  unfold dom_rel, codom_rel, seq, eqv_rel, set_union in H; desf.
+  { apply cfEninit in H.
+    unfold seq, eqv_rel in H; desf. }
+  apply sb_seq_Eninit_r in H0; auto. 
+  unfold seq, eqv_rel in H0; desf.
+Qed.
+
+Lemma cont_cf_tid k lang st WF e
+      (KK : K (k, existT _ lang st)) 
+      (cfKe: cont_cf_dom S k e) : 
+  tid e = cont_thread S k.
+Proof. 
+  assert (Eninit e) as NINITe.
+  { eapply cont_cf_domEninit; eauto. }
+  unfold cont_thread, cont_cf_dom in *.
+  edestruct k eqn:EQk.
+  { desf. }
+  assert (Eninit eid) as NINITeid.
+  { eapply K_inEninit; eauto. }
+  autounfold with unfolderDb in cfKe; desf.
+  fold (ES.same_tid S e z).
+  apply same_tid_sym.
+  eapply sb_tid; eauto.
+  autounfold with unfolderDb. 
+  eexists; splits; eauto. 
 Qed.
 
 End EventStructure.
