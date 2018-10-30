@@ -228,6 +228,9 @@ Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
 Proof. unfold ES.cf. basic_solver. Qed.
 
+Lemma cf_irr : irreflexive cf.
+Proof. basic_solver. Qed.
+
 Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
 Proof.
   unfold ES.cf.
@@ -254,9 +257,6 @@ Proof.
   rewrite restr_relE.
   apply (sb_tid WF).
 Qed.  
-
-Lemma cf_irr : irreflexive cf.
-Proof. basic_solver. Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
