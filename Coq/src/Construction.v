@@ -238,7 +238,7 @@ Proof.
     desf; unfold upd_opt; rewrite updo; try rewrite updo; desf; omega.
 Qed.
 
-Lemma basic_step_same_tid e e' S S'  
+Lemma basic_step_same_tid_restr e e' S S'  
       (BSTEP : t_basic e e' S S') :
   restr_rel S.(ES.acts_set) S.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S'.(ES.same_tid).
 Proof. 
@@ -297,7 +297,7 @@ Proof.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
 Qed.
 
-Lemma basic_step_same_loc e e' S S' 
+Lemma basic_step_same_loc_restr e e' S S' 
       (BSTEP : t_basic e e' S S') :
   restr_rel S.(ES.acts_set) (same_loc S) ≡ restr_rel S.(ES.acts_set) (same_loc S').
 Proof. 
@@ -461,7 +461,7 @@ Proof.
     apply inter_rel_more.
     { eapply restr_set_subset.
       { eapply ES.acts_ninit_set_incl. } 
-      erewrite <- basic_step_same_tid; eauto. }
+      erewrite <- basic_step_same_tid_restr; eauto. }
     rewrite SB'.
     rewrite cross_union_r.
     repeat rewrite <- unionA.
@@ -595,7 +595,7 @@ Proof.
         assert (ES.acts_set S eid) as Eeid.
         { eapply ES.K_inEninit; eauto. }
         assert (ES.same_tid S x eid) as STIDxEID.
-        { eapply basic_step_same_tid; eauto. 
+        { eapply basic_step_same_tid_restr; eauto. 
           unfold restr_rel; splits; eauto. 
           { eapply ES.same_tid_trans; eauto. 
             unfold ES.same_tid.
@@ -759,7 +759,7 @@ Proof.
         assert (ES.acts_set S eid) as Eeid.
         { eapply ES.K_inEninit; eauto. }
         assert (ES.same_tid S x eid) as STIDxEID.
-        { eapply basic_step_same_tid; eauto. 
+        { eapply basic_step_same_tid_restr; eauto. 
           unfold restr_rel; splits; eauto. 
           { eapply ES.same_tid_trans; eauto. 
             unfold ES.same_tid.
@@ -841,27 +841,43 @@ Proof.
       eapply basic_step_acts_set_NE'; eauto. 
 Qed.
 
+Lemma basic_step_nupd_cf lang k k' st st' e S S' 
+      (BSTEP_ : t_basic_ lang k k' st st' e None S S') 
+      (wfE: ES.Wf S) :
+  cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈.
+Proof. 
+  rewrite (basic_step_cf lang k k' st st' e None S S'); auto. 
+  unfold eq_opt.
+  basic_solver 42.
+Qed.
+
+Lemma basic_step_cf_restr e e' S S'
+      (BSTEP : t_basic e e' S S') 
+      (wfE: ES.Wf S) : 
+  restr_rel (E S) (cf S') ≡ cf S.
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  rewrite (basic_step_cf lang k k' st st' e e' S S'); auto. 
+  repeat rewrite restr_union.
+  repeat rewrite restr_relE.
+  arewrite (⦗E S⦘ ⨾ (ES.cont_cf_dom S k × eq e) ^⋈ ⨾ ⦗E S⦘ ≡ ∅₂)
+    by E_seq_e.
+  arewrite (⦗E S⦘ ⨾ (ES.cont_cf_dom S k × eq_opt e') ^⋈ ⨾ ⦗E S⦘ ≡ ∅₂)
+    by destruct e'; [ E_seq_e | basic_solver ].
+  rewrite ES.cfE at 2; auto.
+  by repeat rewrite union_false_r.
+Qed.
+
 Lemma basic_step_cf_mon e e' S S' 
-      (BSTEP : t_basic e e' S S') :
+      (BSTEP : t_basic e e' S S') 
+      (wfE: ES.Wf S) :
   S.(ES.cf) ⊆ S'.(ES.cf).
 Proof.
   cdes BSTEP; cdes BSTEP_.
-  edestruct basic_step_same_tid as [STIDL STIDR]; [by apply BSTEP|].
-  unfold ES.cf.
-  rewrite SB'. 
-(*
-  rewrite (basic_step_acts_set e e' S S'); [| apply BSTEP].
-  unfold eq_opt. 
-  repeat rewrite <- restr_relE.
-  repeat rewrite minus_inter_compl. 
-  repeat rewrite restr_inter.
-  rewrite STIDL. 
-  autounfold with unfolderDb.
-  ins; desf; splits; auto; 
-    unfold not; ins; desf; auto; omega. 
-*)
-  admit.
-Admitted.
+  rewrite (basic_step_cf lang k k' st st' e e' S S'); auto. 
+  rewrite unionA.
+  apply inclusion_union_r1.
+Qed.  
 
 Lemma basic_step_nupd_rmw e S S' 
       (BSTEP : t_basic e None S S') :
@@ -884,7 +900,8 @@ Lemma step_sb_mon e e' S S'
 Proof. eapply basic_step_sb_mon; unfold_t_incons ISTEP; eauto. Qed.
 
 Lemma step_cf_mon e e' S S' 
-      (ISTEP : t_incons e e' S S') :
+      (ISTEP : t_incons e e' S S') 
+      (wfE: ES.Wf S) :
   S.(ES.cf) ⊆ S'.(ES.cf).
 Proof. eapply basic_step_cf_mon; unfold_t_incons ISTEP; eauto. Qed.
 
@@ -1138,7 +1155,7 @@ Proof.
   arewrite (restr_rel (E S ∩₁ W S) (same_loc S') ≡ restr_rel (E S ∩₁ W S) (same_loc S)).
   { do 2 rewrite <- restr_restr.
     apply restr_rel_more; auto.
-    rewrite <- basic_step_same_loc; eauto. }
+    rewrite <- basic_step_same_loc_restr; eauto. }
   basic_solver 21.
 Qed.
 
