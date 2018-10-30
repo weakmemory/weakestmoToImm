@@ -5,9 +5,9 @@ From promising Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
-     imm_s imm_s_hb SimulationRel
+     imm_common imm_s imm_s_hb SimulationRel
      CertExecution2
-     SubExecution CombRelations.
+     SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency SimRel LblStep CertRf.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
@@ -272,6 +272,10 @@ Notation "'GE'" := G.(acts_set).
 Notation "'Glab'" := (G.(lab)).
 Notation "'Gtid'" := (tid).
 Notation "'Grmw'" := G.(rmw).
+Notation "'Gaddr'" := G.(addr).
+Notation "'Gdata'" := G.(data).
+Notation "'Gctrl'" := G.(ctrl).
+Notation "'Grmw_dep'" := G.(rmw_dep).
 
 Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
 Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
@@ -281,17 +285,113 @@ Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
 
 Notation "'GR'" := (fun a => is_true (is_r Glab a)).
 Notation "'GW'" := (fun a => is_true (is_w Glab a)).
+Notation "'GR_ex'" := (fun a => R_ex Glab a).
 
 Notation "'Gsb'" := (G.(sb)).
 Notation "'Ghb'" := (G.(imm_hb.hb)).
 Notation "'Grf'" := (G.(rf)).
 Notation "'Gco'" := (G.(co)).
 Notation "'Gvf'" := (G.(furr)).
+Notation "'Gppo'" := (G.(ppo)).
 
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
 
 Variable SRC : simrel prog S G sc TC f.
+
+Section Properties.
+
+Variable q : cont_label.
+Variable TC': trav_config.
+Hypothesis TCCOH' : tc_coherent G sc TC'.
+
+Notation "'E0'" := (Tid_ (ES.cont_thread S q) ∩₁
+                         (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
+Notation "'D'" := (D G TC' (ES.cont_thread S q)).
+
+Notation "'C''"  := (covered TC').
+Notation "'I''"  := (issued TC').
+
+Lemma dom_addrE_in_D : dom_rel (Gaddr ;; <| E0 |>) ⊆₁ D.
+Proof.
+  assert (Wf G) as WF by apply SRC.
+  rewrite set_inter_union_r.
+  rewrite id_union; relsf; unionL; splits.
+  { rewrite (addr_in_sb WF).
+    generalize (dom_sb_covered TCCOH').
+    unfold CertExecution2.D; basic_solver 21. }
+  arewrite (Gtid_ (ES.cont_thread S q) ∩₁ dom_rel (Gsb^? ⨾ ⦗issued TC'⦘) ⊆₁
+                  dom_rel (Gsb^? ⨾ ⦗issued TC'⦘)) by basic_solver.
+  rewrite dom_rel_eqv_dom_rel.
+  arewrite (⦗I'⦘ ⊆ ⦗GW⦘ ⨾ ⦗I'⦘).
+  { generalize (issuedW TCCOH'); basic_solver. }
+  rewrite (dom_l (wf_addrD WF)), !seqA.
+  arewrite (⦗GR⦘ ⨾ Gaddr ⨾ Gsb^? ⨾ ⦗GW⦘ ⊆ Gppo).
+  { unfold ppo; rewrite <- ct_step; basic_solver 12. }
+  unfold CertExecution2.D; basic_solver 21.
+Qed.
+
+Lemma dom_ctrlE_in_D : dom_rel (Gctrl ;; <| E0 |>) ⊆₁ D.
+Proof.
+  assert (Wf G) as WF by apply SRC.
+  rewrite set_inter_union_r.
+  rewrite id_union; relsf; unionL; splits.
+  { rewrite (ctrl_in_sb WF).
+    generalize (dom_sb_covered TCCOH').
+    unfold CertExecution2.D; basic_solver 21. }
+  arewrite (Gtid_ (ES.cont_thread S q) ∩₁ dom_rel (Gsb^? ⨾ ⦗issued TC'⦘) ⊆₁
+                  dom_rel (Gsb^? ⨾ ⦗issued TC'⦘)) by basic_solver.
+  rewrite dom_rel_eqv_dom_rel.
+  arewrite (Gctrl ⨾ Gsb^? ⊆ Gctrl).
+  { generalize (ctrl_sb WF); basic_solver 21. }
+  arewrite (⦗I'⦘ ⊆ ⦗GW⦘ ⨾ ⦗I'⦘).
+  { generalize (issuedW TCCOH'); basic_solver. }
+  rewrite (wf_ctrlD WF), !seqA.
+  arewrite (⦗GR⦘ ⨾ Gctrl ⨾ ⦗GW⦘ ⊆ Gppo).
+  { unfold ppo; rewrite <- ct_step; basic_solver 12. }
+  unfold CertExecution2.D; basic_solver 21.
+Qed.
+
+Lemma dom_rmw_depE_in_D : dom_rel (Grmw_dep ;; <| E0 |>) ⊆₁ D.
+Proof.
+  assert (Wf G) as WF by apply SRC.
+  rewrite set_inter_union_r.
+  rewrite id_union; relsf; unionL; splits.
+  { rewrite (rmw_dep_in_sb WF).
+    generalize (dom_sb_covered TCCOH').
+    unfold CertExecution2.D; basic_solver 21. }
+  arewrite (Gtid_ (ES.cont_thread S q) ∩₁ dom_rel (Gsb^? ⨾ ⦗issued TC'⦘) ⊆₁
+                  dom_rel (Gsb^? ⨾ ⦗issued TC'⦘)) by basic_solver.
+  rewrite dom_rel_eqv_dom_rel.
+  rewrite (wf_rmw_depD WF), !seqA.
+  arewrite (⦗I'⦘ ⊆ ⦗GW⦘ ⨾ ⦗I'⦘).
+  { generalize (issuedW TCCOH'); basic_solver. }
+  arewrite (⦗GR⦘ ⨾ Grmw_dep ⨾ ⦗GR_ex⦘ ⨾ Gsb^? ⨾ ⦗GW⦘ ⊆ Gppo).
+  2: unfold CertExecution2.D; basic_solver 21.
+  unfold ppo; hahn_frame.
+  case_refl _.
+  { by rewrite <- ct_step; basic_solver 12. }
+  rewrite ct_begin; rewrite <- inclusion_t_rt, <- ct_step; basic_solver 12.
+Qed.
+
+Lemma dom_rmwE_in_D : dom_rel (Grmw ;; <| E0 |>) ⊆₁ D.
+Proof.
+  assert (Wf G) as WF by apply SRC.
+  rewrite set_inter_union_r.
+  rewrite id_union; relsf; unionL; splits.
+  { rewrite (rmw_in_sb WF).
+    generalize (dom_sb_covered TCCOH').
+    unfold CertExecution2.D; basic_solver 21. }
+  arewrite (Gtid_ (ES.cont_thread S q) ∩₁ dom_rel (Gsb^? ⨾ ⦗issued TC'⦘) ⊆₁
+                  dom_rel (Gsb^? ⨾ ⦗issued TC'⦘)) by basic_solver.
+  rewrite dom_rel_eqv_dom_rel.
+  arewrite (⦗I'⦘ ⊆ ⦗GW⦘ ⨾ ⦗I'⦘).
+  { generalize (issuedW TCCOH'); basic_solver. }
+  generalize (rmw_in_ppo WF) (rmw_sb_W_in_ppo WF).
+  unfold CertExecution2.D; basic_solver 21.
+Qed.
+
+End Properties.
 
 Lemma sim_cert_graph_start TC' thread
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
@@ -560,18 +660,23 @@ Proof.
     2: by red; eauto.
     rewrite <- C_in_D.
     basic_solver. }
-  { rewrite OFAILDEP.
-    rewrite TEH.(tr_rmw_dep).
-    arewrite_id ⦗acts_set (ProgToExecution.G state'')⦘.
-    arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘.
-    rewrite !seq_id_l, !seq_id_r.
-    (* TODO: Continue from here. *)
-    rewrite (dom_frmw_in_D thread WF TCCOH'); try done.
-    basic_solver. }
-  { rewrite TEH''.(tr_addr).
-    arewrite_id ⦗Tid_ thread⦘; rels.
-    rewrite (dom_addr_in_D thread WF_G TCCOH_G); try done.
-    basic_solver. }
+
+  Ltac _ltt q thread E0 OC CC CACTS CCD := 
+    rewrite OC; rewrite CC;
+    rewrite CACTS;
+    arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘; arewrite_id ⦗E0⦘ at 1;
+    rewrite !seq_id_l;
+    unfold E0, thread;
+    rewrite CCD; auto;
+    basic_solver.
+
+  { _ltt q thread E0 OFAILDEP TEH.(tr_rmw_dep) CACTS dom_rmw_depE_in_D. }
+  { _ltt q thread E0 OADDR TEH.(tr_addr) CACTS dom_addrE_in_D. }
+  2: { _ltt q thread E0 OCTRL TEH.(tr_ctrl) CACTS dom_ctrlE_in_D. }
+  (* TODO: continue from here *)
+
+  2: { rewrite ODATA, CACTS, !seqA.
+
   { rewrite TEH''.(tr_acts_set).
     unfolder; ins; desc.
     eapply H5; eauto.
@@ -580,10 +685,6 @@ Proof.
     unfold R_ex, rmwmod in *.
     rewrite TEH''.(tr_lab) in H2; auto.
     eapply TEH''.(tr_acts_set). by split. }
-  { rewrite TEH''.(tr_ctrl).
-    arewrite_id ⦗Tid_ thread⦘; rels.
-    rewrite (dom_ctrl_in_D thread WF_G TCCOH_G); try done.
-    basic_solver. }
   { rewrite TEH''.(tr_data).
     rewrite (dom_r (wf_dataE WF_G)).
     subst G.
