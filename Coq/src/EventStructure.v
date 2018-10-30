@@ -200,7 +200,7 @@ Record Wf :=
         snd c = snd c';
     event_K  : forall e (EE: E e) (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
         exists c, K (CEvent e, c);
-    K_inE : forall e c (inK: K (CEvent e, c)), E e;  
+    K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;  
   }.
 
 Implicit Type WF : Wf.
@@ -213,6 +213,12 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
+Proof. 
+  unfold ES.acts_ninit_set.
+  basic_solver.
+Qed.
+
 Lemma same_tid_refl : reflexive (same_tid S).
 Proof. unfold same_tid. basic_solver. Qed.
 
@@ -222,11 +228,40 @@ Proof. unfold same_tid. basic_solver. Qed.
 Lemma same_tid_trans : transitive (same_tid S). 
 Proof. unfold same_tid, transitive. ins. by rewrite H. Qed.
 
-Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
-Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed. 
+Lemma sb_Einit_Eninit WF : sb ≡ Einit × Eninit ∪ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘. 
+Proof. 
+  unfold same_relation; split.
+  { rewrite sbE at 1; auto.
+    rewrite <- restr_relE.
+    rewrite acts_set_split.
+    rewrite restr_set_union. 
+    repeat rewrite restr_relE.
+    rewrite sb_ninit; eauto.
+    basic_solver. }
+  apply inclusion_union_l.
+  { by apply sb_init. }
+  basic_solver.
+Qed.
+
+Lemma sb_seq_Eninit_l WF : ⦗Eninit⦘ ⨾ sb ≡ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘.  
+Proof.
+  rewrite sb_Einit_Eninit; auto.
+  basic_solver 42.
+Qed.
+
+Lemma sb_seq_Eninit_r WF : sb ⨾ ⦗Eninit⦘ ≡ sb.  
+Proof.
+  unfold same_relation; splits.
+  { basic_solver. }
+  rewrite sb_Einit_Eninit; auto.
+  apply inclusion_union_l; basic_solver. 
+Qed.
 
 Lemma cf_same_tid : cf ⊆ same_tid S.
 Proof. unfold ES.cf. basic_solver. Qed.
+
+Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
+Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed. 
 
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
 Proof. unfold ES.cf. basic_solver. Qed.
@@ -251,6 +286,20 @@ Qed.
 
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
+
+Lemma cf_sym : symmetric cf.
+Proof. 
+  unfold ES.cf, symmetric.
+  ins. 
+  apply restr_relE. 
+  apply restr_relE in H. 
+  generalize dependent H.
+  generalize dependent y.
+  generalize dependent x.
+  fold (symmetric (restr_rel Eninit (same_tid S \ sb⁼))).
+  apply restr_sym. 
+  apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
+Qed.
 
 Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
 Proof.
@@ -382,16 +431,54 @@ Qed.
 (** ** Continuation properites *)
 (******************************************************************************)
 
-Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : cont_sb_dom S k ⊆₁ E.
+Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_sb_dom S k ⊆₁ E.
 Proof. 
   autounfold with unfolderDb. 
   unfold cont_sb_dom.
   ins; desf.
   { unfold acts_init_set, set_inter in H; desf. }
   autounfold with unfolderDb in H; desf.
-  { eapply WF.(K_inE). apply KK. }
+  { eapply WF.(K_inEninit). apply KK. }
   apply WF.(sbE) in H.
   autounfold with unfolderDb in H; desf.
+Qed.
+
+Lemma cont_cf_domEninit k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_cf_dom S k ⊆₁ Eninit.
+Proof. 
+  autounfold with unfolderDb. 
+  unfold cont_cf_dom.
+  ins; desf.
+  { unfold acts_ninit_set, acts_init_set, set_minus; splits; desf. 
+    red. intros [_ EINITx]. 
+    apply init_tid_K; auto.
+    do 2 eexists; eauto. }
+  unfold dom_rel, codom_rel, seq, eqv_rel, set_union in H; desf.
+  { apply cfEninit in H.
+    unfold seq, eqv_rel in H; desf. }
+  apply sb_seq_Eninit_r in H0; auto. 
+  unfold seq, eqv_rel in H0; desf.
+Qed.
+
+Lemma cont_cf_tid k lang st WF e
+      (KK : K (k, existT _ lang st)) 
+      (cfKe: cont_cf_dom S k e) : 
+  tid e = cont_thread S k.
+Proof. 
+  assert (Eninit e) as NINITe.
+  { eapply cont_cf_domEninit; eauto. }
+  unfold cont_thread, cont_cf_dom in *.
+  edestruct k eqn:EQk.
+  { desf. }
+  assert (Eninit eid) as NINITeid.
+  { eapply K_inEninit; eauto. }
+  autounfold with unfolderDb in cfKe; desf.
+  fold (ES.same_tid S e z).
+  apply same_tid_sym.
+  eapply sb_tid; eauto.
+  autounfold with unfolderDb. 
+  eexists; splits; eauto. 
 Qed.
 
 End EventStructure.
