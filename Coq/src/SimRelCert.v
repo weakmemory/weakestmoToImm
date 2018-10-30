@@ -694,27 +694,15 @@ Proof.
     apply ct_step. left. right.
     apply seq_eqv_l. by split. }
 
-  (* TODO: continue from here *)
-  { rewrite TEH''.(tr_data).
-    rewrite (dom_r (wf_dataE WF_G)).
-    subst G.
-    rewrite (E_E0 thread WF TCCOH).
-    unfolder; ins; desc.
-    eapply H4; splits; eauto.
-    intro.
-    apply H6.
-    apply (@dom_data_D (rstG Gf T thread) Gsc T thread WF_G RELCOV_G); try done.
-    basic_solver 12. }
-
-  { assert (C ⊆₁ D G TC' thread) as CCC.
-    { sin_rewrite sim_trav_step_covered_le.
-      2: by red; eauto.
-      apply C_in_D. }
-    rewrite <- CCC.
-    arewrite (acts_set (ProgToExecution.G state) ⊆₁ C).
-    2: basic_solver.
+  { rewrite ODATA, CACTS.
+    arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
+    rewrite <- id_inter.
+    arewrite (E0 ∩₁ set_compl (E0 \₁ D G TC' thread) ⊆₁ D G TC' thread).
+    { unfolder. intros x [AA BB]. apply NNPP. intros UU.
+      apply BB. desf. }
+    (* apply (@dom_data_D (rstG Gf T thread) Gsc T thread WF_G RELCOV_G); try done. *)
+    (* basic_solver 12. } *)
     admit. }
-  1-5: admit.
 
   desf.
   exists cert_state. eexists.
