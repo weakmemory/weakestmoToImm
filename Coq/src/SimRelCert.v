@@ -106,7 +106,7 @@ Section SimRelCert.
       new_rfv : new_rf ⊆ same_val certLab;
       new_rfl : new_rf ⊆ same_loc certLab;
       new_rf_in_vf  : new_rf ⊆ Gvf;
-      new_rf_iss_sb : new_rf ⊆ ⦗ I ⦘ ⨾ new_rf ∪ Gsb;
+      new_rf_iss_sb : new_rf ⊆ ⦗ I' ⦘ ⨾ new_rf ∪ Gsb;
       new_rf_complete : GR ∩₁ certE ⊆₁ codom_rel new_rf;
       new_rff : functional new_rf⁻¹;
 
@@ -425,10 +425,11 @@ Lemma sim_cert_graph_start TC' thread
   exists q state' new_rf,
     ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
     ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
-    ⟪ SRCG : sim_cert_graph S G sc TC TC' q state' new_rf ⟫.
+    ⟪ SRCG : sim_cert_graph S G sc TC' q state' new_rf ⟫.
 Proof.
   assert (Wf G) as WF by apply SRC.
   assert (imm_consistent G sc) as CON by apply SRC.
+  assert (tc_coherent G sc TC) as TCCOH by apply SRC.
   assert (tc_coherent G sc TC') as TCCOH'.
   { eapply sim_trav_step_coherence.
     2: by apply SRC.
@@ -459,7 +460,7 @@ Proof.
   assert (ES.cont_thread S q <> tid_init) as NINITT.
   { admit. }
   
-  assert (exists state' new_rf, sim_cert_graph S G sc TC TC' q state' new_rf)
+  assert (exists state' new_rf, sim_cert_graph S G sc TC' q state' new_rf)
     as [state' [new_rf HH]].
   2: { eexists. eexists. splits; eauto. }
   cdes SSTATE. cdes SSTATE1.
@@ -616,12 +617,12 @@ Proof.
     exfalso. eapply RMW; eauto. }
   desf.
   
-  set (new_rf := cert_rf G sc TC thread ⨾ ⦗ E0 \₁ D G TC' thread ⦘).
+  set (new_rf := cert_rf G sc TC' thread ⨾ ⦗ E0 \₁ D G TC' thread ⦘).
   set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
   set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
 
   assert (new_rff : functional new_rf⁻¹).
-  { arewrite (new_rf ⊆ cert_rf G sc TC thread).
+  { arewrite (new_rf ⊆ cert_rf G sc TC' thread).
     apply cert_rff; auto. }
   assert (new_rfif : functional new_rfi⁻¹).
   { arewrite (new_rfi ⊆ new_rf); auto.
@@ -738,7 +739,7 @@ Proof.
           acts_set (ProgToExecution.G state'')) as SS.
   { unfold acts_set. by rewrite RACTS. }
 
-  exists cert_state. exists (cert_rf G sc TC thread).
+  exists cert_state. exists (cert_rf G sc TC' thread).
   constructor.
   { red. ins. unfold certLab. desf.
     admit. }
@@ -761,13 +762,18 @@ Proof.
   { admit. }
   { admit. }
   { by etransitivity; [apply cert_rf_in_vf|apply vf_in_furr]. }
-  { arewrite (cert_rf G sc TC thread ⊆ ⦗I ∪₁ set_compl I⦘ ⨾ cert_rf G sc TC thread) at 1
+  { arewrite (cert_rf G sc TC' thread ⊆
+              ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾ cert_rf G sc TC' thread) at 1
       by rewrite set_compl_union_id, seq_id_l.
     rewrite id_union, seq_union_l.
     rewrite non_I_cert_rf; auto.
-    done.
-    all: apply SRC. }
-  { admit. }
+    { done. }
+    eapply sim_trav_step_rel_covered.
+    { red. eauto. }
+    apply SRC. }
+  { rewrite <- cert_rf_mod; auto.
+    rewrite SS, CACTS.
+    basic_solver. }
   { by apply cert_rff. }
   admit.
 Admitted.
