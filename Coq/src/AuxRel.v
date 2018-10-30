@@ -148,6 +148,12 @@ Proof. basic_solver. Qed.
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
 Proof. basic_solver. Qed.
 
+Lemma eq_opt_someE : eq_opt (Some a) ≡₁ eq a.
+Proof. basic_solver. Qed. 
+
+Lemma eq_opt_noneE : eq_opt (None : option A) ≡₁ ∅.
+Proof. basic_solver. Qed. 
+
 Lemma set_subset_union_minus : s ⊆₁ s \₁ s' ∪₁ s'. 
 Proof. 
   by unfold set_minus, set_union, set_subset; clear; intros; tauto.
