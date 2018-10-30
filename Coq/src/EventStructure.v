@@ -225,6 +225,9 @@ Proof. unfold same_tid, transitive. ins. by rewrite H. Qed.
 Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
 Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed. 
 
+Lemma cf_same_tid : cf ⊆ same_tid S.
+Proof. unfold ES.cf. basic_solver. Qed.
+
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
 Proof. unfold ES.cf. basic_solver. Qed.
 
