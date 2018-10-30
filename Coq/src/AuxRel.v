@@ -67,6 +67,9 @@ Proof. basic_solver. Qed.
 Lemma crsE : r⁼ ≡ ⦗⊤₁⦘ ∪ r ∪ r⁻¹.
 Proof. basic_solver. Qed.
 
+Lemma crs_cs : r⁼ ≡ ⦗⊤₁⦘ ∪ r^⋈.
+Proof. basic_solver. Qed. 
+
 Lemma cs_union : (r ∪ r')^⋈  ≡ r^⋈ ∪ r'^⋈.
 Proof. basic_solver. Qed.
 
@@ -150,7 +153,7 @@ Proof.
   by unfold set_minus, set_union, set_subset; clear; intros; tauto.
 Qed.
 
-Lemma set_union_minus : s' ⊆₁s -> s ≡₁ s \₁ s' ∪₁ s'. 
+Lemma set_union_minus : s' ⊆₁ s -> s ≡₁ s \₁ s' ∪₁ s'. 
 Proof. 
   intros. 
   unfold set_equiv; splits; 
@@ -163,6 +166,26 @@ Proof.
   unfold same_relation; splits.
   { by apply inclusion_union_minus. }
   basic_solver.
+Qed.
+
+Lemma minus_eqv_absorb_rr : r' ⨾ ⦗ s ⦘ ≡ ∅₂ -> (r \ r') ⨾ ⦗ s ⦘ ≡ r ⨾ ⦗ s ⦘.
+Proof. 
+  autounfold with unfolderDb.
+  ins; splits; ins; desf.
+  { eexists; splits; eauto. }
+  { eexists; splits; eauto. 
+    red. ins. apply (H x y). 
+    eexists; splits; eauto. } 
+Qed.
+
+Lemma minus_eqv_absorb_rl : ⦗ s ⦘ ⨾ r' ≡ ∅₂ -> ⦗ s ⦘ ⨾ (r \ r') ≡ ⦗ s ⦘ ⨾ r.
+Proof. 
+  autounfold with unfolderDb.
+  ins; splits; ins; desf.
+  { eexists; splits; eauto. }
+  { eexists; splits; eauto. 
+    red. ins. apply (H z y). 
+    eexists; splits; eauto. } 
 Qed.
 
 Lemma cross_minus_compl_l : s × s' \ (set_compl s) × s'' ≡ s × s'.
@@ -190,6 +213,14 @@ Qed.
 Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
 Proof. 
   repeat rewrite compl_top_minus; by apply minus_union_r.
+Qed.
+
+Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
+Proof. 
+  repeat rewrite seq_eqv_lr. 
+  unfold inter_rel.
+  unfold same_relation, inclusion.
+  splits; ins; splits; desf. 
 Qed.
 
 Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
