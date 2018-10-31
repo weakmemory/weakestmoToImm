@@ -66,7 +66,7 @@ Proof.
   assert (nth_error (instrs state) (pc state) <> None) as YY.
   { by rewrite <- ISTEP. }
   apply nth_error_Some in YY.
-  red in TERM. desf; [by inv TERM|].
+  red in TERM.
   rewrite INSTRS in *.
   inv ISTEP0; desf.
   all: omega.
