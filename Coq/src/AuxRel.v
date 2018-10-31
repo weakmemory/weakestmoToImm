@@ -333,6 +333,35 @@ Proof.
   red. eexists. eauto.
 Qed.     
 
+Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
+Proof. basic_solver 30. Qed.
+
+Lemma collect_rel_ct : f □ r⁺ ⊆ (f □ r)⁺.
+Proof.
+  unfolder. ins. desf.
+  induction H.
+  { apply ct_step. eexists. eexists. splits; eauto. }
+  eapply t_trans; eauto.
+Qed.
+
+Lemma collect_rel_irr (HH : irreflexive (f □ r)): irreflexive r.
+Proof. generalize HH. basic_solver 10. Qed.
+
+Lemma collect_rel_acyclic (HH : acyclic (f □ r)): acyclic r.
+Proof.
+  red. red.
+  assert (forall x y, r⁺ x y -> x <> y) as AA.
+  2: { ins. eapply AA; eauto. }
+  ins. induction H; intros BB; subst.
+  { eapply HH. apply ct_step. red.
+    eexists. eexists. splits; eauto. }
+  eapply HH.
+  apply collect_rel_ct.
+  red. eexists. eexists. splits.
+  { eapply t_trans; eauto. }
+  all: done.
+Qed.
+
 Lemma set_collect_restr : 
   forall (s: A -> Prop) (f: A -> B), inj_dom s f ->
   f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).
