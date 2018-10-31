@@ -312,7 +312,7 @@ Notation "'D'" := (D G TC' (ES.cont_thread S q)).
 Notation "'C''"  := (covered TC').
 Notation "'I''"  := (issued TC').
 
-Lemma dom_addrE_in_D : dom_rel (Gaddr ;; <| E0 |>) ⊆₁ D.
+Lemma dom_addrE_in_D : dom_rel (Gaddr ⨾ ⦗ E0 ⦘) ⊆₁ D.
 Proof.
   assert (Wf G) as WF by apply SRC.
   rewrite set_inter_union_r.
@@ -331,7 +331,7 @@ Proof.
   unfold CertExecution2.D; basic_solver 21.
 Qed.
 
-Lemma dom_ctrlE_in_D : dom_rel (Gctrl ;; <| E0 |>) ⊆₁ D.
+Lemma dom_ctrlE_in_D : dom_rel (Gctrl ⨾ ⦗ E0 ⦘) ⊆₁ D.
 Proof.
   assert (Wf G) as WF by apply SRC.
   rewrite set_inter_union_r.
@@ -352,7 +352,7 @@ Proof.
   unfold CertExecution2.D; basic_solver 21.
 Qed.
 
-Lemma dom_rmw_depE_in_D : dom_rel (Grmw_dep ;; <| E0 |>) ⊆₁ D.
+Lemma dom_rmw_depE_in_D : dom_rel (Grmw_dep ⨾ ⦗ E0 ⦘) ⊆₁ D.
 Proof.
   assert (Wf G) as WF by apply SRC.
   rewrite set_inter_union_r.
@@ -374,7 +374,7 @@ Proof.
   rewrite ct_begin; rewrite <- inclusion_t_rt, <- ct_step; basic_solver 12.
 Qed.
 
-Lemma dom_rmwE_in_D : dom_rel (Grmw ;; <| E0 |>) ⊆₁ D.
+Lemma dom_rmwE_in_D : dom_rel (Grmw ⨾ ⦗ E0 ⦘) ⊆₁ D.
 Proof.
   assert (Wf G) as WF by apply SRC.
   rewrite set_inter_union_r.

@@ -251,7 +251,7 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
-Lemma cert_rf_D_rf : cert_rf ;; <| D |> ⊆ rf.
+Lemma cert_rf_D_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
 Proof.
   unfold cert_rf.
   arewrite (E0 ∩₁ R ⊆₁ R) by basic_solver.
@@ -418,7 +418,7 @@ Proof.
   assert (hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
           ⦗ C ⦘ ⨾ hb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ∪
             sb^? ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) as PP.
-  { arewrite (hb^? ⊆ <| C ∪₁ set_compl C |> ;; hb^?) at 1. 
+  { arewrite (hb^? ⊆ ⦗ C ∪₁ set_compl C ⦘ ⨾ hb^?) at 1. 
     { rewrite set_compl_union_id. by rewrite seq_id_l. }
     rewrite id_union, seq_union_l.
     apply union_mori; [done|].
