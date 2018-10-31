@@ -221,6 +221,20 @@ Proof.
   repeat rewrite compl_top_minus; by apply minus_union_r.
 Qed.
 
+Lemma seq_cross_singl_l x y : s' x -> s × s' ⨾ singl_rel x y ≡ s × eq y.
+Proof. 
+  ins. 
+  autounfold with unfolderDb.
+  splits; ins; splits; desf; eauto. 
+Qed.
+
+Lemma seq_cross_singl_r x y : s y -> singl_rel x y ⨾ s × s' ≡ eq x × s'.
+Proof. 
+  ins. 
+  autounfold with unfolderDb.
+  splits; ins; splits; desf; eauto. 
+Qed.
+
 Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
 Proof. 
   repeat rewrite seq_eqv_lr. 
