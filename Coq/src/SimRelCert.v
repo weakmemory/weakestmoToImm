@@ -888,6 +888,7 @@ Lemma simrel_cert_lbl_step TC' h q new_rf
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' new_rf ⟫.
 Proof.
+  assert (ES.Wf S) as WfS by apply SRC.
   destruct LBL_STEP as [lbls ILBL_STEP].
   set (ILBL_STEP_ALT := ILBL_STEP).
   eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
@@ -917,6 +918,9 @@ Proof.
         (* Then this should follow trivially *)
         admit. }
       admit. }
+
+    assert (SE S (h w)) as hwInSE.
+    { admit. }
 
     edestruct simrel_cert_basic_step as [q' [e [e' [lbl [lbl' [S' HH]]]]]]; eauto; desf.
 
@@ -968,7 +972,7 @@ Proof.
     { admit. }
     
     assert (g' □ S'.(hb) ⊆ Ghb) as BHB.
-    { erewrite ESstep.load_step_hb; eauto; [| by apply SRC].
+    { erewrite ESstep.load_step_hb; eauto.
       rewrite collect_rel_union.
       unionL; auto.
       rewrite collect_rel_seqi.
@@ -1017,7 +1021,7 @@ Proof.
         { right; repeat eexists; eauto. }
         unfold not; ins; apply waNSB. 
         destruct H as [[y [SBqdom wEQ]] NCw].
-        erewrite ESstep.step_event_to_act in wEQ; eauto; [ | by apply SRC | admit ].
+        erewrite ESstep.step_event_to_act in wEQ; eauto; [ | admit ].
         eapply gsb; (* TODO: gsb should not depend on simrel *) 
           [ by eauto | by eauto | admit | ]. 
         autounfold with unfolderDb; repeat eexists; splits; eauto. 
@@ -1032,24 +1036,30 @@ Proof.
       (* hb_jf_not_cf *)
       { cdes ES_BSTEP_. 
         unfold same_relation; splits; [|by basic_solver]. 
-        erewrite ESstep.load_step_hb; eauto; [| by apply SRC].
+        erewrite ESstep.load_step_hb; eauto.
         rewrite JF'.
+        rewrite ESstep.basic_step_nupd_cf; eauto.
         rewrite transp_union, transp_singl_rel, crE.
         relsf.
-        repeat rewrite unionA.
-        repeat rewrite seqA.
-        arewrite 
-          (ES.cont_sb_dom S q × eq e ⨾ (Sjf S)⁻¹ ≡ ∅₂)
-          by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
-        arewrite 
-          (⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ⨾ (Sjf S)⁻¹ ≡ ∅₂)
-          by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
-        arewrite 
-          (Shb S ⨾ singl_rel (ES.next_act S) (h w) ≡ ∅₂)
-          by rewrite hbE; [ ESstep.E_seq_e | apply SRC].
-        relsf.
-        admit. }
-      { admit. }
+        repeat rewrite inter_union_l.
+        repeat rewrite inter_union_r.
+        repeat apply inclusion_union_l.
+
+        all: try (
+          try rewrite ES.jfE;
+          try rewrite releaseE;
+          try rewrite hbE; 
+          try (rewrite ES.cont_sb_domE; eauto);
+          try (arewrite (singl_rel (ES.next_act S) (h w) ⊆ eq e × SE S)
+            by autounfold with unfolderDb; ins; desf);
+          try (arewrite (singl_rel (h w) (ES.next_act S) ⊆ SE S × eq e)
+            by autounfold with unfolderDb; ins; desf);
+          by ESstep.E_seq_e
+        ). 
+
+        { apply SRC. }
+        all: admit. }
+
       all: admit. }
 
     exists q', S', (upd h a e).
