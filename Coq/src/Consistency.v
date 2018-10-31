@@ -3,8 +3,6 @@ From promising Require Import Basic.
 From imm Require Import Events.
 Require Import AuxRel EventStructure.
 
-Set Implict Arguments.
-
 Inductive model := Weakest | Weakestmo.
 
 Section Consistency.
@@ -56,7 +54,7 @@ Definition vis :=
   codom_rel (cc ∩ (ew ⨾ sb ⁼)).
 
 (* release sequence *)
-Definition rs := ⦗E⦘ ⨾ ⦗W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
+Definition rs := ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
 
 Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
 
@@ -140,20 +138,17 @@ Qed.
 
 Lemma rsE : rs ≡ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
 Proof.
-unfold rs.
-split; [|basic_solver 12].
-rewrite rtE; relsf; unionL.
-rewrite (ES.sbE WF); basic_solver 21.
-rewrite (dom_r (ES.rmwE WF)) at 1.
-rewrite <- !seqA.
-sin_rewrite inclusion_ct_seq_eqv_r.
-rewrite !seqA.
-arewrite (⦗E⦘ ⨾ ⦗W⦘ ≡ ⦗W⦘ ⨾ ⦗E⦘) by basic_solver.
-hahn_frame.
-rewrite ct_begin.
-rewrite (dom_l (ES.sbE WF)) at 1.
-rewrite (dom_l (ES.rfE WF)) at 1.
-basic_solver 25.
+  split; [|basic_solver 12].
+  unfold rs.
+  rewrite rtE; relsf; unionL.
+  { rewrite (ES.sbE WF); basic_solver 21. }
+  unionR right.
+  rewrite (dom_r (ES.rmwE WF)) at 1.
+  rewrite <- !seqA.
+  sin_rewrite inclusion_ct_seq_eqv_r.
+  rewrite !seqA.
+  hahn_frame.
+  arewrite (⦗E⦘ ⨾ ⦗E ∩₁ W⦘ ≡ ⦗E ∩₁ W⦘) by basic_solver.
 Qed.
 
 Lemma releaseE : release ≡ ⦗E⦘ ⨾ release ⨾ ⦗E⦘.
