@@ -307,16 +307,20 @@ Lemma collect_seq_eqv_lr rr :
   ⦗ f □₁ s ⦘ ⨾ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
 Proof. rewrite collect_seq_eqv_l. by rewrite collect_seq_eqv_r. Qed.
 
-Lemma collect_eq e :f □₁ eq e ≡₁ eq (f e).
+Lemma collect_eq e: f □₁ eq e ≡₁ eq (f e).
 Proof. basic_solver. Qed.
+
+Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
+Proof. basic_solver 30. Qed.
 
 Lemma collect_rel_seq_l
       (INJ : inj_dom (codom_rel r) f) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
+  split; [by apply collect_rel_seqi|].
   autounfold with unfolderDb.
-  split; ins; desf; eauto.
-  all: repeat eexists; eauto.
+  ins; desf; eauto.
+  repeat eexists; eauto.
   apply INJ in H1; desf.
   red. eauto.
 Qed.
@@ -325,16 +329,14 @@ Lemma collect_rel_seq_r
       (INJ : inj_dom (dom_rel r') f) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
+  split; [by apply collect_rel_seqi|].
   autounfold with unfolderDb.
-  split; ins; desf; eauto.
-  all: repeat eexists; eauto.
+  ins; desf; eauto.
+  repeat eexists; eauto.
   symmetry in H1.
   apply INJ in H1; desf.
   red. eexists. eauto.
 Qed.     
-
-Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
-Proof. basic_solver 30. Qed.
 
 Lemma collect_rel_ct : f □ r⁺ ⊆ (f □ r)⁺.
 Proof.
