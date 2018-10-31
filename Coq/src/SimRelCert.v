@@ -69,7 +69,7 @@ Section SimRelCert.
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
   
   Notation "'Gsb'" := (G.(sb)).
-  Notation "'Ghb'" := (G.(imm_hb.hb)).
+  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
 
@@ -288,7 +288,7 @@ Notation "'GW'" := (fun a => is_true (is_w Glab a)).
 Notation "'GR_ex'" := (fun a => R_ex Glab a).
 
 Notation "'Gsb'" := (G.(sb)).
-Notation "'Ghb'" := (G.(imm_hb.hb)).
+Notation "'Ghb'" := (G.(imm_s_hb.hb)).
 Notation "'Grf'" := (G.(rf)).
 Notation "'Gco'" := (G.(co)).
 Notation "'Gvf'" := (G.(furr)).
@@ -923,7 +923,8 @@ Proof.
     assert (ESstep.t_basic e e' S S') as ES_BSTEP.
     { econstructor. do 4 eexists. apply ES_BSTEP_. }
 
-    assert (ES.event_to_act S' e = a) as g'eaEQ.
+    set (g' := ES.event_to_act S').
+    assert (g' e = a) as g'eaEQ.
     { admit. } 
     
     assert (e' = None) as e'NONE.
@@ -954,6 +955,35 @@ Proof.
     assert (ESstep.t_incons e None S S') as ES_STEP_.
     { unfold ESstep.t_incons. auto. }
 
+    assert (g' □ Ssb S' ⊆ Gsb) as SSB.
+    { admit. }
+
+    assert (g □ Shb S ⊆ Ghb) as SHB.
+    { (* We need a lemma stating that. *)
+      admit. }
+    assert (g' □ Shb S ⊆ Ghb) as SHB'.
+    { admit. }
+
+    assert (ES.cont_sb_dom S q × eq e ⊆ S'.(ES.sb)) as SBDSB.
+    { admit. }
+    
+    assert (g' □ S'.(hb) ⊆ Ghb) as BHB.
+    { erewrite ESstep.load_step_hb; eauto; [| by apply SRC].
+      rewrite collect_rel_union.
+      unionL; auto.
+      rewrite collect_rel_seqi.
+      etransitivity.
+      2: { apply rewrite_trans_seq_cr_l.
+           apply imm_s_hb.hb_trans. }
+      apply seq_mori.
+      { by rewrite collect_rel_cr, SHB'. }
+      rewrite collect_rel_union.
+      unionL.
+      { rewrite SBDSB.
+        etransitivity; eauto.
+        apply imm_s_hb.sb_in_hb. }
+      admit. }
+    
     assert (@es_consistent S' Weakestmo) as ES'CONS.
     { econstructor; simpl.
       
@@ -972,32 +1002,32 @@ Proof.
           admit. }
         (* apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa. *)
         (* unfold union in RFwa; desf.  *)
-        { assert (I w) as Iw.
-          { apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa.
-            autounfold with unfolderDb in RFwa; desf. 
-            admit. }
-          apply inclusion_union_r; right. 
-          autounfold with unfolderDb; ins; splits; desf.
-          { erewrite <- SRCC.(hfeq). 
-            { eapply ESstep.step_vis_mon; eauto; apply SRCC. 
-              autounfold with unfolderDb in *. 
-              eexists; splits; eauto; right; repeat eexists; splits; eauto; desf. }
-            autounfold with unfolderDb; splits. 
-            { right; repeat eexists; eauto. }
-            unfold not; ins; apply waNSB. 
-            destruct H as [[y [SBqdom wEQ]] NCw].
-            erewrite ESstep.step_event_to_act in wEQ; eauto; [ | by apply SRC | admit ].
-            eapply gsb; (* TODO: gsb should not depend on simrel *) 
-              [ by eauto | by eauto | admit | ]. 
-            autounfold with unfolderDb; repeat eexists; splits; eauto. 
-            unfold ES.cont_sb_dom in SBqdom; desf.
-            { admit. }
-            unfold set_inter in SBqdom.
-            destruct SBqdom as [yTID ySBDOM].
-            unfold dom_rel in ySBDOM. 
-            destruct ySBDOM as [y' yy'SBrefl].
-            admit. }
-          cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega. } }
+        assert (I w) as Iw.
+        { apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa.
+          autounfold with unfolderDb in RFwa; desf. 
+          admit. }
+        apply inclusion_union_r; right. 
+        autounfold with unfolderDb; ins; splits; desf.
+        2: cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega.
+        erewrite <- SRCC.(hfeq). 
+        { eapply ESstep.step_vis_mon; eauto; apply SRCC. 
+          autounfold with unfolderDb in *. 
+          eexists; splits; eauto; right; repeat eexists; splits; eauto; desf. }
+        autounfold with unfolderDb; splits. 
+        { right; repeat eexists; eauto. }
+        unfold not; ins; apply waNSB. 
+        destruct H as [[y [SBqdom wEQ]] NCw].
+        erewrite ESstep.step_event_to_act in wEQ; eauto; [ | by apply SRC | admit ].
+        eapply gsb; (* TODO: gsb should not depend on simrel *) 
+          [ by eauto | by eauto | admit | ]. 
+        autounfold with unfolderDb; repeat eexists; splits; eauto. 
+        unfold ES.cont_sb_dom in SBqdom; desf.
+        { admit. }
+        unfold set_inter in SBqdom.
+        destruct SBqdom as [yTID ySBDOM].
+        unfold dom_rel in ySBDOM. 
+        destruct ySBDOM as [y' yy'SBrefl].
+        admit. }
       
       (* hb_jf_not_cf *)
       { cdes ES_BSTEP_. 
@@ -1019,6 +1049,7 @@ Proof.
           by rewrite hbE; [ ESstep.E_seq_e | apply SRC].
         relsf.
         admit. }
+      { admit. }
       all: admit. }
 
     exists q', S', (upd h a e).

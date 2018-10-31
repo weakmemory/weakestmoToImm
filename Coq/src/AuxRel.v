@@ -364,6 +364,12 @@ Proof.
   all: done.
 Qed.
 
+Lemma collect_rel_cr : f □ r^? ⊆  (f □ r)^?.
+Proof.
+  unfolder. ins; desf; auto.
+  right. eexists. eexists. eauto.
+Qed.
+
 Lemma set_collect_restr : 
   forall (s: A -> Prop) (f: A -> B), inj_dom s f ->
   f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).

@@ -1181,7 +1181,7 @@ Qed.
 Lemma load_step_sw e e' S S' 
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
-  sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗eq e⦘ ⨾ ⦗Acq S'⦘. 
+  sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘. 
 Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   assert (ES.Wf S') as wfE'.
@@ -1219,7 +1219,7 @@ Lemma load_step_hb lang k k' st st' e e' S S'
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
   hb S' ≡ hb S ∪ 
-     (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗eq e⦘ ⨾ ⦗Acq S'⦘). 
+     (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘). 
 Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP_; desf.
   unfold hb at 1.
@@ -1234,8 +1234,8 @@ Proof.
     basic_solver. }
   { unfold same_relation; splits; [|basic_solver].
     rewrite ES.cont_sb_domE, releaseE; eauto; by E_seq_e. }
-  { unfold same_relation; splits; [|basic_solver].
-    rewrite ES.cont_sb_domE, ES.sbE, swE; eauto; by E_seq_e. }
+  unfold same_relation; splits; [|basic_solver].
+  rewrite ES.cont_sb_domE, ES.sbE, swE; eauto; by E_seq_e.
 Qed.
     
 End ESstep.
