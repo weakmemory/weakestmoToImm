@@ -1042,7 +1042,7 @@ Proof.
           (ES.cont_sb_dom S q × eq e ⨾ (Sjf S)⁻¹ ≡ ∅₂)
           by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
         arewrite 
-          (⦗eq e⦘ ⨾ ⦗SAcq S'⦘ ⨾ (Sjf S)⁻¹ ≡ ∅₂)
+          (⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ⨾ (Sjf S)⁻¹ ≡ ∅₂)
           by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
         arewrite 
           (Shb S ⨾ singl_rel (ES.next_act S) (h w) ≡ ∅₂)
