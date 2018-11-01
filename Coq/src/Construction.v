@@ -970,6 +970,15 @@ Proof.
         clos_refl_sym_mori.
 Qed.
 
+Lemma next_act_step_lt e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  ES.next_act S < ES.next_act S'.
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  unfold opt_ext in *. desf.
+  all: rewrite EVENT'; omega.
+Qed.
+
 Lemma e2a_step_eq_dom e e' S S'
       (WF : ES.Wf S)
       (BSTEP : t_basic e e' S S') :
@@ -994,12 +1003,27 @@ Proof.
       (* by rewrite DD, CC. *) }
   rewrite CC.
   arewrite (sb S' ⨾ ⦗eq x⦘ ≡ sb S ⨾ ⦗eq x⦘).
-  { admit. }
+  { rewrite SB'. relsf.
+    rewrite !seq_eqv_cross_r.
+    arewrite (eq x ∩₁ eq (ES.next_act S) ≡₁ ∅).
+    { split; [|basic_solver].
+      unfolder. ins. desf.
+      red in SX. omega. }
+    arewrite (eq x ∩₁ eq_opt e' ≡₁ ∅).
+    { split; [|basic_solver].
+      unfolder. ins. desf.
+      unfold opt_ext in EEQ. desf.
+      red in SX. omega. }
+    basic_solver. }
   rewrite (dom_l WF.(ES.sbE)). rewrite !seqA.
   arewrite (⦗fun e => tid S' e = tid S x⦘ ⨾ ⦗E S⦘ ≡
             ⦗fun e => tid S  e = tid S x⦘ ⨾ ⦗E S⦘).
   { admit. }
-  admit.
+  erewrite countNatP_lt_eq. done.
+  { eapply next_act_step_lt; eauto. }
+  ins.
+  apply dom_eqv1 in EE. destruct EE as [_ EE].
+  apply dom_eqv1 in EE. apply EE.
 Admitted.
 
 (******************************************************************************)
