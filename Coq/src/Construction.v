@@ -1,7 +1,7 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events. 
+From imm Require Import Events AuxRel. 
 Require Import AuxRel AuxDef EventStructure Consistency.
 
 Export ListNotations.
@@ -979,22 +979,57 @@ Proof.
   all: rewrite EVENT'; omega.
 Qed.
 
+Lemma tidlab_step_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  << TIDEQ : eq_dom (E S) (tid S') (tid S) >> /\
+  << LABEQ : eq_dom (E S) (lab S') (lab S) >>.
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  rewrite TID', LAB'. unnw. unfold eq_dom.
+  splits; ins; desf.
+  all: unfold upd_opt.
+  all: assert (x <> ES.next_act S) as HH by (red in SX; omega).
+  all: unfold opt_ext in *.
+  all: desf; rewrite updo; auto; [|red in SX; omega].
+  all: rewrite updo; auto.
+Qed.
+
+Lemma tid_step_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (tid S') (tid S).
+Proof. eapply tidlab_step_eq_dom; eauto. Qed.
+
+Lemma lab_step_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (lab S') (lab S).
+Proof. eapply tidlab_step_eq_dom; eauto. Qed.
+
+Lemma loc_step_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (loc S') (loc S).
+Proof.
+  unfold Events.loc. red. ins.
+  assert ((lab S') x = (lab S) x) as AA.
+  2: by rewrite AA.
+  eapply lab_step_eq_dom; eauto.
+Qed.
+
 Lemma e2a_step_eq_dom e e' S S'
       (WF : ES.Wf S)
       (BSTEP : t_basic e e' S S') :
   eq_dom (E S) (ES.event_to_act S') (ES.event_to_act S).
 Proof.
   cdes BSTEP. cdes BSTEP_.
-  red. ins.
+  red. intros x. ins.
   unfold ES.event_to_act.
   assert ((Einit S') x <-> (Einit S) x) as AA.
   { edestruct basic_step_acts_init_set as [AA BB]; eauto. }
   assert ((loc S') x = (loc S) x) as BB.
-  { admit. }
+  { eapply loc_step_eq_dom; eauto. }
   desf; try by intuition.
   assert ((tid S') x = (tid S) x) as CC.
-  { admit. }
-
+  { eapply tid_step_eq_dom; eauto. }
+  
   assert (countNatP (dom_rel (⦗Tid_ S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘)) (ES.next_act S') =
           countNatP (dom_rel (⦗Tid_ S  (tid S  x)⦘ ⨾ sb S  ⨾ ⦗eq x⦘)) (ES.next_act S ))
     as DD.
@@ -1016,14 +1051,18 @@ Proof.
       red in SX. omega. }
     basic_solver. }
   rewrite (dom_l WF.(ES.sbE)). rewrite !seqA.
-  arewrite (⦗fun e => tid S' e = tid S x⦘ ⨾ ⦗E S⦘ ≡
-            ⦗fun e => tid S  e = tid S x⦘ ⨾ ⦗E S⦘).
-  { admit. }
+  seq_rewrite <- !id_inter.
+  arewrite ((fun e => tid S' e = tid S x) ∩₁ E S ≡₁
+            (fun e => tid S  e = tid S x) ∩₁ E S).
+  { split.
+    all: unfolder; ins; desf.
+    all: splits; auto.
+    all: rewrite <- H.
+    symmetry.
+    all: eapply tid_step_eq_dom; eauto. }
   erewrite countNatP_lt_eq. done.
   { eapply next_act_step_lt; eauto. }
-  ins.
-  apply dom_eqv1 in EE. destruct EE as [_ EE].
-  apply dom_eqv1 in EE. apply EE.
+  ins. apply dom_eqv1 in EE. apply EE.
 Admitted.
 
 (******************************************************************************)
