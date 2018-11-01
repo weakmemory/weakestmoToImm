@@ -2,6 +2,7 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 
 Set Implicit Arguments.
+Local Open Scope program_scope.
 
 Section AuxRel.
 
@@ -49,11 +50,11 @@ Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold clos_sym clos_refl_sym eq_opt compl_rel : unfolderDb. 
+Hint Unfold clos_sym clos_refl_sym img_rel eq_opt compl_rel : unfolderDb. 
 
 Section Props.
 
-Variables A B : Type.
+Variables A B C : Type.
 Variable f g : A -> B.
 Variable a : A.
 Variable b : B.
@@ -268,6 +269,26 @@ Proof.
   desf.
   all: rewrite LL.
   all: basic_solver.
+Qed.
+
+Lemma set_collect_compose (h : B -> C) : h □₁ (f □₁ s) ≡₁ (h ∘ f) □₁ s.
+Proof. 
+  autounfold with unfolderDb. unfold set_subset. 
+  ins; splits; ins; splits; desf; eauto.
+Qed.
+
+Lemma img_rel_eqv_eq (h : A -> A) : ⦗s⦘ ⨾ ↑ h ⊆ eq -> s ≡₁ h □₁ s.
+Proof. 
+  autounfold with unfolderDb; unfold img_rel, set_subset.
+  ins; splits; ins; splits; desf.
+  { specialize (H x (h x)).
+    eexists; splits; eauto.
+    symmetry; apply H.
+    eexists; splits; eauto. }
+  specialize (H y (h y)).
+  arewrite (h y = y); auto.
+  symmetry; apply H.
+  eexists; splits; eauto. 
 Qed.
 
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
