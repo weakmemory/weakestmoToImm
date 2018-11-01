@@ -52,6 +52,8 @@ Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
+Notation "'Tid_' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
+
 Definition t_basic_
            (lang : Language.t)
            (k k' : cont_label)
@@ -322,7 +324,7 @@ Lemma basic_step_acts_ninit_set_e
       (BSTEP : t_basic e e' S S')
       (wfE: ES.Wf S) :
   ~ Einit S' e.
-Proof. 
+Proof.
   cdes BSTEP; cdes BSTEP_.
   unfold ES.acts_init_set.
   red. autounfold with unfolderDb. intros [_ TIDe].
@@ -331,9 +333,10 @@ Proof.
   rewrite <- TIDe. 
   rewrite TID'. 
   edestruct e'; unfold upd_opt; desf.
-  { rewrite updo. by rewrite upds. 
-    unfold opt_ext in EEQ; omega. }
-    by rewrite upds. 
+  2: by rewrite upds. 
+  rewrite updo.
+  { by rewrite upds. }
+  unfold opt_ext in EEQ. omega.
 Qed.
 
 Lemma basic_step_acts_ninit_set_e' e e' S S'
@@ -967,10 +970,36 @@ Proof.
         clos_refl_sym_mori.
 Qed.
 
-Lemma step_event_to_act e e' S S'
-      (BSTEP : t_basic e e' S S')
-      (STEP_: t_ e e' S S') (wfE: ES.Wf S) :
-  eq_dom (E S) (ES.event_to_act S) (ES.event_to_act S').
+Lemma e2a_step_eq_dom e e' S S'
+      (WF : ES.Wf S)
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (ES.event_to_act S') (ES.event_to_act S).
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  red. ins.
+  unfold ES.event_to_act.
+  assert ((Einit S') x <-> (Einit S) x) as AA.
+  { edestruct basic_step_acts_init_set as [AA BB]; eauto. }
+  assert ((loc S') x = (loc S) x) as BB.
+  { admit. }
+  desf; try by intuition.
+  assert ((tid S') x = (tid S) x) as CC.
+  { admit. }
+
+  assert (countNatP (dom_rel (⦗Tid_ S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘)) (ES.next_act S') =
+          countNatP (dom_rel (⦗Tid_ S  (tid S  x)⦘ ⨾ sb S  ⨾ ⦗eq x⦘)) (ES.next_act S ))
+    as DD.
+  2: { admit.
+    (* TODO: It doesn't work for some reason :( *)
+      (* by rewrite DD, CC. *) }
+  rewrite CC.
+  arewrite (sb S' ⨾ ⦗eq x⦘ ≡ sb S ⨾ ⦗eq x⦘).
+  { admit. }
+  rewrite (dom_l WF.(ES.sbE)). rewrite !seqA.
+  arewrite (⦗fun e => tid S' e = tid S x⦘ ⨾ ⦗E S⦘ ≡
+            ⦗fun e => tid S  e = tid S x⦘ ⨾ ⦗E S⦘).
+  { admit. }
+  admit.
 Admitted.
 
 (******************************************************************************)
@@ -1257,5 +1286,5 @@ Proof.
   unfold same_relation; splits; [|basic_solver].
   rewrite ES.cont_sb_domE, ES.sbE, swE; eauto; by E_seq_e.
 Qed.
-    
+
 End ESstep.

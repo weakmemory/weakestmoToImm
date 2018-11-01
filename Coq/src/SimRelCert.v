@@ -952,8 +952,8 @@ Proof.
         admit.
         cdes ES_BSTEP_; rewrite EVENT; eauto. } }
 
-    assert (ESstep.t_incons e None S S') as ES_STEP_.
-    { unfold ESstep.t_incons. auto. }
+    assert (ESstep.t_ e None S S') as ES_STEP_.
+    { unfold ESstep.t_. auto. }
 
     assert (g' □ Ssb S' ⊆ Gsb) as SSB.
     { admit. }
@@ -1017,7 +1017,7 @@ Proof.
         { right; repeat eexists; eauto. }
         unfold not; ins; apply waNSB. 
         destruct H as [[y [SBqdom wEQ]] NCw].
-        erewrite ESstep.step_event_to_act in wEQ; eauto; [ | by apply SRC | admit ].
+        erewrite ESstep.e2a_step_eq_dom in wEQ; eauto; [ | by apply SRC | admit ].
         eapply gsb; (* TODO: gsb should not depend on simrel *) 
           [ by eauto | by eauto | admit | ]. 
         autounfold with unfolderDb; repeat eexists; splits; eauto. 

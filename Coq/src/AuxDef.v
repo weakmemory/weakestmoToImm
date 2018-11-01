@@ -86,3 +86,17 @@ Proof.
   { apply H in x0. desf. }
   apply H in y1. desf.
 Qed.
+
+Lemma countNatP_empty n : countNatP ∅ n = 0.
+Proof. induction n; simpls; desf. Qed.
+
+Lemma countNatP_lt_eq (s : nat -> Prop) m n (LT : m < n) (HH : forall e (EE : s e), e < m):
+  countNatP s n = countNatP s m.
+Proof.
+  generalize dependent m.
+  induction n; ins.
+  { omega. }
+  apply le_lt_or_eq in LT. desf; simpls.
+  2: { apply IHn; auto. omega. }
+  all: exfalso; apply HH in s0; omega.
+Qed.
