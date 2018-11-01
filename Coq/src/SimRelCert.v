@@ -177,6 +177,8 @@ Section SimRelCert.
       tr_step : isim_trav_step G sc qtid TC TC';
 
       ghtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
+      
+      hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
 
       hinj : inj_dom hdom h;
       himg : h □₁ hdom ⊆₁ SE;
@@ -211,12 +213,21 @@ Section SimRelCert.
     congruence.
   Qed.
 
-  Lemma h_ksb_dom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
-  Proof.
-    admit. 
-  Admitted.
+  Lemma sbk_in_hdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Proof. 
+    rewrite set_collect_union.
+    arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
+    { rewrite set_collect_compose.
+      apply fixset_set_fixpoint. 
+      apply SRC. }
+    apply set_subset_union_r2.
+  Qed.
 
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
+  Proof.
+  Admitted.
+
+  Lemma new_rf_dom : dom_rel new_rf ⊆₁ hdom.
   Proof.
   Admitted.
 
@@ -313,6 +324,12 @@ Notation "'Gppo'" := (G.(ppo)).
 
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
+
+Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
+Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
+Notation "'hdom' k" := 
+  (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ (ES.cont_thread S k)) ∪₁ (sbq_dom k))
+    (at level 1, only parsing).
 
 Variable SRC : simrel prog S G sc TC f.
 
@@ -831,7 +848,10 @@ Proof.
     rewrite set_unionK;
     apply SRC.
 
-  1-3: by narrow_hdom q CsbqDOM.
+  { by narrow_hdom q CsbqDOM. }
+  { admit. }
+  { by narrow_hdom q CsbqDOM. }
+  { by narrow_hdom q CsbqDOM. }
   { admit. }
   { apply SRC.(ftid). } 
   { apply SRC.(flab). }
@@ -1076,7 +1096,16 @@ Proof.
 
         { apply SRC. }
         { rewrite seq_cross_singl_l; auto. 
-          admit. } 
+          rewrite sbk_in_hdom; eauto.
+          arewrite (eq (h w) ⊆₁ h □₁ hdom q).
+          { rewrite <- collect_eq.
+            apply set_collect_mori; auto. 
+            arewrite (eq w ⊆₁ dom_rel new_rf).
+            { autounfold with unfolderDb.
+              ins; desf; eexists; eauto. }
+            eapply new_rf_dom; eauto. }
+          rewrite <- restr_cross, restr_relE.
+          by rewrite SRCC.(himgNcf). }
           
         all: admit. }
 
