@@ -10,6 +10,7 @@ Section AuxRel.
   Variable cond : A -> Prop.
   Variables s s' : A -> Prop.
   Variable f g : A -> B.
+  Variable h : A -> A.
   Variables r r' : relation A.
 
   Definition clos_sym : relation A := fun x y => r x y \/ r y x. 
@@ -37,8 +38,10 @@ Section AuxRel.
   Definition restr_fun := fun x => 
     if excluded_middle_informative (s x) then f x else g x.
 
-End AuxRel.
+  Definition fixset := 
+    forall (x : A) (SX : s x), x = h x.
 
+End AuxRel.
 
 Notation "⊤₁" := set_full.
 Notation "⊤₂" := (fun _ _ => True).
@@ -50,12 +53,15 @@ Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold clos_sym clos_refl_sym img_rel eq_opt compl_rel : unfolderDb. 
+Hint Unfold 
+     clos_sym clos_refl_sym 
+     img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
 
 Variables A B C : Type.
 Variable f g : A -> B.
+Variable h : A -> A.
 Variable a : A.
 Variable b : B.
 Variables s s' s'' : A -> Prop.
@@ -271,24 +277,35 @@ Proof.
   all: basic_solver.
 Qed.
 
-Lemma set_collect_compose (h : B -> C) : h □₁ (f □₁ s) ≡₁ (h ∘ f) □₁ s.
+Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq.
+Proof. 
+  split; autounfold with unfolderDb.
+  { ins; desf; auto. }
+  ins; desf; auto.
+  apply (H x (h x)).
+  eauto. 
+Qed.
+
+Lemma fixset_set_fixpoint : fixset s h -> s ≡₁ h □₁ s.
+Proof. 
+  autounfold with unfolderDb; unfold set_subset.
+  intros FIX.
+  splits. 
+  { ins. eexists. 
+    specialize (FIX x). 
+    splits; [|symmetry]; eauto. } 
+  ins; desf. 
+  erewrite <- (FIX y); auto. 
+Qed.
+
+(* Lemma fixset_compose (f' : A -> B) (g' : B -> C) :  *)
+(*   fixset s g' ∘ f' ->  *)
+
+Lemma set_collect_compose (f' : A -> B) (g' : B -> C) :
+  g' □₁ (f' □₁ s) ≡₁ (g' ∘ f') □₁ s.
 Proof. 
   autounfold with unfolderDb. unfold set_subset. 
   ins; splits; ins; splits; desf; eauto.
-Qed.
-
-Lemma img_rel_eqv_eq (h : A -> A) : ⦗s⦘ ⨾ ↑ h ⊆ eq -> s ≡₁ h □₁ s.
-Proof. 
-  autounfold with unfolderDb; unfold img_rel, set_subset.
-  ins; splits; ins; splits; desf.
-  { specialize (H x (h x)).
-    eexists; splits; eauto.
-    symmetry; apply H.
-    eexists; splits; eauto. }
-  specialize (H y (h y)).
-  arewrite (h y = y); auto.
-  symmetry; apply H.
-  eexists; splits; eauto. 
 Qed.
 
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
@@ -582,6 +599,18 @@ Qed.
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_subset --> eq ==> impl as inj_dom_mori.
 Proof. unfold impl, inj_dom. basic_solver. Qed.
+
+Add Parametric Morphism A : (@fixset A) with signature 
+    set_equiv ==> eq ==> iff as fixset_more.
+Proof. 
+  intros s s' Heq f. red. 
+  unfold fixset.
+  splits; ins; specialize (H x); apply H; auto; apply Heq; auto.
+Qed.
+
+Add Parametric Morphism A : (@fixset A) with signature 
+  set_subset --> eq ==> impl as fixset_mori.
+Proof. unfold impl, fixset. basic_solver. Qed.
 
 Add Parametric Morphism A : (@set_compl A) with signature 
   set_equiv ==> set_equiv as set_compl_more.
