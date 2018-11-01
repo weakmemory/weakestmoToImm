@@ -176,7 +176,7 @@ Section SimRelCert.
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
-      hgtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
+      ghtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
 
       hinj : inj_dom hdom h;
       himg : h □₁ hdom ⊆₁ SE;
@@ -198,6 +198,23 @@ Section SimRelCert.
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
     }.
+
+  Lemma hgtrip (SRC : simrel_cert) : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
+  Proof. 
+    unfold seq, eqv_rel, set_collect, img_rel, inclusion, compose.
+    intros x y [z [[zEQ [a [DOM xEQ]]] yEQ]].
+    rewrite <- xEQ, yEQ, <- zEQ.
+    arewrite (a = g x); auto.
+    apply ghtrip; auto.
+    apply seq_eqv_l; splits; auto.
+    unfold img_rel, compose.
+    congruence.
+  Qed.
+
+  Lemma h_ksb_dom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Proof.
+    admit. 
+  Admitted.
 
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
@@ -1058,6 +1075,9 @@ Proof.
         ). 
 
         { apply SRC. }
+        { rewrite seq_cross_singl_l; auto. 
+          admit. } 
+          
         all: admit. }
 
       all: admit. }
