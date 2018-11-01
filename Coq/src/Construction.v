@@ -4,6 +4,8 @@ From promising Require Import Basic.
 From imm Require Import Events AuxRel. 
 Require Import AuxRel AuxDef EventStructure Consistency.
 
+Set Implicit Arguments.
+
 Export ListNotations.
 
 Module ESstep.
@@ -845,7 +847,7 @@ Lemma basic_step_nupd_cf lang k k' st st' e S S'
       (wfE: ES.Wf S) :
   cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈.
 Proof. 
-  rewrite (basic_step_cf lang k k' st st' e None S S'); auto. 
+  erewrite basic_step_cf; eauto. 
   unfold eq_opt.
   basic_solver 42.
 Qed.
@@ -856,7 +858,7 @@ Lemma basic_step_cf_restr e e' S S'
   restr_rel (E S) (cf S') ≡ cf S.
 Proof. 
   cdes BSTEP; cdes BSTEP_.
-  rewrite (basic_step_cf lang k k' st st' e e' S S'); auto. 
+  erewrite basic_step_cf; eauto. 
   repeat rewrite restr_union.
   repeat rewrite restr_relE.
   arewrite (⦗E S⦘ ⨾ (ES.cont_cf_dom S k × eq e) ^⋈ ⨾ ⦗E S⦘ ≡ ∅₂)
@@ -873,7 +875,7 @@ Lemma basic_step_cf_mon e e' S S'
   S.(ES.cf) ⊆ S'.(ES.cf).
 Proof.
   cdes BSTEP; cdes BSTEP_.
-  rewrite (basic_step_cf lang k k' st st' e e' S S'); auto. 
+  erewrite basic_step_cf with (S':=S'); eauto.  
   rewrite unionA.
   apply inclusion_union_r1.
 Qed.  
@@ -1065,6 +1067,21 @@ Proof.
   ins. apply dom_eqv1 in EE. apply EE.
 Admitted.
 
+Lemma type_step_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  << REQ : E S ∩₁ R S' ≡₁ E S ∩₁ R S >> /\
+  << WEQ : E S ∩₁ W S' ≡₁ E S ∩₁ W S >> /\
+  << FEQ : E S ∩₁ F S' ≡₁ E S ∩₁ F S >>.
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  unfold is_r, is_w, is_f.
+  generalize (lab_step_eq_dom BSTEP). unfold eq_dom.
+  intros HH.
+  splits; split; unfolder; ins; desf.
+  all: try by (rewrite HH in Heq0; [|by red]; destruct ((lab S) x); desf).
+  all: try by (rewrite <- HH in Heq0; [|by red]; destruct ((lab S') x); desf).
+Qed.
+
 (******************************************************************************)
 (** ** Well-formedness *)
 (******************************************************************************)
@@ -1080,26 +1097,37 @@ Proof. Admitted.
 (** ** Load step properties *)
 (******************************************************************************)
 
+Lemma load_step_E e e' S S'
+      (BSTEP : t_basic e e' S S')
+      (LSTEP: t_load e e' S S') :
+  E S' ≡₁ E S ∪₁ eq e.
+Proof. 
+  assert (e' = None) by inv LSTEP. subst.
+  cdes LSTEP; cdes BSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  unfold upd_opt in LAB'.
+  unfold ES.acts_set. rewrite EVENT'. subst.
+  simpls.
+  unfolder. split; ins; desf; omega.
+Qed.
+
+Lemma load_step_R e e' S S'
+      (LSTEP: t_load e e' S S') :
+  R S' e.
+Proof. apply LSTEP. Qed.
+
 Lemma load_step_r e e' S S'
       (BSTEP : t_basic e e' S S')
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
   E S' ∩₁ R S' ≡₁ (E S ∩₁ R S) ∪₁ eq e.
 Proof. 
-  assert (e' = None) by inv LSTEP. subst.
-  cdes LSTEP; cdes BSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
-  unfold upd_opt in LAB'.
-  rewrite basic_step_nupd_acts_set; eauto.
+  erewrite load_step_E; eauto.
   rewrite set_inter_union_l.
-  arewrite (E S ∩₁ R S' ≡₁ E S ∩₁ R S ).
-  { unfold is_r.
-    rewrite LAB'.
-    unfolder. splits; intros x [xE HH]; desf.
-    all: assert (x <> ES.next_act S) as AA by omega.
-    all: rewrite updo in *; auto.
-    all: destruct ((lab S) x); desf. }
-  arewrite (eq e ∩₁ R S' ≡₁ eq e); [|by auto].
-  basic_solver. 
+  arewrite (eq e ∩₁ R S' ≡₁ eq e).
+  { generalize (load_step_R LSTEP).
+    basic_solver. }
+  arewrite (E S ∩₁ R S' ≡₁ E S ∩₁ R S). 2: done.
+  eapply type_step_eq_dom; eauto.
 Qed.  
 
 Lemma load_step_w e e' S S'
@@ -1108,22 +1136,17 @@ Lemma load_step_w e e' S S'
       (wfE: ES.Wf S) :
   E S' ∩₁ W S' ≡₁ E S ∩₁ W S.
 Proof. 
-  assert (e' = None) by inv LSTEP. subst.
-  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
-  unfold upd_opt in LAB'.
-  rewrite basic_step_nupd_acts_set; eauto.
+  assert (R S' e) as AA.
+  { eapply load_step_R; eauto. }
+  erewrite load_step_E; eauto.
   rewrite set_inter_union_l.
-  arewrite (E S ∩₁ W S' ≡₁ E S ∩₁ W S ).
-  { unfold is_w.
-    rewrite LAB'.
-    unfolder. splits; intros x [xE HH]; desf.
-    all: assert (x <> ES.next_act S) as AA by omega.
-    all: rewrite updo in *; auto.
-    all: destruct ((lab S) x); desf. }
-  arewrite (eq e ∩₁ W S' ≡₁ ∅); [|by rewrite set_union_empty_r]. 
-  autounfold with unfolderDb; unfold set_subset; splits; [|basic_solver].
-  intros x [eEQ HH]; desf.
-  type_solver.
+  arewrite (E S ∩₁ W S' ≡₁ E S ∩₁ W S).
+  { eapply type_step_eq_dom; eauto. }
+  arewrite (eq e ∩₁ W S' ≡₁ ∅).
+  { split; [|basic_solver].
+    unfolder. ins. desf.
+    type_solver. }
+  basic_solver.
 Qed.  
 
 Lemma load_step_f e e' S S'
@@ -1132,23 +1155,18 @@ Lemma load_step_f e e' S S'
       (wfE: ES.Wf S) :
   E S' ∩₁ F S' ≡₁ E S ∩₁ F S.
 Proof. 
-  assert (e' = None) by inv LSTEP. subst.
-  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
-  unfold upd_opt in LAB'.
-  rewrite basic_step_nupd_acts_set; eauto.
+  assert (R S' e) as AA.
+  { eapply load_step_R; eauto. }
+  erewrite load_step_E; eauto.
   rewrite set_inter_union_l.
   arewrite (E S ∩₁ F S' ≡₁ E S ∩₁ F S).
-  { unfold is_f.
-    rewrite LAB'.
-    unfolder. splits; intros x [xE HH]; desf.
-    all: assert (x <> ES.next_act S) as AA by omega.
-    all: rewrite updo in *; auto.
-    all: destruct ((lab S) x); desf. }
-  arewrite (eq e ∩₁ F S' ≡₁ ∅); [|by rewrite set_union_empty_r]. 
-  autounfold with unfolderDb; unfold set_subset; splits; [|basic_solver].
-  intros x [eEQ HH]; desf.
-  type_solver.
-Qed.  
+  { eapply type_step_eq_dom; eauto. }
+  arewrite (eq e ∩₁ F S' ≡₁ ∅).
+  { split; [|basic_solver].
+    unfolder. ins. desf.
+    type_solver. }
+  basic_solver.
+Qed.
 
 Lemma load_step_rel e e' S S'
       (BSTEP : t_basic e e' S S')
