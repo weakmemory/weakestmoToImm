@@ -64,7 +64,7 @@ Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
 Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
 
-Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf)^?.
+Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf).
 
 Definition cont_thread S (cont : cont_label) : thread_id :=
   match cont with
@@ -111,6 +111,7 @@ Notation "'rmw'"   := S.(ES.rmw).
 Notation "'ew'"    := S.(ES.ew).
 Notation "'jf'"    := S.(ES.jf).
 Notation "'rf'"    := S.(ES.rf).
+Notation "'fr'"    := S.(ES.fr).
 Notation "'co'"    := S.(ES.co).
 Notation "'lab'"   := S.(ES.lab).
 Notation "'cf'"    := S.(ES.cf).
@@ -425,6 +426,20 @@ Proof.
   apply funeq_minus.
   generalize WF.(jfv) WF.(ewv) funeq_seq.
   basic_solver.
+Qed.
+
+Lemma frE WF : fr ≡ ⦗E⦘ ⨾ fr ⨾ ⦗E⦘.
+Proof.
+  unfold ES.fr. rewrite WF.(rfE).
+  rewrite WF.(coE).
+  basic_solver 10.
+Qed.
+
+Lemma frD WF : fr ≡ ⦗R⦘ ⨾ fr ⨾ ⦗W⦘.
+Proof.
+  unfold ES.fr. rewrite WF.(rfD).
+  rewrite WF.(coD).
+  basic_solver 10.
 Qed.
 
 (******************************************************************************)

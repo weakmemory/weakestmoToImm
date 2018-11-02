@@ -1,7 +1,7 @@
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events.
-Require Import AuxRel EventStructure.
+Require Import AuxRel EventStructure AuxDef.
 
 Inductive model := Weakest | Weakestmo.
 
@@ -17,6 +17,7 @@ Notation "'rmw'" := S.(ES.rmw).
 Notation "'ew'" := S.(ES.ew).
 Notation "'jf'" := S.(ES.jf).
 Notation "'rf'" := S.(ES.rf).
+Notation "'fr'" := S.(ES.fr).
 Notation "'co'" := S.(ES.co).
 Notation "'cf'" := S.(ES.cf).
 Notation "'cc'" := S.(ES.cc).
@@ -65,7 +66,7 @@ Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 Definition hb : relation eventid := (sb ∪ sw)⁺.
 
 Definition co_strong : relation eventid :=
-  ⦗ W ⦘ ⨾ hb ⨾ ⦗ W ⦘ ∩ same_loc.
+  (⦗ W ⦘ ⨾ hb ⨾ ⦗ W ⦘) ∩ same_loc.
 
 Definition mco (m : model) : relation eventid :=
   match m with
@@ -74,7 +75,7 @@ Definition mco (m : model) : relation eventid :=
   end.
 
 Definition mfr (m : model) : relation eventid :=
-  (rf⁻¹ ⨾ mco m) \ cf^?.
+  (rf⁻¹ ⨾ mco m) \ cf.
 
 Definition eco (m : model) : relation eventid :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
@@ -131,6 +132,44 @@ Lemma hb_sb_sw : hb ≡ hb^? ⨾ (sb ∪ sw).
 Proof.
 unfold hb; rewrite ct_end at 1; rels.
 Qed.
+
+Lemma rf_in_eco : rf ⊆ eco m.
+Proof.
+  unfold eco. etransitivity.
+  2: by apply ct_step.
+  basic_solver.
+Qed.
+
+Lemma co_in_eco : mco m ⊆ eco m.
+Proof.
+  unfold eco. etransitivity.
+  2: by apply ct_step.
+  basic_solver.
+Qed.
+
+Lemma fr_in_eco : mfr m ⊆ eco m.
+Proof.
+  unfold eco. etransitivity.
+  2: by apply ct_step.
+  basic_solver.
+Qed.
+
+Lemma mco_trans : transitive (mco m).
+Proof.
+  destruct m; simpls.
+  2: by apply ES.co_trans.
+  unfold co_strong.
+  red. intros x y z [XY LA] [YZ LB]. split.
+  2: { red. by rewrite LA. }
+  destruct_seq XY as [WX WY].
+  destruct_seq YZ as [YY WZ].
+  apply seq_eqv_l; split; auto.
+  apply seq_eqv_r; split; auto.
+  eapply hb_trans; eauto.
+Qed.
+
+Lemma eco_trans : transitive (eco m).
+Proof. unfold eco. apply transitive_ct. Qed.
 
 (******************************************************************************)
 (** ** Relations in graph *)
@@ -221,6 +260,23 @@ unfold sw.
 rewrite releaseD at 1.
 rewrite (ES.rfD WF) at 1.
 basic_solver 42.
+Qed.
+
+Lemma mcoD : mco m ≡ <| W |> ;; mco m ;; <| W |>.
+Proof.
+  destruct m; simpls.
+  2: by apply ES.coD.
+  unfold co_strong. basic_solver 10.
+Qed.
+
+Lemma mfr_weakestmo : mfr Weakestmo ≡ fr.
+Proof. unfold mfr, ES.fr. simpls. Qed.
+
+Lemma mfrD : mfr m ≡ <| R |> ;; mfr m ;; <| W |>.
+Proof.
+  unfold mfr. rewrite mcoD.
+  rewrite WF.(ES.rfD).
+  basic_solver 10.
 Qed.
 
 (******************************************************************************)
