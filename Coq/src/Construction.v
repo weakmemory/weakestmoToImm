@@ -217,39 +217,81 @@ Proof.
   cdes BSTEP; cdes BSTEP_; unfold opt_ext in EEQ; omega.
 Qed.
 
+Lemma basic_step_next_act_lt e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  ES.next_act S < ES.next_act S'.
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  unfold opt_ext in *. desf.
+  all: rewrite EVENT'; omega.
+Qed.
+
 Lemma basic_step_acts_set_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   S.(ES.acts_set) ⊆₁ S'.(ES.acts_set).
 Proof. 
-  edestruct basic_step_acts_set as [INCL_L INCL_R]; eauto. 
-  do 2 (apply set_subset_union_l in INCL_R; desf). 
+  unfold ES.acts_set. unfolder. intros x. 
+  generalize (basic_step_next_act_lt BSTEP).
+  omega.
 Qed.
 
-Lemma basic_step_tid_eq_dom e e' S S' 
+Lemma basic_step_tidlab_eq_dom  e e' S S'
       (BSTEP : t_basic e e' S S') :
-  eq_dom S.(ES.acts_set) (tid S) (tid S').
-Proof. 
-  unfold eq_dom. ins. 
-  unfold ES.acts_set in SX.
-  cdes BSTEP; cdes BSTEP_.
-  rewrite TID'.
-  unfold opt_ext in *.
-  destruct e';
-    desf; unfold upd_opt; rewrite updo; try rewrite updo; desf; omega.
+  << TIDEQ : eq_dom (E S) (tid S') (tid S) >> /\
+  << LABEQ : eq_dom (E S) (lab S') (lab S) >>.
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  rewrite TID', LAB'. unnw. unfold eq_dom.
+  splits; ins; desf.
+  all: unfold upd_opt.
+  all: assert (x <> ES.next_act S) as HH by (red in SX; omega).
+  all: unfold opt_ext in *.
+  all: desf; rewrite updo; auto; [|red in SX; omega].
+  all: rewrite updo; auto.
+Qed.
+
+Lemma basic_step_tid_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (tid S') (tid S).
+Proof. eapply basic_step_tidlab_eq_dom; eauto. Qed.
+
+Lemma basic_step_lab_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (lab S') (lab S).
+Proof. eapply basic_step_tidlab_eq_dom; eauto. Qed.
+
+Lemma basic_step_loc_eq_dom  e e' S S'
+      (BSTEP : t_basic e e' S S') :
+  eq_dom (E S) (loc S') (loc S).
+Proof.
+  unfold Events.loc. red. ins.
+  assert ((lab S') x = (lab S) x) as AA.
+  2: by rewrite AA.
+  eapply basic_step_lab_eq_dom; eauto.
 Qed.
 
 Lemma basic_step_same_tid_restr e e' S S'  
       (BSTEP : t_basic e e' S S') :
-  restr_rel S.(ES.acts_set) S.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S'.(ES.same_tid).
+  restr_rel S.(ES.acts_set) S'.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S.(ES.same_tid).
 Proof. 
-  autounfold with unfolderDb. 
+  unfolder. 
   unfold ES.same_tid.
-  splits; ins; desf; splits; auto;
-    [erewrite <- basic_step_tid_eq_dom | erewrite basic_step_tid_eq_dom];
-    eauto;
-    rewrite H;
-    [|symmetry];
-    eapply basic_step_tid_eq_dom; eauto. 
+  splits; ins; desf; splits; auto.
+  erewrite <- basic_step_tid_eq_dom; eauto. 
+  2: erewrite basic_step_tid_eq_dom; eauto; symmetry.
+  all: rewrite H; eapply basic_step_tid_eq_dom; eauto. 
+Qed.
+
+Lemma basic_step_same_loc_restr e e' S S' 
+      (BSTEP : t_basic e e' S S') :
+  restr_rel S.(ES.acts_set) (same_loc S') ≡ restr_rel S.(ES.acts_set) (same_loc S).
+Proof. 
+  unfolder. 
+  unfold ES.same_tid.
+  splits; ins; desf; splits; auto; red.
+  erewrite <- basic_step_loc_eq_dom; eauto.
+  2: erewrite basic_step_loc_eq_dom; eauto; symmetry.
+  all: rewrite H; eapply basic_step_loc_eq_dom; eauto. 
 Qed.
 
 Lemma basic_step_tid_e lang k k' st st' e e' S S' 
@@ -276,44 +318,9 @@ Proof.
     by rewrite upds.
 Qed.
 
-Lemma basic_step_lab_eq_dom e e' S S' 
-      (BSTEP : t_basic e e' S S') :
-  eq_dom S.(ES.acts_set) (lab S) (lab S').
-Proof. 
-  unfold eq_dom. ins. 
-  unfold ES.acts_set in SX.
-  cdes BSTEP; cdes BSTEP_.
-  rewrite LAB'.
-  unfold opt_ext in *.
-  destruct e', lbl'; 
-    desf; unfold upd_opt; rewrite updo; try rewrite updo; desf; omega.
-Qed.
-
-Lemma basic_step_loc_eq_dom e e' S S' 
-      (BSTEP : t_basic e e' S S') :
-  eq_dom S.(ES.acts_set) (loc S) (loc S').
-Proof. 
-  unfold eq_dom, Events.loc, ES.acts_set.
-  ins; erewrite basic_step_lab_eq_dom; eauto. 
-Qed.
-
-Lemma basic_step_same_loc_restr e e' S S' 
-      (BSTEP : t_basic e e' S S') :
-  restr_rel S.(ES.acts_set) (same_loc S) ≡ restr_rel S.(ES.acts_set) (same_loc S').
-Proof. 
-  autounfold with unfolderDb. 
-  unfold imm.basic.Events.same_loc.
-  splits; ins; desf; splits; auto;
-    [erewrite <- basic_step_loc_eq_dom | erewrite basic_step_loc_eq_dom];
-    eauto;
-    rewrite H;
-    [|symmetry];
-    eapply basic_step_loc_eq_dom; eauto. 
-Qed.
-
 Lemma basic_step_mod_eq_dom e e' S S' 
       (BSTEP : t_basic e e' S S') :
-  eq_dom S.(ES.acts_set) (mod S) (mod S').
+  eq_dom S.(ES.acts_set) (mod S') (mod S).
 Proof. 
   unfold eq_dom, Events.mod, ES.acts_set.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
@@ -380,9 +387,9 @@ Proof.
       autounfold with unfolderDb; splits; desf; omega. }
     unfold eq_opt. apply set_inter_empty_l. }
   relsf.
-  autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
-  { erewrite basic_step_tid_eq_dom; eauto. }
-  erewrite <- basic_step_tid_eq_dom; eauto.
+  unfolder. unfold set_subset. splits; ins; splits; desf. 
+  { erewrite <- basic_step_tid_eq_dom; eauto. }
+  erewrite basic_step_tid_eq_dom; eauto.
 Qed.
 
 Lemma basic_step_acts_ninit_set e e' S S' 
@@ -395,11 +402,11 @@ Proof.
   rewrite basic_step_acts_set, basic_step_acts_init_set; eauto.
   repeat rewrite set_minus_union_l.
   repeat apply set_union_Propere; auto. 
-  { autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
-    red; ins; desf; omega. }
+  { unfolder. unfold set_subset. splits; ins; splits; desf. 
+    red. ins; desf; omega. }
   edestruct e'. 
-  { autounfold with unfolderDb; unfold set_subset; splits; ins; splits; desf. 
-    red; ins; desf; omega. }
+  { unfolder. unfold set_subset. splits; ins; splits; desf. 
+    red. ins; desf; omega. }
   unfold eq_opt; basic_solver. 
 Qed.
 
@@ -586,7 +593,7 @@ Proof.
         unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
         edestruct k eqn:EQk. 
         { splits; auto.
-          erewrite basic_step_tid_eq_dom; eauto.
+          erewrite <- basic_step_tid_eq_dom; eauto.
           unfold ES.same_tid in STIDxy.
           rewrite STIDxy.
           erewrite basic_step_tid_e; desf; eauto; by unfold ES.cont_thread. }
@@ -596,13 +603,13 @@ Proof.
         assert (ES.acts_set S eid) as Eeid.
         { eapply ES.K_inEninit; eauto. }
         assert (ES.same_tid S x eid) as STIDxEID.
-        { eapply basic_step_same_tid_restr; eauto. 
+        { eapply basic_step_same_tid_restr with (S':=S'); eauto. 
           unfold restr_rel; splits; eauto. 
-          { eapply ES.same_tid_trans; eauto. 
-            unfold ES.same_tid.
-            erewrite basic_step_tid_e; desf; eauto.
-            erewrite <- basic_step_tid_eq_dom; eauto. 
-              by unfold ES.cont_thread. } }
+          eapply ES.same_tid_trans; eauto. 
+          unfold ES.same_tid.
+          erewrite basic_step_tid_e; desf; eauto.
+          erewrite basic_step_tid_eq_dom; eauto. 
+            by unfold ES.cont_thread. }
         eexists; splits; eauto.
         { basic_solver. }
         assert (Eninit S eid) as ENINITeid.
@@ -641,7 +648,7 @@ Proof.
       splits; auto.
       { rewrite <- EQe.
         unfold ES.same_tid.          
-        erewrite <- basic_step_tid_eq_dom; eauto. }
+        erewrite basic_step_tid_eq_dom; eauto. }
       red.
       unfold clos_sym.
       unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
@@ -750,7 +757,7 @@ Proof.
         unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
         edestruct k eqn:EQk. 
         { splits; auto.
-          erewrite basic_step_tid_eq_dom; eauto.
+          erewrite <- basic_step_tid_eq_dom; eauto.
           unfold ES.same_tid in STIDxy.
           rewrite STIDxy.
           erewrite basic_step_tid_e'; desf; eauto; by unfold ES.cont_thread. }
@@ -760,13 +767,13 @@ Proof.
         assert (ES.acts_set S eid) as Eeid.
         { eapply ES.K_inEninit; eauto. }
         assert (ES.same_tid S x eid) as STIDxEID.
-        { eapply basic_step_same_tid_restr; eauto. 
+        { eapply basic_step_same_tid_restr with (S':=S'); eauto. 
           unfold restr_rel; splits; eauto. 
-          { eapply ES.same_tid_trans; eauto. 
-            unfold ES.same_tid.
-            erewrite basic_step_tid_e'; desf; eauto.
-            erewrite <- basic_step_tid_eq_dom; eauto. 
-              by unfold ES.cont_thread. } }
+          eapply ES.same_tid_trans; eauto. 
+          unfold ES.same_tid.
+          erewrite basic_step_tid_e'; desf; eauto.
+          erewrite basic_step_tid_eq_dom; eauto. 
+            by unfold ES.cont_thread. }
         eexists; splits; eauto.
         { basic_solver. }
         assert (Eninit S eid) as ENINITeid.
@@ -805,7 +812,7 @@ Proof.
       splits; auto.
       { rewrite <- EQe.
         unfold ES.same_tid.          
-        erewrite <- basic_step_tid_eq_dom; eauto. }
+        erewrite basic_step_tid_eq_dom; eauto. }
       red.
       unfold clos_sym.
       unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
@@ -972,50 +979,6 @@ Proof.
         clos_refl_sym_mori.
 Qed.
 
-Lemma next_act_step_lt e e' S S'
-      (BSTEP : t_basic e e' S S') :
-  ES.next_act S < ES.next_act S'.
-Proof.
-  cdes BSTEP. cdes BSTEP_.
-  unfold opt_ext in *. desf.
-  all: rewrite EVENT'; omega.
-Qed.
-
-Lemma tidlab_step_eq_dom  e e' S S'
-      (BSTEP : t_basic e e' S S') :
-  << TIDEQ : eq_dom (E S) (tid S') (tid S) >> /\
-  << LABEQ : eq_dom (E S) (lab S') (lab S) >>.
-Proof.
-  cdes BSTEP. cdes BSTEP_.
-  rewrite TID', LAB'. unnw. unfold eq_dom.
-  splits; ins; desf.
-  all: unfold upd_opt.
-  all: assert (x <> ES.next_act S) as HH by (red in SX; omega).
-  all: unfold opt_ext in *.
-  all: desf; rewrite updo; auto; [|red in SX; omega].
-  all: rewrite updo; auto.
-Qed.
-
-Lemma tid_step_eq_dom  e e' S S'
-      (BSTEP : t_basic e e' S S') :
-  eq_dom (E S) (tid S') (tid S).
-Proof. eapply tidlab_step_eq_dom; eauto. Qed.
-
-Lemma lab_step_eq_dom  e e' S S'
-      (BSTEP : t_basic e e' S S') :
-  eq_dom (E S) (lab S') (lab S).
-Proof. eapply tidlab_step_eq_dom; eauto. Qed.
-
-Lemma loc_step_eq_dom  e e' S S'
-      (BSTEP : t_basic e e' S S') :
-  eq_dom (E S) (loc S') (loc S).
-Proof.
-  unfold Events.loc. red. ins.
-  assert ((lab S') x = (lab S) x) as AA.
-  2: by rewrite AA.
-  eapply lab_step_eq_dom; eauto.
-Qed.
-
 Lemma e2a_step_eq_dom e e' S S'
       (WF : ES.Wf S)
       (BSTEP : t_basic e e' S S') :
@@ -1027,10 +990,10 @@ Proof.
   assert ((Einit S') x <-> (Einit S) x) as AA.
   { edestruct basic_step_acts_init_set as [AA BB]; eauto. }
   assert ((loc S') x = (loc S) x) as BB.
-  { eapply loc_step_eq_dom; eauto. }
+  { eapply basic_step_loc_eq_dom; eauto. }
   desf; try by intuition.
   assert ((tid S') x = (tid S) x) as CC.
-  { eapply tid_step_eq_dom; eauto. }
+  { eapply basic_step_tid_eq_dom; eauto. }
   
   assert (countNatP (dom_rel (⦗Tid_ S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘)) (ES.next_act S') =
           countNatP (dom_rel (⦗Tid_ S  (tid S  x)⦘ ⨾ sb S  ⨾ ⦗eq x⦘)) (ES.next_act S ))
@@ -1061,9 +1024,9 @@ Proof.
     all: splits; auto.
     all: rewrite <- H.
     symmetry.
-    all: eapply tid_step_eq_dom; eauto. }
+    all: eapply basic_step_tid_eq_dom; eauto. }
   erewrite countNatP_lt_eq. done.
-  { eapply next_act_step_lt; eauto. }
+  { eapply basic_step_next_act_lt; eauto. }
   ins. apply dom_eqv1 in EE. apply EE.
 Admitted.
 
@@ -1075,7 +1038,7 @@ Lemma type_step_eq_dom  e e' S S'
 Proof.
   cdes BSTEP. cdes BSTEP_.
   unfold is_r, is_w, is_f.
-  generalize (lab_step_eq_dom BSTEP). unfold eq_dom.
+  generalize (basic_step_lab_eq_dom BSTEP). unfold eq_dom.
   intros HH.
   splits; split; unfolder; ins; desf.
   all: try by (rewrite HH in Heq0; [|by red]; destruct ((lab S) x); desf).
@@ -1103,11 +1066,7 @@ Lemma load_step_E e e' S S'
   E S' ≡₁ E S ∪₁ eq e.
 Proof. 
   assert (e' = None) by inv LSTEP. subst.
-  cdes LSTEP; cdes BSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
-  unfold upd_opt in LAB'.
-  unfold ES.acts_set. rewrite EVENT'. subst.
-  simpls.
-  unfolder. split; ins; desf; omega.
+    by apply basic_step_nupd_acts_set.
 Qed.
 
 Lemma load_step_R e e' S S'
@@ -1182,8 +1141,8 @@ Proof.
   arewrite (E S ∩₁ Rel S' ≡₁ E S ∩₁ Rel S); [|basic_solver].
   unfold is_rel, mode_le. 
   unfolder. splits; intros x [xE HH].
-  { erewrite <- basic_step_mod_eq_dom in HH; eauto. }
-  erewrite basic_step_mod_eq_dom in HH; eauto. 
+  { erewrite basic_step_mod_eq_dom in HH; eauto. }
+  erewrite <- basic_step_mod_eq_dom in HH; eauto. 
 Qed.
 
 Lemma load_step_acq e e' S S'
@@ -1200,8 +1159,8 @@ Proof.
   arewrite (E S ∩₁ FR S ∩₁ Acq S' ≡₁ E S ∩₁ FR S ∩₁ Acq S); auto.
   unfold is_acq, mode_le. 
   unfolder; splits; intros x [[xE xFR] HH].
-  { erewrite <- basic_step_mod_eq_dom in HH; eauto. }
-  erewrite basic_step_mod_eq_dom in HH; eauto.
+  { erewrite basic_step_mod_eq_dom in HH; eauto. }
+  erewrite <- basic_step_mod_eq_dom in HH; eauto.
 Qed.  
 
 Lemma load_step_rf e e' S S'
