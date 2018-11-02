@@ -168,7 +168,7 @@ Ltac unfold_t_ H :=
 (* Proves that `r ⨾ ⦗E⦘ ⨾ ⦗eq e⦘ ⨾ r'` or `r ⨾ ⦗eq e⦘ ⨾ ⦗E⦘ ⨾ r'` are empty. *)
 Ltac E_seq_e := 
   apply seq_codom_dom_inter, set_disjointE;
-  autounfold with unfolderDb; ins; splits; desf; omega.
+  unfolder; ins; splits; desf; omega.
 
 (******************************************************************************)
 (** ** Basic step properites *)
@@ -185,7 +185,7 @@ Proof.
   edestruct e'; 
     unfold opt_ext in *; desf; 
     unfold ES.acts_set; 
-    autounfold with unfolderDb;
+    unfolder;
     splits; unfold set_subset; intros; by omega.
 Qed.
 
@@ -336,7 +336,7 @@ Lemma basic_step_acts_ninit_set_e
 Proof.
   cdes BSTEP; cdes BSTEP_.
   unfold ES.acts_init_set.
-  red. autounfold with unfolderDb. intros [_ TIDe].
+  red. unfolder. intros [_ TIDe].
   apply wfE.(ES.init_tid_K).
   do 2 eexists; splits; [by apply CONT|].
   rewrite <- TIDe. 
@@ -355,7 +355,7 @@ Lemma basic_step_acts_ninit_set_e' e e' S S'
 Proof. 
   cdes BSTEP; cdes BSTEP_.
   unfold ES.acts_init_set.
-  red. autounfold with unfolderDb. intros [_ TIDe].
+  red. unfolder. intros [_ TIDe].
   apply wfE.(ES.init_tid_K).
   do 2 eexists; splits; [by apply CONT|].
   rewrite <- TIDe. 
@@ -377,14 +377,14 @@ Proof.
   { apply set_disjointE; unfold set_disjoint; ins.
     eapply basic_step_acts_ninit_set_e; eauto.
     unfold ES.acts_init_set.  
-    autounfold with unfolderDb; splits; desf.
+    unfolder; splits; desf.
     destruct e'; rewrite EVENT'; unfold opt_ext in *; omega. }
   arewrite (eq_opt e' ∩₁ (fun x : nat => (tid S') x = tid_init) ≡₁ ∅). 
   { edestruct e'. 
     { apply set_disjointE; unfold set_disjoint; ins.
       eapply basic_step_acts_ninit_set_e'; eauto.
       unfold ES.acts_init_set.  
-      autounfold with unfolderDb; splits; desf; omega. }
+      unfolder; splits; desf; omega. }
     unfold eq_opt. apply set_inter_empty_l. }
   relsf.
   unfolder. unfold set_subset. splits; ins; splits; desf. 
@@ -481,15 +481,15 @@ Proof.
     repeat rewrite <- minus_inter_compl.
     arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
     { unfold ES.acts_ninit_set, ES.acts_init_set.
-      autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+      unfolder; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
     arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq_opt e')⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
     { unfold ES.acts_ninit_set, ES.acts_init_set.
-      autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+      unfolder; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
     arewrite (Eninit S × Eninit S \ (eq e × eq_opt e')⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
     { unfold ES.acts_ninit_set, ES.acts_init_set.
-      autounfold with unfolderDb; splits; ins; splits; desf; unfold not;
+      unfolder; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
     repeat rewrite crsE.
     basic_solver 42. }
@@ -534,12 +534,10 @@ Proof.
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ ⦗⊤₁⦘) ⨾ ⦗eq e⦘ ≡ 
            ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e⦘).
         { unfold ES.acts_ninit_set.
-          autounfold with unfolderDb.
+          unfolder.
           splits; ins; splits; desf.
-          { eexists; splits; eauto. }
-          eexists; splits; eauto.
-          eexists; splits; eauto.
-          red; splits; desf; omega. }
+          intros [HH _].
+          omega. }
 
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ (sb S)^⋈) ⨾ ⦗eq e⦘ ≡ 
@@ -697,12 +695,9 @@ Proof.
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ ⦗⊤₁⦘) ⨾ ⦗eq e'⦘ ≡ 
            ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e'⦘).
         { unfold ES.acts_ninit_set.
-          autounfold with unfolderDb.
+          unfolder.
           splits; ins; splits; desf.
-          { eexists; splits; eauto. }
-          eexists; splits; eauto.
-          eexists; splits; eauto.
-          red; splits; desf; omega. }
+          intros [HH _]. omega. }
 
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ (sb S)^⋈) ⨾ ⦗eq e'⦘ ≡ 
@@ -944,12 +939,12 @@ Proof.
     rewrite JF';
     rewrite wfE.(ES.jfE).
   1,3:
-    autounfold with unfolderDb;
+    unfolder;
     ins; desf; splits;
     try (by eexists; splits; eauto);
     unfold not; ins; desf; omega.
   all:
-    autounfold with unfolderDb;
+    unfolder;
     ins; desf; splits;
     try (by left; eexists; splits; eauto);
     unfold not; ins; desf; omega.
@@ -1205,7 +1200,7 @@ Proof.
     unfold same_relation; splits; [|basic_solver].
     rewrite ES.rmwE; auto.
     apply inclusion_union_l;
-      autounfold with unfolderDb; ins; splits; desf; omega. }
+      unfolder; ins; splits; desf; omega. }
   rewrite union_false_r.
   admit.
 Admitted.
@@ -1234,7 +1229,7 @@ Proof.
   { rewrite restr_relE.
     rewrite seq_eqv_cross.
     arewrite (E S ∩₁ W S ∩₁ eq e ≡₁ ∅); [|by rewrite cross_false_r].
-    autounfold with unfolderDb; unfold set_subset; splits; ins; desf; omega. }
+    unfolder; unfold set_subset; splits; ins; desf; omega. }
   arewrite (restr_rel (E S ∩₁ W S) (same_loc S') ≡ restr_rel (E S ∩₁ W S) (same_loc S)).
   2: basic_solver 21.
   do 2 rewrite <- restr_restr.
