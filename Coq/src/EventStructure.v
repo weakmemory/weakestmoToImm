@@ -442,6 +442,15 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma rfrf_in_ew WF : rf ;; rf⁻¹ ⊆ ew^?.
+Proof.
+  unfold ES.rf. intros x y [z [[[p [HH DD]] BB] [[q [AA EE]] CC]]].
+  assert (p = q); subst.
+  { eapply jff; eauto. }
+  generalize WF.(ew_trans) WF.(ew_sym) HH AA.
+  basic_solver 10.
+Qed.
+
 (******************************************************************************)
 (** ** Continuation properites *)
 (******************************************************************************)
