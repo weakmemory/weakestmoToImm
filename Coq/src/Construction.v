@@ -237,8 +237,8 @@ Qed.
 
 Lemma basic_step_tidlab_eq_dom  e e' S S'
       (BSTEP : t_basic e e' S S') :
-  << TIDEQ : eq_dom (E S) (tid S') (tid S) >> /\
-  << LABEQ : eq_dom (E S) (lab S') (lab S) >>.
+  ⟪ TIDEQ : eq_dom (E S) (tid S') (tid S) ⟫ /\
+  ⟪ LABEQ : eq_dom (E S) (lab S') (lab S) ⟫.
 Proof.
   cdes BSTEP. cdes BSTEP_.
   rewrite TID', LAB'. unnw. unfold eq_dom.
@@ -1027,9 +1027,9 @@ Admitted.
 
 Lemma type_step_eq_dom  e e' S S'
       (BSTEP : t_basic e e' S S') :
-  << REQ : E S ∩₁ R S' ≡₁ E S ∩₁ R S >> /\
-  << WEQ : E S ∩₁ W S' ≡₁ E S ∩₁ W S >> /\
-  << FEQ : E S ∩₁ F S' ≡₁ E S ∩₁ F S >>.
+  ⟪ REQ : E S ∩₁ R S' ≡₁ E S ∩₁ R S ⟫ /\
+  ⟪ WEQ : E S ∩₁ W S' ≡₁ E S ∩₁ W S ⟫ /\
+  ⟪ FEQ : E S ∩₁ F S' ≡₁ E S ∩₁ F S ⟫.
 Proof.
   cdes BSTEP. cdes BSTEP_.
   unfold is_r, is_w, is_f.
