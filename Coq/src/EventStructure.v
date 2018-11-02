@@ -64,7 +64,7 @@ Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
 Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
 
-Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co) \ ES.(cf).
+Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co).
 
 Definition cont_thread S (cont : cont_label) : thread_id :=
   match cont with
@@ -193,6 +193,8 @@ Record Wf :=
     ewc : ew ⊆ cf ;
     ew_trans : transitive ew ;
     ew_sym : symmetric ew ;
+
+    ew_co_in_co : ew ;; co ⊆ co;
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
@@ -449,6 +451,22 @@ Proof.
   { eapply jff; eauto. }
   generalize WF.(ew_trans) WF.(ew_sym) HH AA.
   basic_solver 10.
+Qed.
+
+Lemma rffr_in_co WF : rf ;; fr ⊆ co.
+Proof.
+  intros x y [z [HH [p [AA BB]]]].
+  edestruct rfrf_in_ew; eauto.
+  { exists z. split; [apply HH|apply AA]. }
+  { desf. }
+  apply WF.(ew_co_in_co). eexists. eauto.
+Qed.
+
+Lemma frco_in_fr WF : fr ;; co ⊆ fr.
+Proof.
+  intros x y [z [[p [AA BB]] HH]].
+  red. eexists. splits; eauto.
+  eapply WF.(co_trans); eauto.
 Qed.
 
 (******************************************************************************)

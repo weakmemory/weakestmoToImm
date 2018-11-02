@@ -74,8 +74,7 @@ Definition mco (m : model) : relation eventid :=
   | Weakestmo => co
   end.
 
-Definition mfr (m : model) : relation eventid :=
-  (rf⁻¹ ⨾ mco m) \ cf.
+Definition mfr (m : model) : relation eventid := rf⁻¹ ⨾ mco m.
 
 Definition eco (m : model) : relation eventid :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
@@ -133,21 +132,35 @@ Proof.
 unfold hb; rewrite ct_end at 1; rels.
 Qed.
 
-Lemma rf_in_eco : rf ⊆ eco m.
+Lemma rf_in_eco (m' : model) : rf ⊆ eco m'.
 Proof.
   unfold eco. etransitivity.
   2: by apply ct_step.
   basic_solver.
 Qed.
 
-Lemma co_in_eco : mco m ⊆ eco m.
+Lemma co_in_eco : co ⊆ eco Weakestmo.
+Proof.
+  unfold eco. simpls. etransitivity.
+  2: by apply ct_step.
+  basic_solver.
+Qed.
+
+Lemma fr_in_eco : fr ⊆ eco Weakestmo.
 Proof.
   unfold eco. etransitivity.
   2: by apply ct_step.
   basic_solver.
 Qed.
 
-Lemma fr_in_eco : mfr m ⊆ eco m.
+Lemma mco_in_eco : mco m ⊆ eco m.
+Proof.
+  unfold eco. etransitivity.
+  2: by apply ct_step.
+  basic_solver.
+Qed.
+
+Lemma mfr_in_eco : mfr m ⊆ eco m.
 Proof.
   unfold eco. etransitivity.
   2: by apply ct_step.
@@ -168,7 +181,7 @@ Proof.
   eapply hb_trans; eauto.
 Qed.
 
-Lemma eco_trans : transitive (eco m).
+Lemma eco_trans (m' : model) : transitive (eco m').
 Proof. unfold eco. apply transitive_ct. Qed.
 
 (******************************************************************************)
@@ -305,6 +318,49 @@ Proof.
   rewrite releaseD.
   rewrite (ES.sbE WF), (ES.rfE WF).
   basic_solver 42.
+Qed.
+
+Lemma eco_alt : eco Weakestmo ≡ rf ∪ co ⨾ rf^? ∪ fr ⨾ rf^?.
+Proof.
+  split.
+  2: { rewrite rf_in_eco, co_in_eco, fr_in_eco.
+       generalize eco_trans. basic_solver. }
+  unfold eco. simpls. rewrite mfr_weakestmo.
+  rewrite !crE; relsf.
+  rewrite WF.(ES.rfD), WF.(ES.coD), WF.(ES.frD).
+  intros x y H. induction H.
+  { generalize H. basic_solver 20. }
+  clear H H0. unfolder in *. desf.
+  all: try type_solver.
+  all: try eauto 20 using WF.(ES.co_trans) with hahn.
+  { left. right. left. splits; auto.
+    eapply ES.rffr_in_co; auto.
+    eexists. eauto. }
+  { left. right. right. eexists z0. splits; auto.
+    eapply ES.rffr_in_co; auto.
+    eexists. eauto. }
+  { assert (co z0 z).
+    { apply ES.rffr_in_co; auto. eexists. eauto. }
+    eauto 10 using WF.(ES.co_trans) with hahn. }
+  { assert (co z0 z1).
+    { apply ES.rffr_in_co; auto. eexists. eauto. }
+    eauto 20 using WF.(ES.co_trans) with hahn. }
+  { right. left. splits; auto.
+    eapply ES.frco_in_fr; auto.
+    eexists. eauto. }
+  { assert (fr x z0).
+    { eapply ES.frco_in_fr; auto. eexists. eauto. }
+    right. right. splits; auto.
+    exists z0. splits; eauto. }
+  { assert (co z0 z).
+    { apply ES.rffr_in_co; auto. eexists. splits; eauto. }
+    right. left. splits; auto.
+    apply ES.frco_in_fr; auto. eexists. eauto. }
+  assert (co z0 z1).
+  { apply ES.rffr_in_co; auto. eexists. splits; eauto. }
+  assert (fr x z1).
+  { apply ES.frco_in_fr; auto. eexists. splits; eauto. }
+  right. right. eexists. splits; eauto.
 Qed.
 
 (******************************************************************************)
