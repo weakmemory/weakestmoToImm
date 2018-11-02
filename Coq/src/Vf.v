@@ -79,7 +79,7 @@ Proof.
   rels.
   
   arewrite (rf ⊆ eco).
-  generalize (eco_trans WF); ins; relsf.
+  generalize (Execution_eco.eco_trans WF); ins; relsf.
 
   generalize (@imm_hb.hb_trans G); ins; relsf.
 
