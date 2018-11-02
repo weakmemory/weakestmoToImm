@@ -176,32 +176,26 @@ Qed.
 
 Lemma minus_eqv_absorb_rr : r' ⨾ ⦗ s ⦘ ≡ ∅₂ -> (r \ r') ⨾ ⦗ s ⦘ ≡ r ⨾ ⦗ s ⦘.
 Proof. 
-  autounfold with unfolderDb.
+  unfolder.
   ins; splits; ins; desf.
-  { eexists; splits; eauto. }
-  { eexists; splits; eauto. 
-    red. ins. apply (H x y). 
-    eexists; splits; eauto. } 
+  eexists; splits; eauto. 
 Qed.
 
 Lemma minus_eqv_absorb_rl : ⦗ s ⦘ ⨾ r' ≡ ∅₂ -> ⦗ s ⦘ ⨾ (r \ r') ≡ ⦗ s ⦘ ⨾ r.
 Proof. 
-  autounfold with unfolderDb.
+  unfolder.
   ins; splits; ins; desf.
-  { eexists; splits; eauto. }
-  { eexists; splits; eauto. 
-    red. ins. apply (H z y). 
-    eexists; splits; eauto. } 
+  eexists; splits; eauto.
 Qed.
 
 Lemma cross_minus_compl_l : s × s' \ (set_compl s) × s'' ≡ s × s'.
 Proof. 
-  autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
+  unfolder; splits; ins; splits; desf; unfold not; ins; desf. 
 Qed.
 
 Lemma cross_minus_compl_r : s × s' \ s'' × (set_compl s') ≡ s × s'.
 Proof. 
-  autounfold with unfolderDb; splits; ins; splits; desf; unfold not; ins; desf. 
+  unfolder; splits; ins; splits; desf; unfold not; ins; desf. 
 Qed.
   
 Lemma minus_inter_compl : r \ r' ≡ r ∩ compl_rel r'.
@@ -212,7 +206,7 @@ Proof. basic_solver. Qed.
 
 Lemma minus_union_r : forall (r r' r'': relation A), r \ (r' ∪ r'') ≡ (r \ r') ∩ (r \ r'').
 Proof. 
-  autounfold with unfolderDb; splits; ins; desf; splits; auto.
+  unfolder; splits; ins; desf; splits; auto.
   unfold not; basic_solver.
 Qed.
 
@@ -260,7 +254,7 @@ Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
 Proof.
   assert (forall x: A, s x -> x <> a). 
   { ins. intros HH. by subst. }
-  autounfold with unfolderDb.
+  unfolder.
   splits; unfold set_subset; ins.
   all: desf; eexists; splits; eauto.
   all: rewrite updo; auto.
@@ -268,7 +262,7 @@ Qed.
 
 Lemma set_collect_eqv : f □ ⦗ s ⦘ ≡ ⦗ f □₁ s ⦘.
 Proof.
-  autounfold with unfolderDb.
+  unfolder.
   splits; ins; desf; eauto.
   eexists. eexists.
   splits; eauto.
@@ -276,7 +270,7 @@ Qed.
 
 Lemma set_collect_dom : f □₁ dom_rel r ≡₁ dom_rel (f □ r).
 Proof.
-  autounfold with unfolderDb.
+  unfolder.
   split; intros x HH; desf; eauto.
   repeat eexists. eauto.
 Qed.
@@ -290,14 +284,14 @@ Proof. basic_solver. Qed.
 
 Lemma collect_seq_eqv_l rr : f □ ⦗ s ⦘ ⨾ rr ⊆ ⦗ f □₁ s ⦘ ⨾ (f □ rr).
 Proof.
-  autounfold with unfolderDb.
+  unfolder.
   intros x y HH; desf; eauto.
   eexists; splits; eauto.
 Qed.
 
 Lemma collect_seq_eqv_r rr : f □ rr ⨾ ⦗ s' ⦘ ⊆ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
 Proof.
-  autounfold with unfolderDb.
+  unfolder.
   intros x y HH; desf; eauto.
   eexists; splits; eauto.
 Qed.
@@ -318,7 +312,7 @@ Lemma collect_rel_seq_l
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   split; [by apply collect_rel_seqi|].
-  autounfold with unfolderDb.
+  unfolder.
   ins; desf; eauto.
   repeat eexists; eauto.
   apply INJ in H1; desf.
@@ -330,7 +324,7 @@ Lemma collect_rel_seq_r
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   split; [by apply collect_rel_seqi|].
-  autounfold with unfolderDb.
+  unfolder.
   ins; desf; eauto.
   repeat eexists; eauto.
   symmetry in H1.
@@ -375,7 +369,7 @@ Lemma set_collect_restr :
   f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).
 Proof.
   ins.
-  autounfold with unfolderDb.
+  unfolder.
   splits; ins; desf; splits; eauto.
   assert (x' = y1) by (apply H; auto). subst.
   assert (y' = y0) by (apply H; auto). subst.
@@ -388,9 +382,10 @@ Lemma collect_rel_eq_dom :
   f □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘).
 Proof.
   ins.
-  autounfold with unfolderDb.
-  splits; ins; desf; repeat eexists; eauto; 
-  symmetry; [apply (EQs z) | apply (EQs' y')]; auto.
+  unfolder.
+  splits; ins; desf; repeat eexists; eauto; symmetry.
+  { by apply EQs. }
+  by apply EQs'.
 Qed.
 
 Lemma collect_rel_restr_eq_dom (HH : eq_dom s f g) :
@@ -405,7 +400,7 @@ Lemma restr_set_subset
       (EQ   : restr_rel s r ≡ restr_rel s r') :
   restr_rel s' r ≡ restr_rel s' r'.
 Proof. 
-  autounfold with unfolderDb in *.
+  unfolder in *.
   destruct EQ as [INCL INCR].
   splits; ins; splits; desf;
     [ apply (INCL x y) | apply (INCR x y) ]; 
@@ -417,18 +412,14 @@ Lemma restr_set_union :
     restr_rel s r ∪ restr_rel s' r ∪
     ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ∪ ⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘.
 Proof.
-  autounfold with unfolderDb.
-  splits; ins; desf; splits; eauto.
-  { left. left. left. auto. }
-  { right. eexists. splits; eauto. }
-  { left. right. eexists. splits; eauto. }
-  { left. left. right. auto. }
+  unfolder.
+    by splits; ins; desf; splits; eauto; left; left; [left|right].
 Qed.
 
 Lemma restr_set_inter :
   restr_rel (s ∩₁ s') r ≡ restr_rel s r ∩ restr_rel s' r.
 Proof.
-  autounfold with unfolderDb.
+  unfolder.
   splits; ins; desf. 
 Qed.
 
@@ -530,11 +521,11 @@ Proof. basic_solver. Qed.
 
 Add Parametric Morphism A : (@compl_rel A) with signature 
   same_relation ==> same_relation as compl_more.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@compl_rel A) with signature 
   inclusion --> inclusion as compl_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
     set_equiv ==> eq ==> iff as inj_dom_more.
@@ -550,40 +541,40 @@ Proof. unfold impl, inj_dom. basic_solver. Qed.
 
 Add Parametric Morphism A : (@set_compl A) with signature 
   set_equiv ==> set_equiv as set_compl_more.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@set_compl A) with signature 
   set_subset --> set_subset as set_compl_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@set_collect A B) with signature 
   eq ==> set_equiv ==> set_equiv as set_collect_more.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@set_collect A B) with signature 
   eq ==> set_subset ==> set_subset as set_collect_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@dom_rel A) with signature
    inclusion ==> set_subset as dom_rel_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@dom_rel A) with signature
    same_relation ==> set_equiv as dom_rel_more.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@codom_rel A) with signature
    inclusion ==> set_subset as codom_rel_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@codom_rel A) with signature
    same_relation ==> set_equiv as codom_rel_more.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@set_minus A) with signature 
   set_equiv ==> set_equiv ==> set_equiv as set_minus_more.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; split; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; split; eauto. Qed.
 
 Add Parametric Morphism A : (@set_minus A) with signature 
   set_subset ==> set_subset --> set_subset as set_minus_mori.
-Proof. red; autounfold with unfolderDb; splits; ins; desf; eauto. Qed.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
