@@ -484,7 +484,7 @@ Proof.
     apply set_subset_inter_r. split.
     { unfold ES.cont_sb_dom.
       desf.
-      { admit. (* autounfold with unfolderDb. basic_solver. *) }
+      { admit. (* unfolder. basic_solver. *) }
       admit.
       (* rewrite set_collect_inter. *)
       (* apply set_subset_inter_l. *)
@@ -945,7 +945,7 @@ Proof.
       { exists (h w).
         splits.
         { eapply new_rf_dom_f; eauto; [by apply SRC|by apply SRCC|].
-          autounfold with unfolderDb.
+          unfolder.
           do 4 eexists. splits; eauto. }
         { simpl. unfold is_w. admit. }
         admit.
@@ -1004,23 +1004,23 @@ Proof.
         (* unfold union in RFwa; desf.  *)
         assert (I w) as Iw.
         { apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa.
-          autounfold with unfolderDb in RFwa; desf. 
+          unfolder in RFwa; desf. 
           admit. }
         apply inclusion_union_r; right. 
-        autounfold with unfolderDb; ins; splits; desf.
+        unfolder; ins; splits; desf.
         2: cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega.
         erewrite <- SRCC.(hfeq). 
         { eapply ESstep.step_vis_mon; eauto; apply SRCC. 
-          autounfold with unfolderDb in *. 
+          unfolder in *. 
           eexists; splits; eauto; right; repeat eexists; splits; eauto; desf. }
-        autounfold with unfolderDb; splits. 
+        unfolder; splits. 
         { right; repeat eexists; eauto. }
         unfold not; ins; apply waNSB. 
         destruct H as [[y [SBqdom wEQ]] NCw].
         erewrite ESstep.e2a_step_eq_dom in wEQ; eauto; [ | by apply SRC | admit ].
         eapply gsb; (* TODO: gsb should not depend on simrel *) 
           [ by eauto | by eauto | admit | ]. 
-        autounfold with unfolderDb; repeat eexists; splits; eauto. 
+        unfolder; repeat eexists; splits; eauto. 
         unfold ES.cont_sb_dom in SBqdom; desf.
         { admit. }
         unfold set_inter in SBqdom.

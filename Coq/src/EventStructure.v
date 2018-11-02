@@ -351,7 +351,7 @@ Proof.
     basic_solver. }
   unfold ES.cf in CF.
   assert ((same_tid S \ sb⁼) x y) as HH.
-  { autounfold with unfolderDb in CF; desf. }
+  { unfolder in CF; desf. }
   unfold minus_rel in HH.
   destruct HH as [STID nSBcrs].
   apply nSBcrs.
@@ -434,20 +434,20 @@ Qed.
 Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_sb_dom S k ⊆₁ E.
 Proof. 
-  autounfold with unfolderDb. 
+  unfolder. 
   unfold cont_sb_dom.
   ins; desf.
   { unfold acts_init_set, set_inter in H; desf. }
-  autounfold with unfolderDb in H; desf.
+  unfolder in H; desf.
   { eapply WF.(K_inEninit). apply KK. }
   apply WF.(sbE) in H.
-  autounfold with unfolderDb in H; desf.
+  unfolder in H; desf.
 Qed.
 
 Lemma cont_cf_domEninit k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ Eninit.
 Proof. 
-  autounfold with unfolderDb. 
+  unfolder. 
   unfold cont_cf_dom.
   ins; desf.
   { unfold acts_ninit_set, acts_init_set, set_minus; splits; desf. 
@@ -473,11 +473,11 @@ Proof.
   { desf. }
   assert (Eninit eid) as NINITeid.
   { eapply K_inEninit; eauto. }
-  autounfold with unfolderDb in cfKe; desf.
+  unfolder in cfKe; desf.
   fold (ES.same_tid S e z).
   apply same_tid_sym.
   eapply sb_tid; eauto.
-  autounfold with unfolderDb. 
+  unfolder. 
   eexists; splits; eauto. 
 Qed.
 

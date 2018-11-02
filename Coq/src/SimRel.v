@@ -197,7 +197,7 @@ Section SimRel.
       rewrite collect_rel_union.
       apply inclusion_union_l.
       { by rewrite seq_id_l. }
-      autounfold with unfolderDb.
+      unfolder.
       ins. desf.
       eexists. eexists. splits; eauto.
       apply SRC.(gew).
@@ -317,7 +317,7 @@ Section SimRel.
         arewrite (e = g (f e)).
         { apply SRC.(fgtrip). apply seq_eqv_l.
             by split; [left|]. }
-        autounfold with unfolderDb. eauto. }
+        unfolder. eauto. }
       assert (~ GEinit e) as NINIT.
       { intros [BB]. unfold is_init in BB. desf. }
       assert (~ SEinit (f e)) as NSINIT.
