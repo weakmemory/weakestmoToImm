@@ -776,7 +776,7 @@ Proof.
   desf.
 
   assert (instrs pre_cert_state = instrs state) as INSTRSS.
-  { admit. }
+  { eapply steps_same_instrs; eauto. }
 
   edestruct get_stable with (state0:=pre_cert_state) (thread:=thread)
     as [cert_state [CC _]].

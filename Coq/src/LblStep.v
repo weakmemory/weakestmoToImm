@@ -212,6 +212,24 @@ Proof.
   desf.
 Qed.
 
+(*****************************************
+** General properties of istep and step **
+*****************************************)
+
+Lemma step_same_instrs thread state state'
+      (STEP : step thread state state') :
+  state'.(instrs) = state.(instrs).
+Proof. cdes STEP. inv STEP0. Qed.
+
+Lemma steps_same_instrs thread state state'
+      (STEP : (step thread)^* state state') :
+  state'.(instrs) = state.(instrs).
+Proof.
+  induction STEP; auto.
+  { eapply step_same_instrs; eauto. }
+  etransitivity; eauto.
+Qed.
+
 Lemma eps_step_same_G thread state state'
       (STEP : istep thread [] state state') :
   state'.(G) = state.(G).
