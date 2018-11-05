@@ -630,6 +630,24 @@ Proof.
   assert (new_rfef : functional new_rfe⁻¹).
   { arewrite (new_rfe ⊆ new_rf); auto.
     unfold new_rfe; basic_solver. }
+  
+  assert (new_rfi ⊆ Gsb) as NEWRFISB.
+  { unfold new_rfi. unfolder. intros x y [TX [RFXY TY]].
+    red in RFXY.
+    apply seq_eqv_r in RFXY. destruct RFXY as [RFXY [EEY NDY]].
+    apply cert_rfE in RFXY; auto. destruct_seq RFXY as [EX EY].
+    apply cert_rfD in RFXY. destruct_seq RFXY as [WX RY].
+    edestruct same_thread with (x:=x) (y:=y) as [[|SBXY]|SBXY]; eauto.
+    { unfold thread in *. intros HH.
+      destruct x; simpls.
+      rewrite <- TX in *. desf. }
+    { by rewrite TX. }
+    { subst. exfalso. type_solver. }
+    exfalso. eapply cert_rf_hb_sc_hb_irr; eauto.
+    eexists. splits; eauto.
+    eexists. splits.
+    { eapply imm_s_hb.sb_in_hb; eauto. }
+      by left. }
 
   set (new_rfe_ex := new_rfe ∪ ⦗ set_compl (codom_rel new_rfe) ⦘).
 
@@ -662,7 +680,6 @@ Proof.
 
   edestruct steps_old_restrict with (state0:=state'') (state':=state') as [ORMW]; eauto.
   desc. unnw.
-  
   edestruct receptiveness_full with
       (tid:=ES.cont_thread S q)
       (s_init:=state) (s:=state'')
@@ -670,17 +687,26 @@ Proof.
       (new_rfi:=new_rfi)
       (MOD:=E0 \₁ D G TC' thread) as [cert_state]; eauto.
   { split; [|basic_solver].
-    admit. }
+    rewrite CACTS.
+    arewrite (new_rfi ⊆ new_rfi ⨾ ⦗E0⦘).
+    { unfold new_rfi, new_rf. basic_solver 10. }
+    apply doma_rewrite.
+    arewrite (new_rfi ⊆ ⦗Gtid_ thread⦘ ⨾ new_rfi).
+    { unfold new_rfi. basic_solver. }
+    rewrite NEWRFISB.
+    red. intros x y SBXY.
+    destruct_seq SBXY as [TX EEY].
+    split; auto.
+    destruct EEY as [TY [COVY|ISSY]]; [left|right].
+    { eapply dom_sb_covered; eauto.
+      eexists. apply seq_eqv_r. eauto. }
+    destruct ISSY as [z ISSY].
+    apply seq_eqv_r in ISSY. destruct ISSY as [SBYZ ISSZ].
+    exists z. apply seq_eqv_r. split; auto.
+    generalize (@sb_trans G) SBXY SBYZ. basic_solver. }
   { unfold new_rfi, new_rf. rewrite cert_rfD at 1.
     admit. }
-  { unfold new_rfi, new_rf.
-    unfolder. ins. desf. red.
-    destruct x.
-    { simpls. exfalso. apply NINITT. simpls. }
-    destruct y.
-    { simpls. exfalso. apply NINITT. simpls. }
-    simpls. desf. split; auto.
-    admit. }
+  { rewrite NEWRFISB. unfold Execution.sb. basic_solver. }
   { unfold new_rfi, new_rf. basic_solver. }
   { rewrite <- CACTS. basic_solver. }
   { rewrite STATECOV.
@@ -995,7 +1021,7 @@ Proof.
           apply union_mori.
           { eapply ESstep.basic_step_sb_mon. eauto. }
           apply cross_mori. 
-          { eapply ESstep.step_vis_mon. eauto. apply SRC. }
+          { eapply ESstep.step_vis_mon; eauto. apply SRC. }
           eapply ESstep.basic_step_acts_set_mon; eauto. }
         destruct (excluded_middle_informative (sb G w a)) as [waSB | waNSB].
         { apply inclusion_union_r; left. 
@@ -1017,7 +1043,9 @@ Proof.
         { right; repeat eexists; eauto. }
         unfold not; ins; apply waNSB. 
         destruct H as [[y [SBqdom wEQ]] NCw].
-        erewrite ESstep.e2a_step_eq_dom in wEQ; eauto; [ | by apply SRC | admit ].
+        erewrite ESstep.e2a_step_eq_dom with (S:=S) in wEQ; eauto.
+
+        [ | by apply SRC | admit | admit ].
         eapply gsb; (* TODO: gsb should not depend on simrel *) 
           [ by eauto | by eauto | admit | ]. 
         unfolder; repeat eexists; splits; eauto. 
