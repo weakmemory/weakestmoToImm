@@ -40,6 +40,7 @@ Section SimRel.
 
   Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'Ssw'" := (S.(Consistency.sw)).
+  Notation "'Shb'" := (S.(Consistency.hb)).
 
   Notation "'SR'" := (fun a => is_true (is_r Slab a)).
   Notation "'SW'" := (fun a => is_true (is_w Slab a)).
@@ -399,6 +400,31 @@ Section SimRel.
       rewrite releaseC.
       basic_solver 42.
     Qed.
+
+    Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
+    Proof. 
+      assert (ES.Wf S) as SWF by apply SRC. 
+      unfold hb, set_minus. 
+      rewrite seq_eqv_l.
+      red.
+      intros x y [[Ex NCx] HBxy].
+      induction HBxy as [x y STEPxy | x y z HBxy IHxy HByz IHyz]. 
+      { destruct STEPxy as [SBxy | SWxy]; auto. 
+        exfalso. 
+        apply NCx.
+        apply swC in SWxy.
+        unfold seq, eqv_rel in SWxy.
+        desf. }
+      specialize (IHxy Ex NCx).
+      assert (SE y) as Ey. 
+      { eapply ES.sbE in IHxy; auto. 
+        unfold seq, eqv_rel in IHxy.
+        desf. }
+      assert (~ (f □₁ C) y) as NCy.
+      { admit. }
+      specialize (IHyz Ey NCy).
+      eapply ES.sb_trans; eauto. 
+    Admitted.  
 
   End Properties.
 End SimRel.
