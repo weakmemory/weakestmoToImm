@@ -664,7 +664,7 @@ Proof.
     unfold new_rfe_ex; basic_solver 12.
     unfold new_rfe_ex; unfolder; ins; desf.
     unfolder in X; exfalso; eauto. }
-
+ 
   assert (exists new_value, forall x, (new_rfe_ex)⁻¹ x (new_value x)) as HH; desc.
   { apply (unique_choice (new_rfe_ex)⁻¹ (new_rfe_unique)). }
 
@@ -678,6 +678,26 @@ Proof.
   assert (wf_thread_state (ES.cont_thread S q) state'') as GPC''.
   { eapply wf_thread_state_steps; [|by eauto]. done. }
 
+  assert (doma (⦗Tid_ thread ⦘ ;; Gsb ⨾ ⦗E0⦘) E0) as PRSBE0.
+  { red. intros x y SBXY.
+    destruct_seq SBXY as [TX TY]. destruct TY as [TY EEY].
+    split; auto.
+    destruct EEY as [COVY|ISSY]; [left|right].
+    { eapply dom_sb_covered; eauto.
+      eexists. apply seq_eqv_r. eauto. }
+    destruct ISSY as [z ISSY].
+    apply seq_eqv_r in ISSY. destruct ISSY as [SBYZ ISSZ].
+    exists z. apply seq_eqv_r. split; auto.
+    generalize (@sb_trans G) SBXY SBYZ. basic_solver. }
+  
+  assert (new_rfi ≡ <| E0 |> ;; new_rfi ;; <| E0 |>) as NEW_RFIE.
+  { split; [|basic_solver].
+    etransitivity.
+    2: apply doma_helper.
+    { unfold new_rfi, new_rf. basic_solver 10. }
+    arewrite (new_rfi ⊆ <|Tid_ thread|> ;; Gsb). 2: done.
+    generalize NEWRFISB. unfold new_rfi. basic_solver 6. }
+
   edestruct steps_old_restrict with (state0:=state'') (state':=state') as [ORMW]; eauto.
   desc. unnw.
   edestruct receptiveness_full with
@@ -685,27 +705,21 @@ Proof.
       (s_init:=state) (s:=state'')
       (new_val:=new_val)
       (new_rfi:=new_rfi)
-      (MOD:=E0 \₁ D G TC' thread) as [cert_state]; eauto.
+      (MOD:=E0 \₁ D G TC' thread) as [pre_cert_state]; eauto.
+  { by rewrite CACTS. }
   { split; [|basic_solver].
-    rewrite CACTS.
-    arewrite (new_rfi ⊆ new_rfi ⨾ ⦗E0⦘).
-    { unfold new_rfi, new_rf. basic_solver 10. }
-    apply doma_rewrite.
-    arewrite (new_rfi ⊆ ⦗Gtid_ thread⦘ ⨾ new_rfi).
-    { unfold new_rfi. basic_solver. }
-    rewrite NEWRFISB.
-    red. intros x y SBXY.
-    destruct_seq SBXY as [TX EEY].
-    split; auto.
-    destruct EEY as [TY [COVY|ISSY]]; [left|right].
-    { eapply dom_sb_covered; eauto.
-      eexists. apply seq_eqv_r. eauto. }
-    destruct ISSY as [z ISSY].
-    apply seq_eqv_r in ISSY. destruct ISSY as [SBYZ ISSZ].
-    exists z. apply seq_eqv_r. split; auto.
-    generalize (@sb_trans G) SBXY SBYZ. basic_solver. }
-  { unfold new_rfi, new_rf. rewrite cert_rfD at 1.
-    admit. }
+    rewrite NEW_RFIE at 1.
+    unfolder. intros x y [EEX [RFXY EEY]].
+    set (AA := RFXY).
+    unfold new_rfi in AA.
+    destruct_seq AA as [TX TY].
+    unfold new_rf in AA. apply seq_eqv_r in AA. destruct AA as [AA _].
+    apply cert_rfD in AA. destruct_seq AA as [WX RY].
+    splits; auto; unfold is_w, is_r.
+    all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
+      [by erewrite tr_lab; eauto | | | by apply CACTS].
+    3,4: by rewrite TY; eauto.
+    all: by rewrite TX; eauto. }
   { rewrite NEWRFISB. unfold Execution.sb. basic_solver. }
   { unfold new_rfi, new_rf. basic_solver. }
   { rewrite <- CACTS. basic_solver. }
@@ -761,13 +775,30 @@ Proof.
     generalize (dom_dataD_in_D q TCCOH'). basic_solver 10. }
   desf.
 
-  assert (acts_set (ProgToExecution.G cert_state) =
+  assert (instrs pre_cert_state = instrs state) as INSTRSS.
+  { admit. }
+
+  edestruct get_stable with (state0:=pre_cert_state) (thread:=thread)
+    as [cert_state [CC _]].
+  { (* TODO: add `stable_lprog thread (instrs state)` to SimRel. *)
+    admit. }
+  { eapply transitive_rt; [|by eauto].
+    rewrite INSTRSS.
+    (* TODO: add `(step thread)＊ (init (instrs state)) state` to SimRel. *)
+    admit. }
+  desc.
+  
+  assert (ProgToExecution.G cert_state = ProgToExecution.G pre_cert_state) as SCC.
+  { eapply eps_steps_same_G; eauto. }
+
+  assert (acts_set (ProgToExecution.G pre_cert_state) =
           acts_set (ProgToExecution.G state'')) as SS.
   { unfold acts_set. by rewrite RACTS. }
 
   exists cert_state. exists (cert_rf G sc TC' thread).
-  constructor.
-  { red. ins. unfold certLab. desf.
+  constructor; auto.
+  all: try rewrite SCC.
+  { red. ins. unfold certLab. rewrite SCC. desf.
     admit. }
   { ins.
     eapply same_label_up_to_value_trans; eauto.
@@ -781,14 +812,14 @@ Proof.
     erewrite <- steps_preserve_lab; try rewrite BB; eauto.
     eapply tr_lab; eauto.
     eapply steps_preserve_E; eauto. }
-  { (* TODO: most likely, it requires to extended the receptiveness property. *)
-    admit. }
   { ins.
     eapply ES.unique_K in KK.
     3: by apply QQ.
     all: eauto.
     2: apply SRC.
-    simpls. inv KK. }
+    simpls. inv KK.
+    eapply transitive_rt; eauto.
+      by apply eps_steps_in_steps. }
   { unfold acts_set. by rewrite <- RACTS. }
   { rewrite <- RRMW, SS. rewrite ORMW, !CACTS.
     rewrite TEH.(tr_rmw), !seqA.

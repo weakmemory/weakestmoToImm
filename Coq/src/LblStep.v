@@ -191,3 +191,43 @@ Proof.
   unfold eqv_rel in *.
   desf. eexists. splits; eauto. 
 Qed. 
+
+Lemma same_pos_stable thread state state'
+      (INSTR : state.(instrs) = state'.(instrs))
+      (PC : state.(pc) = state'.(pc))
+      (STABLE : stable_state thread state) :
+    stable_state thread state'.
+Proof.
+  red. red. intros [state'' STEP].
+  cdes STEP. inv ISTEP0; eapply STABLE.
+  eexists (Build_state _ _ _ _ _ _ _).
+  2: eexists (Build_state _
+                          (if Event.Const.eq_dec (RegFile.eval_expr (regf state) expr) 0
+                           then pc state + 1
+                           else shift) _ _ _ _ _).
+  all: red; splits; [by eauto|].
+  all: eexists; splits; [by rewrite PC, INSTR; eauto|].
+  { eapply assign; eauto; simpls. }
+  eapply if_; eauto; simpls.
+  desf.
+Qed.
+
+Lemma eps_step_same_G thread state state'
+      (STEP : istep thread [] state state') :
+  state'.(G) = state.(G).
+Proof. cdes STEP. inv ISTEP0. Qed.
+
+Lemma eps_steps_same_G thread state state'
+      (STEP : (istep thread [])^* state state') :
+  state'.(G) = state.(G).
+Proof.
+  induction STEP; auto.
+  { eapply eps_step_same_G; eauto. }
+  etransitivity; eauto.
+Qed.
+
+Lemma eps_step_in_step thread : istep thread [] ⊆ step thread.
+Proof. unfold step. basic_solver. Qed.
+
+Lemma eps_steps_in_steps thread : (istep thread [])^* ⊆ (step thread)^*.
+Proof. by rewrite eps_step_in_step. Qed.
