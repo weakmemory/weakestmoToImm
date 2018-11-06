@@ -167,7 +167,7 @@ Ltac unfold_t_ H :=
 
 (* Proves that `r ⨾ ⦗E⦘ ⨾ ⦗eq e⦘ ⨾ r'` or `r ⨾ ⦗eq e⦘ ⨾ ⦗E⦘ ⨾ r'` are empty. *)
 Ltac E_seq_e := 
-  apply seq_codom_dom_inter, set_disjointE;
+  try (apply seq_codom_dom_inter, set_disjointE);
   unfolder; ins; splits; desf; omega.
 
 (******************************************************************************)

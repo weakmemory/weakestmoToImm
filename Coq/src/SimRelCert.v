@@ -162,7 +162,9 @@ Section SimRelCert.
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
-      hgtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
+      ghtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
+      
+      hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
 
       hinj : inj_dom hdom h;
       himg : h □₁ hdom ⊆₁ SE;
@@ -185,7 +187,33 @@ Section SimRelCert.
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
     }.
 
+  Lemma hgtrip (SRC : simrel_cert) : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
+  Proof. 
+    unfold seq, eqv_rel, set_collect, img_rel, inclusion, compose.
+    intros x y [z [[zEQ [a [DOM xEQ]]] yEQ]].
+    rewrite <- xEQ, yEQ, <- zEQ.
+    arewrite (a = g x); auto.
+    apply ghtrip; auto.
+    apply seq_eqv_l; splits; auto.
+    unfold img_rel, compose.
+    congruence.
+  Qed.
+
+  Lemma sbk_in_hdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Proof. 
+    rewrite set_collect_union.
+    arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
+    { rewrite set_collect_compose.
+      apply fixset_set_fixpoint. 
+      apply SRC. }
+    apply set_subset_union_r2.
+  Qed.
+
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
+  Proof.
+  Admitted.
+
+  Lemma new_rf_dom : dom_rel new_rf ⊆₁ hdom.
   Proof.
   Admitted.
 
@@ -282,6 +310,12 @@ Notation "'Gppo'" := (G.(ppo)).
 
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
+
+Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
+Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
+Notation "'hdom' k" := 
+  (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ (ES.cont_thread S k)) ∪₁ (sbq_dom k))
+    (at level 1, only parsing).
 
 Variable SRC : simrel prog S G sc TC f.
 
@@ -881,7 +915,10 @@ Proof.
     rewrite set_unionK;
     apply SRC.
 
-  1-3: by narrow_hdom q CsbqDOM.
+  { by narrow_hdom q CsbqDOM. }
+  { admit. }
+  { by narrow_hdom q CsbqDOM. }
+  { by narrow_hdom q CsbqDOM. }
   { admit. }
   { apply SRC.(ftid). } 
   { apply SRC.(flab). }
@@ -955,6 +992,7 @@ Lemma simrel_cert_lbl_step TC' h q new_rf
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state'' new_rf ⟫.
 Proof.
+  assert (ES.Wf S) as WfS by apply SRC.
   destruct LBL_STEP as [lbls ILBL_STEP].
   set (ILBL_STEP_ALT := ILBL_STEP).
   eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
@@ -984,6 +1022,9 @@ Proof.
         (* Then this should follow trivially *)
         admit. }
       admit. }
+
+    assert (SE S (h w)) as hwInSE.
+    { admit. }
 
     edestruct simrel_cert_basic_step as [q' [e [e' [lbl [lbl' [S' HH]]]]]]; eauto; desf.
 
@@ -1040,7 +1081,7 @@ Proof.
     { admit. }
     
     assert (g' □ S'.(hb) ⊆ Ghb) as BHB.
-    { erewrite ESstep.load_step_hb; eauto; [| by apply SRC].
+    { erewrite ESstep.load_step_hb; eauto.
       rewrite collect_rel_union.
       unionL; auto.
       rewrite collect_rel_seqi.
@@ -1067,7 +1108,7 @@ Proof.
           apply union_mori.
           { eapply ESstep.basic_step_sb_mon. eauto. }
           apply cross_mori. 
-          { eapply ESstep.step_vis_mon; eauto. apply SRC. }
+          { eapply ESstep.step_vis_mon; eauto. } 
           eapply ESstep.basic_step_acts_set_mon; eauto. }
         destruct (excluded_middle_informative (sb G w a)) as [waSB | waNSB].
         { apply inclusion_union_r; left. 
@@ -1091,7 +1132,6 @@ Proof.
         destruct H as [[y [SBqdom wEQ]] NCw].
         admit. }
         (* erewrite ESstep.e2a_step_eq_dom with (S:=S) in wEQ; eauto. *)
-
         (* [ | by apply SRC | admit | admit ]. *)
         (* eapply gsb; (* TODO: gsb should not depend on simrel *)  *)
         (*   [ by eauto | by eauto | admit | ].  *)
@@ -1106,25 +1146,128 @@ Proof.
       
       (* hb_jf_not_cf *)
       { cdes ES_BSTEP_. 
+        
+        assert (eq (h w) ⊆₁ h □₁ hdom q) as hwInHDOM. 
+        { rewrite <- collect_eq.
+          apply set_collect_mori; auto. 
+          arewrite (eq w ⊆₁ dom_rel new_rf).
+          { autounfold with unfolderDb.
+            ins; desf; eexists; eauto. }
+          eapply new_rf_dom; eauto. }
+
         unfold same_relation; splits; [|by basic_solver]. 
-        erewrite ESstep.load_step_hb; eauto; [| by apply SRC].
+        erewrite ESstep.load_step_hb; eauto.
         rewrite JF'.
+        rewrite ESstep.basic_step_nupd_cf; eauto.
         rewrite transp_union, transp_singl_rel, crE.
         relsf.
-        repeat rewrite unionA.
-        repeat rewrite seqA.
-        arewrite 
-          (ES.cont_sb_dom S q × eq e ⨾ (Sjf S)⁻¹ ≡ ∅₂)
-          by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
-        arewrite 
-          (⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ⨾ (Sjf S)⁻¹ ≡ ∅₂)
-          by rewrite ES.jfE; [ ESstep.E_seq_e | apply SRC].
-        arewrite 
-          (Shb S ⨾ singl_rel (ES.next_act S) (h w) ≡ ∅₂)
-          by rewrite hbE; [ ESstep.E_seq_e | apply SRC].
-        relsf.
-        admit. }
-      { admit. }
+        repeat rewrite inter_union_l.
+        repeat rewrite inter_union_r.
+        repeat apply inclusion_union_l.
+
+        all: try (
+          try rewrite ES.jfE;
+          try rewrite releaseE;
+          try rewrite hbE; 
+          try (rewrite ES.cont_sb_domE; eauto);
+          try (arewrite (singl_rel (ES.next_act S) (h w) ⊆ eq e × SE S)
+            by autounfold with unfolderDb; ins; desf);
+          try (arewrite (singl_rel (h w) (ES.next_act S) ⊆ SE S × eq e)
+            by autounfold with unfolderDb; ins; desf);
+          by ESstep.E_seq_e
+        ).
+
+        { apply SRC. }
+
+        { repeat rewrite seqA.
+          rewrite seq_incl_cross.
+          { rewrite <- restr_cross, restr_relE. 
+            by rewrite SRCC.(himgNcf). }
+          { rewrite dom_cross; [|red; basic_solver]. 
+            eapply sbk_in_hdom; eauto. }
+          by rewrite codom_singl_rel. } 
+
+        { repeat rewrite seqA.
+          rewrite hbE; auto.
+          rewrite set_union_minus with (s := SE S) (s' := f □₁ C) at 1.
+          2 : 
+            { etransitivity. 
+              2 : eapply SRC.(fimg). 
+              basic_solver. }
+          rewrite id_union.  
+          repeat rewrite seq_union_l. 
+          rewrite inter_union_l.
+          apply inclusion_union_l. 
+          { repeat rewrite <- seqA.
+            rewrite hbNCsb; eauto. 
+            arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
+            { rewrite ES.sbE; auto; basic_solver. } 
+            rewrite sbk_in_hdom; eauto.
+            rewrite <- seqA.
+            rewrite seq_incl_cross.
+            { rewrite <- restr_cross, restr_relE. 
+              by rewrite SRCC.(himgNcf). }
+            { admit. }
+            by rewrite codom_singl_rel. }
+          repeat rewrite seqA.
+          rewrite seq_incl_cross.
+          { rewrite <- restr_cross, restr_relE. 
+            by rewrite SRCC.(himgNcf). }
+          { arewrite (f □₁ C ≡₁ h □₁ C).
+            { admit. }
+            repeat rewrite set_collect_union.
+            basic_solver 10. }
+          repeat rewrite codom_seq.
+          by rewrite codom_singl_rel. } 
+        
+        { repeat rewrite seqA. 
+          rewrite seq_incl_cross.
+          { rewrite <- restr_cross, restr_relE.
+            by rewrite SRCC.(himgNcf). }
+          { rewrite releaseC; eauto. 
+            arewrite (f □₁ C ≡₁ h □₁ C).
+            { admit. }
+            rewrite dom_seq.
+            repeat rewrite set_collect_union.
+            basic_solver 10. }
+          repeat rewrite codom_seq.
+          rewrite codom_singl_rel; auto. } 
+
+        { repeat rewrite seqA.
+          rewrite hbE; auto.
+          rewrite set_union_minus with (s := SE S) (s' := f □₁ C) at 1.
+          2 : 
+            { etransitivity. 
+              2 : eapply SRC.(fimg). 
+              basic_solver. }
+          rewrite id_union.  
+          repeat rewrite seq_union_l. 
+          rewrite inter_union_l.
+          apply inclusion_union_l.  
+          { repeat rewrite <- seqA.
+            rewrite hbNCsb; eauto. 
+            arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
+            { rewrite ES.sbE; auto; basic_solver. } 
+            rewrite releaseC; eauto. 
+            repeat rewrite seqA.
+            rewrite <- seqA.
+            rewrite seq_incl_cross.
+            { rewrite <- restr_cross, restr_relE. 
+              by rewrite SRCC.(himgNcf). }
+            { admit. }
+            repeat rewrite codom_seq.
+            by rewrite codom_singl_rel. }
+          repeat rewrite seqA.
+          rewrite seq_incl_cross.
+          { rewrite <- restr_cross, restr_relE. 
+            by rewrite SRCC.(himgNcf). }
+          { arewrite (f □₁ C ≡₁ h □₁ C).
+            { admit. }
+            repeat rewrite set_collect_union.
+            basic_solver 10. }
+          repeat rewrite codom_seq.
+          rewrite codom_singl_rel; auto. } }
+
       all: admit. }
 
     exists q', S', (upd h a e).
