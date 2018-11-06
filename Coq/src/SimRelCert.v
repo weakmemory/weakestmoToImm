@@ -106,7 +106,7 @@ Section SimRelCert.
       new_rfv : new_rf ⊆ same_val certLab;
       new_rfl : new_rf ⊆ same_loc certLab;
       new_rf_in_vf  : new_rf ⊆ Gvf;
-      new_rf_iss_sb : new_rf ⊆ ⦗ I' ⦘ ⨾ new_rf ∪ Gsb;
+      new_rf_iss_sb : new_rf ⊆ ⦗ I ⦘ ⨾ new_rf ∪ Gsb;
       new_rf_complete : GR ∩₁ certE ⊆₁ codom_rel new_rf;
       new_rff : functional new_rf⁻¹;
 
@@ -411,7 +411,7 @@ Lemma sim_cert_graph_start TC' thread
   exists q state' new_rf,
     ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
     ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
-    ⟪ SRCG : sim_cert_graph S G sc TC' q state' new_rf ⟫.
+    ⟪ SRCG : sim_cert_graph S G sc TC TC' q state' new_rf ⟫.
 Proof.
   assert (Wf G) as WF by apply SRC.
   assert (imm_consistent G sc) as CON by apply SRC.
@@ -446,7 +446,7 @@ Proof.
   assert (ES.cont_thread S q <> tid_init) as NINITT.
   { admit. }
   
-  assert (exists state' new_rf, sim_cert_graph S G sc TC' q state' new_rf)
+  assert (exists state' new_rf, sim_cert_graph S G sc TC TC' q state' new_rf)
     as [state' [new_rf HH]].
   2: { eexists. eexists. splits; eauto. }
   cdes SSTATE. cdes SSTATE1.
@@ -823,7 +823,31 @@ Proof.
       by rewrite set_compl_union_id, seq_id_l.
     rewrite id_union, seq_union_l.
     rewrite non_I_cert_rf; auto.
-    { done. }
+    { unionL; [|basic_solver].
+      inv TR_STEP; simpls.
+
+      3: assert (Gtid w = ES.cont_thread S q) as TX
+          by (apply wf_rmwt in RMW; auto; rewrite <- RMW; auto).
+      1,2: assert (Gtid w = ES.cont_thread S q) as TX by auto.
+
+      all: assert (~ is_init w) as NINITX
+          by (intros AA; destruct w; simpls; desf;
+              rewrite <- TX in *; desf).
+      all: rewrite id_union, seq_union_l; unionL; [basic_solver|].
+      all: unionR right.
+      all: unfolder; intros x y [AA RF]; desf.
+      all: assert (Gtid y = ES.cont_thread S q) as TY
+          by (unfold cert_rf, CertRf.E0 in RF; unfolder in RF;
+              generalize RF; basic_solver).
+      all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
+      all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
+      all: assert (Gtid x = Gtid y) as TTT by (rewrite TY; auto).
+      all: destruct (@same_thread G x y) as [[|SB]|SB]; desf; auto;
+        [type_solver|].
+      all: exfalso.
+      all: eapply cert_rf_hb_sc_hb_irr; eauto.
+      all: assert (Ghb y x) as HB by (apply imm_s_hb.sb_in_hb; auto).
+      all: repeat (eexists; split; eauto). }
     eapply sim_trav_step_rel_covered.
     { red. eauto. }
     apply SRC. }
