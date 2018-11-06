@@ -2,6 +2,7 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 
 Set Implicit Arguments.
+Local Open Scope program_scope.
 
 Section AuxRel.
 
@@ -9,6 +10,7 @@ Section AuxRel.
   Variable cond : A -> Prop.
   Variables s s' : A -> Prop.
   Variable f g : A -> B.
+  Variable h : A -> A.
   Variables r r' : relation A.
 
   Definition clos_sym : relation A := fun x y => r x y \/ r y x. 
@@ -36,8 +38,10 @@ Section AuxRel.
   Definition restr_fun := fun x => 
     if excluded_middle_informative (s x) then f x else g x.
 
-End AuxRel.
+  Definition fixset := 
+    forall (x : A) (SX : s x), x = h x.
 
+End AuxRel.
 
 Notation "⊤₁" := set_full.
 Notation "⊤₂" := (fun _ _ => True).
@@ -49,12 +53,15 @@ Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
-Hint Unfold clos_sym clos_refl_sym eq_opt compl_rel : unfolderDb. 
+Hint Unfold 
+     clos_sym clos_refl_sym 
+     img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
 
-Variables A B : Type.
+Variables A B C : Type.
 Variable f g : A -> B.
+Variable h : A -> A.
 Variable a : A.
 Variable b : B.
 Variables s s' s'' : A -> Prop.
@@ -110,6 +117,9 @@ Lemma restr_sym : forall (r : relation A), symmetric r -> symmetric (restr_rel s
 Proof. basic_solver. Qed.
 
 Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
+Proof. basic_solver. Qed.
+
+Lemma codom_singl_rel (x y : A) : codom_rel (singl_rel x y) ≡₁ eq y. 
 Proof. basic_solver. Qed.
 
 Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
@@ -215,6 +225,20 @@ Proof.
   repeat rewrite compl_top_minus; by apply minus_union_r.
 Qed.
 
+Lemma seq_cross_singl_l x y : s' x -> s × s' ⨾ singl_rel x y ≡ s × eq y.
+Proof. 
+  ins. 
+  autounfold with unfolderDb.
+  splits; ins; splits; desf; eauto. 
+Qed.
+
+Lemma seq_cross_singl_r x y : s y -> singl_rel x y ⨾ s × s' ≡ eq x × s'.
+Proof. 
+  ins. 
+  autounfold with unfolderDb.
+  splits; ins; splits; desf; eauto. 
+Qed.
+
 Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
 Proof. 
   repeat rewrite seq_eqv_lr. 
@@ -248,6 +272,37 @@ Proof.
   desf.
   all: rewrite LL.
   all: basic_solver.
+Qed.
+
+Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq.
+Proof. 
+  split; autounfold with unfolderDb.
+  { ins; desf; auto. }
+  ins; desf; auto.
+  apply (H x (h x)).
+  eauto. 
+Qed.
+
+Lemma fixset_set_fixpoint : fixset s h -> s ≡₁ h □₁ s.
+Proof. 
+  autounfold with unfolderDb; unfold set_subset.
+  intros FIX.
+  splits. 
+  { ins. eexists. 
+    specialize (FIX x). 
+    splits; [|symmetry]; eauto. } 
+  ins; desf. 
+  erewrite <- (FIX y); auto. 
+Qed.
+
+(* Lemma fixset_compose (f' : A -> B) (g' : B -> C) :  *)
+(*   fixset s g' ∘ f' ->  *)
+
+Lemma set_collect_compose (f' : A -> B) (g' : B -> C) :
+  g' □₁ (f' □₁ s) ≡₁ (g' ∘ f') □₁ s.
+Proof. 
+  autounfold with unfolderDb. unfold set_subset. 
+  ins; splits; ins; splits; desf; eauto.
 Qed.
 
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
@@ -538,6 +593,18 @@ Qed.
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_subset --> eq ==> impl as inj_dom_mori.
 Proof. unfold impl, inj_dom. basic_solver. Qed.
+
+Add Parametric Morphism A : (@fixset A) with signature 
+    set_equiv ==> eq ==> iff as fixset_more.
+Proof. 
+  intros s s' Heq f. red. 
+  unfold fixset.
+  splits; ins; specialize (H x); apply H; auto; apply Heq; auto.
+Qed.
+
+Add Parametric Morphism A : (@fixset A) with signature 
+  set_subset --> eq ==> impl as fixset_mori.
+Proof. unfold impl, fixset. basic_solver. Qed.
 
 Add Parametric Morphism A : (@set_compl A) with signature 
   set_equiv ==> set_equiv as set_compl_more.

@@ -22,38 +22,53 @@ Section SimRel.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
-  Notation "'K'"  := S.(ES.cont_set).
-  Notation "'GE'" := G.(acts_set).
-  Notation "'GEinit'" := (is_init ∩₁ GE).
-  Notation "'C'"  := (covered TC).
-  Notation "'I'"  := (issued TC).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gtid'" := (tid).
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
-  Notation "'Grf'" := (G.(rf)).
-  Notation "'Gvf'" := (furr G sc).
-  Notation "'Gco'" := (G.(co)).
-  Notation "'Grmw'" := (G.(rmw)).
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
+  Notation "'K'"  := S.(ES.cont_set).
+
+  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
+
   Notation "'Ssb'" := (S.(ES.sb)).
+  Notation "'Srmw'" := (S.(ES.rmw)).
+  Notation "'Sjf'" := (S.(ES.jf)).
   Notation "'Srf'" := (S.(ES.rf)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
+  Notation "'Scc'" := (S.(ES.cc)).
   Notation "'Sew'" := (S.(ES.ew)).
-  Notation "'Sjf'" := (S.(ES.jf)).
-  Notation "'Srmw'" := (S.(ES.rmw)).
+
+  Notation "'Srelease'" := (S.(Consistency.release)).
+  Notation "'Ssw'" := (S.(Consistency.sw)).
+  Notation "'Shb'" := (S.(Consistency.hb)).
+
+  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
+  Notation "'SW'" := (fun a => is_true (is_w Slab a)).
+  Notation "'SF'" := (fun a => is_true (is_f Slab a)).
+  Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
+  
+  Notation "'GE'" := G.(acts_set).
+  Notation "'GEinit'" := (is_init ∩₁ GE).
+  Notation "'Glab'" := (G.(lab)).
+  Notation "'Gtid'" := (tid).
+  Notation "'Grmw'" := G.(rmw).
+  
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
-  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
-
-  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
-
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
+  
+  Notation "'Gsb'" := (G.(sb)).
+  Notation "'Grf'" := (G.(rf)).
+  Notation "'Gco'" := (G.(co)).
+  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Gvf'" := (furr G sc).
+
+  Notation "'C'"  := (covered TC).
+  Notation "'I'"  := (issued TC).
+
 
   Definition pc thread :=
     C ∩₁ Gtid_ thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
@@ -142,6 +157,8 @@ Section SimRel.
       ftid : Stid ∘ f = Gtid;
 
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
+
+      frel : (SE ∩₁ SRel) \₁ f □₁ C ≡₁ ∅;
 
       vis  : f □₁ fdom ⊆₁ vis S;
 
@@ -354,6 +371,60 @@ Section SimRel.
       { intros x HH. desf. }
       eapply dom_sb_covered; eauto.
    Admitted.
+
+    Lemma releaseC : Srelease ≡ ⦗f □₁ C⦘ ⨾ Srelease. 
+    Proof.
+      assert (ES.Wf S) as SWF by apply SRC. 
+      red; splits; [|basic_solver]. 
+      rewrite releaseE; auto. 
+      rewrite set_union_minus with (s := SE) (s' := f □₁ C) at 1.
+      { rewrite <- seqA, id_union.
+        repeat rewrite seq_union_l. 
+        apply inclusion_union_l.
+        { unfold release.
+          rewrite <- seqA with (r2 := ⦗SRel⦘). 
+          rewrite <- AuxRel.id_inter. 
+          rewrite set_inter_minus_l.
+          rewrite SRC.(frel).
+          basic_solver. }
+        rewrite releaseE; auto. 
+        basic_solver 42. } 
+      etransitivity. 
+      2 : eapply SRC.(fimg). 
+      basic_solver.
+    Qed.
+
+    Lemma swC : Ssw ≡ ⦗f □₁ C⦘ ⨾ Ssw.  
+    Proof. 
+      unfold sw. 
+      rewrite releaseC.
+      basic_solver 42.
+    Qed.
+
+    Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
+    Proof. 
+      assert (ES.Wf S) as SWF by apply SRC. 
+      unfold hb, set_minus. 
+      rewrite seq_eqv_l.
+      red.
+      intros x y [[Ex NCx] HBxy].
+      induction HBxy as [x y STEPxy | x y z HBxy IHxy HByz IHyz]. 
+      { destruct STEPxy as [SBxy | SWxy]; auto. 
+        exfalso. 
+        apply NCx.
+        apply swC in SWxy.
+        unfold seq, eqv_rel in SWxy.
+        desf. }
+      specialize (IHxy Ex NCx).
+      assert (SE y) as Ey. 
+      { eapply ES.sbE in IHxy; auto. 
+        unfold seq, eqv_rel in IHxy.
+        desf. }
+      assert (~ (f □₁ C) y) as NCy.
+      { admit. }
+      specialize (IHyz Ey NCy).
+      eapply ES.sb_trans; eauto. 
+    Admitted.  
 
   End Properties.
 End SimRel.
