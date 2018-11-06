@@ -1159,9 +1159,40 @@ Proof.
           repeat rewrite codom_seq.
           rewrite codom_singl_rel; auto. } 
 
-         
-
-        all: admit. }
+        { repeat rewrite seqA.
+          rewrite hbE; auto.
+          rewrite set_union_minus with (s := SE S) (s' := f □₁ C) at 1.
+          2 : 
+            { etransitivity. 
+              2 : eapply SRC.(fimg). 
+              basic_solver. }
+          rewrite id_union.  
+          repeat rewrite seq_union_l. 
+          rewrite inter_union_l.
+          apply inclusion_union_l.  
+          { repeat rewrite <- seqA.
+            rewrite hbNCsb; eauto. 
+            arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
+            { rewrite ES.sbE; auto; basic_solver. } 
+            rewrite releaseC; eauto. 
+            repeat rewrite seqA.
+            rewrite <- seqA.
+            rewrite seq_incl_cross.
+            { rewrite <- restr_cross, restr_relE. 
+              by rewrite SRCC.(himgNcf). }
+            { admit. }
+            repeat rewrite codom_seq.
+            by rewrite codom_singl_rel. }
+          repeat rewrite seqA.
+          rewrite seq_incl_cross.
+          { rewrite <- restr_cross, restr_relE. 
+            by rewrite SRCC.(himgNcf). }
+          { arewrite (f □₁ C ≡₁ h □₁ C).
+            { admit. }
+            repeat rewrite set_collect_union.
+            basic_solver 10. }
+          repeat rewrite codom_seq.
+          rewrite codom_singl_rel; auto. } }
 
       all: admit. }
 
