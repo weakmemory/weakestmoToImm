@@ -148,22 +148,8 @@ Section SimRelCert.
       destruct (certLab r); destruct (Glab r);
         destruct (certLab w); destruct (Glab w); desf.
     Qed.
-
-    Lemma new_rf_dom_f : f □₁ (dom_rel (new_rf ⨾ ⦗ certE ⦘)) ⊆₁ SE.
-    Proof. 
-      admit.
-    Admitted.
-
   End CertGraphProperties.
 
-  Record sb_max i e :=
-    (* TODO. It looks too strong. Shouldn't e' be in GE at very least?
-       Doesn't inGi follow from sbMAX?
-     *)
-    { inGi  : Gtid_ i e;
-      sbMAX : forall e', Gtid_ i e' -> Gsb^? e' e
-    }.
-  
   Notation "'sbq_dom'" := (g □₁ ES.cont_sb_dom S q) (only parsing).
   Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
   Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ qtid) ∪₁ sbq_dom)
@@ -1001,9 +987,14 @@ Proof.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
       { exists (h w).
         splits.
-        { eapply new_rf_dom_f; eauto; [by apply SRC|by apply SRCC|].
-          unfolder.
-          do 4 eexists. splits; eauto. }
+        { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
+          destruct RFwa as [RFwa|RFwa].
+          { apply seq_eqv_l in RFwa. destruct RFwa as [IW _].
+            eapply himg; [by apply SRCC|].
+            red. eexists. split; eauto.
+            (* TODO: trivial after fix in new_rf_iss_sb *)
+            admit. }
+          admit. }
         { simpl. unfold is_w. admit. }
         admit.
         admit.
@@ -1074,19 +1065,20 @@ Proof.
         { right; repeat eexists; eauto. }
         unfold not; ins; apply waNSB. 
         destruct H as [[y [SBqdom wEQ]] NCw].
-        erewrite ESstep.e2a_step_eq_dom with (S:=S) in wEQ; eauto.
-
-        [ | by apply SRC | admit | admit ].
-        eapply gsb; (* TODO: gsb should not depend on simrel *) 
-          [ by eauto | by eauto | admit | ]. 
-        unfolder; repeat eexists; splits; eauto. 
-        unfold ES.cont_sb_dom in SBqdom; desf.
-        { admit. }
-        unfold set_inter in SBqdom.
-        destruct SBqdom as [yTID ySBDOM].
-        unfold dom_rel in ySBDOM. 
-        destruct ySBDOM as [y' yy'SBrefl].
         admit. }
+        (* erewrite ESstep.e2a_step_eq_dom with (S:=S) in wEQ; eauto. *)
+
+        (* [ | by apply SRC | admit | admit ]. *)
+        (* eapply gsb; (* TODO: gsb should not depend on simrel *)  *)
+        (*   [ by eauto | by eauto | admit | ].  *)
+        (* unfolder; repeat eexists; splits; eauto.  *)
+        (* unfold ES.cont_sb_dom in SBqdom; desf. *)
+        (* { admit. } *)
+        (* unfold set_inter in SBqdom. *)
+        (* destruct SBqdom as [yTID ySBDOM]. *)
+        (* unfold dom_rel in ySBDOM.  *)
+        (* destruct ySBDOM as [y' yy'SBrefl]. *)
+        (* admit. } *)
       
       (* hb_jf_not_cf *)
       { cdes ES_BSTEP_. 
