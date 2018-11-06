@@ -1264,6 +1264,46 @@ Proof.
           basic_solver 10. }
         repeat rewrite codom_seq.
         rewrite codom_singl_rel; auto. }
+      
+      { admit. }
+
+      { cdes ES_BSTEP_.
+
+        red; split; [|basic_solver].
+        rewrite JF', ESstep.basic_step_cf; eauto. 
+        repeat rewrite csE.
+        repeat rewrite transp_cross.
+        repeat rewrite inter_union_l.
+        repeat rewrite inter_union_r. 
+        unfold eq_opt.
+        relsf.
+        repeat rewrite unionA.
+        repeat apply inclusion_union_l.
+
+        all: try (
+          try rewrite ES.jfE;
+          try rewrite ES.cfE;
+          by ESstep.E_seq_e
+        ).
+
+        { apply SRC. }
+        
+        { unfolder. 
+          intros x y [[EQx _] [CONTCFx _]].
+          rewrite EQx in *. 
+          eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
+          destruct RFwa as [RFwa|RFwa].          
+          { apply seq_eqv_l in RFwa.
+            destruct RFwa as [IW RFwa].
+            admit. }
+          admit. }
+
+        unfolder. 
+        intros x y [[EQx _] [EQe _]].
+        rewrite EQx in EQe.
+        rewrite <- EQe in hwInSE.
+        unfold "SE" in hwInSE.
+        omega. }
 
       all: admit. }
 
