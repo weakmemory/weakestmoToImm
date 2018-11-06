@@ -1072,6 +1072,15 @@ Proof.
       
       (* hb_jf_not_cf *)
       { cdes ES_BSTEP_. 
+        
+        assert (eq (h w) ⊆₁ h □₁ hdom q) as hwInHDOM. 
+        { rewrite <- collect_eq.
+          apply set_collect_mori; auto. 
+          arewrite (eq w ⊆₁ dom_rel new_rf).
+          { autounfold with unfolderDb.
+            ins; desf; eexists; eauto. }
+          eapply new_rf_dom; eauto. }
+
         unfold same_relation; splits; [|by basic_solver]. 
         erewrite ESstep.load_step_hb; eauto.
         rewrite JF'.
@@ -1092,18 +1101,12 @@ Proof.
           try (arewrite (singl_rel (h w) (ES.next_act S) ⊆ SE S × eq e)
             by autounfold with unfolderDb; ins; desf);
           by ESstep.E_seq_e
-        ). 
+        ).
 
         { apply SRC. }
         { rewrite seq_cross_singl_l; auto. 
           rewrite sbk_in_hdom; eauto.
-          arewrite (eq (h w) ⊆₁ h □₁ hdom q).
-          { rewrite <- collect_eq.
-            apply set_collect_mori; auto. 
-            arewrite (eq w ⊆₁ dom_rel new_rf).
-            { autounfold with unfolderDb.
-              ins; desf; eexists; eauto. }
-            eapply new_rf_dom; eauto. }
+          rewrite hwInHDOM.
           rewrite <- restr_cross, restr_relE.
           by rewrite SRCC.(himgNcf). }
 
@@ -1134,7 +1137,18 @@ Proof.
           rewrite <- restr_cross, restr_relE.
           by rewrite SRCC.(himgNcf). }
 
-        
+        { repeat rewrite seqA. 
+          rewrite seq_incl_cross.
+          { rewrite <- restr_cross, restr_relE.
+            by rewrite SRCC.(himgNcf). }
+          { rewrite releaseC; eauto. 
+            arewrite (f □₁ C ≡₁ h □₁ C).
+            { admit. }
+            rewrite dom_seq.
+            repeat rewrite set_collect_union.
+            basic_solver 10. }
+          repeat rewrite codom_seq.
+          rewrite codom_singl_rel; auto. } 
 
         all: admit. }
 

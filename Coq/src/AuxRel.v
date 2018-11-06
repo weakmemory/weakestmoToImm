@@ -119,6 +119,9 @@ Proof. basic_solver. Qed.
 Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
 Proof. basic_solver. Qed.
 
+Lemma codom_singl_rel (x y : A) : codom_rel (singl_rel x y) ≡₁ eq y. 
+Proof. basic_solver. Qed.
+
 Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
 Proof. basic_solver. Qed.
 
