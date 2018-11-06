@@ -199,7 +199,13 @@ Section SimRelCert.
     congruence.
   Qed.
 
-  Lemma sbk_in_hdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Lemma hdomC (SRC : simrel_cert) : C ⊆₁ hdom.
+  Proof. basic_solver. Qed.
+
+  Lemma hdomI (SRC : simrel_cert) : I ⊆₁ hdom.
+  Proof. admit. Admitted.
+
+  Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
   Proof. 
     rewrite set_collect_union.
     arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
@@ -208,6 +214,18 @@ Section SimRelCert.
       apply SRC. }
     apply set_subset_union_r2.
   Qed.
+
+  Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
+  Proof. 
+    red; split; [|basic_solver].
+    repeat rewrite set_collect_union. 
+    repeat rewrite set_inter_union_r.
+    apply set_subset_union_l; split. 
+    { apply set_subset_union_l; split. 
+      { admit. }
+      admit. }
+    admit. 
+  Admitted.
 
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
@@ -1023,8 +1041,17 @@ Proof.
         admit. }
       admit. }
 
+    assert (hdom q w) as wInHDOM.
+    { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
+      destruct RFwa as [RFwa|RFwa].
+      { unfold seq, eqv_rel in RFwa; desf.
+        eapply hdomI; eauto. }
+      admit. }
+
     assert (SE S (h w)) as hwInSE.
-    { admit. }
+    { apply SRCC.(himg). 
+      unfold set_collect.
+      eexists; split; eauto. }
 
     edestruct simrel_cert_basic_step as [q' [e [e' [lbl [lbl' [S' HH]]]]]]; eauto; desf.
 
@@ -1051,14 +1078,7 @@ Proof.
       splits.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
       exists (h w).
-      splits.
-      { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
-        destruct RFwa as [RFwa|RFwa].
-        { apply seq_eqv_l in RFwa. destruct RFwa as [IW RFwa].
-          eapply himg; [by apply SRCC|].
-          red. eexists. split; eauto.
-          admit. }
-        admit. }
+      splits; auto. 
       { simpl. unfold is_w. admit. }
       admit.
       admit.
@@ -1182,7 +1202,7 @@ Proof.
           { rewrite <- restr_cross, restr_relE. 
             by rewrite SRCC.(himgNcf). }
           { rewrite dom_cross; [|red; basic_solver]. 
-            eapply sbk_in_hdom; eauto. }
+            eapply sbk_in_hhdom; eauto. }
           by rewrite codom_singl_rel. } 
 
         { repeat rewrite seqA.
@@ -1200,7 +1220,7 @@ Proof.
             rewrite hbNCsb; eauto. 
             arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
             { rewrite ES.sbE; auto; basic_solver. } 
-            rewrite sbk_in_hdom; eauto.
+            rewrite sbk_in_hhdom; eauto.
             rewrite <- seqA.
             rewrite seq_incl_cross.
             { rewrite <- restr_cross, restr_relE. 
@@ -1291,13 +1311,11 @@ Proof.
         { unfolder. 
           intros x y [[EQx _] [CONTCFx _]].
           rewrite EQx in *. 
-          eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
-          destruct RFwa as [RFwa|RFwa].          
-          { apply seq_eqv_l in RFwa.
-            destruct RFwa as [IW RFwa].
-            admit. }
-          admit. }
-
+          eapply cfk_hdom; eauto. 
+          unfold set_inter; split; eauto.
+          unfold set_collect.
+          eexists; split; eauto. }
+          
         unfolder. 
         intros x y [[EQx _] [EQe _]].
         rewrite EQx in EQe.
