@@ -275,7 +275,7 @@ rewrite (ES.rfD WF) at 1.
 basic_solver 42.
 Qed.
 
-Lemma mcoD : mco m ≡ <| W |> ;; mco m ;; <| W |>.
+Lemma mcoD : mco m ≡ ⦗ W ⦘ ⨾ mco m ⨾ ⦗ W ⦘.
 Proof.
   destruct m; simpls.
   2: by apply ES.coD.
@@ -285,7 +285,7 @@ Qed.
 Lemma mfr_weakestmo : mfr Weakestmo ≡ fr.
 Proof. unfold mfr, ES.fr. simpls. Qed.
 
-Lemma mfrD : mfr m ≡ <| R |> ;; mfr m ;; <| W |>.
+Lemma mfrD : mfr m ≡ ⦗ R ⦘ ⨾ mfr m ⨾ ⦗ W ⦘.
 Proof.
   unfold mfr. rewrite mcoD.
   rewrite WF.(ES.rfD).

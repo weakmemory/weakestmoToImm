@@ -194,7 +194,7 @@ Record Wf :=
     ew_trans : transitive ew ;
     ew_sym : symmetric ew ;
 
-    ew_co_in_co : ew ;; co ⊆ co;
+    ew_co_in_co : ew ⨾ co ⊆ co;
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
@@ -444,7 +444,7 @@ Proof.
   basic_solver 10.
 Qed.
 
-Lemma rfrf_in_ew WF : rf ;; rf⁻¹ ⊆ ew^?.
+Lemma rfrf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew^?.
 Proof.
   unfold ES.rf. intros x y [z [[[p [HH DD]] BB] [[q [AA EE]] CC]]].
   assert (p = q); subst.
@@ -453,7 +453,7 @@ Proof.
   basic_solver 10.
 Qed.
 
-Lemma rffr_in_co WF : rf ;; fr ⊆ co.
+Lemma rffr_in_co WF : rf ⨾ fr ⊆ co.
 Proof.
   intros x y [z [HH [p [AA BB]]]].
   edestruct rfrf_in_ew; eauto.
@@ -462,7 +462,7 @@ Proof.
   apply WF.(ew_co_in_co). eexists. eauto.
 Qed.
 
-Lemma frco_in_fr WF : fr ;; co ⊆ fr.
+Lemma frco_in_fr WF : fr ⨾ co ⊆ fr.
 Proof.
   intros x y [z [[p [AA BB]] HH]].
   red. eexists. splits; eauto.

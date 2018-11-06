@@ -222,7 +222,7 @@ Lemma step_same_instrs thread state state'
 Proof. cdes STEP. inv STEP0. Qed.
 
 Lemma steps_same_instrs thread state state'
-      (STEP : (step thread)^* state state') :
+      (STEP : (step thread)＊ state state') :
   state'.(instrs) = state.(instrs).
 Proof.
   induction STEP; auto.
@@ -236,7 +236,7 @@ Lemma eps_step_same_G thread state state'
 Proof. cdes STEP. inv ISTEP0. Qed.
 
 Lemma eps_steps_same_G thread state state'
-      (STEP : (istep thread [])^* state state') :
+      (STEP : (istep thread [])＊ state state') :
   state'.(G) = state.(G).
 Proof.
   induction STEP; auto.
@@ -247,5 +247,5 @@ Qed.
 Lemma eps_step_in_step thread : istep thread [] ⊆ step thread.
 Proof. unfold step. basic_solver. Qed.
 
-Lemma eps_steps_in_steps thread : (istep thread [])^* ⊆ (step thread)^*.
+Lemma eps_steps_in_steps thread : (istep thread [])＊ ⊆ (step thread)＊.
 Proof. by rewrite eps_step_in_step. Qed.

@@ -678,7 +678,7 @@ Proof.
   assert (wf_thread_state (ES.cont_thread S q) state'') as GPC''.
   { eapply wf_thread_state_steps; [|by eauto]. done. }
 
-  assert (doma (⦗Tid_ thread ⦘ ;; Gsb ⨾ ⦗E0⦘) E0) as PRSBE0.
+  assert (doma (⦗Tid_ thread ⦘ ⨾ Gsb ⨾ ⦗E0⦘) E0) as PRSBE0.
   { red. intros x y SBXY.
     destruct_seq SBXY as [TX TY]. destruct TY as [TY EEY].
     split; auto.
@@ -690,12 +690,12 @@ Proof.
     exists z. apply seq_eqv_r. split; auto.
     generalize (@sb_trans G) SBXY SBYZ. basic_solver. }
   
-  assert (new_rfi ≡ <| E0 |> ;; new_rfi ;; <| E0 |>) as NEW_RFIE.
+  assert (new_rfi ≡ ⦗ E0 ⦘ ⨾ new_rfi ⨾ ⦗ E0 ⦘) as NEW_RFIE.
   { split; [|basic_solver].
     etransitivity.
     2: apply doma_helper.
     { unfold new_rfi, new_rf. basic_solver 10. }
-    arewrite (new_rfi ⊆ <|Tid_ thread|> ;; Gsb). 2: done.
+    arewrite (new_rfi ⊆ ⦗Tid_ thread⦘ ⨾ Gsb). 2: done.
     generalize NEWRFISB. unfold new_rfi. basic_solver 6. }
 
   edestruct steps_old_restrict with (state0:=state'') (state':=state') as [ORMW]; eauto.
