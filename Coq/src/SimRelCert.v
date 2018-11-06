@@ -1050,20 +1050,19 @@ Proof.
       unfold ESstep.add_jf.
       splits.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
-      { exists (h w).
-        splits.
-        { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
-          destruct RFwa as [RFwa|RFwa].
-          { apply seq_eqv_l in RFwa. destruct RFwa as [IW _].
-            eapply himg; [by apply SRCC|].
-            red. eexists. split; eauto.
-            (* TODO: trivial after fix in new_rf_iss_sb *)
-            admit. }
+      exists (h w).
+      splits.
+      { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
+        destruct RFwa as [RFwa|RFwa].
+        { apply seq_eqv_l in RFwa. destruct RFwa as [IW RFwa].
+          eapply himg; [by apply SRCC|].
+          red. eexists. split; eauto.
           admit. }
-        { simpl. unfold is_w. admit. }
-        admit.
-        admit.
-        cdes ES_BSTEP_; rewrite EVENT; eauto. } }
+        admit. }
+      { simpl. unfold is_w. admit. }
+      admit.
+      admit.
+      cdes ES_BSTEP_; rewrite EVENT; eauto. }
 
     assert (ESstep.t_ e None S S') as ES_STEP_.
     { unfold ESstep.t_. auto. }
