@@ -121,7 +121,7 @@ Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
 Notation "'same_loc'" := (same_loc lab).
 
-Notation "'tid_' t" := (fun x => tid x = t) (at level 1).
+Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
@@ -148,7 +148,7 @@ Definition event_to_act (e : eventid) : actid :=
     else
       let thread := tid e in
       ThreadEvent thread
-                  (countNatP (dom_rel (⦗ tid_ thread ⦘⨾ sb ⨾ ⦗ eq e ⦘))
+                  (countNatP (dom_rel (⦗ Tid thread ⦘⨾ sb ⨾ ⦗ eq e ⦘))
                              (next_act S)).
 
 Record Wf :=
@@ -522,6 +522,73 @@ Proof.
   unfolder. 
   eexists; splits; eauto. 
 Qed.
+
+Lemma cont_cf_cont_sb k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_cf_dom S k ≡₁ (E ∩₁ Tid (cont_thread S k)) \₁ cont_sb_dom S k. 
+Proof. 
+  unfold cont_thread, cont_sb_dom, cont_cf_dom. 
+  unfold ES.acts_init_set.
+  unfold set_inter, set_minus, set_equiv, set_subset.
+  edestruct k eqn:EQk. 
+  { splits; ins; splits; desf. 
+    red; ins; desf.
+    eapply init_tid_K; eauto. }
+  assert (Eninit eid) as ENIeid.
+  { eapply K_inEninit; eauto. }
+  assert (E eid) as Eeid. 
+  { eapply K_inEninit; eauto. }
+  splits. 
+  { intros x [CFx | SBx].
+    { unfold dom_rel, seq, eqv_rel, clos_refl in *; desf.
+      assert (E x) as Ex. 
+      { apply cfE in CFx. 
+        unfold seq, eqv_rel in CFx. 
+        desf. } 
+      splits; desf. 
+      { by eapply cf_same_tid. }
+      red; ins; desf. 
+      { eapply cf_irr; eauto. } 
+      eapply n_sb_cf; [apply Ex | apply Eeid | eauto]. }
+    unfold dom_rel, codom_rel, seq, eqv_rel, clos_refl in *. 
+    destruct SBx as [a [b [[EQab EQeid] SBx]]].
+    rewrite <- EQab, <- EQeid in *.
+    assert (E x) as Ex. 
+    { apply sbE in SBx; auto.  
+      unfold seq, eqv_rel in SBx. 
+      desf. } 
+    assert ((⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘) eid x) as SBNIx.
+    { eapply sb_seq_Eninit_l; auto.
+      unfold seq, eqv_rel; eauto.  } 
+    splits; auto. 
+    { symmetry; eapply sb_tid; auto. }
+    red. ins. desf. 
+    { eapply sb_irr; eauto. }
+    eapply sb_irr, sb_trans; eauto. }
+  intros x [[Ex STID] NSBDOM].
+  assert (Eninit x) as ENIx.
+  { unfold ES.acts_ninit_set, ES.acts_init_set in *. 
+    unfold set_inter, set_minus in *.
+    splits; auto. 
+    red; splits; auto. 
+    apply ENIeid; splits; auto; desf; congruence. }
+  destruct (excluded_middle_informative (cf x eid)) as [CF | nCF].
+  { left. basic_solver 10. } 
+  unfold dom_rel, codom_rel, seq, eqv_rel, clos_refl in *.   
+  right. do 2 exists eid.
+  splits; auto.
+  assert ((⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘) x eid) as STIDNI.
+  { unfold seq, eqv_rel. 
+    eexists x; splits; auto.  
+    eexists eid; splits; auto. } 
+  eapply same_thread in STIDNI; auto. 
+  destruct STIDNI as [SBx | CFx].
+  { unfold seq, eqv_rel, clos_refl_sym in SBx.
+    destruct SBx as [z [[EQz _] HH]].
+    destruct HH as [z' [[REFL | [SBx | SBx]] [EQeid _]]];
+    rewrite <- EQz, EQeid in *; auto. 
+    all: exfalso; apply NSBDOM; do 2 exists eid; auto. }
+  exfalso; auto. 
+Qed.      
 
 End EventStructure.
 End ES.
