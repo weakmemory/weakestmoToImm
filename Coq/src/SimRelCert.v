@@ -963,7 +963,14 @@ Lemma simrel_cert_lbl_step TC' h q
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
     ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state''⟫.
 Proof.
+  assert (Wf G) as WF by apply SRC.
   assert (ES.Wf S) as WfS by apply SRC.
+  assert (tc_coherent G sc TC) as TCCOH by apply SRC.
+  assert (sim_trav_step G sc TC TC') as TCSTEP.
+  { red. eexists. eapply tr_step; eauto. }
+  assert (tc_coherent G sc TC') as TCCOH'.
+  { eapply sim_trav_step_coherence; eauto. }
+
   destruct LBL_STEP as [lbls ILBL_STEP].
   set (ILBL_STEP_ALT := ILBL_STEP).
   eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
@@ -982,16 +989,9 @@ Proof.
     assert (acts_set (ProgToExecution.G state'') a) as aInCertG.
     { admit. }
 
-    edestruct cert_rf_complete as [w RFwa].
-    { by apply SRCC. }
+    edestruct cert_rf_complete as [w RFwa]; eauto.
     { unfold set_inter. splits.  
-      { apply aInGR. }
-      eapply preserve_event.
-      { eapply cstate_reachable. 
-        (* Here we probably have to show that simrel_cert holds for S' *)
-        { admit. }
-        (* Then this should follow trivially *)
-        admit. }
+      2: by apply aInGR.
       admit. }
 
     assert (SE S (h w)) as hwInSE.
@@ -1119,10 +1119,11 @@ Proof.
         assert (eq (h w) ⊆₁ h □₁ hdom q) as hwInHDOM. 
         { rewrite <- collect_eq.
           apply set_collect_mori; auto. 
-          arewrite (eq w ⊆₁ dom_rel new_rf).
-          { autounfold with unfolderDb.
-            ins; desf; eexists; eauto. }
-          eapply new_rf_dom; eauto. }
+          admit.
+          (* arewrite (eq w ⊆₁ dom_rel new_rf). *)
+          (* { autounfold with unfolderDb. *)
+          (*   ins; desf; eexists; eauto. } *)
+          (* eapply new_rf_dom; eauto. *) }
 
         unfold same_relation; splits; [|by basic_solver]. 
         erewrite ESstep.load_step_hb; eauto.
