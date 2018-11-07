@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
      imm_common imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
      CombRelations Execution_eco.
-Require Import Vf AuxRel.
+Require Import Vf AuxRel AuxDef.
 
 Section CertRf.
 Variable G  : execution.
@@ -104,15 +104,14 @@ Proof.
   apply vfE.
 Qed.
 
-Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗ E0 ⦘.
+Lemma cert_rf_codomE0 : cert_rf ≡ cert_rf ⨾ ⦗E0⦘.
+Proof. unfold cert_rf. basic_solver. Qed.
+
+Lemma cert_rf_codomt : cert_rf ≡ cert_rf ⨾ ⦗Tid_ thread⦘.
 Proof.
-  unfold cert_rf.
-  rewrite AuxRel.seq_eqv_minus_lr.
-  rewrite seqA.
-  rewrite <- id_inter.
-  arewrite (E0 ∩₁ R ∩₁ E0 ≡₁ E0 ∩₁ R).
-  2: done.
-  basic_solver 20.
+  split; [|basic_solver].
+  rewrite cert_rf_codomE0 at 1.
+  unfold E0. basic_solver.
 Qed.
 
 Lemma cert_rfD : cert_rf ≡ ⦗W⦘ ⨾ cert_rf ⨾ ⦗R⦘.
@@ -152,7 +151,7 @@ Proof.
   unfold cert_rf in *. desf; unfolder in *; basic_solver 40.
 Qed.
 
-Lemma cert_rf_comp : forall b (IN: (E0 ∩₁ R) b), exists a, cert_rf a b.
+Lemma cert_rf_complete : forall b (IN: (E0 ∩₁ R) b), exists a, cert_rf a b.
 Proof.
   ins; unfolder in *; desc.
   assert (exists l, loc b = Some l); desc.
@@ -224,10 +223,10 @@ Lemma cert_rf_mod: E0 ∩₁ R ≡₁ codom_rel cert_rf.
 Proof.
   split.
   { intros x HH.
-    apply cert_rf_comp in HH.
+    apply cert_rf_complete in HH.
     desc. eexists. eauto. }
   rewrite (dom_r cert_rfD).
-  rewrite cert_rf_codom.
+  rewrite cert_rf_codomE0.
   rewrite !codom_eqv1.
   basic_solver 10.
 Qed.
@@ -240,6 +239,13 @@ Proof.
   rewrite cert_rf_in_furr.
   apply furr_hb_sc_hb_irr; auto.
   all: apply COH.
+Qed.
+
+Lemma cert_rf_hb_irr: irreflexive (cert_rf ⨾ hb).
+Proof.
+  arewrite (cert_rf ⨾ hb ⊆ cert_rf ⨾ hb ⨾ (sc ⨾ hb)^?).
+  { rewrite crE. relsf. }
+  apply cert_rf_hb_sc_hb_irr.
 Qed.
 
 Lemma rf_D_in_vf : rf ⨾ ⦗D⦘ ⊆ vf.
@@ -368,7 +374,7 @@ Qed.
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
   cdes COH.
-  rewrite cert_rf_codom. rewrite (dom_r cert_rfD).
+  rewrite cert_rf_codomE0. rewrite (dom_r cert_rfD).
   rewrite cert_rf_in_vf. rewrite !seqA.
   unfold vf.
   arewrite_id ⦗E⦘. rewrite seq_id_l.
@@ -574,19 +580,29 @@ Proof.
   eapply sb_trans; eauto.
 Qed.
 
-  (* rewrite (cert_rfD). *)
-  (* arewrite (⦗E0 \₁ I⦘ ⨾ ⦗W⦘ ⊆ ⦗E0 \₁ I⦘ ⨾ ⦗Tid_ thread⦘ ⨾ ⦗W⦘). *)
-  (* { by revert IT_new_co; unfolder; firstorder. } *)
-  (* rewrite (cert_rfE). *)
-  (* arewrite (E \₁ D ⊆₁ E ∩₁ Tid_ thread). *)
-  (* { by unfold D; unfolder; ins; desf; tauto. } *)
-  (* unfolder; ins; desf. *)
-  (* eapply (@same_thread G) in H3; desf. *)
-  (* destruct H3; [subst x; type_solver|]. *)
-  (* 2: by intro K; apply (init_w WF) in K; type_solver. *)
-  (* exfalso; generalize cert_rf_hb. *)
-  (* generalize (@sb_in_hb G); basic_solver 12. *)
-(* Qed. *)
+Lemma cert_rf_ntid_sb : cert_rf ⊆ <| NTid_ thread |> ;; cert_rf ∪ sb.
+Proof.
+  arewrite (cert_rf ⊆ ⦗Tid_ thread ∪₁ NTid_ thread⦘ ⨾ cert_rf ;; ⦗Tid_ thread⦘).
+  { unfolder. intros x y HH. splits; auto.
+    { apply classic. }
+    generalize HH. unfold cert_rf, E0. unfolder. basic_solver. }
+  rewrite id_union, seq_union_l.
+  unionL; [|basic_solver].
+  unionR right.
+  rewrite cert_rfD, !seqA.
+  unfolder. intros x y [[TX WX] [VF [RY TY]]].
+  apply cert_rfE in VF. destruct_seq VF as [EX EY].
+  assert (~ is_init y) as NIY. 
+  { intros HH. eapply init_w in HH; eauto. type_solver. }
+  destruct (classic (is_init x)) as [|NIX].
+  { by apply init_ninit_sb. }
+  edestruct same_thread with (x:=x) (y:=y) as [[|SB]|SB]; eauto.
+  { by rewrite TX. }
+  { type_solver. }
+  exfalso.
+  eapply cert_rf_hb_irr. eexists; splits; eauto.
+    by apply sb_in_hb.
+Qed.
 
 (* Lemma cert_rfe_Acq : (cert_rf \ Gsb) ⨾ ⦗R∩₁Acq⦘ ⊆ ∅₂. *)
 (* Proof. *)
