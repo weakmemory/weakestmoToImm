@@ -172,12 +172,8 @@ Section SimRelCert.
     congruence.
   Qed.
 
-  Lemma hdomC (SRC : simrel_cert) : C ⊆₁ hdom.
+  Lemma C_in_hdom : C ⊆₁ hdom.
   Proof. basic_solver. Qed.
-
-  (* TODO: this statement is incorrect! *)
-  Lemma hdomI (SRC : simrel_cert) : I ⊆₁ hdom.
-  Proof. admit. Admitted.
 
   Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
   Proof. 
@@ -209,6 +205,20 @@ Section SimRelCert.
   Lemma new_rf_dom : dom_rel new_rf ⊆₁ hdom.
   Proof.
   Admitted.
+
+  Lemma new_rf_ntid_iss_sb (SRC : simrel_cert) :
+    new_rf ⊆ ⦗ NTid_ qtid ∩₁ I ⦘ ⨾ new_rf ∪ Gsb.
+  Proof.
+    etransitivity.
+    { apply cert_rf_ntid_sb.
+      1,2: by apply SRC.
+      eapply sim_trav_step_rel_covered.
+      eexists.
+      all: apply SRC. }
+    sin_rewrite new_rf_iss_sb.
+    2: by apply SRC.
+    basic_solver 10.
+  Qed.
 
   Record forward_pair (e : actid) (e' : eventid) 
          (state : (thread_lts (ES.cont_thread S (CEvent e'))).(Language.state)) :=
@@ -1014,10 +1024,11 @@ Proof.
       admit. }
 
     assert (hdom q w) as wInHDOM.
-    { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
+    { eapply new_rf_ntid_iss_sb in RFwa; [|by apply SRCC].
       destruct RFwa as [RFwa|RFwa].
-      { unfold seq, eqv_rel in RFwa; desf.
-        eapply hdomI; eauto. }
+      { apply seq_eqv_l in RFwa. destruct RFwa as [[NTIDw IW] RFwa].
+        left. right. split; auto.
+        eexists. eexists. split; [|red]; eauto. }
       admit. }
 
     assert (SE S (h w)) as hwInSE.
