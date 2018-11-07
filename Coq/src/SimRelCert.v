@@ -172,7 +172,14 @@ Section SimRelCert.
     congruence.
   Qed.
 
-  Lemma sbk_in_hdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Lemma hdomC (SRC : simrel_cert) : C ⊆₁ hdom.
+  Proof. basic_solver. Qed.
+
+  (* TODO: this statement is incorrect! *)
+  Lemma hdomI (SRC : simrel_cert) : I ⊆₁ hdom.
+  Proof. admit. Admitted.
+
+  Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
   Proof. 
     rewrite set_collect_union.
     arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
@@ -181,6 +188,18 @@ Section SimRelCert.
       apply SRC. }
     apply set_subset_union_r2.
   Qed.
+
+  Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
+  Proof. 
+    red; split; [|basic_solver].
+    repeat rewrite set_collect_union. 
+    repeat rewrite set_inter_union_r.
+    apply set_subset_union_l; split. 
+    { apply set_subset_union_l; split. 
+      { admit. }
+      admit. }
+    admit. 
+  Admitted.
 
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
@@ -994,8 +1013,17 @@ Proof.
       2: by apply aInGR.
       admit. }
 
+    assert (hdom q w) as wInHDOM.
+    { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
+      destruct RFwa as [RFwa|RFwa].
+      { unfold seq, eqv_rel in RFwa; desf.
+        eapply hdomI; eauto. }
+      admit. }
+
     assert (SE S (h w)) as hwInSE.
-    { admit. }
+    { apply SRCC.(himg). 
+      unfold set_collect.
+      eexists; split; eauto. }
 
     edestruct simrel_cert_basic_step as [q' [e [e' [lbl [lbl' [S' HH]]]]]]; eauto; desf.
 
@@ -1022,14 +1050,7 @@ Proof.
       splits.
       { simpl. unfold is_r. auto. by rewrite eSLAB. }
       exists (h w).
-      splits.
-      { eapply new_rf_iss_sb in RFwa; [|by apply SRCC].
-        destruct RFwa as [RFwa|RFwa].
-        { apply seq_eqv_l in RFwa. destruct RFwa as [IW RFwa].
-          eapply himg; [by apply SRCC|].
-          red. eexists. split; eauto.
-          admit. }
-        admit. }
+      splits; auto. 
       { simpl. unfold is_w. admit. }
       admit.
       admit.
@@ -1154,7 +1175,7 @@ Proof.
           { rewrite <- restr_cross, restr_relE. 
             by rewrite SRCC.(himgNcf). }
           { rewrite dom_cross; [|red; basic_solver]. 
-            eapply sbk_in_hdom; eauto. }
+            eapply sbk_in_hhdom; eauto. }
           by rewrite codom_singl_rel. } 
 
         { repeat rewrite seqA.
@@ -1172,7 +1193,7 @@ Proof.
             rewrite hbNCsb; eauto. 
             arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
             { rewrite ES.sbE; auto; basic_solver. } 
-            rewrite sbk_in_hdom; eauto.
+            rewrite sbk_in_hhdom; eauto.
             rewrite <- seqA.
             rewrite seq_incl_cross.
             { rewrite <- restr_cross, restr_relE. 
@@ -1236,6 +1257,44 @@ Proof.
           basic_solver 10. }
         repeat rewrite codom_seq.
         rewrite codom_singl_rel; auto. }
+      
+      { admit. }
+
+      { cdes ES_BSTEP_.
+
+        red; split; [|basic_solver].
+        rewrite JF', ESstep.basic_step_cf; eauto. 
+        repeat rewrite csE.
+        repeat rewrite transp_cross.
+        repeat rewrite inter_union_l.
+        repeat rewrite inter_union_r. 
+        unfold eq_opt.
+        relsf.
+        repeat rewrite unionA.
+        repeat apply inclusion_union_l.
+
+        all: try (
+          try rewrite ES.jfE;
+          try rewrite ES.cfE;
+          by ESstep.E_seq_e
+        ).
+
+        { apply SRC. }
+        
+        { unfolder. 
+          intros x y [[EQx _] [CONTCFx _]].
+          rewrite EQx in *. 
+          eapply cfk_hdom; eauto. 
+          unfold set_inter; split; eauto.
+          unfold set_collect.
+          eexists; split; eauto. }
+          
+        unfolder. 
+        intros x y [[EQx _] [EQe _]].
+        rewrite EQx in EQe.
+        rewrite <- EQe in hwInSE.
+        unfold "SE" in hwInSE.
+        omega. }
 
       all: admit. }
 
@@ -1255,9 +1314,9 @@ Proof.
   all: admit. 
 Admitted.
 
-Lemma simrel_cert_step TC' h q state'' new_rf
+Lemma simrel_cert_step TC' h q state''
       (state : (thread_lts (ES.cont_thread S q)).(Language.state))
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'' new_rf)
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
       (KK : K S (q, existT _ _ state))
       (KNEQ : state <> state'') :
   exists (state' : (thread_lts (ES.cont_thread S q)).(Language.state)),
@@ -1281,8 +1340,8 @@ Proof.
   splits; auto. 
 Qed.
 
-Lemma simrel_cert_cc_dom TC' h q state' new_rf
-  (SRCC : simrel_cert prog S G sc TC TC' f h q state' new_rf) : 
+Lemma simrel_cert_cc_dom TC' h q state'
+  (SRCC : simrel_cert prog S G sc TC TC' f h q state') :
   dom_rel (Scc S ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
 Proof. 
   admit.
