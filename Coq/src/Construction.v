@@ -54,7 +54,7 @@ Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-Notation "'Tid_' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
+Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
 
 Definition t_basic_
            (lang : Language.t)
@@ -580,107 +580,46 @@ Proof.
         rewrite <- AuxRel.seq_eqv_minus_lr, <- AuxRel.seq_eqv_minus_ll.
         basic_solver. }
 
-      unfold same_relation; splits. 
-      { rewrite seq_eqv_lr.
-        unfold cross_rel, minus_rel.
-        unfold inclusion.
-        intros x y [NINITx [[STIDxy NsbDOM] EQe]].
-        assert (E S x) as Ex. 
-        { by apply ES.acts_ninit_set_incl. }
-        splits; auto.
-        unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
-        edestruct k eqn:EQk. 
-        { splits; auto.
+      rewrite <- seq_eqv_minus_lr.
+      rewrite csE, minus_union_r, transp_cross. 
+      arewrite 
+        (ES.same_tid S' ⨾ ⦗eq e⦘ \ eq e × ES.cont_sb_dom S k ≡ ES.same_tid S' ⨾ ⦗eq e⦘). 
+      { red; split; [basic_solver|].
+        unfolder; ins; desf; splits; auto.  
+        red. intros [_ HH].
+        eapply ES.cont_sb_domE in HH; eauto. 
+        unfold ES.acts_set in HH; omega. }
+      erewrite inter_absorb_r with (r' := ES.same_tid S' ⨾ ⦗eq e⦘); [|basic_solver]. 
+      rewrite <- seq_eqv_minus_ll.
+      arewrite 
+        (⦗Eninit S⦘ ⨾ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ (E S ∩₁ Tid S (ES.cont_thread S k)) × eq e).
+      { unfolder; splits. 
+        { intros x y [ENIx [STIDxy EQe]].
+          assert (E S x) as Ex by apply ENIx.
+          splits; auto. 
           erewrite <- basic_step_tid_eq_dom; eauto.
           unfold ES.same_tid in STIDxy.
-          rewrite STIDxy.
+          rewrite STIDxy, <- EQe.
           erewrite basic_step_tid_e; desf; eauto; by unfold ES.cont_thread. }
-        destruct (excluded_middle_informative (cf S x eid)) as [CF | nCF].
-        { left. exists eid. basic_solver. }
-        right. exists eid. 
-        assert (ES.acts_set S eid) as Eeid.
-        { eapply ES.K_inEninit; eauto. }
-        assert (ES.same_tid S x eid) as STIDxEID.
-        { eapply basic_step_same_tid_restr with (S':=S'); eauto. 
-          unfold restr_rel; splits; eauto. 
-          eapply ES.same_tid_trans; eauto. 
-          unfold ES.same_tid.
-          erewrite basic_step_tid_e; desf; eauto.
-          erewrite basic_step_tid_eq_dom; eauto. 
-            by unfold ES.cont_thread. }
-        eexists; splits; eauto.
-        { basic_solver. }
-        assert (Eninit S eid) as ENINITeid.
-        { eapply ES.K_inEninit; eauto. }
-        assert ((⦗Eninit S⦘ ⨾ ES.same_tid S ⨾ ⦗Eninit S⦘) eid x) as HH. 
-        { unfold seq, eqv_rel. 
-          eexists; splits; eauto. 
-          eexists; splits; eauto.
-          by apply ES.same_tid_sym. }
-        apply ES.same_thread in HH; auto.
-        unfold union in HH. 
-        destruct HH as [SBEINITrefl | CF].
-        { assert ((sb S)⁼ eid x) as SBrefl.
-          { unfold seq, eqv_rel in SBEINITrefl; desf. } 
-          destruct SBrefl as [REFL | [SB1 | SB2]]; auto.
-          all : 
-            exfalso;
-            apply NsbDOM; 
-            unfold clos_sym;
-            left; splits; auto;
-            basic_solver 42. }
-        exfalso. 
-        apply nCF.
-        by apply ES.cf_sym. }
-        
-      rewrite seq_eqv_lr.
-      unfold cross_rel, minus_rel.
-      intros x y [cfCONT EQe]. 
-      assert (Eninit S x) as ENINITx. 
-      { eapply ES.cont_cf_domEninit; eauto. }
-      assert (E S x) as Ex. 
-      { by apply ES.acts_ninit_set_incl. }
-      assert (tid S' e = tid S x) as TIDe.
-      { erewrite basic_step_tid_e; eauto.
-        symmetry; eapply ES.cont_cf_tid; eauto. } 
-      splits; auto.
-      { rewrite <- EQe.
-        unfold ES.same_tid.          
-        erewrite basic_step_tid_eq_dom; eauto. }
-      red.
-      unfold clos_sym.
-      unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
-      edestruct k eqn:EQk. 
-      { intros [[EINITx _] | [EINITe EQex]].
-        { unfold ES.acts_ninit_set, set_minus in *. 
-          by apply ENINITx. }
-        eapply basic_step_acts_set_NE; eauto; congruence. }
-      intros [[SB _] | [SB EQex]].
-      { unfold dom_rel, seq, eqv_rel, clos_refl in SB.
-        destruct SB as [x' [y' HH]].
-        destruct HH as [HH [_ EQeid]].
-        rewrite <- EQeid in HH.
-        destruct HH as [REFL | SBxeid].
-        { unfold dom_rel, codom_rel, set_union in cfCONT. 
-          destruct cfCONT as [CF | SB].
-          { unfold seq, eqv_rel in CF; desf.
-            eapply ES.cf_irr; eauto. }
-          unfold seq, eqv_rel in SB; desf.
-          eapply ES.sb_irr; eauto. } 
-        unfold dom_rel, codom_rel, set_union in cfCONT. 
-        destruct cfCONT as [CF | SB].
-        { unfold seq, eqv_rel in CF; desf. 
-          eapply ES.n_sb_cf; [ eauto| | eauto ].
-          eapply ES.sbE in SBxeid; eauto. 
-          unfold seq, eqv_rel in SBxeid; desf. }
-        unfold seq, eqv_rel in SB; desf. 
-        eapply ES.sb_irr; eauto.
-        eapply ES.sb_trans; eauto. }
-      unfold dom_rel, seq, eqv_rel, clos_refl in SB.
-      destruct SB as [x' [y' HH]].
-      destruct HH as [HH [_ EQeid]].
-      rewrite <- EQex in Ex.
-      eapply basic_step_acts_set_NE; eauto. }
+        intros x y [[Ex TIDx] EQe].
+        assert (Eninit S x) as ENIx.
+        { unfold ES.acts_ninit_set, ES.acts_init_set.
+          unfold set_inter, set_minus.
+          split; auto. 
+          red; ins; desf. 
+          eapply ES.init_tid_K; eauto. 
+          do 2 eexists. 
+          splits; eauto. 
+          congruence. }
+        splits; auto. 
+        unfold ES.same_tid.
+        erewrite basic_step_tid_eq_dom; eauto.
+        rewrite TIDx, <- EQe.
+        symmetry. 
+        eapply basic_step_tid_e; eauto. }
+      rewrite ES.cont_cf_cont_sb; eauto. 
+      unfolder; splits; ins; splits; desf; auto.   
+      red; ins; desf. } 
 
     destruct e'; [|unfold eq_opt; basic_solver].
     rename e0 into e'.
@@ -740,108 +679,46 @@ Proof.
         rewrite <- AuxRel.seq_eqv_minus_lr, <- AuxRel.seq_eqv_minus_ll.
         basic_solver. }
 
-      (* TODO : get rid of copy-paste *)
-      unfold same_relation; splits. 
-      { rewrite seq_eqv_lr.
-        unfold cross_rel, minus_rel.
-        unfold inclusion.
-        intros x y [NINITx [[STIDxy NsbDOM] EQe]].
-        assert (E S x) as Ex. 
-        { by apply ES.acts_ninit_set_incl. }
-        splits; auto.
-        unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
-        edestruct k eqn:EQk. 
-        { splits; auto.
+      rewrite <- seq_eqv_minus_lr.
+      rewrite csE, minus_union_r, transp_cross. 
+      arewrite 
+        (ES.same_tid S' ⨾ ⦗eq e'⦘ \ eq e' × ES.cont_sb_dom S k ≡ ES.same_tid S' ⨾ ⦗eq e'⦘). 
+      { red; split; [basic_solver|].
+        unfolder; ins; desf; splits; auto.  
+        red. intros [_ HH].
+        eapply ES.cont_sb_domE in HH; eauto. 
+        unfold ES.acts_set in HH; omega. }
+      erewrite inter_absorb_r with (r' := ES.same_tid S' ⨾ ⦗eq e'⦘); [|basic_solver]. 
+      rewrite <- seq_eqv_minus_ll.
+      arewrite 
+        (⦗Eninit S⦘ ⨾ ES.same_tid S' ⨾ ⦗eq e'⦘ ≡ (E S ∩₁ Tid S (ES.cont_thread S k)) × eq e').
+      { unfolder; splits. 
+        { intros x y [ENIx [STIDxy EQe]].
+          assert (E S x) as Ex by apply ENIx.
+          splits; auto. 
           erewrite <- basic_step_tid_eq_dom; eauto.
           unfold ES.same_tid in STIDxy.
-          rewrite STIDxy.
+          rewrite STIDxy, <- EQe.
           erewrite basic_step_tid_e'; desf; eauto; by unfold ES.cont_thread. }
-        destruct (excluded_middle_informative (cf S x eid)) as [CF | nCF].
-        { left. exists eid. basic_solver. }
-        right. exists eid. 
-        assert (ES.acts_set S eid) as Eeid.
-        { eapply ES.K_inEninit; eauto. }
-        assert (ES.same_tid S x eid) as STIDxEID.
-        { eapply basic_step_same_tid_restr with (S':=S'); eauto. 
-          unfold restr_rel; splits; eauto. 
-          eapply ES.same_tid_trans; eauto. 
-          unfold ES.same_tid.
-          erewrite basic_step_tid_e'; desf; eauto.
-          erewrite basic_step_tid_eq_dom; eauto. 
-            by unfold ES.cont_thread. }
-        eexists; splits; eauto.
-        { basic_solver. }
-        assert (Eninit S eid) as ENINITeid.
-        { eapply ES.K_inEninit; eauto. }
-        assert ((⦗Eninit S⦘ ⨾ ES.same_tid S ⨾ ⦗Eninit S⦘) eid x) as HH. 
-        { unfold seq, eqv_rel. 
-          eexists; splits; eauto. 
-          eexists; splits; eauto.
-          by apply ES.same_tid_sym. }
-        apply ES.same_thread in HH; auto.
-        unfold union in HH. 
-        destruct HH as [SBEINITrefl | CF].
-        { assert ((sb S)⁼ eid x) as SBrefl.
-          { unfold seq, eqv_rel in SBEINITrefl; desf. } 
-          destruct SBrefl as [REFL | [SB1 | SB2]]; auto.
-          all : 
-            exfalso;
-            apply NsbDOM; 
-            unfold clos_sym;
-            left; splits; auto;
-            basic_solver 42. }
-        exfalso. 
-        apply nCF.
-        by apply ES.cf_sym. }
-        
-      rewrite seq_eqv_lr.
-      unfold cross_rel, minus_rel.
-      intros x y [cfCONT EQe]. 
-      assert (Eninit S x) as ENINITx. 
-      { eapply ES.cont_cf_domEninit; eauto. }
-      assert (E S x) as Ex. 
-      { by apply ES.acts_ninit_set_incl. }
-      assert (tid S' e' = tid S x) as TIDe.
-      { erewrite basic_step_tid_e'; eauto.
-        symmetry; eapply ES.cont_cf_tid; eauto. } 
-      splits; auto.
-      { rewrite <- EQe.
-        unfold ES.same_tid.          
-        erewrite basic_step_tid_eq_dom; eauto. }
-      red.
-      unfold clos_sym.
-      unfold ES.cont_thread, ES.cont_sb_dom, ES.cont_cf_dom in *. 
-      edestruct k eqn:EQk. 
-      { intros [[EINITx _] | [EINITe EQex]].
-        { unfold ES.acts_ninit_set, set_minus in *. 
-          by apply ENINITx. }
-        eapply basic_step_acts_set_NE'; eauto; congruence. }
-      intros [[SB _] | [SB EQex]].
-      { unfold dom_rel, seq, eqv_rel, clos_refl in SB.
-        destruct SB as [x' [y' HH]].
-        destruct HH as [HH [_ EQeid]].
-        rewrite <- EQeid in HH.
-        destruct HH as [REFL | SBxeid].
-        { unfold dom_rel, codom_rel, set_union in cfCONT. 
-          destruct cfCONT as [CF | SB].
-          { unfold seq, eqv_rel in CF; desf.
-            eapply ES.cf_irr; eauto. }
-          unfold seq, eqv_rel in SB; desf.
-          eapply ES.sb_irr; eauto. } 
-        unfold dom_rel, codom_rel, set_union in cfCONT. 
-        destruct cfCONT as [CF | SB].
-        { unfold seq, eqv_rel in CF; desf. 
-          eapply ES.n_sb_cf; [ eauto| | eauto ].
-          eapply ES.sbE in SBxeid; eauto. 
-          unfold seq, eqv_rel in SBxeid; desf. }
-        unfold seq, eqv_rel in SB; desf. 
-        eapply ES.sb_irr; eauto.
-        eapply ES.sb_trans; eauto. }
-      unfold dom_rel, seq, eqv_rel, clos_refl in SB.
-      destruct SB as [x' [y' HH]].
-      destruct HH as [HH [_ EQeid]].
-      rewrite <- EQex in Ex.
-      eapply basic_step_acts_set_NE'; eauto. 
+        intros x y [[Ex TIDx] EQe].
+        assert (Eninit S x) as ENIx.
+        { unfold ES.acts_ninit_set, ES.acts_init_set.
+          unfold set_inter, set_minus.
+          split; auto. 
+          red; ins; desf. 
+          eapply ES.init_tid_K; eauto. 
+          do 2 eexists. 
+          splits; eauto. 
+          congruence. }
+        splits; auto. 
+        unfold ES.same_tid.
+        erewrite basic_step_tid_eq_dom; eauto.
+        rewrite TIDx, <- EQe.
+        symmetry. 
+        eapply basic_step_tid_e'; eauto. }
+      rewrite ES.cont_cf_cont_sb; eauto. 
+      unfolder; splits; ins; splits; desf; auto.   
+      red; ins; desf.  
 Qed.
 
 Lemma basic_step_nupd_cf lang k k' st st' e S S' 
@@ -990,8 +867,8 @@ Proof.
   assert ((tid S') x = (tid S) x) as CC.
   { eapply basic_step_tid_eq_dom; eauto. }
   
-  assert (countNatP (dom_rel (⦗Tid_ S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘)) (ES.next_act S') =
-          countNatP (dom_rel (⦗Tid_ S  (tid S  x)⦘ ⨾ sb S  ⨾ ⦗eq x⦘)) (ES.next_act S ))
+  assert (countNatP (dom_rel (⦗Tid S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘)) (ES.next_act S') =
+          countNatP (dom_rel (⦗Tid S  (tid S  x)⦘ ⨾ sb S  ⨾ ⦗eq x⦘)) (ES.next_act S ))
     as DD.
   2: { admit.
     (* TODO: It doesn't work for some reason :( *)
