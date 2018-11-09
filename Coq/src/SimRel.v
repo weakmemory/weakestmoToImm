@@ -33,11 +33,14 @@ Section SimRel.
   Notation "'Srmw'" := (S.(ES.rmw)).
   Notation "'Sjf'" := (S.(ES.jf)).
   Notation "'Srf'" := (S.(ES.rf)).
+  Notation "'Srfi'" := (S.(ES.rfi)).
+  Notation "'Srfe'" := (S.(ES.rfe)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Scc'" := (S.(ES.cc)).
   Notation "'Sew'" := (S.(ES.ew)).
 
+  Notation "'Srs'" := (S.(Consistency.rs)).
   Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Shb'" := (S.(Consistency.hb)).
@@ -63,7 +66,11 @@ Section SimRel.
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
+
+  Notation "'Grs'" := (G.(imm_s_hb.rs)).
+  Notation "'Grelease'" := (G.(imm_s_hb.release)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+
   Notation "'Gvf'" := (furr G sc).
 
   Notation "'C'"  := (covered TC).
@@ -136,6 +143,8 @@ Section SimRel.
       gjf  : g □ Sjf  ⊆ Gvf;
       gew  : g □ Sew  ⊆ eq;
       gco  : g □ Sco  ⊆ Gco;
+      
+      grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
@@ -149,6 +158,8 @@ Section SimRel.
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) Glab (Slab ∘ f);
       
+      (* we should use `same_lab_up_to_value` here,
+         but it is not possible until we modify its definition in IMM *)
       glab : forall e,
           same_label_up_to_value (Slab e) (Glab (g e));
 
@@ -157,8 +168,6 @@ Section SimRel.
       ftid : Stid ∘ f = Gtid;
 
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
-
-      frel : (SE ∩₁ SRel) \₁ f □₁ C ≡₁ ∅;
 
       vis  : f □₁ fdom ⊆₁ vis S;
 
@@ -273,6 +282,40 @@ Section SimRel.
       admit. 
     Admitted.
 
+    Lemma grs : g □ Srs ⊆ Grs. 
+    Proof. 
+      unfold rs, imm_s_hb.rs. 
+      repeat rewrite collect_rel_seqi.
+      repeat apply seq_mori. 
+      { rewrite set_collect_eqv, set_collect_inter.
+        apply eqv_rel_mori. 
+        apply set_subset_inter_l.
+        right. admit. }
+      { rewrite collect_rel_cr.
+        rewrite collect_rel_interi. 
+        apply clos_refl_mori, inter_rel_mori. 
+        { apply gsb. }
+        admit. }
+      { rewrite set_collect_eqv.
+        apply eqv_rel_mori. 
+        admit. }
+      rewrite collect_rel_crt.
+      auto using clos_refl_trans_mori, grfrmw.  
+    Admitted.
+
+    Lemma grelease : g □ Srelease ⊆ Grelease.
+    Proof. 
+      unfold release, imm_s_hb.release. 
+      repeat rewrite collect_rel_seqi.
+      repeat apply seq_mori. 
+      { admit. }
+      { rewrite collect_rel_cr, collect_rel_seqi. 
+        apply clos_refl_mori, seq_mori. 
+        { admit. }
+        apply gsb. }
+      apply grs. 
+    Admitted. 
+ 
     Lemma gtid e : Stid e = Gtid (g e).
     Proof.
       assert (SEinit e -> Stid e = tid_init) as HH.
@@ -370,60 +413,38 @@ Section SimRel.
       arewrite (eq e ⊆₁ C).
       { intros x HH. desf. }
       eapply dom_sb_covered; eauto.
-   Admitted.
-
-    Lemma releaseC : Srelease ≡ ⦗f □₁ C⦘ ⨾ Srelease. 
-    Proof.
-      assert (ES.Wf S) as SWF by apply SRC. 
-      red; splits; [|basic_solver]. 
-      rewrite releaseE; auto. 
-      rewrite set_union_minus with (s := SE) (s' := f □₁ C) at 1.
-      { rewrite <- seqA, id_union.
-        repeat rewrite seq_union_l. 
-        apply inclusion_union_l.
-        { unfold release.
-          rewrite <- seqA with (r2 := ⦗SRel⦘). 
-          rewrite <- AuxRel.id_inter. 
-          rewrite set_inter_minus_l.
-          rewrite SRC.(frel).
-          basic_solver. }
-        rewrite releaseE; auto. 
-        basic_solver 42. } 
-      etransitivity. 
-      2 : eapply SRC.(fimg). 
-      basic_solver.
-    Qed.
-
-    Lemma swC : Ssw ≡ ⦗f □₁ C⦘ ⨾ Ssw.  
+    Admitted.
+    
+    Lemma dom_release_iss : 
+        dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C.
     Proof. 
-      unfold sw. 
-      rewrite releaseC.
-      basic_solver 42.
-    Qed.
+      admit. 
+    Admitted.
 
     Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
     Proof. 
-      assert (ES.Wf S) as SWF by apply SRC. 
-      unfold hb, set_minus. 
-      rewrite seq_eqv_l.
-      red.
-      intros x y [[Ex NCx] HBxy].
-      induction HBxy as [x y STEPxy | x y z HBxy IHxy HByz IHyz]. 
-      { destruct STEPxy as [SBxy | SWxy]; auto. 
-        exfalso. 
-        apply NCx.
-        apply swC in SWxy.
-        unfold seq, eqv_rel in SWxy.
-        desf. }
-      specialize (IHxy Ex NCx).
-      assert (SE y) as Ey. 
-      { eapply ES.sbE in IHxy; auto. 
-        unfold seq, eqv_rel in IHxy.
-        desf. }
-      assert (~ (f □₁ C) y) as NCy.
-      { admit. }
-      specialize (IHyz Ey NCy).
-      eapply ES.sb_trans; eauto. 
+      admit. 
+      (* assert (ES.Wf S) as SWF by apply SRC.  *)
+      (* unfold hb, set_minus.  *)
+      (* rewrite seq_eqv_l. *)
+      (* red. *)
+      (* intros x y [[Ex NCx] HBxy]. *)
+      (* induction HBxy as [x y STEPxy | x y z HBxy IHxy HByz IHyz].  *)
+      (* { destruct STEPxy as [SBxy | SWxy]; auto.  *)
+      (*   exfalso.  *)
+      (*   apply NCx. *)
+      (*   apply swC in SWxy. *)
+      (*   unfold seq, eqv_rel in SWxy. *)
+      (*   desf. } *)
+      (* specialize (IHxy Ex NCx). *)
+      (* assert (SE y) as Ey.  *)
+      (* { eapply ES.sbE in IHxy; auto.  *)
+      (*   unfold seq, eqv_rel in IHxy. *)
+      (*   desf. } *)
+      (* assert (~ (f □₁ C) y) as NCy. *)
+      (* { admit. } *)
+      (* specialize (IHyz Ey NCy). *)
+      (* eapply ES.sb_trans; eauto.  *)
     Admitted.  
 
   End Properties.
