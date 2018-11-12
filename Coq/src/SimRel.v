@@ -141,7 +141,7 @@ Section SimRel.
 
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
-      gew  : g □ Sew  ⊆ eq;
+      gew  : g □ Sew  ⊆ ⦗I⦘;
       gco  : g □ Sco  ⊆ Gco;
       
       grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
@@ -414,12 +414,42 @@ Section SimRel.
       { intros x HH. desf. }
       eapply dom_sb_covered; eauto.
     Admitted.
+
+    (* TODO: prove more general lemma about an image of non-conflicting events *)
+    Lemma ginjfC : inj_dom (f □₁ C) g.    
+    Proof. 
+      admit. 
+    Admitted.
     
     Lemma dom_release_iss : 
         dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C.
     Proof. 
-      admit. 
-    Admitted.
+      eapply set_collect_subset.
+      { apply ginjfC. }
+      rewrite set_collect_dom, !collect_rel_seqi, 
+        set_collect_eqv, !set_collect_compose.
+      arewrite ((g ∘ f) □₁ I ≡₁ I).
+      { symmetry. 
+        eapply fixset_set_fixpoint.
+        eapply fixset_mori with (x:=fdom). 
+        { unfold flip; basic_solver 10. }
+        { eauto. }
+        apply fixset_img_rel.
+        eapply SRC.(fgtrip). }
+      arewrite ((g ∘ f) □₁ C ≡₁ C).
+      { symmetry. 
+        eapply fixset_set_fixpoint.
+        eapply fixset_mori with (x:=fdom). 
+        { unfold flip; basic_solver 10. }
+        { eauto. }
+        apply fixset_img_rel.
+        eapply SRC.(fgtrip). }
+      rewrite grelease. 
+      rewrite collect_rel_cr.
+      rewrite gew; auto. 
+      arewrite (⦗I⦘^? ⨾ ⦗I⦘ ≡ ⦗I⦘) by basic_solver.
+      eapply dom_release_issued; apply SRC.  
+    Qed.  
 
     Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
     Proof. 
