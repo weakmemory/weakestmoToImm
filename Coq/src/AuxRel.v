@@ -55,6 +55,7 @@ Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
 Hint Unfold 
      clos_sym clos_refl_sym 
+     inj_dom 
      img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
@@ -330,6 +331,16 @@ Proof.
   repeat eexists. eauto.
 Qed.
 
+Lemma set_collect_subset (INJ : inj_dom s' f) : 
+  f □₁ s ⊆₁ f □₁ s' -> s ⊆₁ s'.
+Proof.   
+  unfolder in *. 
+  intros FSUBS x SX. 
+  assert (exists y : A, s y /\ f y = f x) as HH by eauto. 
+  destruct (FSUBS (f x) HH) as [y [S'y EQfxy]].
+  erewrite INJ; eauto.  
+Qed.
+
 (* Note that inclusion in other direction doesn't hold.
    For example, if `f` is constant and `a <> b`, then
    `f □₁ (eq a ∩₁ eq b) ≡₁ ∅` and `f □₁ eq a ∩₁ f □₁ eq b ≡₁ f □₁ eq a`.
@@ -356,7 +367,10 @@ Lemma collect_seq_eqv_lr rr :
   ⦗ f □₁ s ⦘ ⨾ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
 Proof. rewrite collect_seq_eqv_l. by rewrite collect_seq_eqv_r. Qed.
 
-Lemma collect_eq e: f □₁ eq e ≡₁ eq (f e).
+Lemma collect_rel_interi : f □ (r ∩ r') ⊆ (f □ r) ∩ (f □ r').
+Proof. basic_solver 10. Qed.
+
+Lemma collect_eq e : f □₁ eq e ≡₁ eq (f e).
 Proof. basic_solver. Qed.
 
 Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
@@ -387,12 +401,24 @@ Proof.
   red. eexists. eauto.
 Qed.     
 
-Lemma collect_rel_ct : f □ r⁺ ⊆ (f □ r)⁺.
+Lemma collect_rel_cr (rr : relation A) : f □ rr^? ⊆  (f □ rr)^?.
+Proof.
+  unfolder. ins; desf; auto.
+  right. eexists. eexists. eauto.
+Qed.
+
+Lemma collect_rel_ct (rr : relation A) : f □ rr⁺ ⊆ (f □ rr)⁺.
 Proof.
   unfolder. ins. desf.
   induction H.
   { apply ct_step. eexists. eexists. splits; eauto. }
   eapply t_trans; eauto.
+Qed.
+
+Lemma collect_rel_crt (rr : relation A) : f □ rr^* ⊆  (f □ rr)^*.
+Proof.
+  rewrite <- !cr_of_ct. 
+  by rewrite <- collect_rel_ct, <- collect_rel_cr.
 Qed.
 
 Lemma collect_rel_irr (HH : irreflexive (f □ r)): irreflexive r.
@@ -411,12 +437,6 @@ Proof.
   red. eexists. eexists. splits.
   { eapply t_trans; eauto. }
   all: done.
-Qed.
-
-Lemma collect_rel_cr : f □ r^? ⊆  (f □ r)^?.
-Proof.
-  unfolder. ins; desf; auto.
-  right. eexists. eexists. eauto.
 Qed.
 
 Lemma set_collect_restr : 
