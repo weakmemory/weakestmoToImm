@@ -149,6 +149,50 @@ Proof.
     apply seq_eqv_r; split; [split|]; auto. }
   arewrite (⦗set_compl C⦘ ⨾ ⦗Rel⦘ ⨾ ⦗W⦘ ⊆ ⦗set_compl C ∩₁ Rel ∩₁ W⦘).
   { seq_rewrite <- !id_inter. by rewrite set_interA. }
+  arewrite (⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⨾ ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾
+               (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⊆
+            ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⨾ ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾
+               (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ;;
+               <| codom_rel  (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘) |>)
+    by basic_solver 40.
+  arewrite (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
+            <| dom_rel (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) |> ;;
+              rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘)
+    by basic_solver 40.
+  arewrite (⦗codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘)⦘ ⨾
+               ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊ ⨾ ⦗set_compl I⦘ ⨾
+               ⦗dom_rel (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘)⦘ ⊆
+            ⦗codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘)⦘ ⨾
+               ⦗set_compl I⦘ ⨾ (rfi ⨾ rmw ;; <| set_compl I |>)＊ ⨾ ⦗set_compl I⦘ ⨾
+               ⦗dom_rel (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘)⦘).
+  2: { unfold Execution.rfi. rewrite rmw_in_sb; auto.
+       arewrite (rf ∩ sb ⨾ sb ⨾ ⦗set_compl I⦘ ⊆ sb).
+       { generalize (@sb_trans G). basic_solver. }
+       rewrite rt_of_trans. 2: apply (@sb_trans G).
+       generalize (@sb_trans G). basic_solver. }
+  intros x y HH.
+  apply seq_eqv_l in HH. destruct HH as [CODOM HH].
+  apply seq_eqv_l in HH. destruct HH as [CIX HH].
+  destruct HH as [v [HH DOM]].
+  apply seq_eqv_l in DOM. destruct DOM as [CIV [XX DOM]]; subst.
+  do 2 (apply seq_eqv_l; split; auto).
+  apply seqA.
+  do 2 (apply seq_eqv_r; split; auto).
+  apply rtE in HH. destruct HH as [HH|HH].
+  { inv HH. apply rt_refl. }
+  apply inclusion_t_rt.
+  induction HH.
+  2: { apply ct_ct. eexists. split; eauto.
+       specialize (IHHH1 CODOM CIX).
+       apply IHHH2.
+       2: { eapply codom_eqv1. exists x.
+            apply inclusion_ct_seq_eqv_r. eauto. }
+       destruct DOM as [v DOM]. destruct_seq DOM as [WV WX].
+       exists v.
+       apply seq_eqv_l. split; auto.
+       apply seq_eqv_r. split.
+       all: admit. }
+
   arewrite (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾
                ⦗W⦘ ⨾ ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊ ⊆
           ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾
@@ -168,25 +212,10 @@ Proof.
                  ⦗codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘)⦘ ⨾
                  ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊) by basic_solver 40.
        rewrite XX. basic_solver 40. }
-  intros x y HH.
-  apply seq_eqv_l in HH. destruct HH as [DOM HH].
-  apply seq_eqv_l in HH. destruct HH as [CI HH].
-  do 2 (apply seq_eqv_l; split; auto).
-  apply rtE in HH. destruct HH as [HH|HH].
-  { inv HH. apply rt_refl. }
-  apply inclusion_t_rt.
-  induction HH.
-  2: { apply ct_ct. eexists. split; eauto.
-       specialize (IHHH1 DOM CI).
-       apply IHHH2.
-       2: { eapply codom_eqv1. exists x.
-            apply inclusion_ct_seq_eqv_r. eauto. }
-       destruct DOM as [v DOM]. destruct_seq DOM as [WV WX].
-       exists v.
-       apply seq_eqv_l. split; auto.
-       apply seq_eqv_r. split.
-       all: admit. }
+
   apply ct_step.
+  match goal with H : (rf ⨾ rmw) _ _ |- _ => destruct H as [v [RF RMW]] end.
+  apply rfi_union_rfe in RF. destruct RF as [RF|RF].
 Admitted.
 
 
