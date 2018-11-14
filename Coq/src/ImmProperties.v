@@ -83,9 +83,13 @@ Proof.
     by rewrite rt_rt.
 Qed.
 
-Lemma sw_in_Csw_sb : restr_rel (dom_rel (sb^? ;; <| I |>)) sw ⊆ <| C |> ;; sw ∪ sb.
+Lemma sw_in_Csw_sb : restr_rel (C ∪₁ dom_rel (sb^? ;; <| I |>)) sw ⊆ <| C |> ;; sw ∪ sb.
 Proof.
   rewrite restr_relE.
+  rewrite !id_union. relsf.
+  unionL.
+  1,3: basic_solver.
+  { rewrite sw_covered; eauto. basic_solver. }
   arewrite (sw ⊆ <| C ∪₁ set_compl C |> ;; sw) at 1.
   { rewrite set_compl_union_id. by rewrite seq_id_l. }
   rewrite id_union. relsf.
