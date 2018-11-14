@@ -69,6 +69,9 @@ Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
 Variables r r' r'': relation A.
 
+Lemma seqA_rev : r ⨾ r' ⨾ r'' ⊆ (r ⨾ r') ⨾ r''.
+Proof. apply seqA. Qed.
+
 Lemma csE : r^⋈  ≡ r ∪ r⁻¹.
 Proof. basic_solver. Qed.
 

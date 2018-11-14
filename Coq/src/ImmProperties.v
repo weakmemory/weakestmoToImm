@@ -39,6 +39,7 @@ Notation "'rfe'" := G.(rfe).
 Notation "'detour'" := G.(detour).
 Notation "'hb'" := G.(hb).
 Notation "'sw'" := G.(sw).
+Notation "'release'" := G.(release).
 
 Notation "'lab'" := G.(lab).
 (* Notation "'loc'" := (loc lab). *)
@@ -66,6 +67,21 @@ Notation "'W_ex'" := G.(W_ex).
 Notation "'W_ex_acq'" := (W_ex ∩₁ (fun a => is_true (is_xacq lab a))).
 
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
+
+Lemma release_rf_rmw_step : release ;; rf ;; rmw ⊆ release.
+Proof.
+  unfold imm_s_hb.release at 1. unfold rs.
+  rewrite !seqA.
+  arewrite (rf ⨾ rmw ⊆ (rf ⨾ rmw)＊) at 2.
+    by rewrite rt_rt.
+Qed.
+
+Lemma release_rf_rmw_steps : release ;; (rf ;; rmw)^* ⊆ release.
+Proof.
+  unfold imm_s_hb.release at 1. unfold rs.
+  rewrite !seqA.
+    by rewrite rt_rt.
+Qed.
 
 Lemma sw_in_Csw_sb : restr_rel (dom_rel (sb^? ;; <| I |>)) sw ⊆ <| C |> ;; sw ∪ sb.
 Proof.
@@ -119,104 +135,86 @@ Proof.
        match goal with H : rfe _ _ |- _ =>
                        apply wf_rfeD in H; auto; (destruct_seq H as [XX YY]); auto
        end. }
-  unfold release, rs. rewrite !seqA.
-  arewrite ((⦗F⦘ ⨾ sb)^? ⊆ ⦗F⦘ ⨾ sb ∪ <| fun _ => True |>)
-    by basic_solver.
-  rewrite !seq_union_l, !seq_union_r.
-  unionL.
-  { rewrite !seqA. seq_rewrite <- !id_inter.
-    arewrite (dom_rel (sb^? ⨾ ⦗I⦘) ∩₁ set_compl C ∩₁ Rel ∩₁ F ⊆₁ ∅).
-    2: by relsf.
-    unfolder. ins. desf.
-    { match goal with H : I _ |- _ => apply TCCOH.(issuedW) in H end.
-      type_solver. }
-    match goal with H : ~ (C _) |- _ => apply H end.
-    apply TCCOH.(dom_F_sb_issued).
-    eexists. apply seq_eqv_l. split; [split; auto|].
-    { mode_solver. }
-    apply seq_eqv_r. split; eauto. }
-  rewrite seq_id_l.
-
-  arewrite (⦗set_compl C⦘ ⨾ ⦗Rel⦘ ⨾ ⦗W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⊆
-            ⦗set_compl C⦘ ⨾ ⦗Rel⦘ ⨾ ⦗W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⨾ ⦗set_compl I⦘).
-  { unfolder. ins. desf; splits; auto; intros AA.
-    all: match goal with H : ~ (C _) |- _ => apply H end.
-    { apply RELCOV. split; [split|]; auto. }
-    apply TCCOH in AA.
-    apply AA. eexists. apply seq_eqv_r. split; eauto.
-    apply sb_from_w_rel_in_fwbob.
-    apply seq_eqv_l; split; [split|]; auto.
-    apply seq_eqv_r; split; [split|]; auto. }
-  arewrite (⦗set_compl C⦘ ⨾ ⦗Rel⦘ ⨾ ⦗W⦘ ⊆ ⦗set_compl C ∩₁ Rel ∩₁ W⦘).
-  { seq_rewrite <- !id_inter. by rewrite set_interA. }
-  arewrite (⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⨾ ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾
-               (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⊆
-            ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⨾ ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾
-               (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ;;
-               <| codom_rel  (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘) |>)
-    by basic_solver 40.
-  arewrite (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
-            <| dom_rel (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘) |> ;;
-              rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘)
-    by basic_solver 40.
-  arewrite (⦗codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘)⦘ ⨾
-               ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊ ⨾ ⦗set_compl I⦘ ⨾
-               ⦗dom_rel (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘)⦘ ⊆
-            ⦗codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘)⦘ ⨾
-               ⦗set_compl I⦘ ⨾ (rfi ⨾ rmw ;; <| set_compl I |>)＊ ⨾ ⦗set_compl I⦘ ⨾
-               ⦗dom_rel (rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘)⦘).
-  2: { unfold Execution.rfi. rewrite rmw_in_sb; auto.
-       arewrite (rf ∩ sb ⨾ sb ⨾ ⦗set_compl I⦘ ⊆ sb).
-       { generalize (@sb_trans G). basic_solver. }
-       rewrite rt_of_trans. 2: apply (@sb_trans G).
+  unfold imm_s_hb.release, rs.
+  arewrite
+    (⦗set_compl C⦘ ⨾ (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ ⦗W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊) ⊆
+     ⦗set_compl C⦘ ⨾ (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ ⦗W⦘ ⨾
+       (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ;; <| set_compl I |> ⨾ (<| set_compl I |> ;; rf ⨾ rmw)＊)).
+  { intros x y HH.
+    destruct_seq_l HH as NC.
+    do 4 apply seqA in HH. destruct HH as [v [HH SUF]].
+    apply seq_eqv_l. split; auto.
+    
+    Ltac _ltt :=
+      apply seqA;
+      apply seqA with (r1 := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^?);
+      apply seqA with (r1 := (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^?) ⨾ ⦗W⦘);
+      apply seqA with (r1 := ((⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^?) ⨾ ⦗W⦘) ⨾ (sb ∩ same_loc lab)^?).
+    
+    _ltt.
+    exists v. split.
+    { generalize HH. basic_solver. }
+    assert (release x v) as REL.
+    { unfold imm_s_hb.release, rs. _ltt.
+      eexists. split; eauto. apply rt_refl. }
+    apply seq_eqv_l. split.
+    { intros II. apply NC. eapply dom_release_issued; eauto.
+      eexists. apply seq_eqv_r. split; eauto. }
+    assert (codom_rel (<| set_compl C |> ;; release) v) as XX.
+    { exists x. apply seq_eqv_l. split; auto. }
+    assert (~ I v) as NI.
+    { intros II. apply NC. eapply dom_release_issued; eauto.
+      eexists. apply seq_eqv_r. split; eauto. }
+    clear x NC HH REL.
+    induction SUF.
+    2: by apply rt_refl.
+    { apply rt_step. apply seq_eqv_l. split; auto. }
+    eapply rt_trans.
+    { by apply IHSUF1. }
+    assert (codom_rel (⦗set_compl C⦘ ⨾ release) y) as YY.
+    { destruct XX as [v XX]. destruct_seq_l XX as CC.
+      eexists. apply seq_eqv_l. split; eauto.
+      apply release_rf_rmw_steps.
+      eexists. split; eauto. }
+    apply IHSUF2; auto.
+    intros II.
+    destruct YY as [v YY]. destruct_seq_l YY as CC. apply CC.
+    eapply dom_release_issued; eauto.
+    eexists. apply seq_eqv_r. split; eauto. }
+  arewrite ((⦗set_compl I⦘ ⨾ rf ⨾ rmw)＊ ⨾
+             ⦗set_compl I⦘ ⨾ rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
+            sb^? ⨾ ⦗set_compl I⦘ ⨾ rfi ⨾ ⦗Acq⦘ ⨾ ⦗dom_rel (sb^? ⨾ ⦗I⦘)⦘).
+  2: { unfold Execution.rfi.
        generalize (@sb_trans G). basic_solver. }
-  intros x y HH.
-  apply seq_eqv_l in HH. destruct HH as [CODOM HH].
-  apply seq_eqv_l in HH. destruct HH as [CIX HH].
-  destruct HH as [v [HH DOM]].
-  apply seq_eqv_l in DOM. destruct DOM as [CIV [XX DOM]]; subst.
-  do 2 (apply seq_eqv_l; split; auto).
-  apply seqA.
-  do 2 (apply seq_eqv_r; split; auto).
-  apply rtE in HH. destruct HH as [HH|HH].
-  { inv HH. apply rt_refl. }
-  apply inclusion_t_rt.
-  induction HH.
-  2: { apply ct_ct. eexists. split; eauto.
-       specialize (IHHH1 CODOM CIX).
-       apply IHHH2.
-       2: { eapply codom_eqv1. exists x.
-            apply inclusion_ct_seq_eqv_r. eauto. }
-       destruct DOM as [v DOM]. destruct_seq DOM as [WV WX].
-       exists v.
-       apply seq_eqv_l. split; auto.
-       apply seq_eqv_r. split.
-       all: admit. }
+  intros x y [v [HH XX]].
+  eexists. split; [|by eauto].
+  assert (dom_rel (sb ;; <| I |>) v) as VV.
+  { generalize XX (@sb_trans G). unfold Execution.rfi. basic_solver 40. }
+  clear y XX.
+  induction HH as [x y HH| | ].
+  2: by apply r_refl.
+  { apply r_step.
+    destruct_seq_l HH as NIX. destruct HH as [v [RF RMW]].
+    apply rfi_union_rfe in RF. destruct RF as [RF|RF].
+    { by eapply (@sb_trans G); [apply RF|apply rmw_in_sb]. }
+    exfalso. destruct VV as [z VV]. destruct_seq_r VV as AZ.
+    set (IZ := AZ).
+    apply TCCOH in IZ.
+    apply NIX. destruct IZ as [NN _]. apply NN.
+    eexists. apply seq_eqv_r. split; eauto.
+    eexists. split; [by right; eauto|left].
+    red. apply seq_eqv_l. split.
+    { apply wf_rfeD in RF; auto. generalize RF. basic_solver. }
+    apply seq_eqv_r. split.
+    2: by eapply issuedW; eauto.
+    apply ct_step. left; right. apply seq_eqv_l. split.
+    { apply wf_rmwD in RMW; auto. generalize RMW. basic_solver. }
+    eapply (@sb_trans G); eauto. by apply rmw_in_sb. }
+  specialize (IHHH2 VV).
+  eapply (transitive_cr (@sb_trans G) _ IHHH2); eauto.
 
-  arewrite (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾
-               ⦗W⦘ ⨾ ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊ ⊆
-          ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾
-               ⦗W⦘ ⨾ ⦗set_compl I⦘ ⨾ (rfi ⨾ rmw ;; <| set_compl I |>)＊).
-  2: { unfold Execution.rfi. rewrite rmw_in_sb; auto.
-       arewrite (rf ∩ sb ⨾ sb ⨾ ⦗set_compl I⦘ ⊆ sb).
-       { generalize (@sb_trans G). basic_solver. }
-       rewrite rt_of_trans. 2: apply (@sb_trans G).
-       generalize (@sb_trans G). basic_solver. }
-  assert (<| codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘) |> ⨾
-                  ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊ ⊆
-          <| codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘) |> ⨾
-                  ⦗set_compl I⦘ ⨾ ((rfi ⨾ rmw) ⨾ ⦗set_compl I⦘)＊) as XX.
-  2: { arewrite (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⨾
-                 ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊ ⊆
-                 ⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⨾
-                 ⦗codom_rel (⦗set_compl C ∩₁ Rel ∩₁ W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘)⦘ ⨾
-                 ⦗set_compl I⦘ ⨾ (rf ⨾ rmw)＊) by basic_solver 40.
-       rewrite XX. basic_solver 40. }
-
-  apply ct_step.
-  match goal with H : (rf ⨾ rmw) _ _ |- _ => destruct H as [v [RF RMW]] end.
-  apply rfi_union_rfe in RF. destruct RF as [RF|RF].
-Admitted.
-
+  Unshelve.
+  apply IHHH1. generalize VV (@sb_trans G) IHHH2. basic_solver 10.
+Qed.
 
 End Properties.

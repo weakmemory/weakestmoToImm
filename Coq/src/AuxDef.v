@@ -7,6 +7,14 @@ Tactic Notation "destruct_seq" constr(x)
   apply seq_eqv_l in x; destruct x as [y x];
   apply seq_eqv_r in x; destruct x as [x z].
 
+Tactic Notation "destruct_seq_l" constr(x)
+       "as" ident(y) :=
+  apply seq_eqv_l in x; destruct x as [y x].
+
+Tactic Notation "destruct_seq_r" constr(x)
+       "as" ident(y) :=
+  apply seq_eqv_r in x; destruct x as [x y].
+
 Export ListNotations.
 
 Definition opt_same_ctor {A B} (a : option A) (b : option B) : Prop := 
