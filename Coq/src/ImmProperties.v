@@ -83,12 +83,10 @@ Proof.
     by rewrite rt_rt.
 Qed.
 
-Lemma sw_in_Csw_sb : restr_rel (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)) sw ⊆ ⦗ C ⦘ ⨾ sw ∪ sb.
+Lemma sw_in_Csw_sb : sw ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)⦘ ⊆ ⦗ C ⦘ ⨾ sw ∪ sb.
 Proof.
-  rewrite restr_relE.
-  rewrite !id_union. relsf.
+  rewrite !id_union. rewrite seq_union_r. 
   unionL.
-  1,3: basic_solver.
   { rewrite sw_covered; eauto. basic_solver. }
   arewrite (sw ⊆ ⦗ C ∪₁ set_compl C ⦘ ⨾ sw) at 1.
   { rewrite set_compl_union_id. by rewrite seq_id_l. }
@@ -219,6 +217,58 @@ Proof.
 
   Unshelve.
   apply IHHH1. generalize VV (@sb_trans G) IHHH2. basic_solver 10.
+Qed.
+
+Lemma hb_in_Chb_sb : hb ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)⦘ ⊆ ⦗ C ⦘ ⨾ hb ∪ sb.
+Proof.
+  unfold imm_s_hb.hb.
+  intros x y HH.
+  destruct_seq_r HH as DOM.
+  apply clos_trans_tn1 in HH.
+  induction HH as [y [HH|HH]|y z AA].
+  { by right. }
+  { assert ((⦗C⦘ ⨾ sw ∪ sb) x y) as [ZZ|ZZ].
+    3: by right.
+    2: { destruct_seq_l ZZ as CX.
+         left. apply seq_eqv_l. split; auto.
+         apply ct_step. by right. }
+    apply sw_in_Csw_sb. apply seq_eqv_r. splits; auto. }
+  assert (sb y z -> (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)) y) as DOMY.
+  { intros SB.
+    destruct DOM as [DOM|DOM].
+    2: { right. generalize (@sb_trans G) SB DOM. basic_solver 10. }
+    left.
+    eapply dom_sb_covered; eauto. eexists.
+    apply seq_eqv_r. split; eauto. }
+
+  assert ((C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)) y) as BB.
+  2: { set (CC:=BB). apply IHHH in CC.
+       destruct CC as [CC|CC].
+       { left.
+         destruct_seq_l CC as XX.
+         apply seq_eqv_l. split; auto.
+         apply ct_ct. eexists. split; eauto. }
+       destruct AA as [AA|AA].
+       { right. eapply (@sb_trans G); eauto. }
+       assert ((sw ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘) y z) as DD.
+       { apply seq_eqv_r. by split. }
+       eapply sw_in_Csw_sb in DD.
+       destruct DD as [DD|DD].
+       2: { right. eapply (@sb_trans G); eauto. }
+       left.
+       apply seq_eqv_l. split.
+       2: { apply ct_ct. eexists.
+            split; apply ct_step; [left|right]; eauto. }
+       assert (C y) as CY.
+       { by destruct_seq_l DD as XX. }
+       eapply dom_sb_covered; eauto. eexists.
+       apply seq_eqv_r. split; eauto. }
+  destruct AA as [|AA]; [by intuition|].
+  assert ((sw ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘) y z) as DD.
+  { apply seq_eqv_r. by split. }
+  eapply sw_in_Csw_sb in DD.
+  destruct DD as [DD|]; [|by intuition].
+  left. by destruct_seq_l DD as CY.
 Qed.
 
 End Properties.
