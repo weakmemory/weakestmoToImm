@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import AuxRel
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      CombRelations CombRelationsMore
-     TraversalConfig Traversal SimTraversal.
+     TraversalConfig Traversal TraversalConfigAlt SimTraversal.
 Require Import AuxRel AuxDef.
 
 Set Implicit Arguments.
@@ -269,6 +269,54 @@ Proof.
   eapply sw_in_Csw_sb in DD.
   destruct DD as [DD|]; [|by intuition].
   left. by destruct_seq_l DD as CY.
+Qed.
+
+Lemma sc_sb_I_dom_C: dom_rel (sc ⨾ sb ⨾ ⦗I⦘) ⊆₁ C.
+Proof.
+  cdes CON.
+  rewrite (dom_r Wf_sc.(wf_scD)).
+  unfolder. ins. desf.
+  cdes TCCOH.
+  assert (C z) as AA.
+  2: { apply CC in AA. red in AA.
+       unfolder in AA. desf.
+       1,2: type_solver.
+       eapply AA2. eexists.
+       apply seq_eqv_r. split; eauto. }
+  eapply II; eauto.
+  eexists. apply seq_eqv_r. split; eauto.
+  apply sb_from_f_in_fwbob.
+  apply seq_eqv_l. split; [split|]; auto.
+  mode_solver.
+Qed.
+
+Lemma scCsbI_C : sc ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ ⦗C⦘ ⨾ sc.
+Proof.
+  rewrite id_union. rewrite seq_union_r. unionL.
+  { eapply sc_covered; eauto. }
+  unfolder. ins. desf.
+  all: eapply wf_scD in H; [|by apply CON].
+  all: destruct_seq H as [XX YY].
+  { eapply issuedW in H2; eauto.
+    type_solver. }
+  split; auto.
+  assert (C y) as CY.
+  2: { eapply dom_sc_covered; eauto. eexists. apply seq_eqv_r.
+       split; eauto. }
+  eapply tc_fwbob_I.
+  { apply tc_coherent_implies_tc_coherent_alt; eauto. apply CON. }
+  eexists. apply seq_eqv_r. split; eauto.
+  eapply sb_from_f_in_fwbob. apply seq_eqv_l.
+  split; auto.
+  mode_solver.
+Qed.
+
+Lemma sbCsbI_CsbI : sb ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⨾ sb.
+Proof.
+  rewrite id_union, !seq_union_r, !seq_union_l.
+  apply union_mori.
+  { rewrite sb_covered; eauto. basic_solver. }
+  generalize (@sb_trans G). basic_solver 10.
 Qed.
 
 End Properties.

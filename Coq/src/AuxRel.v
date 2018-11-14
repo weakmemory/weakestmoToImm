@@ -577,6 +577,19 @@ Proof.
     by right.
 Qed.
 
+Lemma dom_r2l_rt (HH : r ⨾ ⦗s⦘ ⊆ ⦗s⦘ ⨾ r') : r＊ ⨾ ⦗s⦘ ⊆ ⦗s⦘ ⨾ r'＊.
+Proof.
+  unfolder in *. ins. desf.
+  induction H.
+  { edestruct HH; eauto. split; auto.
+      by apply rt_step. }
+  { split; auto. apply rt_refl. }
+  destruct IHclos_refl_trans2; auto.
+  destruct IHclos_refl_trans1; auto.
+  split; auto.
+  eapply transitive_rt; eauto.
+Qed.
+
 End Props.
 
 Require Import Setoid.
