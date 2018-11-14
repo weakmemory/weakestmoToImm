@@ -418,7 +418,7 @@ Proof.
   eapply t_trans; eauto.
 Qed.
 
-Lemma collect_rel_crt (rr : relation A) : f □ rr^* ⊆  (f □ rr)^*.
+Lemma collect_rel_crt (rr : relation A) : f □ rr＊ ⊆  (f □ rr)＊.
 Proof.
   rewrite <- !cr_of_ct. 
   by rewrite <- collect_rel_ct, <- collect_rel_cr.

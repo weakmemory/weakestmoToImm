@@ -68,7 +68,7 @@ Notation "'W_ex_acq'" := (W_ex ∩₁ (fun a => is_true (is_xacq lab a))).
 
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
-Lemma release_rf_rmw_step : release ;; rf ;; rmw ⊆ release.
+Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
 Proof.
   unfold imm_s_hb.release at 1. unfold rs.
   rewrite !seqA.
@@ -76,32 +76,32 @@ Proof.
     by rewrite rt_rt.
 Qed.
 
-Lemma release_rf_rmw_steps : release ;; (rf ;; rmw)^* ⊆ release.
+Lemma release_rf_rmw_steps : release ⨾ (rf ⨾ rmw)＊ ⊆ release.
 Proof.
   unfold imm_s_hb.release at 1. unfold rs.
   rewrite !seqA.
     by rewrite rt_rt.
 Qed.
 
-Lemma sw_in_Csw_sb : restr_rel (C ∪₁ dom_rel (sb^? ;; <| I |>)) sw ⊆ <| C |> ;; sw ∪ sb.
+Lemma sw_in_Csw_sb : restr_rel (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)) sw ⊆ ⦗ C ⦘ ⨾ sw ∪ sb.
 Proof.
   rewrite restr_relE.
   rewrite !id_union. relsf.
   unionL.
   1,3: basic_solver.
   { rewrite sw_covered; eauto. basic_solver. }
-  arewrite (sw ⊆ <| C ∪₁ set_compl C |> ;; sw) at 1.
+  arewrite (sw ⊆ ⦗ C ∪₁ set_compl C ⦘ ⨾ sw) at 1.
   { rewrite set_compl_union_id. by rewrite seq_id_l. }
   rewrite id_union. relsf.
   apply union_mori; [basic_solver|].
   unfold imm_s_hb.sw.
-  arewrite ((sb ;; ⦗F⦘)^? ⊆ sb ;; ⦗F⦘ ∪ <| fun _ => True |>) by basic_solver.
+  arewrite ((sb ⨾ ⦗F⦘)^? ⊆ sb ⨾ ⦗F⦘ ∪ ⦗ fun _ => True ⦘) by basic_solver.
   rewrite !seq_union_l, !seq_union_r.
   unionL.
   { rewrite !seqA.
     seq_rewrite <- !id_inter. rewrite <- !set_interA.
     arewrite (sb ⨾ ⦗F ∩₁ Acq ∩₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘ ⊆
-              <| C |> ;; sb ⨾ ⦗F ∩₁ Acq ∩₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘).
+              ⦗ C ⦘ ⨾ sb ⨾ ⦗F ∩₁ Acq ∩₁ dom_rel (sb^? ⨾ ⦗I⦘)⦘).
     { unfolder. ins. desf; splits; auto.
       2,4: by do 2 eexists; splits; eauto.
       2: eapply TCCOH.(dom_sb_covered).
@@ -115,7 +115,7 @@ Proof.
     sin_rewrite release_rf_covered; eauto.
     basic_solver. }
   rewrite seq_id_l.
-  arewrite (rf ⊆ <| I ∪₁ set_compl I|> ;; rf).
+  arewrite (rf ⊆ ⦗ I ∪₁ set_compl I⦘ ⨾ rf).
   { rewrite set_compl_union_id. basic_solver. }
   rewrite id_union. relsf.
   unionL.
@@ -143,7 +143,7 @@ Proof.
   arewrite
     (⦗set_compl C⦘ ⨾ (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ ⦗W⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊) ⊆
      ⦗set_compl C⦘ ⨾ (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ ⦗W⦘ ⨾
-       (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ;; <| set_compl I |> ⨾ (<| set_compl I |> ;; rf ⨾ rmw)＊)).
+       (sb ∩ same_loc lab)^? ⨾ ⦗W⦘ ⨾ ⦗ set_compl I ⦘ ⨾ (⦗ set_compl I ⦘ ⨾ rf ⨾ rmw)＊)).
   { intros x y HH.
     destruct_seq_l HH as NC.
     do 4 apply seqA in HH. destruct HH as [v [HH SUF]].
@@ -164,7 +164,7 @@ Proof.
     apply seq_eqv_l. split.
     { intros II. apply NC. eapply dom_release_issued; eauto.
       eexists. apply seq_eqv_r. split; eauto. }
-    assert (codom_rel (<| set_compl C |> ;; release) v) as XX.
+    assert (codom_rel (⦗ set_compl C ⦘ ⨾ release) v) as XX.
     { exists x. apply seq_eqv_l. split; auto. }
     assert (~ I v) as NI.
     { intros II. apply NC. eapply dom_release_issued; eauto.
@@ -192,7 +192,7 @@ Proof.
        generalize (@sb_trans G). basic_solver. }
   intros x y [v [HH XX]].
   eexists. split; [|by eauto].
-  assert (dom_rel (sb ;; <| I |>) v) as VV.
+  assert (dom_rel (sb ⨾ ⦗ I ⦘) v) as VV.
   { generalize XX (@sb_trans G). unfold Execution.rfi. basic_solver 40. }
   clear y XX.
   induction HH as [x y HH| | ].

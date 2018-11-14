@@ -580,9 +580,9 @@ Proof.
   eapply sb_trans; eauto.
 Qed.
 
-Lemma cert_rf_ntid_sb : cert_rf ⊆ <| NTid_ thread |> ;; cert_rf ∪ sb.
+Lemma cert_rf_ntid_sb : cert_rf ⊆ ⦗ NTid_ thread ⦘ ⨾ cert_rf ∪ sb.
 Proof.
-  arewrite (cert_rf ⊆ ⦗Tid_ thread ∪₁ NTid_ thread⦘ ⨾ cert_rf ;; ⦗Tid_ thread⦘).
+  arewrite (cert_rf ⊆ ⦗Tid_ thread ∪₁ NTid_ thread⦘ ⨾ cert_rf ⨾ ⦗Tid_ thread⦘).
   { unfolder. intros x y HH. splits; auto.
     { apply classic. }
     generalize HH. unfold cert_rf, E0. unfolder. basic_solver. }
