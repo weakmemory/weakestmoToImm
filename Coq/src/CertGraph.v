@@ -629,15 +629,93 @@ Proof.
 
     desf.
 
-    
+    assert (instrs pre_cert_state = instrs state) as INSTRSS.
+    { eapply steps_same_instrs; eauto. }
 
+    edestruct get_stable with (state0:=pre_cert_state) (thread:=thread)
+      as [cert_state [CC _]].
+    { (* TODO: add `stable_lprog thread (instrs state)` to SimRel. *)
+      admit. }
+    { eapply transitive_rt; [|by eauto].
+      rewrite INSTRSS.
+      (* TODO: add `(step thread)＊ (init (instrs state)) state` to SimRel. *)
+      admit. }
+    desc.
     
+    assert (ProgToExecution.G cert_state = ProgToExecution.G pre_cert_state) as SCC.
+    { eapply eps_steps_same_G; eauto. }
 
-    
-    
+    assert (acts_set (ProgToExecution.G pre_cert_state) =
+            acts_set (ProgToExecution.G state'')) as SS.
+    { unfold acts_set. by rewrite RACTS. }
 
-    
-  
+    exists cert_state.
+    constructor; auto.
+    all: try rewrite SCC.
+    { red. ins. unfold certLab. admit. }
+    { ins.
+      eapply same_label_up_to_value_trans; eauto.
+      assert (tid e = thread) as BB.
+      { red in EE. rewrite <- RACTS in EE. by apply CACTS. }
+      assert (acts_set (ProgToExecution.G state'') e) as CC.
+      { by red; rewrite RACTS. }
+
+      assert (lab (ProgToExecution.G state'') e = G.(lab) e) as AA. 
+      2: { rewrite AA. red. desf. }
+      erewrite <- steps_preserve_lab; try rewrite BB; eauto.
+      eapply tr_lab; eauto.
+      eapply steps_preserve_E; eauto. }
+    { unfold acts_set. by rewrite <- RACTS. }
+    { rewrite <- RRMW, SS. rewrite ORMW, !CACTS.
+      rewrite TEH.(tr_rmw), !seqA.
+      rewrite seq_eqvC. seq_rewrite <- !id_inter.
+      arewrite (E0 ∩₁ Tid_ thread ≡₁ E0).
+      2: done.
+      rewrite set_interC. unfold CertRf.E0. rewrite <- !set_interA. 
+        by rewrite set_interK. }
+    { admit. }
+    { erewrite same_label_same_loc; eauto.
+      all: admit. }
+    { arewrite (cert_rf G sc TC' thread ⊆
+                        ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾
+                        cert_rf G sc TC' thread) at 1
+        by rewrite set_compl_union_id, seq_id_l.
+      rewrite id_union, seq_union_l.
+      rewrite non_I_cert_rf; auto.
+      { unionL; [|basic_solver].
+        inv TSTEP. 
+
+        (* 3: assert (tid w = thread) as TX *)
+        (*     by (apply wf_rmwt in RMW; auto; rewrite <- RMW; auto). *)
+        (* 1,2: assert (Gtid w = ES.cont_thread S q) as TX by auto. *)
+
+        3: assert (tid r = tid w) as TR by admit.  
+
+        all: assert (~ is_init w) as NINITX
+            by (intros AA; destruct w; simpls; desf;
+                rewrite <- TX in *; desf).
+        
+        (* all: rewrite id_union, seq_union_l; unionL; [basic_solver|]. *)
+        all: unionR right.
+        all: unfolder; intros a b [AA RF]; desf.
+        
+        3: rewrite TR in RF.
+        (* 1,2: rewrite TX in RF. *)
+        all: assert (tid b = tid w) as TB
+            by (apply cert_rf_codomt in RF; generalize RF; basic_solver).
+
+        all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
+        all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
+        all: (assert (tid a = tid b) as TTT by (rewrite TB; admit)).
+        all: destruct (@same_thread G a b) as [[|SB]|SB]; desf; auto. 
+        2,5,8: type_solver.
+        all: exfalso.
+        all: eapply cert_rf_hb_sc_hb_irr; eauto.
+        all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto; admit).
+        all: repeat (eexists; split; eauto). }
+      eapply TCCOH'; [ eapply TCCOH | apply TSTEP].
+      admit. }
+    admit. 
 Admitted.
 
 End CertGraphLemmas.
