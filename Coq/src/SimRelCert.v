@@ -545,7 +545,7 @@ Proof.
       (new_val:=new_val)
       (new_rfi:=new_rfi)
       (MOD:=E0 \₁ D G TC' thread) as [pre_cert_state]; eauto.
-  { rewrite CACTS. }
+  { rewrite CACTS. admit. }
   { split; [|basic_solver].
     rewrite NEW_RFIE at 1.
     unfolder. intros x y [EEX [RFXY EEY]].
@@ -556,12 +556,12 @@ Proof.
     apply cert_rfD in AA. destruct_seq AA as [WX RY].
     splits; auto; unfold is_w, is_r.
     all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
-      [by erewrite tr_lab; eauto | | | by apply CACTS].
+      [admit | | | admit ].
     3,4: by rewrite TY; eauto.
     all: by rewrite TX; eauto. }
   { rewrite NEWRFISB. unfold Execution.sb. basic_solver. }
   { unfold new_rfi, new_rf. basic_solver. }
-  { rewrite <- CACTS. basic_solver. }
+  { admit. }
   { rewrite STATECOV.
     sin_rewrite sim_trav_step_covered_le.
     2: by red; eauto.
@@ -585,9 +585,7 @@ Proof.
   (*   rewrite dom_rmw_depE_in_D; [| |apply TCCOH|]; auto.  *)
   (*   basic_solver. *)
 
-  { _ltt q thread E0 TCCOH OFAILDEP TEH.(tr_rmw_dep) CACTS dom_rmw_depE_in_D. }
-  { _ltt q thread E0 TCCOH OADDR TEH.(tr_addr) CACTS dom_addrE_in_D. }
-  2: { _ltt q thread E0 TCCOH OCTRL TEH.(tr_ctrl) CACTS dom_ctrlE_in_D. }
+  1-2, 4: admit. 
 
   { rewrite CACTS.
     unfolder; ins; desc.
@@ -610,7 +608,7 @@ Proof.
     apply seq_eqv_l. by split. }
 
   { rewrite ODATA, CACTS.
-    arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
+    admit. (*arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
     rewrite <- id_inter.
     arewrite (E0 ∩₁ set_compl (E0 \₁ D G TC' thread) ⊆₁ D G TC' thread).
     { unfolder. intros x [AA BB].
@@ -619,7 +617,7 @@ Proof.
     rewrite TEH.(tr_data), !seqA. 
     arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘. rewrite !seq_id_l.
     unfold thread.
-    generalize (dom_dataD_in_D). basic_solver 10. }
+    generalize (dom_dataD_in_D). basic_solver 10.*) }
   desf.
 
   assert (instrs pre_cert_state = instrs state) as INSTRSS.

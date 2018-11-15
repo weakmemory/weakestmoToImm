@@ -502,6 +502,25 @@ Proof.
     { arewrite (new_rfe ⊆ new_rf); auto.
       unfold new_rfe; basic_solver. }
 
+    assert (new_rfi ≡ ⦗ E0 ⦘ ⨾ new_rfi ⨾ ⦗ E0 ⦘) as NEW_RFIE.
+    { split; [|basic_solver].
+      etransitivity.
+      2: apply doma_helper.
+      { unfold new_rfi, new_rf. basic_solver 10. }
+      arewrite (new_rfi ⊆ ⦗Tid_ thread⦘ ⨾ sb). 
+      { (*generalize cert_rfi_in_sb.*) 
+        etransitivity.
+        { apply NEWRFI_IN_CERT. }
+        unfold cert_rfi. 
+        arewrite (
+            cert_rfi G sc TC' thread ⊆ 
+            ⦗Tid_ thread⦘ ⨾ cert_rfi G sc TC' thread ⨾ ⦗Tid_ thread⦘).
+        { unfold cert_rfi. basic_solver. }
+        rewrite cert_rfi_in_sb; auto. 
+        basic_solver 42.
+        admit. }
+      eapply E0_sbprcl; eauto. }
+      
     assert (forall r, exists ! w, new_rfe_ex⁻¹ r w) as new_rfe_unique.
     { ins.
       destruct (classic ((codom_rel new_rfe) r)) as [X|X].
@@ -531,51 +550,90 @@ Proof.
         (new_val:=new_val)
         (new_rfi:=new_rfi)
         (MOD:=E0 \₁ D) as [pre_cert_state]; eauto.
-    { red. split; [|basic_solver].  
-      unfold new_rfi, new_rf.
-      rewrite CACTS. 
-      arewrite (
-          ⦗Tid_ thread⦘ ⨾ (cert_rf G sc TC' thread ⨾ ⦗E0 \₁ D⦘) ⨾ ⦗Tid_ thread⦘ ≡ 
-           (cert_rfi G sc TC' thread ⨾ ⦗E0⦘) ⨾ ⦗E0 \₁ D⦘) at 1.
-      { unfold cert_rfi. basic_solver 42. }
-      arewrite (
-          ⦗E0⦘ ⨾ ⦗Tid_ thread⦘ ⨾ cert_rf G sc TC' thread ⨾ ⦗E0 \₁ D⦘ ⨾ ⦗Tid_ thread⦘ ⨾ ⦗E0⦘ ≡
-          ⦗E0⦘ ⨾ cert_rfi G sc TC' thread ⨾ ⦗E0⦘ ⨾ ⦗E0 \₁ D⦘). 
-      { unfold cert_rfi. basic_solver 42. }
-      rewrite <- seqA.
-      rewrite cert_rfi_in_E0; eauto.  
-      basic_solver 10.  
-      admit. }
-      
-    all: admit. 
+    { rewrite CACTS. apply NEW_RFIE. }
+    { split; [|basic_solver].
+      rewrite NEW_RFIE at 1.
+      unfolder. intros w r [EEX [RFXY EEY]].
+      set (AA := RFXY).
+      unfold new_rfi in AA.
+      destruct_seq AA as [TX TY].
+      unfold new_rf in AA. apply seq_eqv_r in AA. destruct AA as [AA _].
+      apply cert_rfD in AA. destruct_seq AA as [WX RY].
+      splits; auto; unfold is_w, is_r.
+      all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
+        [ erewrite tr_lab; eauto; eapply E0_eq_certE; eauto
+        | | | by apply CACTS]. 
+      1-2: rewrite TX; auto.  
+      all: rewrite TY; auto. }
+    { rewrite NEWRFI_IN_CERT.
+      rewrite cert_rfi_in_sb; auto. 
+      unfold Execution.sb. basic_solver. 
+      admit. } 
+    { unfold new_rfi, new_rf. basic_solver. } 
+    { rewrite <- CACTS. basic_solver. } 
+    { rewrite STATECOV. 
+      sin_rewrite sim_trav_step_covered_le.
+      2: by red; eauto.
+      rewrite <- C_in_D.
+      basic_solver. }
+
+    Ltac _ltt thread EE0 TCCOH OC CC CACTS CCD := 
+      rewrite OC; rewrite CC;
+      rewrite CACTS;
+      arewrite_id ⦗Tid_ thread⦘; arewrite_id ⦗E0⦘ at 1;
+      rewrite !seq_id_l;
+      (*unfold EE0, thread;*)
+      rewrite CCD; [| |apply TCCOH|]; auto;
+      basic_solver.
     
-    (* { red. split; [|basic_solver].  *)
-    (*   unfold new_rfi, new_rf.  *)
-      
-      
-    (*   apply cert_rfi_in_E0. *)
-    (* { by rewrite CACTS. } *)
-    (* { split; [|basic_solver]. *)
-    (*   rewrite NEW_RFIE at 1. *)
-    (*   unfolder. intros x y [EEX [RFXY EEY]]. *)
-    (*   set (AA := RFXY). *)
-    (*   unfold new_rfi in AA. *)
-    (*   destruct_seq AA as [TX TY]. *)
-    (*   unfold new_rf in AA. apply seq_eqv_r in AA. destruct AA as [AA _]. *)
-    (*   apply cert_rfD in AA. destruct_seq AA as [WX RY]. *)
-    (*   splits; auto; unfold is_w, is_r. *)
-    (*   all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto; *)
-    (*     [by erewrite tr_lab; eauto | | | by apply CACTS]. *)
-    (*   3,4: by rewrite TY; eauto. *)
-    (*   all: by rewrite TX; eauto. } *)
-    (* { rewrite NEWRFISB. unfold Execution.sb. basic_solver. } *)
-    (* { unfold new_rfi, new_rf. basic_solver. } *)
-    (* { rewrite <- CACTS. basic_solver. } *)
-    (* { rewrite STATECOV. *)
-    (*   sin_rewrite sim_trav_step_covered_le. *)
-    (*   2: by red; eauto. *)
-    (*   rewrite <- C_in_D. *)
-    (*   basic_solver. } *)
+    { _ltt thread E0 TCCOH OFAILDEP TEH.(tr_rmw_dep) CACTS dom_rmw_depE_in_D. }
+    { _ltt thread E0 TCCOH OADDR TEH.(tr_addr) CACTS dom_addrE_in_D. }
+    2: { _ltt thread E0 TCCOH OCTRL TEH.(tr_ctrl) CACTS dom_ctrlE_in_D. }
+
+    { rewrite CACTS.
+      unfolder; ins; desc.
+      apply H3.
+      destruct H as [TT [AA|AA]].
+      { by apply C_in_D. }
+      unfolder in AA. 
+      destruct AA as [y [z [[EQx | SB] [EQ Iz]]]]. 
+      { rewrite EQx. by apply I_in_D. }
+      red. left. left. right.
+      eexists. eexists. split.
+      { by left. }
+      apply seq_eqv_r. split; eauto.
+      assert (R_ex y) as UU.
+      { admit. }
+      red. apply seq_eqv_l. split.
+      { apply R_ex_in_R. 
+        admit. }
+      apply seq_eqv_r. split.
+      (*2: by eapply issuedW; eauto.*)
+      apply ct_step. left. right.
+      apply seq_eqv_l. split; auto.  
+      { admit. }
+      eapply issuedW. 
+      { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
+      auto. }
+
+    { rewrite ODATA, CACTS.
+      arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
+      rewrite <- id_inter.
+      arewrite (E0 ∩₁ set_compl (E0 \₁ D) ⊆₁ D).
+      { unfolder. intros a [AA BB].
+        destruct (classic (D a)); auto.
+        exfalso. apply BB. desf. }
+      rewrite TEH.(tr_data), !seqA. 
+      arewrite_id ⦗Tid_ thread⦘. rewrite !seq_id_l.
+      generalize (dom_dataD_in_D). basic_solver 10. }
+
+    desf.
+
+    
+
+    
+
+    
     
 
     
