@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig
      imm_common imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
      CombRelations Execution_eco.
-Require Import Vf AuxRel AuxDef.
+Require Import EventStructure Vf AuxRel AuxDef.
 
 Section CertRf.
 Variable G  : execution.
@@ -602,6 +602,54 @@ Proof.
   exfalso.
   eapply cert_rf_hb_irr. eexists; splits; eauto.
     by apply sb_in_hb.
+Qed.
+
+Lemma cert_rfi_in_sb (NINITT : thread <> tid_init) : 
+  cert_rfi ⊆ sb.
+Proof. 
+  unfold cert_rfi. unfolder. intros x y [TX [RFXY TY]].
+  red in RFXY.
+  (* destruct RFXY as [RFXY [EEY NDY]] *)
+  (* apply seq_eqv_r in RFXY. destruct RFXY as [RFXY [EEY NDY]]. *)
+  apply cert_rfE in RFXY; auto. destruct_seq RFXY as [EX EY].
+  apply cert_rfD in RFXY. destruct_seq RFXY as [WX RY].
+  edestruct same_thread with (x:=x) (y:=y) as [[|SBXY]|SBXY]; eauto.
+  { intros HH.
+    destruct x; simpls.
+    rewrite <- TX in *. desf. }
+  { by rewrite TX. }
+  { subst. exfalso. type_solver. }
+  exfalso. eapply cert_rf_hb_sc_hb_irr; eauto.
+  eexists. splits; eauto.
+  eexists. splits.
+  { eapply imm_s_hb.sb_in_hb; eauto. }
+    by left. 
+Qed.
+
+Lemma E0_sbprcl : doma (⦗Tid_ thread ⦘ ⨾ sb ⨾ ⦗E0⦘) E0.
+Proof. 
+  red. intros x y SBXY.
+  destruct_seq SBXY as [TX TY]. destruct TY as [TY EEY].
+  split; auto.
+  destruct EEY as [COVY|ISSY]; [left|right].
+  { eapply dom_sb_covered; eauto.
+    eexists. apply seq_eqv_r. eauto. }
+  destruct ISSY as [z ISSY].
+  apply seq_eqv_r in ISSY. destruct ISSY as [SBYZ ISSZ].
+  exists z. apply seq_eqv_r. split; auto.
+  generalize (@sb_trans G) SBXY SBYZ. basic_solver. 
+Qed.
+
+Lemma cert_rfi_in_E0 (NINITT : thread <> tid_init) : 
+  (cert_rfi ⨾ ⦗ E0 ⦘ ≡ ⦗ E0 ⦘ ⨾ cert_rfi ⨾ ⦗ E0 ⦘).
+Proof.
+  split; [|basic_solver].
+  etransitivity.
+  2: apply doma_helper.
+  { unfold cert_rfi. basic_solver 20. }
+  arewrite (cert_rfi ⊆ ⦗Tid_ thread⦘ ⨾ sb). 
+  { generalize cert_rfi_in_sb. unfold cert_rfi. basic_solver 6. }
+  apply E0_sbprcl.
 Qed.
 
 (* Lemma cert_rfe_Acq : (cert_rf \ Gsb) ⨾ ⦗R∩₁Acq⦘ ⊆ ∅₂. *)
