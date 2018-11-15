@@ -22,6 +22,7 @@ Section SimRel.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
+  Notation "'SEninit'" := S.(ES.acts_ninit_set).
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
@@ -53,6 +54,7 @@ Section SimRel.
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'Glab'" := (G.(lab)).
+  Notation "'Gloc'" := (loc G.(lab)).
   Notation "'Gtid'" := (tid).
   Notation "'Grmw'" := G.(rmw).
   
@@ -88,6 +90,12 @@ Section SimRel.
       (ilbl_step tid).
   
   Notation "'g'" := (ES.event_to_act S).
+  Notation "'g_s'" :=
+    (fun e: actid => 
+       let thread := Stid e in
+       ThreadEvent thread
+                   (countNatP (dom_rel (⦗Stid thread⦘ ⨾ sb ⨾ ⦗eq e⦘))
+                              (ES.next_act S))).
 
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
@@ -156,7 +164,7 @@ Section SimRel.
       finj : inj_dom fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
-      flab : eq_dom (C ∪₁ I) Glab (Slab ∘ f);
+      flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       
       (* we should use `same_lab_up_to_value` here,
          but it is not possible until we modify its definition in IMM *)
@@ -263,15 +271,140 @@ Section SimRel.
       desf.
     Qed.
 
+    Lemma gEinit : g □₁ SEinit ⊆₁ GEinit.
+    Proof.
+      unfold ES.event_to_act.
+      unfolder. ins. desf.
+      3: { exfalso. apply n. split; auto. }
+      2: { exfalso.
+           eapply ES.init_lab in a.
+           2: by apply SRC.
+           unfold loc in *. desf. }
+      split; auto.
+      apply SRC.(finitIncl) in a.
+      destruct a as [z [[AA BB] CC]].
+      desf. destruct z; desf.
+      assert (Slab (f (InitEvent l0)) = Glab (InitEvent l0)) as DD.
+      { eapply SRC.(flab). left. apply SRC. split; eauto. }
+      unfold loc in *. rewrite DD in Heq.
+      rewrite wf_init_lab in Heq; [|by apply SRC].
+      inv Heq.
+    Qed.
+
+    (* TODO: move to AuxDef.v *)
+    Lemma set_collect_if_then {A B}
+          (ft fe: A -> B) (s s' : A -> Prop) (HH : s ⊆₁ s') :
+      (fun e : A =>
+         if excluded_middle_informative (s' e)
+         then ft e
+         else fe e) □₁ s ≡₁ ft □₁ s.
+    Proof.
+      unfolder. split; ins; desf; eauto.
+      2: eexists; splits; eauto; desf.
+      all: by exfalso; match goal with H : ~ _ |- _ => apply H end; apply HH.
+    Qed.
+
+    (* TODO: move to AuxDef.v *)
+    Lemma set_collect_if_else {A B}
+          (ft fe: A -> B) (s s' : A -> Prop) (HH : s ∩₁ s' ⊆₁ ∅) :
+      (fun e : A =>
+         if excluded_middle_informative (s' e)
+         then ft e
+         else fe e) □₁ s ≡₁ fe □₁ s.
+    Proof.
+      unfolder. split; ins; desf; eauto.
+      2: eexists; splits; eauto; desf.
+      all: exfalso; eapply HH; split; eauto.
+    Qed.
+
+    (* TODO: move to AuxDef.v *)
+    Lemma collect_rel_if_then {A B}
+          (ft fe: A -> B) (s : A -> Prop) (r : relation A)
+          (DOM : dom_rel r ⊆₁ s) (CODOM : codom_rel r ⊆₁ s) :
+      (fun e : A =>
+         if excluded_middle_informative (s e)
+         then ft e
+         else fe e) □ r ≡ ft □ r.
+    Proof.
+      unfolder. split; ins; desf; eauto.
+      4: do 2 eexists; splits; eauto; desf.
+      1,3,5: by exfalso; match goal with H : ~ _ |- _ => apply H end;
+          eapply CODOM; eexists; eauto.
+      all: by exfalso; match goal with H : ~ _ |- _ => apply H end;
+        eapply DOM; eexists; eauto.
+    Qed.
+
+    (* TODO: move to AuxDef.v *)
+    Lemma collect_rel_if_else {A B}
+          (ft fe: A -> B) (s : A -> Prop) (r : relation A)
+          (DOM : dom_rel r ∩₁ s ⊆₁ ∅) (CODOM : codom_rel r ∩₁ s ⊆₁ ∅) :
+      (fun e : A =>
+         if excluded_middle_informative (s e)
+         then ft e
+         else fe e) □ r ≡ fe □ r.
+    Proof.
+      unfolder. split; ins; desf; eauto.
+      4: do 2 eexists; splits; eauto; desf.
+      1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
+      all: exfalso; eapply CODOM; split; [eexists|]; eauto.
+    Qed.
+
+    Lemma gEninit : g □₁ SEninit ⊆₁ set_compl is_init.
+    Proof. unfold ES.acts_ninit_set, ES.event_to_act. basic_solver. Qed.
+
+    (* TODO: move to ImmProperties.v *)
+    Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
+    Proof. unfold ext_sb. basic_solver. Qed.
+    
+    Lemma gext_sb : g □ Ssb ⊆ ext_sb.
+    Proof.
+      assert (ES.Wf S) as WF by apply SRC.
+      rewrite <- WF.(ES.sb_seq_Eninit_r).
+      rewrite <- seq_id_l with (r:=Ssb).
+      rewrite <- set_compl_union_id with (s:=SEinit).
+      rewrite id_union. relsf.
+      rewrite !seqA.
+      eapply inclusion_union_l.
+      { arewrite (⦗SEinit⦘ ⨾ Ssb ⨾ ⦗SEninit⦘ ⊆ SEinit × SEninit).
+        { basic_solver. }
+        rewrite collect_rel_cross.
+        rewrite gEinit, gEninit.
+        etransitivity; [|by apply initninit_in_ext_sb].
+        basic_solver. }
+      rewrite (dom_l WF.(ES.sbE)), !seqA.
+      arewrite (⦗set_compl SEinit⦘ ⨾ ⦗SE⦘ ⊆ ⦗SEninit⦘) by basic_solver.
+      unfold ES.event_to_act.
+      rewrite collect_rel_if_else.
+      2,3: unfold ES.acts_ninit_set; basic_solver.
+      (* TODO. It should follow from definition of g. *)
+    Admitted.
+
     Lemma gE : g □₁ SE ⊆₁ GE.
     Proof.
-      (* TODO. It should follow from definition of g. *)
+      (* TODO: Move to the simulation relation. *)
+
+      (* arewrite (SE ⊆₁ SE \₁ SEinit ∪₁ SEinit). *)
+      (* { intros x HH. by destruct (classic (SEinit x)); [right|left]. } *)
+      (* rewrite set_collect_union. *)
+      (* apply set_subset_union_l. split; [|by apply ginitE]. *)
+      (* unfold ES.event_to_act. *)
+      (* rewrite set_collect_if_else. 2: basic_solver. *)
+
+
+
+      (* generalize dependent y. *)
+      (* induction (ES.next_act S). *)
+      (* { ins. omega. } *)
+      (* ins. *)
+
     Admitted.
 
     Lemma gsb : g □ Ssb ⊆ Gsb.
     Proof.
-      (* TODO. It should follow from definition of g. *)
-    Admitted.
+      rewrite ES.sbE; [|by apply SRC].
+      unfold Execution.sb.
+        by rewrite !collect_rel_seqi, set_collect_eqv, gext_sb, gE.
+    Qed.
 
     Lemma fsb : f □ (⦗ fdom ⦘ ⨾ Gsb ⨾ ⦗ fdom ⦘) ⊆ Ssb. 
     Proof.
