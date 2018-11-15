@@ -291,64 +291,6 @@ Section SimRel.
       inv Heq.
     Qed.
 
-    (* TODO: move to AuxDef.v *)
-    Lemma set_collect_if_then {A B}
-          (ft fe: A -> B) (s s' : A -> Prop) (HH : s ⊆₁ s') :
-      (fun e : A =>
-         if excluded_middle_informative (s' e)
-         then ft e
-         else fe e) □₁ s ≡₁ ft □₁ s.
-    Proof.
-      unfolder. split; ins; desf; eauto.
-      2: eexists; splits; eauto; desf.
-      all: by exfalso; match goal with H : ~ _ |- _ => apply H end; apply HH.
-    Qed.
-
-    (* TODO: move to AuxDef.v *)
-    Lemma set_collect_if_else {A B}
-          (ft fe: A -> B) (s s' : A -> Prop) (HH : s ∩₁ s' ⊆₁ ∅) :
-      (fun e : A =>
-         if excluded_middle_informative (s' e)
-         then ft e
-         else fe e) □₁ s ≡₁ fe □₁ s.
-    Proof.
-      unfolder. split; ins; desf; eauto.
-      2: eexists; splits; eauto; desf.
-      all: exfalso; eapply HH; split; eauto.
-    Qed.
-
-    (* TODO: move to AuxDef.v *)
-    Lemma collect_rel_if_then {A B}
-          (ft fe: A -> B) (s : A -> Prop) (r : relation A)
-          (DOM : dom_rel r ⊆₁ s) (CODOM : codom_rel r ⊆₁ s) :
-      (fun e : A =>
-         if excluded_middle_informative (s e)
-         then ft e
-         else fe e) □ r ≡ ft □ r.
-    Proof.
-      unfolder. split; ins; desf; eauto.
-      4: do 2 eexists; splits; eauto; desf.
-      1,3,5: by exfalso; match goal with H : ~ _ |- _ => apply H end;
-          eapply CODOM; eexists; eauto.
-      all: by exfalso; match goal with H : ~ _ |- _ => apply H end;
-        eapply DOM; eexists; eauto.
-    Qed.
-
-    (* TODO: move to AuxDef.v *)
-    Lemma collect_rel_if_else {A B}
-          (ft fe: A -> B) (s : A -> Prop) (r : relation A)
-          (DOM : dom_rel r ∩₁ s ⊆₁ ∅) (CODOM : codom_rel r ∩₁ s ⊆₁ ∅) :
-      (fun e : A =>
-         if excluded_middle_informative (s e)
-         then ft e
-         else fe e) □ r ≡ fe □ r.
-    Proof.
-      unfolder. split; ins; desf; eauto.
-      4: do 2 eexists; splits; eauto; desf.
-      1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
-      all: exfalso; eapply CODOM; split; [eexists|]; eauto.
-    Qed.
-
     Lemma gEninit : g □₁ SEninit ⊆₁ set_compl is_init.
     Proof. unfold ES.acts_ninit_set, ES.event_to_act. basic_solver. Qed.
 
@@ -376,8 +318,25 @@ Section SimRel.
       unfold ES.event_to_act.
       rewrite collect_rel_if_else.
       2,3: unfold ES.acts_ninit_set; basic_solver.
-      (* TODO. It should follow from definition of g. *)
-    Admitted.
+      intros x y HH. red in HH. desf.
+      red.
+      assert (Stid x' = Stid y') as TT.
+      { by apply WF.(ES.sb_tid). }
+      rewrite TT.
+      splits; auto.
+      destruct_seq HH as [AA BB].
+      assert (dom_rel (⦗Stid_ (Stid y')⦘ ⨾ Ssb ⨾ ⦗eq y'⦘) x') as CC.
+      { eexists. apply seq_eqv_l. split; auto.
+        apply seq_eqv_r. eauto. }
+      assert (irreflexive Ssb) as UU by (by apply ES.sb_irr).
+      apply countNatP_lt with (e:=x'); auto.
+      3: by apply AA.
+      2: { intros YY. eapply UU. generalize YY. basic_solver. }
+      intros z [v PP]. destruct_seq PP as [DD EE]; subst.
+      eexists. apply seq_eqv_l. split; auto.
+      apply seq_eqv_r. split; [|by eauto].
+      eapply ES.sb_trans; eauto.
+    Qed.
 
     Lemma gE : g □₁ SE ⊆₁ GE.
     Proof.

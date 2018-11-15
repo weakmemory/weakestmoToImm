@@ -40,7 +40,6 @@ Section AuxRel.
 
   Definition fixset := 
     forall (x : A) (SX : s x), x = h x.
-
 End AuxRel.
 
 Notation "⊤₁" := set_full.
@@ -588,6 +587,56 @@ Proof.
   destruct IHclos_refl_trans1; auto.
   split; auto.
   eapply transitive_rt; eauto.
+Qed.
+
+Lemma set_collect_if_then (ft fe: A -> B) (HH : s ⊆₁ s') :
+  (fun e : A =>
+     if excluded_middle_informative (s' e)
+     then ft e
+     else fe e) □₁ s ≡₁ ft □₁ s.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  2: eexists; splits; eauto; desf.
+  all: by exfalso; match goal with H : ~ _ |- _ => apply H end; apply HH.
+Qed.
+
+Lemma set_collect_if_else (ft fe: A -> B) (HH : s ∩₁ s' ⊆₁ ∅) :
+  (fun e : A =>
+     if excluded_middle_informative (s' e)
+     then ft e
+     else fe e) □₁ s ≡₁ fe □₁ s.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  2: eexists; splits; eauto; desf.
+  all: exfalso; eapply HH; split; eauto.
+Qed.
+
+Lemma collect_rel_if_then
+      (ft fe: A -> B) (DOM : dom_rel r ⊆₁ s) (CODOM : codom_rel r ⊆₁ s) :
+  (fun e : A =>
+     if excluded_middle_informative (s e)
+     then ft e
+     else fe e) □ r ≡ ft □ r.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  4: do 2 eexists; splits; eauto; desf.
+  1,3,5: by exfalso; match goal with H : ~ _ |- _ => apply H end;
+    eapply CODOM; eexists; eauto.
+  all: by exfalso; match goal with H : ~ _ |- _ => apply H end;
+    eapply DOM; eexists; eauto.
+Qed.
+
+Lemma collect_rel_if_else
+      (ft fe: A -> B) (DOM : dom_rel r ∩₁ s ⊆₁ ∅) (CODOM : codom_rel r ∩₁ s ⊆₁ ∅) :
+  (fun e : A =>
+     if excluded_middle_informative (s e)
+     then ft e
+     else fe e) □ r ≡ fe □ r.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  4: do 2 eexists; splits; eauto; desf.
+  1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
+  all: exfalso; eapply CODOM; split; [eexists|]; eauto.
 Qed.
 
 End Props.
