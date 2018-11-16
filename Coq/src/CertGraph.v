@@ -116,7 +116,7 @@ Section CertGraph.
       apply NISS. by eapply init_issued; eauto. 
     Qed.
 
-    Lemma E0_eq_certE 
+    Lemma E0_in_certE 
           (TEH : thread_restricted_execution G thread certG) :
       E0 ⊆₁ certE.
     Proof. 
@@ -419,7 +419,7 @@ Proof.
     edestruct steps_middle_set with
       (thread := thread)
       (state0 := state) (state':=state') as [state''].
-    3: { eapply E0_eq_certE; eauto. }
+    3: { eapply E0_in_certE; eauto. }
     all: eauto. 
     { apply set_subset_inter_r. split.
       { etransitivity. 
@@ -535,7 +535,7 @@ Proof.
       apply cert_rfD in AA. destruct_seq AA as [WX RY].
       splits; auto; unfold is_w, is_r.
       all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
-        [ erewrite tr_lab; eauto; eapply E0_eq_certE; eauto
+        [ erewrite tr_lab; eauto; eapply E0_in_certE; eauto
         | | | by apply CACTS]. 
       1-2: rewrite TX; auto.  
       all: rewrite TY; auto. }
