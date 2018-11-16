@@ -319,4 +319,7 @@ Proof.
   generalize (@sb_trans G). basic_solver 10.
 Qed.
 
+Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
+Proof. unfold ext_sb. basic_solver. Qed.
+    
 End Properties.

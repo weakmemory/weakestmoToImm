@@ -5,7 +5,8 @@ From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb SimulationRel
      CombRelations.
-Require Import AuxRel AuxDef EventStructure Construction Consistency LblStep.
+Require Import AuxRel AuxDef EventStructure Construction Consistency LblStep
+        ImmProperties.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -291,10 +292,6 @@ Section SimRel.
     Lemma gEninit : g □₁ SEninit ⊆₁ set_compl is_init.
     Proof. unfold ES.acts_ninit_set, ES.event_to_act. basic_solver. Qed.
 
-    (* TODO: move to ImmProperties.v *)
-    Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
-    Proof. unfold ext_sb. basic_solver. Qed.
-    
     Lemma gext_sb : g □ Ssb ⊆ ext_sb.
     Proof.
       assert (ES.Wf S) as WF by apply SRC.
