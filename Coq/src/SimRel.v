@@ -64,6 +64,7 @@ Section SimRel.
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
+  Notation "'GF'" := (fun a => is_true (is_f Glab a)).
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
   
   Notation "'Gsb'" := (G.(sb)).
@@ -339,48 +340,51 @@ Section SimRel.
         by rewrite !collect_rel_seqi, set_collect_eqv, gext_sb, gE.
     Qed.
 
-    Lemma fsb : f □ (⦗ fdom ⦘ ⨾ Gsb ⨾ ⦗ fdom ⦘) ⊆ Ssb. 
+    (* TODO: it may not follow from the simulation relation. *)
+    Lemma fsb : f □ (Gsb ⨾ ⦗ fdom ⦘) ⊆ Ssb. 
     Proof.
-      rewrite <- restr_relE.
-      unfold restr_rel, collect_rel, inclusion.
-      intros x' y' [x [y HH]].
-      destruct HH as [[GSB [FDOMx FDOMy]] [Fx Fy]].
-      admit. 
+      unfold collect_rel, inclusion.
+      ins. desf.
     Admitted.
+    
+    Ltac g_type t H :=
+      unfolder; ins; desf; erewrite t in H; [|by apply SRC]; inv H.
+
+    Lemma gW : g □₁ SW ⊆₁ GW.
+    Proof. g_type same_label_is_w H. Qed.
+
+    Lemma gF : g □₁ SF ⊆₁ GF.
+    Proof. g_type same_label_is_f H. Qed.
+
+    Lemma gRel : g □₁ SRel ⊆₁ GRel.
+    Proof. g_type same_label_is_rel H. Qed.
+    
+    Lemma gsame_loc : g □ same_loc Slab ⊆ same_loc Glab.
+    Proof. g_type same_label_same_loc H. Qed.
 
     Lemma grs : g □ Srs ⊆ Grs. 
     Proof. 
       unfold rs, imm_s_hb.rs. 
-      repeat rewrite collect_rel_seqi.
-      repeat apply seq_mori. 
-      { rewrite set_collect_eqv, set_collect_inter.
-        apply eqv_rel_mori. 
-        apply set_subset_inter_l.
-        right. admit. }
-      { rewrite collect_rel_cr.
-        rewrite collect_rel_interi. 
-        apply clos_refl_mori, inter_rel_mori. 
-        { apply gsb. }
-        admit. }
-      { rewrite set_collect_eqv.
-        apply eqv_rel_mori. 
-        admit. }
-      rewrite collect_rel_crt.
-      auto using clos_refl_trans_mori, grfrmw.  
-    Admitted.
+      rewrite !collect_rel_seqi.
+      rewrite !set_collect_eqv.
+      arewrite (SE ∩₁ SW ⊆₁ SW) by basic_solver.
+      rewrite !gW.
+      repeat apply seq_mori; eauto with hahn.
+      2: { rewrite collect_rel_crt. auto using clos_refl_trans_mori, grfrmw. }
+      rewrite collect_rel_cr.
+      rewrite collect_rel_interi. 
+      apply clos_refl_mori, inter_rel_mori. 
+      { apply gsb. }
+      apply gsame_loc.
+    Qed.
 
     Lemma grelease : g □ Srelease ⊆ Grelease.
     Proof. 
       unfold release, imm_s_hb.release. 
-      repeat rewrite collect_rel_seqi.
-      repeat apply seq_mori. 
-      { admit. }
-      { rewrite collect_rel_cr, collect_rel_seqi. 
-        apply clos_refl_mori, seq_mori. 
-        { admit. }
-        apply gsb. }
-      apply grs. 
-    Admitted. 
+      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi. 
+      rewrite !set_collect_eqv.
+        by rewrite gRel, grs, gsb, gF.
+    Qed.
  
     Lemma gtid e : Stid e = Gtid (g e).
     Proof.
