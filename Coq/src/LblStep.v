@@ -2,7 +2,7 @@ Require Import Omega.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution
      Prog ProgToExecution ProgToExecutionProperties.
-Require Import AuxRel.
+Require Import AuxDef AuxRel.
 
 Lemma unique_eps_step thread state state' state''
       (EPS_STEP1 : istep thread [] state state')
@@ -249,3 +249,49 @@ Proof. unfold step. basic_solver. Qed.
 
 Lemma eps_steps_in_steps thread : (istep thread [])＊ ⊆ (step thread)＊.
 Proof. by rewrite eps_step_in_step. Qed.
+
+(****************************
+** Destruction of lbl_step **
+*****************************)
+
+Lemma lbl_step_cases thread lbls state state'
+      (ILBL_STEP : ilbl_step thread lbls state state') :
+  exists lbl lbl',
+
+    ⟪ LBLS : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
+    ( ( ⟪ ACTS : acts_set state'.(G) ≡₁ 
+                 acts_set state.(G) ∪₁ eq (ThreadEvent thread state.(eindex)) ⟫ /\
+        ⟪ LBL'none : lbl' = None ⟫ /\
+        ( (exists ord loc val, ⟪ LBL_LD : lbl = Aload false ord loc val ⟫) \/
+          (exists ord loc val, ⟪ LBL_LD_EX : lbl = Aload true ord loc val ⟫) \/
+          (exists ord loc val, ⟪ LBL_ST : lbl = Astore Xpln ord loc val ⟫) \/
+          (exists ord, ⟪ LBL_F : lbl = Afence ord ⟫) ) ) \/
+      ( ⟪ ACTS : acts_set state'.(G) ≡₁ 
+                 acts_set state.(G) ∪₁ 
+                 eq (ThreadEvent thread state.(eindex)) ∪₁ eq (ThreadEvent thread (1 + state.(eindex))) ⟫ /\
+        exists ordr ordw loc valr valw, 
+          ⟪ LBL_LD_EX : lbl = Aload true ordr loc valr ⟫ /\
+          ⟪ LBL_ST_EX : lbl' = Some (Astore Xacq ordw loc valw) ⟫ )).
+Proof. 
+  eapply ilbl_step_alt in ILBL_STEP; desf. 
+  cdes ISTEP. 
+  edestruct ISTEP0; desf; do 2 eexists; splits. 
+  { erewrite opt_to_list_none. 
+    by apply app_nil_l. }
+  { left; splits; eauto. }
+  { erewrite opt_to_list_none. 
+    by apply app_nil_l. }
+  { left; splits; eauto 20. }
+  { erewrite opt_to_list_none. 
+    by apply app_nil_l. }
+  { left; splits; eauto. }
+  { erewrite opt_to_list_none. 
+    by apply app_nil_l. }
+  { left; splits; eauto 20. }
+  { erewrite opt_to_list_some. 
+    unfold "++"; eauto. }
+  { right; splits; eauto 10. }
+  { erewrite opt_to_list_some. 
+    unfold "++"; eauto. }
+  right; splits; eauto 10.
+Qed.
