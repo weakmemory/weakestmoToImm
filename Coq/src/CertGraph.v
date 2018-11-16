@@ -116,29 +116,6 @@ Section CertGraph.
       apply NISS. by eapply init_issued; eauto. 
     Qed.
 
-    (* Lemma E0_eq_certE  *)
-    (*       (TEH : thread_restricted_execution G thread certG)  *)
-    (*       (CDOM : certE ⊆₁ C) :  *)
-    (*   E0 ≡₁ certE. *)
-    (* Proof.  *)
-    (*   red. split.  *)
-    (*   { (* E0_in_e in CertRF ? *) *)
-    (*     rewrite tr_acts_set; eauto. *)
-    (*     rewrite set_interC. *)
-    (*     apply set_subset_inter; auto. *)
-    (*     rewrite coveredE; eauto. *)
-    (*     rewrite issuedE; eauto. *)
-    (*     rewrite wf_sbE. *)
-    (*     basic_solver. } *)
-    (*   apply set_subset_inter_r. split. *)
-    (*   { etransitivity.  *)
-    (*     { eapply TEH.(tr_acts_set). }         *)
-    (*     basic_solver. } *)
-    (*   unionR left. *)
-    (*   etransitivity; eauto.   *)
-    (*   eapply sim_trav_step_covered_le. red. eauto.  *)
-    (* Qed. *)
-
     Lemma E0_eq_certE 
           (TEH : thread_restricted_execution G thread certG) :
       E0 ⊆₁ certE.
@@ -151,13 +128,6 @@ Section CertGraph.
       rewrite wf_sbE.
       basic_solver.
     Qed.
-
-    (* Lemma E0_in_E : E0 ⊆₁ E. *)
-    (* Proof.  *)
-    (*   rewrite TCCOH'.(coveredE). *)
-    (*   rewrite TCCOH'.(issuedE). *)
-    (*   rewrite wf_sbE. basic_solver.  *)
-    (* Qed. *)
 
     Lemma E0_eindex_weak e (CTE : E0 e) (NINITT : thread <> tid_init) : 
       exists index : nat,
@@ -423,13 +393,18 @@ Variable TSTEP : isim_trav_step G sc thread TC TC'.
 
 Hint Resolve TCCOH'. 
 
-Lemma sim_cert_graph_start 
+Lemma cert_graph_start 
       (state : Language.Language.state (Promise.thread_lts thread))
       (NINITT : thread <> tid_init)
       (GPC : wf_thread_state thread state)
       (SSTATE : sim_state G sim_normal C state)
-      (STATECOV : acts_set state.(ProgToExecution.G) ⊆₁ C) :
-  exists state', cert_graph G sc TC TC' thread state'.
+      (STATECOV : acts_set state.(ProgToExecution.G) ⊆₁ C) 
+      (RMWCLOS : forall r w (RMW : rmw r w), C r <-> C w)
+      (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) :
+  exists state', 
+    ⟪ CERTG : cert_graph G sc TC TC' thread state' ⟫ /\
+    ⟪ CST_STABLE : stable_state thread state' ⟫ /\
+    ⟪ CST_REACHABLE : (step thread)＊ state state' ⟫.
 Proof. 
     cdes SSTATE. cdes SSTATE1.
 
@@ -438,8 +413,7 @@ Proof.
 
     assert (forall r w, rmw r w -> covered TC' r <-> covered TC' w) as RMWCOV.
     { eapply sim_trav_step_rmw_covered; eauto.
-      { red. eauto. }
-      admit. }
+      red. eauto. }
 
     edestruct E0_eindex; eauto; desf. 
     edestruct steps_middle_set with
@@ -650,6 +624,8 @@ Proof.
     { unfold acts_set. by rewrite RACTS. }
 
     exists cert_state.
+    splits; auto. 
+    2 : { eapply transitive_rt; eauto. by apply eps_steps_in_steps. }
     constructor; auto.
     all: try rewrite SCC.
     { red. ins. unfold certLab. admit. }

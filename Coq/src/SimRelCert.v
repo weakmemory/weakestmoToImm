@@ -93,19 +93,16 @@ Section SimRelCert.
   Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ NTid_ qtid) ∪₁ sbq_dom)
                          (only parsing).
 
-  Record simrel_cert_graph := 
-    { cstate_stable : stable_state qtid state';
+  Record simrel_cert :=
+    { sim : simrel prog S G sc TC f;
+
+      cstate_stable : stable_state qtid state';
       cstate_reachable : 
         forall (state : (thread_lts qtid).(Language.state))
                (KK : K (q, existT _ _ state)),
           (step qtid)＊ state state';
-      certg : cert_graph G sc TC TC' qtid state';
-    }.
-      
-  Record simrel_cert :=
-    { sim : simrel prog S G sc TC f;
 
-      cert : simrel_cert_graph;
+      cert : cert_graph G sc TC TC' qtid state';
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
@@ -268,455 +265,43 @@ Notation "'hdom' k" :=
 
 Variable SRC : simrel prog S G sc TC f.
 
-Lemma sim_cert_graph_start TC' thread
+Hint Resolve SRC. 
+
+(* cstate_stable : stable_state qtid state'; *)
+(*       cstate_reachable :  *)
+(*         forall (state : (thread_lts qtid).(Language.state)) *)
+(*                (KK : K (q, existT _ _ state)), *)
+(*           (step qtid)＊ state state'; *)
+(*       certg : cert_graph G sc TC TC' qtid state'; *)
+
+Lemma simrel_cert_graph_start TC' thread 
+      (* (NINITT : thread <> tid_init) *)
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
-  exists q state',
-    ⟪ QTID : thread = ES.cont_thread S q  ⟫ /\
-    ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S q ⊆₁ covered TC ⟫ /\
-    ⟪ SRCG : simrel_cert_graph S G sc TC TC' q state' ⟫.
-Proof.
-  assert (Wf G) as WF by apply SRC.
-  assert (imm_consistent G sc) as CON by apply SRC.
-  assert (tc_coherent G sc TC) as TCCOH by apply SRC.
-  assert (tc_coherent G sc TC') as TCCOH'.
-  { eapply sim_trav_step_coherence.
-    2: by apply SRC.
-    red. eauto. }
-
-  assert (forall r w, Grmw r w -> covered TC' r <-> covered TC' w) as RMWCOV.
-  { eapply sim_trav_step_rmw_covered; eauto.
-    { red. eauto. }
-    apply SRC. }
-
-  edestruct cont_tid_state with (thread:=thread) as [state [q]]; eauto.
-  { eapply trstep_thread_prog; [| | apply TCCOH|]; eauto. }
+  exists k state',
+    ⟪ CERTG : cert_graph G sc TC TC' thread state' ⟫ /\
+    ⟪ kTID : ES.cont_thread S k = thread ⟫ /\
+    ⟪ CST_STABLE : stable_state thread state' ⟫ /\
+    ⟪ CST_REACHABLE : 
+        forall (state : (thread_lts thread).(Language.state))
+               (KK : K S (k, existT _ _ state)),
+          (step thread)＊ state state' ⟫. 
+Proof. 
+  edestruct cont_tid_state as [state [k HH]]; eauto. 
+  { eapply trstep_thread_prog; eauto; apply SRC. }
   desf. 
-
-  assert (ES.cont_thread S q <> tid_init) as NINITT.
-  { admit. }
-  
-  assert (exists state', simrel_cert_graph S G sc TC TC' q state')
-    as [state' HH].
-  2: { eexists. splits; eauto. } 
-  cdes SSTATE. cdes SSTATE1.
-  set (E0 := Tid_ (ES.cont_thread S q) ∩₁
-             (covered TC' ∪₁ dom_rel (Gsb^? ⨾ ⦗ issued TC' ⦘))).
-
-  (* assert (E0 ⊆₁ acts_set (ProgToExecution.G state')) as EEI'. *)
-  (* { unfold E0. *)
-  (*   rewrite tr_acts_set; eauto. *)
-  (*   rewrite set_interC. *)
-  (*   apply set_subset_inter; auto. *)
-  (*   rewrite coveredE; eauto. *)
-  (*   rewrite issuedE; eauto. *)
-  (*   rewrite wf_sbE. *)
-  (*   basic_solver. } *)
-  
-  (* assert (acts_set (ProgToExecution.G state) ⊆₁ E0) as EEI. *)
-  (* { etransitivity. *)
-  (*   { eapply contstateE; eauto. apply SRC. } *)
-  (*   unfold E0. *)
-  (*   apply set_subset_inter_r. split. *)
-  (*   { unfold ES.cont_sb_dom. *)
-  (*     desf. *)
-  (*     { admit. (* unfolder. basic_solver. *) } *)
-  (*     admit. *)
-  (*     (* rewrite set_collect_inter. *) *)
-  (*     (* apply set_subset_inter_l. *) *)
-  (*     (* left. *) *)
-  (*     (* eapply gtid_; eauto. *) } *)
-  (*   unionR left. *)
-  (*   assert (covered TC ⊆₁ covered TC') as AA. *)
-  (*   { eapply sim_trav_step_covered_le. *)
-  (*     red. eauto. } *)
-  (*   etransitivity; eauto. } *)
-
-  (* assert (E0 ⊆₁ acts_set G) as CTEE. *)
-  (* { unfold E0. *)
-  (*   rewrite TCCOH'.(coveredE). *)
-  (*   rewrite TCCOH'.(issuedE). *)
-  (*   rewrite wf_sbE. basic_solver. } *)
-
-  assert (wf_thread_state (ES.cont_thread S q) state) as GPC.
+  edestruct cert_graph_start as [state' HH]; eauto; try by apply SRC.
+  { (* should follow from TR_STEP ??? *)
+    admit. }
   { eapply contwf; eauto. apply SRC. }
-
-  set (thread := ES.cont_thread S q).
-
-  assert (wf_thread_state thread state') as GPC'.
-  { eapply wf_thread_state_steps; eauto. }
-
-  (* assert (CREP_weak : *)
-  (*           forall e (CTE : E0 e), *)
-  (*           exists index : nat, *)
-  (*             ⟪ EREP : e = ThreadEvent thread index ⟫). *)
-  (* { ins. unfold E0 in CTE. destruct CTE as [AA BB]. *)
-  (*   destruct e. *)
-  (*   { simpls. rewrite <- AA in *.  *)
-  (*   ; simpls; rewrite <- AA in *; desf. *)
-  (*   eauto. } *)
-  
-  (* assert (exists ctindex, *)
-  (*            ⟪ CCLOS :forall index (LT : index < ctindex), *)
-  (*                E0 (ThreadEvent thread index) ⟫ /\ *)
-  (*            ⟪ CREP : forall e (CTE : E0 e), *)
-  (*                exists index : nat, *)
-  (*                  ⟪ EREP : e = ThreadEvent thread index ⟫ /\ *)
-  (*                  ⟪ ILT : index < ctindex ⟫ ⟫). *)
-  (* { destruct (classic (exists e, E0 e)) as [|NCT]. *)
-  (*   2: { exists 0. splits. *)
-  (*        { ins. inv LT. } *)
-  (*        ins. exfalso. apply NCT. eauto. } *)
-  (*   desc. *)
-  (*   assert (acyclic (Gsb ⨾ ⦗ E0 ⦘)) as AC. *)
-  (*   { arewrite (Gsb ⨾ ⦗E0⦘ ⊆ Gsb). apply sb_acyclic. } *)
-  (*   set (doml := filterP E0 G.(acts)). *)
-  (*   assert (forall c, (Gsb ⨾ ⦗E0⦘)＊ e c -> In c doml) as UU. *)
-  (*   { intros c SCC. apply rtE in SCC. destruct SCC as [SCC|SCC]. *)
-  (*     { red in SCC. desf. apply in_filterP_iff. split; auto. by apply CTEE. } *)
-  (*     apply inclusion_ct_seq_eqv_r in SCC. apply seq_eqv_r in SCC. *)
-  (*     apply in_filterP_iff. split; auto; [apply CTEE|]; desf. } *)
-  (*   edestruct (last_exists doml AC UU) as [max [MM1 MM2]]. *)
-  (*   assert (E0 max) as CTMAX. *)
-  (*   { apply rtE in MM1. destruct MM1 as [MM1|MM1]. *)
-  (*     { red in MM1. desf. } *)
-  (*     apply inclusion_ct_seq_eqv_r in MM1. apply seq_eqv_r in MM1. desf. } *)
-  (*   assert (Tid_ thread max) as CTTID by apply CTMAX. *)
-  (*   destruct max as [l|mthread mindex]. *)
-  (*   { simpls. *)
-  (*     unfold thread in *. rewrite <- CTTID in *. desf. } *)
-  (*   simpls. rewrite CTTID in *. *)
-  (*   assert (acts_set G (ThreadEvent thread mindex)) as EEM. *)
-  (*   { by apply CTEE. } *)
-  (*   exists (1 + mindex). splits. *)
-  (*   { ins. destruct CTMAX as [_ CTMAX]. *)
-  (*     split; [by ins|]. *)
-  (*    apply le_lt_or_eq in LT. destruct LT as [LT|LT]. *)
-  (*     2: { inv LT. } *)
-  (*     assert ((ProgToExecution.G state').(acts_set) (ThreadEvent thread mindex)) as PP. *)
-  (*     { apply TEH.(tr_acts_set). by split. } *)
-  (*     assert (G.(acts_set) (ThreadEvent thread index)) as EEE. *)
-  (*     { apply TEH.(tr_acts_set). eapply acts_rep in PP; eauto. desc. *)
-  (*       eapply GPC'.(acts_clos). inv REP. omega. } *)
-  (*     assert (Gsb (ThreadEvent thread index) (ThreadEvent thread mindex)) as QQQ. *)
-  (*     { red. *)
-  (*       apply seq_eqv_l. split; auto. *)
-  (*       apply seq_eqv_r. split; auto. *)
-  (*       red. split; auto. omega. } *)
-  (*     destruct CTMAX as [AA|[z AA]]; [left|right]. *)
-  (*     { apply TCCOH' in AA. apply AA. eexists. *)
-  (*       apply seq_eqv_r. split; eauto. } *)
-  (*     exists z. apply seq_eqv_r in AA. destruct AA as [AA1 AA2]. *)
-  (*     apply seq_eqv_r. split; auto. *)
-  (*     apply rewrite_trans_seq_cr_cr. *)
-  (*     { apply sb_trans. } *)
-  (*     eexists; split; [|by eauto]. *)
-  (*       by apply r_step. } *)
-  (*   ins. set (CTE' := CTE). *)
-  (*   apply CREP_weak in CTE'. desc. *)
-  (*   eexists. splits; eauto. *)
-  (*   destruct (le_gt_dec index mindex) as [LL|LL]. *)
-  (*   { by apply le_lt_n_Sm. } *)
-  (*   exfalso. *)
-  (*   eapply MM2. apply seq_eqv_r. split; [|by apply CTE]. *)
-  (*   red. *)
-  (*   apply seq_eqv_l. split; auto. *)
-  (*   apply seq_eqv_r. split; auto. *)
-  (*   red. rewrite EREP. by split. } *)
-  (* desc. *)
-  
-  edestruct steps_middle_set with
-      (thread:=ES.cont_thread S q)
-      (state0:=state) (state':=state') as [state''].
-  3: admit. (*by apply EEI'.*)
-  all: eauto.
-  { ins.
-    admit. 
-    (* eapply rmw_in_thread_restricted_rmw in RMW; eauto. *)
-    (* split; intros [TT XX]; split. *)
-    (* 1,3: by apply WF.(wf_rmwt) in RMW; rewrite <- TT; red in RMW; desf. *)
-    (* all: destruct XX as [XX|XX]; [by left; eapply RMWCOV with (r:=r); eauto|right]. *)
-    (* all: destruct XX as [e XX]. *)
-    (* all: apply seq_eqv_r in XX; destruct XX as [SB II]. *)
-    (* all: exists e; apply seq_eqv_r; split; auto. *)
-    (* 2: { apply (wf_rmwi WF) in RMW. *)
-    (*      generalize SB RMW (@sb_trans G). basic_solver. } *)
-    (* assert (GR r) as RR. *)
-    (* { apply WF.(wf_rmwD) in RMW. destruct_seq RMW as [AAA BBB]. *)
-    (*   type_solver. } *)
-    (* apply (wf_rmwi WF) in RMW. *)
-    (* destruct SB as [|SB]; subst. *)
-    (* { eapply issuedW in II; eauto. type_solver. } *)
-    (* destruct (classic (w = e)) as [|NEQ]; [by left|]. *)
-    (* assert (~ is_init r) as NINIT. *)
-    (* { intros GG. eapply WF.(init_w) in GG. *)
-    (*   type_solver. } *)
-    (* edestruct sb_semi_total_l with (y:=w) (z:=e); eauto. *)
-    (* { apply RMW. } *)
-    (* exfalso. eapply RMW; eauto. *) }
-  1-2: admit. 
-  desf.
-  
-  set (new_rf := cert_rf G sc TC' thread ⨾ ⦗ E0 \₁ D G TC' thread ⦘).
-  set (new_rfi := ⦗ Tid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
-  set (new_rfe := ⦗ NTid_ thread ⦘ ⨾ new_rf ⨾ ⦗ Tid_ thread ⦘).
-
-  assert (new_rff : functional new_rf⁻¹).
-  { arewrite (new_rf ⊆ cert_rf G sc TC' thread).
-    apply cert_rff; auto. }
-  assert (new_rfif : functional new_rfi⁻¹).
-  { arewrite (new_rfi ⊆ new_rf); auto.
-    unfold new_rfi; basic_solver. }
-  assert (new_rfef : functional new_rfe⁻¹).
-  { arewrite (new_rfe ⊆ new_rf); auto.
-    unfold new_rfe; basic_solver. }
-  
-  assert (new_rfi ⊆ Gsb) as NEWRFISB.
-  { unfold new_rfi. unfolder. intros x y [TX [RFXY TY]].
-    red in RFXY.
-    apply seq_eqv_r in RFXY. destruct RFXY as [RFXY [EEY NDY]].
-    apply cert_rfE in RFXY; auto. destruct_seq RFXY as [EX EY].
-    apply cert_rfD in RFXY. destruct_seq RFXY as [WX RY].
-    edestruct same_thread with (x:=x) (y:=y) as [[|SBXY]|SBXY]; eauto.
-    { unfold thread in *. intros HH.
-      destruct x; simpls.
-      rewrite <- TX in *. desf. }
-    { by rewrite TX. }
-    { subst. exfalso. type_solver. }
-    exfalso. eapply cert_rf_hb_sc_hb_irr; eauto.
-    eexists. splits; eauto.
-    eexists. splits.
-    { eapply imm_s_hb.sb_in_hb; eauto. }
-      by left. }
-
-  set (new_rfe_ex := new_rfe ∪ ⦗ set_compl (codom_rel new_rfe) ⦘).
-
-  assert (forall r, exists ! w, new_rfe_ex⁻¹ r w) as new_rfe_unique.
-  { ins.
-    destruct (classic ((codom_rel new_rfe) r)) as [X|X].
-    { unfolder in X; desf.
-      exists x; red; splits.
-      unfold new_rfe_ex; basic_solver 12.
-      unfold new_rfe_ex; unfolder; ins; desf.
-      eapply new_rfef; basic_solver.
-      exfalso; eauto. }
-    exists r; red; splits.
-    unfold new_rfe_ex; basic_solver 12.
-    unfold new_rfe_ex; unfolder; ins; desf.
-    unfolder in X; exfalso; eauto. }
- 
-  assert (exists new_value, forall x, (new_rfe_ex)⁻¹ x (new_value x)) as HH; desc.
-  { apply (unique_choice (new_rfe_ex)⁻¹ (new_rfe_unique)). }
-
-  set (get_val (v: option value) :=  match v with | Some v => v | _ => 0 end).
-
-  set (new_val := fun r => get_val (val G.(lab) (new_value r))).
-
-  assert (acts_set (ProgToExecution.G state) ⊆₁ C) as STATECOV.
-  { intros x EE. apply GPC.(acts_rep) in EE. desc. subst. by apply PCOV. }
-
-  assert (wf_thread_state (ES.cont_thread S q) state'') as GPC''.
-  { admit. }
-
-  assert (doma (⦗Tid_ thread ⦘ ⨾ Gsb ⨾ ⦗E0⦘) E0) as PRSBE0.
-  { red. intros x y SBXY.
-    destruct_seq SBXY as [TX TY]. destruct TY as [TY EEY].
-    split; auto.
-    destruct EEY as [COVY|ISSY]; [left|right].
-    { eapply dom_sb_covered; eauto.
-      eexists. apply seq_eqv_r. eauto. }
-    destruct ISSY as [z ISSY].
-    apply seq_eqv_r in ISSY. destruct ISSY as [SBYZ ISSZ].
-    exists z. apply seq_eqv_r. split; auto.
-    generalize (@sb_trans G) SBXY SBYZ. basic_solver. }
-  
-  assert (new_rfi ≡ ⦗ E0 ⦘ ⨾ new_rfi ⨾ ⦗ E0 ⦘) as NEW_RFIE.
-  { split; [|basic_solver].
-    etransitivity.
-    2: apply doma_helper.
-    { unfold new_rfi, new_rf. basic_solver 10. }
-    arewrite (new_rfi ⊆ ⦗Tid_ thread⦘ ⨾ Gsb). 2: done.
-    generalize NEWRFISB. unfold new_rfi. basic_solver 6. }
-
-  edestruct steps_old_restrict with (state0:=state'') (state':=state') as [ORMW]; eauto.
-  desc. unnw.
-  edestruct receptiveness_full with
-      (tid:=ES.cont_thread S q)
-      (s_init:=state) (s:=state'')
-      (new_val:=new_val)
-      (new_rfi:=new_rfi)
-      (MOD:=E0 \₁ D G TC' thread) as [pre_cert_state]; eauto.
-  { rewrite CACTS. admit. }
-  { split; [|basic_solver].
-    rewrite NEW_RFIE at 1.
-    unfolder. intros x y [EEX [RFXY EEY]].
-    set (AA := RFXY).
-    unfold new_rfi in AA.
-    destruct_seq AA as [TX TY].
-    unfold new_rf in AA. apply seq_eqv_r in AA. destruct AA as [AA _].
-    apply cert_rfD in AA. destruct_seq AA as [WX RY].
-    splits; auto; unfold is_w, is_r.
-    all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
-      [admit | | | admit ].
-    3,4: by rewrite TY; eauto.
-    all: by rewrite TX; eauto. }
-  { rewrite NEWRFISB. unfold Execution.sb. basic_solver. }
-  { unfold new_rfi, new_rf. basic_solver. }
-  { admit. }
-  { rewrite STATECOV.
-    sin_rewrite sim_trav_step_covered_le.
-    2: by red; eauto.
-    rewrite <- C_in_D.
-    basic_solver. }
-
-  Ltac _ltt q thread E0 TCCOH OC CC CACTS CCD := 
-    rewrite OC; rewrite CC;
-    rewrite CACTS;
-    arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘; arewrite_id ⦗E0⦘ at 1;
-    rewrite !seq_id_l;
-    unfold E0, thread;
-    rewrite CCD; [| |apply TCCOH|]; auto;
-    basic_solver.
-
-  (* { rewrite OFAILDEP; rewrite TEH.(tr_rmw_dep). *)
-  (*   rewrite CACTS. *)
-  (*   arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘; arewrite_id ⦗E0⦘ at 1. *)
-  (*   rewrite !seq_id_l. *)
-  (*   unfold E0, thread. *)
-  (*   rewrite dom_rmw_depE_in_D; [| |apply TCCOH|]; auto.  *)
-  (*   basic_solver. *)
-
-  1-2, 4: admit. 
-
-  { rewrite CACTS.
-    unfolder; ins; desc.
-    apply H2.
-    destruct H as [TT [AA|AA]].
-    { by apply C_in_D. }
-    unfolder in AA. desf.
-    { by apply I_in_D. }
-    red. left. left. right.
-    eexists. eexists. split.
-    { by left. }
-    apply seq_eqv_r. split; eauto.
-    assert (R_ex Glab x) as UU.
-    { admit. }
-    red. apply seq_eqv_l. split.
-    { by apply R_ex_in_R. }
-    apply seq_eqv_r. split.
-    2: by eapply issuedW; eauto.
-    apply ct_step. left. right.
-    apply seq_eqv_l. by split. }
-
-  { rewrite ODATA, CACTS.
-    admit. (*arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
-    rewrite <- id_inter.
-    arewrite (E0 ∩₁ set_compl (E0 \₁ D G TC' thread) ⊆₁ D G TC' thread).
-    { unfolder. intros x [AA BB].
-      destruct (classic (D G TC' thread x)); auto.
-      exfalso. apply BB. desf. }
-    rewrite TEH.(tr_data), !seqA. 
-    arewrite_id ⦗Gtid_ (ES.cont_thread S q)⦘. rewrite !seq_id_l.
-    unfold thread.
-    generalize (dom_dataD_in_D). basic_solver 10.*) }
-  desf.
-
-  assert (instrs pre_cert_state = instrs state) as INSTRSS.
-  { eapply steps_same_instrs; eauto. }
-
-  edestruct get_stable with (state0:=pre_cert_state) (thread:=thread)
-    as [cert_state [CC _]].
-  { (* TODO: add `stable_lprog thread (instrs state)` to SimRel. *)
+  { (* should follow from CsbqDOM *)
     admit. }
-  { eapply transitive_rt; [|by eauto].
-    rewrite INSTRSS.
-    (* TODO: add `(step thread)＊ (init (instrs state)) state` to SimRel. *)
-    admit. }
-  desc.
-  
-  assert (ProgToExecution.G cert_state = ProgToExecution.G pre_cert_state) as SCC.
-  { eapply eps_steps_same_G; eauto. }
-
-  assert (acts_set (ProgToExecution.G pre_cert_state) =
-          acts_set (ProgToExecution.G state'')) as SS.
-  { unfold acts_set. by rewrite RACTS. }
-
-  exists cert_state.
-  constructor; auto.
-  { ins.
-    eapply ES.unique_K in KK.
-    3: by apply QQ.
-    all: eauto.
-    2: apply SRC.
-    simpls. inv KK.
-    eapply transitive_rt; eauto.
-      by apply eps_steps_in_steps. }
-  constructor; auto.
-  all: try rewrite SCC.
-  { red. ins. unfold certLab. admit. (* rewrite SCC. desf.
-    admit.*) }
-  { ins.
-    eapply same_label_up_to_value_trans; eauto.
-    assert (Gtid e = (ES.cont_thread S q)) as BB.
-    { red in EE. rewrite <- RACTS in EE. by apply CACTS. }
-    assert (acts_set (ProgToExecution.G state'') e) as CC.
-    { by red; rewrite RACTS. }
-
-    assert (lab (ProgToExecution.G state'') e = Glab e) as AA. 
-    2: { rewrite AA. red. desf. }
-    erewrite <- steps_preserve_lab; try rewrite BB; eauto.
-    eapply tr_lab; eauto.
-    eapply steps_preserve_E; eauto. }
-  { unfold acts_set. by rewrite <- RACTS. }
-  { rewrite <- RRMW, SS. rewrite ORMW, !CACTS.
-    rewrite TEH.(tr_rmw), !seqA.
-    rewrite seq_eqvC. seq_rewrite <- !id_inter.
-    arewrite (E0 ∩₁ Gtid_ (ES.cont_thread S q) ≡₁ E0).
-    2: done.
-    rewrite set_interC. unfold E0. rewrite <- !set_interA. 
-      by rewrite set_interK. }
-  { admit. }
-  { erewrite same_label_same_loc; eauto.
-    all: admit. }
-  { arewrite (cert_rf G sc TC' (ES.cont_thread S q) ⊆
-              ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾
-              cert_rf G sc TC' (ES.cont_thread S q)) at 1
-      by rewrite set_compl_union_id, seq_id_l.
-    rewrite id_union, seq_union_l.
-    rewrite non_I_cert_rf; auto.
-    { unionL; [|basic_solver].
-      inv TR_STEP; simpls.
-
-      3: assert (Gtid w = ES.cont_thread S q) as TX
-          by (apply wf_rmwt in RMW; auto; rewrite <- RMW; auto).
-      1,2: assert (Gtid w = ES.cont_thread S q) as TX by auto.
-
-      3: assert (Gtid r = ES.cont_thread S q) as TR by auto.
-
-      all: assert (~ is_init w) as NINITX
-          by (intros AA; destruct w; simpls; desf;
-              rewrite <- TX in *; desf).
-      all: rewrite id_union, seq_union_l; unionL; [basic_solver|].
-      all: unionR right.
-      all: unfolder; intros x y [AA RF]; desf.
-      
-      3: rewrite TR in RF.
-      1,2: rewrite TX in RF.
-      all: assert (Gtid y = ES.cont_thread S q) as TY
-          by (apply cert_rf_codomt in RF; generalize RF; basic_solver).
-
-      all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
-      all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
-      all: assert (Gtid x = Gtid y) as TTT by (rewrite TY; auto).
-      all: destruct (@same_thread G x y) as [[|SB]|SB]; desf; auto;
-        [type_solver|].
-      all: exfalso.
-      all: eapply cert_rf_hb_sc_hb_irr; eauto.
-      all: assert (Ghb y x) as HB by (apply imm_s_hb.sb_in_hb; auto).
-      all: repeat (eexists; split; eauto). }
-    eapply sim_trav_step_rel_covered.
-    { red. eauto. }
-    apply SRC. }
-  admit.
+  desf. 
+  exists k, state'. 
+  splits; auto.  
+  ins. 
+  eapply ES.unique_K in KK;
+    [| by apply SRC | by apply QQ | auto].
+  simpls. inv KK.
 Admitted.
 
 Lemma simrel_cert_start TC' thread
@@ -724,7 +309,7 @@ Lemma simrel_cert_start TC' thread
   exists q state',
     ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
 Proof.
-  edestruct sim_cert_graph_start as [q [state' HH]]; eauto.
+  edestruct simrel_cert_graph_start as [q [state' HH]]; eauto.
   desf.
   exists q. exists state'.
   constructor; auto.
@@ -738,27 +323,29 @@ Proof.
     rewrite set_unionK;
     apply SRC.
 
-  { by narrow_hdom q CsbqDOM. }
-  { admit. }
-  { by narrow_hdom q CsbqDOM. }
-  { by narrow_hdom q CsbqDOM. }
-  { admit. }
-  { apply SRC.(ftid). } 
-  { apply SRC.(flab). }
-  { admit. }
-  { by narrow_hdom q CsbqDOM. } 
-  { admit. }
-  { admit. }
-  { admit. }
-  rewrite CsbqDOM.
-  unfold ES.cc.
-  rewrite <- restr_relE.
-  rewrite restr_inter.
-  rewrite restr_rel_mori.
-  { rewrite (restr_relE _ (Scf S)). 
-    rewrite SRC.(fimgNcf). 
-      by rewrite inter_false_l. } 
-  all: basic_solver.
+  all: admit. 
+
+  (* { by narrow_hdom q CsbqDOM. } *)
+  (* { admit. } *)
+  (* { by narrow_hdom q CsbqDOM. } *)
+  (* { by narrow_hdom q CsbqDOM. } *)
+  (* { admit. } *)
+  (* { apply SRC.(ftid). }  *)
+  (* { apply SRC.(flab). } *)
+  (* { admit. } *)
+  (* { by narrow_hdom q CsbqDOM. }  *)
+  (* { admit. } *)
+  (* { admit. } *)
+  (* { admit. } *)
+  (* rewrite CsbqDOM. *)
+  (* unfold ES.cc. *)
+  (* rewrite <- restr_relE. *)
+  (* rewrite restr_inter. *)
+  (* rewrite restr_rel_mori. *)
+  (* { rewrite (restr_relE _ (Scf S)).  *)
+  (*   rewrite SRC.(fimgNcf).  *)
+  (*     by rewrite inter_false_l. }  *)
+  (* all: basic_solver. *)
 Admitted.
 
 Lemma simrel_cert_basic_step k lbls jf ew co
@@ -847,7 +434,7 @@ Proof.
       admit. }
 
     assert (hdom q w) as wInHDOM.
-    { eapply new_rf_ntid_iss_sb in RFwa; [|by apply SRCC].
+    { eapply new_rf_ntid_iss_sb in RFwa; try eapply SRCC.  
       destruct RFwa as [RFwa|RFwa].
       { apply seq_eqv_l in RFwa. destruct RFwa as [[NTIDw IW] RFwa].
         left. right. split; auto.
@@ -1049,12 +636,13 @@ Proof.
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE.
             by rewrite SRCC.(himgNcf). }
-          { rewrite releaseC; eauto. 
+          { admit. 
+            (* rewrite releaseC; eauto. 
             arewrite (f □₁ C ≡₁ h □₁ C).
             { admit. }
             rewrite dom_seq.
             repeat rewrite set_collect_union.
-            basic_solver 10. }
+            basic_solver 10. *) }
           repeat rewrite codom_seq.
           rewrite codom_singl_rel; auto. } 
 
@@ -1072,7 +660,8 @@ Proof.
           rewrite hbNCsb; eauto. 
           arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
           { rewrite ES.sbE; auto; basic_solver. } 
-          rewrite releaseC; eauto. 
+          admit. 
+          (* rewrite releaseC; eauto. 
           repeat rewrite seqA.
           rewrite <- seqA.
           rewrite seq_incl_cross.
@@ -1080,7 +669,7 @@ Proof.
               by rewrite SRCC.(himgNcf). }
           { admit. }
           repeat rewrite codom_seq.
-            by rewrite codom_singl_rel. }
+            by rewrite codom_singl_rel. *) }
         repeat rewrite seqA.
         rewrite seq_incl_cross.
         { rewrite <- restr_cross, restr_relE. 

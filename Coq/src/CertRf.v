@@ -640,18 +640,6 @@ Proof.
   generalize (@sb_trans G) SBXY SBYZ. basic_solver. 
 Qed.
 
-Lemma cert_rfi_in_E0 (NINITT : thread <> tid_init) : 
-  (cert_rfi ⨾ ⦗ E0 ⦘ ≡ ⦗ E0 ⦘ ⨾ cert_rfi ⨾ ⦗ E0 ⦘).
-Proof.
-  split; [|basic_solver].
-  etransitivity.
-  2: apply doma_helper.
-  { unfold cert_rfi. basic_solver 20. }
-  arewrite (cert_rfi ⊆ ⦗Tid_ thread⦘ ⨾ sb). 
-  { generalize cert_rfi_in_sb. unfold cert_rfi. basic_solver 6. }
-  apply E0_sbprcl.
-Qed.
-
 (* Lemma cert_rfe_Acq : (cert_rf \ Gsb) ⨾ ⦗R∩₁Acq⦘ ⊆ ∅₂. *)
 (* Proof. *)
 (*   rewrite cert_rfE. *)
