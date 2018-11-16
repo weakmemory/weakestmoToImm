@@ -167,10 +167,7 @@ Section SimRel.
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       
-      (* we should use `same_lab_up_to_value` here,
-         but it is not possible until we modify its definition in IMM *)
-      glab : forall e,
-          same_label_up_to_value (Slab e) (Glab (g e));
+      glab : same_lab_up_to_value Slab (Glab ∘ g);
 
       (* To be able to show that `ftid` holds after a simulation step,
          we use Logic.FunctionalExtensionality. *)
