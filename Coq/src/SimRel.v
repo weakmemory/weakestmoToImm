@@ -147,6 +147,7 @@ Section SimRel.
 
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
 
+      gE : g □₁ SE ⊆₁ GE;
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
       gew  : g □ Sew  ⊆ ⦗I⦘;
@@ -178,7 +179,6 @@ Section SimRel.
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
       vis  : f □₁ fdom ⊆₁ vis S;
-
     }.
 
   Record forward_pair (e : actid) (e' : eventid) :=
@@ -337,26 +337,6 @@ Section SimRel.
       apply seq_eqv_r. split; [|by eauto].
       eapply ES.sb_trans; eauto.
     Qed.
-
-    Lemma gE : g □₁ SE ⊆₁ GE.
-    Proof.
-      (* TODO: Move to the simulation relation. *)
-
-      (* arewrite (SE ⊆₁ SE \₁ SEinit ∪₁ SEinit). *)
-      (* { intros x HH. by destruct (classic (SEinit x)); [right|left]. } *)
-      (* rewrite set_collect_union. *)
-      (* apply set_subset_union_l. split; [|by apply ginitE]. *)
-      (* unfold ES.event_to_act. *)
-      (* rewrite set_collect_if_else. 2: basic_solver. *)
-
-
-
-      (* generalize dependent y. *)
-      (* induction (ES.next_act S). *)
-      (* { ins. omega. } *)
-      (* ins. *)
-
-    Admitted.
 
     Lemma gsb : g □ Ssb ⊆ Gsb.
     Proof.
