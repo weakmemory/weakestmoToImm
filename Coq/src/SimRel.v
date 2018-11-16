@@ -164,31 +164,18 @@ Section SimRel.
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      finj : inj_dom fdom f;  
+      finj : inj_dom_s fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       
       glab : same_lab_up_to_value Slab (Glab ∘ g);
 
-      (* To be able to show that `ftid` holds after a simulation step,
-         we use Logic.FunctionalExtensionality. *)
-      ftid : Stid ∘ f = Gtid;
+      ftid : eq_dom GE (Stid ∘ f) Gtid;
 
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
       vis  : f □₁ fdom ⊆₁ vis S;
-    }.
-
-  Record forward_pair (e : actid) (e' : eventid) :=
-    { fp_tcstep : trav_step G sc TC (mkTC (C ∪₁ eq e) I);
-      fp_inGE   : GE e ;
-      fp_inSE   : SE e'; 
-      fp_tidEq  : Stid e' = Gtid e;
-      fp_labEq  : Slab e' = Glab e;
-      fp_covsb  : Ssb ⨾ ⦗ eq e' ⦘ ⊆ ⦗ f □₁ C ⦘ ⨾ Ssb;
-      fp_sbEq   : upd f e e' □ (Gsb ⨾ ⦗ eq e ⦘) ≡ Ssb ⨾ ⦗ eq e' ⦘;
-      fp_imgrf  : upd f e e' □ (Grf ⨾ ⦗ eq e ⦘) ⊆ Srf;
     }.
 
   Section Properties.
@@ -397,8 +384,8 @@ Section SimRel.
     Lemma gtid_ thread : g □₁ Stid_ thread ⊆₁ Gtid_ thread.
     Proof. generalize gtid. basic_solver. Qed.
 
-    Lemma flaboth e :
-          same_label_up_to_value (Slab e.(f)) (Glab e).
+    Lemma flaboth :
+          same_lab_up_to_value (Slab ∘ f) Glab.
     Proof.
       (* TODO. It should follow from glab and definition of g. *)
     Admitted.
@@ -418,14 +405,16 @@ Section SimRel.
            desf.
            eexists. eexists.
            splits; eauto.
-           { red. ins. admit. (* red in H. desf. *) }
+           { red. ins.
+             eapply init_covered; eauto.
+               by apply gEinit. }
            red. splits; ins.
            2: { symmetry in AA.
                 eapply GPROG in AA. desf.
                 cdes AA. exists s.
+                red. splits; auto.
+                2: by rewrite PEQ.
                 admit. }
-                (* red. splits; auto. *)
-                (*   by rewrite PEQ. } *)
            (* split; intros XX; [|omega]. *)
            (* exfalso. apply NPC. clear NPC. *)
            admit. }
@@ -461,7 +450,8 @@ Section SimRel.
       assert (lang = thread_lts (ES.cont_thread S (CEvent (f e)))); subst.
       { eapply contlang; eauto. }
       assert (Stid (f e) = Gtid e) as TT.
-      { by rewrite <- SRC.(ftid). }
+      { rewrite <- SRC.(ftid); auto.
+        eapply coveredE; eauto. }
       simpls. rewrite TT in KK.
       eapply contpc in PC; eauto.
       eexists. eexists.
@@ -483,19 +473,33 @@ Section SimRel.
       arewrite (eq e ⊆₁ C).
       { intros x HH. desf. }
       eapply dom_sb_covered; eauto.
+      apply fimg; auto.
+      generalize CE. basic_solver.
     Admitted.
 
-    (* TODO: prove more general lemma about an image of non-conflicting events *)
-    Lemma ginjfC : inj_dom (f □₁ C) g.    
+    Lemma ginjfdom : inj_dom (f □₁ fdom) g.
     Proof. 
-      admit. 
-    Admitted.
+      red. intros x y [x' [AA BB]] [y' [CC DD]] HH. subst.
+      assert (g (f x') = x' /\ g (f y') = y') as [FF GG].
+      { split.
+        all: symmetry; apply SRC.(fgtrip); apply seq_eqv_l.
+        all: by split; auto; red. }
+      rewrite FF in *. rewrite GG in *. by subst.
+    Qed.
+
+    Lemma ginjfC : inj_dom (f □₁ C) g.
+    Proof.
+      eapply inj_dom_mori; eauto.
+      2: by apply ginjfdom.
+      red. basic_solver.
+    Qed.
     
     Lemma dom_release_iss : 
         dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C.
     Proof. 
       eapply set_collect_subset.
-      { apply ginjfC. }
+      { (* TODO: it doesn't hold :( *)
+        admit. }
       rewrite set_collect_dom, !collect_rel_seqi, 
         set_collect_eqv, !set_collect_compose.
       arewrite ((g ∘ f) □₁ I ≡₁ I).

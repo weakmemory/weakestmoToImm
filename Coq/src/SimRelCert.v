@@ -139,7 +139,7 @@ Section SimRelCert.
       
       hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
 
-      hinj : inj_dom hdom h;
+      hinj : inj_dom_s hdom h;
       himg : h □₁ hdom ⊆₁ SE;
       hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
       htid : Stid ∘ h = Gtid;

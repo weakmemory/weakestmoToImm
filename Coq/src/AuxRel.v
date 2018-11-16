@@ -31,8 +31,12 @@ Section AuxRel.
   Definition eq_dom := 
     forall (x: A) (SX: s x), f x = g x. 
 
-  Definition inj_dom :=
+  Definition inj_dom_s :=
     forall (x y : A) (SY: s y) (EQ : f x = f y),
+      x = y.
+
+  Definition inj_dom :=
+    forall (x y : A) (SX : s x) (SY: s y) (EQ : f x = f y),
       x = y.
 
   Definition restr_fun := fun x => 
@@ -54,7 +58,7 @@ Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
 Hint Unfold 
      clos_sym clos_refl_sym 
-     inj_dom 
+     inj_dom_s inj_dom
      img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
@@ -298,8 +302,8 @@ Proof.
   erewrite <- (FIX y); auto. 
 Qed.
 
-(* Lemma fixset_compose (f' : A -> B) (g' : B -> C) :  *)
-(*   fixset s g' ∘ f' ->  *)
+Lemma inj_dom_s_inj_dom (INJ : inj_dom_s s f) : inj_dom s f.
+Proof. unfolder in *. ins. by apply INJ. Qed.
 
 Lemma set_collect_compose (f' : A -> B) (g' : B -> C) :
   g' □₁ (f' □₁ s) ≡₁ (g' ∘ f') □₁ s.
@@ -333,7 +337,7 @@ Proof.
   repeat eexists. eauto.
 Qed.
 
-Lemma set_collect_subset (INJ : inj_dom s' f) : 
+Lemma set_collect_subset (INJ : inj_dom_s s' f) : 
   f □₁ s ⊆₁ f □₁ s' -> s ⊆₁ s'.
 Proof.   
   unfolder in *. 
@@ -379,7 +383,7 @@ Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
 Proof. basic_solver 30. Qed.
 
 Lemma collect_rel_seq_l
-      (INJ : inj_dom (codom_rel r) f) : 
+      (INJ : inj_dom_s (codom_rel r) f) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   split; [by apply collect_rel_seqi|].
@@ -391,7 +395,7 @@ Proof.
 Qed.
 
 Lemma collect_rel_seq_r
-      (INJ : inj_dom (dom_rel r') f) : 
+      (INJ : inj_dom_s (dom_rel r') f) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
 Proof.
   split; [by apply collect_rel_seqi|].
@@ -442,7 +446,7 @@ Proof.
 Qed.
 
 Lemma set_collect_restr : 
-  forall (s: A -> Prop) (f: A -> B), inj_dom s f ->
+  forall (s: A -> Prop) (f: A -> B), inj_dom_s s f ->
   f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).
 Proof.
   ins.
@@ -667,13 +671,17 @@ Add Parametric Morphism A : (@compl_rel A) with signature
   inclusion --> inclusion as compl_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
-Add Parametric Morphism A B : (@inj_dom A B) with signature 
-    set_equiv ==> eq ==> iff as inj_dom_more.
+Add Parametric Morphism A B : (@inj_dom_s A B) with signature 
+    set_equiv ==> eq ==> iff as inj_dom_s_more.
 Proof. 
   intros s s' Heq f. red. 
-  unfold inj_dom in *.
+  unfold inj_dom_s in *.
   splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
 Qed.
+
+Add Parametric Morphism A B : (@inj_dom_s A B) with signature 
+  set_subset --> eq ==> impl as inj_dom_s_mori.
+Proof. unfold impl, inj_dom_s. basic_solver. Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_subset --> eq ==> impl as inj_dom_mori.
