@@ -176,6 +176,7 @@ Section SimRel.
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
       vis  : f □₁ fdom ⊆₁ vis S;
+
     }.
 
   Section Properties.

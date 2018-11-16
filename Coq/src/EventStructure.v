@@ -8,6 +8,7 @@ Set Implicit Arguments.
 Export ListNotations.
 
 Definition eventid := nat.
+(* TODO: move to IMM Events.v *)
 Definition tid_init := xH.
 
 Module Language.
