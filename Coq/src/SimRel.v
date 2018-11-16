@@ -523,7 +523,7 @@ Section SimRel.
       rewrite gew; auto. 
       arewrite (⦗I⦘^? ⨾ ⦗I⦘ ≡ ⦗I⦘) by basic_solver.
       eapply dom_release_issued; apply SRC.  
-    Qed.  
+    Admitted.  
 
     Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
     Proof. 
