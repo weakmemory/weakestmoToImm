@@ -396,7 +396,8 @@ Lemma simrel_cert_lbl_step TC' h q
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
       (KK : K S (q, existT _ _ state))
-      (LBL_STEP : lbl_step (ES.cont_thread S q) state state') :
+      (LBL_STEP : lbl_step (ES.cont_thread S q) state state')
+      (CST_REACHABLE : (step (ES.cont_thread S q))＊ state' state'') :
   exists  q' S' h',
     ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
@@ -409,24 +410,26 @@ Proof.
   { red. eexists. eapply tr_step; eauto. }
   assert (tc_coherent G sc TC') as TCCOH'.
   { eapply sim_trav_step_coherence; eauto. }
+  assert (cert_graph G sc TC TC' (ES.cont_thread S q) state'') as CERTG by apply SRCC. 
 
   destruct LBL_STEP as [lbls ILBL_STEP].
-  set (ILBL_STEP_ALT := ILBL_STEP).
-  eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
-  cdes ISTEP. 
-  edestruct ISTEP0; desf.
+  edestruct lbl_step_cases; eauto; desf.  
   { set (thread := (ES.cont_thread S q)).
     set (a   := ThreadEvent thread (eindex state)).
-    set (l   := (RegFile.eval_lexpr (regf state) lexpr)).
+
+    assert (acts_set state''.(ProgToExecution.G) a) as aInCertE.
+    { eapply preserve_event; eauto.  
+      apply ACTS; basic_solver. }
 
     assert (GE a) as aInGE.
-    { admit. }
+    { destruct CERTG. 
+      eapply E0_in_E; [apply TCCOH'|].
+      by eapply dcertE. }       
 
     assert (GR a) as aInGR.
-    { admit. }
-
-    assert (acts_set (ProgToExecution.G state'') a) as aInCertG.
-    { admit. }
+    { destruct CERTG.
+      erewrite same_label_is_r.  
+      all: admit. }
 
     edestruct cert_rf_complete as [w RFwa]; eauto.
     { unfold set_inter. splits.  
@@ -453,7 +456,9 @@ Proof.
 
     set (g' := ES.event_to_act S').
     assert (g' e = a) as g'eaEQ.
-    { admit. } 
+    { 
+
+      admit. } 
     
     assert (e' = None) as e'NONE.
     { admit. }
@@ -732,6 +737,22 @@ Proof.
     { admit. }
 
     econstructor. 
+    { econstructor; try by apply SRC.  
+      { admit. }
+      { apply ES'CONS. }
+      { admit. }
+      { admit. }
+      (* g' □₁ SE' ⊆₁ GE *)
+      { rewrite ESstep.basic_step_nupd_acts_set; eauto.  
+        rewrite set_collect_union. 
+        apply set_subset_union_l. 
+        split. 
+        { erewrite set_collect_eq_dom; [eapply SRC|].
+          eapply ESstep.e2a_step_eq_dom; eauto. } 
+        rewrite set_collect_eq.
+        apply eq_predicate. 
+        unfold g' in g'eaEQ; rewrite g'eaEQ; auto. }
+        
     all: admit. }
 
   all: admit. 
