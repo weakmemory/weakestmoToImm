@@ -73,7 +73,7 @@ Section CertGraph.
 
   Record cert_graph :=
     { cslab : eq_dom ((Tid_ thread) ∩₁ (C' ∪₁ I')) certLab G.(lab);
-      cuplab_cert : forall e (EE : certE e),
+      cuplab_cert : forall e (EE : certE e), 
           same_label_up_to_value (certG.(lab) e) (G.(lab) e);
       
       dcertE : certE ≡₁ E0;
@@ -215,9 +215,10 @@ Section CertGraph.
       split; auto.  
     Qed.
 
-    Lemma cuplab e (SCG : cert_graph) :
-      same_label_up_to_value (certLab e) (G.(lab) e).
+    Lemma cuplab (SCG : cert_graph) :
+      same_lab_up_to_value certLab G.(lab).
     Proof.
+      unfold same_lab_up_to_value; ins. 
       unfold certLab. desf.
       { by apply SCG. }
       red. desf.

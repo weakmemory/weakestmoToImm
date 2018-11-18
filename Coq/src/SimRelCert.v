@@ -427,9 +427,19 @@ Proof.
       by eapply dcertE. }       
 
     assert (GR a) as aInGR.
-    { destruct CERTG.
+    { edestruct CERTG.
       erewrite same_label_is_r.  
-      all: admit. }
+      2: { apply same_lab_up_to_value_comm. eapply cuplab; eauto. }
+      unfold is_r, CertGraph.certLab.
+      destruct 
+        (excluded_middle_informative (acts_set (ProgToExecution.G state'') a))
+      as [HinCertE | HninCertE].
+      { erewrite steps_preserve_lab; eauto.  
+        { by rewrite GLAB, upds. }
+        { (* should follow from `simrel_cont S'` *)
+          admit. }
+        apply ACTS. basic_solver. }
+      exfalso. by apply HninCertE. }
 
     edestruct cert_rf_complete as [w RFwa]; eauto.
     { unfold set_inter. splits.  
