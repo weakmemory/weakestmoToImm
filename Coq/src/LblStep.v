@@ -257,10 +257,10 @@ Proof. by rewrite eps_step_in_step. Qed.
 Lemma lbl_step_cases thread lbls state state'
       (ILBL_STEP : ilbl_step thread lbls state state') :
   exists lbl lbl',
-
     ⟪ LBLS : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
     ( ( ⟪ ACTS : acts_set state'.(G) ≡₁ 
                  acts_set state.(G) ∪₁ eq (ThreadEvent thread state.(eindex)) ⟫ /\
+        ⟪ GLAB : lab state'.(G) = upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl ⟫ /\
         ⟪ LBL'none : lbl' = None ⟫ /\
         ( (exists ord loc val, ⟪ LBL_LD : lbl = Aload false ord loc val ⟫) \/
           (exists ord loc val, ⟪ LBL_LD_EX : lbl = Aload true ord loc val ⟫) \/
@@ -269,29 +269,37 @@ Lemma lbl_step_cases thread lbls state state'
       ( ⟪ ACTS : acts_set state'.(G) ≡₁ 
                  acts_set state.(G) ∪₁ 
                  eq (ThreadEvent thread state.(eindex)) ∪₁ eq (ThreadEvent thread (1 + state.(eindex))) ⟫ /\
+        ⟪ GLAB : lab state'.(G) = 
+                 upd_opt (upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl) 
+                              (Some (ThreadEvent thread (1 + state.(eindex)))) lbl' ⟫ /\
         exists ordr ordw loc valr valw, 
           ⟪ LBL_LD_EX : lbl = Aload true ordr loc valr ⟫ /\
           ⟪ LBL_ST_EX : lbl' = Some (Astore Xacq ordw loc valw) ⟫ )).
 Proof. 
   eapply ilbl_step_alt in ILBL_STEP; desf. 
   cdes ISTEP. 
-  edestruct ISTEP0; desf; do 2 eexists; splits. 
-  { erewrite opt_to_list_none. 
-    by apply app_nil_l. }
-  { left; splits; eauto. }
-  { erewrite opt_to_list_none. 
-    by apply app_nil_l. }
-  { left; splits; eauto 20. }
-  { erewrite opt_to_list_none. 
-    by apply app_nil_l. }
-  { left; splits; eauto. }
-  { erewrite opt_to_list_none. 
-    by apply app_nil_l. }
-  { left; splits; eauto 20. }
-  { erewrite opt_to_list_some. 
-    unfold "++"; eauto. }
-  { right; splits; eauto 10. }
-  { erewrite opt_to_list_some. 
-    unfold "++"; eauto. }
-  right; splits; eauto 10.
+  edestruct ISTEP0; desf; do 2 eexists. 
+
+  Ltac nupd_helper UG := 
+    split;
+      [ erewrite opt_to_list_none; by apply app_nil_l
+      | left; splits; eauto 20;
+        erewrite eps_steps_same_G; eauto;
+        unfold add in UG; rewrite UG;
+        unfold acts_set; simpl; basic_solver
+      ].
+
+  1-4: nupd_helper UG.
+
+  Ltac upd_helper UG := 
+    split; 
+      [ erewrite opt_to_list_some; unfold "++"; eauto
+      | right; splits; eauto 20;
+        erewrite eps_steps_same_G; eauto;
+        unfold add in UG; unfold add_rmw in UG; rewrite UG;
+        unfold acts_set, upd_opt; simpl;
+        rewrite Nat.add_1_r; basic_solver                 
+      ].
+
+  all: upd_helper UG.
 Qed.
