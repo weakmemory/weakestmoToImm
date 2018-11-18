@@ -58,7 +58,7 @@ Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
 Hint Unfold 
      clos_sym clos_refl_sym 
-     inj_dom_s inj_dom
+     inj_dom_s inj_dom eq_dom
      img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
@@ -456,6 +456,17 @@ Proof.
   assert (y' = y0) by (apply H; auto). subst.
   eexists. eexists.
   splits; eauto.
+Qed.
+
+Lemma set_collect_eq_dom (EQ : eq_dom s f g) :
+  f □₁ s ≡₁ g □₁ s.
+Proof. 
+  unfolder in *. 
+  split. 
+  { ins. desf. 
+    specialize (EQ y H).
+    eauto. }
+  ins. desf. eauto. 
 Qed.
 
 Lemma collect_rel_eq_dom :
