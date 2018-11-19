@@ -392,6 +392,18 @@ Proof.
     | rewrite updo; [by rewrite upds | by omega] ].
 Qed.  
 
+Lemma simrel_cert_esstep_e2a_eqr e e' S' r r' r''
+      (ESSTEP : ESstep.t_basic e e' S S')
+      (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
+      (rEQ : r' ≡ r) 
+      (rIN : (ES.event_to_act S) □ r ⊆ r'') : 
+  (ES.event_to_act S') □ r' ⊆ r''.
+Proof. 
+  rewrite rEQ, restrE, collect_rel_eq_dom.
+  { rewrite <- restrE; eauto. }
+  all: eapply ESstep.e2a_step_eq_dom; eauto; apply SRC.  
+Qed.
+
 Lemma simrel_cert_lbl_step TC' h q
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
@@ -762,6 +774,22 @@ Proof.
         rewrite set_collect_eq.
         apply eq_predicate. 
         unfold g' in g'eaEQ; rewrite g'eaEQ; auto. }
+      (* grmw : g □ Srmw ⊆ Grmw *)
+      { eapply simrel_cert_esstep_e2a_eqr; 
+          [| apply ES.rmwE | eapply ESstep.basic_step_nupd_rmw | apply SRC];
+          eauto. }
+      (* gjf  : g □ Sjf  ⊆ Gvf *)
+      { admit. }
+      (* gew  : g □ Sew  ⊆ ⦗I⦘ *)
+      { eapply simrel_cert_esstep_e2a_eqr; 
+          [| apply ES.ewE | eapply EW' | apply SRC];
+          eauto. }
+      (* gew  : g □ Sco  ⊆ Gco *)
+      { eapply simrel_cert_esstep_e2a_eqr; 
+          [| apply ES.coE | eapply CO' | apply SRC];
+          eauto. }
+      
+      
         
     all: admit. }
 
