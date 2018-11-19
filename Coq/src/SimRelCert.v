@@ -37,6 +37,8 @@ Section SimRelCert.
   
   Notation "'certG'" := state'.(ProgToExecution.G).
 
+  Notation "'e2a' S" := (ES.event_to_act S) (at level 10).
+
   Notation "'g'" := (ES.event_to_act S).
 
   Notation "'SE'" := S.(ES.acts_set).
@@ -130,6 +132,20 @@ Section SimRelCert.
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
     }.
+
+  Definition sim_add_jf (r : eventid) (S S' : ES.t) : Prop :=
+    ⟪ RR : is_r (ES.lab S') r ⟫ /\
+    exists w,
+      ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
+      ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\
+      ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
+
+  Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop :=
+    ⟪ WW : is_w (ES.lab S') w ⟫ /\
+    exists (ws : eventid -> Prop),
+      ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\
+      ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
+      ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫.
 
   Lemma hgtrip (SRC : simrel_cert) : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
   Proof. 
