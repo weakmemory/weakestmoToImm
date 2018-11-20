@@ -885,6 +885,41 @@ Qed.
 (** ** event_to_act properties *)
 (******************************************************************************)
 
+
+
+Lemma basic_step_seqn_init thread lang k k' st st' e e' S S' 
+      (WF : ES.Wf S)
+      (kINIT : k = CInit thread)
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+  ES.event_seqn S' e = 0. 
+Proof.   
+  cdes BSTEP_.
+  unfold ES.event_seqn.
+  arewrite (⦗Tid S' ((tid S') e)⦘ ⨾ sb S' ⨾ ⦗eq e⦘ ≡ ∅₂); 
+    [|by rewrite dom_empty; apply countNatP_empty].
+  split; [|basic_solver]. 
+  rewrite SB', cross_union_r. relsf. 
+  repeat apply inclusion_union_l.
+  { rewrite ES.sbE; auto; by E_seq_e. }
+  2-3: destruct e'; by E_seq_e.
+  rewrite seq_eqv_lr. 
+  unfold ES.cont_sb_dom. 
+  desf; red.
+  intros x y [eqTID [CROSS EQy]]; desf.
+  eapply ES.init_tid_K; eauto. 
+  do 2 eexists; splits; eauto.  
+  unfold ES.cont_thread.
+  arewrite (thread = (tid S') (ES.next_act S)) .
+  { etransitivity; [|erewrite basic_step_tid_e; eauto].  
+    by unfold ES.cont_thread. }
+  assert (Einit S' x) as INITx. 
+  { eapply basic_step_acts_init_set; eauto.  
+    { econstructor; eauto. }
+    unfold cross_rel in CROSS; desf. } 
+  arewrite (tid_init = (tid S') x); auto. 
+  unfold ES.acts_init_set, set_inter in INITx; desf. 
+Qed.
+
 Lemma e2a_step_eq_dom e e' S S'
       (WF : ES.Wf S)
       (BSTEP : t_basic e e' S S') :

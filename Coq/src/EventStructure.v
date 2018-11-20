@@ -139,6 +139,9 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
+Definition event_seqn (e : eventid) : nat := 
+  countNatP (dom_rel (⦗ Tid (tid e) ⦘ ⨾ sb ⨾ ⦗ eq e ⦘)) (next_act S).
+
 Definition event_to_act (e : eventid) : actid :=
     if excluded_middle_informative (Einit e)
     then
