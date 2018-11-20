@@ -139,7 +139,7 @@ Notation "'Acq'" := (is_acq lab).
 Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
-Definition event_seqn (e : eventid) : nat := 
+Definition seqn (e : eventid) : nat := 
   countNatP (dom_rel (⦗ Tid (tid e) ⦘ ⨾ sb ⨾ ⦗ eq e ⦘)) (next_act S).
 
 Definition event_to_act (e : eventid) : actid :=
@@ -166,8 +166,10 @@ Record Wf :=
     sb_init : Einit × Eninit ⊆ sb;
     sb_ninit : sb ⨾ ⦗Einit⦘ ≡ ∅₂;
     sb_tid : ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘ ⊆ same_tid S;
+
     sb_irr   : irreflexive sb;
     sb_trans : transitive sb;
+    sb_prcl  : prefix_clos sb;
 
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
@@ -592,7 +594,34 @@ Proof.
     rewrite <- EQz, EQeid in *; auto. 
     all: exfalso; apply NSBDOM; do 2 exists eid; auto. }
   exfalso; auto. 
-Qed.      
+Qed.   
+
+(******************************************************************************)
+(** ** seqn properites *)
+(******************************************************************************)
+
+Lemma seqn_immsb WF x y 
+      (STID : same_tid S x y)
+      (IMMSB : immediate sb x y) :
+  seqn y = 1 + seqn x.
+Proof. 
+  unfold seqn. 
+  erewrite trans_prcl_immediate_seqr_split with (y := y). 
+  all: eauto using sb_trans, sb_prcl. 
+  rewrite seq_eqv_cross_l, dom_cross.
+  2 : { red. basic_solver. }
+  rewrite set_inter_union_r.
+  arewrite (Tid (tid y) ∩₁ eq x ≡₁ eq x) by basic_solver.
+  rewrite countNatP_union.
+  { eapply Nat.add_wd.
+    { eapply countNatP_eq.
+      apply immediate_in, sbE, seq_eqv_lr in IMMSB; desf. } 
+    arewrite (tid x = tid y) by apply STID. 
+    apply countNatP_more; auto. 
+    basic_solver. }
+  unfolder; ins; desf. 
+  eapply sb_irr; eauto.  
+Qed.
 
 End EventStructure.
 End ES.

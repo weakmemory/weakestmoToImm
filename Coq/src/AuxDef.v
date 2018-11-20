@@ -46,14 +46,14 @@ Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) :=
 Definition same_val {A} (lab : A -> label) : relation A :=
   (fun x y => val lab x = val lab y).
 
-Fixpoint countNatP (f: nat -> Prop) (n : nat) : nat :=
+Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
   match n with
   | 0 => 0 
   | S n =>
-    let shift := if excluded_middle_informative (f n)
+    let shift := if excluded_middle_informative (p n)
                  then 1 else 0
     in
-    shift + countNatP f n
+    shift + countNatP p n
   end.
 
 Hint Unfold upd_opt : unfolderDb.
@@ -125,6 +125,62 @@ Qed.
 
 Lemma countNatP_empty n : countNatP ∅ n = 0.
 Proof. induction n; simpls; desf. Qed.
+
+Lemma countNatP_zero s n : countNatP s n = 0 <-> forall m, s m -> n <= m.
+Proof. 
+  red. split. 
+  { induction n. 
+    { ins; omega. }
+    unfold countNatP. 
+    destruct (excluded_middle_informative (s n)) as [HH | nHH].
+    { ins; omega. }
+    rewrite Nat.add_0_l.
+    intros HH m Sm. 
+    eapply IHn in HH; eauto. 
+    destruct HH; intuition. } 
+  intros Hm. 
+  induction n.  
+  { ins; omega. }
+  unfold countNatP. 
+  destruct (excluded_middle_informative (s n)) as [HH | nHH].
+  { specialize (Hm n). intuition. }
+  rewrite Nat.add_0_l.
+  apply IHn.
+  intros m Sm.
+  specialize (Hm m). 
+  intuition.
+Qed.
+
+Lemma countNatP_eq m n (LT : m < n) : countNatP (eq m) n = 1.
+Proof.
+  generalize dependent m.
+  induction n; ins; [omega|].
+  destruct (excluded_middle_informative (m = n)) as [HH | nHH].
+  { arewrite (countNatP (eq m) n = 0); [|omega]. 
+    eapply countNatP_zero. 
+    intuition. }
+  rewrite Nat.add_0_l.
+  rewrite Nat.lt_succ_r in LT.
+  destruct LT; intuition.
+Qed.
+
+Lemma countNatP_union (s s' : nat -> Prop) n 
+      (DISJ : set_disjoint s s') : 
+  countNatP (s ∪₁ s') n = countNatP s n + countNatP s' n.
+Proof. 
+  induction n; simpls.
+  destruct (excluded_middle_informative ((s ∪₁ s') n)) as [HH | nHH].
+  { unfold set_union in HH. 
+    destruct HH as [S | S'].
+    { assert (~ s' n) as nS'. 
+      { red. ins. by apply (DISJ n). }
+      desf; omega. }
+    assert (~ s n) as nS. 
+    { red. ins. by apply (DISJ n). }
+    desf; omega. }
+  unfold not, set_union in nHH.
+  desf; exfalso; auto.  
+Qed.
 
 Lemma countNatP_lt_eq (s : nat -> Prop) m n (LT : m < n) (HH : forall e (EE : s e), e < m):
   countNatP s n = countNatP s m.
