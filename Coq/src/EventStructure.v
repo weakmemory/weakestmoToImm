@@ -62,8 +62,8 @@ Definition cc (ES : t) :=
 
 Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 
-Definition rfe (ES : t) := ES.(rf) \ ES.(same_tid).
-Definition rfi (ES : t) := ES.(rf) ∩ ES.(same_tid).
+Definition rfe (ES : t) := ES.(rf) \ ES.(sb).
+Definition rfi (ES : t) := ES.(rf) ∩ ES.(sb).
 
 Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co).
 
@@ -590,6 +590,31 @@ Proof.
     all: exfalso; apply NSBDOM; do 2 exists eid; auto. }
   exfalso; auto. 
 Qed.      
+
+Lemma cf_sb_in_cf WF : cf ;; sb ⊆ cf.
+Proof.
+  intros x y [z [CF SB]].
+  red. red in CF.
+  destruct_seq CF as [AA BB].
+  apply seq_eqv_l. split; auto.
+  apply WF.(sbE) in SB. destruct_seq SB as [EZ EY].
+  assert (Eninit y) as CC.
+  { red. split; auto.
+    intros DD. eapply WF.(sb_ninit).
+    apply seq_eqv_r. split; eauto. }
+  apply seq_eqv_r. split; [split|]; auto.
+  { etransitivity; [by apply CF|].
+    apply sb_tid; auto.
+    apply seq_eqv_l. split; auto.
+    apply seq_eqv_r. split; auto. }
+  intros DD. apply CF.
+  red in DD. desf.
+  { generalize SB. basic_solver. }
+  { (* TODO: sb_semi_total_r analog is needed. *)
+    admit. }
+  assert (sb z x) as UU by (eapply sb_trans; eauto).
+  generalize UU. basic_solver.
+Admitted.
 
 End EventStructure.
 End ES.

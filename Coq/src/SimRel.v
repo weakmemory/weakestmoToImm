@@ -158,8 +158,6 @@ Section SimRel.
       
       grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
 
-      fjfeI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
-
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
       fimgNcf : ⦗ f □₁ fdom ⦘ ⨾ Scf ⨾ ⦗ f □₁ fdom ⦘ ≡ ∅₂;
@@ -184,9 +182,33 @@ Section SimRel.
   Record simrel :=
     { src : simrel_common;
       gE_trav : g □₁ SE ⊆₁ fdom;
+      jfefI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
     }.
 
   Section Properties.
+    Lemma rfeI (SRC : simrel) :
+      dom_rel Srfe ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>).
+    Proof.
+      assert (ES.Wf S) as WF by apply SRC.
+      unfold ES.rfe, ES.rf, ES.jfe.
+      rewrite crE at 1.
+      rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
+      unionL.
+      { etransitivity; [|by apply SRC.(jfefI)].
+        unfold ES.jfe. basic_solver. }
+      intros x [y [[[z [EW JF]] CC] NSB]].
+      assert (~ Ssb z y) as AA.
+      { intros SB. apply CC.
+        apply ES.cf_sb_in_cf; auto.
+        eexists. split; eauto.
+        apply ES.ewc; auto. }
+      edestruct SRC.(jfefI) as [v HH].
+      { eexists. split; eauto. }
+      destruct_seq_r HH as BB.
+      eexists.  apply seq_eqv_r. split; [|by eauto].
+      generalize WF.(ES.ew_trans) EW HH. basic_solver.
+    Qed.
+
     Variable SRC : simrel_common.
 
     Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
@@ -341,7 +363,7 @@ Section SimRel.
       unfold collect_rel, inclusion.
       ins. desf.
     Admitted.
-    
+
     Ltac g_type t H :=
       unfolder; ins; desf; erewrite t in H; [|by apply SRC]; inv H.
 

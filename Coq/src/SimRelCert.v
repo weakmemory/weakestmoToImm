@@ -111,7 +111,7 @@ Section SimRelCert.
       
       hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
 
-      hjfeI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
+      jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
 
       hinj : inj_dom_s hdom h;
       himg : h □₁ hdom ⊆₁ SE;
