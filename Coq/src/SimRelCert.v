@@ -184,6 +184,9 @@ Section SimRelCert.
   Lemma hbNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
   Proof. Admitted.
 
+  Lemma hb_in_Chb_sb : Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
+  Proof. Admitted.
+
 End SimRelCert.
 
 Section SimRelLemmas.
@@ -639,14 +642,11 @@ Proof.
           by rewrite codom_singl_rel. } 
 
         { rewrite !seqA.
-          arewrite (Shb S ⊆ <| h □₁ C ∪₁ set_compl (h □₁ C)|> ;; Shb S).
-          { rewrite set_compl_union_id. by rewrite seq_id_l. }
-          rewrite id_union.  
+          rewrite hb_in_Chb_sb; eauto. 
           rewrite !seq_union_l. 
           rewrite inter_union_l.
-          apply inclusion_union_l. 
+          unionL.
           2: { rewrite <- !seqA.
-               rewrite hbNCsb; eauto. 
                rewrite sbk_in_hhdom; eauto.
                rewrite seq_incl_cross.
                { rewrite <- restr_cross, restr_relE. 
@@ -659,7 +659,7 @@ Proof.
           { rewrite !set_collect_union.
             basic_solver 10. }
           rewrite !codom_seq.
-            by rewrite codom_singl_rel. } 
+            by rewrite codom_singl_rel. }
         
         { rewrite !seqA. 
           rewrite seq_incl_cross.
@@ -667,8 +667,6 @@ Proof.
             by rewrite SRCC.(himgNcf). }
           { admit. 
             (* rewrite releaseC; eauto. 
-            arewrite (f □₁ C ≡₁ h □₁ C).
-            { admit. }
             rewrite dom_seq.
             rewrite !set_collect_union.
             basic_solver 10. *) }
@@ -676,14 +674,11 @@ Proof.
           rewrite codom_singl_rel; auto. } 
 
         rewrite !seqA.
-        arewrite (Shb S ⊆ <| h □₁ C ∪₁ set_compl (h □₁ C)|> ;; Shb S).
-        { rewrite set_compl_union_id. by rewrite seq_id_l. }
-        rewrite id_union.  
+        rewrite hb_in_Chb_sb; eauto. 
         rewrite !seq_union_l. 
         rewrite inter_union_l.
         apply inclusion_union_l.  
         2: { rewrite <- !seqA.
-             rewrite hbNCsb; eauto. 
              admit. 
         (* rewrite releaseC; eauto. 
           rewrite !seqA.
