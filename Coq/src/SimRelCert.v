@@ -37,9 +37,7 @@ Section SimRelCert.
   
   Notation "'certG'" := state'.(ProgToExecution.G).
 
-  Notation "'e2a' S" := (ES.event_to_act S) (at level 10).
-
-  Notation "'g'" := (ES.event_to_act S).
+  Notation "'g'" := (e2a S).
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -217,7 +215,7 @@ Variable TC : trav_config.
 
 Variable f : actid -> eventid.
 
-Notation "'g'" := (ES.event_to_act S).
+Notation "'g'" := (e2a S).
 
 Notation "'SE' S" := S.(ES.acts_set) (at level 10).
 Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -449,8 +447,8 @@ Lemma simrel_cert_esstep_e2a_eqr e e' S' r r' r''
       (ESSTEP : ESstep.t_basic e e' S S')
       (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
       (rEQ : r' ≡ r) 
-      (rIN : (ES.event_to_act S) □ r ⊆ r'') : 
-  (ES.event_to_act S') □ r' ⊆ r''.
+      (rIN : (e2a S) □ r ⊆ r'') : 
+  (e2a S') □ r' ⊆ r''.
 Proof. 
   rewrite rEQ, restrE, collect_rel_eq_dom.
   { rewrite <- restrE; eauto. }

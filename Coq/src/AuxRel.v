@@ -660,6 +660,16 @@ Qed.
 Lemma immediate_in : immediate r ⊆ r. 
 Proof. basic_solver. Qed.
 
+Lemma inter_trans : transitive r -> transitive r' -> transitive (r ∩ r').
+Proof. 
+  clear.
+  unfolder.
+  intros TR TR' x y z.
+  specialize (TR x y z).
+  specialize (TR' x y z).
+  intuition.
+Qed.
+
 Lemma trans_prcl_immediate_seqr_split x y
       (TRANS : transitive r) (PRCL : prefix_clos r) (IMM : (immediate r) x y) :
   r ⨾ ⦗ eq y ⦘ ≡ (eq x ∪₁ dom_rel (r ⨾ ⦗ eq x ⦘)) × eq y.

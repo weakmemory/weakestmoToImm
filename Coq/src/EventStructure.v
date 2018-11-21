@@ -97,6 +97,8 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
+Definition cf_free S X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
+
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
 Section EventStructure.
@@ -106,7 +108,17 @@ Variable S : ES.t.
 Notation "'E'"      := S.(ES.acts_set).
 Notation "'Einit'"  := S.(ES.acts_init_set).
 Notation "'Eninit'" := S.(ES.acts_ninit_set).
-Notation "'tid'"   := S.(ES.tid).
+
+Notation "'tid'" := S.(ES.tid).
+Notation "'lab'" := S.(ES.lab).
+Notation "'loc'" := (loc lab).
+Notation "'val'" := (val lab).
+
+Notation "'same_tid'" := (same_tid S).
+Notation "'same_loc'" := (same_loc lab).
+
+Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+
 Notation "'sb'"    := S.(ES.sb).
 Notation "'rmw'"   := S.(ES.rmw).
 Notation "'ew'"    := S.(ES.ew).
@@ -114,15 +126,9 @@ Notation "'jf'"    := S.(ES.jf).
 Notation "'rf'"    := S.(ES.rf).
 Notation "'fr'"    := S.(ES.fr).
 Notation "'co'"    := S.(ES.co).
-Notation "'lab'"   := S.(ES.lab).
 Notation "'cf'"    := S.(ES.cf).
+
 Notation "'K'"     := S.(ES.cont_set).
-
-Notation "'loc'" := (loc lab).
-Notation "'val'" := (val lab).
-Notation "'same_loc'" := (same_loc lab).
-
-Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
@@ -143,8 +149,7 @@ Definition seqn (e : eventid) : nat :=
   countNatP (dom_rel (⦗ Tid (tid e) ⦘ ⨾ sb ⨾ ⦗ eq e ⦘)) (next_act S).
 
 Record Wf :=
-  { (* initI : exists a, Einit a; *)
-    initL : forall l, (exists b, E b /\ loc b = Some l) ->
+  { initL : forall l, (exists b, E b /\ loc b = Some l) ->
                       exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
         exists l, lab e = Astore Xpln Opln l 0 ;
@@ -152,11 +157,15 @@ Record Wf :=
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
     sb_ninit : sb ⨾ ⦗Einit⦘ ≡ ∅₂;
-    sb_tid : ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘ ⊆ same_tid S;
+    sb_tid : ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘ ⊆ same_tid;
 
-    sb_irr   : irreflexive sb;
-    sb_trans : transitive sb;
-    sb_prcl  : prefix_clos sb;
+    sb_irr     : irreflexive sb;
+    sb_trans   : transitive sb;
+    sb_prcl    : prefix_clos (sb ∩ same_tid);
+
+    sb_ncf_tot : 
+      forall X (inclE : X ⊆₁ E) (NCF : cf_free S X), 
+        is_total X (sb ∩ same_tid); 
 
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
@@ -215,14 +224,14 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma same_tid_refl : reflexive (same_tid S).
-Proof. unfold same_tid. basic_solver. Qed.
+Lemma same_tid_refl : reflexive same_tid.
+Proof. unfold ES.same_tid. basic_solver. Qed.
 
-Lemma same_tid_sym : symmetric (same_tid S). 
-Proof. unfold same_tid. basic_solver. Qed.
+Lemma same_tid_sym : symmetric same_tid. 
+Proof. unfold ES.same_tid. basic_solver. Qed.
 
-Lemma same_tid_trans : transitive (same_tid S). 
-Proof. unfold same_tid, transitive. ins. by rewrite H. Qed.
+Lemma same_tid_trans : transitive same_tid. 
+Proof. unfold ES.same_tid, transitive. ins. by rewrite H. Qed.
 
 Lemma sb_Einit_Eninit WF : sb ≡ Einit × Eninit ∪ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘. 
 Proof. 
@@ -253,7 +262,7 @@ Proof.
   apply inclusion_union_l; basic_solver. 
 Qed.
 
-Lemma cf_same_tid : cf ⊆ same_tid S.
+Lemma cf_same_tid : cf ⊆ same_tid.
 Proof. unfold ES.cf. basic_solver. Qed.
 
 Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
@@ -292,12 +301,12 @@ Proof.
   generalize dependent H.
   generalize dependent y.
   generalize dependent x.
-  fold (symmetric (restr_rel Eninit (same_tid S \ sb⁼))).
+  fold (symmetric (restr_rel Eninit (same_tid \ sb⁼))).
   apply restr_sym. 
   apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
 Qed.
 
-Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
+Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
 Proof.
   unfold ES.cf.
   rewrite <- !restr_relE.
@@ -311,8 +320,8 @@ Proof.
   { basic_solver. } 
   rewrite <- restr_union, <- csE.
   rewrite <- cs_restr.
-  rewrite <- (unionK (restr_rel Eninit (same_tid S))).
-  assert (symmetric (restr_rel Eninit (same_tid S))) as SYM. 
+  rewrite <- (unionK (restr_rel Eninit same_tid)).
+  assert (symmetric (restr_rel Eninit same_tid)) as SYM. 
   { apply restr_sym. apply same_tid_sym. }
   rewrite <- (transp_sym SYM) at 2. 
   rewrite <- csE.
@@ -346,12 +355,43 @@ Proof.
   { unfold ES.acts_ninit_set.
     basic_solver. }
   unfold ES.cf in CF.
-  assert ((same_tid S \ sb⁼) x y) as HH.
+  assert ((same_tid \ sb⁼) x y) as HH.
   { unfolder in CF; desf. }
   unfold minus_rel in HH.
   destruct HH as [STID nSBcrs].
   apply nSBcrs.
   unfold clos_refl_sym; auto.
+Qed.
+
+Lemma cf_sb_in_cf WF : cf ;; sb ⊆ cf.
+Proof.
+  intros x y [z [CF SB]].
+  red. red in CF.
+  destruct_seq CF as [AA BB].
+  apply seq_eqv_l. split; auto.
+  apply WF.(sbE) in SB. destruct_seq SB as [EZ EY].
+  assert (Eninit y) as CC.
+  { red. split; auto.
+    intros DD. eapply WF.(sb_ninit).
+    apply seq_eqv_r. split; eauto. }
+  apply seq_eqv_r. split; [split|]; auto.
+  { etransitivity; [by apply CF|].
+    apply sb_tid; auto.
+    apply seq_eqv_l. split; auto.
+    apply seq_eqv_r. split; auto. }
+  intros DD. apply CF.
+  red in DD. desf.
+  { generalize SB. basic_solver. }
+  { assert (same_tid x y) as STIDxy.
+    { eapply WF.(sb_tid). basic_solver. }
+    assert (same_tid z y) as STIDzy.
+    { eapply WF.(sb_tid). basic_solver. }
+    assert ((sb ∩ same_tid)⁼ x z).
+    { eapply WF.(sb_prcl); unfold inter_rel; eauto. }
+    unfolder in *. 
+    basic_solver. }
+  assert (sb z x) as UU by (eapply sb_trans; eauto).
+  generalize UU. basic_solver.
 Qed.
 
 Lemma ew_irr WF : irreflexive ew.
@@ -590,7 +630,7 @@ Proof.
   unfold dom_rel, codom_rel, seq, eqv_rel, clos_refl in *.   
   right. do 2 exists eid.
   splits; auto.
-  assert ((⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘) x eid) as STIDNI.
+  assert ((⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘) x eid) as STIDNI.
   { unfold seq, eqv_rel. 
     eexists x; splits; auto.  
     eexists eid; splits; auto. } 
@@ -609,52 +649,36 @@ Qed.
 (******************************************************************************)
 
 Lemma seqn_immsb WF x y 
-      (STID : same_tid S x y)
+      (STID : same_tid x y)
       (IMMSB : immediate sb x y) :
   seqn y = 1 + seqn x.
 Proof. 
-  unfold seqn. 
-  erewrite trans_prcl_immediate_seqr_split with (y := y). 
-  all: eauto using sb_trans, sb_prcl. 
-  rewrite seq_eqv_cross_l, dom_cross.
-  2 : { red. basic_solver. }
-  rewrite set_inter_union_r.
-  arewrite (Tid (tid y) ∩₁ eq x ≡₁ eq x) by basic_solver.
-  rewrite countNatP_union.
-  { eapply Nat.add_wd.
-    { eapply countNatP_eq.
-      apply immediate_in, sbE, seq_eqv_lr in IMMSB; desf. } 
-    arewrite (tid x = tid y) by apply STID. 
-    apply countNatP_more; auto. 
+  unfold seqn.
+  arewrite (⦗Tid (tid x)⦘ ⨾ sb ⨾ ⦗eq x⦘ ≡ (sb ∩ same_tid) ⨾ ⦗eq x⦘).
+  { basic_solver. }
+  arewrite (⦗Tid (tid y)⦘ ⨾ sb ⨾ ⦗eq y⦘ ≡ (sb ∩ same_tid) ⨾ ⦗eq y⦘).
+  { basic_solver. }
+  assert (immediate (sb ∩ same_tid) x y) as IMMSB_STID. 
+  { apply immediateE. 
+    unfolder. 
+    splits; auto. 
+    { by apply immediate_in. }
+    apply immediateE in IMMSB.
+    unfolder in IMMSB.
+    red. ins. 
+    apply IMMSB.
     basic_solver. }
+  erewrite trans_prcl_immediate_seqr_split with (y := y). 
+  all: eauto using inter_trans, sb_trans, same_tid_trans, sb_prcl. 
+  rewrite dom_cross.
+  2 : { red. basic_solver. }
+  rewrite countNatP_union.
+  { eapply Nat.add_wd; auto. 
+    eapply countNatP_eq.
+    apply immediate_in, sbE, seq_eqv_lr in IMMSB; desf. } 
   unfolder; ins; desf. 
   eapply sb_irr; eauto.  
 Qed.
-
-Lemma cf_sb_in_cf WF : cf ;; sb ⊆ cf.
-Proof.
-  intros x y [z [CF SB]].
-  red. red in CF.
-  destruct_seq CF as [AA BB].
-  apply seq_eqv_l. split; auto.
-  apply WF.(sbE) in SB. destruct_seq SB as [EZ EY].
-  assert (Eninit y) as CC.
-  { red. split; auto.
-    intros DD. eapply WF.(sb_ninit).
-    apply seq_eqv_r. split; eauto. }
-  apply seq_eqv_r. split; [split|]; auto.
-  { etransitivity; [by apply CF|].
-    apply sb_tid; auto.
-    apply seq_eqv_l. split; auto.
-    apply seq_eqv_r. split; auto. }
-  intros DD. apply CF.
-  red in DD. desf.
-  { generalize SB. basic_solver. }
-  { (* TODO: sb_semi_total_r analog is needed. *)
-    admit. }
-  assert (sb z x) as UU by (eapply sb_trans; eauto).
-  generalize UU. basic_solver.
-Admitted.
 
 End EventStructure.
 End ES.
