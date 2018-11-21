@@ -936,8 +936,8 @@ Proof. Admitted.
 (******************************************************************************)
 
 Lemma basic_step_seqn_eq_dom e e' S S'
-      (WF : ES.Wf S)
-      (BSTEP : t_basic e e' S S') :
+      (BSTEP : t_basic e e' S S') 
+      (WF : ES.Wf S) :
   eq_dom (E S) (ES.seqn S') (ES.seqn S). 
 Proof. 
   cdes BSTEP; cdes BSTEP_.
@@ -960,8 +960,7 @@ Proof.
     basic_solver. }
   rewrite (dom_l WF.(ES.sbE)). rewrite !seqA.
   seq_rewrite <- !id_inter.
-  arewrite ((Tid S' (tid S x)) ∩₁ E S ≡₁
-            (Tid S  (tid S x)) ∩₁ E S).
+  arewrite ((Tid S' (tid S x)) ∩₁ E S ≡₁ (Tid S  (tid S x)) ∩₁ E S).
   { split.
     all: unfolder; ins; desf.
     all: splits; auto.
@@ -974,9 +973,9 @@ Proof.
 Qed.
 
 Lemma basic_step_seqn_kinit thread lang k k' st st' e e' S S' 
-      (WF : ES.Wf S)
       (kINIT : k = CInit thread)
-      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
   ES.seqn S' e = 0. 
 Proof.   
   cdes BSTEP_.
@@ -1007,10 +1006,10 @@ Proof.
 Qed.
 
 Lemma basic_step_seqn_kevent x lang k k' st st' e e' S S' 
-      (WF : ES.Wf S)
       (kEVENT : k = CEvent x)
       (BSTEP_ : t_basic_ lang k k' st st' e e' S S') 
-      (STEP_ : t_ e e' S S') :
+      (STEP_ : t_ e e' S S') 
+      (WF : ES.Wf S) :
   ES.seqn S' e = 1 + ES.seqn S x. 
 Proof.
   cdes BSTEP_.
@@ -1059,6 +1058,43 @@ Proof.
   eapply (basic_step_sb_restr BSTEP); auto. 
   by unfold restr_rel. 
 Qed.  
+
+Lemma basic_step_seqn_e' e e' S S' 
+      (BSTEP : t_basic e (Some e') S S') 
+      (STEP_ : t_ e (Some e') S S') 
+      (WF : ES.Wf S) :
+  ES.seqn S' e' = 1 + ES.seqn S' e. 
+Proof.   
+  cdes BSTEP; cdes BSTEP_.  
+  assert (ES.Wf S') as WF'.
+  { eapply step_wf; eauto. }
+  assert (immediate (sb S') e e') as IMMSB. 
+  { apply immediateE.
+    unfold minus_rel, seq. 
+    split. 
+    { apply SB'. basic_solver. }
+    red. intros [x [SBz SBz']].
+    assert (x = e') as EQx. 
+    { apply SB' in SBz.
+      unfold union in SBz.
+      destruct SBz as [[SB | SBK] | HH].
+      { exfalso. 
+        eapply ES.sbE in SB; auto.  
+        apply seq_eqv_lr in SB.
+        eapply basic_step_acts_set_NE; eauto.
+        desf. }
+      { exfalso. 
+        eapply basic_step_acts_set_NE; eauto.
+        unfold cross_rel in SBK.
+        destruct SBK as [SBk _].
+        eapply ES.cont_sb_domE; eauto. }
+      unfold cross_rel, eq_opt in HH; desf. }
+    eapply ES.sb_irr; [apply WF'|].
+    subst x; eauto. } 
+  eapply ES.seqn_immsb; eauto.  
+  unfold ES.same_tid.
+  erewrite basic_step_tid_e; [erewrite basic_step_tid_e'|]; eauto. 
+Qed.
 
 Lemma e2a_step_eq_dom e e' S S'
       (WF : ES.Wf S)
