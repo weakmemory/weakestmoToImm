@@ -207,7 +207,7 @@ Record Wf :=
     init_tid_K : ~ (exists c k, K (k, c) /\ cont_thread S k = tid_init);
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
-    event_K  : forall e (EE: E e) (NINIT : ~ Einit e) (NRMW : ~ dom_rel rmw e),
+    event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
         exists c, K (CEvent e, c);
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;  
   }.
@@ -479,6 +479,13 @@ Qed.
 (** ** Continuation properites *)
 (******************************************************************************)
 
+Lemma K_inE e lang st WF (KK : K (CEvent e, existT _ lang st)) : E e.
+Proof. 
+  apply K_inEninit in KK; auto.  
+  unfold ES.acts_ninit_set, set_minus in KK.
+  desf.
+Qed.
+
 Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_sb_dom S k ⊆₁ E.
 Proof. 
@@ -490,6 +497,20 @@ Proof.
   { eapply WF.(K_inEninit). apply KK. }
   apply WF.(sbE) in H.
   unfolder in H; desf.
+Qed.
+
+Lemma cont_sb_nfrwd e k lang st WF 
+      (KE : k = CEvent e) 
+      (KK : K (k, existT _ lang st)) : 
+  codom_rel (⦗ eq e ⦘ ⨾ sb) ⊆₁ set_compl (cont_sb_dom S k).
+Proof. 
+  unfold cont_sb_dom.   
+  unfolder; desf. 
+  intros x [e' [EQe SB]].
+  subst e'. 
+  red. ins. desf.
+  { eapply sb_irr; eauto. } 
+  eapply sb_irr; [|eapply sb_trans]; eauto. 
 Qed.
 
 Lemma cont_cf_domEninit k lang st WF (KK : K (k, existT _ lang st)) : 
