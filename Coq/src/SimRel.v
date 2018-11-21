@@ -34,6 +34,7 @@ Section SimRel.
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Srmw'" := (S.(ES.rmw)).
   Notation "'Sjf'" := (S.(ES.jf)).
+  Notation "'Sjfe'" := (S.(ES.jfe)).
   Notation "'Srf'" := (S.(ES.rf)).
   Notation "'Srfi'" := (S.(ES.rfi)).
   Notation "'Srfe'" := (S.(ES.rfe)).
@@ -156,6 +157,8 @@ Section SimRel.
       gco  : g □ Sco  ⊆ Gco;
       
       grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
+
+      fjfeI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 

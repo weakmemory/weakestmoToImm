@@ -49,6 +49,7 @@ Section SimRelCert.
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
   Notation "'Ssb'" := (S.(ES.sb)).
+  Notation "'Sjfe'" := (S.(ES.jfe)).
   Notation "'Srf'" := (S.(ES.rf)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
@@ -109,6 +110,8 @@ Section SimRelCert.
       ghtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
       
       hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
+
+      hjfeI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
 
       hinj : inj_dom_s hdom h;
       himg : h □₁ hdom ⊆₁ SE;
