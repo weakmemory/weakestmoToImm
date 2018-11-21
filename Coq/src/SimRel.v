@@ -132,7 +132,7 @@ Section SimRel.
   
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
-  Record simrel :=
+  Record simrel_common :=
     { gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
                        (EE : GE (ThreadEvent thread n)),
@@ -180,7 +180,7 @@ Section SimRel.
     }.
 
   Section Properties.
-    Variable SRC : simrel.
+    Variable SRC : simrel_common.
 
     Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
     Proof.
@@ -197,7 +197,7 @@ Section SimRel.
       apply issuedSbE.
     Qed.
 
-    Lemma finE e (SEE : SE (f e)) : GE e.
+    Lemma fE e (SEE : SE (f e)) : GE e.
     Proof.
       apply fdomE.
       apply NNPP. intros NN.

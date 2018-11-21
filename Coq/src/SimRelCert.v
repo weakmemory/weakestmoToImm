@@ -94,7 +94,7 @@ Section SimRelCert.
                          (only parsing).
 
   Record simrel_cert :=
-    { sim : simrel prog S G sc TC f;
+    { sim : simrel_common prog S G sc TC f;
 
       cstate_stable : stable_state qtid state';
       cstate_reachable : 
@@ -263,7 +263,7 @@ Notation "'hdom' k" :=
   (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ (ES.cont_thread S k)) ∪₁ (sbq_dom k))
     (at level 1, only parsing).
 
-Variable SRC : simrel prog S G sc TC f.
+Variable SRC : simrel_common prog S G sc TC f.
 
 Hint Resolve SRC. 
 
