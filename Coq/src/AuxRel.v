@@ -229,7 +229,7 @@ Qed.
 
 Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
 Proof. 
-  repeat rewrite compl_top_minus; by apply minus_union_r.
+  rewrite !compl_top_minus; by apply minus_union_r.
 Qed.
 
 Lemma seq_cross_singl_l x y : s' x -> s × s' ⨾ singl_rel x y ≡ s × eq y.
@@ -248,7 +248,7 @@ Qed.
 
 Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
 Proof. 
-  repeat rewrite seq_eqv_lr. 
+  rewrite !seq_eqv_lr. 
   unfold inter_rel.
   unfold same_relation, inclusion.
   splits; ins; splits; desf. 
@@ -257,9 +257,9 @@ Qed.
 Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
 Proof. 
   ins. 
-  repeat rewrite transp_seq. 
-  repeat rewrite seqA.
-  repeat rewrite transp_sym; auto; apply eqv_sym.
+  rewrite !transp_seq. 
+  rewrite !seqA.
+  rewrite !transp_sym; auto; apply eqv_sym.
 Qed.
 
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.

@@ -120,7 +120,7 @@ Qed.
 (*   arewrite ((hb ⨾ ⦗F ∩₁ Sc⦘)^? ⨾ psc^? ⨾ hb^? ⨾ hb ⨾ psc ⊆ *)
 (*                             (hb ⨾ ⦗F ∩₁ Sc⦘)^? ⨾ psc^? ⨾ hb^?). *)
 (*   2: done. *)
-(*   repeat rewrite crE. relsf. *)
+(*   rewrite !crE. relsf. *)
 (* Qed. *)
 
 End GvfProperties.

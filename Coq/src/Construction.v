@@ -372,7 +372,7 @@ Proof.
   cdes BSTEP; cdes BSTEP_.
   unfold ES.acts_init_set.
   rewrite basic_step_acts_set; eauto. 
-  repeat rewrite set_inter_union_l.  
+  rewrite !set_inter_union_l.  
   arewrite (eq e ∩₁ (fun x : nat => (tid S') x = tid_init) ≡₁ ∅). 
   { apply set_disjointE; unfold set_disjoint; ins.
     eapply basic_step_acts_ninit_set_e; eauto.
@@ -400,7 +400,7 @@ Proof.
   cdes BSTEP; cdes BSTEP_.
   unfold ES.acts_ninit_set.
   rewrite basic_step_acts_set, basic_step_acts_init_set; eauto.
-  repeat rewrite set_minus_union_l.
+  rewrite !set_minus_union_l.
   repeat apply set_union_Propere; auto. 
   { unfolder. unfold set_subset. splits; ins; splits; desf. 
     red. ins; desf; omega. }
@@ -440,10 +440,10 @@ Proof.
   unfold "cf" at 1.
   rewrite <- restr_relE.
   rewrite basic_step_acts_ninit_set; eauto.
-  repeat rewrite restr_set_union.
+  rewrite !restr_set_union.
   rewrite id_union. 
-  repeat rewrite seq_union_r.
-  repeat rewrite seq_union_l.
+  rewrite !seq_union_r.
+  rewrite !seq_union_l.
 
   arewrite 
     (restr_rel (eq e) (ES.same_tid S' \ (sb S')⁼) ≡ ∅₂)
@@ -459,26 +459,25 @@ Proof.
     by rewrite SB'; basic_solver 42.
   relsf.
 
-  repeat rewrite unionA.
+  rewrite !unionA.
   apply union_more.
 
   { unfold ES.cf. 
     rewrite <- restr_relE. 
-    repeat rewrite minus_inter_compl.
-    repeat rewrite restr_inter.
+    rewrite !minus_inter_compl.
+    rewrite !restr_inter.
     apply inter_rel_more.
     { eapply restr_set_subset.
       { eapply ES.acts_ninit_set_incl. } 
       erewrite <- basic_step_same_tid_restr; eauto. }
     rewrite SB'.
     rewrite cross_union_r.
-    repeat rewrite <- unionA.
-    repeat rewrite crs_union.
-    repeat rewrite compl_union.
-    repeat rewrite restr_inter.
-    repeat rewrite restr_cross.
-    repeat rewrite <- minus_inter_compl.
-    repeat rewrite <- minus_inter_compl.
+    rewrite <- !unionA.
+    rewrite !crs_union.
+    rewrite !compl_union.
+    rewrite !restr_inter.
+    rewrite !restr_cross.
+    rewrite <- !minus_inter_compl.
     arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
     { unfold ES.acts_ninit_set, ES.acts_init_set.
       unfolder; splits; ins; splits; desf; unfold not;
@@ -491,7 +490,7 @@ Proof.
     { unfold ES.acts_ninit_set, ES.acts_init_set.
       unfolder; splits; ins; splits; desf; unfold not;
         ins; splits; desf; auto; omega. }
-    repeat rewrite crsE.
+    rewrite !crsE.
     basic_solver 42. }
 
   rewrite <- unionA.
@@ -510,13 +509,13 @@ Proof.
       rewrite seq_transp_sym; auto; 
       apply minus_sym; [ apply ES.same_tid_sym | apply crs_sym ].
 
-    repeat rewrite <- csE.
+    rewrite <- !csE.
     rewrite SB'. 
     rewrite cross_union_r.
-    repeat rewrite <- unionA.
-    repeat rewrite crs_union.
-    repeat rewrite crs_cs.
-    repeat rewrite <- unionA.
+    rewrite <- !unionA.
+    rewrite !crs_union.
+    rewrite !crs_cs.
+    rewrite <- !unionA.
     arewrite 
       (⦗⊤₁⦘ ∪ (sb S) ^⋈ ∪ ⦗⊤₁⦘ ∪ (ES.cont_sb_dom S k × eq e) ^⋈ ∪ ⦗⊤₁⦘
        ∪ (ES.cont_sb_dom S k × eq_opt e') ^⋈ ∪ ⦗⊤₁⦘ ∪ (eq e × eq_opt e') ^⋈ ≡
@@ -527,8 +526,8 @@ Proof.
 
     { etransitivity.
 
-      { repeat rewrite minus_union_r.
-        repeat rewrite seq_eqv_inter_lr.
+      { rewrite !minus_union_r.
+        rewrite !seq_eqv_inter_lr.
 
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ ⦗⊤₁⦘) ⨾ ⦗eq e⦘ ≡ 
@@ -627,8 +626,8 @@ Proof.
     
     etransitivity.
 
-      { repeat rewrite minus_union_r.
-        repeat rewrite seq_eqv_inter_lr.
+      { rewrite !minus_union_r.
+        rewrite !seq_eqv_inter_lr.
 
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ ⦗⊤₁⦘) ⨾ ⦗eq e'⦘ ≡ 
@@ -738,14 +737,14 @@ Lemma basic_step_cf_restr e e' S S'
 Proof. 
   cdes BSTEP; cdes BSTEP_.
   erewrite basic_step_cf; eauto. 
-  repeat rewrite restr_union.
-  repeat rewrite restr_relE.
+  rewrite !restr_union.
+  rewrite !restr_relE.
   arewrite (⦗E S⦘ ⨾ (ES.cont_cf_dom S k × eq e) ^⋈ ⨾ ⦗E S⦘ ≡ ∅₂)
     by E_seq_e.
   arewrite (⦗E S⦘ ⨾ (ES.cont_cf_dom S k × eq_opt e') ^⋈ ⨾ ⦗E S⦘ ≡ ∅₂)
     by destruct e'; [ E_seq_e | basic_solver ].
   rewrite ES.cfE at 2; auto.
-  by repeat rewrite union_false_r.
+  by rewrite !union_false_r.
 Qed.
 
 Lemma basic_step_cf_mon e e' S S' 
@@ -1051,7 +1050,7 @@ Proof.
     admit. }
   arewrite ((ew S)^? ⨾ jf S ⨾ ⦗eq e⦘ ≡ ∅₂).
   { rewrite ES.jfE; auto.
-    repeat rewrite seqA.
+    rewrite !seqA.
     by E_seq_e. }
   arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e); 
     basic_solver 10.
@@ -1092,7 +1091,7 @@ Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
   assert (ES.Wf S') as wfE'.
   { eapply step_wf; unfold t_; eauto. }
-  repeat rewrite rs_alt; auto.
+  rewrite !rs_alt; auto.
   rewrite basic_step_nupd_sb, load_step_w, load_step_rf_rmw; eauto.
   do 2 rewrite crE.
   relsf.
@@ -1124,12 +1123,12 @@ Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   assert (ES.Wf S') as wfE'.
   { eapply step_wf; unfold t_; eauto. }
-  repeat rewrite release_alt; auto.
+  rewrite !release_alt; auto.
   rewrite basic_step_nupd_sb, load_step_rel, load_step_f, load_step_rs; eauto.
   do 2 rewrite crE.
   relsf.
   apply union_more; auto.
-  repeat rewrite seqA.
+  rewrite !seqA.
   arewrite (ES.cont_sb_dom S k × eq e ⨾ rs S ≡ ∅₂); [|basic_solver 10].
   rewrite rsE; auto.
   arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘ ≡ ∅₂); [ by E_seq_e | basic_solver ].
@@ -1145,15 +1144,15 @@ Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   assert (ES.Wf S') as wfE'.
   { eapply step_wf; unfold t_; eauto. }
-  repeat rewrite sw_alt; auto.
+  rewrite !sw_alt; auto.
   rewrite 
     load_step_release, load_step_rf, load_step_f, load_step_acq,
     basic_step_nupd_sb;
     eauto.
   rewrite id_union.
-  repeat rewrite crE.
+  rewrite !crE.
   relsf.
-  repeat rewrite unionA.
+  rewrite !unionA.
   apply union_more; auto.
   apply union_more; auto.
   arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S ∩₁ F S⦘ ≡ ∅₂) by E_seq_e.

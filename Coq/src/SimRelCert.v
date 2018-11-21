@@ -159,8 +159,8 @@ Section SimRelCert.
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
   Proof. 
     red; split; [|basic_solver].
-    repeat rewrite set_collect_union. 
-    repeat rewrite set_inter_union_r.
+    rewrite !set_collect_union. 
+    rewrite !set_inter_union_r.
     apply set_subset_union_l; split. 
     { apply set_subset_union_l; split. 
       { admit. }
@@ -600,8 +600,8 @@ Proof.
         rewrite ESstep.basic_step_nupd_cf; eauto.
         rewrite transp_union, transp_singl_rel, crE.
         relsf.
-        repeat rewrite inter_union_l.
-        repeat rewrite inter_union_r.
+        rewrite !inter_union_l.
+        rewrite !inter_union_r.
         repeat apply inclusion_union_l.
 
         all: try (
@@ -618,15 +618,14 @@ Proof.
 
         { apply SRC. }
 
-        { repeat rewrite seqA.
-          rewrite seq_incl_cross.
+        { rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE. 
             by rewrite SRCC.(himgNcf). }
           { rewrite dom_cross; [|red; basic_solver]. 
             eapply sbk_in_hhdom; eauto. }
           by rewrite codom_singl_rel. } 
 
-        { repeat rewrite seqA.
+        { rewrite !seqA.
           rewrite hbE; auto.
           rewrite set_union_minus with (s := SE S) (s' := f □₁ C) at 1.
           2 : 
@@ -634,10 +633,10 @@ Proof.
               2 : eapply SRC.(fimg). 
               basic_solver. }
           rewrite id_union.  
-          repeat rewrite seq_union_l. 
+          rewrite !seq_union_l. 
           rewrite inter_union_l.
           apply inclusion_union_l. 
-          { repeat rewrite <- seqA.
+          { rewrite <- !seqA.
             rewrite hbNCsb; eauto. 
             arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
             { rewrite ES.sbE; auto; basic_solver. } 
@@ -648,18 +647,18 @@ Proof.
               by rewrite SRCC.(himgNcf). }
             { admit. }
             by rewrite codom_singl_rel. }
-          repeat rewrite seqA.
+          rewrite !seqA.
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE. 
             by rewrite SRCC.(himgNcf). }
           { arewrite (f □₁ C ≡₁ h □₁ C).
             { admit. }
-            repeat rewrite set_collect_union.
+            rewrite !set_collect_union.
             basic_solver 10. }
-          repeat rewrite codom_seq.
+          rewrite !codom_seq.
           by rewrite codom_singl_rel. } 
         
-        { repeat rewrite seqA. 
+        { rewrite !seqA. 
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE.
             by rewrite SRCC.(himgNcf). }
@@ -668,44 +667,44 @@ Proof.
             arewrite (f □₁ C ≡₁ h □₁ C).
             { admit. }
             rewrite dom_seq.
-            repeat rewrite set_collect_union.
+            rewrite !set_collect_union.
             basic_solver 10. *) }
-          repeat rewrite codom_seq.
+          rewrite !codom_seq.
           rewrite codom_singl_rel; auto. } 
 
-        repeat rewrite seqA.
+        rewrite !seqA.
         rewrite hbE; auto.
         rewrite set_union_minus with (s := SE S) (s' := f □₁ C) at 1.
         2: { etransitivity. 
              2: eapply SRC.(fimg). 
              basic_solver. }
         rewrite id_union.  
-        repeat rewrite seq_union_l. 
+        rewrite !seq_union_l. 
         rewrite inter_union_l.
         apply inclusion_union_l.  
-        { repeat rewrite <- seqA.
+        { rewrite <- !seqA.
           rewrite hbNCsb; eauto. 
           arewrite (Ssb S ⨾ ⦗SE S⦘ ≡ Ssb S). 
           { rewrite ES.sbE; auto; basic_solver. } 
           admit. 
           (* rewrite releaseC; eauto. 
-          repeat rewrite seqA.
+          rewrite !seqA.
           rewrite <- seqA.
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE. 
               by rewrite SRCC.(himgNcf). }
           { admit. }
-          repeat rewrite codom_seq.
+          rewrite !codom_seq.
             by rewrite codom_singl_rel. *) }
-        repeat rewrite seqA.
+        rewrite !seqA.
         rewrite seq_incl_cross.
         { rewrite <- restr_cross, restr_relE. 
             by rewrite SRCC.(himgNcf). }
         { arewrite (f □₁ C ≡₁ h □₁ C).
           { admit. }
-          repeat rewrite set_collect_union.
+          rewrite !set_collect_union.
           basic_solver 10. }
-        repeat rewrite codom_seq.
+        rewrite !codom_seq.
         rewrite codom_singl_rel; auto. }
       
       { admit. }
@@ -714,13 +713,13 @@ Proof.
 
         red; split; [|basic_solver].
         rewrite JF', ESstep.basic_step_cf; eauto. 
-        repeat rewrite csE.
-        repeat rewrite transp_cross.
-        repeat rewrite inter_union_l.
-        repeat rewrite inter_union_r. 
+        rewrite !csE.
+        rewrite !transp_cross.
+        rewrite !inter_union_l.
+        rewrite !inter_union_r. 
         unfold eq_opt.
         relsf.
-        repeat rewrite unionA.
+        rewrite !unionA.
         repeat apply inclusion_union_l.
 
         all: try (

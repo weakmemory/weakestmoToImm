@@ -239,7 +239,7 @@ Proof.
     rewrite <- restr_relE.
     rewrite acts_set_split.
     rewrite restr_set_union. 
-    repeat rewrite restr_relE.
+    rewrite !restr_relE.
     rewrite sb_ninit; eauto.
     basic_solver. }
   apply inclusion_union_l.
@@ -308,12 +308,12 @@ Qed.
 Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid S ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
 Proof.
   unfold ES.cf.
-  repeat rewrite <- restr_relE.
+  rewrite <- !restr_relE.
   rewrite restr_minus.
   rewrite unionC.
   rewrite <- union_minus; auto.
   rewrite crsE.
-  repeat rewrite restr_union.
+  rewrite !restr_union.
   rewrite unionA.
   apply inclusion_union_l.
   { basic_solver. } 

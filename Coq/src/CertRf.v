@@ -422,7 +422,7 @@ Proof.
   arewrite_id ⦗E⦘. rewrite seq_id_l.
   rewrite !crE.
   repeat (rewrite seq_union_l, seq_id_l).
-  repeat rewrite seq_union_r.
+  rewrite !seq_union_r.
   unionL.
   all: try (rewrite Wf_sc.(wf_scD); type_solver).
   { type_solver. }
