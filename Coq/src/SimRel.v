@@ -176,7 +176,11 @@ Section SimRel.
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
       vis  : f □₁ fdom ⊆₁ vis S;
-
+    }.
+  
+  Record simrel :=
+    { src : simrel_common;
+      gE_trav : g □₁ SE ⊆₁ fdom;
     }.
 
   Section Properties.
