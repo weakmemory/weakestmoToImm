@@ -81,6 +81,18 @@ Section SimRel.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
+  Definition e2a (e : eventid) : actid :=
+    if excluded_middle_informative (SEinit e)
+    then
+      match Sloc e with
+      | Some l => InitEvent l
+      | _      => InitEvent BinNums.xH
+      end
+    else
+      let thread := Stid e in
+      ThreadEvent thread (ES.seqn S e).
+
+  Notation "'g'" := e2a. 
 
   Definition pc thread :=
     C ∩₁ Gtid_ thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
@@ -92,14 +104,6 @@ Section SimRel.
       is_terminal
       (ilbl_step tid).
   
-  Notation "'g'" := (ES.event_to_act S).
-  Notation "'g_s'" :=
-    (fun e: actid => 
-       let thread := Stid e in
-       ThreadEvent thread
-                   (countNatP (dom_rel (⦗Stid thread⦘ ⨾ sb ⨾ ⦗eq e⦘))
-                              (ES.next_act S))).
-
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
                         (INK : K (cont, existT _ lang state)),
@@ -149,7 +153,7 @@ Section SimRel.
       scont : simrel_cont;
 
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
-
+      
       gE : g □₁ SE ⊆₁ GE;
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
@@ -157,6 +161,9 @@ Section SimRel.
       gco  : g □ Sco  ⊆ Gco;
       
       grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
+
+      contseqn : forall e thread (st : (thread_lts thread).(Language.state)),
+          K (CEvent e, existT _ _ st) -> st.(eindex) = 1 + ES.seqn S e;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
@@ -291,7 +298,7 @@ Section SimRel.
 
     Lemma gEinit : g □₁ SEinit ⊆₁ GEinit.
     Proof.
-      unfold ES.event_to_act.
+      unfold e2a.
       unfolder. ins. desf.
       3: { exfalso. apply n. split; auto. }
       2: { exfalso.
@@ -310,7 +317,7 @@ Section SimRel.
     Qed.
 
     Lemma gEninit : g □₁ SEninit ⊆₁ set_compl is_init.
-    Proof. unfold ES.acts_ninit_set, ES.event_to_act. basic_solver. Qed.
+    Proof. unfold e2a, ES.acts_ninit_set. basic_solver. Qed.
 
     Lemma gext_sb : g □ Ssb ⊆ ext_sb.
     Proof.
@@ -329,7 +336,7 @@ Section SimRel.
         basic_solver. }
       rewrite (dom_l WF.(ES.sbE)), !seqA.
       arewrite (⦗set_compl SEinit⦘ ⨾ ⦗SE⦘ ⊆ ⦗SEninit⦘) by basic_solver.
-      unfold ES.event_to_act.
+      unfold e2a.
       rewrite collect_rel_if_else.
       2,3: unfold ES.acts_ninit_set; basic_solver.
       intros x y HH. red in HH. desf.
@@ -348,6 +355,7 @@ Section SimRel.
       2: { intros YY. eapply UU. generalize YY. basic_solver. }
       intros z [v PP]. destruct_seq PP as [DD EE]; subst.
       eexists. apply seq_eqv_l. split; auto.
+      { congruence. }
       apply seq_eqv_r. split; [|by eauto].
       eapply ES.sb_trans; eauto.
     Qed.
@@ -409,7 +417,7 @@ Section SimRel.
     Proof.
       assert (SEinit e -> Stid e = tid_init) as HH.
       { admit. }
-      unfold ES.event_to_act. desf; simpls.
+      unfold e2a. desf; simpls.
       all: by apply HH.
     Admitted.
 
@@ -505,8 +513,9 @@ Section SimRel.
       arewrite (eq e ⊆₁ C).
       { intros x HH. desf. }
       eapply dom_sb_covered; eauto.
-      apply fimg; auto.
-      generalize CE. basic_solver.
+      admit. 
+      (* apply fimg; auto. *)
+      (* generalize CE. basic_solver. *)
     Admitted.
 
     Lemma ginjfdom : inj_dom (f □₁ fdom) g.

@@ -37,6 +37,8 @@ Section SimRelCert.
   
   Notation "'certG'" := state'.(ProgToExecution.G).
 
+  Notation "'e2a' S" := (ES.event_to_act S) (at level 10).
+
   Notation "'g'" := (ES.event_to_act S).
 
   Notation "'SE'" := S.(ES.acts_set).
@@ -138,6 +140,20 @@ Section SimRelCert.
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
     }.
 
+  Definition sim_add_jf (r : eventid) (S S' : ES.t) : Prop :=
+    ⟪ RR : is_r (ES.lab S') r ⟫ /\
+    exists w,
+      ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
+      ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\
+      ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
+
+  Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop :=
+    ⟪ WW : is_w (ES.lab S') w ⟫ /\
+    exists (ws : eventid -> Prop),
+      ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\
+      ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
+      ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫.
+
   Lemma hgtrip (SRC : simrel_cert) : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
   Proof. 
     unfold seq, eqv_rel, set_collect, img_rel, inclusion, compose.
@@ -207,6 +223,8 @@ Notation "'SE' S" := S.(ES.acts_set) (at level 10).
 Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
 Notation "'Stid' S" := (S.(ES.tid)) (at level 10).
 Notation "'Slab' S" := S.(ES.lab) (at level 10).
+Notation "'Sloc' S" := (loc S.(ES.lab)) (at level 10).
+
 Notation "'Ssb' S" := S.(ES.sb) (at level 10).
 Notation "'Srmw' S" := S.(ES.rmw) (at level 10).
 Notation "'Sew' S" := S.(ES.ew) (at level 10).
@@ -363,6 +381,26 @@ Proof.
   (* all: basic_solver. *)
 Admitted.
 
+Lemma basic_step_e2a_eq_dom e e' S'
+      (WF : ES.Wf S)
+      (BSTEP : ESstep.t_basic e e' S S') :
+  eq_dom (SE S) (e2a S') (e2a S).
+Proof.
+  cdes BSTEP; cdes BSTEP_.
+  red. intros x. ins.
+  unfold e2a.
+  assert ((SEinit S') x <-> (SEinit S) x) as AA.
+  { edestruct ESstep.basic_step_acts_init_set as [AA BB]; eauto. }
+  assert ((Sloc S') x = (Sloc S) x) as BB.
+  { eapply ESstep.basic_step_loc_eq_dom; eauto. }
+  desf; try by intuition.
+  assert ((Stid S') x = (Stid S) x) as CC.
+  { eapply ESstep.basic_step_tid_eq_dom; eauto. }
+  assert (ES.seqn S' x = ES.seqn S x) as DD.
+  { eapply ESstep.basic_step_seqn_eq_dom; eauto. }
+  congruence.
+Qed.
+
 Lemma simrel_cert_basic_step k lbls jf ew co
       (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
       (* (SRCC : simrel_cert prog S G sc TC TC' f h k st'' new_rf) *)
@@ -416,7 +454,7 @@ Lemma simrel_cert_esstep_e2a_eqr e e' S' r r' r''
 Proof. 
   rewrite rEQ, restrE, collect_rel_eq_dom.
   { rewrite <- restrE; eauto. }
-  all: eapply ESstep.e2a_step_eq_dom; eauto; apply SRC.  
+  all: eapply basic_step_e2a_eq_dom; eauto; apply SRC.  
 Qed.
 
 Lemma simrel_cert_lbl_step TC' h q
@@ -442,7 +480,7 @@ Proof.
   destruct LBL_STEP as [lbls ILBL_STEP].
   edestruct lbl_step_cases; eauto; desf.  
   { set (thread := (ES.cont_thread S q)).
-    set (a   := ThreadEvent thread (eindex state)).
+    set (a := ThreadEvent thread (eindex state)).
 
     assert (acts_set state''.(ProgToExecution.G) a) as aInCertE.
     { eapply preserve_event; eauto.  
@@ -491,12 +529,21 @@ Proof.
     assert (ESstep.t_basic e e' S S') as ES_BSTEP.
     { econstructor. do 4 eexists. apply ES_BSTEP_. }
 
-    set (g' := ES.event_to_act S').
+    set (g' := e2a S').
     assert (g' e = a) as g'eaEQ.
-    { 
+    { subst g' a thread. 
+      unfold e2a. 
+      destruct (excluded_middle_informative ((SEinit S') e)) as [INIT | nINIT]. 
+      { exfalso; eapply ESstep.basic_step_acts_ninit_set_e; eauto. } 
+      erewrite ESstep.basic_step_tid_e; eauto.  
+      edestruct q; simpl.  
+      { (* we need property like `K (Cinit, st) => st.eindex = 0` in SimRel *)
+        erewrite ESstep.basic_step_seqn_kinit; eauto. 
+        admit. }
+      erewrite ESstep.basic_step_seqn_kevent; eauto. 
+      { erewrite contseqn; eauto. }
+      admit. }
 
-      admit. } 
-    
     assert (e' = None) as e'NONE.
     { admit. }
     
@@ -759,7 +806,7 @@ Proof.
         apply set_subset_union_l. 
         split. 
         { erewrite set_collect_eq_dom; [eapply SRC|].
-          eapply ESstep.e2a_step_eq_dom; eauto. } 
+          eapply basic_step_e2a_eq_dom; eauto. } 
         rewrite set_collect_eq.
         apply eq_predicate. 
         unfold g' in g'eaEQ; rewrite g'eaEQ; auto. }
@@ -777,8 +824,6 @@ Proof.
       { eapply simrel_cert_esstep_e2a_eqr; 
           [| apply ES.coE | eapply CO' | apply SRC];
           eauto. }
-      
-      
         
     all: admit. }
 

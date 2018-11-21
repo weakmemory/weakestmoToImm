@@ -44,6 +44,9 @@ Section AuxRel.
 
   Definition fixset := 
     forall (x : A) (SX : s x), x = h x.
+
+  Definition prefix_clos := 
+    forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
 End AuxRel.
 
 Notation "⊤₁" := set_full.
@@ -653,6 +656,36 @@ Proof.
   1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
   all: exfalso; eapply CODOM; split; [eexists|]; eauto.
 Qed.
+
+Lemma immediate_in : immediate r ⊆ r. 
+Proof. basic_solver. Qed.
+
+Lemma trans_prcl_immediate_seqr_split x y
+      (TRANS : transitive r) (PRCL : prefix_clos r) (IMM : (immediate r) x y) :
+  r ⨾ ⦗ eq y ⦘ ≡ (eq x ∪₁ dom_rel (r ⨾ ⦗ eq x ⦘)) × eq y.
+Proof. 
+  red; split. 
+  { unfolder.
+    intros z y' [Rzy EQy].
+    split; auto.
+    assert (r^= z x) as Rzx. 
+    { eapply PRCL; eauto; desf.  
+      by apply immediate_in. }
+    unfold clos_refl_sym in Rzx.
+    desf; eauto.  
+    apply immediateE in IMM. 
+    unfold minus_rel in IMM. 
+    destruct IMM as [Rxy NRR].
+    exfalso. apply NRR. 
+    unfolder. eauto. }
+  unfolder. 
+  intros z y' [[EQx | [x' [Rzx EQx']]] EQy].
+  { splits; desf.
+    by apply immediate_in. }
+  splits; desf. 
+  eapply TRANS; eauto. 
+  by apply immediate_in.
+Qed. 
 
 End Props.
 
