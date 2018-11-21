@@ -1096,58 +1096,6 @@ Proof.
   erewrite basic_step_tid_e; [erewrite basic_step_tid_e'|]; eauto. 
 Qed.
 
-Lemma e2a_step_eq_dom e e' S S'
-      (WF : ES.Wf S)
-      (BSTEP : t_basic e e' S S') :
-  eq_dom (E S) (ES.event_to_act S') (ES.event_to_act S).
-Proof.
-  cdes BSTEP; cdes BSTEP_.
-  red. intros x. ins.
-  unfold ES.event_to_act.
-  assert ((Einit S') x <-> (Einit S) x) as AA.
-  { edestruct basic_step_acts_init_set as [AA BB]; eauto. }
-  assert ((loc S') x = (loc S) x) as BB.
-  { eapply basic_step_loc_eq_dom; eauto. }
-  desf; try by intuition.
-  assert ((tid S') x = (tid S) x) as CC.
-  { eapply basic_step_tid_eq_dom; eauto. }
-  
-  assert (countNatP (dom_rel (⦗Tid S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘)) (ES.next_act S') =
-          countNatP (dom_rel (⦗Tid S  (tid S  x)⦘ ⨾ sb S  ⨾ ⦗eq x⦘)) (ES.next_act S ))
-    as DD.
-  2: { admit.
-    (* TODO: It doesn't work for some reason :( *)
-      (* by rewrite DD, CC. *) }
-  rewrite CC.
-  arewrite (sb S' ⨾ ⦗eq x⦘ ≡ sb S ⨾ ⦗eq x⦘).
-  { rewrite SB'. relsf.
-    rewrite !seq_eqv_cross_r.
-    arewrite (eq x ∩₁ eq (ES.next_act S) ≡₁ ∅).
-    { split; [|basic_solver].
-      unfolder. ins. desf.
-      red in SX. omega. }
-    arewrite (eq x ∩₁ eq_opt e' ≡₁ ∅).
-    { split; [|basic_solver].
-      unfolder. ins. desf.
-      unfold opt_ext in EEQ. desf.
-      red in SX. omega. }
-    basic_solver. }
-  rewrite (dom_l WF.(ES.sbE)). rewrite !seqA.
-  seq_rewrite <- !id_inter.
-  arewrite ((fun e => tid S' e = tid S x) ∩₁ E S ≡₁
-            (fun e => tid S  e = tid S x) ∩₁ E S).
-  { split.
-    all: unfolder; ins; desf.
-    all: splits; auto.
-    all: rewrite <- H.
-    symmetry.
-    all: eapply basic_step_tid_eq_dom; eauto. }
-  erewrite countNatP_lt_eq. done.
-  { eapply basic_step_next_act_lt; eauto. }
-  ins. apply dom_eqv1 in EE. apply EE.
-Admitted.
-
-
 (******************************************************************************)
 (** ** Load step properties *)
 (******************************************************************************)

@@ -142,19 +142,6 @@ Notation "'Sc'" := (is_sc lab).
 Definition seqn (e : eventid) : nat := 
   countNatP (dom_rel (⦗ Tid (tid e) ⦘ ⨾ sb ⨾ ⦗ eq e ⦘)) (next_act S).
 
-Definition event_to_act (e : eventid) : actid :=
-    if excluded_middle_informative (Einit e)
-    then
-      match loc e with
-      | Some l => InitEvent l
-      | _      => InitEvent BinNums.xH
-      end
-    else
-      let thread := tid e in
-      ThreadEvent thread
-                  (countNatP (dom_rel (⦗ Tid thread ⦘⨾ sb ⨾ ⦗ eq e ⦘))
-                             (next_act S)).
-
 Record Wf :=
   { (* initI : exists a, Einit a; *)
     initL : forall l, (exists b, E b /\ loc b = Some l) ->
