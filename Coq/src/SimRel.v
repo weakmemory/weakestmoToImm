@@ -183,6 +183,8 @@ Section SimRel.
     { src : simrel_common;
       gE_trav : g □₁ SE ⊆₁ fdom;
       jfefI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
+
+      release_issf_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
     }.
 
   Section Properties.
@@ -523,63 +525,5 @@ Section SimRel.
       2: by apply ginjfdom.
       red. basic_solver.
     Qed.
-    
-    Lemma dom_release_iss : 
-        dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C.
-    Proof. 
-      eapply set_collect_subset.
-      { (* TODO: it doesn't hold :( *)
-        admit. }
-      rewrite set_collect_dom, !collect_rel_seqi, 
-        set_collect_eqv, !set_collect_compose.
-      arewrite ((g ∘ f) □₁ I ≡₁ I).
-      { symmetry. 
-        eapply fixset_set_fixpoint.
-        eapply fixset_mori with (x:=fdom). 
-        { unfold flip; basic_solver 10. }
-        { eauto. }
-        apply fixset_img_rel.
-        eapply SRC.(fgtrip). }
-      arewrite ((g ∘ f) □₁ C ≡₁ C).
-      { symmetry. 
-        eapply fixset_set_fixpoint.
-        eapply fixset_mori with (x:=fdom). 
-        { unfold flip; basic_solver 10. }
-        { eauto. }
-        apply fixset_img_rel.
-        eapply SRC.(fgtrip). }
-      rewrite grelease. 
-      rewrite collect_rel_cr.
-      rewrite gew; auto. 
-      arewrite (⦗I⦘^? ⨾ ⦗I⦘ ≡ ⦗I⦘) by basic_solver.
-      eapply dom_release_issued; apply SRC.  
-    Admitted.  
-
-    Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
-    Proof. 
-      admit. 
-      (* assert (ES.Wf S) as SWF by apply SRC.  *)
-      (* unfold hb, set_minus.  *)
-      (* rewrite seq_eqv_l. *)
-      (* red. *)
-      (* intros x y [[Ex NCx] HBxy]. *)
-      (* induction HBxy as [x y STEPxy | x y z HBxy IHxy HByz IHyz].  *)
-      (* { destruct STEPxy as [SBxy | SWxy]; auto.  *)
-      (*   exfalso.  *)
-      (*   apply NCx. *)
-      (*   apply swC in SWxy. *)
-      (*   unfold seq, eqv_rel in SWxy. *)
-      (*   desf. } *)
-      (* specialize (IHxy Ex NCx). *)
-      (* assert (SE y) as Ey.  *)
-      (* { eapply ES.sbE in IHxy; auto.  *)
-      (*   unfold seq, eqv_rel in IHxy. *)
-      (*   desf. } *)
-      (* assert (~ (f □₁ C) y) as NCy. *)
-      (* { admit. } *)
-      (* specialize (IHyz Ey NCy). *)
-      (* eapply ES.sb_trans; eauto.  *)
-    Admitted.  
-
   End Properties.
 End SimRel.

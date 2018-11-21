@@ -44,10 +44,12 @@ Section SimRelCert.
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
+  Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'K'"  := S.(ES.cont_set).
 
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
+  Notation "'Shb'" := (S.(Consistency.hb)).
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Sjfe'" := (S.(ES.jfe)).
   Notation "'Srf'" := (S.(ES.rf)).
@@ -128,10 +130,12 @@ Section SimRelCert.
       complete_fdom :
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
-      hfeq  : eq_dom (fdom \₁ (sbq_dom \₁ C)) f h; 
+      hfeq  : eq_dom (C ∪₁ fdom \₁ sbq_dom) f h; 
 
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
+
+      release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
     }.
 
   Lemma hgtrip (SRC : simrel_cert) : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
@@ -174,6 +178,11 @@ Section SimRelCert.
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
   Admitted.
+  
+  (* Lemma hsw :  *)
+
+  Lemma hbNCsb : ⦗SE \₁ f □₁ C⦘ ⨾ Shb ⊆ Ssb. 
+  Proof. Admitted.
 
 End SimRelCert.
 
@@ -565,12 +574,13 @@ Proof.
         2: cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega.
         erewrite <- SRCC.(hfeq). 
         { eapply ESstep.step_vis_mon; eauto; apply SRCC. 
-          unfolder in *. 
+          unfolder.
           eexists; splits; eauto; right; repeat eexists; splits; eauto; desf. }
+        right.
         unfolder; splits. 
         { right; repeat eexists; eauto. }
         unfold not; ins; apply waNSB. 
-        destruct H as [[y [SBqdom wEQ]] NCw].
+        destruct H as [y [SBqdom wEQ]].
         admit. }
         (* erewrite ESstep.e2a_step_eq_dom with (S:=S) in wEQ; eauto. *)
         (* [ | by apply SRC | admit | admit ]. *)
