@@ -163,7 +163,11 @@ Record Wf :=
     sb_trans   : transitive sb;
     sb_prcl    : prefix_clos (sb ∩ same_tid);
 
-    sb_ncf_tot : 
+    (* TODO: It might be more convenient to state it like this:
+      ` forall X (NCF : cf_free S X), 
+          is_total (E ∩₁ X) (sb ∩ same_tid); `
+     *)
+    sb_ncf_tot :
       forall X (inclE : X ⊆₁ E) (NCF : cf_free S X), 
         is_total X (sb ∩ same_tid); 
 
