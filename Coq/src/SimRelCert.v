@@ -53,6 +53,7 @@ Section SimRelCert.
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Sjfe'" := (S.(ES.jfe)).
   Notation "'Srf'" := (S.(ES.rf)).
+  Notation "'Srfe'" := (S.(ES.rfe)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Scc'" := (S.(ES.cc)).
@@ -73,6 +74,7 @@ Section SimRelCert.
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
+  Notation "'Grfe'" := (G.(rfe)).
   Notation "'Gco'" := (G.(co)).
 
   Notation "'certE'" := certG.(acts_set).
@@ -192,6 +194,29 @@ Section SimRelCert.
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
   Admitted.
+
+  Lemma rfeI (SRC : simrel_cert) :
+    dom_rel Srfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>).
+  Proof.
+    assert (ES.Wf S) as WF by apply SRC.
+    unfold ES.rfe, ES.rf, ES.jfe.
+    rewrite crE at 1.
+    rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
+    unionL.
+    { etransitivity; [|by apply SRC.(jfehI)].
+      unfold ES.jfe. basic_solver. }
+    intros x [y [[[z [EW JF]] CC] NSB]].
+    assert (~ Ssb z y) as AA.
+    { intros SB. apply CC.
+      apply ES.cf_sb_in_cf; auto.
+      eexists. split; eauto.
+      apply ES.ewc; auto. }
+    edestruct SRC.(jfehI) as [v HH].
+    { eexists. split; eauto. }
+    destruct_seq_r HH as BB.
+    eexists.  apply seq_eqv_r. split; [|by eauto].
+    generalize WF.(ES.ew_trans) EW HH. basic_solver.
+  Qed.
   
   (* Lemma hsw :  *)
 
