@@ -438,9 +438,9 @@ Proof.
     [ econstructor; splits; simpl; eauto; 
         eexists; eexists (Some _); 
         splits; simpl; eauto
-    | rewrite updo; [by rewrite upds | by omega]
+    | rewrite updo; [by rewrite upds | omega]
     | by rewrite upds
-    | rewrite updo; [by rewrite upds | by omega] ].
+    | rewrite updo; [by rewrite upds | omega] ].
 Qed.  
 
 Lemma simrel_cert_esstep_e2a_eqr e e' S' r r' r''

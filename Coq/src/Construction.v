@@ -196,7 +196,7 @@ Proof.
     unfold opt_ext in *; desf; 
     unfold ES.acts_set; 
     unfolder;
-    splits; unfold set_subset; intros; by omega.
+    splits; unfold set_subset; intros; omega.
 Qed.
 
 Lemma basic_step_nupd_acts_set 
@@ -323,7 +323,7 @@ Proof.
     rewrite TID';
     unfold upd_opt, ES.cont_thread;
     unfold opt_ext in EEQ.
-  1,3: rewrite updo; [by rewrite upds | by omega].
+  1,3: rewrite updo; [by rewrite upds | omega].
   all: by rewrite upds.
 Qed.
 
