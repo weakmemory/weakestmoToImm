@@ -43,7 +43,7 @@ Section AuxRel.
     if excluded_middle_informative (s x) then f x else g x.
 
   Definition fixset := 
-    forall (x : A) (SX : s x), x = h x.
+    forall (x : A) (SX : s x), h x = x.
 
   Definition prefix_clos := 
     forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
@@ -287,10 +287,9 @@ Qed.
 Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq.
 Proof. 
   split; autounfold with unfolderDb.
-  { ins; desf; auto. }
+  { ins; desf; auto. symmetry. intuition. }
   ins; desf; auto.
-  apply (H x (h x)).
-  eauto. 
+  symmetry. eapply H. eexists. splits; eauto.
 Qed.
 
 Lemma fixset_set_fixpoint : fixset s h -> s ≡₁ h □₁ s.
@@ -300,9 +299,9 @@ Proof.
   splits. 
   { ins. eexists. 
     specialize (FIX x). 
-    splits; [|symmetry]; eauto. } 
+    splits; eauto. } 
   ins; desf. 
-  erewrite <- (FIX y); auto. 
+  erewrite (FIX y); auto. 
 Qed.
 
 Lemma inj_dom_s_inj_dom (INJ : inj_dom_s s f) : inj_dom s f.
