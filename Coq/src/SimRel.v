@@ -103,35 +103,54 @@ Section SimRel.
       init
       is_terminal
       (ilbl_step tid).
+
+  Definition thread_syntax (tid : thread_id) : Type := 
+    (thread_lts tid).(Language.syntax).
+
+  Definition thread_st (tid : thread_id) : Type := 
+    (thread_lts tid).(Language.state).
+
+  Definition thread_init_st (tid : thread_id) : 
+    thread_syntax tid -> thread_st tid :=  
+    (thread_lts tid).(Language.init).
+
+  Definition thread_cont_st (tid : thread_id) (state : thread_st tid) : 
+    {x : Language.t & Language.state x} :=
+    existT _ (thread_lts tid) state.
   
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
                         (INK : K (cont, existT _ lang state)),
         lang = thread_lts (ES.cont_thread S cont);
-      
-      contstateE : forall cont thread (state : (thread_lts thread).(Language.state))
-                        (INK : K (cont, existT _ _ state)), 
-          state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont;
 
-      contstable : forall cont thread (state : (thread_lts thread).(Language.state))
-                        (INK : K (cont, existT _ _ state)), 
-          stable_state thread state;
-
-      contwf : forall cont thread (state : (thread_lts thread).(Language.state))
-                        (INK : K (cont, existT _ _ state)),
+      contwf : forall cont thread (state : thread_st thread)
+                        (INK : K (cont, thread_cont_st state)),
           wf_thread_state thread state;
 
-      continit : forall thread lprog
-                        (INPROG : IdentMap.find thread prog = Some lprog),
-          exists (state : (thread_lts thread).(Language.state)),
-            ⟪ INK : K (CInit thread, existT _ _ state) ⟫ /\
-            ⟪ INITST :
-                (istep thread [])＊ ((thread_lts thread).(Language.init) lprog)
-                                 state⟫;
+      contstable : forall cont thread (state : thread_st thread)
+                          (INK : K (cont, thread_cont_st state)), 
+          stable_state thread state;
 
-      contpc : forall e (state : (thread_lts (Gtid e)).(Language.state))
+      contrun : forall thread (lprog : thread_syntax thread) 
+                        (INPROG : IdentMap.find thread prog = Some lprog),
+          exists (state : thread_st thread),
+            ⟪ INK : K (CInit thread, thread_cont_st state) ⟫ /\
+            ⟪ INITST : (istep thread [])＊ (thread_init_st lprog) state⟫;
+
+      continit : forall thread (state : thread_st thread),
+          K (CInit thread, thread_cont_st state) -> state.(eindex) = 0;
+
+      contseqn : forall e thread (state : thread_st thread),
+          K (CEvent e, thread_cont_st state) -> state.(eindex) = 1 + ES.seqn S e;
+
+      (* It should follow from `contseqn` *)
+      (* contstateE : forall cont thread (state : thread_st thread) *)
+      (*                   (INK : K (cont, thread_cont_st state)),  *)
+      (*     state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont; *)
+
+      contpc : forall e (state : (thread_st (Gtid e)))
                       (PC : pc (Gtid e) e)
-                      (INK : K (CEvent (f e), existT _ _ state)),
+                      (INK : K (CEvent (f e), thread_cont_st state)),
                 @sim_state G sim_normal C (Gtid e) state;
     }.
   
