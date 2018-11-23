@@ -838,7 +838,26 @@ Proof.
           [| apply ES.rmwE | eapply ESstep.basic_step_nupd_rmw | apply SRC];
           eauto. }
       (* gjf  : g □ Sjf  ⊆ Gvf *)
-      { admit. }
+      { rewrite JF', collect_rel_union. 
+        unionL. 
+        { rewrite ES.jfE; auto. 
+          erewrite collect_rel_eq_dom.
+          { rewrite <- ES.jfE; auto. 
+            eapply SRC. }
+          all: eapply basic_step_e2a_eq_dom; eauto. }
+        cdes ES_BSTEP_. 
+        rewrite <- EVENT.
+        rewrite collect_rel_singl. 
+        arewrite (e2a S' (h w) = w).
+        { erewrite basic_step_e2a_eq_dom; eauto.
+          symmetry. eapply ghtrip; eauto.
+          apply seq_eqv_l.
+          split; auto.  
+          basic_solver. }
+        fold g'. rewrite g'eaEQ.
+        unfolder. ins. desf.
+        eapply vf_in_furr; [by apply SRC|]. 
+        eapply cert_rf_in_vf, RFwa. }
       (* gew  : g □ Sew  ⊆ ⦗I⦘ *)
       { eapply simrel_cert_esstep_e2a_eqr; 
           [| apply ES.ewE | eapply EW' | apply SRC];

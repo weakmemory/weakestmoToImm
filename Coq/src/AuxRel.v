@@ -381,6 +381,9 @@ Proof. basic_solver 10. Qed.
 Lemma collect_eq e : f □₁ eq e ≡₁ eq (f e).
 Proof. basic_solver. Qed.
 
+Lemma collect_rel_singl x y : f □ singl_rel x y ≡ singl_rel (f x) (f y).
+Proof. basic_solver 42. Qed.
+
 Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
 Proof. basic_solver 30. Qed.
 
