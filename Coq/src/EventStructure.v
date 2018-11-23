@@ -214,6 +214,10 @@ Record Wf :=
 
 Implicit Type WF : Wf.
 
+(******************************************************************************)
+(** ** acts_set properties *)
+(******************************************************************************)
+
 Lemma acts_set_split : E ≡₁ Einit ∪₁ Eninit.
 Proof.
   unfold ES.acts_init_set, ES.acts_ninit_set.
@@ -223,10 +227,11 @@ Proof.
 Qed.
 
 Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
-Proof. 
-  unfold ES.acts_ninit_set.
-  basic_solver.
-Qed.
+Proof. unfold ES.acts_ninit_set. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** same_tid properites *)
+(******************************************************************************)
 
 Lemma same_tid_refl : reflexive same_tid.
 Proof. unfold ES.same_tid. basic_solver. Qed.
@@ -236,6 +241,10 @@ Proof. unfold ES.same_tid. basic_solver. Qed.
 
 Lemma same_tid_trans : transitive same_tid. 
 Proof. unfold ES.same_tid, transitive. ins. by rewrite H. Qed.
+
+(******************************************************************************)
+(** ** sb properties *)
+(******************************************************************************)
 
 Lemma sb_Einit_Eninit WF : sb ≡ Einit × Eninit ∪ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘. 
 Proof. 
@@ -253,10 +262,7 @@ Proof.
 Qed.
 
 Lemma sb_seq_Eninit_l WF : ⦗Eninit⦘ ⨾ sb ≡ ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘.  
-Proof.
-  rewrite sb_Einit_Eninit; auto.
-  basic_solver 42.
-Qed.
+Proof. rewrite sb_Einit_Eninit; auto. basic_solver 42. Qed.
 
 Lemma sb_seq_Eninit_r WF : sb ⨾ ⦗Eninit⦘ ≡ sb.  
 Proof.
@@ -266,8 +272,9 @@ Proof.
   apply inclusion_union_l; basic_solver. 
 Qed.
 
-Lemma cf_same_tid : cf ⊆ same_tid.
-Proof. unfold ES.cf. basic_solver. Qed.
+(******************************************************************************)
+(** ** cf properties *)
+(******************************************************************************)
 
 Lemma cfE : cf ≡ ⦗E⦘ ⨾ cf ⨾ ⦗E⦘.
 Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed. 
@@ -275,23 +282,17 @@ Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 Lemma cfEninit : cf ≡ ⦗Eninit⦘ ⨾ cf ⨾ ⦗Eninit⦘.
 Proof. unfold ES.cf. basic_solver. Qed.
 
+Lemma cf_same_tid : cf ⊆ same_tid.
+Proof. unfold ES.cf. basic_solver. Qed.
+
 Lemma ncfEinit_l : ⦗Einit⦘ ⨾ cf ≡ ∅₂.
-Proof. 
-  unfold ES.cf, ES.acts_ninit_set.
-  basic_solver.
-Qed.
+Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 
 Lemma ncfEinit_r : cf ⨾ ⦗Einit⦘ ≡ ∅₂.
-Proof. 
-  unfold ES.cf, ES.acts_ninit_set.
-  basic_solver.
-Qed.
+Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 
-Lemma ncfEinit_lr : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
-Proof. 
-  unfold ES.cf, ES.acts_ninit_set.
-  basic_solver.
-Qed.
+Lemma ncfEinit : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 
 Lemma cf_irr : irreflexive cf.
 Proof. basic_solver. Qed.
@@ -309,6 +310,10 @@ Proof.
   apply restr_sym. 
   apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
 Qed.
+
+(******************************************************************************)
+(** ** sb/cf properties *)
+(******************************************************************************)
 
 Lemma same_thread WF : ⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘ ≡ ⦗Eninit⦘ ⨾ sb⁼ ⨾ ⦗Eninit⦘ ∪ cf.
 Proof.
@@ -337,13 +342,28 @@ Proof.
   apply (sb_tid WF).
 Qed.  
 
+Lemma same_thread_cf_free WF X (CFF : cf_free S X) : 
+  ⦗Eninit ∩₁ X⦘ ⨾ same_tid ⨾ ⦗Eninit ∩₁ X⦘ ≡ ⦗Eninit ∩₁ X⦘ ⨾ sb⁼ ⨾ ⦗Eninit ∩₁ X⦘.
+Proof.
+  rewrite set_interC with (s := Eninit) at 1 3.
+  rewrite !AuxRel.id_inter, !seqA.
+  rewrite <- !seqA with (r1 := ⦗Eninit⦘).
+  rewrite <- !seqA with (r3 := ⦗X⦘).
+  rewrite !seqA with (r1 := ⦗Eninit⦘).
+  rewrite same_thread; auto. 
+  relsf. rewrite !seqA.
+  arewrite (⦗X⦘ ⨾ cf ⨾ ⦗X⦘ ≡ ∅₂).
+  { red; split; [by apply CFF | basic_solver]. }
+  basic_solver 42.
+Qed.
+
 Lemma n_sb_cf x y (Ex : E x) (Ey : E y) : ~ (sb x y /\ cf x y).
 Proof. 
   red. intros [SB CF].
   destruct 
     (excluded_middle_informative (Einit x), excluded_middle_informative (Einit y)) 
     as [[INITx | nINITx]  [INITy | nINITy]].
-  { eapply ncfEinit_lr.
+  { eapply ncfEinit.
     eapply seq_eqv_lr.
     splits; [|by apply CF|]; auto. }
   { eapply ncfEinit_l.
@@ -398,18 +418,30 @@ Proof.
   generalize UU. basic_solver.
 Qed.
 
-Lemma ew_irr WF : irreflexive ew.
-Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
+(******************************************************************************)
+(** ** rmw properties *)
+(******************************************************************************)
 
 Lemma rmwE WF : rmw ≡ ⦗E⦘ ⨾ rmw ⨾ ⦗E⦘.
 Proof.
-split; [|basic_solver].
-arewrite (rmw ⊆ rmw ∩ rmw) at 1.
-rewrite (rmwi WF) at 1.
-arewrite (immediate sb ⊆ sb).
-rewrite (sbE WF).
-basic_solver.
+  split; [|basic_solver].
+  arewrite (rmw ⊆ rmw ∩ rmw) at 1.
+  rewrite (rmwi WF) at 1.
+  arewrite (immediate sb ⊆ sb).
+  rewrite (sbE WF).
+  basic_solver.
 Qed.
+
+(******************************************************************************)
+(** ** ew properties *)
+(******************************************************************************)
+
+Lemma ew_irr WF : irreflexive ew.
+Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
+
+(******************************************************************************)
+(** ** rf properties *)
+(******************************************************************************)
 
 Lemma rfE WF : rf ≡ ⦗E⦘ ⨾ rf ⨾ ⦗E⦘.
 Proof.
@@ -467,6 +499,10 @@ Proof.
   basic_solver.
 Qed.
 
+(******************************************************************************)
+(** ** fr properties *)
+(******************************************************************************)
+
 Lemma frE WF : fr ≡ ⦗E⦘ ⨾ fr ⨾ ⦗E⦘.
 Proof.
   unfold ES.fr. rewrite WF.(rfE).
@@ -480,6 +516,11 @@ Proof.
   rewrite WF.(coD).
   basic_solver 10.
 Qed.
+
+
+(******************************************************************************)
+(** ** rf/fr properties *)
+(******************************************************************************)
 
 Lemma rfrf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew^?.
 Proof.
@@ -507,7 +548,7 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** Continuation properites *)
+(** ** continuation properites *)
 (******************************************************************************)
 
 Lemma K_inE e lang st WF (KK : K (CEvent e, existT _ lang st)) : E e.
@@ -652,6 +693,27 @@ Qed.
 (** ** seqn properites *)
 (******************************************************************************)
 
+Lemma seqn_sb WF : seqn □ (sb ∩ same_tid) ⊆ Nat.lt.
+Proof. 
+  unfolder. unfold seqn, Nat.lt.
+  intros a b [x [y [[SB STID] [SEQx SEQy]]]].
+  rewrite <- SEQx, <- SEQy. 
+  apply countNatP_lt with (e:=x); auto.
+  { intros z [v PP]. destruct_seq PP as [DD EE]; subst.
+    eexists. apply seq_eqv_l. split; auto.
+    { congruence. }
+    apply seq_eqv_r. split; [|by eauto].
+    eapply sb_trans; eauto. }
+  { red; unfolder; ins; desf.
+    eapply sb_irr; eauto. }
+  { red; unfolder; eauto 10. }
+  apply sbE, seq_eqv_lr in SB; desf. 
+Qed.  
+
+Lemma seqn_sb_alt WF x y (STID : same_tid x y) (SB : sb x y) : 
+  seqn x < seqn y. 
+Proof. eapply seqn_sb; unfolder; eauto 50. Qed.
+
 Lemma seqn_immsb WF x y 
       (STID : same_tid x y)
       (IMMSB : immediate sb x y) :
@@ -682,6 +744,27 @@ Proof.
     apply immediate_in, sbE, seq_eqv_lr in IMMSB; desf. } 
   unfolder; ins; desf. 
   eapply sb_irr; eauto.  
+Qed.
+
+Lemma seqn_inj WF X thread (XinTID : X ⊆₁ Eninit ∩₁ Tid thread) (CFF : cf_free S X) : 
+  inj_dom X seqn. 
+Proof. 
+  intros x y Xx Xy EQ.
+  assert (Eninit x /\ tid x = thread) as HA. 
+  { apply XinTID in Xx. unfold set_inter in Xx. desf. }
+  assert (Eninit y /\ tid y = thread) as HB. 
+  { apply XinTID in Xy. unfold set_inter in Xy. desf. }
+  assert (same_tid x y) as STID by desf. 
+  assert ((⦗Eninit ∩₁ X⦘ ⨾ same_tid ⨾ ⦗Eninit ∩₁ X⦘) x y) as HH.
+  { unfolder; splits; desf. }
+  apply same_thread_cf_free in HH; auto. 
+  apply seq_eqv_lr in HH.
+  destruct HH as [_ [SB _]].
+  unfold clos_refl_sym in SB; desf.
+  { assert (seqn x < seqn y) as HH; [|omega]. 
+    eapply seqn_sb_alt; eauto. }
+  assert (seqn y < seqn x) as HH; [|omega]. 
+  eapply seqn_sb_alt; eauto.
 Qed.
 
 End EventStructure.
