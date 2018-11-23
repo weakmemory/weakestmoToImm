@@ -94,6 +94,33 @@ Section SimRel.
 
   Notation "'g'" := e2a. 
 
+  Lemma e2a_inj (SWF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
+    inj_dom X e2a. 
+  Proof. 
+    unfolder. unfold e2a. ins. 
+    destruct 
+      (excluded_middle_informative (SEinit x), excluded_middle_informative (SEinit y)) 
+    as [[INITx | nINITx]  [INITy | nINITy]].
+    { desf. 
+      { eapply SWF.(ES.init_uniq); congruence. }
+      all: 
+        eapply SWF.(ES.init_lab) in INITx;
+        eapply SWF.(ES.init_lab) in INITy;
+        unfold loc in *; desf. }
+    1-2: desf.
+    desf.
+    eapply ES.seqn_inj. 
+    { eauto. }
+    { eapply set_inter_Proper. 
+      { unfold ES.acts_ninit_set.
+        eapply set_minus_mori; [eapply XinSE|].
+        unfold flip. eauto. }
+      eapply set_subset_refl. }
+    { eapply ES.cf_free_subset; [|by apply CFF]. 
+      basic_solver. }
+    all: basic_solver. 
+  Qed.
+
   Definition pc thread :=
     C ∩₁ Gtid_ thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
 
@@ -180,9 +207,6 @@ Section SimRel.
       gco  : g □ Sco  ⊆ Gco;
       
       grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
-
-      contseqn : forall e thread (st : (thread_lts thread).(Language.state)),
-          K (CEvent e, existT _ _ st) -> st.(eindex) = 1 + ES.seqn S e;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 

@@ -57,6 +57,8 @@ Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
 Definition cf (ES : t) :=
   ⦗ ES.(acts_ninit_set) ⦘ ⨾ (ES.(same_tid) \ (ES.(sb)⁼)) ⨾ ⦗ ES.(acts_ninit_set) ⦘.
 
+Definition cf_free S X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
+
 Definition cc (ES : t) := 
   ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
 
@@ -96,8 +98,6 @@ Definition cont_cf_dom S c :=
   | CInit  i => fun x => ES.acts_set S x /\ S.(tid) x = i 
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
-
-Definition cf_free S X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
 
 Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
 
@@ -153,6 +153,7 @@ Record Wf :=
                       exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
         exists l, lab e = Astore Xpln Opln l 0 ;
+    init_uniq : inj_dom Einit loc;
     
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
@@ -417,6 +418,14 @@ Proof.
   assert (sb z x) as UU by (eapply sb_trans; eauto).
   generalize UU. basic_solver.
 Qed.
+
+(******************************************************************************)
+(** ** cf_free properties *)
+(******************************************************************************)
+
+Lemma cf_free_subset X X' (SUBS : X' ⊆₁ X) : 
+  cf_free S X -> cf_free S X'.
+Proof. unfold cf_free; basic_solver 42. Qed.
 
 (******************************************************************************)
 (** ** rmw properties *)
