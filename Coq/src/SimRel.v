@@ -462,8 +462,8 @@ Section SimRel.
       2: { apply IdentMap.Facts.in_find_iff in INP. desf. }
       destruct (classic (exists e, pc thread e)) as [[e PC]|NPC].
       2: { edestruct (continit (scont SRC)) as [state]; eauto.
-           desf.
-           eexists. eexists.
+           desf. all: admit. 
+           (* eexists. eexists.
            splits; eauto.
            { red. ins.
              eapply init_covered; eauto.
@@ -477,7 +477,7 @@ Section SimRel.
                 admit. }
            (* split; intros XX; [|omega]. *)
            (* exfalso. apply NPC. clear NPC. *)
-           admit. }
+           admit. *) }
       assert (thread <> tid_init) as NTINIT.
       { intros HH; subst. by apply PROG_NINIT. }
       assert (thread = Gtid e); subst.

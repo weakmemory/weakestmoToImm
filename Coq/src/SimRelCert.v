@@ -564,7 +564,7 @@ Proof.
         erewrite ESstep.basic_step_seqn_kinit; eauto. 
         admit. }
       erewrite ESstep.basic_step_seqn_kevent; eauto. 
-      { erewrite contseqn; eauto. }
+      { erewrite contseqn; eauto. eapply SRC. }
       admit. }
 
     assert (e' = None) as e'NONE.
