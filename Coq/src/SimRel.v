@@ -191,6 +191,7 @@ Section SimRel.
       tccoh : tc_coherent G sc TC;
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
       irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
+      tid_initi : GE ∩₁ Gtid_ tid_init ⊆₁ GEinit;
       swf   : ES.Wf S;
       
       gcons : imm_consistent G sc;
@@ -217,6 +218,7 @@ Section SimRel.
 
       finj : inj_dom_s fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
+      fimgInit : SEinit ≡₁ f □₁ GEinit;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       

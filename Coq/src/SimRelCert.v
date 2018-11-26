@@ -78,7 +78,6 @@ Section SimRelCert.
   Notation "'Gco'" := (G.(co)).
 
   Notation "'certE'" := certG.(acts_set).
-  Notation "'certTid'" := (tid).
   Notation "'certRmw'" := (certG.(rmw)).
 
   Definition certLab (e : actid) : label :=
@@ -117,10 +116,11 @@ Section SimRelCert.
 
       jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
 
-      hinj : inj_dom_s hdom h;
-      himg : h □₁ hdom ⊆₁ SE;
-      hoth : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
-      htid : Stid ∘ h = Gtid;
+      hinj     : inj_dom_s hdom h;
+      himg     : h □₁ hdom ⊆₁ SE;
+      himgInit : SEinit ≡₁ h □₁ (GE ∩₁ is_init);
+      hoth     : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
+      htid     : eq_dom hdom Gtid (Stid ∘ h);
 
       hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
       hlabTHRD : eq_dom sbq_dom certLab (Slab ∘ h);
@@ -191,11 +191,57 @@ Section SimRelCert.
     admit. 
   Admitted.
 
-  Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
+  Lemma hsb (SRC : simrel_cert) : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
-    intros x y HH. red in HH. desf.
-    destruct_seq HH as [AA BB].
+    intros x y SB. red in SB. desf.
+    destruct_seq SB as [AA BB].
+    assert (~ is_init y') as YNINIT.
+    { apply no_sb_to_init in SB. by destruct_seq_r SB as YY. }
 
+    assert (SE (h x')) as HEX.
+    { apply himg; auto. eexists. split; [|by eauto]; eauto. }
+    assert (SE (h y')) as HEY.
+    { apply himg; auto. eexists. split; [|by eauto]; eauto. }
+
+    assert (~ SEinit (h y')) as HYNINIT.
+    { intros JJ. apply himgInit in JJ; auto.
+      red in JJ. desf. apply hinj in JJ0; auto. subst.
+      destruct JJ. desf. }
+
+    set (CC := SB). apply sb_tid_init in CC. desf.
+    2: { apply ES.sb_init; [by apply SRC|].
+         split. 2: by split.
+         apply himgInit; auto. eexists. split; eauto.
+         split; auto. apply wf_sbE in SB. by destruct_seq SB as [JJ II]. }
+    assert (~ Scf (h x') (h y')) as NCF.
+    { intros JJ.
+      eapply SRC.(himgNcf).
+      apply seq_eqv_l. split; [|apply seq_eqv_r; split; eauto].
+      all: by eexists; split; [|by eauto]. }
+    edestruct ES.same_thread as [PP _]; [by apply SRC|].
+    specialize (PP (h x') (h y')).
+
+    assert (~ is_init x') as XNINIT.
+    { intros XX. admit. }
+    assert (~ SEinit (h x')) as HXNINIT.
+    { intros JJ. apply himgInit in JJ; auto.
+      red in JJ. desf. apply hinj in JJ0; auto. subst.
+      destruct JJ. desf. }
+    destruct PP as [PP|]; [| |done].
+    { apply seq_eqv_l. split.
+      2: apply seq_eqv_r; split.
+      1,3: by split.
+      (* TODO: trivial *)
+      admit. }
+    destruct_seq PP as [XX YY].
+    red in PP. desf.
+    { apply hinj in PP; auto. subst. by apply sb_irr in SB. }
+    exfalso.
+    eapply sb_irr. eapply sb_trans; eauto.
+    eapply gsb; [by apply SRC|].
+    do 2 eexists. splits; eauto.
+    all: symmetry; eapply ghtrip; [by apply SRC|].
+    all: by apply seq_eqv_l; split; auto.
   Admitted.
 
   Lemma rfeI (SRC : simrel_cert) :
