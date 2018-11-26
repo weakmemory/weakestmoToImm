@@ -127,7 +127,7 @@ Section SimRelCert.
 
       hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
 
-      himgNcf : ⦗ h □₁ hdom ⦘ ⨾ Scf ⨾ ⦗ h □₁ hdom ⦘ ≡ ∅₂;
+      himgNcf : ES.cf_free S (h □₁ hdom);
       
       complete_fdom :
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
@@ -193,6 +193,9 @@ Section SimRelCert.
 
   Lemma hsb : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
+    intros x y HH. red in HH. desf.
+    destruct_seq HH as [AA BB].
+
   Admitted.
 
   Lemma rfeI (SRC : simrel_cert) :
@@ -706,7 +709,7 @@ Proof.
 
         { rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE. 
-            by rewrite SRCC.(himgNcf). }
+            apply SRCC.(himgNcf). }
           { rewrite dom_cross; [|red; basic_solver]. 
             eapply sbk_in_hhdom; eauto. }
           by rewrite codom_singl_rel. } 
@@ -720,12 +723,12 @@ Proof.
                rewrite sbk_in_hhdom; eauto.
                rewrite seq_incl_cross.
                { rewrite <- restr_cross, restr_relE. 
-                   by rewrite SRCC.(himgNcf). }
+                 apply SRCC.(himgNcf). }
                2: by rewrite codom_singl_rel.
                admit. }
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE. 
-            by rewrite SRCC.(himgNcf). }
+            apply SRCC.(himgNcf). }
           { rewrite !set_collect_union.
             basic_solver 10. }
           rewrite !codom_seq.
@@ -734,7 +737,7 @@ Proof.
         { rewrite !seqA. 
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE.
-            by rewrite SRCC.(himgNcf). }
+            apply SRCC.(himgNcf). }
           { admit. 
             (* rewrite releaseC; eauto. 
             rewrite dom_seq.
@@ -761,7 +764,7 @@ Proof.
             by rewrite codom_singl_rel. *) }
         rewrite seq_incl_cross.
         { rewrite <- restr_cross, restr_relE. 
-            by rewrite SRCC.(himgNcf). }
+          apply SRCC.(himgNcf). }
         { rewrite !set_collect_union.
           basic_solver 10. }
         rewrite !codom_seq.
