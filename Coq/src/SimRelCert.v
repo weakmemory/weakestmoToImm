@@ -191,12 +191,24 @@ Section SimRelCert.
     admit. 
   Admitted.
 
-  Lemma hsb (SRC : simrel_cert) : h □ (⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
+  Lemma hdom_sb_prefix : Gsb ⨾ ⦗ hdom ⦘ ≡ ⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘.
   Proof.
+    split.
+    all: intros x y SB.
+    2: { destruct_seq_l SB as AA. apply SB. }
+    apply seq_eqv_l. split; auto.
+    destruct_seq_r SB as YY.
+  Admitted.
+
+  Lemma hsb (SRC : simrel_cert) : h □ (Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
+  Proof.
+    rewrite hdom_sb_prefix.
     intros x y SB. red in SB. desf.
     destruct_seq SB as [AA BB].
     assert (~ is_init y') as YNINIT.
     { apply no_sb_to_init in SB. by destruct_seq_r SB as YY. }
+
+    apply wf_sbE in SB. destruct_seq SB as [EX EY]. 
 
     assert (SE (h x')) as HEX.
     { apply himg; auto. eexists. split; [|by eauto]; eauto. }
@@ -212,7 +224,7 @@ Section SimRelCert.
     2: { apply ES.sb_init; [by apply SRC|].
          split. 2: by split.
          apply himgInit; auto. eexists. split; eauto.
-         split; auto. apply wf_sbE in SB. by destruct_seq SB as [JJ II]. }
+         split; auto. }
     assert (~ Scf (h x') (h y')) as NCF.
     { intros JJ.
       eapply SRC.(himgNcf).
@@ -222,7 +234,10 @@ Section SimRelCert.
     specialize (PP (h x') (h y')).
 
     assert (~ is_init x') as XNINIT.
-    { intros XX. admit. }
+    { intros XX. apply YNINIT.
+      eapply tid_initi; [by apply SRC|].
+      split; auto.
+      rewrite <- CC. destruct x'; desf. }
     assert (~ SEinit (h x')) as HXNINIT.
     { intros JJ. apply himgInit in JJ; auto.
       red in JJ. desf. apply hinj in JJ0; auto. subst.
@@ -231,8 +246,7 @@ Section SimRelCert.
     { apply seq_eqv_l. split.
       2: apply seq_eqv_r; split.
       1,3: by split.
-      (* TODO: trivial *)
-      admit. }
+      do 2 (rewrite htid in CC; auto). }
     destruct_seq PP as [XX YY].
     red in PP. desf.
     { apply hinj in PP; auto. subst. by apply sb_irr in SB. }
@@ -242,7 +256,7 @@ Section SimRelCert.
     do 2 eexists. splits; eauto.
     all: symmetry; eapply ghtrip; [by apply SRC|].
     all: by apply seq_eqv_l; split; auto.
-  Admitted.
+  Qed.
 
   Lemma rfeI (SRC : simrel_cert) :
     dom_rel Srfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>).
