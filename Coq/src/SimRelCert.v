@@ -695,10 +695,10 @@ Proof.
   admit.
 Admitted.
 
-Lemma weaken_sim_add_jf TC' h q state'' e e' S' 
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'') 
+Lemma weaken_sim_add_jf TC' h q st st' e e' S' 
+      (SRCC : simrel_cert prog S G sc TC TC' f h q st st') 
       (BSTEP : ESstep.t_basic e e' S S') 
-      (SAJF : sim_add_jf S G sc TC TC' h q e S') : 
+      (SAJF : sim_add_jf S G sc TC TC' h q st e S') : 
   ESstep.add_jf e S S'.
 Proof. 
   cdes SAJF.

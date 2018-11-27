@@ -178,7 +178,7 @@ Section SimRel.
 
   Lemma contstateE (SRC : simrel_cont) :
     forall cont thread (state : thread_st thread)
-           (INK : K (cont, thread_cont_st state)),
+           (INK : K (cont, thread_cont_st thread state)),
       state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont.
   Proof.
     (* It should follow from `contseqn` *)
