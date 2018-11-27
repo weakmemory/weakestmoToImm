@@ -191,10 +191,6 @@ Section SimRelCert.
   Lemma C_in_hdom : C ⊆₁ hdom.
   Proof. unfold cert_dom. basic_solver. Qed.
 
-  Lemma g_cont_sb_dom_spec : g □₁ ES.cont_sb_dom S q ≡₁ state.(ProgToExecution.G).(acts_set).
-  Proof.
-  Admitted.
-
   Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
   Proof.
     unfold cert_dom.
@@ -203,8 +199,15 @@ Section SimRelCert.
     { rewrite set_collect_compose.
       apply fixset_set_fixpoint.
       apply SRC. }
-    rewrite g_cont_sb_dom_spec. eauto with hahn.
-  Qed.
+    arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ ES.cont_sb_dom S q).
+    2: by eauto with hahn.
+    eapply contstateE; eauto.
+    { (* TODO: add the constraint '~ IdentMap.In tid_init prog' to 'simrel'. *)
+      admit. }
+    { apply SRC. }
+    destruct state_q_cont; auto. desf.
+    apply KK.
+  Admitted.
 
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
   Proof. 

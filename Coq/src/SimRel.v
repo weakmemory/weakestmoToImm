@@ -170,17 +170,20 @@ Section SimRel.
       contseqn : forall e thread (state : thread_st thread),
           K (CEvent e, thread_cont_st state) -> state.(eindex) = 1 + ES.seqn S e;
 
-      (* It should follow from `contseqn` *)
-      (* contstateE : forall cont thread (state : thread_st thread) *)
-      (*                   (INK : K (cont, thread_cont_st state)),  *)
-      (*     state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont; *)
-
       contpc : forall e (state : (thread_st (Gtid e)))
                       (PC : pc (Gtid e) e)
                       (INK : K (CEvent (f e), thread_cont_st state)),
                 @sim_state G sim_normal C (Gtid e) state;
     }.
-  
+
+  Lemma contstateE (SRC : simrel_cont) :
+    forall cont thread (state : thread_st thread)
+           (INK : K (cont, thread_cont_st state)),
+      state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont.
+  Proof.
+    (* It should follow from `contseqn` *)
+  Admitted.
+
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
   Record simrel_common :=
