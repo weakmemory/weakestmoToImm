@@ -219,7 +219,8 @@ Section SimRel.
       fimg : f □₁ fdom ⊆₁ SE;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
-      
+
+      (* TODO: add domain parameter to `same_lab_up_to_value` in IMM *)
       glab : same_lab_up_to_value Slab (Glab ∘ g);
 
       ftid : eq_dom GE (Stid ∘ f) Gtid;

@@ -552,25 +552,34 @@ Admitted.
 Lemma basic_step_e2a_lab e e' S' 
       (BSTEP : ESstep.t_basic e e' S S') :
   same_lab_up_to_value (Slab S') (Glab ∘ (e2a S')).
-Proof. admit. Admitted.
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  admit.
+Admitted.
 
 Lemma weaken_sim_add_jf TC' h q state'' e e' S' 
       (SRCC : simrel_cert prog S G sc TC TC' f h q state'') 
-      (BSTEP : ESstep.t_basic e e' S S') : 
-  sim_add_jf S G sc TC TC' h q e S' -> ESstep.add_jf e S S'.
+      (BSTEP : ESstep.t_basic e e' S S') 
+      (SAJF : sim_add_jf S G sc TC TC' h q e S') : 
+  ESstep.add_jf e S S'.
 Proof. 
-  intros HH. cdes HH.
+  cdes SAJF.
   assert (SE S w) as SEw.
   { eapply himg; eauto. }
   econstructor; auto. 
   exists w; splits; auto.  
-  { eapply cert_rfD, seq_eqv_lr in NEW_RF.
-    destruct NEW_RF as [WW _].
-    erewrite basic_step_e2a_eq_dom in WW; eauto; [|apply SRC].
-    assert (is_w (Slab S) w) as WW'. 
-    { erewrite same_label_is_w; [|eapply glab]; eauto. }
-    unfold is_w. erewrite ESstep.basic_step_lab_eq_dom; eauto. } 
-  { admit. }
+  { assert (is_w (Glab ∘ (e2a S')) w) as WW.
+    { eapply cert_rfD, seq_eqv_lr in NEW_RF.
+      destruct NEW_RF as [HH _].
+        by unfold is_w, compose in *. }
+    erewrite same_label_is_w; eauto.
+    eapply basic_step_e2a_lab; eauto. }
+  { erewrite same_label_same_loc.
+    { eapply cert_rfl in NEW_RF.
+      assert (same_loc (Glab ∘ (e2a S')) w e) as HH.
+      { by unfold same_loc, loc, compose in *. }
+      by apply HH. }
+    eapply basic_step_e2a_lab; eauto. }
   admit. 
 Admitted.
 
