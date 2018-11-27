@@ -162,7 +162,7 @@ Section SimRelCert.
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
     }.
 
-  Definition sim_add_jf (r : eventid) (S S' : ES.t) : Prop :=
+  Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=
     ⟪ RR : is_r (ES.lab S') r ⟫ /\
     exists w,
       ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
@@ -449,19 +449,24 @@ Notation "'Gppo'" := (G.(ppo)).
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
 
+Notation "'thread_syntax' tid"  := 
+  (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+
+Notation "'thread_st' tid" := 
+  (Language.state (thread_lts tid)) (at level 10, only parsing).
+
+Notation "'thread_init_st' tid" := 
+  (Language.init (thread_lts tid)) (at level 10, only parsing).
+
+Notation "'thread_cont_st' tid" :=
+  (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+
 Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
 Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
 
 Variable SRC : simrel_common prog S G sc TC f.
 
 Hint Resolve SRC. 
-
-(* cstate_stable : stable_state qtid state'; *)
-(*       cstate_reachable :  *)
-(*         forall (state : (thread_lts qtid).(Language.state)) *)
-(*                (KK : K (q, existT _ _ state)), *)
-(*           (step qtid)＊ state state'; *)
-(*       certg : cert_graph G sc TC TC' qtid state'; *)
 
 Lemma simrel_cert_graph_start TC' thread 
       (* (NINITT : thread <> tid_init) *)
@@ -547,6 +552,7 @@ Lemma basic_step_e2a_eq_dom e e' S'
       (BSTEP : ESstep.t_basic e e' S S') :
   eq_dom (SE S) (e2a S') (e2a S).
 Proof.
+  clear SRC f TC sc GPROG G PROG_NINIT prog. 
   cdes BSTEP; cdes BSTEP_.
   red. intros x. ins.
   unfold e2a.
@@ -561,6 +567,159 @@ Proof.
   { eapply ESstep.basic_step_seqn_eq_dom; eauto. }
   congruence.
 Qed.
+
+Lemma basic_step_simrel_cont k k' e e' S'
+      (st st' : thread_st (ES.cont_thread S k))
+      (WF : ES.Wf S)
+      (SRK : simrel_cont prog S G TC f)
+      (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') : 
+  simrel_cont prog S' G TC f.
+Proof. 
+  clear SRC sc.
+  cdes BSTEP_.
+  assert (ESstep.t_basic e e' S S') as BSTEP.
+  { econstructor; eauto. }
+  assert (ES.cont_thread S' k = ES.cont_thread S k) as eqKtid. 
+  { unfold ES.cont_thread. desf.
+    erewrite ESstep.basic_step_tid_eq_dom; eauto. 
+    eapply ES.K_inEninit; eauto. }
+  split.
+  { ins; eapply ESstep.basic_step_cont_set in INK; eauto.
+    unfold set_union in INK; desf.
+    { arewrite (ES.cont_thread S' cont = ES.cont_thread S cont).
+      { unfold ES.cont_thread. desf.
+        erewrite ESstep.basic_step_tid_eq_dom; eauto. 
+        eapply ES.K_inEninit; eauto. }
+      by eapply SRK in INK. }
+    unfold ES.cont_thread.
+    arewrite (Stid S' (opt_ext (ES.next_act S) e') = ES.cont_thread S k). 
+    { edestruct e'; simpl;
+        [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e];
+        eauto. }
+    eapply SRK; eauto. }
+  { intros kk thread st'' KK. 
+    eapply ESstep.basic_step_cont_set in KK; eauto.
+    unfold set_union in KK. 
+    destruct KK as [KK | KK].
+    { eapply contwf; eauto. }
+    arewrite (st'' = st').
+    { admit. }
+    arewrite (thread = ES.cont_thread S k).
+    { destruct (excluded_middle_informative (thread = ES.cont_thread S k)); auto.
+      exfalso. 
+      inversion KK.
+      admit. }
+    simpls. eapply wf_thread_state_steps; eauto.
+    { eapply contwf; eauto. }
+    eapply ilbl_steps_in_steps.
+    econstructor. econstructor. eauto. }
+  { admit. }
+  { admit. }
+  { admit. }
+  { intros x thread st'' KK. 
+    eapply ESstep.basic_step_cont_set in KK; eauto.
+    unfold set_union in KK. destruct KK as [KK | KK].
+    { erewrite ESstep.basic_step_seqn_eq_dom; eauto.
+      { by eapply SRK. }
+      eapply ES.K_inEninit; eauto. }
+    arewrite (x = (opt_ext e e')). 
+    { by inversion KK. }
+    arewrite (st'' = st').
+    { admit. }
+    simpls.
+    edestruct lbl_step_cases as [l [l' HH]]; eauto.
+    { eapply contwf; eauto. }
+    assert (lbl = l) as eqLBL.
+    { destruct HH as [EE _]. admit. }
+    assert (lbl' = l') as eqLBL'.
+    { destruct HH as [EE _]. admit. }
+    edestruct e'; simpl.
+    { destruct HH as [_ [HH | HH]]. 
+      { destruct HH as [_ [_ [_ [LBL _]]]].
+        subst l'. rewrite LBL in LABEL'. exfalso. auto. } 
+      destruct HH as [IDX _]. 
+      erewrite IDX. simpl. 
+      erewrite ESstep.basic_step_seqn_e'; eauto.
+      2 : { (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
+            admit. }             
+      arewrite (eindex st = ES.seqn S' e); [|omega].
+      edestruct k. 
+      { erewrite continit; eauto.
+        erewrite ESstep.basic_step_seqn_kinit; eauto. }
+      erewrite contseqn; eauto.
+      erewrite <- ESstep.basic_step_seqn_kevent; eauto.
+      admit. }
+    destruct HH as [_ [HH | HH]]. 
+    { destruct HH as [IDX _]. 
+      erewrite IDX. simpl. 
+      edestruct k. 
+      { erewrite continit; eauto.
+        erewrite ESstep.basic_step_seqn_kinit; eauto. }
+      erewrite contseqn; eauto.
+      erewrite <- ESstep.basic_step_seqn_kevent; eauto.
+      admit. }
+    destruct HH as [_ [_ [_ HH]]].
+    destruct HH as [ordr [ordw [loc [valr [vaw [_ LBL]]]]]].
+    subst l'. rewrite LBL in LABEL'. exfalso. auto. }
+  admit. 
+Admitted.  
+
+Lemma basic_step_e2a_e k k' e e' S' 
+      (st st' : thread_st (ES.cont_thread S k))
+      (WF : ES.Wf S)
+      (SRK : simrel_cont prog S G TC f)
+      (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
+  e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)).
+Proof. 
+  clear SRC sc.  
+  cdes BSTEP_.
+  assert (ESstep.t_basic e e' S S') as BSTEP.
+  { econstructor; eauto. }
+  unfold e2a. 
+  destruct (excluded_middle_informative ((SEinit S') e)) as [INIT | nINIT]. 
+  { exfalso; eapply ESstep.basic_step_acts_ninit_set_e; eauto. } 
+  erewrite ESstep.basic_step_tid_e; eauto.  
+  edestruct k; simpl.  
+  { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
+  erewrite ESstep.basic_step_seqn_kevent; eauto. 
+  { erewrite contseqn; eauto. }
+  (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
+  admit. 
+Admitted.
+
+Lemma basic_step_e2a_lab e e' S' 
+      (BSTEP : ESstep.t_basic e e' S S') :
+  same_lab_up_to_value (Slab S') (Glab ∘ (e2a S')).
+Proof. 
+  cdes BSTEP; cdes BSTEP_.
+  admit.
+Admitted.
+
+Lemma weaken_sim_add_jf TC' h q state'' e e' S' 
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state'') 
+      (BSTEP : ESstep.t_basic e e' S S') 
+      (SAJF : sim_add_jf S G sc TC TC' h q e S') : 
+  ESstep.add_jf e S S'.
+Proof. 
+  cdes SAJF.
+  assert (SE S w) as SEw.
+  { eapply himg; eauto. }
+  econstructor; auto. 
+  exists w; splits; auto.  
+  { assert (is_w (Glab ∘ (e2a S')) w) as WW.
+    { eapply cert_rfD, seq_eqv_lr in NEW_RF.
+      destruct NEW_RF as [HH _].
+        by unfold is_w, compose in *. }
+    erewrite same_label_is_w; eauto.
+    eapply basic_step_e2a_lab; eauto. }
+  { erewrite same_label_same_loc.
+    { eapply cert_rfl in NEW_RF.
+      assert (same_loc (Glab ∘ (e2a S')) w e) as HH.
+      { by unfold same_loc, loc, compose in *. }
+      by apply HH. }
+    eapply basic_step_e2a_lab; eauto. }
+  admit. 
+Admitted.
 
 Lemma simrel_cert_basic_step k lbls jf ew co
       (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
@@ -639,7 +798,8 @@ Proof.
   assert (cert_graph G sc TC TC' (ES.cont_thread S q) state'') as CERTG by apply SRCC. 
 
   destruct LBL_STEP as [lbls ILBL_STEP].
-  edestruct lbl_step_cases; eauto; desf.  
+  edestruct lbl_step_cases; eauto; desf.
+  { admit. }
   { set (thread := (ES.cont_thread S q)).
     set (a := ThreadEvent thread (eindex state)).
 

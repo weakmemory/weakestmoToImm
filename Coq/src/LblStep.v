@@ -255,10 +255,12 @@ Proof. by rewrite eps_step_in_step. Qed.
 *****************************)
 
 Lemma lbl_step_cases thread lbls state state'
+      (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread lbls state state') :
   exists lbl lbl',
     ⟪ LBLS : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
-    ( ( ⟪ ACTS : acts_set state'.(G) ≡₁ 
+    ( ( ⟪ EINDEX : state'.(eindex) = 1 + state.(eindex) ⟫ /\
+        ⟪ ACTS : acts_set state'.(G) ≡₁ 
                  acts_set state.(G) ∪₁ eq (ThreadEvent thread state.(eindex)) ⟫ /\
         ⟪ GLAB : lab state'.(G) = upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl ⟫ /\
         ⟪ LBL'none : lbl' = None ⟫ /\
@@ -266,7 +268,8 @@ Lemma lbl_step_cases thread lbls state state'
           (exists ord loc val, ⟪ LBL_LD_EX : lbl = Aload true ord loc val ⟫) \/
           (exists ord loc val, ⟪ LBL_ST : lbl = Astore Xpln ord loc val ⟫) \/
           (exists ord, ⟪ LBL_F : lbl = Afence ord ⟫) ) ) \/
-      ( ⟪ ACTS : acts_set state'.(G) ≡₁ 
+      ( ⟪ EINDEX : state'.(eindex) = 2 + state.(eindex) ⟫ /\
+        ⟪ ACTS : acts_set state'.(G) ≡₁ 
                  acts_set state.(G) ∪₁ 
                  eq (ThreadEvent thread state.(eindex)) ∪₁ eq (ThreadEvent thread (1 + state.(eindex))) ⟫ /\
         ⟪ GLAB : lab state'.(G) = 
@@ -280,26 +283,46 @@ Proof.
   cdes ISTEP. 
   edestruct ISTEP0; desf; do 2 eexists. 
 
-  Ltac nupd_helper UG := 
+  Ltac nupd_helper UINDEX UG := 
     split;
       [ erewrite opt_to_list_none; by apply app_nil_l
       | left; splits; eauto 20;
-        erewrite eps_steps_same_G; eauto;
-        unfold add in UG; rewrite UG;
-        unfold acts_set; simpl; basic_solver
+        [ symmetry; etransitivity;
+          [ erewrite Nat.add_comm; by erewrite <- UINDEX
+          | symmetry; eapply steps_same_eindex; eauto;
+            eapply wf_thread_state_step; eauto;
+            econstructor; eauto ]
+        | erewrite eps_steps_same_G; eauto;
+          unfold add in UG; rewrite UG;
+          unfold acts_set; simpl; basic_solver
+        | erewrite eps_steps_same_G; eauto;
+          unfold add in UG; rewrite UG;
+          unfold acts_set; simpl; basic_solver
+        ]
       ].
 
-  1-4: nupd_helper UG.
+  1-4: nupd_helper UINDEX UG.
 
-  Ltac upd_helper UG := 
+  Ltac upd_helper UINDEX UG := 
     split; 
       [ erewrite opt_to_list_some; unfold "++"; eauto
       | right; splits; eauto 20;
-        erewrite eps_steps_same_G; eauto;
-        unfold add in UG; unfold add_rmw in UG; rewrite UG;
-        unfold acts_set, upd_opt; simpl;
-        rewrite Nat.add_1_r; basic_solver                 
+        [ symmetry; etransitivity;
+          [ erewrite Nat.add_comm; by erewrite <- UINDEX
+          | symmetry; eapply steps_same_eindex; eauto;
+            eapply wf_thread_state_step; eauto;
+            econstructor; eauto ]
+        | erewrite eps_steps_same_G; eauto;
+          unfold add in UG; unfold add_rmw in UG; rewrite UG;
+          unfold acts_set, upd_opt; simpl;
+          rewrite Nat.add_1_r; basic_solver
+        | erewrite eps_steps_same_G; eauto;
+          unfold add in UG; unfold add_rmw in UG; rewrite UG;
+          unfold acts_set, upd_opt; simpl;
+          rewrite Nat.add_1_r; basic_solver           
+        ]
       ].
 
-  all: upd_helper UG.
+  all: upd_helper UINDEX UG.
+
 Qed.
