@@ -526,6 +526,29 @@ Proof.
   admit. 
 Admitted.  
 
+Lemma basic_step_e2a_e k k' e e' S' 
+      (st st' : thread_st (ES.cont_thread S k))
+      (WF : ES.Wf S)
+      (SRK : simrel_cont prog S G TC f)
+      (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
+  e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)).
+Proof. 
+  clear SRC sc.  
+  cdes BSTEP_.
+  assert (ESstep.t_basic e e' S S') as BSTEP.
+  { econstructor; eauto. }
+  unfold e2a. 
+  destruct (excluded_middle_informative ((SEinit S') e)) as [INIT | nINIT]. 
+  { exfalso; eapply ESstep.basic_step_acts_ninit_set_e; eauto. } 
+  erewrite ESstep.basic_step_tid_e; eauto.  
+  edestruct k; simpl.  
+  { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
+  erewrite ESstep.basic_step_seqn_kevent; eauto. 
+  { erewrite contseqn; eauto. }
+  (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
+  admit. 
+Admitted.
+
 Lemma basic_step_e2a_lab e e' S' 
       (BSTEP : ESstep.t_basic e e' S S') :
   same_lab_up_to_value (Slab S') (Glab ∘ (e2a S')).
