@@ -313,6 +313,18 @@ Notation "'Gppo'" := (G.(ppo)).
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
 
+Notation "'thread_syntax' tid"  := 
+  (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+
+Notation "'thread_st' tid" := 
+  (Language.state (thread_lts tid)) (at level 10, only parsing).
+
+Notation "'thread_init_st' tid" := 
+  (Language.init (thread_lts tid)) (at level 10, only parsing).
+
+Notation "'thread_cont_st' tid" :=
+  (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+
 Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
 Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
 Notation "'hdom' k" := 
@@ -452,7 +464,6 @@ Proof.
     unfold set_union in KK. 
     destruct KK as [KK | KK].
     { eapply contwf; eauto. }
-    unfold thread_cont_st in KK.
     arewrite (st'' = st').
     { admit. }
     arewrite (thread = ES.cont_thread S k).
@@ -476,7 +487,7 @@ Proof.
     arewrite (x = (opt_ext e e')). 
     { by inversion KK. }
     arewrite (st'' = st').
-    { unfold thread_cont_st in KK. admit. }
+    { admit. }
     simpls.
     edestruct lbl_step_cases as [l [l' HH]]; eauto.
     { eapply contwf; eauto. }
@@ -617,7 +628,8 @@ Proof.
   assert (cert_graph G sc TC TC' (ES.cont_thread S q) state'') as CERTG by apply SRCC. 
 
   destruct LBL_STEP as [lbls ILBL_STEP].
-  edestruct lbl_step_cases; eauto; desf.  
+  edestruct lbl_step_cases; eauto; desf.
+  { admit. }
   { set (thread := (ES.cont_thread S q)).
     set (a := ThreadEvent thread (eindex state)).
 
