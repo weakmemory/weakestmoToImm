@@ -1,10 +1,12 @@
 Require Import Classical Peano_dec Setoid PArith.
 From hahn Require Import Hahn.
+From promising Require Import Basic.
 From imm Require Import AuxRel
      Events Execution Execution_eco imm_s_hb imm_s imm_common
+     Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
      TraversalConfig Traversal TraversalConfigAlt SimTraversal.
-Require Import AuxRel AuxDef.
+Require Import AuxRel AuxDef EventStructure.
 
 Set Implicit Arguments.
 
@@ -22,6 +24,9 @@ Notation "'C'" := (covered TC).
 Notation "'I'" := (issued TC).
 
 Notation "'E'" := G.(acts_set).
+
+Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+
 Notation "'sb'" := G.(sb).
 Notation "'rf'" := G.(rf).
 Notation "'co'" := G.(co).
@@ -67,6 +72,22 @@ Notation "'W_ex'" := G.(W_ex).
 Notation "'W_ex_acq'" := (W_ex ∩₁ (fun a => is_true (is_xacq lab a))).
 
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
+
+Lemma tid_initi prog 
+      (GPROG : program_execution prog G)
+      (PROG_NINIT : ~ (IdentMap.In tid_init prog)) : 
+  E ∩₁ Tid tid_init ⊆₁ is_init.
+Proof. 
+  clear WF sc CON TC TCCOH RELCOV. 
+  red. unfolder. 
+  intros e [EE TIDe].
+  unfold tid, is_init in *.
+  destruct e eqn:Heq; auto.
+  destruct GPROG as [HH _].
+  rewrite <- Heq in EE.
+  specialize (HH e EE).
+  desf. 
+Qed.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
 Proof.
