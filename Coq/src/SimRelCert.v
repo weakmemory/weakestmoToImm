@@ -29,9 +29,11 @@ Section SimRelCert.
   Variable q : cont_label.
   Notation "'qtid'" := (ES.cont_thread S q) (only parsing).
 
-  (* A state, which is reachable from a state in a continuation related to (h q) in S
-     and which represents a graph certification. *)
-  Variable state' : state.
+  (* A state in a continuation related to q in S. *)
+  Variable state : ProgToExecution.state.
+
+  (* A state, which is reachable from 'state' and which represents a graph certification. *)
+  Variable state' : ProgToExecution.state.
 
   Notation "'new_rf'" := (cert_rf G sc TC' qtid).
   
@@ -94,17 +96,37 @@ Section SimRelCert.
 
   Notation "'sbq_dom'" := (g □₁ ES.cont_sb_dom S q) (only parsing).
   Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
-  Notation "'hdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ NTid_ qtid) ∪₁ sbq_dom)
-                         (only parsing).
-
+  
+  Definition cert_dom state q :=
+    (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ NTid_ (ES.cont_thread S q)) ∪₁
+      state.(ProgToExecution.G).(acts_set)).
+  Notation "'hdom'" :=  (cert_dom state q) (only parsing).
+  
+  Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
+    fun l =>
+      match l with
+      | (ll, lstate) =>
+        exists (st : (thread_lts (ES.cont_thread S ll)).(Language.state)),
+          << SSTATE : lstate = st >> /\
+          << KK     : K (ll, existT _ _ st) >>
+      end.
+  
+  Lemma Kstate_spec c (st : (thread_lts (ES.cont_thread S c)).(Language.state))
+        (KK : K (c, existT _ _ st)) :
+    exists (st' : ProgToExecution.state),
+      << KST : Kstate (c, st') >> /\
+      << EQST : st = st' >>.
+  Proof.
+    exists st. splits; auto. red.
+    eexists. splits; eauto.
+  Qed.
+  
   Record simrel_cert :=
     { sim : simrel_common prog S G sc TC f;
 
       cstate_stable : stable_state qtid state';
-      cstate_reachable : 
-        forall (state : (thread_lts qtid).(Language.state))
-               (KK : K (q, existT _ _ state)),
-          (step qtid)＊ state state';
+      state_q_cont  : Kstate (q, state);
+      cstate_reachable : (step qtid)＊ state state';
 
       cert : cert_graph G sc TC TC' qtid state';
 
@@ -167,21 +189,27 @@ Section SimRelCert.
   Qed.
 
   Lemma C_in_hdom : C ⊆₁ hdom.
-  Proof. basic_solver. Qed.
+  Proof. unfold cert_dom. basic_solver. Qed.
+
+  Lemma g_cont_sb_dom_spec : g □₁ ES.cont_sb_dom S q ≡₁ state.(ProgToExecution.G).(acts_set).
+  Proof.
+  Admitted.
 
   Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
-  Proof. 
+  Proof.
+    unfold cert_dom.
     rewrite set_collect_union.
     arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
     { rewrite set_collect_compose.
-      apply fixset_set_fixpoint. 
+      apply fixset_set_fixpoint.
       apply SRC. }
-    apply set_subset_union_r2.
+    rewrite g_cont_sb_dom_spec. eauto with hahn.
   Qed.
 
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
   Proof. 
     red; split; [|basic_solver].
+    unfold cert_dom.
     rewrite !set_collect_union. 
     rewrite !set_inter_union_r.
     apply set_subset_union_l; split. 
@@ -191,18 +219,60 @@ Section SimRelCert.
     admit. 
   Admitted.
 
-  Lemma hdom_sb_prefix : Gsb ⨾ ⦗ hdom ⦘ ≡ ⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘.
+  Lemma cont_sb_dom_dom (WF : ES.Wf S) :
+    dom_rel (Ssb ;; <| ES.cont_sb_dom S q |>) ⊆₁ ES.cont_sb_dom S q.
+  Proof.
+    intros x [y SB].
+    destruct_seq_r SB as YY. red in YY. desf.
+    { exfalso. eapply ES.sb_ninit; eauto.
+      apply seq_eqv_r. eauto. }
+    red. generalize WF.(ES.sb_trans) YY SB. basic_solver 10.
+  Qed.
+
+  Lemma hdom_sb_dom (SRC : simrel_cert) :
+    dom_rel (Gsb ⨾ ⦗ hdom ⦘) ⊆₁ hdom.
+  Proof.
+    assert (tc_coherent G sc TC) as TCCOH by apply SRC.
+    intros x [y SB].
+    destruct_seq_r SB as YY.
+    set (ESB := SB).
+    destruct_seq ESB as [XE YE].
+    destruct YY as [[YY|[YY NTID]]|YY].
+    { apply C_in_hdom. eapply dom_sb_covered; eauto.
+      eexists. apply seq_eqv_r. eauto. }
+    { set (CC := SB). apply sb_tid_init in CC. desf.
+      { left. right. split. 2: by rewrite CC.
+        generalize (@sb_trans G) SB YY. basic_solver 10. }
+      apply C_in_hdom. eapply init_covered; eauto.
+      split; auto. }
+    destruct (classic (is_init x)) as [NN|NINIT].
+    { apply C_in_hdom. eapply init_covered; eauto.
+      split; auto. }
+    right.
+    destruct state_q_cont as [lstate]; auto. desf.
+    assert (wf_thread_state (ES.cont_thread S q) lstate) as WFT.
+    { eapply contwf; [by apply SRC|]. subst. apply KK. }
+    eapply acts_rep in YY; eauto. destruct YY as [yin]. desf.
+    rewrite REP in *.
+    destruct x; desf.
+    red in ESB. desf. rewrite ESB in *.
+    apply acts_clos; auto.
+    omega.
+  Qed.
+
+  Lemma hdom_sb_prefix (SRC : simrel_cert) :
+    Gsb ⨾ ⦗ hdom ⦘ ≡ ⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘.
   Proof.
     split.
     all: intros x y SB.
     2: { destruct_seq_l SB as AA. apply SB. }
     apply seq_eqv_l. split; auto.
-    destruct_seq_r SB as YY.
-  Admitted.
+    apply hdom_sb_dom; auto. red. eauto.
+  Qed.
 
   Lemma hsb (SRC : simrel_cert) : h □ (Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
   Proof.
-    rewrite hdom_sb_prefix.
+    rewrite hdom_sb_prefix; auto.
     intros x y SB. red in SB. desf.
     destruct_seq SB as [AA BB].
     assert (~ is_init y') as YNINIT.
@@ -378,9 +448,6 @@ Notation "'I'"  := (issued TC).
 
 Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
 Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
-Notation "'hdom' k" := 
-  (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNtid_ (ES.cont_thread S k)) ∪₁ (sbq_dom k))
-    (at level 1, only parsing).
 
 Variable SRC : simrel_common prog S G sc TC f.
 
@@ -424,13 +491,18 @@ Proof.
 Admitted.
 
 Lemma simrel_cert_start TC' thread
-      (TR_STEP : isim_trav_step G sc thread TC TC') : 
-  exists q state',
-    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state' ⟫.
+      (TR_STEP : isim_trav_step G sc thread TC TC') :
+  exists q state state',
+    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state state' ⟫.
 Proof.
   edestruct simrel_cert_graph_start as [q [state' HH]]; eauto.
   desf.
-  exists q. exists state'.
+  exists q.
+
+  (* TODO: return the corresponding state in 'simrel_cert_graph_start'. *)
+  eexists. 
+
+  exists state'.
   constructor; auto.
   
   Ltac narrow_hdom q CsbqDOM :=
@@ -545,14 +617,14 @@ Qed.
 
 Lemma simrel_cert_lbl_step TC' h q
       (state state' state'': (thread_lts (ES.cont_thread S q)).(Language.state))
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state state'')
       (KK : K S (q, existT _ _ state))
       (LBL_STEP : lbl_step (ES.cont_thread S q) state state')
       (CST_REACHABLE : (step (ES.cont_thread S q))＊ state' state'') :
   exists  q' S' h',
     ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
     ⟪ KK' : (ES.cont_set S') (q', existT _ _ state') ⟫ /\
-    ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state''⟫.
+    ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' q' state' state''⟫.
 Proof.
   assert (Wf G) as WF by apply SRC.
   assert (ES.Wf S) as WfS by apply SRC.
@@ -597,7 +669,10 @@ Proof.
       2: by apply aInGR.
       admit. }
 
-    assert (hdom q w) as wInHDOM.
+    assert (exists (pstate : ProgToExecution.state), pstate = state) as [pstate EQST].
+    { eexists. eauto. }
+    
+    assert (cert_dom S G TC state q w) as wInHDOM.
     { eapply new_rf_ntid_iss_sb in RFwa; try eapply SRCC.  
       destruct RFwa as [RFwa|RFwa].
       { apply seq_eqv_l in RFwa. destruct RFwa as [[NTIDw IW] RFwa].
@@ -734,7 +809,7 @@ Proof.
       (* hb_jf_not_cf *)
       { cdes ES_BSTEP_. 
         
-        assert (eq (h w) ⊆₁ h □₁ hdom q) as hwInHDOM. 
+        assert (eq (h w) ⊆₁ h □₁ cert_dom S G TC state q) as hwInHDOM. 
         { rewrite <- collect_eq.
           apply set_collect_mori; auto. 
           admit.
@@ -789,8 +864,9 @@ Proof.
           rewrite seq_incl_cross.
           { rewrite <- restr_cross, restr_relE. 
             apply SRCC.(himgNcf). }
-          { rewrite !set_collect_union.
-            basic_solver 10. }
+          { admit. }
+            (* rewrite !set_collect_union. *)
+            (* basic_solver 10. } *)
           rewrite !codom_seq.
             by rewrite codom_singl_rel. }
         
@@ -825,8 +901,9 @@ Proof.
         rewrite seq_incl_cross.
         { rewrite <- restr_cross, restr_relE. 
           apply SRCC.(himgNcf). }
-        { rewrite !set_collect_union.
-          basic_solver 10. }
+        { admit. }
+          (* rewrite !set_collect_union. *)
+          (* basic_solver 10. } *)
         rewrite !codom_seq.
         rewrite codom_singl_rel; auto. }
       
@@ -937,7 +1014,7 @@ Admitted.
 
 Lemma simrel_cert_step TC' h q state''
       (state : (thread_lts (ES.cont_thread S q)).(Language.state))
-      (SRCC : simrel_cert prog S G sc TC TC' f h q state'')
+      (SRCC : simrel_cert prog S G sc TC TC' f h q state state'')
       (KK : K S (q, existT _ _ state))
       (KNEQ : state <> state'') :
   exists (state' : (thread_lts (ES.cont_thread S q)).(Language.state)),
@@ -945,24 +1022,25 @@ Lemma simrel_cert_step TC' h q state''
 Proof.
   set (thread := (ES.cont_thread S q)).
   set (REACHABLE := KK).
-  eapply cstate_reachable in REACHABLE; [|by apply SRCC].
-  assert ((lbl_step thread)＊ state state'') as LSTEPS.
-  { apply (steps_stable_lbl_steps thread). 
-    apply restr_relE.
-    unfold restr_rel.
-    splits; auto.
-    { apply (SRC.(scont)).(contstable) in KK. auto. } 
-    apply SRCC. } 
-  apply rtE in LSTEPS.
-  destruct LSTEPS as [Tr|TCSTEP]; [ red in Tr; desf | ].
-  apply t_step_rt in TCSTEP.
-  destruct TCSTEP as [state' [STEP _]].
-  exists state'. 
-  splits; auto. 
-Qed.
+  admit.
+  (* eapply cstate_reachable in REACHABLE; [|by apply SRCC]. *)
+  (* assert ((lbl_step thread)＊ state state'') as LSTEPS. *)
+  (* { apply (steps_stable_lbl_steps thread).  *)
+  (*   apply restr_relE. *)
+  (*   unfold restr_rel. *)
+  (*   splits; auto. *)
+  (*   { apply (SRC.(scont)).(contstable) in KK. auto. }  *)
+  (*   apply SRCC. }  *)
+  (* apply rtE in LSTEPS. *)
+  (* destruct LSTEPS as [Tr|TCSTEP]; [ red in Tr; desf | ]. *)
+  (* apply t_step_rt in TCSTEP. *)
+  (* destruct TCSTEP as [state' [STEP _]]. *)
+  (* exists state'.  *)
+  (* splits; auto.  *)
+Admitted.
 
-Lemma simrel_cert_cc_dom TC' h q state'
-  (SRCC : simrel_cert prog S G sc TC TC' f h q state') :
+Lemma simrel_cert_cc_dom TC' h q state state'
+  (SRCC : simrel_cert prog S G sc TC TC' f h q state state') :
   dom_rel (Scc S ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ f □₁ I. 
 Proof. 
   admit.

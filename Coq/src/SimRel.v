@@ -389,13 +389,6 @@ Section SimRel.
         by rewrite !collect_rel_seqi, set_collect_eqv, gext_sb, gE.
     Qed.
 
-    (* TODO: it may not follow from the simulation relation. *)
-    Lemma fsb : f □ (Gsb ⨾ ⦗ fdom ⦘) ⊆ Ssb. 
-    Proof.
-      unfold collect_rel, inclusion.
-      ins. desf.
-    Admitted.
-
     Ltac g_type t H :=
       unfolder; ins; desf; erewrite t in H; [|by apply SRC]; inv H.
 
