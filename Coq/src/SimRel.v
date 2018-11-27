@@ -82,30 +82,79 @@ Section SimRel.
   Notation "'I'"  := (issued TC).
 
   Definition e2a (e : eventid) : actid :=
-    if excluded_middle_informative (SEinit e)
+    if excluded_middle_informative (Stid e = tid_init)
     then
       match Sloc e with
       | Some l => InitEvent l
       | _      => InitEvent BinNums.xH
       end
     else
-      let thread := Stid e in
-      ThreadEvent thread (ES.seqn S e).
+      ThreadEvent (Stid e) (ES.seqn S e).
 
-  Notation "'g'" := e2a. 
+  Lemma e2a_tid e : 
+    Stid e = Gtid (e2a e).
+  Proof. 
+    unfold e2a.
+    destruct (excluded_middle_informative (Stid e = tid_init)). 
+    1 : destruct (Sloc e).
+    all : by unfold tid.
+  Qed.
 
-  Lemma e2a_inj (SWF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
+  Lemma e2a_Einit 
+        (EE : e2a □₁ SE ⊆₁ GE) 
+        (EEinit : e2a □₁ Stid_ tid_init ⊆₁ is_init) :
+    e2a □₁ SEinit ⊆₁ GEinit.
+  Proof.
+    red. unfolder.
+    intros e [e' [[Ee TIDe] E2A]].
+    split; [apply EEinit | apply EE]; basic_solver.
+  Qed.
+
+  Lemma gEninit : e2a □₁ SEninit ⊆₁ set_compl is_init.
+  Proof. unfold e2a, ES.acts_ninit_set. basic_solver. Qed.
+
+  Lemma e2a_ext_sb 
+        (EE : e2a □₁ SE ⊆₁ GE) 
+        (EEinit : e2a □₁ Stid_ tid_init ⊆₁ is_init)
+        (WF : ES.Wf S) :
+    e2a □ Ssb ⊆ ext_sb.
+  Proof.
+    rewrite WF.(ES.sb_Einit_Eninit). relsf.
+    unionL.
+    { rewrite e2a_Einit, gEninit; auto.
+      etransitivity; [|by apply initninit_in_ext_sb].
+      basic_solver. }
+    unfold e2a.
+    rewrite collect_rel_if_else.
+    2,3: unfold ES.acts_ninit_set; basic_solver.
+    intros x y HH. red in HH. desf. red.
+    assert (Stid x' = Stid y') as TT.
+    { by apply WF.(ES.sb_tid). }
+    rewrite TT.
+    splits; auto.
+    eapply ES.seqn_sb_alt; auto.
+    apply seq_eqv_lr in HH; desf. 
+  Qed.
+
+  Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
     inj_dom X e2a. 
   Proof. 
     unfolder. unfold e2a. ins. 
     destruct 
-      (excluded_middle_informative (SEinit x), excluded_middle_informative (SEinit y)) 
+      (excluded_middle_informative (Stid x = tid_init), 
+       excluded_middle_informative (Stid y = tid_init)) 
     as [[INITx | nINITx]  [INITy | nINITy]].
-    { desf. 
-      { eapply SWF.(ES.init_uniq); congruence. }
+    { assert (SEinit x) as EINITx. 
+      { unfold ES.acts_init_set, set_inter.
+        split; auto. }
+      assert (SEinit y) as EINITy. 
+      { unfold ES.acts_init_set, set_inter.
+        split; auto. }
+      desf. 
+      { eapply WF.(ES.init_uniq); auto; congruence. }
       all: 
-        eapply SWF.(ES.init_lab) in INITx;
-        eapply SWF.(ES.init_lab) in INITy;
+        eapply WF.(ES.init_lab) in EINITx;
+        eapply WF.(ES.init_lab) in EINITy;
         unfold loc in *; desf. }
     1-2: desf.
     desf.
@@ -118,8 +167,18 @@ Section SimRel.
       eapply set_subset_refl. }
     { eapply ES.cf_free_subset; [|by apply CFF]. 
       basic_solver. }
-    all: basic_solver. 
+    assert (~ SEinit x) as nEINITx. 
+    { unfold ES.acts_init_set, set_inter.
+      red. intros [_ HH]. auto. }
+    assert (~ SEinit y) as nEINITy. 
+    { unfold ES.acts_init_set, set_inter.
+      red. intros [_ HH]. auto. }
+    1,3: basic_solver.
+    unfolder; splits; auto. 
+    red. intros [_ HH]. auto. 
   Qed.
+
+  Notation "'g'" := e2a. 
 
   Definition pc thread :=
     C ∩₁ Gtid_ thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
@@ -326,11 +385,14 @@ Section SimRel.
     Proof.
       unfold e2a.
       unfolder. ins. desf.
-      3: { exfalso. apply n. split; auto. }
-      2: { exfalso.
-           eapply ES.init_lab in a.
-           2: by apply SRC.
-           unfold loc in *. desf. }
+      { split; auto.
+        unfold acts_set.
+      (* 3: { exfalso. apply n. split; auto. } *)
+      (* 2: { exfalso. *)
+      (*      eapply ES.init_lab in a. *)
+      (*      2: by apply SRC. *)
+      (*      unfold loc in *. desf. } *)
+      1 : admit.
       split; auto.
       apply SRC.(finitIncl) in a.
       destruct a as [z [[AA BB] CC]].
