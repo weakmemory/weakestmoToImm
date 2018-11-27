@@ -140,7 +140,7 @@ Section SimRelCert.
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
     }.
 
-  Definition sim_add_jf (r : eventid) (S S' : ES.t) : Prop :=
+  Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=
     ⟪ RR : is_r (ES.lab S') r ⟫ /\
     exists w,
       ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
@@ -323,13 +323,6 @@ Variable SRC : simrel_common prog S G sc TC f.
 
 Hint Resolve SRC. 
 
-(* cstate_stable : stable_state qtid state'; *)
-(*       cstate_reachable :  *)
-(*         forall (state : (thread_lts qtid).(Language.state)) *)
-(*                (KK : K (q, existT _ _ state)), *)
-(*           (step qtid)＊ state state'; *)
-(*       certg : cert_graph G sc TC TC' qtid state'; *)
-
 Lemma simrel_cert_graph_start TC' thread 
       (* (NINITT : thread <> tid_init) *)
       (TR_STEP : isim_trav_step G sc thread TC TC') : 
@@ -409,6 +402,7 @@ Lemma basic_step_e2a_eq_dom e e' S'
       (BSTEP : ESstep.t_basic e e' S S') :
   eq_dom (SE S) (e2a S') (e2a S).
 Proof.
+  clear SRC f TC sc GPROG G PROG_NINIT prog. 
   cdes BSTEP; cdes BSTEP_.
   red. intros x. ins.
   unfold e2a.
@@ -428,11 +422,7 @@ Lemma basic_step_simrel_cont k k' e e' S'
       (st st' : thread_st (ES.cont_thread S k))
       (WF : ES.Wf S)
       (SRK : simrel_cont prog S G TC f)
-      (* (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') *)
-      (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-      (* (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])  *)
-      (* (LBL_CTOR : opt_same_ctor e' lbl')  *)
-  : 
+      (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') : 
   simrel_cont prog S' G TC f.
 Proof. 
   clear SRC sc.
@@ -457,7 +447,23 @@ Proof.
         [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e];
         eauto. }
     eapply SRK; eauto. }
-  { admit. }
+  { intros kk thread st'' KK. 
+    eapply ESstep.basic_step_cont_set in KK; eauto.
+    unfold set_union in KK. 
+    destruct KK as [KK | KK].
+    { eapply contwf; eauto. }
+    unfold thread_cont_st in KK.
+    arewrite (st'' = st').
+    { admit. }
+    arewrite (thread = ES.cont_thread S k).
+    { destruct (excluded_middle_informative (thread = ES.cont_thread S k)); auto.
+      exfalso. 
+      inversion KK.
+      admit. }
+    simpls. eapply wf_thread_state_steps; eauto.
+    { eapply contwf; eauto. }
+    eapply ilbl_steps_in_steps.
+    econstructor. econstructor. eauto. }
   { admit. }
   { admit. }
   { admit. }
