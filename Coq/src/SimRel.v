@@ -285,7 +285,6 @@ Section SimRel.
       tccoh : tc_coherent G sc TC;
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
       irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
-      tid_initi : GE ∩₁ GTid tid_init ⊆₁ GEinit;
       swf   : ES.Wf S;
       
       gcons : imm_consistent G sc;
@@ -296,6 +295,7 @@ Section SimRel.
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
       
       gE : g □₁ SE ⊆₁ GE;
+
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
       gew  : g □ Sew  ⊆ ⦗I⦘;

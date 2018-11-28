@@ -9,7 +9,7 @@ From imm Require Import Events Execution
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency 
-        SimRel LblStep CertRf CertGraph.
+        SimRel LblStep CertRf CertGraph ImmProperties.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
@@ -306,7 +306,7 @@ Section SimRelCert.
 
     assert (~ is_init x') as XNINIT.
     { intros XX. apply YNINIT.
-      eapply tid_initi; [by apply SRC|].
+      eapply tid_initi; eauto; [by apply SRC|].
       split; auto.
       rewrite <- CC. destruct x'; desf. }
     assert (~ SEinit (h x')) as HXNINIT.
