@@ -225,7 +225,7 @@ Section SimRel.
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       
-      glab : same_lab_up_to_value Slab (Glab ∘ g);
+      glab : same_lab_u2v Slab (Glab ∘ g);
 
       ftid : eq_dom GE (Stid ∘ f) Gtid;
 
@@ -393,19 +393,19 @@ Section SimRel.
     Qed.
 
     Ltac g_type t H :=
-      unfolder; ins; desf; erewrite t in H; [|by apply SRC]; inv H.
+      unfolder; ins; desf; eapply t in H; [|by apply same_lab_u2v_comm; apply SRC]; inv H.
 
     Lemma gW : g □₁ SW ⊆₁ GW.
-    Proof. g_type same_label_is_w H. Qed.
+    Proof. g_type same_lab_u2v_is_w H. Qed.
 
     Lemma gF : g □₁ SF ⊆₁ GF.
-    Proof. g_type same_label_is_f H. Qed.
+    Proof. g_type same_lab_u2v_is_f H. Qed.
 
     Lemma gRel : g □₁ SRel ⊆₁ GRel.
-    Proof. g_type same_label_is_rel H. Qed.
+    Proof. g_type same_lab_u2v_is_rel H. Qed.
     
     Lemma gsame_loc : g □ same_loc Slab ⊆ same_loc Glab.
-    Proof. g_type same_label_same_loc H. Qed.
+    Proof. g_type same_lab_u2v_same_loc H. Qed.
 
     Lemma grs : g □ Srs ⊆ Grs. 
     Proof. 
@@ -443,7 +443,7 @@ Section SimRel.
     Proof. generalize gtid. basic_solver. Qed.
 
     Lemma flaboth :
-          same_lab_up_to_value (Slab ∘ f) Glab.
+          same_lab_u2v (Slab ∘ f) Glab.
     Proof.
       (* TODO. It should follow from glab and definition of g. *)
     Admitted.

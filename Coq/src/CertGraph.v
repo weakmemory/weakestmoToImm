@@ -74,7 +74,7 @@ Section CertGraph.
   Record cert_graph :=
     { cslab : eq_dom ((Tid_ thread) ∩₁ (C' ∪₁ I')) certLab G.(lab);
       cuplab_cert : forall e (EE : certE e), 
-          same_label_up_to_value (certG.(lab) e) (G.(lab) e);
+          same_label_u2v (certG.(lab) e) (G.(lab) e);
       
       dcertE : certE ≡₁ E0;
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ rmw ⨾ ⦗ certE ⦘;
@@ -216,9 +216,9 @@ Section CertGraph.
     Qed.
 
     Lemma cuplab (SCG : cert_graph) :
-      same_lab_up_to_value certLab G.(lab).
+      same_lab_u2v certLab G.(lab).
     Proof.
-      unfold same_lab_up_to_value; ins. 
+      red. red. ins.
       unfold certLab. desf.
       { by apply SCG. }
       red. desf.
@@ -631,7 +631,7 @@ Proof.
     all: try rewrite SCC.
     { red. ins. unfold certLab. admit. }
     { ins.
-      eapply same_label_up_to_value_trans; eauto.
+      eapply same_label_u2v_trans; eauto.
       assert (tid e = thread) as BB.
       { red in EE. rewrite <- RACTS in EE. by apply CACTS. }
       assert (acts_set (ProgToExecution.G state'') e) as CC.
@@ -651,7 +651,7 @@ Proof.
       rewrite set_interC. unfold CertRf.E0. rewrite <- !set_interA. 
         by rewrite set_interK. }
     { admit. }
-    { erewrite same_label_same_loc; eauto.
+    { erewrite same_lab_u2v_same_loc; eauto.
       all: admit. }
     { arewrite (cert_rf G sc TC' thread ⊆
                         ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾

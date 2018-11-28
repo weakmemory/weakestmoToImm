@@ -654,8 +654,8 @@ Proof.
 
     assert (GR a) as aInGR.
     { edestruct CERTG.
-      erewrite same_label_is_r.  
-      2: { apply same_lab_up_to_value_comm. eapply cuplab; eauto. }
+      eapply same_lab_u2v_is_r.  
+      { apply same_lab_u2v_comm. eapply cuplab; eauto. }
       unfold is_r, CertGraph.certLab.
       destruct 
         (excluded_middle_informative (acts_set (ProgToExecution.G state'') a))
