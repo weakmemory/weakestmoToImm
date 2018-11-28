@@ -819,6 +819,31 @@ Proof.
 Qed.
 
 (******************************************************************************)
+(** ** basic_step : continuation propeties *)
+(******************************************************************************)
+
+Lemma basic_step_cont_set lang k k' st st' e e' S S' 
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+  K S' ≡₁ K S ∪₁ eq (CEvent (opt_ext e e'), existT _ lang st').
+Proof. 
+  cdes BSTEP_.
+  unfold ES.cont_set, set_union.
+  rewrite CONT'. 
+  split; intros kk KK;
+    [apply in_cons_iff in KK|apply in_cons_iff];
+    basic_solver.
+Qed.  
+
+Lemma basic_step_nupd_cont_set lang k k' st st' e S S' 
+      (BSTEP_ : t_basic_ lang k k' st st' e None S S') :
+  K S' ≡₁ K S ∪₁ eq (CEvent e, existT _ lang st').
+Proof. 
+  cdes BSTEP_.
+  erewrite basic_step_cont_set; eauto. 
+  by unfold opt_ext.
+Qed.  
+
+(******************************************************************************)
 (** ** Monotonocity step lemmas *)
 (******************************************************************************)
 
