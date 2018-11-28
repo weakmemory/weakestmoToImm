@@ -29,7 +29,7 @@ Section SimRel.
   Notation "'Sloc'" := (loc S.(ES.lab)).
   Notation "'K'"  := S.(ES.cont_set).
 
-  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
 
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Srmw'" := (S.(ES.rmw)).
@@ -55,13 +55,15 @@ Section SimRel.
   
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
+  Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
+
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gloc'" := (loc G.(lab)).
   Notation "'Gtid'" := (tid).
   Notation "'Grmw'" := G.(rmw).
   
-  Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
@@ -100,28 +102,47 @@ Section SimRel.
     all : by unfold tid.
   Qed.
 
+  Lemma e2a_Tid thread : 
+    e2a □₁ STid thread ⊆₁ GTid thread.
+  Proof. unfolder. ins. desf. symmetry. apply e2a_tid. Qed.
+
   Lemma e2a_Einit 
-        (EE : e2a □₁ SE ⊆₁ GE) 
-        (EEinit : e2a □₁ Stid_ tid_init ⊆₁ is_init) :
+        (EE : e2a □₁ SE ⊆₁ GE) :
     e2a □₁ SEinit ⊆₁ GEinit.
   Proof.
     red. unfolder.
     intros e [e' [[Ee TIDe] E2A]].
-    split; [apply EEinit | apply EE]; basic_solver.
+    assert (GE e) as GEe by (apply EE; basic_solver). 
+    split; auto.
+    eapply tid_initi; eauto. 
+    red; split; auto.
+    subst e. by erewrite <- e2a_tid. 
   Qed.
 
-  Lemma gEninit : e2a □₁ SEninit ⊆₁ set_compl is_init.
-  Proof. unfold e2a, ES.acts_ninit_set. basic_solver. Qed.
+  Lemma e2a_Eninit 
+        (EE : e2a □₁ SE ⊆₁ GE) : 
+    e2a □₁ SEninit ⊆₁ GEninit.
+  Proof. 
+    unfold e2a, ES.acts_ninit_set. unfolder. 
+    ins; split; desf; auto.
+    1-2: exfalso; auto. 
+    apply EE. unfolder.
+    eexists; split; eauto. 
+    unfold e2a.
+    destruct 
+      (excluded_middle_informative (Stid y = tid_init)); 
+      auto.
+    by exfalso. 
+  Qed.
 
   Lemma e2a_ext_sb 
         (EE : e2a □₁ SE ⊆₁ GE) 
-        (EEinit : e2a □₁ Stid_ tid_init ⊆₁ is_init)
         (WF : ES.Wf S) :
     e2a □ Ssb ⊆ ext_sb.
   Proof.
     rewrite WF.(ES.sb_Einit_Eninit). relsf.
     unionL.
-    { rewrite e2a_Einit, gEninit; auto.
+    { rewrite e2a_Einit, e2a_Eninit; auto.
       etransitivity; [|by apply initninit_in_ext_sb].
       basic_solver. }
     unfold e2a.
@@ -134,6 +155,16 @@ Section SimRel.
     splits; auto.
     eapply ES.seqn_sb_alt; auto.
     apply seq_eqv_lr in HH; desf. 
+  Qed.
+
+  Lemma e2a_sb 
+        (EE : e2a □₁ SE ⊆₁ GE) 
+        (WF : ES.Wf S) : 
+    e2a □ Ssb ⊆ Gsb.
+  Proof.
+    rewrite ES.sbE; [|by apply WF].
+    unfold Execution.sb.
+      by rewrite !collect_rel_seqi, set_collect_eqv, e2a_ext_sb, EE.
   Qed.
 
   Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
@@ -181,7 +212,7 @@ Section SimRel.
   Notation "'g'" := e2a. 
 
   Definition pc thread :=
-    C ∩₁ Gtid_ thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
+    C ∩₁ GTid thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
 
   Definition thread_lts (tid : thread_id) : Language.t :=
     @Language.mk
@@ -253,7 +284,7 @@ Section SimRel.
       tccoh : tc_coherent G sc TC;
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
       irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
-      tid_initi : GE ∩₁ Gtid_ tid_init ⊆₁ GEinit;
+      tid_initi : GE ∩₁ GTid tid_init ⊆₁ GEinit;
       swf   : ES.Wf S;
       
       gcons : imm_consistent G sc;
@@ -329,6 +360,16 @@ Section SimRel.
       red. eexists. splits; eauto.
     Qed.
 
+    Lemma ginjfdom : inj_dom (f □₁ fdom) g.
+    Proof. eapply e2a_inj; apply SRC. Qed.
+
+    Lemma ginjfC : inj_dom (f □₁ C) g.
+    Proof.
+      eapply inj_dom_mori; eauto.
+      2: by apply ginjfdom.
+      red. basic_solver.
+    Qed.
+
     Lemma grf : g □ Srf ≡ g □ Sjf.
     Proof.
       destruct SRC.
@@ -352,7 +393,7 @@ Section SimRel.
     Qed.
     
     Lemma sbtot_fdom thread (NINIT : thread <> tid_init) :
-      is_total (f □₁ fdom ∩₁ Stid_ thread) Ssb.
+      is_total (f □₁ fdom ∩₁ STid thread) Ssb.
     Proof.
       red. ins.
       apply NNPP. intros NN.
@@ -379,80 +420,6 @@ Section SimRel.
       red. intros [_ INITb].
       edestruct IWb as [_ INITb'].
       desf.
-    Qed.
-
-    Lemma gEinit : g □₁ SEinit ⊆₁ GEinit.
-    Proof.
-      unfold e2a.
-      unfolder. ins. desf.
-      { split; auto.
-        unfold acts_set.
-      (* 3: { exfalso. apply n. split; auto. } *)
-      (* 2: { exfalso. *)
-      (*      eapply ES.init_lab in a. *)
-      (*      2: by apply SRC. *)
-      (*      unfold loc in *. desf. } *)
-      1 : admit.
-      split; auto.
-      apply SRC.(finitIncl) in a.
-      destruct a as [z [[AA BB] CC]].
-      desf. destruct z; desf.
-      assert (Slab (f (InitEvent l0)) = Glab (InitEvent l0)) as DD.
-      { eapply SRC.(flab). left. apply SRC. split; eauto. }
-      unfold loc in *. rewrite DD in Heq.
-      rewrite wf_init_lab in Heq; [|by apply SRC].
-      inv Heq.
-    Qed.
-
-    Lemma gEninit : g □₁ SEninit ⊆₁ set_compl is_init.
-    Proof. unfold e2a, ES.acts_ninit_set. basic_solver. Qed.
-
-    Lemma gext_sb : g □ Ssb ⊆ ext_sb.
-    Proof.
-      assert (ES.Wf S) as WF by apply SRC.
-      rewrite <- WF.(ES.sb_seq_Eninit_r).
-      rewrite <- seq_id_l with (r:=Ssb).
-      rewrite <- set_compl_union_id with (s:=SEinit).
-      rewrite id_union. relsf.
-      rewrite !seqA.
-      eapply inclusion_union_l.
-      { arewrite (⦗SEinit⦘ ⨾ Ssb ⨾ ⦗SEninit⦘ ⊆ SEinit × SEninit).
-        { basic_solver. }
-        rewrite collect_rel_cross.
-        rewrite gEinit, gEninit.
-        etransitivity; [|by apply initninit_in_ext_sb].
-        basic_solver. }
-      rewrite (dom_l WF.(ES.sbE)), !seqA.
-      arewrite (⦗set_compl SEinit⦘ ⨾ ⦗SE⦘ ⊆ ⦗SEninit⦘) by basic_solver.
-      unfold e2a.
-      rewrite collect_rel_if_else.
-      2,3: unfold ES.acts_ninit_set; basic_solver.
-      intros x y HH. red in HH. desf.
-      red.
-      assert (Stid x' = Stid y') as TT.
-      { by apply WF.(ES.sb_tid). }
-      rewrite TT.
-      splits; auto.
-      destruct_seq HH as [AA BB].
-      assert (dom_rel (⦗Stid_ (Stid y')⦘ ⨾ Ssb ⨾ ⦗eq y'⦘) x') as CC.
-      { eexists. apply seq_eqv_l. split; auto.
-        apply seq_eqv_r. eauto. }
-      assert (irreflexive Ssb) as UU by (by apply ES.sb_irr).
-      apply countNatP_lt with (e:=x'); auto.
-      3: by apply AA.
-      2: { intros YY. eapply UU. generalize YY. basic_solver. }
-      intros z [v PP]. destruct_seq PP as [DD EE]; subst.
-      eexists. apply seq_eqv_l. split; auto.
-      { congruence. }
-      apply seq_eqv_r. split; [|by eauto].
-      eapply ES.sb_trans; eauto.
-    Qed.
-
-    Lemma gsb : g □ Ssb ⊆ Gsb.
-    Proof.
-      rewrite ES.sbE; [|by apply SRC].
-      unfold Execution.sb.
-        by rewrite !collect_rel_seqi, set_collect_eqv, gext_sb, gE.
     Qed.
 
     Ltac g_type t H :=
@@ -482,7 +449,7 @@ Section SimRel.
       rewrite collect_rel_cr.
       rewrite collect_rel_interi. 
       apply clos_refl_mori, inter_rel_mori. 
-      { apply gsb. }
+      { apply e2a_sb; apply SRC. }
       apply gsame_loc.
     Qed.
 
@@ -491,20 +458,11 @@ Section SimRel.
       unfold release, imm_s_hb.release. 
       rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi. 
       rewrite !set_collect_eqv.
-        by rewrite gRel, grs, gsb, gF.
+      rewrite gRel, grs, e2a_sb, gF.
+      { apply inclusion_refl. }
+      all: apply SRC.
     Qed.
  
-    Lemma gtid e : Stid e = Gtid (g e).
-    Proof.
-      assert (SEinit e -> Stid e = tid_init) as HH.
-      { admit. }
-      unfold e2a. desf; simpls.
-      all: by apply HH.
-    Admitted.
-
-    Lemma gtid_ thread : g □₁ Stid_ thread ⊆₁ Gtid_ thread.
-    Proof. generalize gtid. basic_solver. Qed.
-
     Lemma flaboth :
           same_lab_up_to_value (Slab ∘ f) Glab.
     Proof.
@@ -590,7 +548,7 @@ Section SimRel.
       rewrite dom_union.
       apply set_subset_union_l.
       split; [basic_solver|].
-      rewrite gsb.
+      rewrite e2a_sb.
       arewrite (eq e ⊆₁ C).
       { intros x HH. desf. }
       eapply dom_sb_covered; eauto.
@@ -599,21 +557,5 @@ Section SimRel.
       (* generalize CE. basic_solver. *)
     Admitted.
 
-    Lemma ginjfdom : inj_dom (f □₁ fdom) g.
-    Proof. 
-      red. intros x y [x' [AA BB]] [y' [CC DD]] HH. subst.
-      assert (g (f x') = x' /\ g (f y') = y') as [FF GG].
-      { split.
-        all: symmetry; apply SRC.(fgtrip); apply seq_eqv_l.
-        all: by split; auto; red. }
-      rewrite FF in *. rewrite GG in *. by subst.
-    Qed.
-
-    Lemma ginjfC : inj_dom (f □₁ C) g.
-    Proof.
-      eapply inj_dom_mori; eauto.
-      2: by apply ginjfdom.
-      red. basic_solver.
-    Qed.
   End Properties.
 End SimRel.
