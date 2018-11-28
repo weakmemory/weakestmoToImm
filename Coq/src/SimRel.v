@@ -187,7 +187,8 @@ Section SimRel.
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
   Record simrel_common :=
-    { gwf   : Execution.Wf G;
+    { noinitprog : ~ IdentMap.In tid_init prog;
+      gwf   : Execution.Wf G;
       gprclos : forall thread m n (LT : m < n)
                        (EE : GE (ThreadEvent thread n)),
           GE (ThreadEvent thread m);

@@ -202,12 +202,10 @@ Section SimRelCert.
     arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ ES.cont_sb_dom S q).
     2: by eauto with hahn.
     eapply contstateE; eauto.
-    { (* TODO: add the constraint '~ IdentMap.In tid_init prog' to 'simrel'. *)
-      admit. }
-    { apply SRC. }
+    1,2: by apply SRC.
     destruct state_q_cont; auto. desf.
     apply KK.
-  Admitted.
+  Qed.
 
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
   Proof. 
