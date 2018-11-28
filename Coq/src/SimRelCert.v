@@ -323,11 +323,11 @@ Section SimRelCert.
     { apply hinj in PP; auto. subst. by apply sb_irr in SB. }
     exfalso.
     eapply sb_irr. eapply sb_trans; eauto.
-    eapply gsb; [by apply SRC|].
+    eapply e2a_sb; eauto; try apply SRC. 
     do 2 eexists. splits; eauto.
     all: symmetry; eapply ghtrip; [by apply SRC|].
     all: by apply seq_eqv_l; split; auto.
-  Qed.
+  Admitted.
 
   Lemma rfeI (SRC : simrel_cert) :
     dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘).
@@ -554,11 +554,14 @@ Proof.
   cdes BSTEP; cdes BSTEP_.
   red. intros x. ins.
   unfold e2a.
-  assert ((SEinit S') x <-> (SEinit S) x) as AA.
-  { edestruct ESstep.basic_step_acts_init_set as [AA BB]; eauto. }
+  assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA.
+  { red; split; ins;
+      [ erewrite <- ESstep.basic_step_tid_eq_dom
+      | erewrite ESstep.basic_step_tid_eq_dom
+      ]; eauto. }
   assert ((Sloc S') x = (Sloc S) x) as BB.
   { eapply ESstep.basic_step_loc_eq_dom; eauto. }
-  desf; try by intuition.
+  desf; try by (exfalso; intuition).
   assert ((Stid S') x = (Stid S) x) as CC.
   { eapply ESstep.basic_step_tid_eq_dom; eauto. }
   assert (ES.seqn S' x = ES.seqn S x) as DD.
@@ -678,9 +681,13 @@ Proof.
   { exfalso; eapply ESstep.basic_step_acts_ninit_set_e; eauto. } 
   erewrite ESstep.basic_step_tid_e; eauto.  
   edestruct k; simpl.  
-  { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
+  { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. 
+    destruct (excluded_middle_informative (tid = tid_init)); auto.
+    exfalso; eapply ES.init_tid_K; eauto. }
   erewrite ESstep.basic_step_seqn_kevent; eauto. 
-  { erewrite contseqn; eauto. }
+  { erewrite contseqn; eauto. 
+    destruct (excluded_middle_informative ((Stid S) eid = tid_init)); auto.
+    exfalso; eapply ES.init_tid_K; eauto. }
   (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
   admit. 
 Admitted.
@@ -708,9 +715,9 @@ Proof.
     { eapply cert_rfD, seq_eqv_lr in NEW_RF.
       destruct NEW_RF as [HH _].
         by unfold is_w, compose in *. }
-    eapply same_lab_u2v_is_w; eauto.
+    eapply same_label_is_w; eauto.
     eapply basic_step_e2a_lab; eauto. }
-  { eapply same_lab_u2v_same_loc.
+  { eapply same_label_same_loc.
     { eapply basic_step_e2a_lab; eauto. }
     eapply cert_rfl in NEW_RF.
     assert (same_loc (Glab ∘ (e2a S')) w e) as HH.
@@ -812,7 +819,7 @@ Proof.
 
     assert (GR a) as aInGR.
     { edestruct CERTG.
-      eapply same_lab_u2v_is_r.  
+      eapply same_label_is_r.  
       { apply same_lab_u2v_comm. eapply cuplab; eauto. }
       unfold is_r, CertGraph.certLab.
       destruct 
@@ -863,7 +870,10 @@ Proof.
         erewrite ESstep.basic_step_seqn_kinit; eauto. 
         admit. }
       erewrite ESstep.basic_step_seqn_kevent; eauto. 
-      { erewrite contseqn; eauto. eapply SRC. }
+      { erewrite contseqn; eauto. 
+        2: eapply SRC. 
+        destruct (excluded_middle_informative ((Stid S) eid = tid_init)); auto.
+        exfalso; eapply ES.init_tid_K; eauto. }
       admit. }
 
     assert (e' = None) as e'NONE.
