@@ -4,7 +4,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb SimulationRel
-     CombRelations.
+     CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency LblStep
         ImmProperties.
 

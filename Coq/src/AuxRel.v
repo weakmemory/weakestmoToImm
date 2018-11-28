@@ -1,5 +1,6 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
+From imm Require Import AuxRel.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -27,9 +28,6 @@ Section AuxRel.
   end.
   
   Definition compl_rel := fun a b => ~ r a b.
-
-  Definition eq_dom := 
-    forall (x: A) (SX: s x), f x = g x. 
 
   Definition inj_dom_s :=
     forall (x y : A) (SY: s y) (EQ : f x = f y),
@@ -61,7 +59,7 @@ Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
 Hint Unfold 
      clos_sym clos_refl_sym 
-     inj_dom_s inj_dom eq_dom
+     inj_dom_s inj_dom
      img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
@@ -537,18 +535,6 @@ Proof.
   unfold inclusion, restr_rel; ins. 
   induction H; desf; splits; eauto using t_step, t_trans. 
 Qed.
-
-Lemma eq_dom_union :
-  eq_dom (s ∪₁ s') f g <-> eq_dom s f g /\ eq_dom s' f g.
-Proof. 
-  split.
-  { ins. unfold eq_dom in *. 
-    splits; ins; apply (H x); basic_solver. }
-  intros [Hs Hs'].
-  unfold eq_dom in *. ins. 
-  unfold set_union in SX. 
-  desf; basic_solver.
-Qed.  
 
 Lemma rt_dom_ri (HH : r ⊆ ⦗ s ⦘ ⨾ r) : r＊ ⨾ ⦗ s ⦘ ⊆ (r ⨾ ⦗ s ⦘)＊.
 Proof.
