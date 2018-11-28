@@ -107,15 +107,15 @@ Section SimRelCert.
       match l with
       | (ll, lstate) =>
         exists (st : (thread_lts (ES.cont_thread S ll)).(Language.state)),
-          << SSTATE : lstate = st >> /\
-          << KK     : K (ll, existT _ _ st) >>
+          ⟪ SSTATE : lstate = st ⟫ /\
+          ⟪ KK     : K (ll, existT _ _ st) ⟫
       end.
   
   Lemma Kstate_spec c (st : (thread_lts (ES.cont_thread S c)).(Language.state))
         (KK : K (c, existT _ _ st)) :
     exists (st' : ProgToExecution.state),
-      << KST : Kstate (c, st') >> /\
-      << EQST : st = st' >>.
+      ⟪ KST : Kstate (c, st') ⟫ /\
+      ⟪ EQST : st = st' ⟫.
   Proof.
     exists st. splits; auto. red.
     eexists. splits; eauto.
@@ -136,7 +136,7 @@ Section SimRelCert.
       
       hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
 
-      jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
+      jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘);
 
       hinj     : inj_dom_s hdom h;
       himg     : h □₁ hdom ⊆₁ SE;
@@ -221,7 +221,7 @@ Section SimRelCert.
   Admitted.
 
   Lemma cont_sb_dom_dom (WF : ES.Wf S) :
-    dom_rel (Ssb ;; <| ES.cont_sb_dom S q |>) ⊆₁ ES.cont_sb_dom S q.
+    dom_rel (Ssb ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ ES.cont_sb_dom S q.
   Proof.
     intros x [y SB].
     destruct_seq_r SB as YY. red in YY. desf.
@@ -330,7 +330,7 @@ Section SimRelCert.
   Qed.
 
   Lemma rfeI (SRC : simrel_cert) :
-    dom_rel Srfe ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>).
+    dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘).
   Proof.
     assert (ES.Wf S) as WF by apply SRC.
     unfold ES.rfe, ES.rf, ES.jfe.

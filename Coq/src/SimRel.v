@@ -239,7 +239,7 @@ Section SimRel.
   Record simrel :=
     { src : simrel_common;
       gE_trav : g □₁ SE ⊆₁ fdom;
-      jfefI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
+      jfefI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
 
       release_issf_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
     }.

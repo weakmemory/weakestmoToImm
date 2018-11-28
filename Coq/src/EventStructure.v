@@ -388,7 +388,7 @@ Proof.
   unfold clos_refl_sym; auto.
 Qed.
 
-Lemma cf_sb_in_cf WF : cf ;; sb ⊆ cf.
+Lemma cf_sb_in_cf WF : cf ⨾ sb ⊆ cf.
 Proof.
   intros x y [z [CF SB]].
   red. red in CF.
