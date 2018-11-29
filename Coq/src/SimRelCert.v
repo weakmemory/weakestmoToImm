@@ -369,9 +369,7 @@ Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
 Variable S : ES.t.
 Variable G  : execution.
 Variable GPROG : program_execution prog G.
-Variable sc : relation actid.
 Variable TC : trav_config.
-
 Variable f : actid -> eventid.
 
 Notation "'g'" := (e2a S).
@@ -462,94 +460,12 @@ Notation "'thread_cont_st' tid" :=
 Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
 Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
 
-Variable SRC : simrel_common prog S G sc TC f.
-
-Hint Resolve SRC. 
-
-Lemma simrel_cert_graph_start TC' thread 
-      (* (NINITT : thread <> tid_init) *)
-      (TR_STEP : isim_trav_step G sc thread TC TC') : 
-  exists k state',
-    ⟪ CERTG : cert_graph G sc TC TC' thread state' ⟫ /\
-    ⟪ kTID : ES.cont_thread S k = thread ⟫ /\
-    ⟪ CST_STABLE : stable_state thread state' ⟫ /\
-    ⟪ CST_REACHABLE : 
-        forall (state : (thread_lts thread).(Language.state))
-               (KK : K S (k, existT _ _ state)),
-          (step thread)＊ state state' ⟫. 
-Proof. 
-  edestruct cont_tid_state as [state [k HH]]; eauto. 
-  { eapply trstep_thread_prog; eauto; apply SRC. }
-  desf. 
-  edestruct cert_graph_start as [state' HH]; eauto; try by apply SRC.
-  { (* should follow from TR_STEP ??? *)
-    admit. }
-  { (* should follow from CsbqDOM *)
-    admit. }
-  desf. 
-  exists k, state'. 
-  splits; auto.  
-  ins. 
-  eapply ES.unique_K in KK;
-    [| by apply SRC | by apply QQ | auto].
-  simpls. inv KK.
-Admitted.
-
-Lemma simrel_cert_start TC' thread
-      (TR_STEP : isim_trav_step G sc thread TC TC') :
-  exists q state state',
-    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state state' ⟫.
-Proof.
-  edestruct simrel_cert_graph_start as [q [state' HH]]; eauto.
-  desf.
-  exists q.
-
-  (* TODO: return the corresponding state in 'simrel_cert_graph_start'. *)
-  eexists. 
-
-  exists state'.
-  constructor; auto.
-  
-  Ltac narrow_hdom q CsbqDOM :=
-    arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True);
-    rewrite set_inter_full_r;
-    rewrite CsbqDOM;
-    rewrite set_unionC;
-    rewrite <- set_unionA;
-    rewrite set_unionK;
-    apply SRC.
-
-  all: admit. 
-
-  (* { by narrow_hdom q CsbqDOM. } *)
-  (* { admit. } *)
-  (* { by narrow_hdom q CsbqDOM. } *)
-  (* { by narrow_hdom q CsbqDOM. } *)
-  (* { admit. } *)
-  (* { apply SRC.(ftid). }  *)
-  (* { apply SRC.(flab). } *)
-  (* { admit. } *)
-  (* { by narrow_hdom q CsbqDOM. }  *)
-  (* { admit. } *)
-  (* { admit. } *)
-  (* { admit. } *)
-  (* rewrite CsbqDOM. *)
-  (* unfold ES.cc. *)
-  (* rewrite <- restr_relE. *)
-  (* rewrite restr_inter. *)
-  (* rewrite restr_rel_mori. *)
-  (* { rewrite (restr_relE _ (Scf S)).  *)
-  (*   rewrite SRC.(fimgNcf).  *)
-  (*     by rewrite inter_false_l. }  *)
-  (* all: basic_solver. *)
-Admitted.
-
 Lemma basic_step_e2a_eq_dom e e' S'
       (WF : ES.Wf S)
       (BSTEP : ESstep.t_basic e e' S S') :
   eq_dom (SE S) (e2a S') (e2a S).
 Proof.
-  clear SRC f TC sc GPROG G PROG_NINIT prog. 
+  clear f TC. 
   cdes BSTEP; cdes BSTEP_.
   red. intros x. ins.
   unfold e2a.
@@ -575,7 +491,6 @@ Lemma basic_step_simrel_cont k k' e e' S'
       (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') : 
   simrel_cont prog S' G TC f.
 Proof. 
-  clear SRC sc.
   cdes BSTEP_.
   assert (ESstep.t_basic e e' S S') as BSTEP.
   { econstructor; eauto. }
@@ -720,7 +635,6 @@ Lemma basic_step_e2a_e k k' e e' S'
       (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
   e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)).
 Proof. 
-  clear SRC sc.  
   cdes BSTEP_.
   assert (ESstep.t_basic e e' S S') as BSTEP.
   { econstructor; eauto. }
@@ -738,6 +652,90 @@ Proof.
     exfalso; eapply ES.init_tid_K; eauto. }
   (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
   admit. 
+Admitted.
+
+Variable sc : relation actid.
+
+Variable SRC : simrel_common prog S G sc TC f.
+
+Hint Resolve SRC. 
+
+Lemma simrel_cert_graph_start TC' thread 
+      (* (NINITT : thread <> tid_init) *)
+      (TR_STEP : isim_trav_step G sc thread TC TC') : 
+  exists k state',
+    ⟪ CERTG : cert_graph G sc TC TC' thread state' ⟫ /\
+    ⟪ kTID : ES.cont_thread S k = thread ⟫ /\
+    ⟪ CST_STABLE : stable_state thread state' ⟫ /\
+    ⟪ CST_REACHABLE : 
+        forall (state : (thread_lts thread).(Language.state))
+               (KK : K S (k, existT _ _ state)),
+          (step thread)＊ state state' ⟫. 
+Proof. 
+  edestruct cont_tid_state as [state [k HH]]; eauto. 
+  { eapply trstep_thread_prog; eauto; apply SRC. }
+  desf. 
+  edestruct cert_graph_start as [state' HH]; eauto; try by apply SRC.
+  { (* should follow from TR_STEP ??? *)
+    admit. }
+  { (* should follow from CsbqDOM *)
+    admit. }
+  desf. 
+  exists k, state'. 
+  splits; auto.  
+  ins. 
+  eapply ES.unique_K in KK;
+    [| by apply SRC | by apply QQ | auto].
+  simpls. inv KK.
+Admitted.
+
+Lemma simrel_cert_start TC' thread
+      (TR_STEP : isim_trav_step G sc thread TC TC') :
+  exists q state state',
+    ⟪ SRCC : simrel_cert prog S G sc TC TC' f f q state state' ⟫.
+Proof.
+  edestruct simrel_cert_graph_start as [q [state' HH]]; eauto.
+  desf.
+  exists q.
+
+  (* TODO: return the corresponding state in 'simrel_cert_graph_start'. *)
+  eexists. 
+
+  exists state'.
+  constructor; auto.
+  
+  Ltac narrow_hdom q CsbqDOM :=
+    arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True);
+    rewrite set_inter_full_r;
+    rewrite CsbqDOM;
+    rewrite set_unionC;
+    rewrite <- set_unionA;
+    rewrite set_unionK;
+    apply SRC.
+
+  all: admit. 
+
+  (* { by narrow_hdom q CsbqDOM. } *)
+  (* { admit. } *)
+  (* { by narrow_hdom q CsbqDOM. } *)
+  (* { by narrow_hdom q CsbqDOM. } *)
+  (* { admit. } *)
+  (* { apply SRC.(ftid). }  *)
+  (* { apply SRC.(flab). } *)
+  (* { admit. } *)
+  (* { by narrow_hdom q CsbqDOM. }  *)
+  (* { admit. } *)
+  (* { admit. } *)
+  (* { admit. } *)
+  (* rewrite CsbqDOM. *)
+  (* unfold ES.cc. *)
+  (* rewrite <- restr_relE. *)
+  (* rewrite restr_inter. *)
+  (* rewrite restr_rel_mori. *)
+  (* { rewrite (restr_relE _ (Scf S)).  *)
+  (*   rewrite SRC.(fimgNcf).  *)
+  (*     by rewrite inter_false_l. }  *)
+  (* all: basic_solver. *)
 Admitted.
 
 Lemma basic_step_e2a_lab e e' S' 
