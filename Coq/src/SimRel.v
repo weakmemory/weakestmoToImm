@@ -114,17 +114,17 @@ Section SimRel.
     }.
 
   Record simrel_cont :=
-    { contlang : forall cont lang (state : lang.(Language.state))
-                        (INK : K (cont, existT _ lang state)),
-        lang = thread_lts (ES.cont_thread S cont);
+    { contlang : forall k lang (state : lang.(Language.state))
+                        (INK : K (k, existT _ lang state)),
+        lang = thread_lts (ES.cont_thread S k);
 
-      contwf : forall cont thread (state : thread_st thread)
-                        (INK : K (cont, thread_cont_st thread state)),
-          wf_thread_state thread state;
+      contwf : forall k (state : thread_st (ES.cont_thread S k))
+                        (INK : K (k, thread_cont_st (ES.cont_thread S k) state)),
+          wf_thread_state (ES.cont_thread S k) state;
 
-      contstable : forall cont thread (state : thread_st thread)
-                          (INK : K (cont, thread_cont_st thread state)), 
-          stable_state thread state;
+      contstable : forall k (state : thread_st (ES.cont_thread S k))
+                          (INK : K (k, thread_cont_st (ES.cont_thread S k) state)), 
+          stable_state (ES.cont_thread S k) state;
 
       contrun : forall thread (lprog : thread_syntax thread) 
                         (INPROG : IdentMap.find thread prog = Some lprog),
@@ -136,8 +136,8 @@ Section SimRel.
                         (INKi : K (CInit thread, thread_cont_st thread state)),
           state.(eindex) = 0;
 
-      contseqn : forall e thread (state : thread_st thread)
-                        (INKe : K (CEvent e, thread_cont_st thread state)),
+      contseqn : forall e (state : thread_st (Stid e))
+                        (INKe : K (CEvent e, thread_cont_st (Stid e) state)),
           state.(eindex) = 1 + ES.seqn S e;
 
       contpc : forall e (state : (thread_st (Gtid e)))

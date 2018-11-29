@@ -822,6 +822,18 @@ Qed.
 (** ** basic_step : continuation propeties *)
 (******************************************************************************)
 
+Lemma basic_step_cont_thread lang k st e e' S S' 
+      (BSTEP_ : t_basic e e' S S') 
+      (WF : ES.Wf S)
+      (KK : K S (k, existT _ lang st)) :
+  ES.cont_thread S' k = ES.cont_thread S k. 
+Proof. 
+  unfold ES.cont_thread.
+  destruct k; auto. 
+  eapply basic_step_tid_eq_dom; eauto.
+  eapply ES.K_inEninit; eauto.
+Qed.
+
 Lemma basic_step_cont_set lang k k' st st' e e' S S' 
       (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
   K S' ≡₁ K S ∪₁ eq (CEvent (opt_ext e e'), existT _ lang st').

@@ -252,7 +252,7 @@ Section SimRelCert.
     right.
     destruct state_q_cont as [lstate]; auto. desf.
     assert (wf_thread_state (ES.cont_thread S q) lstate) as WFT.
-    { eapply contwf; [by apply SRC|]. subst. apply KK. }
+    { eapply contwf; [by apply SRC|]. apply KK. }
     eapply acts_rep in YY; eauto. destruct YY as [yin]. desf.
     rewrite REP in *.
     destruct x; desf.
@@ -484,7 +484,6 @@ Proof.
   edestruct cert_graph_start as [state' HH]; eauto; try by apply SRC.
   { (* should follow from TR_STEP ??? *)
     admit. }
-  { eapply contwf; eauto. apply SRC. }
   { (* should follow from CsbqDOM *)
     admit. }
   desf. 
@@ -584,56 +583,90 @@ Proof.
   { unfold ES.cont_thread. desf.
     erewrite ESstep.basic_step_tid_eq_dom; eauto. 
     eapply ES.K_inEninit; eauto. }
+  assert (Stid S' (opt_ext e e') = ES.cont_thread S k) as TIDee.
+  { edestruct e'; simpl;
+      [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e];
+      eauto. }
   split.
-  { ins; eapply ESstep.basic_step_cont_set in INK; eauto.
+  { intros kk lang st'' INK.  
+    eapply ESstep.basic_step_cont_set in INK; eauto.
     unfold set_union in INK; desf.
-    { arewrite (ES.cont_thread S' cont = ES.cont_thread S cont).
-      { unfold ES.cont_thread. desf.
-        erewrite ESstep.basic_step_tid_eq_dom; eauto. 
-        eapply ES.K_inEninit; eauto. }
+    { erewrite ESstep.basic_step_cont_thread; eauto.
       by eapply SRK in INK. }
     unfold ES.cont_thread.
-    arewrite (Stid S' (opt_ext (ES.next_act S) e') = ES.cont_thread S k). 
-    { edestruct e'; simpl;
-        [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e];
-        eauto. }
+    rewrite TIDee.
     eapply SRK; eauto. }
-  { intros kk thread st'' KK. 
+  { intros kk st'' KK. 
     eapply ESstep.basic_step_cont_set in KK; eauto.
     unfold set_union in KK. 
     destruct KK as [KK | KK].
-    { eapply contwf; eauto. }
-    arewrite (st'' = st').
-    { admit. }
-    arewrite (thread = ES.cont_thread S k).
-    { destruct (excluded_middle_informative (thread = ES.cont_thread S k)); auto.
-      exfalso. 
-      inversion KK.
-      admit. }
-    simpls. eapply wf_thread_state_steps; eauto.
-    { eapply contwf; eauto. }
-    eapply ilbl_steps_in_steps.
-    econstructor. econstructor. eauto. }
-  { admit. }
-  { admit. }
-  { admit. }
-  { intros x thread st'' KK. 
-    eapply ESstep.basic_step_cont_set in KK; eauto.
-    unfold set_union in KK. destruct KK as [KK | KK].
-    { erewrite ESstep.basic_step_seqn_eq_dom; eauto.
-      { by eapply SRK. }
-      eapply ES.K_inEninit; eauto. }
-    arewrite (x = (opt_ext e e')). 
+    { erewrite ESstep.basic_step_cont_thread; eauto.
+      apply SRK.
+      erewrite <- ESstep.basic_step_cont_thread; eauto. }
+    assert (kk = CEvent (opt_ext e e')) as kkEQ.
     { by inversion KK. }
-    arewrite (st'' = st').
-    { admit. }
+    rewrite <- kkEQ in *.
+    assert (ES.cont_thread S' kk = (ES.cont_thread S k)) as Hkk.
+    { subst kk. unfold ES.cont_thread at 1. apply TIDee. }
+    rewrite Hkk in *. 
+    inversion KK as [HH].
+    apply inj_pair2 in HH. 
+    rewrite <- HH.
+    eapply wf_thread_state_steps.
+    { eapply SRK; eauto. }
+    eapply ilbl_steps_in_steps.
+    do 2 econstructor. 
+    eapply STEP. }
+  { intros kk st'' KK. 
+    eapply ESstep.basic_step_cont_set in KK; eauto.
+    unfold set_union in KK. 
+    destruct KK as [KK | KK].
+    { erewrite ESstep.basic_step_cont_thread; eauto.
+      apply SRK.
+      erewrite <- ESstep.basic_step_cont_thread; eauto. }
+    assert (kk = CEvent (opt_ext e e')) as kkEQ.
+    { by inversion KK. }
+    rewrite <- kkEQ in *.
+    assert (ES.cont_thread S' kk = (ES.cont_thread S k)) as Hkk.
+    { subst kk. unfold ES.cont_thread at 1. apply TIDee. }
+    rewrite Hkk in *. 
+    inversion KK as [HH].
+    apply inj_pair2 in HH. 
+    rewrite <- HH.
+    simpls. 
+    unfold ilbl_step in STEP.
+    apply seqA in STEP.
+    apply seq_eqv_r in STEP.
+    desf. }
+  { admit. }
+  { admit. }
+  { intros x st'' KK. 
+    eapply ESstep.basic_step_cont_set in KK; eauto.
+    unfold set_union in KK. 
+    destruct KK as [KK | KK].
+    { assert (SE S x) as SEx.
+      { eapply ES.K_inEninit; eauto. }
+      erewrite ESstep.basic_step_seqn_eq_dom; eauto.
+      eapply SRK. erewrite <- ESstep.basic_step_tid_eq_dom; eauto. }
+    assert (x = opt_ext e e') as xEQ.
+    { by inversion KK. }
+    rewrite xEQ in *. 
+    rewrite TIDee in KK. 
+    inversion KK as [HST].
+    apply inj_pair2 in HST. 
+    rewrite <- HST.
     simpls.
+    
     edestruct lbl_step_cases as [l [l' HH]]; eauto.
     { eapply contwf; eauto. }
     assert (lbl = l) as eqLBL.
-    { destruct HH as [EE _]. admit. }
+    { destruct HH as [EE _]. 
+      unfold app, opt_to_list in EE.
+      destruct lbl', l'; inversion EE; intuition. }
     assert (lbl' = l') as eqLBL'.
-    { destruct HH as [EE _]. admit. }
+    { destruct HH as [EE _]. 
+      unfold app, opt_to_list in EE.
+      destruct lbl', l'; inversion EE; intuition. }
     edestruct e'; simpl.
     { destruct HH as [_ [HH | HH]]. 
       { destruct HH as [_ [_ [_ [LBL _]]]].
@@ -662,6 +695,8 @@ Proof.
     destruct HH as [_ [_ [_ HH]]].
     destruct HH as [ordr [ordw [loc [valr [vaw [_ LBL]]]]]].
     subst l'. rewrite LBL in LABEL'. exfalso. auto. }
+  
+
   admit. 
 Admitted.  
 
