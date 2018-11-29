@@ -9,7 +9,7 @@ From imm Require Import Events Execution
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency 
-        SimRel LblStep CertRf CertGraph ImmProperties.
+        SimRel LblStep CertRf CertGraph EventToAction ImmProperties.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
@@ -202,7 +202,7 @@ Section SimRelCert.
     arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ ES.cont_sb_dom S q).
     2: by eauto with hahn.
     eapply contstateE; eauto.
-    1,2: by apply SRC.
+    { by apply SRC. }
     destruct state_q_cont; auto. desf.
     apply KK.
   Qed.
@@ -1132,6 +1132,7 @@ Proof.
     { econstructor; try by apply SRC.  
       { admit. }
       { apply ES'CONS. }
+      { admit. }
       { admit. }
       { admit. }
       (* g' □₁ SE' ⊆₁ GE *)

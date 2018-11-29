@@ -6,14 +6,13 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb SimulationRel
      CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency LblStep
-        ImmProperties.
+        EventToAction ImmProperties.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section SimRel.
   Variable prog : Prog.t.
-  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
   Variable S : ES.t.
   Variable G  : execution.
   Variable GPROG : program_execution prog G.
@@ -83,133 +82,7 @@ Section SimRel.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Definition e2a (e : eventid) : actid :=
-    if excluded_middle_informative (Stid e = tid_init)
-    then
-      match Sloc e with
-      | Some l => InitEvent l
-      | _      => InitEvent BinNums.xH
-      end
-    else
-      ThreadEvent (Stid e) (ES.seqn S e).
-
-  Lemma e2a_tid e : 
-    Stid e = Gtid (e2a e).
-  Proof. 
-    unfold e2a.
-    destruct (excluded_middle_informative (Stid e = tid_init)). 
-    1 : destruct (Sloc e).
-    all : by unfold tid.
-  Qed.
-
-  Lemma e2a_Tid thread : 
-    e2a □₁ STid thread ⊆₁ GTid thread.
-  Proof. unfolder. ins. desf. symmetry. apply e2a_tid. Qed.
-
-  Lemma e2a_Einit 
-        (EE : e2a □₁ SE ⊆₁ GE) :
-    e2a □₁ SEinit ⊆₁ GEinit.
-  Proof.
-    red. unfolder.
-    intros e [e' [[Ee TIDe] E2A]].
-    assert (GE e) as GEe by (apply EE; basic_solver). 
-    split; auto.
-    eapply tid_initi; eauto. 
-    red; split; auto.
-    subst e. by erewrite <- e2a_tid. 
-  Qed.
-
-  Lemma e2a_Eninit 
-        (EE : e2a □₁ SE ⊆₁ GE) : 
-    e2a □₁ SEninit ⊆₁ GEninit.
-  Proof. 
-    unfold e2a, ES.acts_ninit_set. unfolder. 
-    ins; split; desf; auto.
-    1-2: exfalso; auto. 
-    apply EE. unfolder.
-    eexists; split; eauto. 
-    unfold e2a.
-    destruct 
-      (excluded_middle_informative (Stid y = tid_init)); 
-      auto.
-    by exfalso. 
-  Qed.
-
-  Lemma e2a_ext_sb 
-        (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S) :
-    e2a □ Ssb ⊆ ext_sb.
-  Proof.
-    rewrite WF.(ES.sb_Einit_Eninit). relsf.
-    unionL.
-    { rewrite e2a_Einit, e2a_Eninit; auto.
-      etransitivity; [|by apply initninit_in_ext_sb].
-      basic_solver. }
-    unfold e2a.
-    rewrite collect_rel_if_else.
-    2,3: unfold ES.acts_ninit_set; basic_solver.
-    intros x y HH. red in HH. desf. red.
-    assert (Stid x' = Stid y') as TT.
-    { by apply WF.(ES.sb_tid). }
-    rewrite TT.
-    splits; auto.
-    eapply ES.seqn_sb_alt; auto.
-    apply seq_eqv_lr in HH; desf. 
-  Qed.
-
-  Lemma e2a_sb 
-        (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S) : 
-    e2a □ Ssb ⊆ Gsb.
-  Proof.
-    rewrite ES.sbE; [|by apply WF].
-    unfold Execution.sb.
-      by rewrite !collect_rel_seqi, set_collect_eqv, e2a_ext_sb, EE.
-  Qed.
-
-  Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
-    inj_dom X e2a. 
-  Proof. 
-    unfolder. unfold e2a. ins. 
-    destruct 
-      (excluded_middle_informative (Stid x = tid_init), 
-       excluded_middle_informative (Stid y = tid_init)) 
-    as [[INITx | nINITx]  [INITy | nINITy]].
-    { assert (SEinit x) as EINITx. 
-      { unfold ES.acts_init_set, set_inter.
-        split; auto. }
-      assert (SEinit y) as EINITy. 
-      { unfold ES.acts_init_set, set_inter.
-        split; auto. }
-      desf. 
-      { eapply WF.(ES.init_uniq); auto; congruence. }
-      all: 
-        eapply WF.(ES.init_lab) in EINITx;
-        eapply WF.(ES.init_lab) in EINITy;
-        unfold loc in *; desf. }
-    1-2: desf.
-    desf.
-    eapply ES.seqn_inj. 
-    { eauto. }
-    { eapply set_inter_Proper. 
-      { unfold ES.acts_ninit_set.
-        eapply set_minus_mori; [eapply XinSE|].
-        unfold flip. eauto. }
-      eapply set_subset_refl. }
-    { eapply ES.cf_free_subset; [|by apply CFF]. 
-      basic_solver. }
-    assert (~ SEinit x) as nEINITx. 
-    { unfold ES.acts_init_set, set_inter.
-      red. intros [_ HH]. auto. }
-    assert (~ SEinit y) as nEINITy. 
-    { unfold ES.acts_init_set, set_inter.
-      red. intros [_ HH]. auto. }
-    1,3: basic_solver.
-    unfolder; splits; auto. 
-    red. intros [_ HH]. auto. 
-  Qed.
-
-  Notation "'g'" := e2a. 
+  Notation "'g'" := (e2a S). 
 
   Definition pc thread :=
     C ∩₁ GTid thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
@@ -292,6 +165,7 @@ Section SimRel.
       
       scont : simrel_cont;
 
+      gffix : fixset fdom (g ∘ f);      
       fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
       
       gE : g □₁ SE ⊆₁ GE;
@@ -318,7 +192,7 @@ Section SimRel.
 
       glab : same_lab_u2v_dom SE Slab (Glab ∘ g);
 
-      ftid : eq_dom GE (Stid ∘ f) Gtid;
+      (* ftid : eq_dom GE (Stid ∘ f) Gtid; *)
 
       finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
 
@@ -466,7 +340,7 @@ Section SimRel.
       rewrite collect_rel_interi. 
       apply clos_refl_mori, inter_rel_mori. 
       { rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto. 
-        apply e2a_sb; apply SRC. }
+        eapply e2a_sb; eauto; apply SRC. }
       apply gsame_loc.
     Qed.
 
@@ -479,7 +353,7 @@ Section SimRel.
       arewrite (SE ∩₁ (fun _ : eventid => True) ⊆₁ SE) by basic_solver.
       rewrite gRel, grs, e2a_sb, gF.
       { unfold imm_s_hb.release. basic_solver 10. }
-      all: apply SRC.
+      all: eauto; apply SRC.
     Qed.
  
     Lemma flaboth :
@@ -517,7 +391,7 @@ Section SimRel.
            (* exfalso. apply NPC. clear NPC. *)
            admit. *) }
       assert (thread <> tid_init) as NTINIT.
-      { intros HH; subst. by apply PROG_NINIT. }
+      { intros HH; subst. by apply SRC. }
       assert (thread = Gtid e); subst.
       { red in PC. generalize PC. basic_solver. }
       assert (C e) as CE by apply PC.
@@ -548,8 +422,9 @@ Section SimRel.
       assert (lang = thread_lts (ES.cont_thread S (CEvent (f e)))); subst.
       { eapply contlang; eauto. }
       assert (Stid (f e) = Gtid e) as TT.
-      { rewrite <- SRC.(ftid); auto.
-        eapply coveredE; eauto. }
+      { arewrite (Stid (f e) = (Stid ∘ f) e).
+        erewrite a2e_tid; eauto. 
+        basic_solver. }
       simpls. rewrite TT in KK.
       eapply contpc in PC; eauto.
       eexists. eexists.
