@@ -66,6 +66,13 @@ Lemma opt_to_list_some (A : Type) (a : A) :
   opt_to_list (Some a) = [a].
 Proof. by unfold opt_to_list. Qed.
 
+Lemma opt_to_list_app_singl (A : Type) (a a' : A) (b b' : option A) :
+  opt_to_list b ++ [a] = opt_to_list b' ++ [a'] -> a = a /\ b = b'.
+Proof. 
+  unfold opt_to_list, app. ins.
+  destruct b, b'; inversion H; intuition.
+Qed.
+
 Lemma upd_opt_none_l (A B : Type) (f : A -> B) b : upd_opt f None b = f. 
 Proof. 
   by unfold upd_opt.

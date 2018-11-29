@@ -582,14 +582,9 @@ Proof.
     simpls.
     edestruct lbl_step_cases as [l [l' HH]]; eauto.
     { eapply contwf; eauto. }
-    assert (lbl = l) as eqLBL.
-    { destruct HH as [EE _]. 
-      unfold app, opt_to_list in EE.
-      destruct lbl', l'; inversion EE; intuition. }
-    assert (lbl' = l') as eqLBL'.
-    { destruct HH as [EE _]. 
-      unfold app, opt_to_list in EE.
-      destruct lbl', l'; inversion EE; intuition. }
+    edestruct HH as [EE _].
+    apply opt_to_list_app_singl in EE.
+    destruct EE as [eqLBL eqLBL'].
     edestruct e'; simpl.
     { destruct HH as [_ [HH | HH]]. 
       { destruct HH as [_ [_ [_ [LBL _]]]].
@@ -738,12 +733,40 @@ Proof.
   (* all: basic_solver. *)
 Admitted.
 
-Lemma basic_step_e2a_lab e e' S' 
-      (BSTEP : ESstep.t_basic e e' S S') :
-  same_lab_u2v (Slab S') (Glab ∘ (e2a S')).
+Lemma basic_step_e2a_lab k k' st st' e e' S' 
+      (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
+  same_lab_u2v_dom (SE S') (Slab S') (Glab ∘ (e2a S')).
 Proof. 
-  cdes BSTEP; cdes BSTEP_.
-  admit.
+  cdes BSTEP_.
+  assert (ESstep.t_basic e e' S S') as BSTEP.
+  { econstructor; eauto. }
+  unfold same_lab_u2v_dom.
+  intros x SEx.
+  eapply ESstep.basic_step_acts_set in SEx; eauto.
+  destruct SEx as [[SEx | SEx] | SEx].
+  { erewrite ESstep.basic_step_lab_eq_dom; eauto. 
+    unfold compose. 
+    by erewrite basic_step_e2a_eq_dom; eauto; apply SRC. }
+  { subst x.
+    arewrite ((Slab S') e = lbl).
+    { rewrite LAB'. unfold upd_opt, opt_ext in *.
+      destruct e'; desf. 
+      { rewrite updo; [|omega].
+        by rewrite upds. }
+      by rewrite upds. }
+    unfold compose.
+    erewrite basic_step_e2a_e; eauto. 
+    2-3: apply SRC.
+    edestruct lbl_step_cases as [l [l' HH]]; eauto.
+    { eapply contwf; eauto; apply SRC. }
+    { eapply STEP. }
+    destruct HH as [AA BB].
+    apply opt_to_list_app_singl in AA.
+    destruct AA as [LA LB].
+    destruct BB as [BB | BB].
+    { destruct BB as [_ [_ [LAB _]]]. 
+      admit. }
+    admit.
 Admitted.
 
 Lemma weaken_sim_add_jf TC' h q st st' e e' S' 
@@ -761,10 +784,11 @@ Proof.
     { eapply cert_rfD, seq_eqv_lr in NEW_RF.
       destruct NEW_RF as [HH _].
         by unfold is_w, compose in *. }
-    eapply same_label_is_w; eauto.
-    eapply basic_step_e2a_lab; eauto. }
+    eapply same_lab_u2v_dom_is_w; eauto.
+    eapply basic_step_e2a_lab; eauto. 
+    all: admit. }
   { eapply same_label_same_loc.
-    { eapply basic_step_e2a_lab; eauto. }
+    { admit. (* eapply basic_step_e2a_lab; eauto. *) }
     eapply cert_rfl in NEW_RF.
     assert (same_loc (Glab ∘ (e2a S')) w e) as HH.
     { by unfold same_loc, loc, compose in *. }
