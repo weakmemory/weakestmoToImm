@@ -1133,8 +1133,6 @@ Proof.
       { admit. }
       { apply ES'CONS. }
       { admit. }
-      { admit. }
-      { admit. }
       (* g' □₁ SE' ⊆₁ GE *)
       { rewrite ESstep.basic_step_nupd_acts_set; eauto.  
         rewrite set_collect_union. 

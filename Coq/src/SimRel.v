@@ -106,6 +106,13 @@ Section SimRel.
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
+  Record simrel_graph := 
+    { gprclos : forall thread m n (LT : m < n) (EE : GE (ThreadEvent thread n)),
+          GE (ThreadEvent thread m);
+      rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
+      irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
+    }.
+
   Record simrel_cont :=
     { contlang : forall cont lang (state : lang.(Language.state))
                         (INK : K (cont, existT _ lang state)),
@@ -151,23 +158,18 @@ Section SimRel.
 
   Record simrel_common :=
     { noinitprog : ~ IdentMap.In tid_init prog;
+      
       gwf   : Execution.Wf G;
-      gprclos : forall thread m n (LT : m < n)
-                       (EE : GE (ThreadEvent thread n)),
-          GE (ThreadEvent thread m);
-      tccoh : tc_coherent G sc TC;
-      rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
-      irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
       swf   : ES.Wf S;
       
       gcons : imm_consistent G sc;
       scons : @es_consistent S Weakestmo;
-      
-      scont : simrel_cont;
 
-      gffix : fixset fdom (g ∘ f);      
-      fgtrip : ⦗ fdom ⦘ ⨾ ↑ (g ∘ f) ⊆ eq;
+      tccoh : tc_coherent G sc TC;
       
+      sr_cont : simrel_cont;
+      sr_graph : simrel_graph;
+
       gE : g □₁ SE ⊆₁ GE;
 
       grmw : g □ Srmw ⊆ Grmw;
@@ -179,22 +181,21 @@ Section SimRel.
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
-      fimgNcf : ⦗ f □₁ fdom ⦘ ⨾ Scf ⨾ ⦗ f □₁ fdom ⦘ ≡ ∅₂;
+      fimgNcf : ES.cf_free S (f □₁ fdom);
       
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
+      gffix : fixset fdom (g ∘ f);
+
       finj : inj_dom_s fdom f;  
       fimg : f □₁ fdom ⊆₁ SE;
-      fimgInit : SEinit ≡₁ f □₁ GEinit;
       foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
 
       glab : same_lab_u2v_dom SE Slab (Glab ∘ g);
 
-      (* ftid : eq_dom GE (Stid ∘ f) Gtid; *)
-
-      finitIncl : S.(ES.acts_init_set) ⊆₁ f □₁ (is_init ∩₁ GE);
+      finitIncl : SEinit ⊆₁ f □₁ GEinit;
 
       vis  : f □₁ fdom ⊆₁ vis S;
     }.
@@ -373,7 +374,7 @@ Section SimRel.
       destruct (IdentMap.find thread prog) as [lprog|] eqn:AA.
       2: { apply IdentMap.Facts.in_find_iff in INP. desf. }
       destruct (classic (exists e, pc thread e)) as [[e PC]|NPC].
-      2: { edestruct (continit (scont SRC)) as [state]; eauto.
+      2: { edestruct (continit (sr_cont SRC)) as [state]; eauto.
            desf. all: admit. 
            (* eexists. eexists.
            splits; eauto.
@@ -406,8 +407,7 @@ Section SimRel.
         apply NRMW. exists (g w).
         apply SRC.(grmw).
         arewrite (e = g (f e)).
-        { apply SRC.(fgtrip). apply seq_eqv_l.
-            by split; [left|]. }
+        { symmetry. apply SRC.(gffix). basic_solver. }
         unfolder. eauto. }
       assert (~ GEinit e) as NINIT.
       { intros [BB]. unfold is_init in BB. desf. }
@@ -434,8 +434,7 @@ Section SimRel.
       rewrite collect_seq_eqv_r.
       rewrite collect_eq.
       arewrite (g (f e) = e).
-      { symmetry. apply SRC.(fgtrip).
-        apply seq_eqv_l. by split; [left|]. }
+      { apply SRC.(gffix). basic_solver. }
       rewrite crE.
       rewrite collect_rel_union.
       rewrite seq_union_l.
