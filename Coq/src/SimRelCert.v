@@ -638,8 +638,17 @@ Proof.
     apply seqA in STEP.
     apply seq_eqv_r in STEP.
     desf. }
-  { admit. }
-  { admit. }
+  { intros thread lprog INP.
+    edestruct SRK.(contrun) as [st'' [Kinit ISTEP]]; eauto.    
+    eexists; split; eauto.
+    eapply ESstep.basic_step_cont_set; eauto.
+    left. eauto. }
+  { intros thread st'' KK. 
+    eapply ESstep.basic_step_cont_set in KK; eauto.
+    unfold set_union in KK. 
+    destruct KK as [KK | KK].
+    { by eapply SRK. }
+    exfalso. inversion KK. }
   { intros x st'' KK. 
     eapply ESstep.basic_step_cont_set in KK; eauto.
     unfold set_union in KK. 
@@ -656,7 +665,6 @@ Proof.
     apply inj_pair2 in HST. 
     rewrite <- HST.
     simpls.
-    
     edestruct lbl_step_cases as [l [l' HH]]; eauto.
     { eapply contwf; eauto. }
     assert (lbl = l) as eqLBL.
@@ -695,8 +703,13 @@ Proof.
     destruct HH as [_ [_ [_ HH]]].
     destruct HH as [ordr [ordw [loc [valr [vaw [_ LBL]]]]]].
     subst l'. rewrite LBL in LABEL'. exfalso. auto. }
-  
-
+  intros a st'' PC KK. 
+  eapply ESstep.basic_step_cont_set in KK; eauto.
+  unfold set_union in KK. 
+  destruct KK as [KK | KK].
+  { eapply contpc; eauto. }
+  exfalso. 
+  (* we need property like `pc < state.eindex` *)
   admit. 
 Admitted.  
 
