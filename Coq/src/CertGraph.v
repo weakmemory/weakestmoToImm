@@ -651,7 +651,7 @@ Proof.
       rewrite set_interC. unfold CertRf.E0. rewrite <- !set_interA. 
         by rewrite set_interK. }
     { admit. }
-    { erewrite same_label_same_loc; eauto.
+    { erewrite same_lab_u2v_same_loc; eauto.
       all: admit. }
     { arewrite (cert_rf G sc TC' thread ⊆
                         ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾

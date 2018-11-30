@@ -802,7 +802,7 @@ Section SimRelCertLemmas.
       eapply same_lab_u2v_dom_is_w; eauto.
       eapply basic_step_e2a_lab; eauto. 
       all: admit. }
-    { eapply same_label_same_loc.
+    { eapply same_lab_u2v_same_loc.
       { admit. (* eapply basic_step_e2a_lab; eauto. *) }
       eapply cert_rfl in NEW_RF.
       assert (same_loc (Glab ∘ (e2a S')) w e) as HH.
@@ -905,7 +905,7 @@ Section SimRelCertLemmas.
 
       assert (GR a) as aInGR.
       { edestruct CERTG.
-        eapply same_label_is_r.  
+        eapply same_lab_u2v_is_r.  
         { apply same_lab_u2v_comm. eapply cuplab; eauto. }
         unfold is_r, CertGraph.certLab.
         destruct 
