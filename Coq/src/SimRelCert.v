@@ -378,7 +378,7 @@ Section SimRelCert.
     generalize HH RFRMW. basic_solver 40.
   Qed.
   
-  Lemma swNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb^?.
+  Lemma swNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb.
   Proof.
     assert (ES.Wf S) as WF by apply SRC.
     unfold sw.
@@ -396,11 +396,37 @@ Section SimRelCert.
     eexists. eexists. eauto.
   Qed.
 
-  Lemma hbNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
+  Lemma sbHC_dom (SRC : simrel_cert) : dom_rel (Ssb ⨾ ⦗ h □₁ C ⦘) ⊆₁ h □₁ C.
   Proof. Admitted.
 
-  Lemma hb_in_Chb_sb (SRC : simrel_cert) : Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
-  Proof. Admitted.
+  Lemma sbNCNC (SRC : simrel_cert) :
+    codom_rel (⦗ set_compl (h □₁ C) ⦘ ⨾ Ssb) ⊆₁ set_compl (h □₁ C).
+  Proof.
+    intros x [y HH]. destruct_seq_l HH as DX.
+    intros DY. apply DX.
+    apply sbHC_dom; auto. eexists. apply seq_eqv_r. eauto.
+  Qed.
+
+  Lemma hbNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
+  Proof.
+    assert (ES.Wf S) as WF by apply SRC.
+    intros x y HH. destruct_seq_l HH as DX.
+    red in HH. apply clos_trans_tn1 in HH.
+    induction HH as [y [|HH]|y z [HH|HH]]; auto.
+    { apply swNCsb; auto. by apply seq_eqv_l. }
+    all: eapply ES.sb_trans; eauto.
+    apply swNCsb; auto. apply seq_eqv_l. split; auto.
+    apply sbNCNC; auto.
+    eexists. apply seq_eqv_l. eauto.
+  Qed.
+
+  Lemma hb_in_HChb_sb (SRC : simrel_cert) : Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
+  Proof.
+    arewrite (Shb ⊆ ⦗h □₁ C ∪₁ set_compl (h □₁ C)⦘ ⨾ Shb).
+    { rewrite set_compl_union_id. by rewrite seq_id_l. }
+    rewrite id_union, seq_union_l. apply union_mori; [done|].
+    apply hbNCsb; auto.
+  Qed.
 
 End SimRelCert.
 
