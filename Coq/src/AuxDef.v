@@ -67,7 +67,7 @@ Lemma opt_to_list_some (A : Type) (a : A) :
 Proof. by unfold opt_to_list. Qed.
 
 Lemma opt_to_list_app_singl (A : Type) (a a' : A) (b b' : option A) :
-  opt_to_list b ++ [a] = opt_to_list b' ++ [a'] -> a = a /\ b = b'.
+  opt_to_list b ++ [a] = opt_to_list b' ++ [a'] -> a = a' /\ b = b'.
 Proof. 
   unfold opt_to_list, app. ins.
   destruct b, b'; inversion H; intuition.
