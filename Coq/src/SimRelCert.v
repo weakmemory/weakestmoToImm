@@ -52,6 +52,7 @@ Section SimRelCert.
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
   Notation "'Shb'" := (S.(Consistency.hb)).
+  Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Sjfe'" := (S.(ES.jfe)).
   Notation "'Srf'" := (S.(ES.rf)).
@@ -63,6 +64,9 @@ Section SimRelCert.
 
   Notation "'SR'" := (fun a => is_true (is_r Slab a)).
   Notation "'SW'" := (fun a => is_true (is_w Slab a)).
+  Notation "'SF'" := (fun a => is_true (is_f Slab a)).
+
+  Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
   
   Notation "'GE'" := G.(acts_set).
   Notation "'Glab'" := (G.(lab)).
@@ -327,7 +331,7 @@ Section SimRelCert.
     do 2 eexists. splits; eauto.
     all: symmetry; eapply ghtrip; [by apply SRC|].
     all: by apply seq_eqv_l; split; auto.
-  Admitted.
+  Qed.
 
   Lemma rfeI (SRC : simrel_cert) :
     dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘).
@@ -351,13 +355,51 @@ Section SimRelCert.
     eexists.  apply seq_eqv_r. split; [|by eauto].
     generalize WF.(ES.ew_trans) EW HH. basic_solver.
   Qed.
-  
-  (* Lemma hsw :  *)
 
-  Lemma hbNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
+  Lemma releaseNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Srelease ⊆ Ssb^?.
+  Proof.
+    assert (ES.Wf S) as WF by apply SRC.
+    unfold release at 1, rs. rewrite <- !seqA.
+    intros x y [z [HH RFRMW]].
+    apply clos_rt_rtn1 in RFRMW.
+    induction RFRMW as [|y w [u [RF RMW]]].
+    { generalize WF.(ES.sb_trans) HH. basic_solver 10. }
+    apply ES.rfi_union_rfe in RF. destruct RF as [RF|RF].
+    { apply WF.(ES.rmwi) in RMW. red in RF. 
+      generalize WF.(ES.sb_trans) IHRFRMW RF RMW. basic_solver 10. }
+    exfalso.
+    assert (~ (h □₁ C) x) as CC.
+    { generalize HH. basic_solver 10. }
+    apply CC. eapply release_issh_cov; auto.
+    assert (dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘) y) as [yy DD].
+    { apply rfeI; auto. eexists. eauto. }
+    eexists. eexists. split; eauto.
+    unfold release, rs. apply clos_rtn1_rt in RFRMW.
+    generalize HH RFRMW. basic_solver 40.
+  Qed.
+  
+  Lemma swNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb^?.
+  Proof.
+    assert (ES.Wf S) as WF by apply SRC.
+    unfold sw.
+    arewrite (⦗set_compl (h □₁ C)⦘ ⨾ Srelease ⨾ Srf ⊆ Ssb).
+    2: { generalize WF.(ES.sb_trans). basic_solver. }
+    rewrite ES.rfi_union_rfe. rewrite !seq_union_r. unionL.
+    { sin_rewrite releaseNCsb; auto. unfold ES.rfi.
+      generalize WF.(ES.sb_trans). basic_solver. }
+    intros x y HH.
+    destruct_seq_l HH as DX. exfalso. apply DX.
+    destruct HH as [z [REL RFE]].
+    eapply release_issh_cov; auto.
+    assert (dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘) z) as [zz DD].
+    { apply rfeI; auto. eexists. eauto. }
+    eexists. eexists. eauto.
+  Qed.
+
+  Lemma hbNCsb (SRC : simrel_cert) : ⦗ set_compl (h □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
   Proof. Admitted.
 
-  Lemma hb_in_Chb_sb : Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
+  Lemma hb_in_Chb_sb (SRC : simrel_cert) : Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
   Proof. Admitted.
 
 End SimRelCert.

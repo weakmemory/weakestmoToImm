@@ -67,6 +67,13 @@ Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
 Definition rfe (ES : t) := ES.(rf) \ ES.(sb).
 Definition rfi (ES : t) := ES.(rf) ∩ ES.(sb).
 
+Lemma rfi_union_rfe (ES : t) : ES.(rf) ≡ ES.(rfi) ∪ ES.(rfe).
+Proof.
+  unfold rfe, rfi. split; [|by eauto with hahn].
+  unfolder. ins. destruct (classic (sb ES x y)) as [AA|AA].
+  all: generalize H AA; basic_solver.
+Qed.
+
 Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co).
 
 Definition cont_thread S (cont : cont_label) : thread_id :=
