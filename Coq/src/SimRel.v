@@ -358,7 +358,7 @@ Section SimRel.
     Qed.
  
     Lemma flaboth :
-          same_lab_u2v_dom GE (Slab ∘ f) Glab.
+          same_lab_u2v_dom fdom (Slab ∘ f) Glab.
     Proof.
       (* TODO. It should follow from glab and definition of g. *)
     Admitted.
