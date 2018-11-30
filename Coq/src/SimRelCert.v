@@ -867,15 +867,23 @@ Section SimRelCertLemmas.
     admit. 
   Admitted.
 
-  Lemma weaken_sim_add_jf TC' h q st st' e e' S' 
-        (SRCC : simrel_cert prog S G sc TC TC' f h q st st') 
-        (BSTEP : ESstep.t_basic e e' S S') 
-        (SAJF : sim_add_jf S G sc TC TC' h q st e S') : 
+  Lemma weaken_sim_add_jf TC' h k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
+        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S') : 
     ESstep.add_jf e S S'.
   Proof. 
     cdes SAJF.
+    assert (ESstep.t_basic e e' S S') as BSTEP.
+    { econstructor. eauto. }
     assert (SE S w) as SEw.
     { eapply himg; eauto. }
+    assert (SE S' w) as SEw'.
+    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
+    assert (SE S' e) as SEe'.
+    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
     econstructor; auto. 
     exists w; splits; auto.  
     { assert (is_w (Glab ∘ (e2a S')) w) as WW.
@@ -883,14 +891,17 @@ Section SimRelCertLemmas.
         destruct NEW_RF as [HH _].
           by unfold is_w, compose in *. }
       eapply same_lab_u2v_dom_is_w; eauto.
-      eapply basic_step_e2a_lab; eauto. 
-      all: admit. }
-    { eapply same_label_same_loc.
-      { admit. (* eapply basic_step_e2a_lab; eauto. *) }
-      eapply cert_rfl in NEW_RF.
-      assert (same_loc (Glab ∘ (e2a S')) w e) as HH.
-      { by unfold same_loc, loc, compose in *. }
-        by apply HH. }
+      { eapply basic_step_e2a_lab; eauto. }
+      red; split; auto. }
+    { assert (restr_rel (SE S') (Ssame_loc S') w e) as HH.
+      { eapply same_lab_u2v_dom_same_loc.
+        { eapply basic_step_e2a_lab; eauto. }
+        apply restr_relE, seq_eqv_lr. 
+        splits; auto. 
+        eapply cert_rfl in NEW_RF.
+        by unfold same_loc, loc, compose in *. }
+      apply restr_relE, seq_eqv_lr in HH. 
+      basic_solver. }
     admit. 
   Admitted.
 
