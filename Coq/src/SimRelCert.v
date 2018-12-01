@@ -415,8 +415,16 @@ Section SimRelCert.
   
   Lemma sbHC_dom (SRC : simrel_cert) : dom_rel (Ssb ⨾ ⦗ h □₁ C ⦘) ⊆₁ h □₁ C.
   Proof.
-    (* TODO: follows from sb_hdom_in_hsb and dom_rel (Gsb ⨾ ⦗ C ⦘) ⊆ C. *)
-  Admitted.
+    rewrite <- seq_eqvK.
+    sin_rewrite C_in_hdom.
+    sin_rewrite sb_hdom_in_hsb; auto.
+    rewrite <- set_collect_eqv.
+    rewrite <- collect_rel_seq_r.
+    2: { sin_rewrite C_in_hdom. rewrite dom_eqv.
+         apply SRC. }
+    rewrite sb_covered; [|by apply SRC].
+    basic_solver.
+  Qed.
 
   Lemma sbNCNC (SRC : simrel_cert) :
     codom_rel (⦗ set_compl (h □₁ C) ⦘ ⨾ Ssb) ⊆₁ set_compl (h □₁ C).
