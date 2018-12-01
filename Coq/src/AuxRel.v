@@ -312,6 +312,14 @@ Proof.
   ins; splits; ins; splits; desf; eauto.
 Qed.
 
+Lemma collect_rel_compose (f' : A -> B) (g' : B -> C) :
+  g' □ (f' □ r) ≡ (g' ∘ f') □ r.
+Proof. 
+  unfolder. unfold compose.
+  ins; splits; ins; splits; desf; eauto.
+  do 2 eexists. splits; eauto.
+Qed.
+
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
 Proof.
   assert (forall x: A, s x -> x <> a). 
@@ -345,6 +353,33 @@ Proof.
   assert (exists y : A, s y /\ f y = f x) as HH by eauto. 
   destruct (FSUBS (f x) HH) as [y [S'y EQfxy]].
   erewrite INJ; eauto.  
+Qed.
+
+Lemma collect_rel_subset (INJ : inj_dom_s s f) : 
+  f □ restr_rel s r ⊆ f □ restr_rel s r' -> restr_rel s r ⊆ restr_rel s r'.
+Proof.   
+  unfolder in *. 
+  intros FSUBS x y SX. desf. splits; auto.
+  edestruct FSUBS.
+  { do 2 eexists. splits; eauto. }
+  desf.
+  do 2 match goal with H : f _ = f _ |- _ => apply INJ in H; auto end.
+  desf.
+Qed.
+
+Lemma collect_rel_eqdom_eq (HEQ : <| s |> ;; ↑ h ⊆ eq) :
+  h □ restr_rel s r ≡ restr_rel s r.
+Proof.
+  unfolder in *.
+  split; ins; desf.
+  2: { do 2 eexists. splits; eauto.
+       all: by symmetry; apply HEQ. }
+  set (XEQ := HEQ).
+  specialize (XEQ x' (h x')).
+  rewrite <- XEQ; [|by split].
+  specialize (HEQ y' (h y')).
+  rewrite <- HEQ; [|by split].
+  done.
 Qed.
 
 (* Note that inclusion in other direction doesn't hold.
