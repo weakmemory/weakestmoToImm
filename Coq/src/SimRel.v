@@ -15,7 +15,6 @@ Section SimRel.
   Variable prog : Prog.t.
   Variable S : ES.t.
   Variable G  : execution.
-  Variable GPROG : program_execution prog G.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable f  : actid -> eventid.
@@ -158,6 +157,7 @@ Section SimRel.
 
   Record simrel_common :=
     { noinitprog : ~ IdentMap.In tid_init prog;
+      gprog : program_execution prog G;
       
       gwf   : Execution.Wf G;
       swf   : ES.Wf S;

@@ -396,8 +396,27 @@ Section SimRelCert.
     eexists. eexists. eauto.
   Qed.
 
+  Lemma sb_hdom_dom (SRC : simrel_cert) : dom_rel (Ssb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.
+  Proof. (* TODO: most likely, we need this in simrel_cert. *) Admitted.
+
+  Lemma sb_hdom_in_hsb (SRC : simrel_cert) : Ssb ⨾ ⦗ h □₁ hdom ⦘ ⊆ h □ Gsb.
+  Proof.
+    assert (inj_dom_s hdom h) as HD by apply SRC.
+    arewrite (Ssb ⨾ ⦗ h □₁ hdom ⦘ ⊆ ⦗ h □₁ hdom ⦘ ;; Ssb ⨾ ⦗ h □₁ hdom ⦘). 
+    { intros x y HH. apply seq_eqv_l. split; auto.
+      apply sb_hdom_dom; auto. eexists. eauto. }
+    rewrite <- restr_relE.
+    rewrite <- collect_rel_eqdom_eq. 2: by apply hgtrip.
+    rewrite <- collect_rel_compose.
+    apply collect_rel_mori; auto.
+    rewrite inclusion_restr.
+    eapply e2a_sb; apply SRC.
+  Qed.
+  
   Lemma sbHC_dom (SRC : simrel_cert) : dom_rel (Ssb ⨾ ⦗ h □₁ C ⦘) ⊆₁ h □₁ C.
-  Proof. Admitted.
+  Proof.
+    (* TODO: follows from sb_hdom_in_hsb and dom_rel (Gsb ⨾ ⦗ C ⦘) ⊆ C. *)
+  Admitted.
 
   Lemma sbNCNC (SRC : simrel_cert) :
     codom_rel (⦗ set_compl (h □₁ C) ⦘ ⨾ Ssb) ⊆₁ set_compl (h □₁ C).
