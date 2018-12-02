@@ -141,6 +141,7 @@ Section SimRelCert.
       
       hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g); 
 
+      (* shouldn't it be `f □₁ I` ? *)
       jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘);
 
       hinj     : inj_dom_s hdom h;
@@ -164,6 +165,7 @@ Section SimRelCert.
       imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆
               ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ;
 
+      (* shouldn't it be `f □₁ I` ? *)
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
     }.
 
@@ -1208,7 +1210,8 @@ Section SimRelCertLemmas.
       
       assert (@es_consistent S' Weakestmo) as ES'CONS.
       { econstructor; simpl.
-        
+        all : admit. }
+      (*
         (* jf_vis *)
         { rewrite JF'. 
           apply inclusion_union_l.
@@ -1393,6 +1396,7 @@ Section SimRelCertLemmas.
           omega. }
 
         all: admit. }
+      *)
 
       exists q', S', (upd h a e).
 

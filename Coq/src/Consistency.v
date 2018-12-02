@@ -52,22 +52,41 @@ Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel'" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
+(* immediate conflict *)
+
+Definition icf : relation eventid :=
+  cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb).
+
+(* causality conflict  *)
+
 Definition cc := 
   cf ∩ (jfe ⨾ (sb ∪ jf)＊ ⨾ jfe ⨾ sb^?). 
+
+(* visible events *)
 
 Definition vis :=
   codom_rel (cc ∩ (ew ⨾ sb ⁼)).
 
 (* release sequence *)
+
 Definition rs := ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
 
 Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
 
 (* synchronizes with *)
+
 Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 
 (* happens before *)
+
 Definition hb : relation eventid := (sb ∪ sw)⁺.
+
+(* extended conflict *)
+
+Definition ecf : relation eventid := 
+  (hb⁻¹)^? ⨾ cf ⨾ hb^?.
+
+(* coherence *)
 
 Definition co_strong : relation eventid :=
   (⦗ W ⦘ ⨾ hb ⨾ ⦗ W ⦘) ∩ same_loc.
@@ -83,24 +102,24 @@ Definition mfr (m : model) : relation eventid := rf⁻¹ ⨾ mco m.
 Definition eco (m : model) : relation eventid :=
   (rf ∪ (mco m) ∪ (mfr m))⁺.
 
+(* sc order *)
+
 Definition psc (m : model) : relation eventid :=
   ⦗ Sc ⦘ ⨾ hb ⨾ eco m ⨾ hb ⨾ ⦗ Sc ⦘.
 
-(* TODO : prbly just `sb` in the second disjunct *)
-Definition cf_imm : relation eventid :=
-  cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb⁻¹).
-
 Record es_consistent {m} :=
-  { jf_vis : jf ⊆ sb ∪ vis × E;
-    hb_jf_not_cf  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂;
-    es_coherent : irreflexive (hb ⨾ (eco m)^?);
-    jf_not_cf : jf ∩ cf ≡ ∅₂;
-    jfpo_irr :
-      irreflexive (jfe ⨾ (sb ∪ jf)＊ ⨾ sb ⨾
-                   jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾
-                   (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew)));
-    labeq : dom_rel (cf_imm ∩ same_lab) ⊆₁ R;
-    labeq_jf_irr : irreflexive (jf ⨾ cf_imm ⨾ jf⁻¹ ⨾ ew^?);
+  { ecf_irf : irreflexive ecf;
+    jf_necf : jf ∩ ecf ≡ ∅₂; 
+    jfe_vis : dom_rel jfe ⊆₁ vis;
+    (* hb_jf_not_cf  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂; *)
+    coh : irreflexive (hb ⨾ (eco m)^?);
+    (* jf_not_cf : jf ∩ cf ≡ ∅₂; *)
+    (* jfpo_irr : *)
+    (*   irreflexive (jfe ⨾ (sb ∪ jf)＊ ⨾ sb ⨾ *)
+    (*                jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾ *)
+    (*                (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew))); *)
+    icf_lab : dom_rel (icf ∩ same_lab) ⊆₁ R;
+    icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew^?);
   }.
 
 (******************************************************************************)
@@ -368,15 +387,21 @@ Proof.
 Qed.
 
 (******************************************************************************)
+(** ** Alternative representations of properties *)
+(******************************************************************************)
+
+
+
+(******************************************************************************)
 (** ** Consistent rf properties *)
 (******************************************************************************)
 
 Lemma jf_in_rf : jf ⊆ rf.
 Proof.
-  unfold ES.rf.
-  generalize ESC.(jf_not_cf).
-  basic_solver.
-Qed.
+  unfold ES.rf. admit. 
+  (* generalize ESC.(jf_not_cf). *)
+  (* basic_solver. *)
+Admitted.
 
 Lemma rf_complete : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf. apply WF. Qed.
