@@ -148,7 +148,6 @@ Section SimRelCert.
       himg     : h □₁ hdom ⊆₁ SE;
       himgInit : SEinit ≡₁ h □₁ (GE ∩₁ is_init);
       hoth     : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
-      htid     : eq_dom hdom Gtid (Stid ∘ h);
 
       hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
       hlabTHRD : eq_dom sbq_dom certLab (Slab ∘ h);
@@ -182,6 +181,9 @@ Section SimRelCert.
       ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\
       ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
       ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫.
+
+  Lemma htid (SRC : simrel_cert) : eq_dom hdom (Stid ∘ h) Gtid.
+  Proof. eapply a2e_tid. eapply fixset_img_rel. eapply SRC. Qed.
 
   Lemma hgtrip (SRC : simrel_cert) : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
   Proof. 
@@ -324,7 +326,7 @@ Section SimRelCert.
     { apply seq_eqv_l. split.
       2: apply seq_eqv_r; split.
       1,3: by split.
-      do 2 (rewrite htid in CC; auto). }
+      do 2 (rewrite <- htid in CC; auto). }
     destruct_seq PP as [XX YY].
     red in PP. desf.
     { apply hinj in PP; auto. subst. by apply sb_irr in SB. }

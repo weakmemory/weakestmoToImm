@@ -284,6 +284,7 @@ Qed.
 
 Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq.
 Proof. 
+  clear.
   split; autounfold with unfolderDb.
   { ins; desf; auto. symmetry. intuition. }
   ins; desf; auto.
