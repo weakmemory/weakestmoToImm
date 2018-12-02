@@ -38,7 +38,6 @@ Section SimRel.
   Notation "'Srfe'" := (S.(ES.rfe)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
-  Notation "'Scc'" := (S.(ES.cc)).
   Notation "'Sew'" := (S.(ES.ew)).
 
   Notation "'Srs'" := (S.(Consistency.rs)).

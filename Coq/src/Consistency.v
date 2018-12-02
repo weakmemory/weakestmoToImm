@@ -11,7 +11,9 @@ Variable S : ES.t.
 
 Notation "'E'" := S.(ES.acts_set).
 Notation "'E_init'" := S.(ES.acts_init_set).
+
 Notation "'lab'" := S.(ES.lab).
+
 Notation "'sb'" := S.(ES.sb).
 Notation "'rmw'" := S.(ES.rmw).
 Notation "'ew'" := S.(ES.ew).
@@ -20,7 +22,6 @@ Notation "'rf'" := S.(ES.rf).
 Notation "'fr'" := S.(ES.fr).
 Notation "'co'" := S.(ES.co).
 Notation "'cf'" := S.(ES.cf).
-Notation "'cc'" := S.(ES.cc).
 
 Notation "'jfe'" := S.(ES.jfe).
 Notation "'rfe'" := S.(ES.rfe).
@@ -32,6 +33,8 @@ Notation "'coi'" := S.(ES.coi).
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
 Notation "'mod'" := (mod lab).
+
+Notation "'same_lab'" := S.(ES.same_lab).
 Notation "'same_loc'" := (same_loc lab).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
@@ -49,7 +52,8 @@ Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel'" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-Definition same_lab x y := lab x = lab y.
+Definition cc := 
+  cf ∩ (jfe ⨾ (sb ∪ jf)＊ ⨾ jfe ⨾ sb^?). 
 
 Definition vis :=
   codom_rel (cc ∩ (ew ⨾ sb ⁼)).

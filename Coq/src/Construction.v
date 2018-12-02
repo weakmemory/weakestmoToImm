@@ -26,7 +26,6 @@ Notation "'jf' S" := S.(ES.jf) (at level 10).
 Notation "'rf' S" := S.(ES.rf) (at level 10).
 Notation "'co' S" := S.(ES.co) (at level 10).
 Notation "'cf' S" := S.(ES.cf) (at level 10).
-Notation "'cc' S" := S.(ES.cc) (at level 10).
 
 Notation "'jfe' S" := S.(ES.jfe) (at level 10).
 Notation "'rfe' S" := S.(ES.rfe) (at level 10).
@@ -915,9 +914,9 @@ Qed.
 Lemma step_cc_mon e e' S S'
       (BSTEP : t_basic e e' S S')
       (STEP_: t_ e e' S S') (wfE: ES.Wf S) :
-  S.(ES.cc) ⊆ S'.(ES.cc).
+  cc S ⊆ cc S'.
 Proof.
-  unfold ES.cc. 
+  unfold cc. 
   eauto 20 using
         inclusion_union_mon, inclusion_inter_mon, inclusion_seq_mon, clos_refl_trans_mon,
         step_sb_mon, step_cf_mon, step_jf_mon, step_jfe_mon,

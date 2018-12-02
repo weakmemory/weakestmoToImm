@@ -41,40 +41,39 @@ Record t :=
                       lang.(Language.state) });
      }.
 
-Definition acts_set (ES : t) := fun x => x < ES.(next_act).
-Definition acts_init_set (ES : t) :=
-  ES.(acts_set) ∩₁ (fun x => ES.(tid) x = tid_init).
-Definition acts_ninit_set (ES : t) := ES.(acts_set) \₁ ES.(acts_init_set).
-Definition cont_set (ES : t) := fun x => In x ES.(cont).
+Definition acts_set (S : t) := fun x => x < S.(next_act).
+Definition acts_init_set (S : t) :=
+  S.(acts_set) ∩₁ (fun x => S.(tid) x = tid_init).
+Definition acts_ninit_set (S : t) := S.(acts_set) \₁ S.(acts_init_set).
 
-Definition same_tid (ES : t) := fun x y => ES.(tid) x = ES.(tid) y.
+Definition cont_set (S : t) := fun x => In x S.(cont).
 
-Definition jfe (ES : t) := ES.(jf) \ ES.(sb).
-Definition coe (ES : t) := ES.(co) \ ES.(sb).
-Definition jfi (ES : t) := ES.(jf) ∩ ES.(sb).
-Definition coi (ES : t) := ES.(co) ∩ ES.(sb).
+Definition same_tid (S : t) := fun x y => S.(tid) x = S.(tid) y.
+Definition same_lab (S : t) := fun x y => S.(lab) x = S.(lab) y.
 
-Definition cf (ES : t) :=
-  ⦗ ES.(acts_ninit_set) ⦘ ⨾ (ES.(same_tid) \ (ES.(sb)⁼)) ⨾ ⦗ ES.(acts_ninit_set) ⦘.
+Definition jfe (S : t) := S.(jf) \ S.(sb).
+Definition coe (S : t) := S.(co) \ S.(sb).
+Definition jfi (S : t) := S.(jf) ∩ S.(sb).
+Definition coi (S : t) := S.(co) ∩ S.(sb).
 
-Definition cf_free S X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
+Definition cf (S : t) :=
+  ⦗ S.(acts_ninit_set) ⦘ ⨾ (S.(same_tid) \ (S.(sb)⁼)) ⨾ ⦗ S.(acts_ninit_set) ⦘.
 
-Definition cc (ES : t) := 
-  ES.(cf) ∩ (ES.(jfe) ⨾ (ES.(sb) ∪ ES.(jf))＊ ⨾ ES.(jfe) ⨾ ES.(sb)^?). 
+Definition cf_free (S : t) X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
 
-Definition rf (ES : t) := ES.(ew)^? ⨾ ES.(jf) \ ES.(cf).
+Definition rf (S : t) := S.(ew)^? ⨾ S.(jf) \ S.(cf).
 
-Definition rfe (ES : t) := ES.(rf) \ ES.(sb).
-Definition rfi (ES : t) := ES.(rf) ∩ ES.(sb).
+Definition rfe (S : t) := S.(rf) \ S.(sb).
+Definition rfi (S : t) := S.(rf) ∩ S.(sb).
 
-Lemma rfi_union_rfe (ES : t) : ES.(rf) ≡ ES.(rfi) ∪ ES.(rfe).
+Lemma rfi_union_rfe (S : t) : S.(rf) ≡ S.(rfi) ∪ S.(rfe).
 Proof.
   unfold rfe, rfi. split; [|by eauto with hahn].
-  unfolder. ins. destruct (classic (sb ES x y)) as [AA|AA].
+  unfolder. ins. destruct (classic (sb S x y)) as [AA|AA].
   all: generalize H AA; basic_solver.
 Qed.
 
-Definition fr (ES : t) := ES.(rf)⁻¹ ⨾ ES.(co).
+Definition fr (S : t) := S.(rf)⁻¹ ⨾ S.(co).
 
 Definition cont_thread S (cont : cont_label) : thread_id :=
   match cont with

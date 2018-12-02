@@ -51,16 +51,17 @@ Section SimRelCert.
 
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
-  Notation "'Shb'" := (S.(Consistency.hb)).
-  Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Sjfe'" := (S.(ES.jfe)).
   Notation "'Srf'" := (S.(ES.rf)).
   Notation "'Srfe'" := (S.(ES.rfe)).
   Notation "'Sco'" := (S.(ES.co)).
   Notation "'Scf'" := (S.(ES.cf)).
-  Notation "'Scc'" := (S.(ES.cc)).
   Notation "'Sew'" := (S.(ES.ew)).
+
+  Notation "'Scc'" := (S.(cc)).
+  Notation "'Ssw'" := (S.(sw)).
+  Notation "'Shb'" := (S.(hb)).
 
   Notation "'SR'" := (fun a => is_true (is_r Slab a)).
   Notation "'SW'" := (fun a => is_true (is_w Slab a)).
@@ -479,7 +480,6 @@ Notation "'Sjf' S" := S.(ES.jf) (at level 10).
 Notation "'Srf' S" := S.(ES.rf) (at level 10).
 Notation "'Sco' S" := S.(ES.co) (at level 10).
 Notation "'Scf' S" := S.(ES.cf) (at level 10).
-Notation "'Scc' S" := S.(ES.cc) (at level 10).
 
 Notation "'Sjfe' S" := S.(ES.jfe) (at level 10).
 Notation "'Srfe' S" := S.(ES.rfe) (at level 10).
@@ -488,6 +488,7 @@ Notation "'Sjfi' S" := S.(ES.jfi) (at level 10).
 Notation "'Srfi' S" := S.(ES.rfi) (at level 10).
 Notation "'Scoi' S" := S.(ES.coi) (at level 10).
 
+Notation "'Scc' S" := S.(cc) (at level 10).
 Notation "'Ssw' S" := S.(sw) (at level 10).
 Notation "'Shb' S" := S.(hb) (at level 10).
 
