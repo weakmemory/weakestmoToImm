@@ -1024,7 +1024,7 @@ Section SimRelCertLemmas.
     desf; apply ACTS; basic_solver.    
   Qed.
 
-  Lemma basic_step_e2a_lab TC' h k k' e e' S' 
+  Lemma basic_step_e2a_same_lab_u2v TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') 
