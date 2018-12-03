@@ -113,7 +113,6 @@ Record es_consistent {m} :=
     jfe_vis : dom_rel jfe ⊆₁ vis;
     (* hb_jf_not_cf  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂; *)
     coh : irreflexive (hb ⨾ (eco m)^?);
-    (* jf_not_cf : jf ∩ cf ≡ ∅₂; *)
     (* jfpo_irr : *)
     (*   irreflexive (jfe ⨾ (sb ∪ jf)＊ ⨾ sb ⨾ *)
     (*                jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾ *)
@@ -134,6 +133,19 @@ Variable ESC : @es_consistent m.
 (******************************************************************************)
 (** ** Basic properties *)
 (******************************************************************************)
+
+Lemma cf_in_ecf : cf ⊆ ecf.
+Proof.
+  unfold ecf. rewrite !crE, !seq_union_l, !seq_union_r.
+  repeat unionR left. basic_solver 10.
+Qed.
+
+Lemma jf_not_cf : jf ∩ cf ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  sin_rewrite cf_in_ecf.
+  apply ESC.
+Qed.
 
 Lemma hb_trans : transitive hb.
 Proof. vauto. Qed.
@@ -398,10 +410,10 @@ Qed.
 
 Lemma jf_in_rf : jf ⊆ rf.
 Proof.
-  unfold ES.rf. admit. 
-  (* generalize ESC.(jf_not_cf). *)
-  (* basic_solver. *)
-Admitted.
+  unfold ES.rf.
+  generalize jf_not_cf.
+  basic_solver.
+Qed.
 
 Lemma rf_complete : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf. apply WF. Qed.
