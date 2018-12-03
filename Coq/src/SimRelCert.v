@@ -507,8 +507,6 @@ Notation "'SAcq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'SAcqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'SSc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-Notation "'Ssame_loc' S" := (same_loc S.(ES.lab)) (at level 10).
-Notation "'Ssame_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
@@ -1024,6 +1022,22 @@ Section SimRelCertLemmas.
     desf; apply ACTS; basic_solver.    
   Qed.
 
+  Lemma basic_step_e2a_certlab_e TC' h k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     Slab S' e = certLab G st'' (e2a S' e).
+  Proof. 
+    unfold certLab.
+    destruct 
+      (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S' e))) as [GCE | nGCE].
+    2 : { exfalso. apply nGCE. 
+          eapply dcertE; [apply SRCC|].
+          eapply basic_step_e2a_E0_e; eauto. }
+    eapply basic_step_e2a_lab_e; eauto.
+  Qed.
+
   Lemma basic_step_e2a_same_lab_u2v TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
@@ -1081,17 +1095,47 @@ Section SimRelCertLemmas.
         destruct NEW_RF as [HH _].
           by unfold is_w, compose in *. }
       eapply same_lab_u2v_dom_is_w; eauto.
-      { eapply basic_step_e2a_lab; eauto. }
+      { eapply basic_step_e2a_same_lab_u2v; eauto. }
       red; split; auto. }
-    { assert (restr_rel (SE S') (Ssame_loc S') w e) as HH.
+    { assert (restr_rel (SE S') (same_loc (Slab S')) w e) as HH.
       { eapply same_lab_u2v_dom_same_loc.
-        { eapply basic_step_e2a_lab; eauto. }
+        { eapply basic_step_e2a_same_lab_u2v; eauto. }
         apply restr_relE, seq_eqv_lr. 
         splits; auto. 
         eapply cert_rfl in NEW_RF.
         by unfold same_loc, loc, compose in *. }
       apply restr_relE, seq_eqv_lr in HH. 
       basic_solver. }
+    assert (same_val (certLab G st'') (e2a S' w) (e2a S' e)) as SAME_VAL.
+    { eapply new_rfv; eauto. apply SRCC. }
+    unfold same_val, val in *.
+    erewrite basic_step_e2a_certlab_e with (e := e); eauto.
+    arewrite (Slab S' w = Slab S w).
+    { erewrite ESstep.basic_step_lab_eq_dom; eauto. }
+    assert (e2a S w = e2a S' w) as E2Aw. 
+    { symmetry. eapply basic_step_e2a_eq_dom; eauto. apply SRCC. }
+    rewrite <- E2Aw in *.
+    eapply new_rf_ntid_iss_sb in NEW_RF. 
+    2-6: apply SRCC.
+    unfolder in wHDOM. destruct wHDOM as [wa [CERTwa Hwa]].
+    assert (g w = wa) as Gwwa.
+    { rewrite <- Hwa. symmetry.
+      eapply ghtrip; [apply SRCC|].
+      unfolder. basic_solver. }
+    arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
+    destruct NEW_RF as [Iss | SB].
+    { assert (I wa) as Iw.
+      { apply seq_eqv_l in Iss. unfolder in Iss. rewrite <- Gwwa. basic_solver. }
+      arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
+      unfold certLab.
+      destruct 
+        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (g w))) as [GCE | nGCE].
+      { admit. }
+      rewrite <- Hwa.
+      arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
+      symmetry. rewrite Hwa, Gwwa. eapply hlabCI; [apply SRCC|].
+      basic_solver. }
+    
     admit. 
   Admitted.
 
