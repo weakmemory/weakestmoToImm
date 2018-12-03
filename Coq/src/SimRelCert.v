@@ -551,6 +551,9 @@ Notation "'thread_init_st' tid" :=
 Notation "'thread_cont_st' tid" :=
   (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
+Notation "'cont_lang'" :=
+  (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
+
 Notation "'sbq_dom' k" := (g □₁ ES.cont_sb_dom S k) (at level 1, only parsing).
 
 Section EventToActionLemmas.
@@ -596,7 +599,7 @@ Section SimRelContLemmas.
 
   Lemma basic_step_simrel_cont k k' e e' S'
         (st st' : thread_st (ES.cont_thread S k))
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') : 
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
     simrel_cont prog S' G TC f.
   Proof. 
     cdes BSTEP_.
@@ -729,7 +732,7 @@ Section SimRelContLemmas.
 
   Lemma basic_step_e2a_e k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') :
     e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)).
   Proof. 
     cdes BSTEP_.
@@ -752,7 +755,7 @@ Section SimRelContLemmas.
 
   Lemma basic_step_e2a_e' k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e (Some e') S S') :
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S') :
     e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)).
   Proof. 
     cdes BSTEP_.
@@ -869,13 +872,13 @@ Section SimRelCertLemmas.
   Lemma basic_step_e2a_E0_e TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
      E0 G TC' (ES.cont_thread S k) (e2a S' e).
   Proof. 
-    cdes BSTEP_.
+    cdes BSTEP_. simpl in BSTEP_.
     eapply dcertE; [apply SRCC|].
-    erewrite basic_step_e2a_e; eauto. 
+    erewrite basic_step_e2a_e; eauto using BSTEP_. 
     2-3 : eapply SRCC.
     eapply preserve_event.
     { eapply ilbl_steps_in_steps; eauto. }
@@ -888,11 +891,11 @@ Section SimRelCertLemmas.
   Lemma basic_step_e2a_E0_e' TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e (Some e') S S')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
      E0 G TC' (ES.cont_thread S k) (e2a S' e').
   Proof. 
-    cdes BSTEP_.
+    cdes BSTEP_. simpl in BSTEP_.
     eapply dcertE; [apply SRCC|].
     erewrite basic_step_e2a_e'; eauto. 
     2-3 : eapply SRCC.
@@ -907,11 +910,11 @@ Section SimRelCertLemmas.
   Lemma basic_step_e2a_GE_e TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
      GE (e2a S' e).
   Proof. 
-    cdes BSTEP_.
+    cdes BSTEP_. 
     eapply E0_in_E. 
     { eapply sim_trav_step_coherence; [econstructor|]; eapply SRCC. }
     eapply basic_step_e2a_E0_e; eauto.
@@ -920,7 +923,7 @@ Section SimRelCertLemmas.
   Lemma basic_step_e2a_GE_e' TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e (Some e') S S')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
      GE (e2a S' e').
   Proof. 
@@ -933,11 +936,11 @@ Section SimRelCertLemmas.
   Lemma basic_step_e2a_lab TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
     same_lab_u2v_dom (SE S') (Slab S') (Glab ∘ (e2a S')).
   Proof. 
-    cdes BSTEP_.
+    cdes BSTEP_. simpl in BSTEP_.
     
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor; eauto. }
