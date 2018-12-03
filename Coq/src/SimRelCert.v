@@ -933,6 +933,97 @@ Section SimRelCertLemmas.
     eapply basic_step_e2a_E0_e'; eauto.
   Qed.
 
+  Lemma basic_step_e2a_lab_e TC' h k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     Slab S' e = lab (ProgToExecution.G st'') (e2a S' e).
+  Proof. 
+    cdes BSTEP_. simpl in BSTEP_.
+    assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
+    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e; eauto. }
+    assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
+    { eapply wf_thread_state_steps.
+      { eapply SRCC; eauto. }
+      eapply ilbl_steps_in_steps.
+      do 2 econstructor. eapply STEP. }
+    arewrite ((Slab S') e = lbl).
+    { rewrite LAB'. unfold upd_opt, opt_ext in *.
+      destruct e'; desf. 
+      { rewrite updo; [|omega].
+          by rewrite upds. }
+        by rewrite upds. }
+    edestruct lbl_step_cases as [l [l' HH]]. 
+    { eapply SRCC; eauto. }
+    { eapply STEP. }
+    destruct HH as [AA BB].
+    apply opt_to_list_app_singl in AA.
+    destruct AA as [LA LB].
+    subst l l'.
+    erewrite steps_preserve_lab.    
+    { erewrite basic_step_e2a_e.
+        2-4 : eauto; apply SRCC.
+        destruct BB as [BB | BB].
+        { destruct BB as [_ [ACTS [LAB _]]]. 
+          rewrite LAB. by rewrite upds. }
+        destruct BB as [_ [ACTS [LAB HH]]].
+        desf. rewrite LAB.
+        unfold upd_opt.
+        rewrite updo. 
+        { rewrite upds. basic_solver. }
+        red. intros HH. inversion HH. omega. }
+    { by rewrite GTIDe. }
+    { apply ilbl_steps_in_steps. 
+      by rewrite GTIDe. }    
+    erewrite basic_step_e2a_e.
+    2-4 : eauto; apply SRCC.
+    desf; apply ACTS; basic_solver.    
+  Qed.
+
+  Lemma basic_step_e2a_lab_e' TC' h k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     Slab S' e' = lab (ProgToExecution.G st'') (e2a S' e').
+  Proof. 
+    cdes BSTEP_. simpl in BSTEP_.
+    assert (Gtid (e2a S' e') = ES.cont_thread S k) as GTIDe.
+    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e'; eauto. }
+    assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
+    { eapply wf_thread_state_steps.
+      { eapply SRCC; eauto. }
+      eapply ilbl_steps_in_steps.
+      do 2 econstructor. eapply STEP. }
+    destruct lbl' as [lbl' | ].
+    2 : { by unfold opt_same_ctor in LABEL'. }
+    arewrite ((Slab S') e' = lbl').
+    { rewrite LAB'. unfold upd_opt, opt_ext in *.
+      by rewrite upds. }
+    edestruct lbl_step_cases as [l [l' HH]]. 
+    { eapply SRCC; eauto. }
+    { eapply STEP. }
+    destruct HH as [AA BB].
+    apply opt_to_list_app_singl in AA.
+    destruct AA as [LA LB].
+    subst l l'.
+    destruct BB as [BB | BB]; [desf|].
+    erewrite steps_preserve_lab.    
+    { erewrite basic_step_e2a_e'.
+        2-4 : eauto; apply SRCC.
+        destruct BB as [_ [ACTS [LAB HH]]].
+        desf. rewrite LAB.
+        unfold upd_opt.
+        by rewrite upds. }
+    { by rewrite GTIDe. }
+    { apply ilbl_steps_in_steps. 
+      by rewrite GTIDe. }    
+    erewrite basic_step_e2a_e'.
+    2-4 : eauto; apply SRCC.
+    desf; apply ACTS; basic_solver.    
+  Qed.
+
   Lemma basic_step_e2a_lab TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
@@ -941,19 +1032,8 @@ Section SimRelCertLemmas.
     same_lab_u2v_dom (SE S') (Slab S') (Glab ∘ (e2a S')).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
-    
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor; eauto. }
-    
-    assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
-    { eapply wf_thread_state_steps.
-      { eapply SRCC; eauto. }
-      eapply ilbl_steps_in_steps.
-      do 2 econstructor. eapply STEP. }
-    
-    assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
-    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e; eauto. }
-
     unfold same_lab_u2v_dom.
     intros x SEx.
     eapply ESstep.basic_step_acts_set in SEx; eauto.
@@ -962,68 +1042,20 @@ Section SimRelCertLemmas.
       unfold compose. 
         by erewrite basic_step_e2a_eq_dom; eauto; apply SRCC. }
     { subst x.
-      arewrite ((Slab S') e = lbl).
-      { rewrite LAB'. unfold upd_opt, opt_ext in *.
-        destruct e'; desf. 
-        { rewrite updo; [|omega].
-            by rewrite upds. }
-          by rewrite upds. }
+      erewrite basic_step_e2a_lab_e; eauto.
       unfold compose. 
-      edestruct lbl_step_cases as [l [l' HH]]. 
-      { eapply SRCC; eauto. }
-      { eapply STEP. }
-      destruct HH as [AA BB].
-      apply opt_to_list_app_singl in AA.
-      destruct AA as [LA LB].
-      subst l l'.
-      eapply same_label_u2v_trans.
-      2 : { eapply cuplab_cert; [|eapply dcertE]. 
-              1-2 : apply SRCC.
-              eapply basic_step_e2a_E0_e; eauto. }
-      erewrite steps_preserve_lab.
-      { erewrite basic_step_e2a_e.
-        2-4 : eauto; apply SRCC.
-        destruct BB as [BB | BB].
-        { destruct BB as [_ [ACTS [LAB _]]]. 
-          rewrite LAB.
-          rewrite upds. unfold same_label_u2v. desf. }
-        destruct BB as [_ [ACTS [LAB HH]]].
-        desf. rewrite LAB.
-        unfold upd_opt.
-        rewrite updo. 
-        { rewrite upds. basic_solver. }
-        red. intros HH. inversion HH. omega. }
-      { by rewrite GTIDe. }
-      { apply ilbl_steps_in_steps. 
-        by rewrite GTIDe. }
-      erewrite basic_step_e2a_e.
-      2-4 : eauto; apply SRCC.
-      desf; apply ACTS; basic_solver. }
-
+      eapply cuplab_cert; [|eapply dcertE].
+      1-2 : apply SRCC.
+      eapply basic_step_e2a_E0_e; eauto. }
     destruct e' as [e' | ].
     2 : { exfalso. by unfold eq_opt in SEx. }
     unfold eq_opt in SEx. subst x.
-    destruct lbl' as [lbl' | ].
-    2 : { exfalso. by unfold opt_same_ctor in LABEL'. }
-    arewrite ((Slab S') e' = lbl').
-    { rewrite LAB'. unfold upd_opt, opt_ext in *.
-        by rewrite upds. }
+    erewrite basic_step_e2a_lab_e'; eauto.
     unfold compose. 
-    edestruct lbl_step_cases as [l [l' HH]]. 
-    { eapply SRCC; eauto. }
-    { eapply STEP. }
-    destruct HH as [AA BB].
-    apply opt_to_list_app_singl in AA.
-    destruct AA as [LA LB].
-    subst l l'.
-    eapply same_label_u2v_trans.
-    2 : { eapply cuplab_cert; [|eapply dcertE]. 
-          1-2 : apply SRCC.
-          (* eapply basic_step_e2a_E0; eauto. *)
-          admit. }
-    (* erewrite steps_preserve_lab. *)
-    admit. 
-  Admitted.
+    eapply cuplab_cert; [|eapply dcertE].
+    1-2 : apply SRCC.
+    eapply basic_step_e2a_E0_e'; eauto.    
+  Qed.
 
   Lemma weaken_sim_add_jf TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
