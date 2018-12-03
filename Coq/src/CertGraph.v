@@ -72,7 +72,8 @@ Section CertGraph.
   Notation "'D'" := (D G TC' thread).
 
   Record cert_graph :=
-    { cslab : eq_dom ((Tid_ thread) ∩₁ (C' ∪₁ I')) certLab G.(lab);
+    { (* TODO: remove `(Tid_ thread)` ? *)
+      cslab : eq_dom ((Tid_ thread) ∩₁ (C' ∪₁ I')) certLab G.(lab);
       cuplab_cert : forall e (EE : certE e), 
           same_label_u2v (certG.(lab) e) (G.(lab) e);
       
