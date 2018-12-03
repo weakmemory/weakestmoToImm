@@ -735,21 +735,44 @@ Section SimRelContLemmas.
     cdes BSTEP_.
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor; eauto. }
+    assert (SE S' e) as SEe. 
+    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
     unfold e2a. 
-    destruct (excluded_middle_informative ((SEinit S') e)) as [INIT | nINIT]. 
-    { exfalso; eapply ESstep.basic_step_acts_ninit_set_e; eauto. } 
+    destruct (excluded_middle_informative ((Stid S') e = tid_init)) as [INIT | nINIT]. 
+    { exfalso. eapply ESstep.basic_step_acts_ninit_set_e; eauto.
+      unfold ES.acts_init_set. basic_solver. } 
     erewrite ESstep.basic_step_tid_e; eauto.  
     edestruct k; simpl.  
-    { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. 
-      destruct (excluded_middle_informative (tid = tid_init)); auto.
-      exfalso; eapply ES.init_tid_K; eauto. }
+    { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
     erewrite ESstep.basic_step_seqn_kevent; eauto. 
-    { erewrite contseqn; eauto. 
-      destruct (excluded_middle_informative ((Stid S) eid = tid_init)); auto.
-      exfalso; eapply ES.init_tid_K; eauto. }
+    { erewrite contseqn; eauto. }
     (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
     admit. 
   Admitted.
+
+  Lemma basic_step_e2a_e' k k' e e' S' 
+        (st st' : thread_st (ES.cont_thread S k))
+        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e (Some e') S S') :
+    e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)).
+  Proof. 
+    cdes BSTEP_.
+    assert (ESstep.t_basic e (Some e') S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (SE S' e') as SEe'. 
+    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
+    unfold e2a. 
+    destruct (excluded_middle_informative ((Stid S') e' = tid_init)) as [INIT | nINIT]. 
+    { exfalso. eapply ESstep.basic_step_acts_ninit_set_e'; eauto.
+      unfold ES.acts_init_set. basic_solver. } 
+    erewrite ESstep.basic_step_tid_e'; eauto.  
+    erewrite ESstep.basic_step_seqn_e'; eauto.
+    edestruct k; simpl.  
+    { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
+    erewrite ESstep.basic_step_seqn_kevent; eauto. 
+    { erewrite contseqn; eauto. }
+    (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
+    all: admit. 
+  Admitted. 
 
 End SimRelContLemmas.
 
@@ -862,6 +885,25 @@ Section SimRelCertLemmas.
     desf; apply ACTS; basic_solver.
   Qed.
 
+  Lemma basic_step_e2a_E0_e' TC' h k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e (Some e') S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     E0 G TC' (ES.cont_thread S k) (e2a S' e').
+  Proof. 
+    cdes BSTEP_.
+    eapply dcertE; [apply SRCC|].
+    erewrite basic_step_e2a_e'; eauto. 
+    2-3 : eapply SRCC.
+    eapply preserve_event.
+    { eapply ilbl_steps_in_steps; eauto. }
+    edestruct lbl_step_cases as [l [l' HH]].
+    { eapply SRCC; eauto. }
+    { apply STEP. }
+    desf; apply ACTS; basic_solver.
+  Qed.  
+
   Lemma basic_step_e2a_GE_e TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
@@ -873,6 +915,19 @@ Section SimRelCertLemmas.
     eapply E0_in_E. 
     { eapply sim_trav_step_coherence; [econstructor|]; eapply SRCC. }
     eapply basic_step_e2a_E0_e; eauto.
+  Qed.
+
+  Lemma basic_step_e2a_GE_e' TC' h k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e (Some e') S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     GE (e2a S' e').
+  Proof. 
+    cdes BSTEP_.
+    eapply E0_in_E. 
+    { eapply sim_trav_step_coherence; [econstructor|]; eapply SRCC. }
+    eapply basic_step_e2a_E0_e'; eauto.
   Qed.
 
   Lemma basic_step_e2a_lab TC' h k k' e e' S' 
