@@ -132,7 +132,6 @@ Section SimRelCert.
 
       cstate_stable : stable_state qtid state';
       state_q_cont  : Kstate (q, state);
-      (* TODO: change to lbl_step *)
       cstate_reachable : (step qtid)＊ state state';
 
       cert : cert_graph G sc TC TC' qtid state';
@@ -753,11 +752,9 @@ Section SimRelContLemmas.
     admit. 
   Admitted.
 
-  Lemma basic_step_e2a_cont_sb_dom k k' e e' S' 
+  Lemma basic_step_e2a_e' k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S') :
-    dom_rel (Gsb ⨾ ⦗ eq (e2a S' e) ⦘) ≡₁ e2a S □₁ ES.cont_sb_dom S k.
-    
     e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)).
   Proof. 
     cdes BSTEP_.
@@ -778,8 +775,6 @@ Section SimRelContLemmas.
     (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
     all: admit. 
   Admitted. 
-
-  
 
 End SimRelContLemmas.
 
@@ -1129,32 +1124,25 @@ Section SimRelCertLemmas.
       eapply ghtrip; [apply SRCC|].
       unfolder. basic_solver. }
     arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
-    rewrite <- Hwa.
-    arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
     destruct NEW_RF as [Iss | SB].
     { assert (I wa) as Iw.
       { apply seq_eqv_l in Iss. unfolder in Iss. rewrite <- Gwwa. basic_solver. }
+      arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
       unfold certLab.
       destruct 
-        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (g (h wa)))) as [GCE | nGCE].
-      { admit. }
+        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S w))) as [GCE | nGCE].
+      { assert (GNtid_ (ES.cont_thread S k) (e2a S w)) as HH.
+        { apply seq_eqv_l in Iss. 
+          destruct Iss as [[NTID _] _].
+          apply NTID. }
+        exfalso. apply HH. 
+        eapply dcertE in GCE; [|apply SRCC].
+        by destruct GCE. }
+      rewrite <- Hwa.
+      arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
       symmetry. rewrite Hwa, Gwwa. eapply hlabCI; [apply SRCC|].
       basic_solver. }
-    symmetry. rewrite Hwa, Gwwa. eapply hlabTHRD; [apply SRCC|].
-    eapply contstateE.
-    { admit. }
     
-    unfolder; eexists; split; eauto.
-    eapply contstateE. constateE.
-    erewrite <- contstateE.
-    unfolder.
-    basic_solver.
-    unfold certLab.
-    destruct 
-        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (g w))) as [GCE | nGCE].
-      { 
-
-        admit. }
     admit. 
   Admitted.
 
