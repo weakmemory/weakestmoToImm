@@ -111,6 +111,7 @@ Record es_consistent {m} :=
   { ecf_irf : irreflexive ecf;
     jf_necf : jf ∩ ecf ≡ ∅₂; 
     jfe_vis : dom_rel jfe ⊆₁ vis;
+    (* jf_not_cf : jf ∩ cf ≡ ∅₂; *)
     (* hb_jf_not_cf  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂; *)
     coh : irreflexive (hb ⨾ (eco m)^?);
     (* jfpo_irr : *)

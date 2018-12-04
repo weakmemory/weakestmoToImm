@@ -102,10 +102,11 @@ Section SimRelCert.
   Notation "'sbq_dom'" := (g □₁ ES.cont_sb_dom S q) (only parsing).
   Notation "'fdom'" := (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
   
-  Definition cert_dom state q :=
-    (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ NTid_ (ES.cont_thread S q)) ∪₁
+  Definition cert_dom thread state :=
+    (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ NTid_ thread) ∪₁
       state.(ProgToExecution.G).(acts_set)).
-  Notation "'hdom'" :=  (cert_dom state q) (only parsing).
+
+  Notation "'hdom'" :=  (cert_dom (ES.cont_thread S q) state) (only parsing).
   
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>
@@ -1129,8 +1130,14 @@ Section SimRelCertLemmas.
       arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
       unfold certLab.
       destruct 
-        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (g w))) as [GCE | nGCE].
-      { admit. }
+        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S w))) as [GCE | nGCE].
+      { assert (GNtid_ (ES.cont_thread S k) (e2a S w)) as HH.
+        { apply seq_eqv_l in Iss. 
+          destruct Iss as [[NTID _] _].
+          apply NTID. }
+        exfalso. apply HH. 
+        eapply dcertE in GCE; [|apply SRCC].
+        by destruct GCE. }
       rewrite <- Hwa.
       arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
       symmetry. rewrite Hwa, Gwwa. eapply hlabCI; [apply SRCC|].

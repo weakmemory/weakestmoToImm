@@ -42,13 +42,42 @@ Section EventToAction.
 
   Definition e2a (e : eventid) : actid :=
     if excluded_middle_informative (Stid e = tid_init)
-    then
-      match Sloc e with
-      | Some l => InitEvent l
-      | _      => InitEvent BinNums.xH
-      end
+    then 
+      InitEvent (opt_ext BinNums.xH (Sloc e))
     else
       ThreadEvent (Stid e) (ES.seqn S e).
+
+  (******************************************************************************)
+  (** ** e2a general properties *)
+  (******************************************************************************)
+
+  Lemma e2a_init (WF : ES.Wf S) e (EINITe : SEinit e) : 
+    exists l, 
+      ⟪ SLOC : Sloc e = Some l⟫ /\
+      ⟪ E2Ai : e2a e = InitEvent l⟫. 
+  Proof. 
+    edestruct ES.init_lab as [l SLAB]; eauto. 
+    exists l. 
+    assert (Sloc e = Some l) as SLOC. 
+    { unfold loc. by rewrite SLAB. }
+    splits; auto. 
+    unfold ES.acts_init_set in EINITe.
+    destruct EINITe as [_ TIDIe].
+    unfold e2a. 
+    destruct (excluded_middle_informative (Stid e = tid_init)); 
+      [|congruence]. 
+    unfold opt_ext. by rewrite SLOC. 
+  Qed.
+
+  Lemma e2a_ninit (WF : ES.Wf S) e (ENINITe : SEninit e) : 
+    e2a e = ThreadEvent (Stid e) (ES.seqn S e).
+  Proof. 
+    unfold ES.acts_ninit_set, ES.acts_init_set in ENINITe.
+    destruct ENINITe as [SEe HH].
+    unfold e2a.
+    destruct (excluded_middle_informative (Stid e = tid_init)); [|auto]. 
+    exfalso. apply HH. by unfolder. 
+  Qed.
 
   (******************************************************************************)
   (** ** e2a tid properties *)
@@ -86,7 +115,7 @@ Section EventToAction.
   Proof. 
     unfold e2a, ES.acts_ninit_set. unfolder. 
     ins; split; desf; auto.
-    1-2: exfalso; auto. 
+    { exfalso; auto. }
     apply EE. unfolder.
     eexists; split; eauto. 
     unfold e2a.
@@ -139,7 +168,7 @@ Section EventToAction.
   Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
     inj_dom X e2a. 
   Proof. 
-    unfolder. unfold e2a. ins. 
+    unfolder. ins. 
     destruct 
       (excluded_middle_informative (Stid x = tid_init), 
        excluded_middle_informative (Stid y = tid_init)) 
@@ -150,14 +179,12 @@ Section EventToAction.
       assert (SEinit y) as EINITy. 
       { unfold ES.acts_init_set, set_inter.
         split; auto. }
-      desf. 
-      { eapply WF.(ES.init_uniq); auto; congruence. }
-      all: 
-        eapply WF.(ES.init_lab) in EINITx;
-        eapply WF.(ES.init_lab) in EINITy;
-        unfold loc in *; desf. }
-    1-2: desf.
-    desf.
+      edestruct e2a_init as [lx [SLOCx GEx]]; 
+        [auto | apply EINITx |].
+      edestruct e2a_init as [ly [SLOCy GEy]]; 
+        [auto | apply EINITy |].
+      eapply WF.(ES.init_uniq); auto; congruence. }
+    all: unfold e2a in *; desf.
     eapply ES.seqn_inj. 
     { eauto. }
     { eapply set_inter_Proper. 

@@ -149,9 +149,10 @@ Section SimRel.
            (INK : K (cont, thread_cont_st thread state)),
       state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont.
   Proof.
+    
     (* It should follow from `contseqn` *)
   Admitted.
-
+     
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
   Record simrel_common :=
@@ -209,6 +210,51 @@ Section SimRel.
 
   Section Properties.
     Variable SRC : simrel_common.
+
+    Lemma basic_step_e2a_cont_sb_dom e k (st : thread_st (ES.cont_thread S k)) 
+          (kE : k = CEvent e)
+          (INK : K (k, thread_cont_st (ES.cont_thread S k) st)) :
+      g □₁ ES.cont_sb_dom S k ≡₁ dom_rel (⦗ GTid (Stid e) ⦘ ⨾ Gsb^? ⨾ ⦗ eq (g e) ⦘).
+    Proof. 
+      edestruct SRC. ins.
+      assert (SE e) as SEe.
+      { subst k. edestruct ES.K_inEninit; eauto. }
+      assert (GE (e2a S e)) as GEe.
+      { apply gE; auto. unfolder. eauto. }
+      assert (wf_thread_state (ES.cont_thread S k) st) as WFT.
+      { eapply contwf; eauto. }
+      rewrite <- contstateE; eauto. 
+      erewrite e2a_ninit in *; auto.
+      2,3 : subst k; eapply ES.K_inEninit; eauto. 
+      split. 
+      { unfold acts_set. intros a ACT.
+        eapply acts_rep in ACT; eauto.
+        desf. unfolder. unfold ES.cont_thread.
+        do 2 eexists; split; eauto.
+        exists (ThreadEvent (Stid e) (ES.seqn S e)).
+        split; eauto.
+        erewrite contseqn in LE; eauto.
+        apply lt_n_Sm_le, le_lt_or_eq in LE.
+        destruct LE as [LT | EQ]; auto.
+        right. unfold sb, ext_sb. apply seq_eqv_lr.
+        splits; auto.
+        eapply gprclos; eauto. }
+      unfolder.
+      intros x [y [TIDx [[EQ | SB] EQy]]]; subst y.         
+      { subst k x. unfold acts_set. apply acts_clos; auto.
+        erewrite contseqn; eauto. }
+      destruct x. 
+      { exfalso. eapply ES.init_tid_K; eauto.
+        do 2 eexists; splits; eauto.
+        subst k. unfold ES.cont_thread.
+        unfold tid in TIDx. by symmetry. }
+      subst k. 
+      unfold acts_set. apply acts_clos; auto.
+      { unfold tid in TIDx. by rewrite TIDx. }
+      unfold sb, ext_sb in SB. apply seq_eqv_lr in SB.
+      erewrite contseqn; eauto.
+      desf; omega.
+    Qed.
 
     Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
     Proof.
