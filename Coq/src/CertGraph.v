@@ -65,10 +65,7 @@ Section CertGraph.
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
 
-  (* Notation "'E0'" := (E0 G TC' thread).  *)
-  (* Notation "'D'" := (D G TC' thread). *)
-  
-  Notation "'E0'" := (Tid_ thread ∩₁ (C' ∪₁ dom_rel (sb^? ⨾ ⦗ I' ⦘))).
+  Notation "'E0'" := (E0 G TC' thread).
   Notation "'D'" := (D G TC' thread).
 
   Record cert_graph :=
@@ -244,6 +241,7 @@ Section CertGraph.
 
     Lemma dom_addrE_in_D : dom_rel (addr ⨾ ⦗ E0 ⦘) ⊆₁ D.
     Proof.
+      unfold CertRf.E0.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (addr_in_sb WF).
@@ -262,6 +260,7 @@ Section CertGraph.
 
     Lemma dom_ctrlE_in_D : dom_rel (ctrl ⨾ ⦗ E0 ⦘) ⊆₁ D.
     Proof.
+      unfold CertRf.E0.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (ctrl_in_sb WF).
@@ -282,6 +281,7 @@ Section CertGraph.
 
     Lemma dom_rmw_depE_in_D : dom_rel (rmw_dep ⨾ ⦗ E0 ⦘) ⊆₁ D.
     Proof.
+      unfold CertRf.E0.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (rmw_dep_in_sb WF).
@@ -303,6 +303,7 @@ Section CertGraph.
 
     Lemma dom_rmwE_in_D : dom_rel (rmw ⨾ ⦗ E0 ⦘) ⊆₁ D.
     Proof.
+      unfold CertRf.E0.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (rmw_in_sb WF).
@@ -319,6 +320,7 @@ Section CertGraph.
 
     Lemma dom_dataD_in_D : dom_rel (data ⨾ ⦗D⦘) ⊆₁ D.
     Proof.
+      unfold CertRf.E0.
       unfold CertExecution2.D.
       rewrite !id_union; relsf; unionL; splits.
       { rewrite (data_in_sb WF).
@@ -568,9 +570,9 @@ Proof.
 
     { rewrite CACTS.
       unfolder; ins; desc.
-      apply H3.
+      apply H2.
       destruct H as [TT [AA|AA]].
-      { by apply C_in_D. }
+      { by apply C_in_D. } 
       unfolder in AA. 
       destruct AA as [y [z [[EQx | SB] [EQ Iz]]]]. 
       { rewrite EQx. by apply I_in_D. }
