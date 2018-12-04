@@ -42,13 +42,42 @@ Section EventToAction.
 
   Definition e2a (e : eventid) : actid :=
     if excluded_middle_informative (Stid e = tid_init)
-    then
-      match Sloc e with
-      | Some l => InitEvent l
-      | _      => InitEvent BinNums.xH
-      end
+    then 
+      InitEvent (opt_ext BinNums.xH (Sloc e))
     else
       ThreadEvent (Stid e) (ES.seqn S e).
+
+  (******************************************************************************)
+  (** ** e2a general properties *)
+  (******************************************************************************)
+
+  Lemma e2a_Einit (WF : ES.Wf S) e (EINITe : SEinit e) : 
+    exists l, 
+      ⟪ SLOC : Sloc e = Some l⟫ /\
+      ⟪ E2Ai : e2a e = InitEvent l⟫. 
+  Proof. 
+    edestruct ES.init_lab as [l SLAB]; eauto. 
+    exists l. 
+    assert (Sloc e = Some l) as SLOC. 
+    { unfold loc. by rewrite SLAB. }
+    splits; auto. 
+    unfold ES.acts_init_set in EINITe.
+    destruct EINITe as [_ TIDIe].
+    unfold e2a. 
+    destruct (excluded_middle_informative (Stid e = tid_init)); 
+      [|congruence]. 
+    unfold opt_ext. by rewrite SLOC. 
+  Qed.
+
+  Lemma e2a_Eninit (WF : ES.Wf S) e (ENINITe : SEninit e) : 
+    e2a e = ThreadEvent (Stid e) (ES.seqn S e).
+  Proof. 
+    unfold ES.acts_ninit_set, ES.acts_init_set in ENINITe.
+    destruct ENINITe as [SEe HH].
+    unfold e2a.
+    destruct (excluded_middle_informative (Stid e = tid_init)); [|auto]. 
+    exfalso. apply HH. by unfolder. 
+  Qed.
 
   (******************************************************************************)
   (** ** e2a tid properties *)
