@@ -149,6 +149,7 @@ Section SimRel.
            (INK : K (cont, thread_cont_st thread state)),
       state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont.
   Proof.
+    
     (* It should follow from `contseqn` *)
   Admitted.
 
