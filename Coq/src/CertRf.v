@@ -45,6 +45,7 @@ Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 Notation "'furr'" := (furr G sc).
 
 Definition E0 := (Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘))).
+
 Definition vf := ⦗ W ⦘ ⨾ (rf ⨾ ⦗ D ⦘)^? ⨾ hb^? ⨾
                     sc^? ⨾ hb^? ⨾ ⦗ E ⦘.
 
@@ -58,6 +59,14 @@ Variable WF  : Wf G.
 Variable COH : imm_consistent G sc.
 Variable TCCOH : tc_coherent G sc TC.
 Variable RELCOH : W ∩₁ Rel ∩₁ I ⊆₁ C.
+
+Lemma E0_in_E : E0 ⊆₁ E.
+Proof.
+  unfold E0.
+  rewrite coveredE, issuedE; try edone.
+  rewrite (dom_l (@wf_sbE G)).
+  basic_solver.
+Qed.
 
 Lemma vfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
 Proof.
@@ -74,14 +83,6 @@ Lemma vf_dom : vf ≡ ⦗ W ⦘ ⨾ vf.
 Proof.
   split; [|basic_solver].
     by unfold vf; seq_rewrite seq_eqvK.
-Qed.
-
-Lemma E0_in_E : E0 ⊆₁ E.
-Proof.
-  unfold E0.
-  rewrite coveredE, issuedE; try edone.
-  rewrite (dom_l (@wf_sbE G)).
-  basic_solver.
 Qed.
 
 Lemma vf_in_furr : vf ⊆ furr.
