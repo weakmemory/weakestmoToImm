@@ -574,7 +574,7 @@ Section EventToActionLemmas.
         ]; eauto. }
     assert ((Sloc S') x = (Sloc S) x) as BB.
     { eapply ESstep.basic_step_loc_eq_dom; eauto. }
-    desf; try by (exfalso; intuition).
+    unfold opt_ext; desf; try by (exfalso; intuition).
     assert ((Stid S') x = (Stid S) x) as CC.
     { eapply ESstep.basic_step_tid_eq_dom; eauto. }
     assert (ES.seqn S' x = ES.seqn S x) as DD.
@@ -1261,7 +1261,7 @@ Section SimRelCertLemmas.
       assert (exists (pstate : ProgToExecution.state), pstate = state) as [pstate EQST].
       { eexists. eauto. }
       
-      assert (cert_dom S G TC state q w) as wInHDOM.
+      assert (cert_dom G TC (ES.cont_thread S q) state w) as wInHDOM.
       { eapply new_rf_ntid_iss_sb in RFwa; try eapply SRCC.  
         destruct RFwa as [RFwa|RFwa].
         { apply seq_eqv_l in RFwa. destruct RFwa as [[NTIDw IW] RFwa].
