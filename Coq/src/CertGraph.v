@@ -626,6 +626,17 @@ Proof.
             acts_set (ProgToExecution.G state'')) as SS.
     { unfold acts_set. by rewrite RACTS. }
 
+    assert (forall e (IN: acts_set (ProgToExecution.G state'') e),
+               lab (ProgToExecution.G state'') e = G.(lab) e) as LST2.
+    { ins.
+      assert (tid e = thread) as ETT. 
+      { eapply acts_rep in IN.
+        2: by eapply wf_thread_state_steps; [|by eauto]; eauto.
+        desf. }
+      erewrite <- steps_preserve_lab; try rewrite ETT; eauto.
+      eapply tr_lab; eauto.
+      eapply steps_preserve_E; eauto. }
+
     exists cert_state.
     splits; auto. 
     2 : { eapply transitive_rt; eauto. by apply eps_steps_in_steps. }
@@ -659,11 +670,8 @@ Proof.
       assert (acts_set (ProgToExecution.G state'') e) as CC.
       { by red; rewrite RACTS. }
 
-      assert (lab (ProgToExecution.G state'') e = G.(lab) e) as AA. 
-      2: { rewrite AA. red. desf. }
-      erewrite <- steps_preserve_lab; try rewrite BB; eauto.
-      eapply tr_lab; eauto.
-      eapply steps_preserve_E; eauto. }
+      assert (lab (ProgToExecution.G state'') e = G.(lab) e) as AA by (by apply LST2).
+      rewrite AA. red. desf. }
     { unfold acts_set. by rewrite <- RACTS. }
     { rewrite <- RRMW, SS. rewrite ORMW, !CACTS.
       rewrite TEH.(tr_rmw), !seqA.
@@ -685,7 +693,7 @@ Proof.
       set (LL := RF).
       apply cert_rfE in LL; auto. destruct_seq LL as [RE RW].
       apply cert_rfD in LL. destruct_seq LL as [RR WW].
-      
+
       assert (Tid_ thread w -> sb w r) as SBWR.
       { intros TTW.
         edestruct same_thread with (x:=r) (y:=w) as [[SB|SB]|SB]; eauto.
@@ -701,6 +709,10 @@ Proof.
         apply SBWR in AA. rewrite SCC. red. rewrite <- RACTS. apply CACTS.
         eapply E0_sbprcl; eauto. apply seq_eqv_l. split; auto.
         apply seq_eqv_r. split; eauto. }
+      
+      assert (D r -> rf w r) as RFWR.
+      { intros. eapply cert_rf_D_rf with (TC:=TC'); eauto.
+        apply seq_eqv_r. do 2 (split; eauto). }
 
       destruct (classic (codom_rel new_rfi r)) as [DD|DD].
       { set (TT:=DD). destruct TT as [w' TT].
@@ -724,10 +736,7 @@ Proof.
              apply seq_eqv_r. split; auto.
              apply seq_eqv_r. do 2 (split; auto). }
         
-        assert (rf w r) as RFWR.
-        { eapply cert_rf_D_rf with (TC:=TC'); eauto.
-          apply seq_eqv_r. do 2 (split; eauto). }
-        
+        specialize (RFWR DR).
         assert (D w) as DW.
         { eapply rfi_D_in_D; eauto. exists r.
           apply seq_eqv_r. repeat (split; auto). }
@@ -761,8 +770,23 @@ Proof.
       unfold certLab.
       destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) w))
         as [EEW|EEW].
-      { (* TODO: trivial *) admit. }
-
+      { exfalso. apply NTTW.
+        rewrite SCC in EEW.
+        eapply acts_rep in EEW.
+        2: by eapply wf_thread_state_steps; [|by eauto].
+        desf. }
+      
+      destruct (classic (D r)) as [DR|NDR].
+      { etransitivity.
+        2: { symmetry. apply OLD_VAL. intros [_ AA]. desf. }
+        unfold val. rewrite LST2; auto.
+        apply wf_rfv; auto. }
+      etransitivity.
+      2: { symmetry. apply NEW_VAL2; auto.
+           2: by split.
+           eapply same_lab_u2v_is_r; eauto. unfold is_r. by rewrite LST2. }
+      unfold new_val, get_val, val.
+      (* TODO: continue from here *)
       admit. }
     { erewrite same_lab_u2v_same_loc; eauto.
       all: admit. }
