@@ -729,6 +729,17 @@ Lemma seqn_sb_alt WF x y (STID : same_tid x y) (SB : sb x y) :
   seqn x < seqn y. 
 Proof. eapply seqn_sb; unfolder; eauto 50. Qed.
 
+(* Lemma countNatP_select (s : nat -> Prop) n i j (LT : i < j) (HH : countNatP s n = j) :  *)
+(*   exists x, ⟪ IN : s' ⊆₁ s ⟫ /\ ⟪ CNTX : countNatP s' n = i ⟫. *)
+(* Proof. admit. Admitted. *)
+
+Lemma seqn_pred WF y i (Ey : E y) (LE : i < seqn y) : 
+  exists x, 
+    ⟪ SBxy : sb x y ⟫ /\ 
+    ⟪ STIDxy : same_tid x y ⟫ /\ 
+    ⟪ SEQNx : seqn x = i ⟫. 
+Proof. admit. Admitted.
+
 Lemma seqn_immsb WF x y 
       (STID : same_tid x y)
       (IMMSB : immediate sb x y) :
