@@ -72,18 +72,22 @@ Section SimRelCert.
   Notation "'GE'" := G.(acts_set).
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gtid'" := (tid).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Gvf'" := (furr G sc).
+
+  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
-  
+
   Notation "'Gsb'" := (G.(sb)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Grmw'" := G.(rmw).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Grfe'" := (G.(rfe)).
   Notation "'Gco'" := (G.(co)).
 
+  Notation "'Gvf'" := (furr G sc).
+  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  
   Notation "'certE'" := certG.(acts_set).
   Notation "'certRmw'" := (certG.(rmw)).
 
@@ -133,6 +137,7 @@ Section SimRelCert.
       cstate_stable : stable_state qtid state';
       state_q_cont  : Kstate (q, state);
       cstate_reachable : (step qtid)＊ state state';
+      cstate_covered : C ∩₁ GTid qtid ⊆₁ acts_set state.(ProgToExecution.G);
 
       cert : cert_graph G sc TC TC' qtid state';
 
@@ -1080,7 +1085,7 @@ Section SimRelCertLemmas.
         (SAJF : sim_add_jf S G sc TC TC' h k st e S') : 
     ESstep.add_jf e S S'.
   Proof. 
-    cdes SAJF.
+    cdes BSTEP_; cdes SAJF.
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor. eauto. }
     assert (SE S w) as SEw.
@@ -1089,6 +1094,8 @@ Section SimRelCertLemmas.
     { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
     assert (SE S' e) as SEe'.
     { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
+    assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
+    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e; eauto. }
     econstructor; auto. 
     exists w; splits; auto.  
     { assert (is_w (Glab ∘ (e2a S')) w) as WW.
@@ -1124,25 +1131,42 @@ Section SimRelCertLemmas.
       eapply ghtrip; [apply SRCC|].
       unfolder. basic_solver. }
     arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
+    rewrite <- Hwa at 1.
+    rewrite Gwwa.
+    arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
     destruct NEW_RF as [Iss | SB].
     { assert (I wa) as Iw.
       { apply seq_eqv_l in Iss. unfolder in Iss. rewrite <- Gwwa. basic_solver. }
-      arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
+      (* arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto]. *)
       unfold certLab.
       destruct 
-        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S w))) as [GCE | nGCE].
-      { assert (GNtid_ (ES.cont_thread S k) (e2a S w)) as HH.
+        (excluded_middle_informative (acts_set (ProgToExecution.G st'') wa)) 
+        as [GCE | nGCE].
+      { assert (GNtid_ (ES.cont_thread S k) wa) as HH.
         { apply seq_eqv_l in Iss. 
           destruct Iss as [[NTID _] _].
-          apply NTID. }
+          rewrite <- Gwwa. apply NTID. }
         exfalso. apply HH. 
         eapply dcertE in GCE; [|apply SRCC].
         by destruct GCE. }
-      rewrite <- Hwa.
-      arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
-      symmetry. rewrite Hwa, Gwwa. eapply hlabCI; [apply SRCC|].
+      (* rewrite <- Hwa. *)
+      (* arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa). *)
+      symmetry. eapply hlabCI; [apply SRCC|].
       basic_solver. }
-    
+    symmetry. eapply hlabTHRD; [apply SRCC|].
+    (* edestruct k eqn:kEQ. *)
+    (* { simpl. admit. } *)
+    edestruct sb_tid_init as [STID | INITx]; eauto. 
+    { eapply contstateE; eauto; [apply SRCC|].
+      destruct CERTwa as [[Cwa | Iwa] | ACTSst]; auto.
+      { eapply cstate_covered; [apply SRCC|].
+        split; auto. 
+        by rewrite <- Gwwa, STID, GTIDe. }
+      exfalso. destruct Iwa as [_ NTIDwa].
+      apply NTIDwa.
+      rewrite <- Gwwa.
+      erewrite <- ESstep.basic_step_tid_e; eauto.
+      by rewrite e2a_tid. }
     admit. 
   Admitted.
 
