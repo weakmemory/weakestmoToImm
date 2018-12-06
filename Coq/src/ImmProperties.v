@@ -5,7 +5,8 @@ From imm Require Import AuxRel
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
-     TraversalConfig Traversal TraversalConfigAlt SimTraversal.
+     TraversalConfig Traversal TraversalConfigAlt SimTraversal
+     CertExecution2.
 Require Import AuxRel AuxDef EventStructure.
 
 Set Implicit Arguments.
@@ -19,6 +20,26 @@ Proof. unfold same_label_u2v, val in *. desf; desf. Qed.
 Section Properties.
 
 Variable G : execution.
+
+Notation "'E'" := G.(acts_set).
+
+Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+
+Lemma tid_initi prog 
+      (GPROG : program_execution prog G)
+      (PROG_NINIT : ~ (IdentMap.In tid_init prog)) : 
+  E ∩₁ Tid tid_init ⊆₁ is_init.
+Proof. 
+  red. unfolder. 
+  intros e [EE TIDe].
+  unfold tid, is_init in *.
+  destruct e eqn:Heq; auto.
+  destruct GPROG as [HH _].
+  rewrite <- Heq in EE.
+  specialize (HH e EE).
+  desf. 
+Qed.
+
 Variable WF : Wf G.
 Variable sc : relation actid.
 Variable CON : imm_consistent G sc.
@@ -28,10 +49,6 @@ Variable TCCOH : tc_coherent G sc TC.
 
 Notation "'C'" := (covered TC).
 Notation "'I'" := (issued TC).
-
-Notation "'E'" := G.(acts_set).
-
-Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 
 Notation "'sb'" := G.(sb).
 Notation "'rf'" := G.(rf).
@@ -77,23 +94,43 @@ Notation "'Loc_' l" := (fun x => loc lab x = Some l) (at level 1).
 Notation "'W_ex'" := G.(W_ex).
 Notation "'W_ex_acq'" := (W_ex ∩₁ (fun a => is_true (is_xacq lab a))).
 
-Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
-
-Lemma tid_initi prog 
-      (GPROG : program_execution prog G)
-      (PROG_NINIT : ~ (IdentMap.In tid_init prog)) : 
-  E ∩₁ Tid tid_init ⊆₁ is_init.
-Proof. 
-  clear WF sc CON TC TCCOH RELCOV. 
-  red. unfolder. 
-  intros e [EE TIDe].
-  unfold tid, is_init in *.
-  destruct e eqn:Heq; auto.
-  destruct GPROG as [HH _].
-  rewrite <- Heq in EE.
-  specialize (HH e EE).
-  desf. 
+Lemma rfi_D_in_D thread (NINIT : thread <> tid_init):
+  dom_rel (rfi ;; <| D G TC thread |>) ⊆₁ D G TC thread.
+Proof.
+  intros w [r RFI]. destruct_seq_r RFI as DR.
+  apply wf_rfiD in RFI; auto. destruct_seq RFI as [WW RR].
+  apply wf_rfiE in RFI; auto. destruct_seq RFI as [EW ER].
+  red in DR. unfold set_union in DR. desf.
+  { apply C_in_D. eapply dom_sb_covered; eauto.
+    eexists. apply seq_eqv_r. split; eauto. apply RFI. }
+  { eapply issuedW in DR; eauto. type_solver. }
+  { red. do 3 left. right. split; auto.
+    edestruct sb_tid_init as [AA|AA]; auto.
+    { apply RFI. }
+    { rewrite AA. apply DR. }
+    destruct w; simpls. intros BB; desf. }
+  { red. do 2 left. right.
+    destruct DR as [z [v [[EE|EE] DR]]].
+    { desf. generalize RFI DR. basic_solver 10. }
+    apply wf_rfiD in EE; auto. destruct_seq EE as [WR RV].
+    clear -RR WR. type_solver. }
+  { apply I_in_D. destruct DR as [v DR].
+    destruct_seq_l DR as IV.
+    assert (v = w); desf.
+    eapply wf_rff; eauto.
+    { apply DR. }
+    apply RFI. }
+  destruct DR as [v DR].
+  destruct_seq_r DR as IV.
+  assert (v = w); desf.
+  { eapply wf_rff; eauto.
+    { apply DR. }
+    apply RFI. }
+  unfold Execution.rfi, Execution.rfe in *.
+  generalize RFI DR. basic_solver.
 Qed.
+
+Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
 Proof.
