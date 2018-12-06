@@ -216,11 +216,12 @@ Section SimRelCert.
       apply SRC. }
     arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ ES.cont_sb_dom S q).
     2: by eauto with hahn.
-    eapply contstateE; eauto.
-    { by apply SRC. }
-    destruct state_q_cont; auto. desf.
-    apply KK.
-  Qed.
+    admit. 
+    (* eapply contstateE; eauto. *)
+    (* { by apply SRC. } *)
+    (* destruct state_q_cont; auto. desf. *)
+    (* apply KK. *)
+  Admitted.
 
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
   Proof. 
@@ -1157,16 +1158,17 @@ Section SimRelCertLemmas.
     (* edestruct k eqn:kEQ. *)
     (* { simpl. admit. } *)
     edestruct sb_tid_init as [STID | INITx]; eauto. 
-    { eapply contstateE; eauto; [apply SRCC|].
-      destruct CERTwa as [[Cwa | Iwa] | ACTSst]; auto.
-      { eapply cstate_covered; [apply SRCC|].
-        split; auto. 
-        by rewrite <- Gwwa, STID, GTIDe. }
-      exfalso. destruct Iwa as [_ NTIDwa].
-      apply NTIDwa.
-      rewrite <- Gwwa.
-      erewrite <- ESstep.basic_step_tid_e; eauto.
-      by rewrite e2a_tid. }
+    { (* eapply contstateE; eauto; [apply SRCC|]. *)
+      (* destruct CERTwa as [[Cwa | Iwa] | ACTSst]; auto. *)
+      (* { eapply cstate_covered; [apply SRCC|]. *)
+      (*   split; auto.  *)
+      (*   by rewrite <- Gwwa, STID, GTIDe. } *)
+      (* exfalso. destruct Iwa as [_ NTIDwa]. *)
+      (* apply NTIDwa. *)
+      (* rewrite <- Gwwa. *)
+      (* erewrite <- ESstep.basic_step_tid_e; eauto. *)
+      (* by rewrite e2a_tid. *) 
+      admit. }
     admit. 
   Admitted.
 
