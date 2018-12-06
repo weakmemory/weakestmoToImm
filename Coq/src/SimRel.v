@@ -171,6 +171,7 @@ Section SimRel.
       sr_graph : simrel_graph;
 
       gE : g □₁ SE ⊆₁ GE;
+      gEinit : GEinit ⊆₁ g □₁ SEinit;
 
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
@@ -210,6 +211,16 @@ Section SimRel.
 
   Section Properties.
     Variable SRC : simrel_common.
+
+    Lemma e2a_same_Einit : 
+      e2a S □₁ SEinit ≡₁ GEinit.
+    Proof. 
+      split; [eapply e2a_Einit; apply SRC|].
+      unfolder. intros a [INITa GEa].
+      edestruct gEinit as [e [[INITe SEe] gEQ]].
+      1-2 : unfolder; eauto.  
+      eexists; splits; eauto. 
+    Qed.
 
     Lemma basic_step_e2a_cont_sb_dom e k (st : thread_st (ES.cont_thread S k)) 
           (kE : k = CEvent e)
