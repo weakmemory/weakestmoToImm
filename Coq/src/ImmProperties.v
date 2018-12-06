@@ -10,6 +10,12 @@ Require Import AuxRel AuxDef EventStructure.
 
 Set Implicit Arguments.
 
+Lemma same_label_u2v_val {A} (lab lab' : A -> label) x
+      (U2V : same_label_u2v (lab x) (lab' x))
+      (VAL : val lab x = val lab' x) :
+  lab x = lab' x.
+Proof. unfold same_label_u2v, val in *. desf; desf. Qed.
+
 Section Properties.
 
 Variable G : execution.

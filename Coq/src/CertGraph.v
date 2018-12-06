@@ -8,7 +8,7 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure LblStep CertRf.
+Require Import AuxRel AuxDef EventStructure LblStep CertRf ImmProperties.
 Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 
 Set Implicit Arguments.
@@ -69,8 +69,7 @@ Section CertGraph.
   Notation "'D'" := (D G TC' thread).
 
   Record cert_graph :=
-    { (* TODO: remove `(Tid_ thread)` ? *)
-      cslab : eq_dom ((Tid_ thread) ∩₁ (C' ∪₁ I')) certLab G.(lab);
+    { cslab : eq_dom ((C' ∪₁ I')) certLab G.(lab);
       cuplab_cert : forall e (EE : certE e), 
           same_label_u2v (certG.(lab) e) (G.(lab) e);
       
@@ -632,7 +631,27 @@ Proof.
     2 : { eapply transitive_rt; eauto. by apply eps_steps_in_steps. }
     constructor; auto.
     all: try rewrite SCC.
-    { red. ins. unfold certLab. admit. }
+    { red. intros a UU. unfold certLab.
+      desf. rewrite SCC in *.
+      assert (tid a = thread) as TT.
+      { eapply acts_rep in a0.
+        2: by eapply wf_thread_state_steps with (s:=state); eauto.
+        desf. }
+      assert (acts_set (ProgToExecution.G state'') a) as AA.
+      { apply CACTS. red.
+        split; auto. by generalize UU; basic_solver 10. }
+      etransitivity.
+      2: { symmetry.
+           etransitivity.
+           { eapply lab_thread_eq_thread_restricted_lab. 2: by eauto.
+             eapply steps_preserve_E; eauto. }
+           eapply steps_preserve_lab; try rewrite TT; [ |by eauto|]; auto. }
+      apply same_label_u2v_val.
+      { by apply SAME. }
+      apply OLD_VAL. intros [BB CC].
+      apply CC. destruct UU as [UU|UU].
+      { by apply C_in_D. }
+        by apply I_in_D. }
     { ins.
       eapply same_label_u2v_trans; eauto.
       assert (tid e = thread) as BB.
