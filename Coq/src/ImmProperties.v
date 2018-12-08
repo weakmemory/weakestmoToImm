@@ -130,6 +130,65 @@ Proof.
   generalize RFI DR. basic_solver.
 Qed.
 
+Lemma rfe_E0D_in_D thread (NINIT : thread <> tid_init):
+  dom_rel (rfe ;; <| Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘))
+               ∩₁ D G TC thread |>) ⊆₁
+          D G TC thread.
+Proof.
+  intros w [r RFE]. destruct_seq_r RFE as DR.
+  apply wf_rfeD in RFE; auto. destruct_seq RFE as [WW RR].
+  apply wf_rfeE in RFE; auto. destruct_seq RFE as [EW ER].
+  destruct DR as [[TR EE0] DR].
+  assert (C r -> D G TC thread w) as UU.
+  { intros HH. apply I_in_D. eapply dom_rf_covered; eauto.
+    eexists. apply seq_eqv_r. split; eauto. apply RFE. }
+  destruct EE0 as [EE0|EE0].
+  { intuition. }
+
+  red in DR. unfold set_union in DR. desf.
+  { intuition. }
+  { eapply issuedW in DR; eauto. type_solver. }
+  { exfalso. by apply DR. }
+  { red. apply I_in_D.
+    destruct DR as [z [v [[EE|EE] DR]]].
+    2: { apply wf_rfiD in EE; auto. destruct_seq EE as [WR RV].
+         clear -RR WR. type_solver. }
+    desf. eapply dom_rfe_ppo_issued; eauto.
+    do 2 eexists. eauto. }
+  { exfalso. destruct DR as [v DR].
+    destruct_seq_l DR as IV.
+    assert (v = w); desf.
+    eapply wf_rff; eauto.
+    { apply DR. }
+    { apply RFE. }
+    apply RFE. apply DR. }
+  destruct EE0 as [t EE0]. destruct_seq_r EE0 as IT.
+  destruct EE0 as [|EE0]; subst.
+  { eapply issuedW in IT; eauto. type_solver. }
+  apply I_in_D.
+  eapply dom_rfe_acq_sb_issued; eauto.
+  destruct DR as [v DR].
+  destruct_seq_r DR as IV.
+  assert (v = w); desf.
+  { eapply wf_rff; eauto.
+    { apply DR. }
+    apply RFE. }
+  generalize DR IV IT EE0. basic_solver 10.
+Qed.
+
+Lemma rf_E0D_in_D thread (NINIT : thread <> tid_init):
+  dom_rel (rf ;; <| Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘))
+               ∩₁ D G TC thread |>) ⊆₁
+          D G TC thread.
+Proof.
+  intros w [r RF]. destruct_seq_r RF as DR.
+  apply rfi_union_rfe in RF. destruct RF as [RF|RF].
+  { apply rfi_D_in_D; auto. eexists.
+    apply seq_eqv_r; split; eauto. apply DR. }
+  apply rfe_E0D_in_D; auto. eexists.
+  apply seq_eqv_r; split; eauto.
+Qed.
+
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
