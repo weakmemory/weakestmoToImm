@@ -798,7 +798,7 @@ Proof.
       all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
       all: repeat (eexists; split; eauto). }
     { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
-    admit.
+    eapply sim_trav_step_rel_covered; eauto. red. eauto. 
 Admitted.
 
 End CertGraphLemmas.
