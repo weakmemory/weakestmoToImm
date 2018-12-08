@@ -819,37 +819,31 @@ Proof.
       rewrite id_union, seq_union_l.
       rewrite non_I_cert_rf; auto.
       { unionL; [|basic_solver].
-        inv TSTEP. 
+        inv TSTEP; simpls. 
 
-        (* 3: assert (tid w = thread) as TX *)
-        (*     by (apply wf_rmwt in RMW; auto; rewrite <- RMW; auto). *)
-        (* 1,2: assert (Gtid w = ES.cont_thread S q) as TX by auto. *)
-
-        3: assert (tid r = tid w) as TR by admit.  
+        3: assert (tid r = tid w) as TR by (eapply wf_rmwt; eauto).
 
         all: assert (~ is_init w) as NINITX
             by (intros AA; destruct w; simpls; desf;
                 rewrite <- TX in *; desf).
         
-        (* all: rewrite id_union, seq_union_l; unionL; [basic_solver|]. *)
+        all: rewrite id_union, seq_union_l; unionL; [basic_solver|].
         all: unionR right.
         all: unfolder; intros a b [AA RF]; desf.
         
         3: rewrite TR in RF.
-        (* 1,2: rewrite TX in RF. *)
-        all: assert (tid b = tid w) as TB
+        all: assert (tid b = tid a) as TB
             by (apply cert_rf_codomt in RF; generalize RF; basic_solver).
 
         all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
         all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
-        all: (assert (tid a = tid b) as TTT by (rewrite TB; admit)).
         all: destruct (@same_thread G a b) as [[|SB]|SB]; desf; auto. 
-        2,5,8: type_solver.
+        1,3,5: type_solver.
         all: exfalso.
         all: eapply cert_rf_hb_sc_hb_irr; eauto.
-        all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto; admit).
+        all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
         all: repeat (eexists; split; eauto). }
-      eapply TCCOH'; [ eapply TCCOH | apply TSTEP].
+      { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
       admit. }
     admit. 
 Admitted.
