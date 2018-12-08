@@ -640,6 +640,19 @@ Proof.
     exists cert_state.
     splits; auto. 
     2 : { eapply transitive_rt; eauto. by apply eps_steps_in_steps. }
+
+    assert (same_lab_u2v (certLab G cert_state) (lab G)) as SU2V.
+    { intros e _. unfold certLab.
+      destruct (excluded_middle_informative
+                  (acts_set (ProgToExecution.G cert_state) e))
+               as [AA|AA].
+      2: { red. desf. }
+      rewrite SCC in *.
+      eapply same_label_u2v_trans.
+      { by apply SAME. }
+      rewrite LST2; [by red; desf|].
+      red. by rewrite RACTS. }
+
     constructor; auto.
     all: try rewrite SCC.
     { red. intros a UU. unfold certLab.
@@ -798,7 +811,7 @@ Proof.
       exfalso. apply HH0. rewrite HH.
       eexists. eauto. }
     { erewrite same_lab_u2v_same_loc; eauto.
-      all: admit. }
+      apply cert_rfl. }
     { arewrite (cert_rf G sc TC' thread ⊆
                         ⦗issued TC' ∪₁ set_compl (issued TC')⦘ ⨾
                         cert_rf G sc TC' thread) at 1
