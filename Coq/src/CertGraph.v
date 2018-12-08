@@ -786,8 +786,17 @@ Proof.
            2: by split.
            eapply same_lab_u2v_is_r; eauto. unfold is_r. by rewrite LST2. }
       unfold new_val, get_val, val.
-      (* TODO: continue from here *)
-      admit. }
+      assert (new_value r = w) as FF.
+      2: { rewrite FF; desf. clear -Heq RR. type_solver. }
+      assert (new_rfe w r) as RFE.
+      { apply seq_eqv_l. split; auto.
+        apply seq_eqv_r. split; auto.
+        apply seq_eqv_r. repeat (split; auto). }
+      specialize (HH r). destruct HH as [HH|HH].
+      { eapply new_rfef; eauto. }
+      clear -HH RFE. red in HH. desf.
+      exfalso. apply HH0. rewrite HH.
+      eexists. eauto. }
     { erewrite same_lab_u2v_same_loc; eauto.
       all: admit. }
     { arewrite (cert_rf G sc TC' thread ⊆
