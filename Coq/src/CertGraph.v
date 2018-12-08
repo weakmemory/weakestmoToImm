@@ -521,6 +521,17 @@ Proof.
     set (get_val (v: option value) :=  match v with | Some v => v | _ => 0 end).
     set (new_val := fun r => get_val (val G.(lab) (new_value r))).
 
+    assert (forall e (IN: acts_set (ProgToExecution.G state'') e),
+               lab (ProgToExecution.G state'') e = G.(lab) e) as LST2.
+    { ins.
+      assert (tid e = thread) as ETT. 
+      { eapply acts_rep in IN.
+        2: by eapply wf_thread_state_steps; [|by eauto]; eauto.
+        desf. }
+      erewrite <- steps_preserve_lab; try rewrite ETT; eauto.
+      eapply tr_lab; eauto.
+      eapply steps_preserve_E; eauto. }
+
     edestruct steps_old_restrict with (state0:=state'') (state':=state') as [ORMW]; eauto.
     desc. unnw.
     edestruct receptiveness_full with
@@ -569,30 +580,27 @@ Proof.
     2: { _ltt thread E0 TCCOH OCTRL TEH.(tr_ctrl) CACTS dom_ctrlE_in_D. }
 
     { rewrite CACTS.
-      unfolder; ins; desc.
-      apply H2.
-      destruct H as [TT [AA|AA]].
+      arewrite ((E0 \₁ D) ∩₁ E0 ⊆₁ E0 \₁ D) by basic_solver.
+      intros e [[EE DE] RE]. red.
+      apply DE.
+      set (EE':=EE).
+      destruct EE' as [TT [AA|AA]].
       { by apply C_in_D. } 
       unfolder in AA. 
       destruct AA as [y [z [[EQx | SB] [EQ Iz]]]]. 
       { rewrite EQx. by apply I_in_D. }
-      red. left. left. right.
+      subst. red. do 2 left. right.
       eexists. eexists. split.
       { by left. }
       apply seq_eqv_r. split; eauto.
-      assert (R_ex y) as UU.
-      { admit. }
+      assert (R_ex e) as UU.
+      { unfold Events.R_ex. rewrite <- LST2; auto. by apply CACTS. }
       red. apply seq_eqv_l. split.
-      { apply R_ex_in_R. 
-        admit. }
+      { by apply R_ex_in_R. }
       apply seq_eqv_r. split.
-      (*2: by eapply issuedW; eauto.*)
+      2: by eapply issuedW; eauto.
       apply ct_step. left. right.
-      apply seq_eqv_l. split; auto.  
-      { admit. }
-      eapply issuedW. 
-      { apply TCCOH'. }
-      auto. }
+      apply seq_eqv_l. split; auto. }
 
     { rewrite ODATA, CACTS.
       arewrite_id ⦗E0⦘ at 1. rewrite seq_id_l.
@@ -626,17 +634,6 @@ Proof.
     assert (acts_set (ProgToExecution.G pre_cert_state) =
             acts_set (ProgToExecution.G state'')) as SS.
     { unfold acts_set. by rewrite RACTS. }
-
-    assert (forall e (IN: acts_set (ProgToExecution.G state'') e),
-               lab (ProgToExecution.G state'') e = G.(lab) e) as LST2.
-    { ins.
-      assert (tid e = thread) as ETT. 
-      { eapply acts_rep in IN.
-        2: by eapply wf_thread_state_steps; [|by eauto]; eauto.
-        desf. }
-      erewrite <- steps_preserve_lab; try rewrite ETT; eauto.
-      eapply tr_lab; eauto.
-      eapply steps_preserve_E; eauto. }
 
     exists cert_state.
     splits; auto. 
