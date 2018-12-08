@@ -477,6 +477,11 @@ Proof.
     { arewrite (new_rfe ⊆ new_rf); auto.
       unfold new_rfe; basic_solver. }
 
+    assert (tc_coherent G sc TC') as TCCOH'.
+    { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
+    assert (W ∩₁ Rel ∩₁ I' ⊆₁ C') as RELCOV'.
+    { eapply sim_trav_step_rel_covered; eauto. red. eauto. }
+
     assert (new_rfi ≡ ⦗ E0 ⦘ ⨾ new_rfi ⨾ ⦗ E0 ⦘) as NEW_RFIE.
     { split; [|basic_solver].
       etransitivity.
@@ -492,8 +497,7 @@ Proof.
             ⦗Tid_ thread⦘ ⨾ cert_rfi G sc TC' thread ⨾ ⦗Tid_ thread⦘).
         { unfold cert_rfi. basic_solver. }
         rewrite cert_rfi_in_sb; auto. 
-        basic_solver 42.
-        admit. }
+        basic_solver 42. }
       eapply E0_sbprcl; eauto. }
       
     assert (forall r, exists ! w, new_rfe_ex⁻¹ r w) as new_rfe_unique.
@@ -536,14 +540,13 @@ Proof.
       apply cert_rfD in AA. destruct_seq AA as [WX RY].
       splits; auto; unfold is_w, is_r.
       all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
-        [ erewrite tr_lab; eauto; eapply E0_in_certE; eauto
+        [ erewrite tr_lab; eauto; eapply E0_in_certE with (TC:=TC); eauto
         | | | by apply CACTS]. 
       1-2: rewrite TX; auto.  
       all: rewrite TY; auto. }
     { rewrite NEWRFI_IN_CERT.
       rewrite cert_rfi_in_sb; auto. 
-      unfold Execution.sb. basic_solver. 
-      admit. } 
+      unfold Execution.sb. basic_solver. }
     { unfold new_rfi, new_rf. basic_solver. } 
     { rewrite <- CACTS. basic_solver. } 
     { rewrite STATECOV. 
@@ -588,7 +591,7 @@ Proof.
       apply seq_eqv_l. split; auto.  
       { admit. }
       eapply issuedW. 
-      { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
+      { apply TCCOH'. }
       auto. }
 
     { rewrite ODATA, CACTS.
@@ -772,33 +775,31 @@ Proof.
       by rewrite set_compl_union_id, seq_id_l.
     rewrite id_union, seq_union_l.
     rewrite non_I_cert_rf; auto.
-    { unionL; [|basic_solver].
-      inv TSTEP; simpls. 
+    unionL; [|basic_solver].
+    inv TSTEP; simpls. 
 
-      3: assert (tid r = tid w) as TR by (eapply wf_rmwt; eauto).
+    3: assert (tid r = tid w) as TR by (eapply wf_rmwt; eauto).
 
-      all: assert (~ is_init w) as NINITX
-          by (intros AA; destruct w; simpls; desf;
-              rewrite <- TX in *; desf).
-      
-      all: rewrite id_union, seq_union_l; unionL; [basic_solver|].
-      all: unionR right.
-      all: unfolder; intros a b [AA RF]; desf.
-      
-      3: rewrite TR in RF.
-      all: assert (tid b = tid a) as TB
-          by (apply cert_rf_codomt in RF; generalize RF; basic_solver).
+    all: assert (~ is_init w) as NINITX
+        by (intros AA; destruct w; simpls; desf;
+            rewrite <- TX in *; desf).
+    
+    all: rewrite id_union, seq_union_l; unionL; [basic_solver|].
+    all: unionR right.
+    all: unfolder; intros a b [AA RF]; desf.
+    
+    3: rewrite TR in RF.
+    all: assert (tid b = tid a) as TB
+        by (apply cert_rf_codomt in RF; generalize RF; basic_solver).
 
-      all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
-      all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
-      all: destruct (@same_thread G a b) as [[|SB]|SB]; desf; auto. 
-      1,3,5: type_solver.
-      all: exfalso.
-      all: eapply cert_rf_hb_sc_hb_irr; eauto.
-      all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
-      all: repeat (eexists; split; eauto). }
-    { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
-    eapply sim_trav_step_rel_covered; eauto. red. eauto. 
+    all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
+    all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
+    all: destruct (@same_thread G a b) as [[|SB]|SB]; desf; auto. 
+    1,3,5: type_solver.
+    all: exfalso.
+    all: eapply cert_rf_hb_sc_hb_irr; eauto.
+    all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
+    all: repeat (eexists; split; eauto).
 Admitted.
 
 End CertGraphLemmas.
