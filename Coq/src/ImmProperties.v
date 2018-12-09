@@ -189,6 +189,34 @@ Proof.
   apply seq_eqv_r; split; eauto.
 Qed.
 
+Lemma itrav_step_thread_ninit prog e TC'
+      (GPROG : program_execution prog G)
+      (PROG_NINIT : ~ (IdentMap.In tid_init prog))
+      (STEP : itrav_step G sc e TC TC') :
+  tid e <> tid_init.
+Proof.
+  intros AA.
+  assert (E e) as EE.
+  { cdes STEP. desf.
+    { apply COV. }
+    apply ISS. }
+  assert (is_init e) as INIT.
+  { eapply tid_initi; eauto. by split. }
+  cdes STEP. desf.
+  { apply NEXT. eapply init_covered; eauto. by split. }
+  apply NISS. eapply init_issued; eauto. by split.
+Qed.
+
+Lemma isim_trav_step_thread_ninit prog thread TC'
+      (GPROG : program_execution prog G)
+      (PROG_NINIT : ~ (IdentMap.In tid_init prog))
+      (STEP : isim_trav_step G sc thread TC TC') :
+  thread <> tid_init.
+Proof.
+  apply sim_trav_step_to_step in STEP. desf.
+  eapply itrav_step_thread_ninit; eauto.
+Qed.
+
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
@@ -444,5 +472,5 @@ Qed.
 
 Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
 Proof. unfold ext_sb. basic_solver. Qed.
-    
+
 End Properties.

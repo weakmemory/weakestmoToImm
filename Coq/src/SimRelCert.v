@@ -805,7 +805,11 @@ Section SimRelCertLemmas.
     { eapply trstep_thread_prog; eauto; apply SRC. }
     desf. 
     edestruct cert_graph_start as [state' HH]; eauto; try by apply SRC.
-    { (* should follow from TR_STEP ??? *)
+    { eapply isim_trav_step_thread_ninit; eauto.
+      all: apply SRC. }
+    { (* TODO: it should be added to simrel_common *)
+      admit. }
+    { (* TODO: it shoud be added to simrel_common *)
       admit. }
     { (* should follow from CsbqDOM *)
       admit. }
