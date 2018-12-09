@@ -88,12 +88,10 @@ Section CertGraph.
     Variable TCCOH : tc_coherent G sc TC.
     Variable TSTEP : isim_trav_step G sc thread TC TC'.
 
-    Fact TCCOH' : tc_coherent G sc TC'.
-    Proof. 
-      eapply sim_trav_step_coherence; red; eauto.
-    Qed.
-
-    Hint Resolve TCCOH'. 
+    Lemma isim_trav_step_coherence : tc_coherent G sc TC'.
+    Proof. eapply sim_trav_step_coherence; eauto. red. eauto. Qed.
+    
+    Hint Resolve isim_trav_step_coherence.
 
     Lemma trstep_thread_prog : IdentMap.In thread prog. 
     Proof. 
@@ -188,7 +186,7 @@ Section CertGraph.
           apply seq_eqv_r. split; auto.
           red. split; auto. omega. }
         destruct CTMAX as [AA|[z AA]]; [left|right].
-        { apply TCCOH' in AA. apply AA. eexists.
+        { apply isim_trav_step_coherence in AA. apply AA. eexists.
           apply seq_eqv_r. split; eauto. }
         exists z. apply seq_eqv_r in AA. destruct AA as [AA1 AA2].
         apply seq_eqv_r. split; auto.
@@ -242,13 +240,13 @@ Section CertGraph.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (addr_in_sb WF).
-        generalize (dom_sb_covered TCCOH').
+        generalize (dom_sb_covered isim_trav_step_coherence).
         unfold CertExecution2.D; basic_solver 21. }
       arewrite (Tid_ thread ∩₁ dom_rel (sb^? ⨾ ⦗I'⦘) ⊆₁
                       dom_rel (sb^? ⨾ ⦗I'⦘)) by basic_solver.
       rewrite dom_rel_eqv_dom_rel.
       arewrite (⦗I'⦘ ⊆ ⦗W⦘ ⨾ ⦗I'⦘).
-      { generalize (issuedW TCCOH'); basic_solver. }
+      { generalize (issuedW isim_trav_step_coherence); basic_solver. }
       rewrite (dom_l (wf_addrD WF)), !seqA.
       arewrite (⦗R⦘ ⨾ addr ⨾ sb^? ⨾ ⦗W⦘ ⊆ ppo).
       { unfold imm_common.ppo; rewrite <- ct_step; basic_solver 12. }
@@ -261,7 +259,7 @@ Section CertGraph.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (ctrl_in_sb WF).
-        generalize (dom_sb_covered TCCOH').
+        generalize (dom_sb_covered isim_trav_step_coherence).
         unfold CertExecution2.D; basic_solver 21. }
       arewrite (Tid_ thread ∩₁ dom_rel (sb^? ⨾ ⦗I'⦘) ⊆₁
                       dom_rel (sb^? ⨾ ⦗I'⦘)) by basic_solver.
@@ -269,7 +267,7 @@ Section CertGraph.
       arewrite (ctrl ⨾ sb^? ⊆ ctrl).
       { generalize (ctrl_sb WF); basic_solver 21. }
       arewrite (⦗I'⦘ ⊆ ⦗W⦘ ⨾ ⦗I'⦘).
-      { generalize (issuedW TCCOH'); basic_solver. }
+      { generalize (issuedW isim_trav_step_coherence); basic_solver. }
       rewrite (wf_ctrlD WF), !seqA.
       arewrite (⦗R⦘ ⨾ ctrl ⨾ ⦗W⦘ ⊆ ppo).
       { unfold imm_common.ppo; rewrite <- ct_step; basic_solver 12. }
@@ -282,14 +280,14 @@ Section CertGraph.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (rmw_dep_in_sb WF).
-        generalize (dom_sb_covered TCCOH').
+        generalize (dom_sb_covered isim_trav_step_coherence).
         unfold CertExecution2.D; basic_solver 21. }
       arewrite (Tid_ thread ∩₁ dom_rel (sb^? ⨾ ⦗I'⦘) ⊆₁
                       dom_rel (sb^? ⨾ ⦗I'⦘)) by basic_solver.
       rewrite dom_rel_eqv_dom_rel.
       rewrite (wf_rmw_depD WF), !seqA.
       arewrite (⦗I'⦘ ⊆ ⦗W⦘ ⨾ ⦗I'⦘).
-      { generalize (issuedW TCCOH'); basic_solver. }
+      { generalize (issuedW isim_trav_step_coherence); basic_solver. }
       arewrite (⦗R⦘ ⨾ rmw_dep ⨾ ⦗R_ex⦘ ⨾ sb^? ⨾ ⦗W⦘ ⊆ ppo).
       2: unfold CertExecution2.D; basic_solver 21.
       unfold imm_common.ppo; hahn_frame.
@@ -304,13 +302,13 @@ Section CertGraph.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (rmw_in_sb WF).
-        generalize (dom_sb_covered TCCOH').
+        generalize (dom_sb_covered isim_trav_step_coherence).
         unfold CertExecution2.D; basic_solver 21. }
       arewrite (Tid_ thread ∩₁ dom_rel (sb^? ⨾ ⦗I'⦘) ⊆₁
                       dom_rel (sb^? ⨾ ⦗I'⦘)) by basic_solver.
       rewrite dom_rel_eqv_dom_rel.
       arewrite (⦗I'⦘ ⊆ ⦗W⦘ ⨾ ⦗I'⦘).
-      { generalize (issuedW TCCOH'); basic_solver. }
+      { generalize (issuedW isim_trav_step_coherence); basic_solver. }
       generalize (rmw_in_ppo WF) (rmw_sb_W_in_ppo WF).
       unfold CertExecution2.D; basic_solver 21.
     Qed.
@@ -392,12 +390,14 @@ Variable IMMC : imm_consistent G sc.
 Variable TCCOH : tc_coherent G sc TC.
 Variable TSTEP : isim_trav_step G sc thread TC TC'.
 
-Hint Resolve TCCOH'. 
+Hint Resolve isim_trav_step_coherence. 
 
 Lemma cert_graph_start 
       (state : Language.Language.state (Promise.thread_lts thread))
       (NINITT : thread <> tid_init)
       (GPC : wf_thread_state thread state)
+      (PROGST : stable_lprog thread (instrs state))
+      (REACHABLE : (step thread)＊ (init (instrs state)) state)
       (SSTATE : sim_state G sim_normal C state)
       (STATECOV : acts_set state.(ProgToExecution.G) ⊆₁ C) 
       (RMWCLOS : forall r w (RMW : rmw r w), C r <-> C w)
@@ -478,7 +478,7 @@ Proof.
       unfold new_rfe; basic_solver. }
 
     assert (tc_coherent G sc TC') as TCCOH'.
-    { eapply TCCOH'; [ eapply TCCOH | apply TSTEP]. }
+    { eapply isim_trav_step_coherence; [ eapply TCCOH | apply TSTEP]. }
     assert (W ∩₁ Rel ∩₁ I' ⊆₁ C') as RELCOV'.
     { eapply sim_trav_step_rel_covered; eauto. red. eauto. }
 
@@ -620,12 +620,8 @@ Proof.
 
     edestruct get_stable with (state0:=pre_cert_state) (thread:=thread)
       as [cert_state [CC _]].
-    { (* TODO: add `stable_lprog thread (instrs state)` to SimRel. *)
-      admit. }
-    { eapply transitive_rt; [|by eauto].
-      rewrite INSTRSS.
-      (* TODO: add `(step thread)＊ (init (instrs state)) state` to SimRel. *)
-      admit. }
+    { by rewrite INSTRSS. }
+    { eapply transitive_rt; [|by eauto]. by rewrite INSTRSS. }
     desc.
     
     assert (ProgToExecution.G cert_state = ProgToExecution.G pre_cert_state) as SCC.
@@ -797,6 +793,6 @@ Proof.
     all: eapply cert_rf_hb_sc_hb_irr; eauto.
     all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
     all: repeat (eexists; split; eauto).
-Admitted.
+Qed.
 
 End CertGraphLemmas.
