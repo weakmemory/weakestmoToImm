@@ -586,6 +586,19 @@ Proof.
   unfolder in H; desf.
 Qed.
 
+Lemma cont_sb_dom_Einit k lang st WF (KK : K (k, existT _ lang st)) : 
+  Einit ⊆₁ cont_sb_dom S k.
+Proof. 
+  unfold cont_sb_dom.
+  unfolder. 
+  ins; desf.
+  exists eid, eid; splits; auto. 
+  right. apply sb_Einit_Eninit; auto. 
+  unfold ES.acts_init_set. unfolder.
+  left; split; auto.   
+  eapply K_inEninit; eauto. 
+Qed.  
+
 Lemma cont_sb_nfrwd e k lang st WF 
       (KE : k = CEvent e) 
       (KK : K (k, existT _ lang st)) : 

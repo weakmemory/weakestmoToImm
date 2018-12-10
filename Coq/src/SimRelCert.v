@@ -46,7 +46,6 @@ Section SimRelCert.
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
-  Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'K'"  := S.(ES.cont_set).
 
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
@@ -60,6 +59,7 @@ Section SimRelCert.
   Notation "'Sew'" := (S.(ES.ew)).
 
   Notation "'Scc'" := (S.(cc)).
+  Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'Ssw'" := (S.(sw)).
   Notation "'Shb'" := (S.(hb)).
 
@@ -70,6 +70,9 @@ Section SimRelCert.
   Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
   
   Notation "'GE'" := G.(acts_set).
+  Notation "'GEinit'" := (is_init ∩₁ GE).
+  Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
+
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gtid'" := (tid).
 
@@ -206,22 +209,35 @@ Section SimRelCert.
   Lemma C_in_hdom : C ⊆₁ hdom.
   Proof. unfold cert_dom. basic_solver. Qed.
 
-  Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Lemma Einit_in_hdom (TCCOH : tc_coherent G sc TC) : GEinit ⊆₁ hdom. 
+  Proof. 
+    etransitivity; [|apply C_in_hdom].
+    eapply init_covered; eauto. 
+  Qed.
+
+  Lemma cont_sb_dom_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
   Proof.
     unfold cert_dom.
-    rewrite set_collect_union.
     arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
     { rewrite set_collect_compose.
       apply fixset_set_fixpoint.
       apply SRC. }
-    arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ ES.cont_sb_dom S q).
-    2: by eauto with hahn.
-    admit. 
-    (* eapply contstateE; eauto. *)
-    (* { by apply SRC. } *)
-    (* destruct state_q_cont; auto. desf. *)
-    (* apply KK. *)
-  Admitted.
+    erewrite set_union_minus with (s := ES.cont_sb_dom S q) (s' := SEinit).
+    2 : { eapply ES.cont_sb_dom_Einit; [apply SRC|]. 
+          destruct SRC.(state_q_cont).
+          desf. apply KK. }
+    rewrite !set_collect_union.
+    apply set_subset_union_l. split.
+    { arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ (ES.cont_sb_dom S q \₁ SEinit)).
+      2: by eauto with hahn.
+      eapply contstateE; eauto.
+      1-2: by apply SRC.
+      destruct state_q_cont; auto. desf. }
+    rewrite <- !set_collect_union.
+    apply set_collect_mori; auto. 
+    rewrite e2a_same_Einit; [|apply SRC]. 
+    eapply Einit_in_hdom; apply SRC.
+  Qed.
 
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
   Proof. 
@@ -1592,6 +1608,8 @@ Section SimRelCertLemmas.
           rewrite set_collect_eq.
           apply eq_predicate. 
           unfold g' in g'eaEQ; rewrite g'eaEQ; auto. }
+        (* gEinit : GEinit ⊆₁ g □₁ SEinit *)
+        { admit. }
         (* grmw : g □ Srmw ⊆ Grmw *)
         { eapply simrel_cert_esstep_e2a_eqr;
           [| | apply ES.rmwE | eapply ESstep.basic_step_nupd_rmw | apply SRCC];
