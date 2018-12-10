@@ -46,7 +46,6 @@ Section SimRelCert.
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
-  Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'K'"  := S.(ES.cont_set).
 
   Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
@@ -60,6 +59,7 @@ Section SimRelCert.
   Notation "'Sew'" := (S.(ES.ew)).
 
   Notation "'Scc'" := (S.(cc)).
+  Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'Ssw'" := (S.(sw)).
   Notation "'Shb'" := (S.(hb)).
 
@@ -70,20 +70,27 @@ Section SimRelCert.
   Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
   
   Notation "'GE'" := G.(acts_set).
+  Notation "'GEinit'" := (is_init ∩₁ GE).
+  Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
+
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gtid'" := (tid).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Gvf'" := (furr G sc).
+
+  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
-  
+
   Notation "'Gsb'" := (G.(sb)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Grmw'" := G.(rmw).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Grfe'" := (G.(rfe)).
   Notation "'Gco'" := (G.(co)).
 
+  Notation "'Gvf'" := (furr G sc).
+  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  
   Notation "'certE'" := certG.(acts_set).
   Notation "'certRmw'" := (certG.(rmw)).
 
@@ -133,6 +140,7 @@ Section SimRelCert.
       cstate_stable : stable_state qtid state';
       state_q_cont  : Kstate (q, state);
       cstate_reachable : (step qtid)＊ state state';
+      cstate_covered : C ∩₁ GTid qtid ⊆₁ acts_set state.(ProgToExecution.G);
 
       cert : cert_graph G sc TC TC' qtid state';
 
@@ -201,20 +209,50 @@ Section SimRelCert.
   Lemma C_in_hdom : C ⊆₁ hdom.
   Proof. unfold cert_dom. basic_solver. Qed.
 
-  Lemma sbk_in_hhdom (SRC : simrel_cert) : ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+  Lemma GEinit_in_hdom (TCCOH : tc_coherent G sc TC) : 
+    GEinit ⊆₁ hdom. 
+  Proof. 
+    etransitivity; [|apply C_in_hdom].
+    eapply init_covered; eauto. 
+  Qed.
+
+  Lemma SEinit_in_cont_sb_dom (SRC : simrel_cert) : 
+    SEinit ⊆₁ ES.cont_sb_dom S q.
+  Proof. 
+    eapply ES.cont_sb_dom_Einit; [apply SRC|].
+    destruct SRC.(state_q_cont).
+    desf. apply KK.
+  Qed.
+
+  Lemma GEinit_in_e2a_cont_sb_dom (SRC : simrel_cert) : 
+    GEinit ⊆₁ e2a S □₁ ES.cont_sb_dom S q. 
+  Proof. 
+    erewrite <- e2a_same_Einit; [|apply SRC].
+    apply set_collect_mori; auto. 
+    by apply SEinit_in_cont_sb_dom.
+  Qed.
+
+  Lemma cont_sb_dom_in_hhdom (SRC : simrel_cert) : 
+    ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
   Proof.
     unfold cert_dom.
-    rewrite set_collect_union.
     arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (g □₁ ES.cont_sb_dom S q)) at 1.
     { rewrite set_collect_compose.
       apply fixset_set_fixpoint.
       apply SRC. }
-    arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ ES.cont_sb_dom S q).
-    2: by eauto with hahn.
-    eapply contstateE; eauto.
-    { by apply SRC. }
-    destruct state_q_cont; auto. desf.
-    apply KK.
+    erewrite set_union_minus with (s := ES.cont_sb_dom S q) (s' := SEinit).
+    2 : by apply SEinit_in_cont_sb_dom.
+    rewrite !set_collect_union.
+    apply set_subset_union_l. split.
+    { arewrite (acts_set (ProgToExecution.G state) ≡₁ g □₁ (ES.cont_sb_dom S q \₁ SEinit)).
+      2: by eauto with hahn.
+      eapply contstateE; eauto.
+      1-2: by apply SRC.
+      destruct state_q_cont; auto. desf. }
+    rewrite <- !set_collect_union.
+    apply set_collect_mori; auto. 
+    rewrite e2a_same_Einit; [|apply SRC]. 
+    eapply GEinit_in_hdom; apply SRC.
   Qed.
 
   Lemma cfk_hdom (SRC : simrel_cert) : ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
@@ -1084,7 +1122,7 @@ Section SimRelCertLemmas.
         (SAJF : sim_add_jf S G sc TC TC' h k st e S') : 
     ESstep.add_jf e S S'.
   Proof. 
-    cdes SAJF.
+    cdes BSTEP_; cdes SAJF.
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor. eauto. }
     assert (SE S w) as SEw.
@@ -1093,6 +1131,8 @@ Section SimRelCertLemmas.
     { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
     assert (SE S' e) as SEe'.
     { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
+    assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
+    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e; eauto. }
     econstructor; auto. 
     exists w; splits; auto.  
     { assert (is_w (Glab ∘ (e2a S')) w) as WW.
@@ -1128,27 +1168,45 @@ Section SimRelCertLemmas.
       eapply ghtrip; [apply SRCC|].
       unfolder. basic_solver. }
     arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
+    rewrite <- Hwa at 1.
+    rewrite Gwwa.
+    arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
     destruct NEW_RF as [Iss | SB].
     { assert (I wa) as Iw.
       { apply seq_eqv_l in Iss. unfolder in Iss. rewrite <- Gwwa. basic_solver. }
-      arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
       unfold certLab.
       destruct 
-        (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S w))) as [GCE | nGCE].
-      { assert (GNtid_ (ES.cont_thread S k) (e2a S w)) as HH.
+        (excluded_middle_informative (acts_set (ProgToExecution.G st'') wa)) 
+        as [GCE | nGCE].
+      { assert (GNtid_ (ES.cont_thread S k) wa) as HH.
         { apply seq_eqv_l in Iss. 
           destruct Iss as [[NTID _] _].
-          apply NTID. }
+          rewrite <- Gwwa. apply NTID. }
         exfalso. apply HH. 
         eapply dcertE in GCE; [|apply SRCC].
         by destruct GCE. }
-      rewrite <- Hwa.
-      arewrite ((Slab S) (h wa) = (Slab S ∘ h) wa).
-      symmetry. rewrite Hwa, Gwwa. eapply hlabCI; [apply SRCC|].
+      symmetry. eapply hlabCI; [apply SRCC|].
       basic_solver. }
-    
-    admit. 
-  Admitted.
+    symmetry. eapply hlabTHRD; [apply SRCC|].
+    edestruct sb_tid_init as [STID | INITx]; eauto. 
+    { assert ((g □₁ (ES.cont_sb_dom S k \₁ SEinit S)) wa) as HH. 
+      { eapply contstateE; eauto. 
+        1-2 : apply SRCC.
+        destruct CERTwa as [[Cwa | Iwa] | ACTSst]; auto.
+        { eapply cstate_covered; [apply SRCC|].
+          split; auto.
+          by rewrite <- Gwwa, STID, GTIDe. }
+        exfalso. destruct Iwa as [_ NTIDwa].
+        apply NTIDwa.
+        rewrite <- Gwwa.
+        erewrite <- ESstep.basic_step_tid_e; eauto.
+        by rewrite e2a_tid. }
+      unfolder in HH. basic_solver. }
+    eapply GEinit_in_e2a_cont_sb_dom; eauto. 
+    unfolder; splits; [congruence|].  
+    eapply gE; [apply SRCC|]. 
+    unfolder. eauto. 
+  Qed.
 
   Lemma simrel_cert_basic_step k lbls jf ew co
         (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
@@ -1570,6 +1628,8 @@ Section SimRelCertLemmas.
           rewrite set_collect_eq.
           apply eq_predicate. 
           unfold g' in g'eaEQ; rewrite g'eaEQ; auto. }
+        (* gEinit : GEinit ⊆₁ g □₁ SEinit *)
+        { admit. }
         (* grmw : g □ Srmw ⊆ Grmw *)
         { eapply simrel_cert_esstep_e2a_eqr;
           [| | apply ES.rmwE | eapply ESstep.basic_step_nupd_rmw | apply SRCC];

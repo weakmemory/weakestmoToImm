@@ -144,14 +144,75 @@ Section SimRel.
                 @sim_state G sim_normal C (Gtid e) state;
     }.
 
-  Lemma contstateE (SRC : simrel_cont) :
-    forall cont thread (state : thread_st thread)
-           (INK : K (cont, thread_cont_st thread state)),
-      state.(ProgToExecution.G).(acts_set) ≡₁ g □₁ ES.cont_sb_dom S cont.
+  Lemma contstateE (WF : ES.Wf S) (SRC : simrel_cont) :
+    forall k (st : thread_st (ES.cont_thread S k))
+           (INK : K (k, thread_cont_st  (ES.cont_thread S k) st)),
+      acts_set st.(ProgToExecution.G) ≡₁ g □₁ (ES.cont_sb_dom S k \₁ SEinit).
   Proof.
-    
-    (* It should follow from `contseqn` *)
-  Admitted.
+    ins. 
+    assert (wf_thread_state (ES.cont_thread S k) st) as WFT.
+    { eapply contwf; eauto. }
+    ins. split.
+    { unfold acts_set. intros a ACT.
+      eapply acts_rep in ACT; eauto. 
+      desf. unfolder. unfold ES.cont_thread.
+      edestruct k eqn:kEQ.
+      { erewrite continit in LE; eauto; omega. }
+      assert (Stid eid <> tid_init) as NINITeid.
+      { red. ins. eapply ES.init_tid_K; eauto. }
+      erewrite contseqn in LE; eauto. 
+      apply lt_n_Sm_le, le_lt_or_eq in LE.
+      destruct LE as [LT | EQ]. 
+      { edestruct ES.seqn_pred; eauto. 
+        { eapply ES.K_inEninit; eauto. }
+        desf.
+        assert (Stid x <> tid_init) as NINITx.
+        { red. ins. congruence. }
+        exists x; splits. 
+        { unfold ES.cont_sb_dom. unfolder. eauto 10. }
+        { intuition. }
+        unfold e2a. 
+        destruct 
+          (excluded_middle_informative (Stid x = tid_init))
+          as [TIDi | nTIDi];
+          [intuition | congruence]. }
+      exists eid; splits.
+      { unfold ES.cont_sb_dom. basic_solver 10. }
+      { intuition. }
+      unfold e2a. 
+      destruct 
+          (excluded_middle_informative (Stid eid = tid_init))
+          as [TIDi | nTIDi];
+          [intuition | congruence]. }
+    unfolder. intros a [e [[SB NINIT] gEQ]]. 
+    edestruct k eqn:kEQ.
+    { unfold ES.cont_sb_dom, ES.acts_init_set in SB.
+      destruct SB as [SEe TIDe].
+      exfalso. apply NINIT. splits; auto. }
+    rewrite <- gEQ.
+    erewrite e2a_ninit; auto. 
+    2 : { unfold ES.acts_ninit_set. 
+          unfolder; split; auto. 
+          eapply ES.cont_sb_domE; eauto. }
+    assert (ES.same_tid S e eid) as STID.
+    { unfold ES.cont_sb_dom in SB.
+      unfolder in SB. desf.
+      apply ES.sb_Einit_Eninit in SB; auto.
+      destruct SB as [AA | BB].
+      { unfolder in AA. intuition. }
+      by apply ES.sb_tid. }
+    unfold acts_set. eapply acts_clos. 
+    { arewrite (Stid e = Stid eid).
+      arewrite (Stid eid = ES.cont_thread S (CEvent eid)).
+      eapply contwf; eauto. }
+    unfold ES.cont_sb_dom in SB.
+    unfolder in SB. 
+    destruct SB as [y [z [[EQe | SBez] [EQzy EQeid]]]].
+    { subst e y z. erewrite contseqn; eauto. }
+    subst z y. etransitivity. 
+    { eapply ES.seqn_sb_alt; eauto. }
+    erewrite contseqn; eauto.
+  Qed.
      
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
 
@@ -171,6 +232,7 @@ Section SimRel.
       sr_graph : simrel_graph;
 
       gE : g □₁ SE ⊆₁ GE;
+      gEinit : GEinit ⊆₁ g □₁ SEinit;
 
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
@@ -211,50 +273,61 @@ Section SimRel.
   Section Properties.
     Variable SRC : simrel_common.
 
-    Lemma basic_step_e2a_cont_sb_dom e k (st : thread_st (ES.cont_thread S k)) 
-          (kE : k = CEvent e)
-          (INK : K (k, thread_cont_st (ES.cont_thread S k) st)) :
-      g □₁ ES.cont_sb_dom S k ≡₁ dom_rel (⦗ GTid (Stid e) ⦘ ⨾ Gsb^? ⨾ ⦗ eq (g e) ⦘).
+    Lemma e2a_same_Einit : 
+      e2a S □₁ SEinit ≡₁ GEinit.
     Proof. 
-      edestruct SRC. ins.
-      assert (SE e) as SEe.
-      { subst k. edestruct ES.K_inEninit; eauto. }
-      assert (GE (e2a S e)) as GEe.
-      { apply gE; auto. unfolder. eauto. }
-      assert (wf_thread_state (ES.cont_thread S k) st) as WFT.
-      { eapply contwf; eauto. }
-      rewrite <- contstateE; eauto. 
-      erewrite e2a_ninit in *; auto.
-      2,3 : subst k; eapply ES.K_inEninit; eauto. 
-      split. 
-      { unfold acts_set. intros a ACT.
-        eapply acts_rep in ACT; eauto.
-        desf. unfolder. unfold ES.cont_thread.
-        do 2 eexists; split; eauto.
-        exists (ThreadEvent (Stid e) (ES.seqn S e)).
-        split; eauto.
-        erewrite contseqn in LE; eauto.
-        apply lt_n_Sm_le, le_lt_or_eq in LE.
-        destruct LE as [LT | EQ]; auto.
-        right. unfold sb, ext_sb. apply seq_eqv_lr.
-        splits; auto.
-        eapply gprclos; eauto. }
-      unfolder.
-      intros x [y [TIDx [[EQ | SB] EQy]]]; subst y.         
-      { subst k x. unfold acts_set. apply acts_clos; auto.
-        erewrite contseqn; eauto. }
-      destruct x. 
-      { exfalso. eapply ES.init_tid_K; eauto.
-        do 2 eexists; splits; eauto.
-        subst k. unfold ES.cont_thread.
-        unfold tid in TIDx. by symmetry. }
-      subst k. 
-      unfold acts_set. apply acts_clos; auto.
-      { unfold tid in TIDx. by rewrite TIDx. }
-      unfold sb, ext_sb in SB. apply seq_eqv_lr in SB.
-      erewrite contseqn; eauto.
-      desf; omega.
+      split; [eapply e2a_Einit; apply SRC|].
+      unfolder. intros a [INITa GEa].
+      edestruct gEinit as [e [[INITe SEe] gEQ]].
+      1-2 : unfolder; eauto.  
+      eexists; splits; eauto. 
     Qed.
+
+    (* Do we really need that ? Can we simplify proof ? *)
+    (* Lemma basic_step_e2a_cont_sb_dom e k (st : thread_st (ES.cont_thread S k))  *)
+    (*       (kE : k = CEvent e) *)
+    (*       (INK : K (k, thread_cont_st (ES.cont_thread S k) st)) : *)
+    (*   g □₁ ES.cont_sb_dom S k ≡₁ dom_rel (⦗ GTid (Stid e) ⦘ ⨾ Gsb^? ⨾ ⦗ eq (g e) ⦘). *)
+    (* Proof.  *)
+    (*   edestruct SRC. ins. *)
+    (*   assert (SE e) as SEe. *)
+    (*   { subst k. edestruct ES.K_inEninit; eauto. } *)
+    (*   assert (GE (e2a S e)) as GEe. *)
+    (*   { apply gE; auto. unfolder. eauto. } *)
+    (*   assert (wf_thread_state (ES.cont_thread S k) st) as WFT. *)
+    (*   { eapply contwf; eauto. } *)
+    (*   rewrite <- contstateE; eauto.  *)
+    (*   erewrite e2a_ninit in *; auto. *)
+    (*   2,3 : subst k; eapply ES.K_inEninit; eauto.  *)
+    (*   split.  *)
+    (*   { unfold acts_set. intros a ACT. *)
+    (*     eapply acts_rep in ACT; eauto. *)
+    (*     desf. unfolder. unfold ES.cont_thread. *)
+    (*     do 2 eexists; split; eauto. *)
+    (*     exists (ThreadEvent (Stid e) (ES.seqn S e)). *)
+    (*     split; eauto. *)
+    (*     erewrite contseqn in LE; eauto. *)
+    (*     apply lt_n_Sm_le, le_lt_or_eq in LE. *)
+    (*     destruct LE as [LT | EQ]; auto. *)
+    (*     right. unfold sb, ext_sb. apply seq_eqv_lr. *)
+    (*     splits; auto. *)
+    (*     eapply gprclos; eauto. } *)
+    (*   unfolder. *)
+    (*   intros x [y [TIDx [[EQ | SB] EQy]]]; subst y.          *)
+    (*   { subst k x. unfold acts_set. apply acts_clos; auto. *)
+    (*     erewrite contseqn; eauto. } *)
+    (*   destruct x.  *)
+    (*   { exfalso. eapply ES.init_tid_K; eauto. *)
+    (*     do 2 eexists; splits; eauto. *)
+    (*     subst k. unfold ES.cont_thread. *)
+    (*     unfold tid in TIDx. by symmetry. } *)
+    (*   subst k.  *)
+    (*   unfold acts_set. apply acts_clos; auto. *)
+    (*   { unfold tid in TIDx. by rewrite TIDx. } *)
+    (*   unfold sb, ext_sb in SB. apply seq_eqv_lr in SB. *)
+    (*   erewrite contseqn; eauto. *)
+    (*   desf; omega. *)
+    (* Qed. *)
 
     Lemma issuedSbE : dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ GE.
     Proof.

@@ -586,6 +586,19 @@ Proof.
   unfolder in H; desf.
 Qed.
 
+Lemma cont_sb_dom_Einit k lang st WF (KK : K (k, existT _ lang st)) : 
+  Einit ⊆₁ cont_sb_dom S k.
+Proof. 
+  unfold cont_sb_dom.
+  unfolder. 
+  ins; desf.
+  exists eid, eid; splits; auto. 
+  right. apply sb_Einit_Eninit; auto. 
+  unfold ES.acts_init_set. unfolder.
+  left; split; auto.   
+  eapply K_inEninit; eauto. 
+Qed.  
+
 Lemma cont_sb_nfrwd e k lang st WF 
       (KE : k = CEvent e) 
       (KK : K (k, existT _ lang st)) : 
@@ -728,6 +741,17 @@ Qed.
 Lemma seqn_sb_alt WF x y (STID : same_tid x y) (SB : sb x y) : 
   seqn x < seqn y. 
 Proof. eapply seqn_sb; unfolder; eauto 50. Qed.
+
+(* Lemma countNatP_select (s : nat -> Prop) n i j (LT : i < j) (HH : countNatP s n = j) :  *)
+(*   exists x, ⟪ IN : s' ⊆₁ s ⟫ /\ ⟪ CNTX : countNatP s' n = i ⟫. *)
+(* Proof. admit. Admitted. *)
+
+Lemma seqn_pred WF y i (Ey : E y) (LE : i < seqn y) : 
+  exists x, 
+    ⟪ SBxy : sb x y ⟫ /\ 
+    ⟪ STIDxy : same_tid x y ⟫ /\ 
+    ⟪ SEQNx : seqn x = i ⟫. 
+Proof. admit. Admitted.
 
 Lemma seqn_immsb WF x y 
       (STID : same_tid x y)
