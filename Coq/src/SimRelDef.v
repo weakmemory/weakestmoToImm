@@ -96,6 +96,8 @@ Section SimRelDef.
   Notation "'Grelease'" := (G.(imm_s_hb.release)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
 
+  Variable sc : relation actid.
+
   Variable TC : trav_config.
 
   Notation "'C'"  := (covered TC).
@@ -103,8 +105,6 @@ Section SimRelDef.
 
   Definition pc thread :=
     C ∩₁ GTid thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
-
-  Variable sc : relation actid.
 
   Notation "'Gvf'" := (furr G sc).
 
@@ -262,9 +262,8 @@ Section SimRelDef.
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
-      ghtrip : ⦗ hdom ⦘ ⨾ ↑ (g ∘ h) ⊆ eq;
-      
-      (* hgfix_sbk : fixset (ES.cont_sb_dom S q) (h ∘ g);  *)
+      ghfix : fixset hdom (g ∘ h);
+      hgfix : fixset (ES.cont_sb_dom S q) (h ∘ g);
 
       jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘);
 
@@ -289,5 +288,19 @@ Section SimRelDef.
 
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
     }.
+
+  Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=
+    ⟪ RR : is_r (ES.lab S') r ⟫ /\
+    exists w,
+      ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
+      ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\
+      ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
+
+  Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop :=
+    ⟪ WW : is_w (ES.lab S') w ⟫ /\
+    exists (ws : eventid -> Prop),
+      ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\
+      ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
+      ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫.
 
 End SimRelDef.
