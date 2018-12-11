@@ -712,8 +712,24 @@ Section SimRelCertLemmas.
       rewrite <- Gwwa.
       erewrite <- ESstep.basic_step_tid_e; eauto.
       by rewrite e2a_tid. }
-    admit. 
-  Admitted.
+    assert (C wa) as Cwa.
+    { eapply init_covered; [apply SRCC|].
+      rewrite <- Gwwa. 
+      split; auto.  
+      eapply gE; [apply SRCC|].
+      unfolder. eauto. }
+    etransitivity. 
+    { eapply cslab; [apply SRCC|].
+      unfold D. repeat left.
+      eapply sim_trav_step_covered_le; [|eauto].
+      econstructor. apply SRCC. }
+    etransitivity.
+    { symmetry. eapply flab; [apply SRCC|]. basic_solver. }
+    unfold compose. 
+    arewrite (f wa = h wa); [|auto].
+    eapply hfeq; [apply SRCC|].
+    by repeat left. 
+  Qed.
 
   Lemma simrel_cert_basic_step k lbls jf ew co
         (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
