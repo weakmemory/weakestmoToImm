@@ -206,6 +206,9 @@ Proof.
   eexists; splits; eauto.
 Qed.
 
+Lemma minus_disjoint : r ∩ r' ≡ ∅₂ -> r \ r' ≡ r. 
+Proof. clear. basic_solver 5. Qed.
+
 Lemma cross_minus_compl_l : s × s' \ (set_compl s) × s'' ≡ s × s'.
 Proof. 
   unfolder; splits; ins; splits; desf; unfold not; ins; desf. 
@@ -584,6 +587,34 @@ Proof.
   rewrite inclusion_t_rt.
   basic_solver.
 Qed. 
+
+Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
+  (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
+Proof. 
+  clear r'' s s' s'' q q' a b f g h B C.
+  rewrite crE, seq_union_r, seq_id_r.
+  rewrite rt_unionE.
+  rewrite <- cr_of_ct with (r := (r ⨾ r'＊)).
+  rewrite crE, seq_union_r.
+  apply union_more.
+  { basic_solver. }
+  arewrite (r ⨾ r'＊ ≡ r). 
+  { rewrite <- cr_of_ct, crE, seq_union_r.
+    arewrite (r ⨾ r'⁺ ≡ ∅₂).
+    { split; [|basic_solver].
+      intros x y HH.  
+      destruct HH as [z [HA HB]].
+      induction HB. 
+      { eapply Hrr'. unfolder. eauto. }
+      intuition. }
+    basic_solver. }
+  arewrite (r⁺ ≡ r); auto. 
+  split. 
+  { intros x y HH. 
+    induction HH; auto.  
+    exfalso. eapply Hrr. unfolder. eauto. }
+  red. ins. constructor. auto. 
+Qed.
 
 Lemma clos_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')⁺ ≡ r'⁺ ∪ r'＊ ⨾ r.

@@ -129,6 +129,8 @@ Notation "'sb'"    := S.(ES.sb).
 Notation "'rmw'"   := S.(ES.rmw).
 Notation "'ew'"    := S.(ES.ew).
 Notation "'jf'"    := S.(ES.jf).
+Notation "'jfi'"    := S.(ES.jfi).
+Notation "'jfe'"    := S.(ES.jfe).
 Notation "'rf'"    := S.(ES.rf).
 Notation "'fr'"    := S.(ES.fr).
 Notation "'co'"    := S.(ES.co).
@@ -453,6 +455,22 @@ Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
+
+(******************************************************************************)
+(** ** jf properties *)
+(******************************************************************************)
+
+Lemma jfiE WF : jfi ≡ ⦗E⦘ ⨾ jfi ⨾ ⦗E⦘.
+Proof. unfold ES.jfi. rewrite WF.(jfE). basic_solver. Qed.
+
+Lemma jfeE WF : jfe ≡ ⦗E⦘ ⨾ jfe ⨾ ⦗E⦘.
+Proof. unfold ES.jfe. rewrite WF.(jfE). basic_solver. Qed.
+
+Lemma jfiD WF : jfi ≡ ⦗W⦘ ⨾ jfi ⨾ ⦗R⦘.
+Proof. unfold ES.jfi. rewrite WF.(jfD). basic_solver. Qed.
+
+Lemma jfeD WF : jfe ≡ ⦗W⦘ ⨾ jfe ⨾ ⦗R⦘.
+Proof. unfold ES.jfe. rewrite WF.(jfD). basic_solver. Qed.
 
 (******************************************************************************)
 (** ** rf properties *)

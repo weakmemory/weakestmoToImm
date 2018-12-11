@@ -64,8 +64,8 @@ Definition cc :=
 
 (* visible events *)
 
-Definition vis :=
-  codom_rel (cc ∩ (ew ⨾ sb ⁼)).
+Definition vis e := 
+  ⟪ EE : E e ⟫ /\ ⟪ CCEW : cc ⨾ ⦗ eq e ⦘ ⊆ ew ⨾ sb⁼ ⟫.
 
 (* release sequence *)
 
@@ -221,8 +221,18 @@ Lemma eco_trans (m' : model) : transitive (eco m').
 Proof. unfold eco. apply transitive_ct. Qed.
 
 (******************************************************************************)
-(** ** Relations in graph *)
+(** ** Sets and Relations in graph *)
 (******************************************************************************)
+
+Lemma visE : vis ⊆₁ E. 
+Proof. unfold vis. basic_solver. Qed.
+
+Lemma ccE : cc ≡ ⦗E⦘ ⨾ cc ⨾ ⦗E⦘.
+Proof. 
+  unfold cc. 
+  rewrite <- restr_relE, restr_inter, restr_inter_absorb_r.
+  by rewrite ES.cfE, restr_relE at 1.
+Qed.
 
 Lemma rsE : rs ≡ ⦗E⦘ ⨾ rs ⨾ ⦗E⦘.
 Proof.
@@ -283,6 +293,17 @@ Qed.
 (** ** Domains and codomains  *)
 (******************************************************************************)
 
+Lemma ccW : cc ≡ ⦗W⦘ ⨾ cc. 
+Proof. 
+  unfold cc. 
+  rewrite interC.
+  rewrite <- AuxRel.seq_eqv_inter_ll.
+  rewrite <- !seqA.
+  erewrite <- dom_l with (d := W) (r := jfe).
+  2 : by eapply ES.jfeD.
+  basic_solver.
+Qed.
+
 Lemma rsD : rs ≡ ⦗W⦘ ⨾ rs ⨾ ⦗W⦘.
 Proof.
 split; [|basic_solver].
@@ -329,8 +350,38 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** Alternative representations of relations *)
+(** ** Alternative representations of sets and relations *)
 (******************************************************************************)
+
+(* Lemma vis_alt :  *)
+(*   vis ≡₁ (E ∩₁ set_compl (codom_rel cc)) ∪₁ codom_rel (cc ∩ (ew ⨾ sb⁼)). *)
+(* Proof.  *)
+(*   unfold vis. unfolder. split.  *)
+(*   { intros e VIS.  *)
+(*     destruct  *)
+(*       (excluded_middle_informative (exists w, cc w e))  *)
+(*       as [CC | nCC].  *)
+(*     { desf. right. eexists.  *)
+(*       splits; eauto. } *)
+(*     desf. left. eauto. } *)
+(*   intros e [[EE nCC] | [w [CC CCEW]]]. *)
+(*   { desf; splits; auto.   *)
+(*     ins. desf. exfalso. apply nCC. eauto. } *)
+(*   splits. *)
+(*   { apply ccE, seq_eqv_lr in CC. desf. } *)
+(*   ins; desf. *)
+(*   ins. desf; eauto 20.  *)
+
+(*     j      desf. eexists. splits; eauto. *)
+(*       unfolder in CCEW. *)
+(*       eapply CCEW. by splits. } *)
+    
+(*       basic_solver. *)
+(*       eapply CCEW. *)
+(*       admit. } *)
+(*     unfold vis in VIS. *)
+    
+(* Qed. *)
 
 Lemma rs_alt : rs ≡ ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (rf ⨾ rmw)＊.
 Proof. 
