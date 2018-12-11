@@ -195,7 +195,7 @@ Section SimRelDef.
 
       finitIncl : SEinit ⊆₁ f □₁ GEinit;
 
-      vis  : f □₁ fdom ⊆₁ vis S;
+      fvis : f □₁ fdom ⊆₁ vis S;
     }.
   
   Record simrel :=
@@ -281,7 +281,7 @@ Section SimRelDef.
       complete_hdom :
         (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
-      hfeq  : eq_dom (C ∪₁ fdom \₁ contE) f h; 
+      hfeq  : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; 
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)

@@ -127,6 +127,9 @@ Proof. basic_solver. Qed.
 Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
 Proof. basic_solver. Qed.
 
+Lemma dom_singl_rel (x y : A) : dom_rel (singl_rel x y) ≡₁ eq x. 
+Proof. basic_solver. Qed.
+
 Lemma codom_singl_rel (x y : A) : codom_rel (singl_rel x y) ≡₁ eq y. 
 Proof. basic_solver. Qed.
 
@@ -164,6 +167,9 @@ Lemma max_elt_cross : set_compl s ⊆₁ max_elt (s × s').
 Proof. basic_solver. Qed.
 
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
+Proof. basic_solver. Qed.
+
+Lemma dom_minus : dom_rel (r \ r') ⊆₁ dom_rel r. 
 Proof. basic_solver. Qed.
 
 Lemma eq_opt_someE : eq_opt (Some a) ≡₁ eq a.

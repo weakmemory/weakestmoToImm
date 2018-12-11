@@ -731,6 +731,87 @@ Section SimRelCertLemmas.
     by repeat left. 
   Qed.
 
+  Lemma simrel_cert_load_step_jfe_vis TC' h k k' e e' S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') 
+        (LSTEP : ESstep.t_load e e' S S')
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    dom_rel (Sjfe S') ⊆₁ (vis S'). 
+  Proof. 
+    cdes BSTEP_; cdes LSTEP; cdes SAJF.
+    assert (ESstep.t_basic e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ES.Wf S') as WFS'.
+    { admit. }
+    erewrite ESstep.load_step_jfe; eauto. 
+    rewrite dom_union. 
+    apply set_subset_union_l. split. 
+    { etransitivity. 
+      { eapply jfe_vis; apply SRCC. }
+      eapply ESstep.load_step_vis_mon; eauto. }
+    unfold ES.jfe.
+    rewrite <- seq_eqv_minus_lr, SSJF', seq_union_l. 
+    arewrite (Sjf S ⨾ ⦗eq e⦘ ≡ ∅₂). 
+    { split; [|basic_solver].
+      rewrite WFS.(ES.jfE).
+      unfolder; splits; ins; desf; omega. }
+    arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e) by basic_solver. 
+    rewrite union_false_l.
+    unfolder. intros x [y [[EQx EQy] nSB]]. 
+    subst x y. 
+    eapply new_rf_ntid_iss_sb in NEW_RF.
+    2-6 : apply SRCC.
+    destruct wHDOM as [wa [CERTwa Hwa]].
+    assert (e2a S' w = wa) as E2Aw.
+    { erewrite basic_step_e2a_eq_dom; eauto. 
+      2 : admit. 
+      rewrite <- Hwa.
+      fold (compose g h wa).
+      eapply ghfix; eauto. }
+    eapply ESstep.load_step_vis_mon; eauto.
+    destruct NEW_RF as [Iss | SB].
+    { eapply fvis; [apply SRCC|].
+      rewrite E2Aw in *. 
+      apply seq_eqv_l in Iss.
+      destruct Iss as [[NTIDwa Iwa] _].
+      unfold set_collect. 
+      exists wa. split; [basic_solver 10|].
+      erewrite hfeq; eauto. 
+      basic_solver 10. }
+    unfold cert_dom in CERTwa.
+    destruct CERTwa as [[Cwa | Iwa] | CONTEwa]. 
+    { eapply fvis; [apply SRCC|].
+      rewrite E2Aw in *. 
+      unfold set_collect. 
+      exists wa. split; [basic_solver 10|].
+      erewrite hfeq; eauto. 
+      basic_solver 10. }
+    { admit. }
+    (* eapply ESstep.basic_step_nupd_sb. *)
+    (* { desf; eauto. } *)
+    (* rewrite <- EVENT. *)
+    (* right; unfolder; splits; auto.  *)
+    (* unfold sb in SB.  *)
+    (* apply seq_eqv_lr in SB. *)
+    (* destruct SB as [_ [EXT_SB _]]. *)
+    (* apply ext_sb_tid_init in EXT_SB. *)
+    (* assert (~ SEinit S' w) as nINITw. *)
+    (* { red. ins. apply nSB. *)
+    (*   eapply WFS'.(ES.sb_init).  *)
+    (*   split; auto.   *)
+    (*   unfold ES.acts_ninit_set.  *)
+    (*   split.  *)
+    (*   { subst e. eapply ESstep.basic_step_next_act_lt; eauto. } *)
+    (*   eapply ESstep.basic_step_acts_ninit_set_e; eauto. } *)
+    (* unfold ES.cont_sb_dom.  *)
+    (* edestruct k.  *)
+    (* { apply (ESstep.basic_step_acts_init_set BSTEP); auto.  *)
+    admit.
+  Admitted.
+
   Lemma simrel_cert_basic_step k lbls jf ew co
         (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
         (* (SRCC : simrel_cert prog S G sc TC TC' f h k st'' new_rf) *)
