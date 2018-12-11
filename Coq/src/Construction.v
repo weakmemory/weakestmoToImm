@@ -210,6 +210,14 @@ Proof.
   by rewrite set_union_empty_r in BSTEP.
 Qed.
 
+Lemma basic_step_nupd_acts_mon e e' S S'  
+      (BSTEP : t_basic e e' S S') :
+  E S ⊆₁ E S'.
+Proof. 
+  rewrite basic_step_acts_set with (S' := S'); eauto. 
+  basic_solver. 
+Qed.
+
 Lemma basic_step_acts_set_NE e e' S S'  
       (BSTEP : t_basic e e' S S') :
   ~ E S e.
@@ -1505,6 +1513,44 @@ Proof.
     basic_solver 10. }
   basic_solver 16.
 Qed.    
+
+Lemma load_step_cc_seqE e e' S S' 
+      (BSTEP : t_basic e e' S S')
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) : 
+  cc S' ⨾ ⦗E S⦘ ≡ cc S.
+Proof. 
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  rewrite load_step_cc; eauto. 
+  rewrite seq_union_l. 
+  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  arewrite (ES.cont_cf_dom S k × eq e ⨾ ⦗E S⦘ ≡ ∅₂). 
+  { split; [|basic_solver].
+    unfolder; splits; ins; desf; omega. }
+  rewrite ccE. basic_solver 10.
+Qed.
+
+Lemma load_step_vis_mon e e' S S'
+      (BSTEP : t_basic e e' S S')
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) : 
+  vis S ⊆₁ vis S'. 
+Proof. 
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  unfold vis. 
+  intros x VIS.
+  splits; desf.
+  { eapply basic_step_acts_set_mon; eauto. }
+  arewrite (eq x ⊆₁ E S ∩₁ eq x) by basic_solver.
+  unfold set_inter. rewrite <- seq_eqv.
+  rewrite <- seqA.
+  erewrite load_step_cc_seqE; eauto. 
+  rewrite EW'.
+  etransitivity; eauto.  
+  apply seq_mori; [done|]. 
+  apply clos_refl_sym_mori. 
+  eapply basic_step_sb_mon; eauto.  
+Qed.
   
 Lemma load_step_rs e e' S S' 
       (BSTEP : t_basic e e' S S')
