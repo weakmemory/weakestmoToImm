@@ -39,6 +39,9 @@ Section CertGraph.
 
   Notation "'E'" := G.(acts_set).
 
+  Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'NTid' t" := (fun x => tid x <> t) (at level 1).
+
   Notation "'R'" := (fun a => is_true (is_r G.(lab) a)).
   Notation "'W'" := (fun a => is_true (is_w G.(lab) a)).
   Notation "'F'" := (fun a => is_true (is_f G.(lab) a)).
@@ -67,6 +70,9 @@ Section CertGraph.
 
   Notation "'E0'" := (E0 G TC' thread).
   Notation "'D'" := (D G TC' thread).
+
+  Definition cert_dom := 
+    (C ∪₁ (dom_rel (sb^? ⨾ ⦗ I ⦘) ∩₁ NTid thread) ∪₁ state.(ProgToExecution.G).(acts_set)).  
 
   Record cert_graph :=
     { cslab : eq_dom D certLab G.(lab);
@@ -232,6 +238,44 @@ Section CertGraph.
         eexists; eauto. }
       sin_rewrite new_rf_iss_sb; auto. 
       basic_solver 10.
+    Qed.
+
+    Lemma new_rf_cert_dom
+          (SCG : cert_graph)
+          (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) 
+          (NINITT : thread <> tid_init) :
+      dom_rel new_rf ⊆₁ cert_dom.
+    Proof. 
+      unfold cert_dom. 
+      rewrite cert_rf_codomE0, cert_rf_codomt. 
+      erewrite new_rf_ntid_iss_sb; eauto.
+      rewrite !seq_union_l, dom_union. 
+      apply set_subset_union_l. split.
+      { basic_solver 10. }
+      rewrite sb_tid_init'.
+      rewrite !seq_union_l, dom_union. 
+      apply set_subset_union_l. split.
+      { arewrite (sb ∩ same_tid ⨾ ⦗Tid thread⦘ ≡ ⦗Tid thread⦘ ⨾ sb). 
+        { unfolder; splits; ins; splits; desf; auto.  
+          { unfold same_tid. 
+            edestruct sb_tid_init as [STID | INITx]; eauto.  
+            exfalso. apply NINITT.
+            by apply is_init_tid in INITx. }
+          edestruct sb_tid_init as [STID | INITx]; eauto.  
+          exfalso. apply NINITT.
+          by apply is_init_tid in INITx. }
+        intros x [y HH]. right. 
+        eapply dcertE; eauto.
+        eapply E0_sbprcl; eauto. }
+      rewrite !seqA, seq_eqv.
+      intros x [y HH].
+      apply seq_eqv_lr in HH.
+      destruct HH as [INITx [SB _]].
+      do 2 left. 
+      eapply init_covered; eauto. 
+      split; auto. 
+      unfold Execution.sb in SB. 
+      apply seq_eqv_lr in SB; desf. 
     Qed.
 
     Lemma dom_addrE_in_D : dom_rel (addr ⨾ ⦗ E0 ⦘) ⊆₁ D.

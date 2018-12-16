@@ -25,6 +25,10 @@ Notation "'E'" := G.(acts_set).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 
+Lemma is_init_tid : 
+  is_init ⊆₁ Tid tid_init. 
+Proof. unfolder. unfold is_init. ins. desf. Qed.
+
 Lemma tid_initi prog 
       (GPROG : program_execution prog G)
       (PROG_NINIT : ~ (IdentMap.In tid_init prog)) : 
