@@ -235,11 +235,11 @@ Section SimRelDef.
 
   Notation "'certLab'" := (certLab G state').
 
-  Definition cert_dom thread state :=
-    (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid thread) ∪₁
-      state.(ProgToExecution.G).(acts_set)).
+  (* Definition cert_dom thread state := *)
+  (*   (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid thread) ∪₁ *)
+  (*     state.(ProgToExecution.G).(acts_set)). *)
   
-  Notation "'hdom'" :=  (cert_dom (ES.cont_thread S q) state) (only parsing).
+  Notation "'hdom'" := (cert_dom G TC (ES.cont_thread S q) state) (only parsing).
 
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>

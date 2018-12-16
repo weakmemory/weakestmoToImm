@@ -627,6 +627,95 @@ Section SimRelCertLemmas.
     eapply basic_step_e2a_E0_e'; eauto.    
   Qed.
 
+  Lemma simrel_cert_basic_step k lbl lbl' lbls jf ew co
+        (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (WFTS : wf_thread_state (ES.cont_thread S k) st)
+        (KK : K S (k, existT _ _ st))
+        (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') 
+        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl]) :
+    exists k' e e' S',
+      ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
+      ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
+      ⟪ JF' : S'.(ES.jf) ≡ jf ⟫ /\
+      ⟪ EW' : S'.(ES.ew) ≡ ew ⟫ /\
+      ⟪ CO' : S'.(ES.co) ≡ co ⟫.
+  Proof.
+    set (ILBL_STEP' := ILBL_STEP).
+    eapply lbl_step_cases in ILBL_STEP'; auto.  
+    desf. 
+
+    all : eapply opt_to_list_app_singl in LBLS; desf.
+
+    1-4 : 
+      exists (CEvent S.(ES.next_act)); 
+      exists S.(ES.next_act); exists None;
+      eexists (ES.mk _ _ _ _ _ _ _ _ _);
+      splits; simpl; eauto;
+      [ econstructor; splits; simpl; eauto; 
+        eexists; exists None; 
+        splits; simpl; eauto; 
+        eapply ILBL_STEP 
+      | by rewrite upds ].
+
+    exists (CEvent S.(ES.next_act)). 
+    exists S.(ES.next_act). exists (Some (1 + S.(ES.next_act))).
+    eexists (ES.mk _ _ _ _ _ _ _ _ _).
+    econstructor; splits; simpl; eauto. 
+    { econstructor; splits; simpl; eauto. 
+      eexists; eexists. 
+      splits; simpl; eauto; by simpl. }
+    { rewrite updo; [|omega]. by rewrite upds. }
+    by rewrite upds.
+  Qed.
+
+  Lemma simrel_cert_add_jf TC' h k lbl lbl' lbls ew co
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+        (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
+        (LBL' : lbl' = None)
+        (RR : exists is_ex ord loc val, ⟪ LBL_LD : lbl = Aload is_ex ord loc val ⟫) :
+    exists k' e e' S', 
+      ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
+      ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
+      ⟪ AJF : sim_add_jf S G sc TC TC' h k st e S' ⟫ /\
+      ⟪ EW' : S'.(ES.ew) ≡ ew ⟫ /\
+      ⟪ CO' : S'.(ES.co) ≡ co ⟫.
+  Proof. 
+    desf. 
+    assert (tc_coherent G sc TC') as TCCOH'. 
+    { eapply isim_trav_step_coherence; apply SRCC. }
+    assert ((K S) (k, existT Language.state (thread_lts (ES.cont_thread S k)) st)) as KK.
+    { edestruct cstate_q_cont; eauto. by desf. }
+    edestruct cert_rf_complete as [w RFwa]; 
+      eauto; try apply SRCC.
+    { (* refactor `basic_step_e2a_E0_e` lemma ??? *)
+      (* split; [eapply basic_step_e2a_E0_e; eauto|].  *)
+      admit. }
+    edestruct simrel_cert_basic_step as [k' [e [e' [S' BSTEP]]]]; eauto.
+    { by eapply SRCC. }
+    desf; do 4 eexists; splits; eauto.
+    econstructor; splits.  
+    { unfold is_r. by rewrite <- LBL. }
+    exists (h w); splits.
+    { unfolder; eexists; splits; eauto.
+      assert (dom_rel (cert_rf G sc TC' (ES.cont_thread S k)) w) as CDOMw.
+      { basic_solver. }
+      eapply new_rf_cert_dom in CDOMw; try apply SRCC.
+      2 : { red. ins. eapply ES.init_tid_K; eauto. apply SRCC. }
+      unfold cert_dom in *. 
+      destruct CDOMw as [[CC | II] | ACTS].
+      { by left; left. }
+      { by left; right. }
+      right. admit. }
+    { arewrite (e2a S' (h w) = w).  
+      all: admit. }
+    cdes ES_BSTEP_. desf. eauto. 
+  Admitted.
+
   Lemma weaken_sim_add_jf TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
@@ -787,8 +876,8 @@ Section SimRelCertLemmas.
       rewrite E2Aw in *. 
       unfold set_collect. 
       exists wa. split; [basic_solver 10|].
-      erewrite hfeq; eauto. 
       basic_solver 10. }
+      erewrite hfeq; eauto. 
     { admit. }
     (* eapply ESstep.basic_step_nupd_sb. *)
     (* { desf; eauto. } *)
@@ -811,50 +900,6 @@ Section SimRelCertLemmas.
     (* { apply (ESstep.basic_step_acts_init_set BSTEP); auto.  *)
     admit.
   Admitted.
-
-  Lemma simrel_cert_basic_step k lbls jf ew co
-        (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
-        (* (SRCC : simrel_cert prog S G sc TC TC' f h k st'' new_rf) *)
-        (KK : K S (k, existT _ _ st))
-        (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') :
-    exists k' e e' lbl lbl' S',
-      ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
-      ⟪ LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
-      ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
-      ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
-      ⟪ TID  : ES.cont_thread S k  = S'.(ES.tid) e ⟫ /\
-      ⟪ JF' : S'.(ES.jf) ≡ jf ⟫ /\
-      ⟪ EW' : S'.(ES.ew) ≡ ew ⟫ /\
-      ⟪ CO' : S'.(ES.co) ≡ co ⟫.
-  Proof.
-    set (ILBL_STEP_ALT := ILBL_STEP).
-    eapply ilbl_step_alt in ILBL_STEP_ALT; desf. 
-    cdes ISTEP. 
-    edestruct ISTEP0; desf.
-
-    1-4 :  
-      exists (CEvent S.(ES.next_act)); 
-               exists S.(ES.next_act); exists None;
-               eexists; eexists None; eexists (ES.mk _ _ _ _ _ _ _ _ _);
-               splits; simpl; eauto;
-               [ econstructor; splits; simpl; eauto; 
-                 eexists; exists None; 
-                 splits; simpl; eauto
-               | by rewrite upds 
-               | by rewrite upds ].
-
-             all : 
-               exists (CEvent (1 + S.(ES.next_act))); 
-               exists S.(ES.next_act); exists (Some (1 + S.(ES.next_act)));
-               eexists; eexists (Some _); eexists (ES.mk _ _ _ _ _ _ _ _ _);
-               splits; simpl; eauto;
-               [ econstructor; splits; simpl; eauto; 
-                 eexists; eexists (Some _); 
-                 splits; simpl; eauto
-               | rewrite updo; [by rewrite upds | omega]
-               | by rewrite upds
-               | rewrite updo; [by rewrite upds | omega] ].
-  Qed.  
 
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 

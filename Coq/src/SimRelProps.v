@@ -109,7 +109,7 @@ Section SimRelProps.
     Variable SRC : simrel_cont prog S G TC f.  
   
     Lemma contstateE k (st : thread_st (ES.cont_thread S k))
-             (INK : K (k, thread_cont_st  (ES.cont_thread S k) st)) :
+             (INK : K (k, thread_cont_st (ES.cont_thread S k) st)) :
       acts_set st.(ProgToExecution.G) ≡₁ g □₁ (ES.cont_sb_dom S k \₁ SEinit).
     Proof.
       ins. 
