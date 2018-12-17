@@ -876,8 +876,8 @@ Section SimRelCertLemmas.
       rewrite E2Aw in *. 
       unfold set_collect. 
       exists wa. split; [basic_solver 10|].
-      basic_solver 10. }
       erewrite hfeq; eauto. 
+      basic_solver 10. }
     { admit. }
     (* eapply ESstep.basic_step_nupd_sb. *)
     (* { desf; eauto. } *)
@@ -985,7 +985,8 @@ Section SimRelCertLemmas.
         unfold set_collect.
         eexists; split; eauto. }
 
-      edestruct simrel_cert_basic_step as [q' [e [e' [lbl [lbl' [S' HH]]]]]]; eauto; desf.
+      edestruct simrel_cert_basic_step as [q' [e [e' [S' HH]]]]; eauto; desf.
+      { admit. }
 
       assert (ESstep.t_basic e e' S S') as ES_BSTEP.
       { econstructor. do 4 eexists. apply ES_BSTEP_. }
@@ -1013,16 +1014,12 @@ Section SimRelCertLemmas.
       
       rewrite e'NONE in ES_BSTEP_. 
       rewrite e'NONE in ES_BSTEP.
-      rewrite e'NONE in LBLS_EQ.
-      simpl in LBLS_EQ.
-      inversion LBLS_EQ as [eSLAB].
-      symmetry in eSLAB.
 
       assert (ESstep.t_load e None S S') as ES_LSTEP.
       { unfold ESstep.t_load. splits; eauto.
         unfold ESstep.add_jf.
         splits.
-        { simpl. unfold is_r. auto. by rewrite eSLAB. }
+        { simpl. unfold is_r. auto. by rewrite <- LBL. }
         exists (h w).
         splits; auto. 
         { simpl. unfold is_w. admit. }
