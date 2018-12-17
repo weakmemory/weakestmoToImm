@@ -431,15 +431,11 @@ Section SimRelCertLemmas.
      E0 G TC' (ES.cont_thread S k) (e2a S' e).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
-    eapply dcertE; [apply SRCC|].
     erewrite basic_step_e2a_e; eauto using BSTEP_. 
     2-3 : eapply SRCC.
-    eapply preserve_event.
-    { eapply ilbl_steps_in_steps; eauto. }
-    edestruct lbl_step_cases as [l [l' HH]].
-    { eapply SRCC; eauto. }
-    { apply STEP. }
-    desf; apply ACTS; basic_solver.
+    eapply ilbl_step_E0_eindex.
+    all : try apply SRCC; eauto. 
+    apply STEP.
   Qed.
 
   Lemma basic_step_e2a_E0_e' TC' h k k' e e' S' 
@@ -450,16 +446,13 @@ Section SimRelCertLemmas.
      E0 G TC' (ES.cont_thread S k) (e2a S' e').
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
-    eapply dcertE; [apply SRCC|].
     erewrite basic_step_e2a_e'; eauto. 
     2-3 : eapply SRCC.
-    eapply preserve_event.
-    { eapply ilbl_steps_in_steps; eauto. }
-    edestruct lbl_step_cases as [l [l' HH]].
-    { eapply SRCC; eauto. }
+    eapply ilbl_step_E0_eindex'.
+    all : try apply SRCC; eauto. 
     { apply STEP. }
-    desf; apply ACTS; basic_solver.
-  Qed.  
+    red. ins. by subst lbl'. 
+  Qed.
 
   Lemma basic_step_e2a_GE_e TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
@@ -675,7 +668,6 @@ Section SimRelCertLemmas.
         (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
         (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
-        (LBL' : lbl' = None)
         (RR : exists is_ex ord loc val, ⟪ LBL_LD : lbl = Aload is_ex ord loc val ⟫) :
     exists k' e e' S', 
       ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
@@ -692,8 +684,12 @@ Section SimRelCertLemmas.
     { edestruct cstate_q_cont; eauto. by desf. }
     edestruct cert_rf_complete as [w RFwa]; 
       eauto; try apply SRCC.
-    { (* refactor `basic_step_e2a_E0_e` lemma ??? *)
-      (* split; [eapply basic_step_e2a_E0_e; eauto|].  *)
+    { split. 
+      { eapply ilbl_step_E0_eindex; eauto. 
+        all : by eapply SRCC. }
+      eapply same_lab_u2v_dom_is_r.
+      { (* eapply cuplab_cert *)
+        admit. }
       admit. }
     edestruct simrel_cert_basic_step as [k' [e [e' [S' BSTEP]]]]; eauto.
     { by eapply SRCC. }

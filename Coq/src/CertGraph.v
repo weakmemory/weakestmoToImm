@@ -443,7 +443,7 @@ Lemma cert_graph_start
       (PROGST : stable_lprog thread (instrs state))
       (REACHABLE : (step thread)＊ (init (instrs state)) state)
       (SSTATE : sim_state G sim_normal C state)
-      (STATECOV : acts_set state.(ProgToExecution.G) ⊆₁ C) 
+      (STATECOV : acts_set state.(ProgToExecution.G) ⊆₁ C)
       (RMWCLOS : forall r w (RMW : rmw r w), C r <-> C w)
       (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) :
   exists state', 
@@ -837,6 +837,40 @@ Proof.
     all: eapply cert_rf_hb_sc_hb_irr; eauto.
     all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
     all: repeat (eexists; split; eauto).
+Qed.
+
+Lemma ilbl_step_E0_eindex lbls
+        (st st' st'' : Language.Language.state (Promise.thread_lts thread))
+        (WFT : wf_thread_state thread st) 
+        (CG : cert_graph G sc TC TC' thread st'')
+        (ILBL_STEP : ilbl_step thread lbls st st')
+        (CST_REACHABLE : (lbl_step thread)＊ st' st'') : 
+  E0 (ThreadEvent thread st.(eindex)).
+Proof. 
+  eapply dcertE; [apply CG|].
+  eapply preserve_event.
+  { eapply ilbl_steps_in_steps; eauto. }
+  edestruct lbl_step_cases as [l [l' HH]]; eauto. 
+  desf; apply ACTS; basic_solver.
+Qed.
+
+Lemma ilbl_step_E0_eindex' lbls lbl lbl'
+        (st st' st'' : Language.Language.state (Promise.thread_lts thread))
+        (WFT : wf_thread_state thread st) 
+        (CG : cert_graph G sc TC TC' thread st'')
+        (ILBL_STEP : ilbl_step thread lbls st st')
+        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
+        (LBL' : lbl' <> None)
+        (CST_REACHABLE : (lbl_step thread)＊ st' st'') : 
+  E0 (ThreadEvent thread (1 + st.(eindex))).
+Proof. 
+  eapply dcertE; [apply CG|].
+  eapply preserve_event.
+  { eapply ilbl_steps_in_steps; eauto. }
+  edestruct lbl_step_cases as [l [l' HH]]; eauto. 
+  desf. 
+  1-4 : apply opt_to_list_app_singl in LBLS; intuition.
+  desf; apply ACTS; basic_solver.
 Qed.
 
 End CertGraphLemmas.
