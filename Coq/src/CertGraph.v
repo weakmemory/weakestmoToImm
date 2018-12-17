@@ -115,9 +115,9 @@ Section CertGraph.
       apply NISS. by eapply init_issued; eauto. 
     Qed.
 
-    Lemma E0_in_certE 
-          (TEH : thread_restricted_execution G thread certG) :
-      E0 ⊆₁ certE.
+    Lemma E0_in_thread_execE st
+          (TEH : thread_restricted_execution G thread st.(ProgToExecution.G)) :
+      E0 ⊆₁ acts_set st.(ProgToExecution.G).
     Proof. 
       rewrite tr_acts_set; eauto.
       rewrite set_interC.
@@ -137,10 +137,10 @@ Section CertGraph.
       eauto. 
     Qed.
 
-    Lemma E0_eindex 
+    Lemma E0_eindex st 
           (NINITT : thread <> tid_init)
-          (GPC : wf_thread_state thread state)
-          (TEH : thread_restricted_execution G thread certG) : 
+          (GPC : wf_thread_state thread st)
+          (TEH : thread_restricted_execution G thread st.(ProgToExecution.G)) : 
       exists ctindex,
         ⟪ CCLOS :forall index (LT : index < ctindex),
             E0 (ThreadEvent thread index) ⟫ /\
@@ -181,7 +181,7 @@ Section CertGraph.
         split; [by ins|].
         apply le_lt_or_eq in LT. destruct LT as [LT|LT].
         2: { inv LT. }
-        assert (certE (ThreadEvent thread mindex)) as PP.
+        assert (acts_set (st.(ProgToExecution.G)) (ThreadEvent thread mindex)) as PP.
         { apply TEH.(tr_acts_set). by split. }
         assert (E (ThreadEvent thread index)) as EEE.
         { apply TEH.(tr_acts_set). eapply acts_rep in PP; eauto. desc.
@@ -464,7 +464,7 @@ Proof.
     edestruct steps_middle_set with
       (thread := thread)
       (state0 := state) (state':=state') as [state''].
-    3: { eapply E0_in_certE; eauto. }
+    3: { eapply E0_in_thread_execE; eauto. }
     all: eauto. 
     { apply set_subset_inter_r. split.
       { etransitivity. 
@@ -595,7 +595,7 @@ Proof.
       apply cert_rfD in AA. destruct_seq AA as [WX RY].
       splits; auto; unfold is_w, is_r.
       all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
-        [ erewrite tr_lab; eauto; eapply E0_in_certE with (TC:=TC); eauto
+        [ erewrite tr_lab; eauto; eapply E0_in_thread_execE with (TC:=TC); eauto
         | | | by apply CACTS]. 
       1-2: rewrite TX; auto.  
       all: rewrite TY; auto. }
