@@ -129,7 +129,6 @@ Record es_consistent {m} :=
 Section Properties.
 Variable WF : ES.Wf S.
 Variable m : model.
-Variable ESC : @es_consistent m.
 
 (******************************************************************************)
 (** ** Basic properties *)
@@ -139,13 +138,6 @@ Lemma cf_in_ecf : cf ⊆ ecf.
 Proof.
   unfold ecf. rewrite !crE, !seq_union_l, !seq_union_r.
   repeat unionR left. basic_solver 10.
-Qed.
-
-Lemma jf_not_cf : jf ∩ cf ≡ ∅₂.
-Proof.
-  split; [|basic_solver].
-  sin_rewrite cf_in_ecf.
-  apply ESC.
 Qed.
 
 Lemma hb_trans : transitive hb.
@@ -353,36 +345,6 @@ Qed.
 (** ** Alternative representations of sets and relations *)
 (******************************************************************************)
 
-(* Lemma vis_alt :  *)
-(*   vis ≡₁ (E ∩₁ set_compl (codom_rel cc)) ∪₁ codom_rel (cc ∩ (ew ⨾ sb⁼)). *)
-(* Proof.  *)
-(*   unfold vis. unfolder. split.  *)
-(*   { intros e VIS.  *)
-(*     destruct  *)
-(*       (excluded_middle_informative (exists w, cc w e))  *)
-(*       as [CC | nCC].  *)
-(*     { desf. right. eexists.  *)
-(*       splits; eauto. } *)
-(*     desf. left. eauto. } *)
-(*   intros e [[EE nCC] | [w [CC CCEW]]]. *)
-(*   { desf; splits; auto.   *)
-(*     ins. desf. exfalso. apply nCC. eauto. } *)
-(*   splits. *)
-(*   { apply ccE, seq_eqv_lr in CC. desf. } *)
-(*   ins; desf. *)
-(*   ins. desf; eauto 20.  *)
-
-(*     j      desf. eexists. splits; eauto. *)
-(*       unfolder in CCEW. *)
-(*       eapply CCEW. by splits. } *)
-    
-(*       basic_solver. *)
-(*       eapply CCEW. *)
-(*       admit. } *)
-(*     unfold vis in VIS. *)
-    
-(* Qed. *)
-
 Lemma rs_alt : rs ≡ ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (rf ⨾ rmw)＊.
 Proof. 
   unfold rs.
@@ -454,16 +416,95 @@ Qed.
 (** ** Alternative representations of properties *)
 (******************************************************************************)
 
+Lemma jf_necf_jf_ncf : jf ∩ ecf ≡ ∅₂ -> jf ∩ cf ≡ ∅₂.
+Proof. 
+  intros [JFnECF _]. 
+  split; [|basic_solver].
+  by sin_rewrite cf_in_ecf.
+Qed.
 
+Lemma jf_necf_hb_tjf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂.
+Proof. 
+  unfold ecf. 
+  intros [JFnECF _]. 
+  split; [|basic_solver].
+  intros x y [[z [HB tJF]] CF].
+  eapply JFnECF. split. 
+  { unfold transp in tJF. eauto. }
+  red. exists y. splits.
+  { unfolder; auto. }
+  red. exists x. splits; auto. 
+  by apply ES.cf_sym. 
+Qed.
+
+Lemma jf_necf_hb_jf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf) ∩ cf ≡ ∅₂.
+Proof. 
+  unfold ecf. 
+  intros [JFnECF _]. 
+  split; [|basic_solver].
+  intros x y [[z [HB JF]] CF].
+  eapply JFnECF. split; eauto.  
+  red. exists x. splits; auto. 
+  red. exists y. splits; auto. 
+Qed.
+
+Lemma jf_necf_hb_jf_thb_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf ⨾ hb⁻¹) ∩ cf ≡ ∅₂.
+Proof. 
+  unfold ecf.
+  intros [JFnECF _]. 
+  split; [|basic_solver].
+  intros x y [[z [HB [z' [JF tHB]]]] CF].
+  eapply JFnECF. split; eauto.  
+  red. exists x. splits.
+  { unfolder; auto. }
+  red. exists y. splits; auto. 
+Qed.
+
+Lemma jf_necf_alt : 
+  jf ∩ ecf ≡ ∅₂ <-> 
+    jf ∩ cf ≡ ∅₂ /\ 
+    (hb ⨾ jf) ∩ cf ≡ ∅₂ /\ 
+    (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂ /\ 
+    (hb ⨾ jf ⨾ hb⁻¹) ∩ cf ≡ ∅₂.
+Proof. 
+  split. 
+  { intros [JFnECF _]. 
+    splits; red; splits; try by intuition.
+    { by apply jf_necf_jf_ncf. }
+    { by apply jf_necf_hb_jf_ncf. }
+    { by apply jf_necf_hb_tjf_ncf. }
+    by apply jf_necf_hb_jf_thb_ncf. }
+  intros [[JFnCF _] [[HBJFnCF _] [[HBtJFnCF _] [HBJFtHBnCF _]]]].
+  split; [|basic_solver].
+  unfold ecf.
+  rewrite !crE, !seq_union_l, !seq_union_r, 
+    !seq_id_r, !seq_id_l, !inter_union_r.
+  unfold union. intros x y HH. desf.
+  { eapply JFnCF; eauto. }
+  { destruct HH as [JF [z [CF HB]]].
+    eapply HBtJFnCF. split. 
+    { unfolder; eauto. }
+      by apply ES.cf_sym. }
+  { destruct HH as [JF [z [tHB CF]]].
+    eapply HBJFnCF. 
+    split; unfolder; eauto. }
+  destruct HH as [JF HH].
+  destruct HH as [z [tHB [z' [CF HB]]]].
+  eapply HBJFtHBnCF. split; eauto.  
+  red. exists x. splits; eauto. 
+  red. exists y. splits; eauto. 
+Qed.
 
 (******************************************************************************)
 (** ** Consistent rf properties *)
 (******************************************************************************)
 
+Variable ESC : @es_consistent m.
+
 Lemma jf_in_rf : jf ⊆ rf.
 Proof.
   unfold ES.rf.
-  generalize jf_not_cf.
+  generalize (jf_necf_jf_ncf ESC.(jf_necf)).
   basic_solver.
 Qed.
 
