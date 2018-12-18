@@ -682,23 +682,49 @@ Section SimRelCertLemmas.
     { eapply isim_trav_step_coherence; apply SRCC. }
     assert ((K S) (k, existT Language.state (thread_lts (ES.cont_thread S k)) st)) as KK.
     { edestruct cstate_q_cont; eauto. by desf. }
+    assert (wf_thread_state (ES.cont_thread S k) st) as WFST.
+    { by apply SRCC. }
     edestruct cert_rf_complete as [w RFwa]; 
       eauto; try apply SRCC.
-    { split. 
+    { assert 
+        (E0 G TC' (ES.cont_thread S k) (ThreadEvent (ES.cont_thread S k) st.(eindex)))
+        as E0_eindex.
       { eapply ilbl_step_E0_eindex; eauto. 
         all : by eapply SRCC. }
+      split; eauto.  
       eapply same_lab_u2v_dom_is_r.
-      { (* eapply cuplab_cert *)
-        admit. }
-      admit. }
+      { apply same_lab_u2v_dom_comm.
+        eapply cuplab_cert; apply SRCC. }
+      split. 
+      { eapply dcertE; eauto; apply SRCC. }
+      unfold is_r.
+      erewrite steps_preserve_lab.  
+      { edestruct lbl_step_cases as [lbl [lbl'' HH]]; eauto.
+        destruct HH as [LBLS [HA | HB]].
+        all : apply opt_to_list_app_singl in LBLS.
+        { destruct HA as [_ [_ [LAB _]]].
+          rewrite LAB, upds. desf. }
+        destruct HB as [_ [_ [LAB LBLS']]].
+        rewrite LAB. unfold upd_opt. 
+        destruct lbl'' eqn:Heq. 
+        { rewrite updo, upds; desf.
+          intros HH. inversion HH. omega. }
+        exfalso. desf. }
+      { eapply wf_thread_state_steps; eauto.
+        eapply ilbl_steps_in_steps.
+        econstructor; econstructor; eauto. }
+      { by eapply ilbl_steps_in_steps. }
+      edestruct lbl_step_cases as [lbl [lbl'' HH]]; eauto.
+      destruct HH as [LBLS [HH | HH]].
+      all : apply opt_to_list_app_singl in LBLS.
+      all : destruct HH as [_ [ACTS _]].
+      all : apply ACTS; basic_solver. }
     edestruct simrel_cert_basic_step as [k' [e [e' [S' BSTEP]]]]; eauto.
-    { by eapply SRCC. }
     desf; do 4 eexists; splits; eauto.
     econstructor; splits.  
     { unfold is_r. by rewrite <- LBL. }
-    exists (h w); splits.
-    { unfolder; eexists; splits; eauto.
-      assert (dom_rel (cert_rf G sc TC' (ES.cont_thread S k)) w) as CDOMw.
+    assert (cert_dom G TC (ES.cont_thread S k) st w) as HDOMw.
+    { assert (dom_rel (cert_rf G sc TC' (ES.cont_thread S k)) w) as CDOMw.
       { basic_solver. }
       eapply new_rf_cert_dom in CDOMw; try apply SRCC.
       2 : { red. ins. eapply ES.init_tid_K; eauto. apply SRCC. }
@@ -707,9 +733,20 @@ Section SimRelCertLemmas.
       { by left; left. }
       { by left; right. }
       right. admit. }
-    { arewrite (e2a S' (h w) = w).  
-      all: admit. }
-    cdes ES_BSTEP_. desf. eauto. 
+    assert 
+      ((h □₁ (cert_dom G TC (ES.cont_thread S k) st)) (h w)) 
+      as hHDOMhw. 
+    { unfolder; eexists; splits; eauto. }
+    exists (h w); splits; auto. 
+    2 : cdes ES_BSTEP_; desf; eauto. 
+    arewrite (e2a S' (h w) = w).  
+    { erewrite basic_step_e2a_eq_dom.
+      { eapply ghfix; eauto. }
+      { apply SRCC. }
+      { econstructor; eauto. }
+      eapply himg; eauto. }
+    erewrite basic_step_e2a_e; eauto. 
+    all : apply SRCC.
   Admitted.
 
   Lemma weaken_sim_add_jf TC' h k k' e e' S' 

@@ -76,8 +76,7 @@ Section CertGraph.
 
   Record cert_graph :=
     { cslab : eq_dom D certLab G.(lab);
-      cuplab_cert : forall e (EE : certE e), 
-          same_label_u2v (certG.(lab) e) (G.(lab) e);
+      cuplab_cert : same_lab_u2v_dom certE certG.(lab) G.(lab);
       
       dcertE : certE ≡₁ E0;
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ rmw ⨾ ⦗ certE ⦘;
@@ -704,7 +703,7 @@ Proof.
 
     constructor; auto.
     all: try rewrite SCC.
-    { ins.
+    { red. ins.
       eapply same_label_u2v_trans; eauto.
       assert (tid e = thread) as BB.
       { red in EE. rewrite <- RACTS in EE. by apply CACTS. }
