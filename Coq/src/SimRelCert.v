@@ -724,15 +724,10 @@ Section SimRelCertLemmas.
     econstructor; splits.  
     { unfold is_r. by rewrite <- LBL. }
     assert (cert_dom G TC (ES.cont_thread S k) st w) as HDOMw.
-    { assert (dom_rel (cert_rf G sc TC' (ES.cont_thread S k)) w) as CDOMw.
-      { basic_solver. }
-      eapply new_rf_cert_dom in CDOMw; try apply SRCC.
-      2 : { red. ins. eapply ES.init_tid_K; eauto. apply SRCC. }
-      unfold cert_dom in *. 
-      destruct CDOMw as [[CC | II] | ACTS].
-      { by left; left. }
-      { by left; right. }
-      right. admit. }
+    { eapply new_rf_cert_dom; try apply SRCC; auto. 
+      { red. ins. eapply ES.init_tid_K; eauto. apply SRCC. }
+      unfold dom_rel. eexists.
+      apply seq_eqv_r; splits; eauto. }
     assert 
       ((h □₁ (cert_dom G TC (ES.cont_thread S k) st)) (h w)) 
       as hHDOMhw. 
@@ -747,7 +742,7 @@ Section SimRelCertLemmas.
       eapply himg; eauto. }
     erewrite basic_step_e2a_e; eauto. 
     all : apply SRCC.
-  Admitted.
+  Qed.
 
   Lemma weaken_sim_add_jf TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))

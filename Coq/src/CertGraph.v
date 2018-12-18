@@ -71,8 +71,8 @@ Section CertGraph.
   Notation "'E0'" := (E0 G TC' thread).
   Notation "'D'" := (D G TC' thread).
 
-  Definition cert_dom := 
-    (C ∪₁ (dom_rel (sb^? ⨾ ⦗ I ⦘) ∩₁ NTid thread) ∪₁ state.(ProgToExecution.G).(acts_set)).  
+  Definition cert_dom st := 
+    (C ∪₁ (dom_rel (sb^? ⨾ ⦗ I ⦘) ∩₁ NTid thread) ∪₁ acts_set st.(ProgToExecution.G)).  
 
   Record cert_graph :=
     { cslab : eq_dom D certLab G.(lab);
@@ -239,14 +239,15 @@ Section CertGraph.
       basic_solver 10.
     Qed.
 
-    Lemma new_rf_cert_dom
+    Lemma new_rf_cert_dom st
           (SCG : cert_graph)
           (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) 
-          (NINITT : thread <> tid_init) :
-      dom_rel new_rf ⊆₁ cert_dom.
+          (NINITT : thread <> tid_init) 
+          (WFST : wf_thread_state thread st) :
+      dom_rel (new_rf ⨾ ⦗ eq (ThreadEvent thread st.(eindex)) ⦘) ⊆₁ cert_dom st.
     Proof. 
       unfold cert_dom. 
-      rewrite cert_rf_codomE0, cert_rf_codomt. 
+      rewrite cert_rf_codomt. 
       erewrite new_rf_ntid_iss_sb; eauto.
       rewrite !seq_union_l, dom_union. 
       apply set_subset_union_l. split.
@@ -264,8 +265,13 @@ Section CertGraph.
           exfalso. apply NINITT.
           by apply is_init_tid in INITx. }
         intros x [y HH]. right. 
-        eapply dcertE; eauto.
-        eapply E0_sbprcl; eauto. }
+        apply seq_eqv_lr in HH. 
+        destruct HH as [TIDx [SB EQy]].
+        destruct x; [intuition|]. 
+        unfold tid in TIDx. subst.
+        apply acts_clos; auto. 
+        unfold Execution.sb, ext_sb in SB.
+        apply seq_eqv_lr in SB; desf. }
       rewrite !seqA, seq_eqv.
       intros x [y HH].
       apply seq_eqv_lr in HH.
