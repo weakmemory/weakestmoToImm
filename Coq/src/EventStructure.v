@@ -101,7 +101,7 @@ Definition cont_sb_codom S c :=
 
 Definition cont_cf_dom S c :=
   match c with
-  | CInit  i => fun x => ES.acts_set S x /\ S.(tid) x = i 
+  | CInit  i => ES.acts_set S ∩₁ (fun x => S.(tid) x = i) 
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
@@ -631,16 +631,27 @@ Proof.
   eapply sb_irr; [|eapply sb_trans]; eauto. 
 Qed.
 
+Lemma cont_cf_domE k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_cf_dom S k ⊆₁ E.
+Proof. 
+  unfold cont_cf_dom. 
+  destruct k; [basic_solver|].
+  apply set_subset_union_l. split.
+  { rewrite cfE. basic_solver. }
+  rewrite sbE; auto. basic_solver.
+Qed.
+
 Lemma cont_cf_domEninit k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ Eninit.
 Proof. 
   unfolder. 
   unfold cont_cf_dom.
   ins; desf.
-  { unfold acts_ninit_set, acts_init_set, set_minus; splits; desf. 
+  { destruct H as [Ex Tidx].
+    unfold acts_ninit_set, acts_init_set, set_minus; splits; desf.
     red. intros [_ EINITx]. 
     apply init_tid_K; auto.
-    do 2 eexists; eauto. }
+    do 2 eexists; splits; eauto. }
   unfold dom_rel, codom_rel, seq, eqv_rel, set_union in H; desf.
   { apply cfEninit in H.
     unfold seq, eqv_rel in H; desf. }
@@ -657,7 +668,7 @@ Proof.
   { eapply cont_cf_domEninit; eauto. }
   unfold cont_thread, cont_cf_dom in *.
   edestruct k eqn:EQk.
-  { desf. }
+  { destruct cfKe as [Ee TIDe]. desf. }
   assert (Eninit eid) as NINITeid.
   { eapply K_inEninit; eauto. }
   unfolder in cfKe; desf.

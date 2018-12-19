@@ -810,6 +810,36 @@ Proof.
   apply inclusion_union_r1.
 Qed.  
 
+Lemma basic_step_cf_free lang k k' st st' e e' S S' X 
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S)
+      (XinE : X ⊆₁ E S)
+      (CFF : ES.cf_free S X) 
+      (nCFkX : X ∩₁ ES.cont_cf_dom S k ≡₁ ∅) :
+  ES.cf_free S' (X ∪₁ eq e ∪₁ eq_opt e').  
+Proof. 
+  cdes BSTEP_.
+  unfold ES.cf_free. 
+  erewrite basic_step_cf; eauto. 
+  rewrite !id_union, !csE.  
+  relsf. unionL; auto.  
+
+  Ltac helper := 
+    unfold eq_opt, opt_ext in *;
+    unfolder; splits; ins; desf; omega.
+
+  all : try by helper.
+  all : try by (rewrite ES.cfE; helper).
+  all : try by (rewrite XinE; helper).
+  all : try by (rewrite ES.cont_cf_domE; eauto; helper).
+
+  1-2 : rewrite <- seqA, seq_eqv_cross_l, set_interK.
+  3-4 : rewrite seq_eqv_cross_r, set_interK.
+
+  all : unfolder; ins; desf.
+  all : eapply nCFkX; unfolder; splits; eauto. 
+Qed.
+
 (******************************************************************************)
 (** ** basic_step : `rmw` propeties *)
 (******************************************************************************)
