@@ -423,6 +423,17 @@ Proof.
   by sin_rewrite cf_in_ecf.
 Qed.
 
+Lemma jf_necf_hb_jf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf) ∩ cf ≡ ∅₂.
+Proof. 
+  unfold ecf. 
+  intros [JFnECF _]. 
+  split; [|basic_solver].
+  intros x y [[z [HB JF]] CF].
+  eapply JFnECF. split; eauto.  
+  red. exists x. splits; auto. 
+  red. exists y. splits; auto. 
+Qed.
+
 Lemma jf_necf_hb_tjf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂.
 Proof. 
   unfold ecf. 
@@ -435,17 +446,6 @@ Proof.
   { unfolder; auto. }
   red. exists x. splits; auto. 
   by apply ES.cf_sym. 
-Qed.
-
-Lemma jf_necf_hb_jf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf) ∩ cf ≡ ∅₂.
-Proof. 
-  unfold ecf. 
-  intros [JFnECF _]. 
-  split; [|basic_solver].
-  intros x y [[z [HB JF]] CF].
-  eapply JFnECF. split; eauto.  
-  red. exists x. splits; auto. 
-  red. exists y. splits; auto. 
 Qed.
 
 Lemma jf_necf_hb_jf_thb_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf ⨾ hb⁻¹) ∩ cf ≡ ∅₂.
