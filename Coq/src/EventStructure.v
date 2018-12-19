@@ -679,6 +679,11 @@ Proof.
   eexists; splits; eauto. 
 Qed.
 
+Lemma cont_cf_Tid_ k lang st WF 
+      (KK : K (k, existT _ lang st)) :
+  cont_cf_dom S k ⊆₁ Tid (cont_thread S k).
+Proof. red. ins. eapply cont_cf_tid; eauto. Qed.
+
 Lemma cont_cf_cont_sb k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ≡₁ (E ∩₁ Tid (cont_thread S k)) \₁ cont_sb_dom S k. 
 Proof. 

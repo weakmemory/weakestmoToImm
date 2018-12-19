@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel.
+     CombRelations SimTraversal SimulationRel AuxRel CertExecution2.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
         CertGraph CertRf ImmProperties SimRelDef.
 
@@ -434,6 +434,19 @@ Section SimRelProps.
 
     Variable SRCC : simrel_cert prog S G sc TC f TC' h q state state'.  
 
+    Lemma hdom_alt : 
+      hdom ≡₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ∩₁ GNTid qtid ∪₁ contE. 
+    Proof. 
+      unfold cert_dom. 
+      split; [|basic_solver 10]. 
+      arewrite (C ≡₁ C ∩₁ GTid qtid ∪₁ C ∩₁ GNTid qtid) at 1.
+      { rewrite <- set_inter_union_r.
+        rewrite tid_set_dec.
+        basic_solver. }
+      erewrite cstate_covered; eauto. 
+      basic_solver 10.
+    Qed.
+
     Lemma htid : eq_dom hdom (Stid ∘ h) Gtid.
     Proof. eapply a2e_tid. eapply SRCC. Qed.
 
@@ -495,17 +508,30 @@ Section SimRelProps.
     Qed.
 
     Lemma cfk_hdom : 
-      ES.cont_cf_dom S q ∩₁ h □₁ hdom ≡₁ ∅.
+      h □₁ hdom ∩₁ ES.cont_cf_dom S q ≡₁ ∅.
     Proof. 
       red; split; [|basic_solver].
-      unfold cert_dom.
+      rewrite hdom_alt.
       rewrite !set_collect_union. 
-      rewrite !set_inter_union_r.
+      rewrite set_inter_union_l.
       apply set_subset_union_l; split. 
-      { apply set_subset_union_l; split. 
-        { admit. }
+      { rewrite ES.cont_cf_Tid_. 
+        { intros x [HH TIDx]. red.
+          destruct HH as [a [DOMa Ha]].
+          destruct DOMa as [CIa NTIDa].
+          subst x. apply NTIDa.
+          erewrite <- a2e_tid; eauto.
+          admit. }
+        { apply SRCC. }
         admit. }
-      admit. 
+      erewrite contstateE with (k := q).
+      2-4 : admit. 
+      arewrite 
+        (h □₁ (g □₁ (ES.cont_sb_dom S q \₁ SEinit)) ≡₁ ES.cont_sb_dom S q \₁ SEinit).
+      { admit. }
+      rewrite ES.cont_cf_cont_sb.
+      2-3 : admit. 
+      unfolder. ins. desf. 
     Admitted.
 
     Lemma cont_sb_dom_dom :
