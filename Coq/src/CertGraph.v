@@ -902,4 +902,14 @@ Proof.
   desf; apply ACTS; basic_solver.
 Qed.
 
+(* Lemma ilbl_step_cert_dom_eindex lbls *)
+(*         (st st' st'' : Language.Language.state (Promise.thread_lts thread)) *)
+(*         (WFT : wf_thread_state thread st)  *)
+(*         (CG : cert_graph G sc TC TC' thread st'') *)
+(*         (ILBL_STEP : ilbl_step thread lbls st st') *)
+(*         (CST_REACHABLE : (lbl_step thread)＊ st' st'') :  *)
+(*   cert_dom st' ≡₁ cert_dom st ∪  *)
+(*            eq (ThreadEvent thread st.(eindex)) ∪₁ eq (ThreadEvent thread (1 + st.(eindex))) *)
+(*   E0 (ThreadEvent thread st.(eindex)). *)
+
 End CertGraphLemmas.

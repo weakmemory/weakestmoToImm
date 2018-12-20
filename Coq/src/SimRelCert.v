@@ -158,19 +158,20 @@ Section SimRelContLemmas.
     cdes BSTEP_.
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor; eauto. }
-    assert (Stid S' (opt_ext e e') = ES.cont_thread S k) as TIDee.
-    { edestruct e'; simpl;
-        [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e];
-        eauto. }
+    (* assert (Stid S' (opt_ext e e') = ES.cont_thread S k) as TIDee. *)
+    (* { edestruct e'; simpl; *)
+    (*     [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e]; *)
+    (*     eauto. } *)
     split.
     { intros kk lang st'' INK.  
       eapply ESstep.basic_step_cont_set in INK; eauto.
-      unfold set_union in INK; desf.
+      unfold set_union in INK. destruct INK as [HA | HB]. 
       { erewrite ESstep.basic_step_cont_thread; eauto.
-          by eapply SRK in INK. }
-      unfold ES.cont_thread.
-      rewrite TIDee.
-      eapply SRK; eauto. }
+          by eapply SRK in HA. }
+      inversion HB.
+      rewrite <- KCE.
+      erewrite ESstep.basic_step_cont_thread_k with (k' := k').
+      all : eauto. }
     { intros kk st'' KK. 
       eapply ESstep.basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
@@ -181,9 +182,11 @@ Section SimRelContLemmas.
       assert (kk = CEvent (opt_ext e e')) as kkEQ.
       { by inversion KK. }
       rewrite <- kkEQ in *.
+      (* subst kk.  *)
+      (* erewrite ESstep.basic_step_cont_thread_k; eauto. *)
       assert (ES.cont_thread S' kk = (ES.cont_thread S k)) as Hkk.
-      { subst kk. unfold ES.cont_thread at 1. apply TIDee. }
-      rewrite Hkk in *. 
+      { subst kk. erewrite ESstep.basic_step_cont_thread_k; eauto. }
+      rewrite Hkk in *.
       inversion KK as [HH].
       apply inj_pair2 in HH. 
       rewrite <- HH.
@@ -203,7 +206,7 @@ Section SimRelContLemmas.
       { by inversion KK. }
       rewrite <- kkEQ in *.
       assert (ES.cont_thread S' kk = (ES.cont_thread S k)) as Hkk.
-      { subst kk. unfold ES.cont_thread at 1. apply TIDee. }
+      { subst kk. erewrite ESstep.basic_step_cont_thread_k; eauto. }
       rewrite Hkk in *. 
       inversion KK as [HH].
       apply inj_pair2 in HH. 
@@ -235,7 +238,10 @@ Section SimRelContLemmas.
       assert (x = opt_ext e e') as xEQ.
       { by inversion KK. }
       rewrite xEQ in *. 
-      rewrite TIDee in KK. 
+      rewrite <- KCE in KK.
+      subst k'.
+      erewrite ESstep.basic_step_cont_thread_k with (k := k) in KK; eauto.
+      (* rewrite TIDee in KK.  *)
       inversion KK as [HST].
       apply inj_pair2 in HST. 
       rewrite <- HST.
@@ -622,6 +628,26 @@ Section SimRelCertLemmas.
     1-2 : apply SRCC.
     eapply basic_step_e2a_E0_e'; eauto.    
   Qed.
+
+  Lemma basic_step_nupd_cert_dom TC' h k k' e S' 
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') : 
+        (* (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : *)
+    cert_dom G TC (ES.cont_thread S' k') st' ≡₁ 
+             cert_dom G TC (ES.cont_thread S k) st ∪₁ eq (e2a S' e).
+  cdes BSTEP_.   
+  assert (ESstep.t_basic e None S S') as BSTEP. 
+  { econstructor. eauto. }
+  assert (ES.Wf S) as WFS by apply SRCC.
+  unfold cert_dom. 
+  erewrite ESstep.basic_step_cont_thread. eauto. 
+  rewrite !set_unionA.
+  
+  do 2 (eapply set_union_Propere; auto). 
+
+  apply set_union_mori.
+  
 
   Lemma simrel_cert_basic_step k lbl lbl' lbls jf ew co
         (st st': (thread_lts (ES.cont_thread S k)).(Language.state))

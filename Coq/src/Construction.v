@@ -69,8 +69,9 @@ Definition t_basic_
   exists lbl lbl',
     let lbls := opt_to_list lbl' ++ [lbl] in
     let thrd := ES.cont_thread S k in
+    ⟪ KCE    : k' =  CEvent (opt_ext e e')⟫ /\
     ⟪ CONT   : K S (k, existT _ lang st) ⟫ /\
-    ⟪ CONT'  : S'.(ES.cont) = (CEvent (opt_ext e e'), existT _ lang st') :: S.(ES.cont) ⟫ /\
+    ⟪ CONT'  : S'.(ES.cont) = (k', existT _ lang st') :: S.(ES.cont) ⟫ /\
     ⟪ STEP   : lang.(Language.step) lbls st st' ⟫ /\
     ⟪ LABEL' : opt_same_ctor e' lbl' ⟫ /\
     ⟪ LAB'   : S'.(ES.lab) = upd_opt (upd S.(ES.lab) e lbl ) e' lbl' ⟫ /\
@@ -871,6 +872,20 @@ Proof.
   eapply ES.K_inEninit; eauto.
 Qed.
 
+Lemma basic_step_cont_thread_k lang k k' st st' e e' S S'
+      (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
+  ES.cont_thread S' k' = ES.cont_thread S k. 
+Proof. 
+  cdes BSTEP_. 
+  subst k'. 
+  unfold opt_ext in *.
+  destruct e'. 
+  { unfold ES.cont_thread at 1.
+    erewrite basic_step_tid_e'; eauto. } 
+  unfold ES.cont_thread at 1.
+  erewrite basic_step_tid_e; eauto.
+Qed.
+
 Lemma basic_step_cont_set lang k k' st st' e e' S S' 
       (BSTEP_ : t_basic_ lang k k' st st' e e' S S') :
   K S' ≡₁ K S ∪₁ eq (CEvent (opt_ext e e'), existT _ lang st').
@@ -1121,7 +1136,7 @@ Proof.
     destruct kSBe' as [_ EQe].
     destruct e'; E_seq_e. } 
   eapply ES.cont_sb_nfrwd; 
-    [ by apply WF | eauto | eauto | | by apply KSBz ].
+    [ by apply WF | by eapply kEVENT | eauto | | by apply KSBz ].
   assert (E S z) as Ez. 
   { eapply ES.cont_sb_domE; eauto. }
   unfold codom_rel.
