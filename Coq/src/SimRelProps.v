@@ -510,29 +510,36 @@ Section SimRelProps.
     Lemma cfk_hdom : 
       h □₁ hdom ∩₁ ES.cont_cf_dom S q ≡₁ ∅.
     Proof. 
+      assert (ES.Wf S) as WFS by apply SRCC.
+      edestruct cstate_q_cont as [st [stEQ KK]]; eauto.
       red; split; [|basic_solver].
       rewrite hdom_alt.
       rewrite !set_collect_union. 
       rewrite set_inter_union_l.
       apply set_subset_union_l; split. 
-      { rewrite ES.cont_cf_Tid_. 
-        { intros x [HH TIDx]. red.
-          destruct HH as [a [DOMa Ha]].
-          destruct DOMa as [CIa NTIDa].
-          subst x. apply NTIDa.
-          erewrite <- a2e_tid; eauto.
-          admit. }
-        { apply SRCC. }
-        admit. }
-      erewrite contstateE with (k := q).
-      2-4 : admit. 
+      { rewrite ES.cont_cf_Tid_; eauto.  
+        intros x [HH TIDx]. red.
+        destruct HH as [a [DOMa Ha]].
+        edestruct DOMa as [CIa NTIDa].
+        subst x. apply NTIDa.
+        erewrite <- a2e_tid; 
+          [eauto | | eapply DOMa]. 
+        eapply fixset_mori; 
+          [| eauto| eapply SRCC].
+        rewrite hdom_alt. red.
+        basic_solver 10. }
+      erewrite contstateE; auto; 
+        [| apply SRCC | rewrite stEQ; eapply KK].
       arewrite 
         (h □₁ (g □₁ (ES.cont_sb_dom S q \₁ SEinit)) ≡₁ ES.cont_sb_dom S q \₁ SEinit).
-      { admit. }
-      rewrite ES.cont_cf_cont_sb.
-      2-3 : admit. 
+      { rewrite set_collect_compose.
+        symmetry. eapply fixset_set_fixpoint.
+        eapply fixset_mori; eauto; 
+          [| eapply hgfix; eapply SRCC].  
+        red. basic_solver. }
+      rewrite ES.cont_cf_cont_sb; eauto. 
       unfolder. ins. desf. 
-    Admitted.
+    Qed.
 
     Lemma cont_sb_dom_dom :
       dom_rel (Ssb ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ ES.cont_sb_dom S q.
