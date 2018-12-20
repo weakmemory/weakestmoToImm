@@ -727,7 +727,7 @@ Section SimRelCertLemmas.
     econstructor; splits.  
     { unfold is_r. by rewrite <- LBL. }
     assert (cert_dom G TC (ES.cont_thread S k) st w) as HDOMw.
-    { eapply new_rf_cert_dom; try apply SRCC; auto. 
+    { eapply cert_rf_cert_dom; try apply SRCC; auto. 
       { red. ins. eapply ES.init_tid_K; eauto. apply SRCC. }
       unfold dom_rel. eexists.
       apply seq_eqv_r; splits; eauto. }
@@ -785,7 +785,7 @@ Section SimRelCertLemmas.
       apply restr_relE, seq_eqv_lr in HH. 
       basic_solver. }
     assert (same_val (certLab G st'') (e2a S' w) (e2a S' e)) as SAME_VAL.
-    { eapply new_rfv; eauto. apply SRCC. }
+    { eapply cert_rfv_clab; eauto. apply SRCC. }
     unfold same_val, val in *.
     erewrite basic_step_e2a_certlab_e with (e := e); eauto.
     arewrite (Slab S' w = Slab S w).
@@ -793,7 +793,7 @@ Section SimRelCertLemmas.
     assert (e2a S w = e2a S' w) as E2Aw. 
     { symmetry. eapply basic_step_e2a_eq_dom; eauto. apply SRCC. }
     rewrite <- E2Aw in *.
-    eapply new_rf_ntid_iss_sb in NEW_RF. 
+    eapply cert_rf_ntid_iss_sb in NEW_RF. 
     2-6: apply SRCC.
     unfolder in wHDOM. destruct wHDOM as [wa [CERTwa Hwa]].
     assert (g w = wa) as Gwwa.
@@ -892,7 +892,7 @@ Section SimRelCertLemmas.
     rewrite union_false_l.
     unfolder. intros x [y [[EQx EQy] nSB]]. 
     subst x y. 
-    eapply new_rf_ntid_iss_sb in NEW_RF.
+    eapply cert_rf_ntid_iss_sb in NEW_RF.
     2-6 : apply SRCC.
     assert (e2a S' w = wa) as E2Aw.
     { erewrite basic_step_e2a_eq_dom; eauto. 

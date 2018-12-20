@@ -35,7 +35,7 @@ Section CertGraph.
 
   Notation "'certRmw'" := (certG.(rmw)).
 
-  Notation "'new_rf'" := (cert_rf G sc TC' thread).
+  Notation "'cert_rf'" := (cert_rf G sc TC' thread).
 
   Notation "'E'" := G.(acts_set).
 
@@ -81,9 +81,9 @@ Section CertGraph.
       dcertE : certE ≡₁ E0;
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ rmw ⨾ ⦗ certE ⦘;
       
-      new_rfv : new_rf ⊆ same_val certLab;
-      new_rfl : new_rf ⊆ same_loc certLab;
-      new_rf_iss_sb : new_rf ⊆ ⦗ I ⦘ ⨾ new_rf ∪ sb;
+      cert_rfv_clab : cert_rf ⊆ same_val certLab;
+      cert_rfl_clab : cert_rf ⊆ same_loc certLab;
+      cert_rf_iss_sb : cert_rf ⊆ ⦗ I ⦘ ⨾ cert_rf ∪ sb;
     }.
 
   Section CertGraphProperties.
@@ -113,6 +113,10 @@ Section CertGraph.
       { apply NEXT. by eapply init_covered; eauto. }
       apply NISS. by eapply init_issued; eauto. 
     Qed.
+
+    (******************************************************************************)
+    (** ** E0 propeties *)
+    (******************************************************************************)
 
     Lemma E0_in_thread_execE st
           (TEH : thread_restricted_execution G thread st.(ProgToExecution.G)) :
@@ -213,6 +217,10 @@ Section CertGraph.
       split; auto.  
     Qed.
 
+    (******************************************************************************)
+    (** ** certLab propeties *)
+    (******************************************************************************)
+
     Lemma cuplab (SCG : cert_graph) :
       same_lab_u2v certLab G.(lab).
     Proof.
@@ -222,33 +230,37 @@ Section CertGraph.
       red. desf.
     Qed.
 
-    Lemma new_rf_w (SCG : cert_graph) : 
-      new_rf ≡ ⦗ W ⦘ ⨾ new_rf.
+    (******************************************************************************)
+    (** ** cert_rf propeties *)
+    (******************************************************************************)
+
+    Lemma cert_rf_w (SCG : cert_graph) : 
+      cert_rf ≡ ⦗ W ⦘ ⨾ cert_rf.
     Proof. rewrite cert_rfD. basic_solver. Qed.
 
-    Lemma new_rf_ntid_iss_sb 
+    Lemma cert_rf_ntid_iss_sb 
           (SCG : cert_graph)
           (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) :
-      new_rf ⊆ ⦗ NTid_ thread ∩₁ I ⦘ ⨾ new_rf ∪ sb.
+      cert_rf ⊆ ⦗ NTid_ thread ∩₁ I ⦘ ⨾ cert_rf ∪ sb.
     Proof.
       etransitivity.
       { apply cert_rf_ntid_sb; auto. 
         eapply sim_trav_step_rel_covered; eauto. 
         eexists; eauto. }
-      sin_rewrite new_rf_iss_sb; auto. 
+      sin_rewrite cert_rf_iss_sb; auto. 
       basic_solver 10.
     Qed.
 
-    Lemma new_rf_cert_dom st
+    Lemma cert_rf_cert_dom st
           (SCG : cert_graph)
           (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) 
           (NINITT : thread <> tid_init) 
           (WFST : wf_thread_state thread st) :
-      dom_rel (new_rf ⨾ ⦗ eq (ThreadEvent thread st.(eindex)) ⦘) ⊆₁ cert_dom st.
+      dom_rel (cert_rf ⨾ ⦗ eq (ThreadEvent thread st.(eindex)) ⦘) ⊆₁ cert_dom st.
     Proof. 
       unfold cert_dom. 
       rewrite cert_rf_codomt. 
-      erewrite new_rf_ntid_iss_sb; eauto.
+      erewrite cert_rf_ntid_iss_sb; eauto.
       rewrite !seq_union_l, dom_union. 
       apply set_subset_union_l. split.
       { basic_solver 10. }
@@ -282,6 +294,10 @@ Section CertGraph.
       unfold Execution.sb in SB. 
       apply seq_eqv_lr in SB; desf. 
     Qed.
+
+    (******************************************************************************)
+    (** ** deps propeties *)
+    (******************************************************************************)
 
     Lemma dom_addrE_in_D : dom_rel (addr ⨾ ⦗ E0 ⦘) ⊆₁ D.
     Proof.
@@ -440,6 +456,10 @@ Variable TCCOH : tc_coherent G sc TC.
 Variable TSTEP : isim_trav_step G sc thread TC TC'.
 
 Hint Resolve isim_trav_step_coherence. 
+
+(******************************************************************************)
+(** ** cert_graph start lemma *)
+(******************************************************************************)
 
 Lemma cert_graph_start 
       (state : Language.Language.state (Promise.thread_lts thread))
@@ -843,6 +863,10 @@ Proof.
     all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
     all: repeat (eexists; split; eauto).
 Qed.
+
+(******************************************************************************)
+(** ** ilbl_step lemmas *)
+(******************************************************************************)
 
 Lemma ilbl_step_E0_eindex lbls
         (st st' st'' : Language.Language.state (Promise.thread_lts thread))
