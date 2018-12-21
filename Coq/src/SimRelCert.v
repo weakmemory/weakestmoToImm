@@ -1042,6 +1042,44 @@ Section SimRelCertLemmas.
     congruence.
   Admitted.  
 
+  Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    Sjf S' ∩ Scf S' ≡ ∅₂.
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    cdes LSTEP.
+    split; [|basic_solver].
+    rewrite SSJF'.
+    erewrite ESstep.basic_step_nupd_cf; eauto. 
+    rewrite !inter_union_r, !inter_union_l. 
+    unionL.
+    { eapply jf_necf_jf_ncf; apply SRCC. }
+    { rewrite ES.cfE.
+      unfolder; splits; ins; desf; omega. }
+    { rewrite ES.jfE; auto. 
+      unfolder; splits; ins; desf; omega. }
+    rewrite csE, inter_union_r, transp_cross.
+    unionL. 
+    { unfolder. ins. desf.
+      eapply cfk_hdom; eauto. 
+      unfolder; eauto. }
+    rewrite ES.cont_cf_domEninit; eauto. 
+    unfold ES.acts_ninit_set.
+    unfolder; splits; ins; desf; omega. 
+  Qed.
+
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
         (ESSTEP : ESstep.t_basic e e' S S')
@@ -1120,7 +1158,9 @@ Section SimRelCertLemmas.
       assert (@es_consistent S' Weakestmo) as ES_CONS'.
       { econstructor; simpl.
         { admit. }
-        { admit. }
+        { apply jf_necf_alt. splits.
+          { eapply simrel_cert_load_step_jf_ncf; eauto. }
+          all : admit. }
         { eapply simrel_cert_load_step_jfe_vis; eauto. }
         all : admit. }
 
