@@ -621,6 +621,23 @@ Proof.
   eapply K_inEninit; eauto. 
 Qed.  
 
+Lemma cont_sb_prcl k lang st WF (KK : K (k, existT _ lang st)) : 
+  sb ⨾ ⦗ cont_sb_dom S k ⦘ ⊆ ⦗ cont_sb_dom S k ⦘ ⨾ sb.
+Proof.
+  unfold cont_sb_dom. 
+  intros x y HH. 
+  apply seq_eqv_r in HH.
+  destruct HH as [SB CONTy].
+  destruct k. 
+  { exfalso. eapply sb_ninit; auto. 
+    apply seq_eqv_r. eauto. }
+  unfolder in CONTy. desf.
+  { unfolder; splits; eauto. }
+  unfolder; splits; eauto.
+  eexists; splits; [|auto].
+  right. eapply sb_trans; eauto. 
+Qed.
+
 Lemma cont_sb_nfrwd e k lang st WF 
       (KE : k = CEvent e) 
       (KK : K (k, existT _ lang st)) : 

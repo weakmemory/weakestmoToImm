@@ -1133,24 +1133,38 @@ Section SimRelCertLemmas.
       rewrite hb_in_HChb_sb; eauto. 
       rewrite !seq_union_l, inter_union_l.
       unionL. 
-      { intros x y [HH CF]. 
-        assert ((h □₁ C) x) as Cx. 
-        { unfolder in HH. basic_solver 10. }
-        assert ((h □₁ cert_dom G TC (ES.cont_thread S k) st) x) as HDOMx. 
-        { unfolder; unfold cert_dom. 
-          unfolder in Cx. desf. 
+      { intros x y [HH CF].
+        eapply himgNcf; eauto.  
+        apply seq_eqv_lr. splits; [|apply CF|].  
+        { unfolder in HH. desf.
+          unfolder. unfold cert_dom. 
           eexists. splits; eauto. 
           by left; left. }
-        assert (y = w) as EQy. 
-        { unfolder in HH. basic_solver 10. }
-        subst y. 
-        eapply himgNcf; eauto. 
-        apply seq_eqv_lr. splits; eauto. }
+        unfolder in HH; desf. }
       intros x y [HH CF].
       eapply himgNcf; eauto.  
       apply seq_eqv_lr. splits; [|apply CF|].  
-      { admit. }
+      { destruct HH as [z [SB [CONTz EQw]]].
+        subst y. 
+        assert ((Ssb S ⨾ ⦗ ES.cont_sb_dom S k ⦘) x z) as SBC.
+        { unfolder; eauto. }
+        eapply ES.cont_sb_prcl in SBC; eauto. 
+        eapply cont_sb_dom_in_hhdom; eauto. 
+        unfolder in SBC. desf. }
       unfolder in HH; desf. }
+    
+    { erewrite ESstep.load_step_rf; eauto. 
+      rewrite SSJF'. 
+      rewrite !seq_union_l, !seq_union_r, !minus_union_l. 
+      relsf. rewrite !inter_union_l. unionL.
+      { solve_by_EE ES.rfE. }
+      { solve_by_EE ES.jfE. }
+      arewrite 
+        ((Sew S)^? ⨾ singl_rel w e ⨾ ⦗eq e⦘ ⊆ 
+                (h □₁ (cert_dom G TC (ES.cont_thread S k) st)) × (eq e)).
+      { admit. }
+      admit. }
+      
     all : admit. 
   Admitted.
     
@@ -1234,6 +1248,8 @@ Section SimRelCertLemmas.
         { admit. }
         { apply jf_necf_alt. splits.
           { eapply simrel_cert_load_step_jf_ncf; eauto. }
+          { admit. } 
+          { eapply simrel_cert_load_step_hb_jf_thb_ncf; eauto. }
           all : admit. }
         { eapply simrel_cert_load_step_jfe_vis; eauto. }
         all : admit. }
@@ -1305,193 +1321,6 @@ Section SimRelCertLemmas.
         eapply basic_step_nupd_hdom_cf_free; eauto. }
       all : admit. }
     all : admit. 
-
-      (*
-        (* jf_vis *)
-        { rewrite JF'. 
-          apply inclusion_union_l.
-          { etransitivity.
-            { eapply scons. apply SRCC. }
-            apply union_mori.
-            { eapply ESstep.basic_step_sb_mon. eauto. }
-            apply cross_mori. 
-            { eapply ESstep.step_vis_mon; eauto. } 
-            eapply ESstep.basic_step_acts_set_mon; eauto. }
-          destruct (excluded_middle_informative (sb G w a)) as [waSB | waNSB].
-          { apply inclusion_union_r; left. 
-            admit. }
-          (* apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa. *)
-          (* unfold union in RFwa; desf.  *)
-          assert (I w) as Iw.
-          { apply (SRCC.(cert).(new_rf_iss_sb)) in RFwa.
-            unfolder in RFwa; desf. }
-          apply inclusion_union_r; right. 
-          unfolder; ins; splits; desf.
-          2: cdes ES_BSTEP_; unfold opt_ext in EVENT'; omega.
-          erewrite <- SRCC.(hfeq). 
-          { eapply ESstep.step_vis_mon; eauto; apply SRCC. 
-            unfolder.
-            eexists; splits; eauto; right; repeat eexists; splits; eauto; desf. }
-          right.
-          unfolder; splits. 
-          { right; repeat eexists; eauto. }
-          unfold not; ins; apply waNSB. 
-          destruct H as [y [SBqdom wEQ]].
-          admit. }
-        (* erewrite ESstep.e2a_step_eq_dom with (S:=S) in wEQ; eauto. *)
-        (* [ | by apply SRC | admit | admit ]. *)
-        (* eapply gsb; (* TODO: gsb should not depend on simrel *)  *)
-        (*   [ by eauto | by eauto | admit | ].  *)
-        (* unfolder; repeat eexists; splits; eauto.  *)
-        (* unfold ES.cont_sb_dom in SBqdom; desf. *)
-        (* { admit. } *)
-        (* unfold set_inter in SBqdom. *)
-        (* destruct SBqdom as [yTID ySBDOM]. *)
-        (* unfold dom_rel in ySBDOM.  *)
-        (* destruct ySBDOM as [y' yy'SBrefl]. *)
-        (* admit. } *)
-        
-        (* hb_jf_not_cf *)
-        { cdes ES_BSTEP_. 
-          
-          assert (eq (h w) ⊆₁ h □₁ cert_dom S G TC state q) as hwInHDOM. 
-          { rewrite <- collect_eq.
-            apply set_collect_mori; auto. 
-            admit.
-            (* arewrite (eq w ⊆₁ dom_rel new_rf). *)
-            (* { autounfold with unfolderDb. *)
-            (*   ins; desf; eexists; eauto. } *)
-          (* eapply new_rf_dom; eauto. *) }
-
-          unfold same_relation; splits; [|by basic_solver]. 
-          erewrite ESstep.load_step_hb; eauto.
-          rewrite JF'.
-          rewrite ESstep.basic_step_nupd_cf; eauto.
-          rewrite transp_union, transp_singl_rel, crE.
-          relsf.
-          rewrite !inter_union_l.
-          rewrite !inter_union_r.
-          repeat apply inclusion_union_l.
-
-          all: try (
-                   try rewrite ES.jfE;
-                   try rewrite releaseE;
-                   try rewrite hbE; 
-                   try (rewrite ES.cont_sb_domE; eauto);
-                   try (arewrite (singl_rel (ES.next_act S) (h w) ⊆ eq e × SE S)
-                         by autounfold with unfolderDb; ins; desf);
-                   try (arewrite (singl_rel (h w) (ES.next_act S) ⊆ SE S × eq e)
-                         by autounfold with unfolderDb; ins; desf);
-                     by ESstep.E_seq_e
-                 ).
-
-          { apply SRCC. }
-
-          { rewrite seq_incl_cross.
-            { rewrite <- restr_cross, restr_relE. 
-              apply SRCC.(himgNcf). }
-            { rewrite dom_cross; [|red; basic_solver]. 
-              eapply sbk_in_hhdom; eauto. }
-              by rewrite codom_singl_rel. } 
-
-          { rewrite !seqA.
-            rewrite hb_in_HChb_sb; eauto. 
-            rewrite !seq_union_l. 
-            rewrite inter_union_l.
-            unionL.
-            2: { rewrite <- !seqA.
-                 rewrite sbk_in_hhdom; eauto.
-                 rewrite seq_incl_cross.
-                 { rewrite <- restr_cross, restr_relE. 
-                   apply SRCC.(himgNcf). }
-                 2: by rewrite codom_singl_rel.
-                 admit. }
-            rewrite seq_incl_cross.
-            { rewrite <- restr_cross, restr_relE. 
-              apply SRCC.(himgNcf). }
-            { admit. }
-            (* rewrite !set_collect_union. *)
-            (* basic_solver 10. } *)
-            rewrite !codom_seq.
-              by rewrite codom_singl_rel. }
-          
-          { rewrite !seqA. 
-            rewrite seq_incl_cross.
-            { rewrite <- restr_cross, restr_relE.
-              apply SRCC.(himgNcf). }
-            { admit. 
-            (* rewrite releaseC; eauto. 
-            rewrite dom_seq.
-            rewrite !set_collect_union.
-            basic_solver 10. *) }
-            rewrite !codom_seq.
-            rewrite codom_singl_rel; auto. } 
-
-          rewrite !seqA.
-          rewrite hb_in_HChb_sb; eauto. 
-          rewrite !seq_union_l. 
-          rewrite inter_union_l.
-          apply inclusion_union_l.  
-          2: { rewrite <- !seqA.
-               admit. 
-          (* rewrite releaseC; eauto. 
-          rewrite !seqA.
-          rewrite <- seqA.
-          rewrite seq_incl_cross.
-          { rewrite <- restr_cross, restr_relE. 
-              by rewrite SRCC.(himgNcf). }
-          { admit. }
-          rewrite !codom_seq.
-            by rewrite codom_singl_rel. *) }
-          rewrite seq_incl_cross.
-          { rewrite <- restr_cross, restr_relE. 
-            apply SRCC.(himgNcf). }
-          { admit. }
-          (* rewrite !set_collect_union. *)
-          (* basic_solver 10. } *)
-          rewrite !codom_seq.
-          rewrite codom_singl_rel; auto. }
-        
-        { admit. }
-
-        { cdes ES_BSTEP_.
-
-          red; split; [|basic_solver].
-          rewrite JF', ESstep.basic_step_cf; eauto. 
-          rewrite !csE.
-          rewrite !transp_cross.
-          rewrite !inter_union_l.
-          rewrite !inter_union_r. 
-          unfold eq_opt.
-          relsf.
-          rewrite !unionA.
-          repeat apply inclusion_union_l.
-
-          all: try (
-                   try rewrite ES.jfE;
-                   try rewrite ES.cfE;
-                     by ESstep.E_seq_e
-                 ).
-
-          { apply SRCC. }
-          
-          { unfolder. 
-            intros x y [[EQx _] [CONTCFx _]].
-            rewrite EQx in *. 
-            eapply cfk_hdom; eauto. 
-            unfold set_inter; split; eauto.
-            unfold set_collect.
-            eexists; split; eauto. }
-          
-          unfolder. 
-          intros x y [[EQx _] [EQe _]].
-          rewrite EQx in EQe.
-          rewrite <- EQe in hwInSE.
-          unfold "SE" in hwInSE.
-          omega. }
-
-        all: admit. }
-      *)
 
   Admitted.
 

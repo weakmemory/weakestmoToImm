@@ -706,8 +706,16 @@ Section SimRelProps.
       unfold release, rs. apply clos_rtn1_rt in RFRMW.
       generalize HH RFRMW. basic_solver 40.
     Qed.
+
+    Lemma release_in_HCrelease_sb : Srelease ⊆ ⦗ h □₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
+    Proof.
+      arewrite (Srelease ⊆ ⦗h □₁ C ∪₁ set_compl (h □₁ C)⦘ ⨾ Srelease).
+      { rewrite set_compl_union_id. by rewrite seq_id_l. }
+      rewrite id_union, seq_union_l. apply union_mori; [done|].
+      apply releaseNCsb; auto.
+    Qed.
     
-    Lemma swNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb.
+    Lemma swNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
     Proof.
       assert (ES.Wf S) as WF by apply SRCC.
       unfold sw.
