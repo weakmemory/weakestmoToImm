@@ -714,6 +714,10 @@ Section SimRelProps.
       rewrite id_union, seq_union_l. apply union_mori; [done|].
       apply releaseNCsb; auto.
     Qed.
+
+    Lemma release_hhdom : 
+      dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
+    Proof. admit. Admitted.
     
     Lemma swNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
     Proof.

@@ -934,6 +934,28 @@ Section SimRelCertLemmas.
     by repeat left. 
   Qed.
 
+  (* Lemma simrel_cert_load_step_jfehI TC' h k k' e S' *)
+  (*       (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
+  (*       (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S')  *)
+  (*       (SAJF : sim_add_jf S G sc TC TC' h k st e S') *)
+  (*       (EW' : Sew S' ≡ Sew S) *)
+  (*       (CO' : Sco S' ≡ Sco S) *)
+  (*       (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :  *)
+  (*   dom_rel (Sjfe S') ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ h □₁ I ⦘).  *)
+  (* Proof. admit. Admitted. *)
+
+  (* Lemma simrel_cert_load_step_rfehI TC' h k k' e S' *)
+  (*       (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
+  (*       (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S')  *)
+  (*       (SAJF : sim_add_jf S G sc TC TC' h k st e S') *)
+  (*       (EW' : Sew S' ≡ Sew S) *)
+  (*       (CO' : Sco S' ≡ Sco S) *)
+  (*       (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :  *)
+  (*   dom_rel (Srfe S') ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ h □₁ I ⦘).  *)
+  (* Proof. admit. Admitted. *)
+
   Lemma simrel_cert_load_step_jfe_vis TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -1159,10 +1181,7 @@ Section SimRelCertLemmas.
       relsf. rewrite !inter_union_l. unionL.
       { solve_by_EE ES.rfE. }
       { solve_by_EE ES.jfE. }
-      arewrite 
-        ((Sew S)^? ⨾ singl_rel w e ⨾ ⦗eq e⦘ ⊆ 
-                (h □₁ (cert_dom G TC (ES.cont_thread S k) st)) × (eq e)).
-      { admit. }
+      rewrite inclusion_minus_rel.
       admit. }
       
     all : admit. 
