@@ -237,11 +237,13 @@ Section SimRelContLemmas.
         eapply SRK. erewrite <- ESstep.basic_step_tid_eq_dom; eauto. }
       assert (x = opt_ext e e') as xEQ.
       { by inversion KK. }
-      rewrite xEQ in *. 
-      rewrite <- KCE in KK.
-      subst k'.
-      erewrite ESstep.basic_step_cont_thread_k with (k := k) in KK; eauto.
-      (* rewrite TIDee in KK.  *)
+      assert ((Stid S') x = ES.cont_thread S k) as TIDx. 
+      { unfold opt_ext in *. subst x. 
+        destruct e'; 
+          [ erewrite ESstep.basic_step_tid_e'
+          | erewrite ESstep.basic_step_tid_e 
+          ]; eauto. }
+      rewrite <- xEQ, TIDx in KK. 
       inversion KK as [HST].
       apply inj_pair2 in HST. 
       rewrite <- HST.
@@ -251,7 +253,7 @@ Section SimRelContLemmas.
       edestruct HH as [EE _].
       apply opt_to_list_app_singl in EE.
       destruct EE as [eqLBL eqLBL'].
-      edestruct e'; simpl.
+      edestruct e'; simpl; rewrite xEQ; unfold opt_ext.
       { destruct HH as [_ [HH | HH]]. 
         { destruct HH as [_ [_ [_ [LBL _]]]].
           subst l'. rewrite LBL in LABEL'. exfalso. auto. } 
@@ -306,7 +308,7 @@ Section SimRelContLemmas.
     erewrite ESstep.basic_step_tid_e; eauto.  
     edestruct k; simpl.  
     { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
-    erewrite ESstep.basic_step_seqn_kevent; eauto. 
+    erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto. 
     { erewrite contseqn; eauto. }
     (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
     admit. 
@@ -330,7 +332,7 @@ Section SimRelContLemmas.
     erewrite ESstep.basic_step_seqn_e'; eauto.
     edestruct k; simpl.  
     { erewrite ESstep.basic_step_seqn_kinit; [erewrite continit| | |]; eauto. }
-    erewrite ESstep.basic_step_seqn_kevent; eauto. 
+    erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto. 
     { erewrite contseqn; eauto. }
     (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
     all: admit. 
@@ -629,25 +631,80 @@ Section SimRelCertLemmas.
     eapply basic_step_e2a_E0_e'; eauto.    
   Qed.
 
-  Lemma basic_step_nupd_cert_dom TC' h k k' e S' 
+  Lemma basic_step_cert_dom TC' h k k' e e' S' 
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
+    cert_dom G TC (ES.cont_thread S' k') st' ≡₁ 
+             cert_dom G TC (ES.cont_thread S k) st ∪₁ 
+               eq (e2a S' e) ∪₁ eq_opt (option_map (e2a S') e').
+  Proof. 
+    cdes BSTEP_.   
+    assert (ESstep.t_basic e e' S S') as BSTEP. 
+    { econstructor. eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    unfold cert_dom. 
+    erewrite ESstep.basic_step_cont_thread_k; eauto. 
+    rewrite !set_unionA.
+    do 2 (eapply set_union_Propere; auto). 
+    edestruct lbl_step_cases as [l [l' HH]].
+    { eapply wf_cont_state. apply SRCC. }
+    { apply STEP. }
+    destruct HH as [LBLS HH].
+    apply opt_to_list_app_singl in LBLS.
+    destruct LBLS as [LA LB]. subst l l'. 
+    destruct HH as [HA | HB].
+    { destruct HA as [_ [ACTS [_ [LBL' _]]]].
+      unfold eq_opt, option_map, opt_same_ctor in *.
+      destruct e'; [desf|].
+      etransitivity; [eapply ACTS|].
+      apply set_union_Propere; auto. 
+      erewrite basic_step_e2a_e; eauto. 
+      2 : { apply SRCC. }
+      basic_solver. }
+    destruct HB as [_ [ACTS [_ LBLS]]].
+    destruct LBLS as [ordr [ordw [loc [valr [valw [LA LB]]]]]].
+    unfold eq_opt, option_map, opt_same_ctor in *.
+    destruct e'; [|desf].
+    etransitivity; [eapply ACTS|].
+    rewrite set_unionA.
+    apply set_union_Propere; auto. 
+    erewrite basic_step_e2a_e; eauto. 
+    2 : { apply SRCC. }
+    erewrite basic_step_e2a_e'; eauto. 
+    apply SRCC.
+  Qed.
+
+  (* Lemma basic_step_nupd_cert_dom TC' h k k' e S'  *)
+  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
+  (*       (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') :  *)
+  (*   cert_dom G TC (ES.cont_thread S' k') st' ≡₁  *)
+  (*            cert_dom G TC (ES.cont_thread S k) st ∪₁ eq (e2a S' e). *)
+  (* Proof.  *)
+  (*   erewrite basic_step_cert_dom. *)
+
+  Lemma basic_step_hdom_cf_free TC' h k k' e e' S' 
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
+    ES.cf_free S' (h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e ∪₁ eq_opt e').
+  Proof. 
+    eapply ESstep.basic_step_cf_free; 
+      try apply SRCC; eauto. 
+    eapply cfk_hdom; apply SRCC.
+  Qed.
+
+  Lemma basic_step_nupd_hdom_cf_free TC' h k k' e S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') : 
-        (* (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : *)
-    cert_dom G TC (ES.cont_thread S' k') st' ≡₁ 
-             cert_dom G TC (ES.cont_thread S k) st ∪₁ eq (e2a S' e).
-  cdes BSTEP_.   
-  assert (ESstep.t_basic e None S S') as BSTEP. 
-  { econstructor. eauto. }
-  assert (ES.Wf S) as WFS by apply SRCC.
-  unfold cert_dom. 
-  erewrite ESstep.basic_step_cont_thread. eauto. 
-  rewrite !set_unionA.
-  
-  do 2 (eapply set_union_Propere; auto). 
-
-  apply set_union_mori.
-  
+    ES.cf_free S' (h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e).
+  Proof. 
+    eapply ES.cf_free_eq.
+    2 : eapply basic_step_hdom_cf_free; eauto. 
+    unfold eq_opt. basic_solver 5.
+  Qed.
 
   Lemma simrel_cert_basic_step k lbl lbl' lbls jf ew co
         (st st': (thread_lts (ES.cont_thread S k)).(Language.state))
@@ -680,7 +737,7 @@ Section SimRelCertLemmas.
         eapply ILBL_STEP 
       | by rewrite upds ].
 
-    exists (CEvent S.(ES.next_act)). 
+    exists (CEvent (1 + S.(ES.next_act))). 
     exists S.(ES.next_act). exists (Some (1 + S.(ES.next_act))).
     eexists (ES.mk _ _ _ _ _ _ _ _ _).
     econstructor; splits; simpl; eauto. 
@@ -1112,6 +1169,22 @@ Section SimRelCertLemmas.
           [| | apply ES.coE | eapply CO' | apply SRCC];
           eauto. } 
         all : admit. }
+      1-15 : admit.
+      (* himgNcf : ES.cf_free S (h □₁ hdom) *)
+      { eapply ES.cf_free_eq.
+        { symmetry. etransitivity.
+          { eapply set_collect_more; [eauto|].
+            etransitivity.
+            { eapply basic_step_cert_dom; eauto. }
+            unfold eq_opt, option_map. 
+            rewrite set_union_empty_r. 
+            eauto. } 
+          rewrite set_collect_union.
+          erewrite set_collect_updo.
+          2 : admit. 
+          rewrite set_collect_eq.
+          by rewrite upds. }
+        eapply basic_step_nupd_hdom_cf_free; eauto. }
       all : admit. }
     all : admit. 
 

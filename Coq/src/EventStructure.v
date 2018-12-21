@@ -435,6 +435,10 @@ Lemma cf_free_subset X X' (SUBS : X' ⊆₁ X) :
   cf_free S X -> cf_free S X'.
 Proof. unfold cf_free; basic_solver 42. Qed.
 
+Lemma cf_free_eq X X' (EQ : X' ≡₁ X) : 
+  cf_free S X <-> cf_free S X'.
+Proof. destruct EQ; unfold cf_free; split; basic_solver 42. Qed.
+
 (******************************************************************************)
 (** ** rmw properties *)
 (******************************************************************************)

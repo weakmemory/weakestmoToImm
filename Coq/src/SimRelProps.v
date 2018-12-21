@@ -434,6 +434,13 @@ Section SimRelProps.
 
     Variable SRCC : simrel_cert prog S G sc TC f TC' h q state state'.  
 
+    Lemma wf_cont_state : wf_thread_state (ES.cont_thread S q) state. 
+    Proof. 
+      edestruct cstate_q_cont; eauto; desf. 
+      eapply contwf; eauto. 
+      apply SRCC.
+    Qed.
+
     Lemma hdom_alt : 
       hdom ≡₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ∩₁ GNTid qtid ∪₁ contE. 
     Proof. 
