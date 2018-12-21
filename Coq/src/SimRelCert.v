@@ -1080,6 +1080,80 @@ Section SimRelCertLemmas.
     unfolder; splits; ins; desf; omega. 
   Qed.
 
+  Lemma simrel_cert_load_step_hb_jf_thb_ncf TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    (Shb S' ⨾ (Sjf S')⁻¹) ∩ Scf S' ≡ ∅₂.
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    cdes LSTEP.
+    split; [|basic_solver].
+    rewrite SSJF'.
+    erewrite ESstep.basic_step_nupd_cf; eauto. 
+    erewrite ESstep.load_step_hb; eauto. 
+    rewrite crE, csE, transp_union, transp_cross, transp_singl_rel. 
+    relsf. 
+    rewrite !inter_union_r, !inter_union_l. 
+
+    assert (singl_rel e w ⊆ eq e × SE S) as singlE.
+    { unfolder. ins. desf. splits; auto. 
+      eapply himg in wHDOM; eauto. }
+
+    Ltac solve_by_EE EE := 
+      rewrite EE; eauto;
+      unfolder; splits; ins; desf; omega.
+
+    unionL.
+    { apply jf_necf_hb_tjf_ncf; apply SRCC. }
+    
+    1-4, 10-14, 21-24 : solve_by_EE ES.jfE.
+    1,6, 11-12, 14, 16 : solve_by_EE hbE.
+    5-8 : solve_by_EE singlE.
+    5 : solve_by_EE ES.cont_sb_domE.
+    5 : solve_by_EE releaseE. 
+
+    { erewrite cont_sb_dom_in_hhdom; eauto.
+      rewrite seq_cross_singl_l; auto. 
+      intros x y [[HDOMx EQy] CF]. subst y. 
+      eapply himgNcf; eauto. 
+      apply seq_eqv_lr. splits; eauto. }
+
+    { rewrite seqA, seq_cross_singl_l; auto. 
+      rewrite hb_in_HChb_sb; eauto. 
+      rewrite !seq_union_l, inter_union_l.
+      unionL. 
+      { intros x y [HH CF]. 
+        assert ((h □₁ C) x) as Cx. 
+        { unfolder in HH. basic_solver 10. }
+        assert ((h □₁ cert_dom G TC (ES.cont_thread S k) st) x) as HDOMx. 
+        { unfolder; unfold cert_dom. 
+          unfolder in Cx. desf. 
+          eexists. splits; eauto. 
+          by left; left. }
+        assert (y = w) as EQy. 
+        { unfolder in HH. basic_solver 10. }
+        subst y. 
+        eapply himgNcf; eauto. 
+        apply seq_eqv_lr. splits; eauto. }
+      intros x y [HH CF].
+      eapply himgNcf; eauto.  
+      apply seq_eqv_lr. splits; [|apply CF|].  
+      { admit. }
+      unfolder in HH; desf. }
+    all : admit. 
+  Admitted.
+    
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
         (ESSTEP : ESstep.t_basic e e' S S')
