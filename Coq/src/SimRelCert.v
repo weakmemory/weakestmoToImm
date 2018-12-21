@@ -1025,7 +1025,11 @@ Section SimRelCertLemmas.
         destruct EE as [CONT_SB _].
         eapply ES.cont_sb_domE in CONT_SB; eauto. 
         eapply ESstep.basic_step_acts_set_NE; eauto. } 
-      admit. }
+      eapply basic_step_hdom_cf_free; eauto. 
+      apply seq_eqv_lr. splits. 
+      { left; left. unfolder; eauto. }
+      { eapply HB. }
+      by left; right. }
     exfalso. 
     apply nSB.
     eapply ESstep.basic_step_nupd_sb; eauto. 
