@@ -1102,6 +1102,62 @@ Section SimRelCertLemmas.
     unfolder; splits; ins; desf; omega. 
   Qed.
 
+  Lemma simrel_cert_load_step_hb_jf_hb_ncf TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    (Shb S' ⨾ Sjf S') ∩ Scf S' ≡ ∅₂.
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    cdes LSTEP.
+    split; [|basic_solver].
+    erewrite ESstep.basic_step_nupd_cf; eauto. 
+    erewrite ESstep.load_step_hb; eauto. 
+    relsf. rewrite !seqA.
+    assert (Sjf S' ≡ ⦗SE S⦘ ⨾ Sjf S') as JFdomE.
+    { eapply dom_rel_helper. 
+      eapply ESstep.load_step_jf_dom; eauto. }
+    rewrite JFdomE.
+    arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗SE S⦘ ⨾ Sjf S' ≡ ∅₂).
+    { unfolder; splits; ins; desf; omega. }
+    arewrite (⦗eq e⦘ ⨾ ⦗SE S⦘ ⨾ Sjf S' ≡ ∅₂). 
+    { unfolder; splits; ins; desf; omega. }
+    relsf. 
+    rewrite csE, transp_cross.
+    rewrite <- JFdomE, SSJF'. 
+    rewrite seq_union_r, !inter_union_r, !inter_union_l.
+    
+    Ltac solve_by_EE EE := 
+      rewrite EE; eauto;
+      unfolder; splits; ins; desf; omega.
+
+    unionL. 
+    { apply jf_necf_hb_jf_ncf; apply SRCC. }
+    { solve_by_EE ES.cfE. }
+    { solve_by_EE ES.jfE. }
+    2,3 : solve_by_EE hbE.
+
+    intros x y [[z [HB [EQz _]]] [KCF EQy]]. 
+    subst y z.
+    assert (Scf S' x e) as CFE.
+    { eapply ESstep.basic_step_nupd_cf; eauto. 
+      right. basic_solver. }
+    eapply basic_step_nupd_hdom_cf_free; eauto. 
+    apply seq_eqv_lr; splits; eauto; [|basic_solver]. 
+    left. eapply hb_hhdom; eauto. 
+    basic_solver 10. 
+  Qed.
+
   Lemma simrel_cert_load_step_hb_jf_thb_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -1292,7 +1348,7 @@ Section SimRelCertLemmas.
         { admit. }
         { apply jf_necf_alt. splits.
           { eapply simrel_cert_load_step_jf_ncf; eauto. }
-          { admit. } 
+          { eapply simrel_cert_load_step_hb_jf_hb_ncf; eauto.  } 
           { eapply simrel_cert_load_step_hb_jf_thb_ncf; eauto. }
           all : admit. }
         { eapply simrel_cert_load_step_jfe_vis; eauto. }
