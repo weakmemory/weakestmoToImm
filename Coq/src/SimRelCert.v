@@ -1064,6 +1064,10 @@ Section SimRelCertLemmas.
     congruence.
   Admitted.  
 
+  Ltac solve_by_EE EE := 
+    rewrite EE; eauto;
+    unfolder; splits; ins; desf; omega.
+
   Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -1102,7 +1106,7 @@ Section SimRelCertLemmas.
     unfolder; splits; ins; desf; omega. 
   Qed.
 
-  Lemma simrel_cert_load_step_hb_jf_hb_ncf TC' h k k' e S'
+  Lemma simrel_cert_load_step_hb_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
@@ -1137,10 +1141,6 @@ Section SimRelCertLemmas.
     rewrite <- JFdomE, SSJF'. 
     rewrite seq_union_r, !inter_union_r, !inter_union_l.
     
-    Ltac solve_by_EE EE := 
-      rewrite EE; eauto;
-      unfolder; splits; ins; desf; omega.
-
     unionL. 
     { apply jf_necf_hb_jf_ncf; apply SRCC. }
     { solve_by_EE ES.cfE. }
@@ -1158,7 +1158,7 @@ Section SimRelCertLemmas.
     basic_solver 10. 
   Qed.
 
-  Lemma simrel_cert_load_step_hb_jf_thb_ncf TC' h k k' e S'
+  Lemma simrel_cert_load_step_hb_tjf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
@@ -1187,10 +1187,6 @@ Section SimRelCertLemmas.
     assert (singl_rel e w ⊆ eq e × SE S) as singlE.
     { unfolder. ins. desf. splits; auto. 
       eapply himg in wHDOM; eauto. }
-
-    Ltac solve_by_EE EE := 
-      rewrite EE; eauto;
-      unfolder; splits; ins; desf; omega.
 
     unionL.
     { apply jf_necf_hb_tjf_ncf; apply SRCC. }
@@ -1267,6 +1263,107 @@ Section SimRelCertLemmas.
       eexists; splits; eauto; desf. }
     unfolder in HH. desf. 
   Qed.    
+
+  Lemma simrel_cert_load_step_hb_jf_thb_ncf TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    (Shb S' ⨾ Sjf S' ⨾ (Shb S')⁻¹) ∩ Scf S' ≡ ∅₂.
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    cdes LSTEP.
+    split; [|basic_solver].
+    rewrite SSJF'.
+    erewrite ESstep.basic_step_nupd_cf; eauto. 
+    erewrite ESstep.load_step_hb; eauto.
+    rewrite !seq_union_r, !seq_union_l, !seq_union_r.
+    rewrite !transp_union, !transp_seq, !transp_cross, transp_eqv_rel. 
+    relsf. rewrite !seqA.
+    
+    rewrite !inter_union_r, !inter_union_l.
+
+    assert (singl_rel w e ⊆ SE S × eq e) as singlE.
+    { unfolder. ins. desf. splits; auto. 
+      eapply himg in wHDOM; eauto. }
+
+    unionL.
+    { eapply jf_necf_hb_jf_thb_ncf; eapply SRCC. }
+
+    1-2,6-8,12-14,19-20,24-26,30-32 : solve_by_EE ES.jfE.
+    1,10-11,17 : solve_by_EE hbE.
+    3-8,11-15 : solve_by_EE singlE.
+    
+    3 : { rewrite ES.cont_sb_domE; eauto. 
+          solve_by_EE hbE. }
+    3 : { rewrite releaseE; eauto. 
+          solve_by_EE hbE. }
+
+    { intros x y [HH CF].
+      eapply himgNcf; eauto.  
+      apply seq_eqv_lr. splits; [|apply CF|]. 
+      { eapply hb_hhdom; eauto. 
+        destruct HH as [z [HB [z' [[EQz EQz'] HH]]]].
+        subst z z'.
+        unfolder; splits; eauto. } 
+      unfolder in HH. desf. 
+      { eapply cont_sb_dom_in_hhdom; eauto. }
+      eapply hb_hhdom; eauto. 
+      unfolder. do 2 eexists; splits; eauto. 
+      eapply cont_sb_dom_in_hhdom; eauto. }
+
+    rewrite ESstep.load_step_rf; eauto.   
+    rewrite transp_union. relsf.
+    rewrite inter_union_l. 
+    unionL.
+    { solve_by_EE ES.rfE. }
+    
+    rewrite inclusion_minus_rel.
+    rewrite SSJF'. 
+    rewrite !transp_seq, transp_union, transp_singl_rel.
+    relsf. rewrite inter_union_l. unionL. 
+    { solve_by_EE ES.jfE. }
+
+    intros x y [HH CF].
+    eapply himgNcf; eauto.  
+    apply seq_eqv_lr. splits; [|apply CF|]. 
+    { eapply hb_hhdom; eauto. 
+      destruct HH as [z [HB [z' [[EQz EQz'] HH]]]].
+      subst z z'. 
+      unfolder; splits; eauto. }
+    assert (((Shb S)^? ⨾ release S ⨾ (Sew S)^? ⨾ singl_rel w e) y e) as HBrREL. 
+    { unfold seq, eqv_rel, transp in HH. desf. 
+      unfold seq. 
+      eexists; splits; eauto. 
+      eexists; splits; eauto. 
+      eexists; splits; eauto. 
+      unfold singl_rel in *. desf. }
+    destruct HBrREL as [z [[EQ | HB] RELew]].
+    { subst z. 
+      eapply release_ew_hhdom; eauto. 
+      destruct RELew as [z [REL HX]].
+      destruct HX as [z' [rEW [EQz' _]]].
+      subst z'. 
+      do 2 eexists; splits; eauto. 
+      eexists; splits; eauto; desf. }
+    eapply hb_hhdom; eauto. 
+    unfolder. exists z, z. splits; auto.
+    eapply release_ew_hhdom; eauto. 
+    destruct RELew as [z' [REL HX]].
+    destruct HX as [z'' [rEW [EQz'' _]]].
+    subst z''. 
+    do 2 eexists; splits; eauto. 
+    eexists; splits; eauto; desf. 
+  Qed.
     
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
@@ -1348,9 +1445,9 @@ Section SimRelCertLemmas.
         { admit. }
         { apply jf_necf_alt. splits.
           { eapply simrel_cert_load_step_jf_ncf; eauto. }
-          { eapply simrel_cert_load_step_hb_jf_hb_ncf; eauto.  } 
-          { eapply simrel_cert_load_step_hb_jf_thb_ncf; eauto. }
-          all : admit. }
+          { eapply simrel_cert_load_step_hb_jf_ncf; eauto.  } 
+          { eapply simrel_cert_load_step_hb_tjf_ncf; eauto. }
+          eapply simrel_cert_load_step_hb_jf_thb_ncf; eauto. }
         { eapply simrel_cert_load_step_jfe_vis; eauto. }
         all : admit. }
 
