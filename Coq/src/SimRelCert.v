@@ -1174,18 +1174,43 @@ Section SimRelCertLemmas.
         eapply cont_sb_dom_in_hhdom; eauto. 
         unfolder in SBC. desf. }
       unfolder in HH; desf. }
-    
-    { erewrite ESstep.load_step_rf; eauto. 
-      rewrite SSJF'. 
-      rewrite !seq_union_l, !seq_union_r, !minus_union_l. 
-      relsf. rewrite !inter_union_l. unionL.
-      { solve_by_EE ES.rfE. }
-      { solve_by_EE ES.jfE. }
-      rewrite inclusion_minus_rel.
-      admit. }
-      
-    all : admit. 
-  Admitted.
+
+    all : 
+      erewrite ESstep.load_step_rf, SSJF'; eauto; 
+      rewrite !seq_union_l, !seq_union_r, !minus_union_l; 
+      relsf; rewrite !inter_union_l; unionL.
+
+    1,4 : solve_by_EE ES.rfE.
+    1,3 : solve_by_EE ES.jfE.
+
+    all : rewrite inclusion_minus_rel, !seqA.
+
+    { intros x y [HH CF].
+      eapply himgNcf; eauto.  
+      apply seq_eqv_lr. splits; [|apply CF|].  
+      { eapply release_ew_hhdom; eauto.
+        unfolder. unfolder in HH.
+        destruct HH as [z [REL HH]].
+        destruct HH as [z' [rEW HH]].
+        do 2 eexists; splits; eauto. 
+        eexists; splits; eauto; desf. }
+      unfolder in HH. desf. }
+
+    intros x y [HH CF].
+    eapply himgNcf; eauto.  
+    apply seq_eqv_lr. splits; [|apply CF|].  
+    { eapply hb_hhdom; eauto. 
+      destruct HH as [z [HB HH]].      
+      unfolder. 
+      do 2 eexists; splits; eauto. 
+      eapply release_ew_hhdom; eauto.      
+      unfolder. unfolder in HH. 
+      destruct HH as [z' [REL HH]].
+      destruct HH as [z'' [rEW HH]].
+      do 2 eexists; splits; eauto. 
+      eexists; splits; eauto; desf. }
+    unfolder in HH. desf. 
+  Qed.    
     
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
