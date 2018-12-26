@@ -109,35 +109,6 @@ Notation "'thread_cont_st' tid" :=
 Notation "'cont_lang'" :=
   (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
 
-Section EventToActionLemmas.
-
-  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
-
-  Lemma basic_step_e2a_eq_dom e e' S'
-        (WF : ES.Wf S)
-        (BSTEP : ESstep.t_basic e e' S S') :
-    eq_dom (SE S) (e2a S') (e2a S).
-  Proof.
-    cdes BSTEP; cdes BSTEP_.
-    red. intros x. ins.
-    unfold e2a.
-    assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA.
-    { red; split; ins;
-        [ erewrite <- ESstep.basic_step_tid_eq_dom
-        | erewrite ESstep.basic_step_tid_eq_dom
-        ]; eauto. }
-    assert ((Sloc S') x = (Sloc S) x) as BB.
-    { eapply ESstep.basic_step_loc_eq_dom; eauto. }
-    unfold opt_ext; desf; try by (exfalso; intuition).
-    assert ((Stid S') x = (Stid S) x) as CC.
-    { eapply ESstep.basic_step_tid_eq_dom; eauto. }
-    assert (ES.seqn S' x = ES.seqn S x) as DD.
-    { eapply ESstep.basic_step_seqn_eq_dom; eauto. }
-    congruence.
-  Qed.
-
-End EventToActionLemmas.
-
 Section SimRelCertLemmas. 
 
   Variable TC : trav_config.
@@ -798,7 +769,7 @@ Section SimRelCertLemmas.
     eapply cert_rf_ntid_iss_sb in NEW_RF.
     2-6 : apply SRCC.
     assert (e2a S' w = wa) as E2Aw.
-    { erewrite basic_step_e2a_eq_dom; eauto. 
+    { erewrite basic_step_e2a_eq_dom with (S := S); eauto. 
       rewrite <- Hwa.
       fold (compose g h wa).
       eapply ghfix; eauto. }
