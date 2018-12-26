@@ -266,6 +266,27 @@ Section SimRelProps.
       all: by eauto.
     Qed.
 
+    Lemma gewI : g □ Sew  ⊆ ⦗ I ⦘. 
+    Proof.
+      intros x y HH.
+      assert (x = y) as EQxy. 
+      { eapply gew; eauto. }
+      unfold eqv_rel. 
+      split; auto.  
+      destruct HH as [x' [y' [EW [EQx EQy]]]].
+      subst x y. 
+      eapply ewfI in EW; eauto.       
+      destruct EW as [[[a [Ia EQfa]] _] | [[a [Ia EQfa]] _]].
+      { subst x'. 
+        fold (compose g f a).
+        erewrite gffix; eauto. 
+        basic_solver 10. }
+      subst y'. rewrite EQxy.
+      fold (compose g f a).
+      erewrite gffix; eauto. 
+      basic_solver 10.
+    Qed.
+
     Lemma grs : g □ Srs ⊆ Grs. 
     Proof. 
       assert (ES.Wf S) as WF by apply SRC.

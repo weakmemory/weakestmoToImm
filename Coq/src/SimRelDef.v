@@ -172,7 +172,7 @@ Section SimRelDef.
 
       grmw : g □ Srmw ⊆ Grmw;
       gjf  : g □ Sjf  ⊆ Gvf;
-      gew  : g □ Sew  ⊆ ⦗I⦘;
+      gew  : g □ Sew  ⊆ eq;
       gco  : g □ Sco  ⊆ Gco;
       
       grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
@@ -183,6 +183,8 @@ Section SimRelDef.
       
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
+
+      ewfI : Sew ⊆ ((f □₁ I) × SE)^⋈;
 
       gffix : fixset fdom (g ∘ f);
 
