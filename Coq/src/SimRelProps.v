@@ -736,9 +736,20 @@ Section SimRelProps.
       apply releaseNCsb; auto.
     Qed.
 
+    Lemma sb_hdom_dom : dom_rel (Ssb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.
+    Proof. (* TODO: most likely, we need this in simrel_cert. *) Admitted.
+
     Lemma release_ew_hhdom : 
       dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
-    Proof. admit. Admitted.
+    Proof.
+      rewrite crE. rewrite !seq_union_l, !seq_union_r, dom_union, seq_id_l.
+      unionL.
+      { rewrite release_in_HCrelease_sb, C_in_hdom.
+        generalize sb_hdom_dom. basic_solver 10. }
+      arewrite (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘ ⊆ Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘).
+      2: { rewrite release_issh_cov; eauto. by rewrite C_in_hdom. }
+      admit.
+    Admitted.
     
     Lemma swNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
     Proof.
@@ -757,9 +768,6 @@ Section SimRelProps.
       { apply rfeI; auto. eexists. eauto. }
       eexists. eexists. eauto.
     Qed.
-
-    Lemma sb_hdom_dom : dom_rel (Ssb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.
-    Proof. (* TODO: most likely, we need this in simrel_cert. *) Admitted.
 
     Lemma sb_hdom_in_hsb : Ssb ⨾ ⦗ h □₁ hdom ⦘ ⊆ h □ Gsb.
     Proof.
@@ -819,7 +827,12 @@ Section SimRelProps.
 
     Lemma hb_hhdom : 
       dom_rel (Shb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
-    Proof. admit. Admitted.
+    Proof.
+      rewrite hb_in_HChb_sb.
+      rewrite seq_union_l, dom_union. unionL.
+      2: by apply sb_hdom_dom.
+      rewrite C_in_hdom. basic_solver.
+    Qed.
    
   End SimRelCertProps. 
 

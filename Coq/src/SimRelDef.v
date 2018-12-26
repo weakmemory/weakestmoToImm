@@ -184,6 +184,7 @@ Section SimRelDef.
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
+      (* TODO: wrong as it 'Sew' is transitive. *)
       ewfI : Sew ⊆ ((f □₁ I) × SE)^⋈;
 
       gffix : fixset fdom (g ∘ f);
