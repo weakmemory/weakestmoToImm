@@ -746,7 +746,8 @@ Section SimRelProps.
       unionL.
       { rewrite release_in_HCrelease_sb, C_in_hdom.
         generalize sb_hdom_dom. basic_solver 10. }
-      arewrite (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘ ⊆ Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘).
+      arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁
+                dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘)).
       2: { rewrite release_issh_cov; eauto. by rewrite C_in_hdom. }
       admit.
     Admitted.
