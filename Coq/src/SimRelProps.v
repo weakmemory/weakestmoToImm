@@ -269,22 +269,24 @@ Section SimRelProps.
     Lemma gewI : g □ Sew  ⊆ ⦗ I ⦘. 
     Proof.
       intros x y HH.
-      assert (x = y) as EQxy. 
+      assert (x = y) as EQxy; subst.
       { eapply gew; eauto. }
-      unfold eqv_rel. 
-      split; auto.  
-      destruct HH as [x' [y' [EW [EQx EQy]]]].
-      subst x y. 
-      eapply ewfI in EW; eauto.       
-      destruct EW as [[[a [Ia EQfa]] _] | [[a [Ia EQfa]] _]].
-      { subst x'. 
-        fold (compose g f a).
+      split; auto.
+      destruct HH as [a [b [EW [EQx EQy]]]]; subst.
+      edestruct ewfI as [x HH]; eauto.
+      { eexists; eauto. }
+      destruct_seq_r HH as FI.
+      red in FI. destruct FI as [y [IY]]; subst.
+      destruct HH as [HH|HH]; subst.
+      { fold (compose g f y).
         erewrite gffix; eauto. 
         basic_solver 10. }
-      subst y'. rewrite EQxy.
-      fold (compose g f a).
-      erewrite gffix; eauto. 
-      basic_solver 10.
+      assert (g a = compose g f y) as XX.
+      2: { rewrite XX. 
+           erewrite gffix; eauto. 
+           basic_solver 10. }
+      eapply gew; eauto.
+      eexists; eauto.
     Qed.
 
     Lemma grs : g □ Srs ⊆ Grs. 
@@ -749,8 +751,15 @@ Section SimRelProps.
       arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁
                 dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘)).
       2: { rewrite release_issh_cov; eauto. by rewrite C_in_hdom. }
-      admit.
-    Admitted.
+      rewrite <- seqA.
+      intros x [y HH].
+      destruct_seq_r HH as HD.
+      destruct HH as [z [REL EW]].
+      edestruct ewhI as [a AA]; eauto.
+      { red. eauto. }
+      exists a.
+      generalize REL AA. basic_solver 10.
+    Qed.
     
     Lemma swNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
     Proof.

@@ -184,8 +184,7 @@ Section SimRelDef.
       complete_fdom :
         (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      (* TODO: wrong as it 'Sew' is transitive. *)
-      ewfI : Sew ⊆ ((f □₁ I) × SE)^⋈;
+      ewfI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
 
       gffix : fixset fdom (g ∘ f);
 
@@ -290,6 +289,8 @@ Section SimRelDef.
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
 
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
+
+      ewhI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
     }.
 
   Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=
