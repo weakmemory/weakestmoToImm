@@ -198,6 +198,8 @@ Section SimRelDef.
       finitIncl : SEinit ⊆₁ f □₁ GEinit;
 
       fvis : f □₁ fdom ⊆₁ vis S;
+
+      sb_fdom_dom : dom_rel (Ssb ⨾ ⦗ f □₁ fdom ⦘) ⊆₁ f □₁ fdom;
     }.
   
   Record simrel :=
@@ -291,6 +293,8 @@ Section SimRelDef.
       release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
 
       ewhI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
+
+      sb_hdom_dom : dom_rel (Ssb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom;
     }.
 
   Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=

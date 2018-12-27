@@ -738,9 +738,6 @@ Section SimRelProps.
       apply releaseNCsb; auto.
     Qed.
 
-    Lemma sb_hdom_dom : dom_rel (Ssb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.
-    Proof. (* TODO: most likely, we need this in simrel_cert. *) Admitted.
-
     Lemma release_ew_hhdom : 
       dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
@@ -784,7 +781,7 @@ Section SimRelProps.
       assert (inj_dom_s hdom h) as HD by apply SRCC.
       arewrite (Ssb ⨾ ⦗ h □₁ hdom ⦘ ⊆ ⦗ h □₁ hdom ⦘ ;; Ssb ⨾ ⦗ h □₁ hdom ⦘). 
       { intros x y HH. apply seq_eqv_l. split; auto.
-        apply sb_hdom_dom; auto. eexists. eauto. }
+        eapply sb_hdom_dom; eauto. eexists. eauto. }
       rewrite <- restr_relE.
       rewrite <- collect_rel_eqdom_eq. 2: by apply hgtrip.
       rewrite <- collect_rel_compose.
