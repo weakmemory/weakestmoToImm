@@ -837,7 +837,7 @@ Section SimRelProps.
     Proof.
       rewrite hb_in_HChb_sb.
       rewrite seq_union_l, dom_union. unionL.
-      2: by apply sb_hdom_dom.
+      2: by eapply sb_hdom_dom; eauto.
       rewrite C_in_hdom. basic_solver.
     Qed.
    
