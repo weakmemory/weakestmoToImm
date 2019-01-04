@@ -5,7 +5,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf.
+        CertGraph CertRf SimRelCont.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -103,9 +103,6 @@ Section SimRelDef.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Definition pc thread :=
-    C ∩₁ GTid thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
-
   Notation "'Gvf'" := (furr G sc).
 
   Record simrel_graph := 
@@ -119,39 +116,6 @@ Section SimRelDef.
 
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
   
-  Record simrel_cont :=
-    { contlang : forall k lang (state : lang.(Language.state))
-                        (INK : K (k, existT _ lang state)),
-        lang = thread_lts (ES.cont_thread S k);
-
-      contwf : forall k (state : thread_st (ES.cont_thread S k))
-                      (INK : K (k, thread_cont_st (ES.cont_thread S k) state)),
-          wf_thread_state (ES.cont_thread S k) state;
-
-      contstable : forall k (state : thread_st (ES.cont_thread S k))
-                          (INK : K (k, thread_cont_st (ES.cont_thread S k) state)), 
-          stable_state (ES.cont_thread S k) state;
-
-      contrun : forall thread (lprog : thread_syntax thread) 
-                       (INPROG : IdentMap.find thread prog = Some lprog),
-          exists (state : thread_st thread),
-            ⟪ INK : K (CInit thread, thread_cont_st thread state) ⟫ /\
-            ⟪ INITST : (istep thread [])＊ (thread_init_st thread lprog) state⟫;
-
-      continit : forall thread (state : thread_st thread)
-                        (INKi : K (CInit thread, thread_cont_st thread state)),
-          state.(eindex) = 0;
-
-      contseqn : forall e (state : thread_st (Stid e))
-                        (INKe : K (CEvent e, thread_cont_st (Stid e) state)),
-          state.(eindex) = 1 + ES.seqn S e;
-
-      contpc : forall e (state : (thread_st (Gtid e)))
-                      (PC : pc (Gtid e) e)
-                      (INK : K (CEvent (f e), thread_cont_st (Gtid e) state)),
-          @sim_state G sim_normal C (Gtid e) state;
-    }.
-
   Record simrel_common :=
     { noinitprog : ~ IdentMap.In tid_init prog;
       gprog : program_execution prog G;
@@ -164,7 +128,7 @@ Section SimRelDef.
 
       tccoh : tc_coherent G sc TC;
       
-      sr_cont : simrel_cont;
+      sr_cont : simrel_cont prog S G TC;
       sr_graph : simrel_graph;
 
       gE : g □₁ SE ⊆₁ GE;
