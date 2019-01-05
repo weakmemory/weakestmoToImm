@@ -315,6 +315,13 @@ Qed.
 Lemma inj_dom_s_inj_dom (INJ : inj_dom_s s f) : inj_dom s f.
 Proof. unfolder in *. ins. by apply INJ. Qed.
 
+Lemma inj_dom_s_union (INJ : inj_dom_s s f) (INJ' : inj_dom_s s' f) :
+  inj_dom_s (s ∪₁ s') f. 
+Proof. 
+  unfolder in *. 
+  ins. desf; [ apply INJ | apply INJ']; auto.  
+Qed.
+
 Lemma set_collect_compose (f' : A -> B) (g' : B -> C) :
   g' □₁ (f' □₁ s) ≡₁ (g' ∘ f') □₁ s.
 Proof. 
@@ -377,19 +384,17 @@ Proof.
   desf.
 Qed.
 
-Lemma collect_rel_eqdom_eq (HEQ : <| s |> ;; ↑ h ⊆ eq) :
+Lemma collect_rel_fixset (FIX : fixset s h) :
   h □ restr_rel s r ≡ restr_rel s r.
 Proof.
   unfolder in *.
   split; ins; desf.
-  2: { do 2 eexists. splits; eauto.
-       all: by symmetry; apply HEQ. }
-  set (XEQ := HEQ).
-  specialize (XEQ x' (h x')).
-  rewrite <- XEQ; [|by split].
-  specialize (HEQ y' (h y')).
-  rewrite <- HEQ; [|by split].
-  done.
+  2: { do 2 eexists. splits; eauto. }
+  assert (h x' = x') as HX. 
+  { specialize (FIX x'). auto. }
+  assert (h y' = y') as HY. 
+  { specialize (FIX y'). auto. }
+  splits; congruence.
 Qed.
 
 (* Note that inclusion in other direction doesn't hold.
