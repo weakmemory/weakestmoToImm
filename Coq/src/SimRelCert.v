@@ -444,14 +444,16 @@ Section SimRelCertLemmas.
     apply SRCC.
   Qed.
 
-  (* Lemma basic_step_nupd_cert_dom TC' h k k' e S'  *)
-  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
-  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
-  (*       (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') :  *)
-  (*   cert_dom G TC (ES.cont_thread S' k') st' ≡₁  *)
-  (*            cert_dom G TC (ES.cont_thread S k) st ∪₁ eq (e2a S' e). *)
-  (* Proof.  *)
-  (*   erewrite basic_step_cert_dom. *)
+  Lemma basic_step_nupd_cert_dom TC' h k k' e S'
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') :
+    cert_dom G TC (ES.cont_thread S' k') st' ≡₁
+             cert_dom G TC (ES.cont_thread S k) st ∪₁ eq (e2a S' e).
+  Proof.
+    erewrite basic_step_cert_dom; eauto. 
+    unfold eq_opt, option_map. basic_solver.
+  Qed.
 
   Lemma basic_step_hdom_cf_free TC' h k k' e e' S' 
         (st st' st'': thread_st (ES.cont_thread S k))
@@ -1270,7 +1272,23 @@ Section SimRelCertLemmas.
           [| | apply ES.coE | eapply CO' | apply SRCC];
           eauto. } 
         all : admit. }
-      1-12 : admit.
+      1-8 : admit.
+      { econstructor. 
+        { admit. }
+        { rewrite basic_step_nupd_cert_dom; eauto. 
+          rewrite set_collect_union.
+          apply set_subset_union_l. split. 
+          { etransitivity.
+            { rewrite set_collect_updo.
+              { apply a2e_img. apply SRCC. }
+              admit. }
+            eapply ESstep.basic_step_acts_set_mon; eauto. } 
+          rewrite set_collect_eq, upds.
+          erewrite ESstep.basic_step_acts_set; eauto. 
+          basic_solver. }
+        rewrite basic_step_nupd_cert_dom; eauto. 
+        admit. }
+      1-3 : admit. 
       (* himgNcf : ES.cf_free S (h □₁ hdom) *)
       { eapply ES.cf_free_eq.
         { symmetry. etransitivity.
