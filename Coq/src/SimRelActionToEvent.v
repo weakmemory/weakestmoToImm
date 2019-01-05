@@ -56,11 +56,12 @@ Section SimRelActionToEvent.
       (* a2e_oth : (a2e □₁ set_compl aD) ∩₁ SE ≡₁ ∅; *)
     }. 
 
-  (* Section SimRelActionToEventProps.  *)
+  Section SimRelActionToEventProps.
+    Variable SRA2E : simrel_a2e.
 
-  
+    
 
-  (* End SimRelActionToEventProps.  *)
+  End SimRelActionToEventProps.
       
 End SimRelActionToEvent. 
 
@@ -115,6 +116,17 @@ Section SimRelActionToEventLemmas.
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
+
+  Lemma simrel_a2e_set_equiv a2eD' (EQ : a2eD ≡₁ a2eD') : 
+    simrel_a2e S a2e a2eD <-> simrel_a2e S a2e a2eD'.
+  Proof. 
+    clear prog GPROG G WF SRA2E.  
+    split; [symmetry in EQ|].
+    all: intros HH; inv HH; constructor;
+      [ eapply inj_dom_s_more; eauto 
+      | erewrite set_collect_more; eauto
+      | eapply fixset_more; eauto ].
+  Qed.
 
   (* Lemma basic_step_simrel_a2e k k' e e' S' *)
   (*       (st st' : thread_st (ES.cont_thread S k)) *)
