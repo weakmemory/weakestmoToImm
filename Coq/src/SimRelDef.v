@@ -5,7 +5,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf SimRelCont.
+        CertGraph CertRf SimRelCont SimRelActionToEvent.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -150,11 +150,8 @@ Section SimRelDef.
 
       ewfI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
 
-      gffix : fixset fdom (g ∘ f);
+      sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
 
-      finj : inj_dom_s fdom f;  
-      fimg : f □₁ fdom ⊆₁ SE;
-      foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅;
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
 
       glab : same_lab_u2v_dom SE Slab (Glab ∘ g);
@@ -230,14 +227,11 @@ Section SimRelDef.
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
-      ghfix : fixset hdom (g ∘ h);
       hgfix : fixset (ES.cont_sb_dom S q) (h ∘ g);
 
       jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘);
 
-      hinj     : inj_dom_s hdom h;
-      himg     : h □₁ hdom ⊆₁ SE;
-      hoth     : (h □₁ set_compl hdom) ∩₁ SE ≡₁ ∅;
+      sr_a2e_h : simrel_a2e S h (cert_dom G TC qtid state);
 
       hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
       hlabTHRD : eq_dom contE certLab (Slab ∘ h);

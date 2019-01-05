@@ -11,7 +11,7 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelDef SimRelProps SimRelCont.
+        SimRelDef SimRelProps SimRelCont SimRelActionToEvent.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -591,10 +591,10 @@ Section SimRelCertLemmas.
     2 : cdes ES_BSTEP_; desf; eauto. 
     arewrite (e2a S' (h w) = w).  
     { erewrite basic_step_e2a_eq_dom.
-      { eapply ghfix; eauto. }
+      { eapply a2e_fix; eauto. apply SRCC. }
       { apply SRCC. }
       { econstructor; eauto. }
-      eapply himg; eauto. }
+      eapply a2e_img; eauto. apply SRCC. }
     erewrite basic_step_e2a_e; eauto. 
     all : apply SRCC.
   Qed.
@@ -611,7 +611,7 @@ Section SimRelCertLemmas.
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor. eauto. }
     assert (SE S w) as SEw.
-    { eapply himg; eauto. }
+    { eapply a2e_img; eauto. apply SRCC. }
     assert (SE S' w) as SEw'.
     { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
     assert (SE S' e) as SEe'.
@@ -650,7 +650,7 @@ Section SimRelCertLemmas.
     unfolder in wHDOM. destruct wHDOM as [wa [CERTwa Hwa]].
     assert (g w = wa) as Gwwa.
     { rewrite <- Hwa.
-      eapply ghfix; [apply SRCC|].
+      eapply a2e_fix; [apply SRCC|].
       unfolder. basic_solver. }
     arewrite (Slab S w = certLab G st'' (e2a S w)); [|auto].
     rewrite <- Hwa at 1.
@@ -748,8 +748,9 @@ Section SimRelCertLemmas.
     destruct wHDOM as [wa [CERTwa Hwa]].
     assert (SE S w) as SEw.
     { rewrite <- Hwa.
-      eapply himg; eauto. 
-      unfolder; splits; eauto. }
+      eapply a2e_img.
+      2 : unfolder; splits; eauto. 
+      apply SRCC. }
     erewrite ESstep.load_step_jfe; eauto. 
     rewrite dom_union. 
     apply set_subset_union_l. split. 
@@ -772,7 +773,7 @@ Section SimRelCertLemmas.
     { erewrite basic_step_e2a_eq_dom with (S := S); eauto. 
       rewrite <- Hwa.
       fold (compose g h wa).
-      eapply ghfix; eauto. }
+      eapply a2e_fix; eauto. apply SRCC. }
     eapply ESstep.load_step_vis_mon; eauto.
     destruct NEW_RF as [Iss | SB].
     { eapply fvis; [apply SRCC|].
@@ -955,7 +956,7 @@ Section SimRelCertLemmas.
 
     assert (singl_rel e w ⊆ eq e × SE S) as singlE.
     { unfolder. ins. desf. splits; auto. 
-      eapply himg in wHDOM; eauto. }
+      eapply a2e_img in wHDOM; eauto. apply SRCC. }
 
     unionL.
     { apply jf_necf_hb_tjf_ncf; apply SRCC. }
@@ -1063,7 +1064,7 @@ Section SimRelCertLemmas.
 
     assert (singl_rel w e ⊆ SE S × eq e) as singlE.
     { unfolder. ins. desf. splits; auto. 
-      eapply himg in wHDOM; eauto. }
+      eapply a2e_img in wHDOM; eauto. apply SRCC. }
 
     unionL.
     { eapply jf_necf_hb_jf_thb_ncf; eapply SRCC. }
@@ -1269,7 +1270,7 @@ Section SimRelCertLemmas.
           [| | apply ES.coE | eapply CO' | apply SRCC];
           eauto. } 
         all : admit. }
-      1-15 : admit.
+      1-12 : admit.
       (* himgNcf : ES.cf_free S (h □₁ hdom) *)
       { eapply ES.cf_free_eq.
         { symmetry. etransitivity.

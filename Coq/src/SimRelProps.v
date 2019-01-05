@@ -5,7 +5,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel CertExecution2.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf ImmProperties SimRelDef SimRelCont.
+        CertGraph CertRf ImmProperties SimRelDef SimRelCont SimRelActionToEvent.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -131,6 +131,13 @@ Section SimRelProps.
       basic_solver.
     Qed.
 
+    Lemma gf_fixI : fixset I (g ∘ f). 
+    Proof. 
+      eapply fixset_mori; 
+        [| eauto | eapply SRC]. 
+      red. basic_solver 10.
+    Qed.
+
     Lemma ginjfdom : inj_dom (f □₁ fdom) g.
     Proof. eapply e2a_inj; apply SRC. Qed.
 
@@ -203,12 +210,9 @@ Section SimRelProps.
       red in FI. destruct FI as [y [IY]]; subst.
       destruct HH as [HH|HH]; subst.
       { fold (compose g f y).
-        erewrite gffix; eauto. 
-        basic_solver 10. }
+        by rewrite gf_fixI. }
       assert (g a = compose g f y) as XX.
-      2: { rewrite XX. 
-           erewrite gffix; eauto. 
-           basic_solver 10. }
+      2: { rewrite XX. by rewrite gf_fixI. }
       eapply gew; eauto.
       eexists; eauto.
     Qed.
@@ -246,6 +250,12 @@ Section SimRelProps.
       { unfold imm_s_hb.release. basic_solver 10. }
       all: eauto; apply SRC.
     Qed.
+
+    (* gffix : fixset fdom (g ∘ f); *)
+    (* finj : inj_dom_s fdom f;   *)
+    (* fimg : f □₁ fdom ⊆₁ SE; *)
+    (* foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅; *)
+    (* flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab; *)
 
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
       exists (state : (thread_lts thread).(Language.state)) c,
@@ -291,7 +301,7 @@ Section SimRelProps.
         apply NRMW. exists (g w).
         eapply grmw; eauto.
         arewrite (e = g (f e)).
-        { symmetry. eapply gffix; eauto. basic_solver. }
+        { symmetry. admit. (* eapply gffix; eauto. basic_solver. *) }
         unfolder. eauto. }
       assert (~ GEinit e) as NINIT.
       { intros [BB]. unfold is_init in BB. desf. }
@@ -300,7 +310,8 @@ Section SimRelProps.
         eapply finitIncl in BB; eauto. 
         red in BB. desf.
         assert (y = e); desf.
-        apply finj; eauto. by left. }
+        admit.
+        (* apply finj; eauto. by left. *) }
       eapply ES.event_K in NSRMW; eauto.
       destruct NSRMW as [[lang state] KK].
       assert (lang = thread_lts (ES.cont_thread S (CEvent (f e)))); subst.
@@ -308,7 +319,7 @@ Section SimRelProps.
       assert (Stid (f e) = Gtid e) as TT.
       { arewrite (Stid (f e) = (Stid ∘ f) e).
         erewrite a2e_tid; eauto. 
-        basic_solver. }
+        admit. (* basic_solver. *) }
       simpls. rewrite TT in KK.
       (* eapply contpc in PC; eauto. *)
       (* eexists. eexists. *)
@@ -405,12 +416,14 @@ Section SimRelProps.
     Proof. eapply a2e_tid. eapply SRCC. Qed.
 
     Lemma hgtrip : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
-    Proof. 
+    Proof.
       unfold seq, eqv_rel, set_collect, img_rel, inclusion, compose.
       intros x y [z [[zEQ [a [DOM xEQ]]] yEQ]].
       rewrite <- xEQ, yEQ, <- zEQ.
       arewrite (a = g x); auto.
-      symmetry. rewrite <- xEQ. eapply ghfix; eauto.
+      symmetry. rewrite <- xEQ. 
+      eapply a2e_fix; eauto.
+      apply SRCC. 
     Qed.
 
     Lemma himgInit : 
@@ -561,13 +574,13 @@ Section SimRelProps.
       apply wf_sbE in SB. destruct_seq SB as [EX EY]. 
 
       assert (SE (h x')) as HEX.
-      { eapply himg; eauto. eexists. split; [|by eauto]; eauto. }
+      { eapply SRCC.(sr_a2e_h). eexists. split; [|by eauto]; eauto. }
       assert (SE (h y')) as HEY.
-      { eapply himg; eauto. eexists. split; [|by eauto]; eauto. }
+      { eapply SRCC.(sr_a2e_h). eexists. split; [|by eauto]; eauto. }
 
       assert (~ SEinit (h y')) as HYNINIT.
       { intros JJ. apply himgInit in JJ; auto.
-        red in JJ. desf. eapply hinj in JJ0; eauto. subst.
+        red in JJ. desf. eapply SRCC.(sr_a2e_h) in JJ0; eauto. subst.
         destruct JJ. desf. }
 
       set (CC := SB). apply sb_tid_init in CC. desf.
@@ -590,7 +603,7 @@ Section SimRelProps.
         rewrite <- CC. destruct x'; desf. }
       assert (~ SEinit (h x')) as HXNINIT.
       { intros JJ. apply himgInit in JJ; auto.
-        red in JJ. desf. eapply hinj in JJ0; eauto. subst.
+        red in JJ. desf. eapply SRCC.(sr_a2e_h) in JJ0; eauto. subst.
         destruct JJ. desf. }
       destruct PP as [PP|]; [| |done].
       { apply seq_eqv_l. split.
@@ -599,14 +612,14 @@ Section SimRelProps.
         do 2 (rewrite <- htid in CC; auto). }
       destruct_seq PP as [XX YY].
       red in PP. desf.
-      { eapply hinj in PP; eauto. subst. by apply sb_irr in SB. }
+      { eapply SRCC.(sr_a2e_h) in PP; eauto. subst. by apply sb_irr in SB. }
       exfalso.
       eapply sb_irr. eapply sb_trans; eauto.
       eapply e2a_sb; eauto; try apply SRCC. 
       do 2 eexists. splits; eauto.
       1 : fold (compose g h y').
       2 : fold (compose g h x').
-      all: eapply ghfix; [by apply SRCC|]; auto. 
+      all: eapply a2e_fix; [by apply SRCC|]; auto. 
     Qed.
 
     Lemma rfeI :
@@ -707,7 +720,8 @@ Section SimRelProps.
       { intros x y HH. apply seq_eqv_l. split; auto.
         eapply sb_hdom_dom; eauto. eexists. eauto. }
       rewrite <- restr_relE.
-      rewrite <- collect_rel_eqdom_eq. 2: by apply hgtrip.
+      rewrite <- collect_rel_eqdom_eq. 
+      2: by apply hgtrip.
       rewrite <- collect_rel_compose.
       apply collect_rel_mori; auto.
       rewrite inclusion_restr.
