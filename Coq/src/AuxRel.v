@@ -291,14 +291,17 @@ Proof.
   all: basic_solver.
 Qed.
 
-Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq.
-Proof. 
-  clear.
-  split; autounfold with unfolderDb.
-  { ins; desf; auto. symmetry. intuition. }
-  ins; desf; auto.
-  symmetry. eapply H. eexists. splits; eauto.
-Qed.
+(* Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq. *)
+(* Proof.  *)
+(*   clear. *)
+(*   split; autounfold with unfolderDb. *)
+(*   { ins; desf; auto. symmetry. intuition. } *)
+(*   ins; desf; auto. *)
+(*   symmetry. eapply H. eexists. splits; eauto. *)
+(* Qed. *)
+
+Lemma fixset_union : fixset (s ∪₁ s') h <-> fixset s h /\ fixset s' h.
+Proof. clear; unfolder; split; ins; intuition. Qed.
 
 Lemma fixset_set_fixpoint : fixset s h -> s ≡₁ h □₁ s.
 Proof. 

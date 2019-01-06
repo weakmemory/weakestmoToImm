@@ -1273,10 +1273,14 @@ Section SimRelCertLemmas.
           eauto. } 
         all : admit. }
       1-8 : admit.
-      { econstructor. 
+      (* sr_a2e_h *)
+      { eapply simrel_a2e_set_equiv. 
+        { eapply basic_step_nupd_cert_dom; eauto. }
+        econstructor. 
+        (* a2e_inj *)
         { admit. }
-        { rewrite basic_step_nupd_cert_dom; eauto. 
-          rewrite set_collect_union.
+        (* a2e_img *)
+        { rewrite set_collect_union.
           apply set_subset_union_l. split. 
           { etransitivity.
             { rewrite set_collect_updo.
@@ -1286,8 +1290,10 @@ Section SimRelCertLemmas.
           rewrite set_collect_eq, upds.
           erewrite ESstep.basic_step_acts_set; eauto. 
           basic_solver. }
-        rewrite basic_step_nupd_cert_dom; eauto. 
-        admit. }
+        rewrite fixset_union. split. 
+        { admit. }
+        unfolder. unfold compose. ins. 
+        by rewrite <- SX, upds. }
       1-3 : admit. 
       (* himgNcf : ES.cf_free S (h □₁ hdom) *)
       { eapply ES.cf_free_eq.

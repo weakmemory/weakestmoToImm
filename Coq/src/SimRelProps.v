@@ -415,15 +415,15 @@ Section SimRelProps.
     Lemma htid : eq_dom hdom (Stid ∘ h) Gtid.
     Proof. eapply a2e_tid. eapply SRCC. Qed.
 
-    Lemma hgtrip : ⦗ h □₁ hdom ⦘ ⨾ ↑ (h ∘ g) ⊆ eq.
+    Lemma hgfix_hhdom : fixset (h □₁ hdom) (h ∘ g).
     Proof.
-      unfold seq, eqv_rel, set_collect, img_rel, inclusion, compose.
-      intros x y [z [[zEQ [a [DOM xEQ]]] yEQ]].
-      rewrite <- xEQ, yEQ, <- zEQ.
-      arewrite (a = g x); auto.
-      symmetry. rewrite <- xEQ. 
-      eapply a2e_fix; eauto.
-      apply SRCC. 
+      unfolder. 
+      intros x [y [DOM Hy]].
+      unfold compose. 
+      rewrite <- Hy.
+      fold (compose g h y).
+      erewrite a2e_fix; eauto.
+      apply SRCC.
     Qed.
 
     Lemma himgInit : 
@@ -720,8 +720,8 @@ Section SimRelProps.
       { intros x y HH. apply seq_eqv_l. split; auto.
         eapply sb_hdom_dom; eauto. eexists. eauto. }
       rewrite <- restr_relE.
-      rewrite <- collect_rel_eqdom_eq. 
-      2: by apply hgtrip.
+      rewrite <- collect_rel_fixset. 
+      2: by apply hgfix_hhdom.
       rewrite <- collect_rel_compose.
       apply collect_rel_mori; auto.
       rewrite inclusion_restr.
