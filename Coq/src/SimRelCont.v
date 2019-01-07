@@ -195,28 +195,28 @@ Section EventToActionLemmas.
   Notation "'Slab' S" := S.(ES.lab) (at level 10).
   Notation "'Sloc' S" := (loc S.(ES.lab)) (at level 10).
 
-  Lemma basic_step_e2a_eq_dom e e' S'
-        (WF : ES.Wf S)
-        (BSTEP : ESstep.t_basic e e' S S') :
-    eq_dom (SE S) (e2a S') (e2a S).
-  Proof.
-    cdes BSTEP; cdes BSTEP_.
-    red. intros x. ins.
-    unfold e2a.
-    assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA.
-    { red; split; ins;
-        [ erewrite <- ESstep.basic_step_tid_eq_dom
-        | erewrite ESstep.basic_step_tid_eq_dom
-        ]; eauto. }
-    assert ((Sloc S') x = (Sloc S) x) as BB.
-    { eapply ESstep.basic_step_loc_eq_dom; eauto. }
-    unfold opt_ext; desf; try by (exfalso; intuition).
-    assert ((Stid S') x = (Stid S) x) as CC.
-    { eapply ESstep.basic_step_tid_eq_dom; eauto. }
-    assert (ES.seqn S' x = ES.seqn S x) as DD.
-    { eapply ESstep.basic_step_seqn_eq_dom; eauto. }
-    congruence.
-  Qed.
+  (* Lemma basic_step_e2a_eq_dom e e' S' *)
+  (*       (WF : ES.Wf S) *)
+  (*       (BSTEP : ESstep.t_basic e e' S S') : *)
+  (*   eq_dom (SE S) (e2a S') (e2a S). *)
+  (* Proof. *)
+  (*   cdes BSTEP; cdes BSTEP_. *)
+  (*   red. intros x. ins. *)
+  (*   unfold e2a. *)
+  (*   assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA. *)
+  (*   { red; split; ins; *)
+  (*       [ erewrite <- ESstep.basic_step_tid_eq_dom *)
+  (*       | erewrite ESstep.basic_step_tid_eq_dom *)
+  (*       ]; eauto. } *)
+  (*   assert ((Sloc S') x = (Sloc S) x) as BB. *)
+  (*   { eapply ESstep.basic_step_loc_eq_dom; eauto. } *)
+  (*   unfold opt_ext; desf; try by (exfalso; intuition). *)
+  (*   assert ((Stid S') x = (Stid S) x) as CC. *)
+  (*   { eapply ESstep.basic_step_tid_eq_dom; eauto. } *)
+  (*   assert (ES.seqn S' x = ES.seqn S x) as DD. *)
+  (*   { eapply ESstep.basic_step_seqn_eq_dom; eauto. } *)
+  (*   congruence. *)
+  (* Qed. *)
 
 End EventToActionLemmas.
 
@@ -455,67 +455,58 @@ Section SimRelContLemmas.
     desf. omega. 
   Admitted.  
 
-  Lemma basic_step_e2a_e k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') :
-    e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)).
-  Proof. 
-    cdes BSTEP_.
-    assert (ESstep.t_basic e e' S S') as BSTEP.
-    { econstructor; eauto. }
-    assert (SE S' e) as SEe. 
-    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
-    unfold e2a. 
-    destruct (excluded_middle_informative ((Stid S') e = tid_init)) as [INIT | nINIT]. 
-    { exfalso. eapply ESstep.basic_step_acts_ninit_set_e; eauto.
-      unfold ES.acts_init_set. basic_solver. } 
-    erewrite ESstep.basic_step_tid_e; eauto.  
-    edestruct k eqn:kEQ. 
-    { erewrite ESstep.basic_step_seqn_kinit. 
-      { erewrite continit; eauto. }
-      all : subst k; eauto. }
-    erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto. 
-    { erewrite contseqn; eauto. }
-    all : subst k; eauto. 
-    (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
-    admit. 
-  Admitted.
+  (* Lemma basic_step_e2a_e k k' e e' S'  *)
+  (*       (st st' : thread_st (ES.cont_thread S k)) *)
+  (*       (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : *)
+  (*   e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)). *)
+  (* Proof.  *)
+  (*   cdes BSTEP_. *)
+  (*   assert (ESstep.t_basic e e' S S') as BSTEP. *)
+  (*   { econstructor; eauto. } *)
+  (*   assert (SE S' e) as SEe.  *)
+  (*   { eapply ESstep.basic_step_acts_set; eauto. basic_solver. } *)
+  (*   unfold e2a.  *)
+  (*   destruct (excluded_middle_informative ((Stid S') e = tid_init)) as [INIT | nINIT].  *)
+  (*   { exfalso. eapply ESstep.basic_step_acts_ninit_set_e; eauto. *)
+  (*     unfold ES.acts_init_set. basic_solver. }  *)
+  (*   erewrite ESstep.basic_step_tid_e; eauto.   *)
+  (*   edestruct k eqn:kEQ.  *)
+  (*   { erewrite ESstep.basic_step_seqn_kinit.  *)
+  (*     { erewrite continit; eauto. } *)
+  (*     all : subst k; eauto. } *)
+  (*   erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto.  *)
+  (*   { erewrite contseqn; eauto. } *)
+  (*   all : subst k; eauto.  *)
+  (*   (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *) *)
+  (*   admit.  *)
+  (* Admitted. *)
 
-  Lemma basic_step_e2a_e' k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S') :
-    e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)).
-  Proof. 
-    cdes BSTEP_.
-    assert (ESstep.t_basic e (Some e') S S') as BSTEP.
-    { econstructor; eauto. }
-    assert (SE S' e') as SEe'. 
-    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
-    unfold e2a. 
-    destruct (excluded_middle_informative ((Stid S') e' = tid_init)) as [INIT | nINIT]. 
-    { exfalso. eapply ESstep.basic_step_acts_ninit_set_e'; eauto.
-      unfold ES.acts_init_set. basic_solver. } 
-    erewrite ESstep.basic_step_tid_e'; eauto.  
-    erewrite ESstep.basic_step_seqn_e'; eauto.
-    2 : { admit. }
-    edestruct k eqn:kEQ.
-    { erewrite ESstep.basic_step_seqn_kinit.
-      { erewrite continit; eauto. } 
-      all : subst k; eauto. }
-    erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto. 
-    { erewrite contseqn; eauto. }
-    all : subst k; eauto. 
-    (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
-    all: admit. 
-  Admitted. 
+  (* Lemma basic_step_e2a_e' k k' e e' S'  *)
+  (*       (st st' : thread_st (ES.cont_thread S k)) *)
+  (*       (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S') : *)
+  (*   e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)). *)
+  (* Proof.  *)
+  (*   cdes BSTEP_. *)
+  (*   assert (ESstep.t_basic e (Some e') S S') as BSTEP. *)
+  (*   { econstructor; eauto. } *)
+  (*   assert (SE S' e') as SEe'.  *)
+  (*   { eapply ESstep.basic_step_acts_set; eauto. basic_solver. } *)
+  (*   unfold e2a.  *)
+  (*   destruct (excluded_middle_informative ((Stid S') e' = tid_init)) as [INIT | nINIT].  *)
+  (*   { exfalso. eapply ESstep.basic_step_acts_ninit_set_e'; eauto. *)
+  (*     unfold ES.acts_init_set. basic_solver. }  *)
+  (*   erewrite ESstep.basic_step_tid_e'; eauto.   *)
+  (*   erewrite ESstep.basic_step_seqn_e'; eauto. *)
+  (*   2 : { admit. } *)
+  (*   edestruct k eqn:kEQ. *)
+  (*   { erewrite ESstep.basic_step_seqn_kinit. *)
+  (*     { erewrite continit; eauto. }  *)
+  (*     all : subst k; eauto. } *)
+  (*   erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto.  *)
+  (*   { erewrite contseqn; eauto. } *)
+  (*   all : subst k; eauto.  *)
+  (*   (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *) *)
+  (*   all: admit.  *)
+  (* Admitted.  *)
 
-End SimRelContLemmas. 
-
-
-
-  
-
-
-  
-
-  
+End SimRelContLemmas.   

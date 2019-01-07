@@ -74,6 +74,21 @@ Section CertGraph.
   Definition cert_dom st := 
     (C ∪₁ (dom_rel (sb^? ⨾ ⦗ I ⦘) ∩₁ NTid thread) ∪₁ acts_set st.(ProgToExecution.G)).  
 
+  Lemma cert_dom_alt st 
+    (STCOV : C ∩₁ Tid thread ⊆₁ acts_set st.(ProgToExecution.G)) :
+      cert_dom st ≡₁ 
+               (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)) ∩₁ NTid thread ∪₁ 
+               acts_set st.(ProgToExecution.G). 
+  Proof. 
+    unfold cert_dom. 
+    split; [|basic_solver 10]. 
+    arewrite (C ≡₁ C ∩₁ Tid thread ∪₁ C ∩₁ NTid thread) at 1.
+    { rewrite <- set_inter_union_r.
+      rewrite tid_set_dec.
+      basic_solver. }
+    rewrite STCOV. basic_solver 10.
+  Qed.
+
   Record cert_graph :=
     { cslab : eq_dom D certLab G.(lab);
       cuplab_cert : same_lab_u2v_dom certE certG.(lab) G.(lab);

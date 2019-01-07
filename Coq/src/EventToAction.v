@@ -4,7 +4,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
      CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure Consistency ImmProperties.
+Require Import AuxRel AuxDef EventStructure Consistency Construction ImmProperties.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -15,9 +15,8 @@ Section EventToAction.
   Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
 
   Variable S : ES.t.
-  Variable G  : execution.
+  Variable G : execution.
   Variable GPROG : program_execution prog G.
-
   
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -241,3 +240,68 @@ Section EventToAction.
   Qed.
 
 End EventToAction.
+
+Section EventToActionLemmas. 
+
+  Variable prog : Prog.t.
+  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
+
+  Variable S : ES.t.
+  Variable G : execution.
+  Variable GPROG : program_execution prog G.
+
+  Variable WF : ES.Wf S.
+
+  Notation "'SE' S" := S.(ES.acts_set) (at level 10).
+  Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
+  Notation "'SEninit' S" := S.(ES.acts_ninit_set) (at level 10).
+
+  Notation "'Stid' S" := (S.(ES.tid)) (at level 10).
+  Notation "'Slab' S" := (S.(ES.lab)) (at level 10).
+  Notation "'Sloc' S" := (loc S.(ES.lab)) (at level 10).
+
+  Notation "'K' S" := S.(ES.cont_set) (at level 10).
+
+  Notation "'STid' S" := (fun t e => S.(ES.tid) e = t) (at level 10).
+
+  Notation "'Ssb' S" := (S.(ES.sb)) (at level 10).
+  Notation "'Scf' S" := (S.(ES.cf)) (at level 10).
+  Notation "'Srmw' S" := (S.(ES.rmw)) (at level 10).
+
+  Notation "'GE'" := G.(acts_set).
+  Notation "'GEinit'" := (is_init ∩₁ GE).
+  Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
+
+  Notation "'Gtid'" := (tid).
+  Notation "'Glab'" := (G.(lab)).
+  Notation "'Gloc'" := (loc G.(lab)).
+  
+  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+
+  Notation "'Gsb'" := (G.(sb)).
+  Notation "'Grmw'" := G.(rmw).
+
+  Lemma basic_step_e2a_eq_dom e e' S'
+        (BSTEP : ESstep.t_basic e e' S S') :
+    eq_dom (SE S) (e2a S') (e2a S).
+  Proof.
+    cdes BSTEP; cdes BSTEP_.
+    red. intros x. ins.
+    unfold e2a.
+    assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA.
+    { red; split; ins;
+        [ erewrite <- ESstep.basic_step_tid_eq_dom
+        | erewrite ESstep.basic_step_tid_eq_dom
+        ]; eauto. }
+    assert ((Sloc S') x = (Sloc S) x) as BB.
+    { eapply ESstep.basic_step_loc_eq_dom; eauto. }
+    unfold opt_ext; desf; try by (exfalso; intuition).
+    assert ((Stid S') x = (Stid S) x) as CC.
+    { eapply ESstep.basic_step_tid_eq_dom; eauto. }
+    assert (ES.seqn S' x = ES.seqn S x) as DD.
+    { eapply ESstep.basic_step_seqn_eq_dom; eauto. }
+    congruence.
+  Qed.
+
+End EventToActionLemmas. 

@@ -5,7 +5,8 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel CertExecution2.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf ImmProperties SimRelDef SimRelCont SimRelActionToEvent.
+        CertGraph CertRf ImmProperties 
+        SimRelDef SimRelCont SimRelEventToAction SimRelActionToEvent.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -107,16 +108,6 @@ Section SimRelProps.
     
     Variable SRC : simrel_common prog S G sc TC f. 
 
-    Lemma e2a_same_Einit : 
-      e2a S □₁ SEinit ≡₁ GEinit.
-    Proof. 
-      split; [eapply e2a_Einit; apply SRC|].
-      unfolder. intros a [INITa GEa].
-      edestruct gEinit as [e [[INITe SEe] gEQ]].
-      1-2 : unfolder; eauto.  
-      eexists; splits; eauto. 
-    Qed.
-
     Lemma fimgInit : 
       SEinit ≡₁ f □₁ GEinit. 
     Proof. admit. Admitted.
@@ -147,61 +138,12 @@ Section SimRelProps.
       2: by apply ginjfdom.
       red. basic_solver.
     Qed.
-
-    Ltac g_type t :=
-      intros x [y HH]; desf;
-      eapply t in HH;
-        [|by apply same_lab_u2v_dom_comm; apply SRC];
-      split; [apply SRC.(gE); red; eexists; split; eauto|]; apply HH.
-
-    Lemma gW : g □₁ (SE ∩₁ SW) ⊆₁ GE ∩₁ GW.
-    Proof. g_type same_lab_u2v_dom_is_w. Qed.
-
-    Lemma gF : g □₁ (SE ∩₁ SF) ⊆₁ GE ∩₁ GF.
-    Proof. g_type same_lab_u2v_dom_is_f. Qed.
-
-    Lemma gRel : g □₁ (SE ∩₁ SRel) ⊆₁ GE ∩₁ GRel.
-    Proof. g_type same_lab_u2v_dom_is_rel. Qed.
     
-    Lemma gsame_loc : 
-      g □ restr_rel SE (same_loc Slab) ⊆ restr_rel GE (same_loc Glab).
-    Proof.
-      intros x y HH. red in HH. desf.
-      eapply same_lab_u2v_dom_same_loc in HH.
-      2: { apply same_lab_u2v_dom_comm. apply SRC. }
-      red in HH. desf. 
-      red. splits.
-      apply HH.
-      all: by eapply gE; eauto; eexists; eauto.
-    Qed.
-
-    Lemma grf : g □ Srf ≡ g □ Sjf.
-    Proof.
-      destruct SRC.
-      split.
-      2: by rewrite jf_in_rf; eauto.
-      unfold ES.rf.
-      arewrite (Sew^? ⨾ Sjf \ Scf ⊆ Sew^? ⨾ Sjf).
-      rewrite crE.
-      rewrite seq_union_l.
-      rewrite collect_rel_union.
-      apply inclusion_union_l.
-      { by rewrite seq_id_l. }
-      unfolder.
-      ins. desf.
-      eexists. eexists. splits; eauto.
-      eapply gew.
-      eexists. eexists.
-      splits.
-      { eapply ES.ew_sym; eauto. }
-      all: by eauto.
-    Qed.
-
     Lemma gewI : g □ Sew  ⊆ ⦗ I ⦘. 
     Proof.
       intros x y HH.
       assert (x = y) as EQxy; subst.
-      { eapply gew; eauto. }
+      { eapply e2a_ew; eauto. apply SRC. }
       split; auto.
       destruct HH as [a [b [EW [EQx EQy]]]]; subst.
       edestruct ewfI as [x HH]; eauto.
@@ -213,49 +155,9 @@ Section SimRelProps.
         by rewrite gf_fixI. }
       assert (g a = compose g f y) as XX.
       2: { rewrite XX. by rewrite gf_fixI. }
-      eapply gew; eauto.
+      eapply e2a_ew; [apply SRC|].
       eexists; eauto.
     Qed.
-
-    Lemma grs : g □ Srs ⊆ Grs. 
-    Proof. 
-      assert (ES.Wf S) as WF by apply SRC.
-      rewrite rs_alt; auto.
-      rewrite !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      rewrite !gW.
-      repeat apply seq_mori; eauto with hahn.
-      2: { rewrite collect_rel_crt. eauto using clos_refl_trans_mori, grfrmw. }
-      rewrite ES.sbE; auto.
-      rewrite wf_sbE.
-      rewrite <- !restr_relE.
-      rewrite <- restr_inter_absorb_r.
-      rewrite <- restr_inter_absorb_r with (r':=same_loc Slab).
-      rewrite collect_rel_cr.
-      rewrite collect_rel_interi. 
-      apply clos_refl_mori, inter_rel_mori. 
-      { rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto. 
-        eapply e2a_sb; eauto; apply SRC. }
-      apply gsame_loc.
-    Qed.
-
-    Lemma grelease : g □ Srelease ⊆ Grelease.
-    Proof. 
-      rewrite release_alt; [|by apply SRC].
-      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      arewrite (SF ∪₁ SW ⊆₁ fun _ => True).
-      arewrite (SE ∩₁ (fun _ : eventid => True) ⊆₁ SE) by basic_solver.
-      rewrite gRel, grs, e2a_sb, gF.
-      { unfold imm_s_hb.release. basic_solver 10. }
-      all: eauto; apply SRC.
-    Qed.
-
-    (* gffix : fixset fdom (g ∘ f); *)
-    (* finj : inj_dom_s fdom f;   *)
-    (* fimg : f □₁ fdom ⊆₁ SE; *)
-    (* foth : (f □₁ set_compl fdom) ∩₁ SE ≡₁ ∅; *)
-    (* flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab; *)
 
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
       exists (state : (thread_lts thread).(Language.state)) c,
@@ -299,7 +201,7 @@ Section SimRelProps.
       assert (~ dom_rel Srmw (f e)) as NSRMW.
       { intros [w RMW].
         apply NRMW. exists (g w).
-        eapply grmw; eauto.
+        eapply e2a_rmw; eauto.
         arewrite (e = g (f e)).
         { symmetry. admit. (* eapply gffix; eauto. basic_solver. *) }
         unfolder. eauto. }
@@ -399,19 +301,6 @@ Section SimRelProps.
       apply SRCC.
     Qed.
 
-    Lemma hdom_alt : 
-      hdom ≡₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) ∩₁ GNTid qtid ∪₁ contE. 
-    Proof. 
-      unfold cert_dom. 
-      split; [|basic_solver 10]. 
-      arewrite (C ≡₁ C ∩₁ GTid qtid ∪₁ C ∩₁ GNTid qtid) at 1.
-      { rewrite <- set_inter_union_r.
-        rewrite tid_set_dec.
-        basic_solver. }
-      erewrite cstate_covered; eauto. 
-      basic_solver 10.
-    Qed.
-
     Lemma htid : eq_dom hdom (Stid ∘ h) Gtid.
     Proof. eapply a2e_tid. eapply SRCC. Qed.
 
@@ -446,7 +335,8 @@ Section SimRelProps.
     Lemma GEinit_in_e2a_cont_sb_dom : 
       GEinit ⊆₁ e2a S □₁ ES.cont_sb_dom S q. 
     Proof. 
-      erewrite <- e2a_same_Einit; [|apply SRCC].
+      erewrite <- e2a_same_Einit.
+      2-4 : eapply SRCC.
       apply set_collect_mori; auto. 
         by apply SEinit_in_cont_sb_dom.
     Qed.
@@ -470,7 +360,8 @@ Section SimRelProps.
         edestruct cstate_q_cont; eauto. desf. }
       rewrite <- !set_collect_union.
       apply set_collect_mori; auto. 
-      rewrite e2a_same_Einit; [|apply SRCC]. 
+      rewrite e2a_same_Einit.
+      2-4 : eapply SRCC. 
       eapply GEinit_in_hdom; apply SRCC.
     Qed.
 
@@ -480,7 +371,7 @@ Section SimRelProps.
       assert (ES.Wf S) as WFS by apply SRCC.
       edestruct cstate_q_cont as [st [stEQ KK]]; eauto.
       red; split; [|basic_solver].
-      rewrite hdom_alt.
+      rewrite cert_dom_alt; [|apply SRCC].
       rewrite !set_collect_union. 
       rewrite set_inter_union_l.
       apply set_subset_union_l; split. 
@@ -493,8 +384,8 @@ Section SimRelProps.
           [eauto | | eapply DOMa]. 
         eapply fixset_mori; 
           [| eauto| eapply SRCC].
-        rewrite hdom_alt. red.
-        basic_solver 10. }
+        rewrite cert_dom_alt; [|apply SRCC]. 
+        red. basic_solver 10. }
       erewrite contstateE;
         [|apply SRCC | apply SRCC | rewrite stEQ; eapply KK].
       arewrite 

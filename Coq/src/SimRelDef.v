@@ -5,7 +5,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf SimRelCont SimRelActionToEvent.
+        CertGraph CertRf SimRelCont SimRelEventToAction SimRelActionToEvent.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -48,13 +48,6 @@ Section SimRelDef.
   Notation "'Shb'" := (S.(Consistency.hb)).
 
   Notation "'g'" := (e2a S). 
-
-  Definition thread_lts (tid : thread_id) : Language.t :=
-    @Language.mk
-      (list Instr.t) state
-      init
-      is_terminal
-      (ilbl_step tid).
 
   Notation "'thread_syntax' tid"  := 
     (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
@@ -131,15 +124,7 @@ Section SimRelDef.
       sr_cont : simrel_cont prog S G TC;
       sr_graph : simrel_graph;
 
-      gE : g □₁ SE ⊆₁ GE;
-      gEinit : GEinit ⊆₁ g □₁ SEinit;
-
-      grmw : g □ Srmw ⊆ Grmw;
-      gjf  : g □ Sjf  ⊆ Gvf;
-      gew  : g □ Sew  ⊆ eq;
-      gco  : g □ Sco  ⊆ Gco;
-      
-      grfrmw : g □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
+      sr_e2a : simrel_e2a S G sc;
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
@@ -153,8 +138,6 @@ Section SimRelDef.
       sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
 
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
-
-      glab : same_lab_u2v_dom SE Slab (Glab ∘ g);
 
       finitIncl : SEinit ⊆₁ f □₁ GEinit;
 
