@@ -453,6 +453,97 @@ Section SimRelCertLemmas.
     by repeat left. 
   Qed.
 
+  Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
+        (ESSTEP : ESstep.t_basic e e' S S')
+        (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
+        (rEQ : r' ≡ r) 
+        (rIN : (e2a S) □ r ⊆ r'') : 
+    (e2a S') □ r' ⊆ r''.
+  Proof. 
+    rewrite rEQ, restrE, collect_rel_eq_dom.
+    { rewrite <- restrE; eauto. }
+    all: eapply basic_step_e2a_eq_dom; eauto; apply SRCC.  
+  Qed.
+
+  Lemma simrel_cert_load_step_simrel_e2a TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    simrel_e2a S' G sc.  
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (sim_trav_step G sc TC TC') as TCSTEP.
+    { red. eexists. eapply tr_step; eauto. }
+    assert (tc_coherent G sc TC') as TCCOH'.
+    { eapply sim_trav_step_coherence; eauto. apply SRCC. }
+
+    constructor.
+
+    (* e2a_GE : e2a □₁ SE ⊆₁ GE *)
+    { rewrite ESstep.basic_step_nupd_acts_set; eauto.  
+      rewrite set_collect_union. 
+      apply set_subset_union_l. 
+      split. 
+      { erewrite set_collect_eq_dom; [eapply SRCC|].
+        eapply basic_step_e2a_eq_dom; eauto. } 
+      rewrite set_collect_eq.
+      apply eq_predicate. 
+      eapply basic_step_e2a_GE_e; eauto. 
+      1-3 : apply SRCC.
+      apply BSTEP_. }
+    (* e2a_GEinit : GEinit ⊆₁ g □₁ SEinit *)
+    { etransitivity. 
+      { eapply e2a_GEinit. apply SRCC. }
+      erewrite ESstep.basic_step_acts_init_set with (S' := S'); eauto.  
+      eapply set_collect_eq_dom.
+      unfolder. ins. desf.
+      eapply basic_step_e2a_eq_dom; eauto. }
+    (* e2a_lab : same_lab_u2v_dom SE Slab (Glab ∘ e2a) *)
+    { eapply basic_step_e2a_same_lab_u2v; eauto; 
+        try apply SRCC; apply BSTEP_. }
+    (* e2a_rmw : e2a □ Srmw ⊆ Grmw *)
+    { eapply simrel_cert_esstep_e2a_eqr;
+      [| | apply ES.rmwE | eapply ESstep.basic_step_nupd_rmw | apply SRCC];
+      eauto. }
+    (* e2a_jf  : e2a □ Sjf  ⊆ Gvf *)
+    { rewrite SSJF', collect_rel_union. 
+      unionL. 
+      { rewrite ES.jfE; auto. 
+        erewrite collect_rel_eq_dom.
+        { rewrite <- ES.jfE; auto. 
+          eapply SRCC. }
+        all: eapply basic_step_e2a_eq_dom; eauto. }
+      rewrite collect_rel_singl. 
+      unfolder; ins; desf.
+      eapply vf_in_furr; [by apply SRCC|]. 
+      eapply cert_rf_in_vf, NEW_RF. }
+    (* e2a_ew  : e2a □ Sew  ⊆ ⦗I⦘ *)
+    { eapply simrel_cert_esstep_e2a_eqr; 
+      [| | apply ES.ewE | eapply EW' | apply SRCC];
+      eauto. }
+    (* e2a_co  : e2a □ Sco  ⊆ Gco *)
+    { eapply simrel_cert_esstep_e2a_eqr; 
+      [| | apply ES.coE | eapply CO' | apply SRCC];
+      eauto. } 
+    (* e2a_rf_rmw : e2a □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw *)
+    eapply simrel_cert_esstep_e2a_eqr. 
+    5 : apply SRCC.
+    1-2 : eauto. 
+    { rewrite ES.rfE, ES.rmwE; auto. basic_solver 10. }
+    eapply ESstep.load_step_rf_rmw; eauto. 
+  Qed.
+    
   Lemma simrel_cert_load_step_jfe_vis TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -863,18 +954,7 @@ Section SimRelCertLemmas.
     eexists; splits; eauto; desf. 
   Qed.
     
-  Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
-        (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
-        (ESSTEP : ESstep.t_basic e e' S S')
-        (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
-        (rEQ : r' ≡ r) 
-        (rIN : (e2a S) □ r ⊆ r'') : 
-    (e2a S') □ r' ⊆ r''.
-  Proof. 
-    rewrite rEQ, restrE, collect_rel_eq_dom.
-    { rewrite <- restrE; eauto. }
-    all: eapply basic_step_e2a_eq_dom; eauto; apply SRCC.  
-  Qed.
+  
 
   Lemma simrel_cert_lbl_step TC' h k
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
@@ -961,46 +1041,7 @@ Section SimRelCertLemmas.
         { admit. }
         { apply ES_CONS'. }
         { eapply basic_step_simrel_cont; eauto; apply SRCC. }
-        { econstructor.
-          (* g' □₁ SE' ⊆₁ GE *)
-          { rewrite ESstep.basic_step_nupd_acts_set; eauto.  
-            rewrite set_collect_union. 
-            apply set_subset_union_l. 
-            split. 
-            { erewrite set_collect_eq_dom; [eapply SRCC|].
-              eapply basic_step_e2a_eq_dom; eauto. } 
-            rewrite set_collect_eq.
-            apply eq_predicate. 
-            eapply basic_step_e2a_GE_e; eauto; apply SRCC. }
-          (* gEinit : GEinit ⊆₁ g □₁ SEinit *)
-          { admit. }
-          (* glab : same_lab_u2v_dom SE Slab (Glab ∘ e2a S) *)
-          { admit. }
-          (* grmw : g □ Srmw ⊆ Grmw *)
-          { eapply simrel_cert_esstep_e2a_eqr;
-            [| | apply ES.rmwE | eapply ESstep.basic_step_nupd_rmw | apply SRCC];
-            eauto. }
-          (* gjf  : g □ Sjf  ⊆ Gvf *)
-          { rewrite SSJF', collect_rel_union. 
-            unionL. 
-            { rewrite ES.jfE; auto. 
-              erewrite collect_rel_eq_dom.
-              { rewrite <- ES.jfE; auto. 
-                eapply SRCC. }
-              all: eapply basic_step_e2a_eq_dom; eauto. }
-            rewrite collect_rel_singl. 
-            unfolder; ins; desf.
-            eapply vf_in_furr; [by apply SRCC|]. 
-            eapply cert_rf_in_vf, NEW_RF. }
-          (* gew  : g □ Sew  ⊆ ⦗I⦘ *)
-          { eapply simrel_cert_esstep_e2a_eqr; 
-            [| | apply ES.ewE | eapply EW' | apply SRCC];
-            eauto. }
-          (* gco  : g □ Sco  ⊆ Gco *)
-          { eapply simrel_cert_esstep_e2a_eqr; 
-            [| | apply ES.coE | eapply CO' | apply SRCC];
-            eauto. } 
-          admit. }
+        { eapply simrel_cert_load_step_simrel_e2a; eauto. }
         all : admit. }
       1-8 : admit.
       (* sr_a2e_h *)
