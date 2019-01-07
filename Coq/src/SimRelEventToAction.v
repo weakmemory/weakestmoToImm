@@ -645,4 +645,21 @@ Section SimRelEventToActionLemmas.
       | eapply fixset_more; eauto ].
   Qed.
 
+  Lemma basic_step_simrel_a2e_preserved e e' S' a2e a2eD
+        (SRA2E : simrel_a2e S a2e a2eD)
+        (BSTEP : ESstep.t_basic e e' S S') : 
+    simrel_a2e S' a2e a2eD.
+  Proof. 
+    constructor.
+    { apply SRA2E. }
+    { etransitivity.
+      { apply SRA2E. }
+      eapply ESstep.basic_step_acts_set_mon; eauto. }
+    eapply fixset_eq_dom.
+    2 : apply SRA2E.
+    unfolder. unfold compose. 
+    ins. eapply basic_step_e2a_eq_dom; eauto.
+    apply SRA2E. basic_solver.
+  Qed.
+
 End SimRelEventToActionLemmas.
