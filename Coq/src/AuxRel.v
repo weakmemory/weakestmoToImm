@@ -11,7 +11,7 @@ Section AuxRel.
   Variable cond : A -> Prop.
   Variables s s' : A -> Prop.
   Variable f g : A -> B.
-  Variable h : A -> A.
+  Variable h h' : A -> A.
   Variables r r' : relation A.
 
   Definition clos_sym : relation A := fun x y => r x y \/ r y x. 
@@ -66,7 +66,7 @@ Section Props.
 
 Variables A B C : Type.
 Variable f g : A -> B.
-Variable h : A -> A.
+Variable h h' : A -> A.
 Variable a : A.
 Variable b : B.
 Variables s s' s'' : A -> Prop.
@@ -291,17 +291,19 @@ Proof.
   all: basic_solver.
 Qed.
 
-(* Lemma fixset_img_rel : fixset s h <-> ⦗s⦘ ⨾ ↑ h ⊆ eq. *)
-(* Proof.  *)
-(*   clear. *)
-(*   split; autounfold with unfolderDb. *)
-(*   { ins; desf; auto. symmetry. intuition. } *)
-(*   ins; desf; auto. *)
-(*   symmetry. eapply H. eexists. splits; eauto. *)
-(* Qed. *)
-
 Lemma fixset_union : fixset (s ∪₁ s') h <-> fixset s h /\ fixset s' h.
 Proof. clear; unfolder; split; ins; intuition. Qed.
+
+Lemma fixset_eq_dom (EQD : eq_dom s h h') : 
+  fixset s h <-> fixset s h'.
+Proof. 
+  clear a b s' s'' q q' r r' r'' f g B C. 
+  unfolder in *. 
+  split; ins; 
+    specialize (EQD x SX);
+    specialize (H x SX);
+    congruence.
+Qed.
 
 Lemma fixset_set_fixpoint : fixset s h -> s ≡₁ h □₁ s.
 Proof. 
@@ -605,7 +607,7 @@ Qed.
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
 Proof. 
-  clear r'' s s' s'' q q' a b f g h B C.
+  clear r'' s s' s'' q q' a b f g h h' B C.
   rewrite crE, seq_union_r, seq_id_r.
   rewrite rt_unionE.
   rewrite <- cr_of_ct with (r := (r ⨾ r'＊)).

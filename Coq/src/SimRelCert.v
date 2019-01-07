@@ -455,6 +455,27 @@ Section SimRelCertLemmas.
     unfold eq_opt, option_map. basic_solver.
   Qed.
 
+  Lemma basic_step_cert_dom_ne TC' h k k' e e' S' 
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
+    ~ (cert_dom G TC (ES.cont_thread S k) st) (e2a S' e).
+  Proof.
+    red. intros HH.
+    eapply hdom_alt in HH; eauto.
+    destruct HH as [HA | HB].
+    { destruct HA as [_ NTID].
+      apply NTID.
+      erewrite <- e2a_tid.
+      eapply ESstep.basic_step_tid_e; eauto. }
+    erewrite basic_step_e2a_e in HB; eauto. 
+    4 : eapply BSTEP_.
+    2-3 : apply SRCC.
+    eapply acts_rep in HB.
+    2 : eapply wf_cont_state; eauto. 
+    desf. omega.
+  Qed.
+
   Lemma basic_step_hdom_cf_free TC' h k k' e e' S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -1285,13 +1306,25 @@ Section SimRelCertLemmas.
           { etransitivity.
             { rewrite set_collect_updo.
               { apply a2e_img. apply SRCC. }
-              admit. }
+              eapply basic_step_cert_dom_ne; eauto. }
             eapply ESstep.basic_step_acts_set_mon; eauto. } 
           rewrite set_collect_eq, upds.
           erewrite ESstep.basic_step_acts_set; eauto. 
           basic_solver. }
+        (* a2e_fix *)
         rewrite fixset_union. split. 
-        { admit. }
+        { eapply fixset_eq_dom. 
+          { unfold eq_dom, compose. 
+            intros x DOM.
+            rewrite updo.
+            { erewrite basic_step_e2a_eq_dom; eauto. 
+              { by fold (compose g h x). }
+              apply SRCC.(sr_a2e_h).
+              basic_solver. }
+            red. intros HH. 
+            eapply basic_step_cert_dom_ne; eauto. 
+            congruence. }
+          apply SRCC. }
         unfolder. unfold compose. ins. 
         by rewrite <- SX, upds. }
       1-3 : admit. 
