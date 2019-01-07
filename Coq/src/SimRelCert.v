@@ -1167,7 +1167,22 @@ Section SimRelCertLemmas.
         { eapply basic_step_simrel_cont; eauto; apply SRCC. }
         { eapply simrel_cert_load_step_simrel_e2a; eauto. }
         { eapply basic_step_simrel_a2e_preserved; eauto; apply SRCC. }
-        all : admit. }
+        1-4 : admit. 
+        (* flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab *)
+        { unfold eq_dom, compose. ins. 
+          erewrite ESstep.basic_step_lab_eq_dom; eauto.
+          { by apply SRCC. }
+          eapply a2e_img; [apply SRCC|].
+          unfolder; eexists; split; eauto.
+          destruct SX as [Cx | Ix]; [by left|].
+          right. do 2 eexists. splits; eauto. }
+        (* fvis : f □₁ fdom ⊆₁ vis S *)
+        { etransitivity.
+          { eapply fvis. apply SRCC. }
+          eapply ESstep.load_step_vis_mon; eauto. }
+        (* finitIncl : SEinit ⊆₁ f □₁ GEinit *)
+        { erewrite ESstep.basic_step_acts_init_set; eauto. apply SRCC. }
+        admit. }
       1-8 : admit.
       (* sr_a2e_h *)
       { eapply basic_step_nupd_simrel_a2e_h; eauto. }
