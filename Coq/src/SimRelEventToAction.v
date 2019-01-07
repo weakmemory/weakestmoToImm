@@ -12,11 +12,9 @@ Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section SimRelEventToAction.
-  Variable prog : Prog.t.
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.
-  Variable TC : trav_config.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -97,7 +95,16 @@ Section SimRelEventToAction.
       e2a_rfrmw : e2a □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
     }.
 
+  Record simrel_a2e (a2e : actid -> eventid) (a2eD : actid -> Prop) := 
+    { a2e_inj : inj_dom_s a2eD a2e;
+      a2e_img : a2e □₁ a2eD ⊆₁ SE;
+      a2e_fix : fixset a2eD (e2a ∘ a2e);
+      (* Do we really need this ? *)
+      (* a2e_oth : (a2e □₁ set_compl aD) ∩₁ SE ≡₁ ∅; *)
+    }. 
+
   Section SimRelEventToActionProps. 
+    Variable prog : Prog.t.
     Variable GPROG : program_execution prog G.
     Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
     Variable WF : ES.Wf S.
@@ -626,6 +633,16 @@ Section SimRelEventToActionLemmas.
     unfold compose. 
     eapply cuplab_cert; [|eapply dcertE]; eauto.
     eapply basic_step_e2a_E0_e'; eauto.    
+  Qed.
+
+  Lemma simrel_a2e_set_equiv a2e a2eD a2eD' (EQ : a2eD ≡₁ a2eD') : 
+    simrel_a2e S a2e a2eD <-> simrel_a2e S a2e a2eD'.
+  Proof. 
+    split; [symmetry in EQ|].
+    all: intros HH; inv HH; constructor;
+      [ eapply inj_dom_s_more; eauto 
+      | erewrite set_collect_more; eauto
+      | eapply fixset_more; eauto ].
   Qed.
 
 End SimRelEventToActionLemmas.

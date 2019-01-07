@@ -5,7 +5,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf SimRelCont SimRelEventToAction SimRelActionToEvent.
+        CertGraph CertRf SimRelCont SimRelEventToAction. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -125,6 +125,7 @@ Section SimRelDef.
       sr_graph : simrel_graph;
 
       sr_e2a : simrel_e2a S G sc;
+      sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
 
       fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
 
@@ -135,13 +136,9 @@ Section SimRelDef.
 
       ewfI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
 
-      sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
-
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
-
-      finitIncl : SEinit ⊆₁ f □₁ GEinit;
-
       fvis : f □₁ fdom ⊆₁ vis S;
+      finitIncl : SEinit ⊆₁ f □₁ GEinit;      
 
       sb_fdom_dom : dom_rel (Ssb ⨾ ⦗ f □₁ fdom ⦘) ⊆₁ f □₁ fdom;
     }.
