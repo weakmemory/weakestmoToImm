@@ -416,6 +416,57 @@ Qed.
 (** ** Alternative representations of properties *)
 (******************************************************************************)
 
+Lemma ecf_irr_hb_cf_irr : irreflexive ecf -> irreflexive (hb ⨾ cf). 
+Proof. 
+  unfold ecf.
+  rewrite !crE. relsf. 
+  unfold irreflexive. 
+  intros ECFIRR x HH. 
+  destruct HH as [y [HB CF]].
+  eapply ECFIRR.
+  left. right.
+  unfold transp. 
+  eexists; split; eauto. 
+  by apply ES.cf_sym. 
+Qed.
+
+Lemma ecf_irr_thb_cf_hb_irr : irreflexive ecf -> irreflexive (hb⁻¹ ⨾ cf ⨾ hb). 
+Proof. 
+  unfold ecf.
+  rewrite !crE. relsf. 
+  unfold irreflexive. 
+  intros ECFIRR x HH. 
+  destruct HH as [y [THB [z [CF HB]]]].
+  eapply ECFIRR.
+  right. right.
+  unfold seq.
+  exists y; split; eauto.
+Qed.
+
+Lemma ecf_irr_alt : 
+  irreflexive ecf <-> irreflexive (hb ⨾ cf) /\  irreflexive (hb⁻¹ ⨾ cf ⨾ hb).
+Proof. 
+  split. 
+  { ins. split. 
+    { by apply ecf_irr_hb_cf_irr. }
+    by apply ecf_irr_thb_cf_hb_irr. }
+  unfold ecf. rewrite !crE. relsf.
+  unfold irreflexive.
+  intros [HBCF THBCFHB].
+  unfold union. 
+  ins; desf.
+  { eapply ES.cf_irr. eauto. }
+  { destruct H as [y [HB CF]].
+    unfold transp in HB.
+    eapply HBCF. 
+    apply ES.cf_sym in CF.
+    unfold seq. eauto. }
+  { destruct H as [y [CF HB]].
+    eapply HBCF. 
+    unfold seq. eauto. }
+  eapply THBCFHB. eauto. 
+Qed.
+
 Lemma jf_necf_jf_ncf : jf ∩ ecf ≡ ∅₂ -> jf ∩ cf ≡ ∅₂.
 Proof. 
   intros [JFnECF _]. 
