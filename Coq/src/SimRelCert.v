@@ -783,6 +783,32 @@ Section SimRelCertLemmas.
     rewrite EE; eauto;
     unfolder; splits; ins; desf; omega.
 
+  Lemma simrel_cert_load_step_hb_cf_irr TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    irreflexive (Shb S' ⨾ Scf S').
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    erewrite ESstep.load_step_hb; eauto. 
+    erewrite ESstep.basic_step_nupd_cf; eauto. 
+    rewrite crE, csE. relsf.
+    rewrite !seqA.
+    rewrite !irreflexive_union.
+    splits.
+    all : admit. 
+  Admitted.
+
   Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
