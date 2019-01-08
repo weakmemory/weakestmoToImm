@@ -177,7 +177,7 @@ Ltac step_solver :=
   rewrite 1?ES.sbE, 1?ES.rmwE, 1?ES.cfE, 
     1?ES.cont_sb_domE, 1?ES.cont_cf_domE,
     1?ES.jfE, 1?ES.jfiE, 1?ES.jfeE,
-    1?ES.coE, 1?ES.ewE, 
+    1?ES.rfE, 1?ES.coE, 1?ES.ewE, 
     1?rsE, 1?releaseE, 1?swE, 1?hbE;
   eauto; unfolder; ins; splits; desf; omega.
 
@@ -1625,10 +1625,11 @@ Lemma load_step_hb lang k k' st st' e e' S S'
      (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘). 
 Proof.
   assert (e' = None) by inv LSTEP. subst.
+  assert (t_basic e None S S') as BSTEP.
+  { econstructor. eauto. }
   cdes LSTEP; cdes AJF; cdes BSTEP_; desf.
   unfold hb at 1.
   rewrite basic_step_nupd_sb, load_step_sw; eauto.
-  2: { red. do 5 eexists. unnw. eauto. }
   rewrite unionA.
   rewrite (unionAC (ES.cont_sb_dom S k × eq (ES.next_act S))).
   rewrite <- (unionA (sb S)).
@@ -1637,7 +1638,12 @@ Proof.
   { rewrite <- cr_of_ct.
     fold (hb S).
     basic_solver. }
-  all : eq_empty; step_solver.
+  all : eq_empty.
+  all : rewrite load_step_rf; eauto.
+  all : rewrite basic_step_cf; eauto.
+  all : rewrite JF'.
+  all : relsf; unionL.
+  all : by step_solver.
 Qed.
 
 End ESstep.
