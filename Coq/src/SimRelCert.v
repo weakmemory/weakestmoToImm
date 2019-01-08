@@ -797,6 +797,8 @@ Section SimRelCertLemmas.
     assert (ESstep.t_basic e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ES.Wf S') as WFS'.
+    { admit. }
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
@@ -806,7 +808,45 @@ Section SimRelCertLemmas.
     rewrite !seqA.
     rewrite !irreflexive_union.
     splits.
-    all : admit. 
+
+    all : try by (eapply empty_irr; ESstep.eq_empty; ESstep.step_solver).
+
+    { eapply ecf_irr_hb_cf_irr. apply SRCC. }
+
+    { intros x [y [HB [KCF EQe]]]. 
+      subst x. apply hbE, seq_eqv_lr in HB; auto. desf.
+      eapply ESstep.basic_step_acts_set_NE; eauto. }
+
+    { intros x [z [[KSB EQe] [_ KCF]]]. subst z. 
+      eapply ES.cont_cf_cont_sb in KCF; eauto.
+      destruct KCF as [_ NKSB]. by apply NKSB. }
+
+    { intros x HH.
+      destruct HH as [y [HB HH]].
+      destruct HH as [z [[KSB EQe] HH]]. subst z.
+      destruct HH as [_ KCF].
+      unfold ES.cont_sb_dom, ES.cont_cf_dom in KSB, KCF.
+      destruct k.
+
+      { (* no hb to Einit *)
+        admit. }
+      destruct KCF as [CF | SB].
+
+      { destruct CF as [z HX]. 
+        apply seq_eqv_r in HX. desf.
+        apply ES.cf_sym in HX.
+        eapply ecf_irr_hb_cf_irr.
+        { apply SRCC. }
+        eexists; splits; [|eauto].
+        destruct KSB as [z' HY].
+        apply seq_eqv_r in HY. desf.
+        apply crE in HY. 
+        unfolder in HY. desf.
+        eapply hb_trans; eauto. 
+        eapply sb_in_hb; eauto. }
+      
+      admit. }
+
   Admitted.
 
   Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
@@ -1170,7 +1210,9 @@ Section SimRelCertLemmas.
       
       assert (@es_consistent S' Weakestmo) as ES_CONS'.
       { econstructor; simpl.
-        { admit. }
+        { eapply ecf_irr_alt. split.
+          { eapply simrel_cert_load_step_hb_cf_irr; eauto. }
+          admit. }
         { apply jf_necf_alt. splits.
           { eapply simrel_cert_load_step_jf_ncf; eauto. }
           { eapply simrel_cert_load_step_hb_jf_ncf; eauto.  } 
