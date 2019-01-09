@@ -199,3 +199,18 @@ Proof.
   2: { apply IHn; auto. omega. }
   all: exfalso; apply HH in s0; omega.
 Qed.
+
+Fixpoint first_nat_list (n : nat) : list nat :=
+  match n with
+  | 0 => []
+  | S m => m :: first_nat_list m
+  end.
+
+Lemma first_nat_list_In_alt (n m : nat) : In m (first_nat_list n) <-> m < n.
+Proof.
+  induction n; simpls.
+  { omega. }
+  split; intros HH; desf.
+  { specialize_full IHn; auto. }
+  inversion HH; auto.
+Qed.

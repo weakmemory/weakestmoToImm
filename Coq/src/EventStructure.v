@@ -180,6 +180,8 @@ Record Wf :=
       forall X (inclE : X ⊆₁ E) (NCF : cf_free S X), 
         is_total X (sb ∩ same_tid); 
 
+    seqn_after_null : E ⊆₁ codom_rel (<| fun x => seqn x = 0 |> ;; (sb^? ∩ same_tid));
+
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
@@ -801,12 +803,16 @@ Proof. eapply seqn_sb; unfolder; eauto 50. Qed.
 (*   exists x, ⟪ IN : s' ⊆₁ s ⟫ /\ ⟪ CNTX : countNatP s' n = i ⟫. *)
 (* Proof. admit. Admitted. *)
 
-Lemma seqn_pred WF y i (Ey : E y) (LE : i < seqn y) : 
-  exists x, 
-    ⟪ SBxy : sb x y ⟫ /\ 
-    ⟪ STIDxy : same_tid x y ⟫ /\ 
-    ⟪ SEQNx : seqn x = i ⟫. 
-Proof. admit. Admitted.
+Lemma seqn_init WF y (Ey : Einit y) : seqn y = 0.
+Proof.
+  unfold seqn.
+  arewrite (⦗Tid (tid y)⦘ ⨾ sb ⨾ ⦗eq y⦘ ≡ ∅₂).
+  2: { rels. apply countNatP_empty. }
+  split; [|basic_solver].
+  arewrite (eq y ⊆₁ Einit) by (intros x HH; desf).
+  rewrite sb_ninit; auto.
+  rels.
+Qed.
 
 Lemma seqn_immsb WF x y 
       (STID : same_tid x y)
@@ -860,6 +866,69 @@ Proof.
   assert (seqn y < seqn x) as HH; [|omega]. 
   eapply seqn_sb_alt; eauto.
 Qed.
+
+Lemma E_alt : E ≡₁ fun x => List.In x (first_nat_list S.(next_act)).
+Proof. red; split; red; apply first_nat_list_In_alt. Qed.
+
+Lemma sb_well_founded WF : well_founded sb.
+Proof.
+  apply fsupp_well_founded.
+  3: by apply WF.(sb_trans).
+  2: by apply WF.(sb_irr).
+  red. ins.
+  eexists. intros. apply E_alt.
+  apply WF.(sbE) in REL. by destruct_seq_l REL as XX.
+Qed.
+
+Lemma sb_transp_well_founded WF : well_founded sb⁻¹.
+Proof.
+  apply fsupp_well_founded.
+  3: { apply transitive_transp. by apply WF.(sb_trans). }
+  2: { red. intros x HH. red in HH. eapply WF.(sb_irr); eauto. }
+  red. ins.
+  eexists. intros. apply E_alt.
+  apply WF.(sbE) in REL. by destruct_seq REL as [YY XX].
+Qed.
+
+Lemma sb_imm_split_r WF : sb ≡ sb^? ;; immediate sb.
+Proof.
+  split.
+  2: { generalize WF.(sb_trans). basic_solver. }
+  intros x y SB.
+  assert (exists z, immediate sb z y) as [z IMM].
+  { edestruct wf_imm_succ as [w [HH AA]].
+    { by apply sb_transp_well_founded. }
+    { eauto. }
+    eexists. split.
+    { apply HH. }
+    intros. eapply AA; red; eauto. }
+  eexists. split; [|by eauto].
+  (* via sb_ncf_tot *)
+Admitted.
+
+Lemma seqn_pred WF y i (Ey : E y) (LT : i < seqn y) : 
+  exists x, 
+    ⟪ SBxy : sb x y ⟫ /\ 
+    ⟪ STIDxy : same_tid x y ⟫ /\ 
+    ⟪ SEQNx : seqn x = i ⟫. 
+Proof.
+  (* set (EE := Ey). *)
+  (* apply WF.(seqn_after_null) in EE. *)
+  (* destruct EE as [z EE]. destruct_seq_l EE as Z0. destruct EE as [[|SB] TT]; subst. *)
+  (* { omega. } *)
+
+
+
+  (* unfold seqn. *)
+
+  (* remember (seqn y) as SY. *)
+  (* generalize dependent y. *)
+  (* induction SY. *)
+  (* { inv LT. } *)
+  (* inversion LT; subst. *)
+  (* unfold seqn in LT. *)
+
+admit. Admitted.
 
 End EventStructure.
 End ES.
