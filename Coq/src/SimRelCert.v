@@ -830,6 +830,7 @@ Section SimRelCertLemmas.
 
       { (* no hb to Einit *)
         admit. }
+      
       destruct KCF as [CF | SB].
 
       { destruct CF as [z HX]. 
@@ -844,10 +845,40 @@ Section SimRelCertLemmas.
         unfolder in HY. desf.
         eapply hb_trans; eauto. 
         eapply sb_in_hb; eauto. }
-      
-      admit. }
 
-  Admitted.
+      eapply coh; [apply SRCC|].
+      unfolder. 
+      exists x. split; [| by left].
+      eapply hb_trans; eauto.
+      unfolder in KSB. unfolder in SB. desf.
+      { by eapply sb_in_hb. }
+      eapply hb_trans; eapply sb_in_hb; eauto. }
+
+    all : erewrite ESstep.load_step_rf, SSJF'; eauto.
+    all : rewrite inclusion_minus_rel.
+    all : relsf.
+    all : rewrite !irreflexive_union; splits.
+    all : try by (eapply empty_irr; ESstep.eq_empty; ESstep.step_solver).
+
+    { intros x HH.
+      unfolder in HH. 
+      eapply cfk_hdom; eauto.
+      split; [|basic_solver].
+      eapply release_ew_hhdom; eauto.
+      unfolder. basic_solver 10. }
+
+    intros x HH. 
+    unfolder in HH. 
+    eapply cfk_hdom; eauto.
+    split; [|basic_solver].
+    eapply hb_hhdom; eauto.
+    destruct HH as [z [HB HH]].
+    unfolder. do 2 eexists; splits; eauto.
+    eapply release_ew_hhdom; eauto.
+    unfolder. basic_solver 10. 
+
+  Admitted.    
+
 
   Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
