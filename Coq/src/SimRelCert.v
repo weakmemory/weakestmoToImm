@@ -802,8 +802,12 @@ Section SimRelCertLemmas.
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
+
     erewrite ESstep.load_step_hb; eauto. 
     erewrite ESstep.basic_step_nupd_cf; eauto. 
+    erewrite ESstep.load_step_rf; eauto.
+    rewrite SSJF'. 
+    rewrite inclusion_minus_rel.
     rewrite crE, csE. relsf.
     rewrite !seqA.
     rewrite !irreflexive_union.
@@ -853,12 +857,6 @@ Section SimRelCertLemmas.
       unfolder in KSB. unfolder in SB. desf.
       { by eapply sb_in_hb. }
       eapply hb_trans; eapply sb_in_hb; eauto. }
-
-    all : erewrite ESstep.load_step_rf, SSJF'; eauto.
-    all : rewrite inclusion_minus_rel.
-    all : relsf.
-    all : rewrite !irreflexive_union; splits.
-    all : try by (eapply empty_irr; ESstep.eq_empty; ESstep.step_solver).
 
     { intros x HH.
       unfolder in HH. 
