@@ -10,7 +10,7 @@ Section Consistency.
 Variable S : ES.t.
 
 Notation "'E'" := S.(ES.acts_set).
-Notation "'E_init'" := S.(ES.acts_init_set).
+Notation "'Einit'" := S.(ES.acts_init_set).
 
 Notation "'lab'" := S.(ES.lab).
 
@@ -140,6 +140,20 @@ Proof.
   repeat unionR left. basic_solver 10.
 Qed.
 
+Lemma ecf_sym : symmetric ecf.
+Proof. 
+  unfold ecf, seq.
+  intros a b [c [HB [d [CF tHB]]]].
+  eexists. split. 
+  { apply transp_cr in tHB. 
+    unfold transp in tHB.
+    apply tHB. }
+  eexists. split. 
+  { eapply ES.cf_sym. eauto. }
+  apply transp_cr in HB.
+  by unfold transp in HB.
+Qed.
+
 Lemma hb_trans : transitive hb.
 Proof. vauto. Qed.
 
@@ -156,8 +170,37 @@ Lemma cr_hb_cr_hb : hb^? ⨾ hb^? ≡ hb^?.
 Proof. generalize hb_trans; basic_solver 20. Qed.
 
 Lemma hb_sb_sw : hb ≡ hb^? ⨾ (sb ∪ sw).
-Proof.
-unfold hb; rewrite ct_end at 1; rels.
+Proof. unfold hb; rewrite ct_end at 1; rels. Qed.
+
+Lemma sw_ninit : sw ⨾ ⦗Einit⦘ ≡ ∅₂. 
+Proof. 
+  split; [|done].
+  unfold sw.
+  rewrite crE. relsf.
+  unionL. 
+  { rewrite ES.rfD; auto.
+    rewrite ES.acts_init_set_inW; auto.
+    type_solver. }
+  rewrite !seqA.
+  arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗Einit⦘ ≡ sb ⨾ ⦗Einit⦘ ⨾ ⦗F⦘ ⨾ ⦗Acq⦘).
+  { basic_solver. }
+  rewrite <- seqA with (r1 := sb). 
+  rewrite ES.sb_ninit; auto.
+  basic_solver.
+Qed.  
+
+Lemma hb_ninit : hb ⨾ ⦗Einit⦘ ≡ ∅₂. 
+Proof. 
+  split; [|done].
+  unfold hb.
+  rewrite seq_eqv_r.
+  intros x y [TC INIT].
+  induction TC; [|intuition]. 
+  destruct H as [SB | SW].
+  { eapply ES.sb_ninit; eauto.
+    apply seq_eqv_r; eauto. }
+  eapply sw_ninit; auto.
+  apply seq_eqv_r; eauto.
 Qed.
 
 Lemma rf_in_eco (m' : model) : rf ⊆ eco m'.
@@ -415,6 +458,57 @@ Qed.
 (******************************************************************************)
 (** ** Alternative representations of properties *)
 (******************************************************************************)
+
+Lemma ecf_irr_hb_cf_irr : irreflexive ecf -> irreflexive (hb ⨾ cf). 
+Proof. 
+  unfold ecf.
+  rewrite !crE. relsf. 
+  unfold irreflexive. 
+  intros ECFIRR x HH. 
+  destruct HH as [y [HB CF]].
+  eapply ECFIRR.
+  left. right.
+  unfold transp. 
+  eexists; split; eauto. 
+  by apply ES.cf_sym. 
+Qed.
+
+Lemma ecf_irr_thb_cf_hb_irr : irreflexive ecf -> irreflexive (hb⁻¹ ⨾ cf ⨾ hb). 
+Proof. 
+  unfold ecf.
+  rewrite !crE. relsf. 
+  unfold irreflexive. 
+  intros ECFIRR x HH. 
+  destruct HH as [y [THB [z [CF HB]]]].
+  eapply ECFIRR.
+  right. right.
+  unfold seq.
+  exists y; split; eauto.
+Qed.
+
+Lemma ecf_irr_alt : 
+  irreflexive ecf <-> irreflexive (hb ⨾ cf) /\  irreflexive (hb⁻¹ ⨾ cf ⨾ hb).
+Proof. 
+  split. 
+  { ins. split. 
+    { by apply ecf_irr_hb_cf_irr. }
+    by apply ecf_irr_thb_cf_hb_irr. }
+  unfold ecf. rewrite !crE. relsf.
+  unfold irreflexive.
+  intros [HBCF THBCFHB].
+  unfold union. 
+  ins; desf.
+  { eapply ES.cf_irr. eauto. }
+  { destruct H as [y [HB CF]].
+    unfold transp in HB.
+    eapply HBCF. 
+    apply ES.cf_sym in CF.
+    unfold seq. eauto. }
+  { destruct H as [y [CF HB]].
+    eapply HBCF. 
+    unfold seq. eauto. }
+  eapply THBCFHB. eauto. 
+Qed.
 
 Lemma jf_necf_jf_ncf : jf ∩ ecf ≡ ∅₂ -> jf ∩ cf ≡ ∅₂.
 Proof. 

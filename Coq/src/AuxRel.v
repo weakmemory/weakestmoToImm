@@ -178,6 +178,9 @@ Proof. basic_solver. Qed.
 Lemma eq_opt_noneE : eq_opt (None : option A) ≡₁ ∅.
 Proof. basic_solver. Qed. 
 
+Lemma empty_irr : r ≡ ∅₂ -> irreflexive r. 
+Proof. basic_solver. Qed.
+
 Lemma set_subset_union_minus : s ⊆₁ s \₁ s' ∪₁ s'. 
 Proof. 
   by unfold set_minus, set_union, set_subset; clear; intros; tauto.
