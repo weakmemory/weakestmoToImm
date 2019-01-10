@@ -1646,4 +1646,38 @@ Proof.
   all : by step_solver.
 Qed.
 
+Lemma load_step_hb_dom e e' S S'
+      (BSTEP : t_basic e e' S S')
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) : 
+  dom_rel (hb S') ⊆₁ E S.
+Proof. 
+  cdes BSTEP. cdes BSTEP_. cdes LSTEP. cdes AJF.
+  rewrite load_step_hb; eauto.
+  rewrite releaseE, hbE; auto.
+  rewrite ES.cont_sb_domE; eauto.
+  basic_solver.
+Qed.  
+
+Lemma load_step_hb_seq_E e e' S S' 
+      (BSTEP : t_basic e e' S S')
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) :
+  hb S' ⨾ ⦗E S⦘ ≡ hb S.
+Proof. 
+  cdes BSTEP. cdes BSTEP_. cdes LSTEP. cdes AJF.
+  rewrite load_step_hb; eauto.
+  rewrite seq_union_l, !seqA.
+  arewrite (
+      (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘) ⨾ ⦗E S⦘ ≡ ∅₂
+  ). 
+ { split; [|done]. 
+   rewrite load_step_rf; eauto.
+   rewrite basic_step_cf; eauto.
+   rewrite JF'.
+   step_solver. }
+  rewrite hbE; auto.
+  basic_solver 20.
+Qed.
+
 End ESstep.
