@@ -45,6 +45,12 @@ Section AuxRel.
 
   Definition prefix_clos := 
     forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
+  
+  Fixpoint repeat_rel n (r : relation A) :=
+    match n with
+    | 0   => eq 
+    | S m => r ;; repeat_rel m r
+    end.
 End AuxRel.
 
 Notation "⊤₁" := set_full.
@@ -767,6 +773,41 @@ Proof.
   eapply TRANS; eauto. 
   by apply immediate_in.
 Qed. 
+
+Lemma repeat_in_crt n : repeat_rel n r ⊆ r^*.
+Proof.
+  induction n; simpls.
+  { basic_solver. }
+  rewrite IHn. arewrite (r ⊆ r^*).
+  apply rewrite_trans.
+  apply transitive_rt.
+Qed.
+
+Lemma repeat_in_ct n (HH : n <> 0) : repeat_rel n r ⊆ r⁺.
+Proof.
+  induction n; simpls.
+  rewrite repeat_in_crt.
+  apply ct_begin.
+Qed.
+
+Lemma repeat_split m n p (SUM : m = n + p) :
+  repeat_rel m r ≡ repeat_rel n r ;; repeat_rel p r.
+Proof.
+  generalize dependent n.
+  generalize p.
+  induction m; ins.
+  { assert (n = 0); subst.
+    { destruct n; auto.
+      inv SUM. }
+    simpls; subst.
+    simpls. basic_solver. }
+  destruct n; subst; simpls.
+  { destruct p0; subst; simpls.
+    inv SUM. arewrite (r ≡ eq ⨾ r).
+    all: basic_solver. }
+  inv SUM. rewrite seqA.
+  rewrite IHm; eauto.
+Qed.
 
 End Props.
 

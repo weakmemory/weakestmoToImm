@@ -943,12 +943,23 @@ Proof.
   eapply IMM; eauto.
 Qed.
 
+Lemma sb_clos_imm_split WF : sb ≡ (immediate sb)⁺.
+Proof.
+  eapply ct_imm1.
+  { apply WF.(sb_irr). }
+  { apply WF.(sb_trans). }
+  rewrite (dom_l WF.(sbE)).
+  rewrite dom_seq, dom_eqv, E_alt.
+  reflexivity.
+Qed.
+
 Lemma seqn_pred WF y i (Ey : E y) (LT : i < seqn y) : 
   exists x, 
     ⟪ SBxy : sb x y ⟫ /\ 
     ⟪ STIDxy : same_tid x y ⟫ /\ 
     ⟪ SEQNx : seqn x = i ⟫. 
 Proof.
+
   (* set (EE := Ey). *)
   (* apply WF.(seqn_after_null) in EE. *)
   (* destruct EE as [z EE]. destruct_seq_l EE as Z0. destruct EE as [[|SB] TT]; subst. *)
