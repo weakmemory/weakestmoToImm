@@ -176,6 +176,10 @@ Record Wf :=
       ` forall X (NCF : cf_free S X), 
           is_total (E ∩₁ X) (sb ∩ same_tid); `
      *)
+    
+    (* PROBLEM: It looks like this property doesn't
+       hold since events to different threads are neither
+       related by cf or sb. *)
     sb_ncf_tot :
       forall X (inclE : X ⊆₁ E) (NCF : cf_free S X), 
         is_total X (sb ∩ same_tid); 
