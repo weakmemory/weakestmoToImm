@@ -235,8 +235,16 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma acts_init_set_inW WF : Einit ⊆₁ W.
+Proof. 
+  intros x INIT.
+  apply init_lab in INIT; auto.
+  desf. unfold is_w. by rewrite INIT.
+Qed.
+
 Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
 Proof. unfold ES.acts_ninit_set. basic_solver. Qed.
+
 
 (******************************************************************************)
 (** ** same_tid properites *)

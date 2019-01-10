@@ -832,8 +832,8 @@ Section SimRelCertLemmas.
       unfold ES.cont_sb_dom, ES.cont_cf_dom in KSB, KCF.
       destruct k.
 
-      { (* no hb to Einit *)
-        admit. }
+      { eapply hb_ninit; [apply WFS|].
+        apply seq_eqv_r. eauto. }
       
       destruct KCF as [CF | SB].
 

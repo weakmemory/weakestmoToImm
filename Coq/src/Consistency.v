@@ -10,7 +10,7 @@ Section Consistency.
 Variable S : ES.t.
 
 Notation "'E'" := S.(ES.acts_set).
-Notation "'E_init'" := S.(ES.acts_init_set).
+Notation "'Einit'" := S.(ES.acts_init_set).
 
 Notation "'lab'" := S.(ES.lab).
 
@@ -156,8 +156,37 @@ Lemma cr_hb_cr_hb : hb^? ⨾ hb^? ≡ hb^?.
 Proof. generalize hb_trans; basic_solver 20. Qed.
 
 Lemma hb_sb_sw : hb ≡ hb^? ⨾ (sb ∪ sw).
-Proof.
-unfold hb; rewrite ct_end at 1; rels.
+Proof. unfold hb; rewrite ct_end at 1; rels. Qed.
+
+Lemma sw_ninit : sw ⨾ ⦗Einit⦘ ≡ ∅₂. 
+Proof. 
+  split; [|done].
+  unfold sw.
+  rewrite crE. relsf.
+  unionL. 
+  { rewrite ES.rfD; auto.
+    rewrite ES.acts_init_set_inW; auto.
+    type_solver. }
+  rewrite !seqA.
+  arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗Einit⦘ ≡ sb ⨾ ⦗Einit⦘ ⨾ ⦗F⦘ ⨾ ⦗Acq⦘).
+  { basic_solver. }
+  rewrite <- seqA with (r1 := sb). 
+  rewrite ES.sb_ninit; auto.
+  basic_solver.
+Qed.  
+
+Lemma hb_ninit : hb ⨾ ⦗Einit⦘ ≡ ∅₂. 
+Proof. 
+  split; [|done].
+  unfold hb.
+  rewrite seq_eqv_r.
+  intros x y [TC INIT].
+  induction TC; [|intuition]. 
+  destruct H as [SB | SW].
+  { eapply ES.sb_ninit; eauto.
+    apply seq_eqv_r; eauto. }
+  eapply sw_ninit; auto.
+  apply seq_eqv_r; eauto.
 Qed.
 
 Lemma rf_in_eco (m' : model) : rf ⊆ eco m'.
