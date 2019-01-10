@@ -48,6 +48,7 @@ Section SimRelProps.
   Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Shb'" := (S.(Consistency.hb)).
+  Notation "'Secf'" := (S.(Consistency.ecf)).
 
   Notation "'g'" := (e2a S). 
 
@@ -668,6 +669,33 @@ Section SimRelProps.
       rewrite seq_union_l, dom_union. unionL.
       2: by eapply sb_hdom_dom; eauto.
       rewrite C_in_hdom. basic_solver.
+    Qed.
+
+    Lemma hb_release_ew_hhdom : 
+      dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
+    Proof. 
+      rewrite crE with (r := Shb). 
+      relsf. split. 
+      { apply release_ew_hhdom. }
+      intros x [y [z [HB REL]]].
+      eapply hb_hhdom. 
+      eexists. apply seq_eqv_r. split; eauto.
+      apply release_ew_hhdom. basic_solver.
+    Qed.
+
+    Lemma himg_necf : 
+      restr_rel (h □₁ hdom) Secf ⊆ ∅₂.
+    Proof. 
+      unfold restr_rel, ecf. 
+      intros a b [ECF [Hx Hy]].
+      destruct ECF as [c [tHB [d [CF HB]]]].
+      eapply himgNcf; eauto. 
+      apply restr_relE. unfold restr_rel.
+      splits; eauto. 
+      { unfolder in tHB; desf. 
+        eapply hb_hhdom. basic_solver 10. }
+      unfolder in HB; desf. 
+      eapply hb_hhdom. basic_solver 10.
     Qed.
    
   End SimRelCertProps. 

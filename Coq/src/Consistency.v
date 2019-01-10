@@ -140,6 +140,20 @@ Proof.
   repeat unionR left. basic_solver 10.
 Qed.
 
+Lemma ecf_sym : symmetric ecf.
+Proof. 
+  unfold ecf, seq.
+  intros a b [c [HB [d [CF tHB]]]].
+  eexists. split. 
+  { apply transp_cr in tHB. 
+    unfold transp in tHB.
+    apply tHB. }
+  eexists. split. 
+  { eapply ES.cf_sym. eauto. }
+  apply transp_cr in HB.
+  by unfold transp in HB.
+Qed.
+
 Lemma hb_trans : transitive hb.
 Proof. vauto. Qed.
 
