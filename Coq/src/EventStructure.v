@@ -837,7 +837,7 @@ Proof.
   erewrite trans_prcl_immediate_seqr_split with (y := y). 
   all: eauto using inter_trans, sb_trans, same_tid_trans, sb_prcl. 
   rewrite dom_cross.
-  2 : { red. basic_solver. }
+  2: { red. basic_solver. }
   rewrite countNatP_union.
   { eapply Nat.add_wd; auto. 
     eapply countNatP_eq.
@@ -890,6 +890,26 @@ Proof.
   apply WF.(sbE) in REL. by destruct_seq REL as [YY XX].
 Qed.
 
+Lemma sb_dom_cf_free WF y : cf_free S (dom_rel (sb ⨾ ⦗eq y⦘)).
+Proof.
+  red. unfolder. ins; desf.
+  apply H7.
+  destruct (classic (z1 = y0)) as [|NEQ]; subst.
+  { by left. }
+  right.
+  (* PROBLEM: to prove it, one needs to use sb_ncf_tot,
+     which requires the statement we are working on.
+     
+     A possible solution is to move the statement to Wf and
+     prove sb_ncf_tot as a lemma using sb_dom_cf_free
+     (and probably smth else). *)
+
+  (* edestruct WF.(sb_ncf_tot) with (X := dom_rel (sb ;; <| eq y2 |>)) *)
+  (*   as [AA|AA]. *)
+  (* 5: by eauto. *)
+  (* { rewrite WF.(sbE). basic_solver. } *)
+Admitted.
+
 Lemma sb_imm_split_r WF : sb ≡ sb^? ;; immediate sb.
 Proof.
   split.
@@ -903,8 +923,18 @@ Proof.
     { apply HH. }
     intros. eapply AA; red; eauto. }
   eexists. split; [|by eauto].
-  (* via sb_ncf_tot *)
-Admitted.
+  destruct (classic (x = z)) as [|NEQ]; subst.
+  { by constructor. }
+  edestruct WF.(sb_ncf_tot) with (X := dom_rel (sb ;; <| eq y |>))
+    as [AA|AA].
+  5: by eauto.
+  { rewrite WF.(sbE). basic_solver. }
+  { apply sb_dom_cf_free. }
+  { eexists. apply seq_eqv_r. split; eauto. }
+  { eexists. apply seq_eqv_r. split; eauto. apply IMM. }
+  { generalize AA. basic_solver. }
+  exfalso. eapply IMM; eauto. apply AA.
+Qed.
 
 Lemma seqn_pred WF y i (Ey : E y) (LT : i < seqn y) : 
   exists x, 
