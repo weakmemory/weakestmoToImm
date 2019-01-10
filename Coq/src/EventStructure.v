@@ -172,17 +172,8 @@ Record Wf :=
     sb_trans   : transitive sb;
     sb_prcl    : prefix_clos (sb ∩ same_tid);
 
-    (* TODO: It might be more convenient to state it like this:
-      ` forall X (NCF : cf_free S X), 
-          is_total (E ∩₁ X) (sb ∩ same_tid); `
-     *)
-    
-    (* PROBLEM: It looks like this property doesn't
-       hold since events to different threads are neither
-       related by cf or sb. *)
-    sb_ncf_tot :
-      forall X (inclE : X ⊆₁ E) (NCF : cf_free S X), 
-        is_total X (sb ∩ same_tid); 
+    sb_tot : forall e (EE : E e),
+        is_total (dom_rel (sb ;; <| eq e |>) \₁ Einit) sb; 
 
     seqn_after_null : E ⊆₁ codom_rel (<| fun x => seqn x = 0 |> ;; (sb^? ∩ same_tid));
 
@@ -901,24 +892,25 @@ Proof.
   destruct (classic (z1 = y0)) as [|NEQ]; subst.
   { by left. }
   right.
-  (* PROBLEM: to prove it, one needs to use sb_ncf_tot,
-     which requires the statement we are working on.
-     
-     A possible solution is to move the statement to Wf and
-     prove sb_ncf_tot as a lemma using sb_dom_cf_free
-     (and probably smth else). *)
-
-  (* edestruct WF.(sb_ncf_tot) with (X := dom_rel (sb ;; <| eq y2 |>)) *)
-  (*   as [AA|AA]. *)
-  (* 5: by eauto. *)
-  (* { rewrite WF.(sbE). basic_solver. } *)
-Admitted.
+  edestruct WF.(sb_tot) with (e := y2) as [AA|AA].
+  4: by eauto.
+  { apply WF.(sbE) in H. generalize H. basic_solver. }
+  1,2: split; [eexists; apply seq_eqv_r; eauto|]; auto.
+  { apply H8. }
+  { apply H6. }
+  all: intuition.
+Qed.
 
 Lemma sb_imm_split_r WF : sb ≡ sb^? ;; immediate sb.
 Proof.
   split.
   2: { generalize WF.(sb_trans). basic_solver. }
   intros x y SB.
+  destruct (classic (exists w, sb x w /\ sb w y))
+    as [[p [SBL SBR]]|NN].
+  2: { exists x. split; [by constructor|].
+       split; auto. ins.
+       apply NN. eexists. eauto. }
   assert (exists z, immediate sb z y) as [z IMM].
   { edestruct wf_imm_succ as [w [HH AA]].
     { by apply sb_transp_well_founded. }
@@ -927,17 +919,28 @@ Proof.
     { apply HH. }
     intros. eapply AA; red; eauto. }
   eexists. split; [|by eauto].
-  destruct (classic (x = z)) as [|NEQ]; subst.
+  destruct (classic (p = z)) as [|NEQ]; subst.
   { by constructor. }
-  edestruct WF.(sb_ncf_tot) with (X := dom_rel (sb ;; <| eq y |>))
-    as [AA|AA].
-  5: by eauto.
-  { rewrite WF.(sbE). basic_solver. }
-  { apply sb_dom_cf_free. }
-  { eexists. apply seq_eqv_r. split; eauto. }
-  { eexists. apply seq_eqv_r. split; eauto. apply IMM. }
-  { generalize AA. basic_solver. }
-  exfalso. eapply IMM; eauto. apply AA.
+
+  assert (E p) as EP.
+  { apply WF.(sbE) in SBR. generalize SBR. basic_solver. }
+  assert (~ Einit p) as NIP.
+  { intros HH. eapply WF.(sb_ninit).
+    apply seq_eqv_r. eauto. }
+
+  assert (~ Einit z) as NIZ.
+  { intros HH. eapply IMM.
+    2: by apply SBR.
+    apply sb_init; auto. repeat (split; auto). }
+  
+  edestruct WF.(sb_tot) with (e := y) as [AA|AA].
+  4: by eauto.
+  { apply WF.(sbE) in SB. generalize SB. basic_solver. }
+  1,2: split; [eexists; apply seq_eqv_r; eauto|]; auto.
+  { by split; eauto; apply IMM. }
+  { right. eapply WF.(sb_trans); eauto. }
+  exfalso.
+  eapply IMM; eauto.
 Qed.
 
 Lemma seqn_pred WF y i (Ey : E y) (LT : i < seqn y) : 
