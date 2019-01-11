@@ -134,21 +134,24 @@ Section EventToAction.
         (WF : ES.Wf S) :
     e2a □ Ssb ⊆ ext_sb.
   Proof.
-    rewrite WF.(ES.sb_Einit_Eninit). relsf.
-    unionL.
+    rewrite WF.(ES.sb_Einit_Eninit). 
+    rewrite <- WF.(ES.sb_seq_Eninit_l).
+    relsf. unionL.
     { rewrite e2a_Einit, e2a_Eninit; auto.
       etransitivity; [|by apply initninit_in_ext_sb].
       basic_solver. }
     unfold e2a.
     rewrite collect_rel_if_else.
-    2,3: unfold ES.acts_ninit_set; basic_solver.
+    2,3 : 
+      rewrite WF.(ES.sb_seq_Eninit_l);
+      unfold ES.acts_ninit_set; basic_solver.
     intros x y HH. red in HH. desf. red.
     assert (Stid x' = Stid y') as TT.
     { by apply WF.(ES.sb_tid). }
     rewrite TT.
     splits; auto.
     eapply ES.seqn_sb_alt; auto.
-    apply seq_eqv_lr in HH; desf. 
+    apply seq_eqv_l in HH; desf. 
   Qed.
 
   Lemma e2a_sb 
