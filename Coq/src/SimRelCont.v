@@ -163,7 +163,7 @@ Section SimRelCont.
         apply ES.sb_Einit_Eninit in SB; auto.
         destruct SB as [AA | BB].
         { unfolder in AA. intuition. }
-          by apply ES.sb_tid. }
+          apply ES.sb_tid; auto. generalize BB. basic_solver. }
       unfold acts_set. eapply acts_clos. 
       { arewrite (Stid e = Stid eid).
         arewrite (Stid eid = ES.cont_thread S (CEvent eid)).
@@ -509,4 +509,4 @@ Section SimRelContLemmas.
   (*   all: admit.  *)
   (* Admitted.  *)
 
-End SimRelContLemmas.   
+End SimRelContLemmas.

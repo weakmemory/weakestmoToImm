@@ -144,7 +144,7 @@ Section EventToAction.
     2,3: unfold ES.acts_ninit_set; basic_solver.
     intros x y HH. red in HH. desf. red.
     assert (Stid x' = Stid y') as TT.
-    { by apply WF.(ES.sb_tid). }
+    { apply WF.(ES.sb_tid). generalize HH. basic_solver. }
     rewrite TT.
     splits; auto.
     eapply ES.seqn_sb_alt; auto.
