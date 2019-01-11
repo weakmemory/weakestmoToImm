@@ -961,6 +961,45 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma seqn_after_null_imm WF y (EE : Eninit y) :
+  exists x,
+    ⟪ EX   : Eninit x ⟫ /\
+    ⟪ SEQX : seqn x = 0 ⟫ /\
+    ⟪ IMM  : (immediate sb) ^^ (seqn y) x y ⟫.
+Proof.
+  remember (seqn y) as n.
+  generalize dependent y.
+  induction n.
+  { ins. exists y. splits; auto. done. }
+  ins.
+  destruct EE as [EE NIY].
+  set (EI := EE).
+  apply seqn_after_null in EI; auto.
+  destruct EI as [x EI]. destruct_seq_l EI as SX.
+  destruct EI as [[|SB] AA]; subst.
+  { rewrite SX in *. desf. }
+  apply WF.(sb_imm_split_r) in SB.
+  destruct SB as [z [[|SB] IMM]]; subst.
+  { set (BB := IMM).
+    apply WF.(seqn_immsb) in BB; auto.
+    rewrite SX in *. rewrite <- Heqn in *.
+    inv BB. simpls.
+    exists z. splits; auto.
+    2: { generalize IMM. basic_solver. }
+    admit. (* follows from AA *) }
+  assert (Eninit z) as NIZ.
+  { apply WF.(sb_Einit_Eninit) in SB.
+    generalize SB. basic_solver. }
+  assert (same_tid z y) as ST.
+  { admit. }
+  set (BB := IMM).
+  apply WF.(seqn_immsb) in BB; auto.
+  rewrite <- Heqn in *. inv BB.
+  specialize_full IHn; eauto.
+  desf. exists x0. splits; eauto.
+  eexists. splits; eauto.
+Admitted.
+
 Lemma seqn_pred WF y i (Ey : E y) (LT : i < seqn y) : 
   exists x, 
     ⟪ SBxy : sb x y ⟫ /\ 
