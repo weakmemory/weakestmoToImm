@@ -1000,11 +1000,49 @@ Proof.
   eexists. splits; eauto.
 Admitted.
 
-Lemma seqn_pred WF y i (Ey : E y) (LT : i < seqn y) : 
+Lemma seqn_pred_imm WF n y (EE : Eninit y)
+      (SS : seqn y = 1 + n) :
+  exists x,
+    ⟪ EX   : Eninit x ⟫ /\
+    ⟪ SEQX : seqn x = n ⟫ /\
+    ⟪ IMM  : immediate sb x y ⟫.
+Proof.
+  edestruct seqn_after_null_imm; eauto. desf.
+  rewrite SS in IMM. simpls.
+  destruct IMM as [z [IMMs IMM]].
+  assert (Eninit z) as BB.
+  { admit. }
+  assert (same_tid z y) as AA.
+  { admit. }
+  exists z. splits; eauto.
+  assert (seqn y = 1 + seqn z) as HH.
+  2: { rewrite SS in HH. inv HH. }
+  apply seqn_immsb; auto.
+Admitted.
+
+Lemma seqn_pred_imm_i WF i n y (EE : Eninit y)
+      (SS : seqn y = i + n) :
+  exists x,
+    ⟪ EX   : Eninit x ⟫ /\
+    ⟪ SEQX : seqn x = n ⟫ /\
+    ⟪ IMM  : (immediate sb) ^^ i x y ⟫.
+Proof.
+  generalize dependent n.
+  generalize dependent y.
+  induction i.
+  { ins. exists y. splits; auto. done. }
+  ins.
+  edestruct seqn_pred_imm; eauto. desf.
+  eapply IHi in SEQX; eauto. desf.
+  exists x0. splits; eauto.
+  eexists. eauto.
+Qed.
+
+Lemma seqn_pred WF y n (Ey : E y) (LT : n < seqn y) : 
   exists x, 
     ⟪ SBxy : sb x y ⟫ /\ 
     ⟪ STIDxy : same_tid x y ⟫ /\ 
-    ⟪ SEQNx : seqn x = i ⟫. 
+    ⟪ SEQNx : seqn x = n ⟫. 
 Proof.
 
   (* set (EE := Ey). *)
