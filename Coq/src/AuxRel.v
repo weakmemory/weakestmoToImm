@@ -59,7 +59,7 @@ Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 
 Hint Unfold 
      clos_sym clos_refl_sym 
-     inj_dom_s inj_dom
+     inj_dom_s inj_dom restr_fun
      img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
@@ -180,6 +180,12 @@ Proof. basic_solver. Qed.
 
 Lemma empty_irr : r ≡ ∅₂ -> irreflexive r. 
 Proof. basic_solver. Qed.
+
+Lemma restr_fun_fst x : s x -> restr_fun s f g x = f x. 
+Proof. clear. unfolder. basic_solver. Qed.
+
+Lemma restr_fun_snd x : ~ s x -> restr_fun s f g x = g x. 
+Proof. clear. unfolder. basic_solver. Qed.
 
 Lemma set_subset_union_minus : s ⊆₁ s \₁ s' ∪₁ s'. 
 Proof. 
@@ -343,6 +349,18 @@ Proof.
   unfolder. unfold compose.
   ins; splits; ins; splits; desf; eauto.
   do 2 eexists. splits; eauto.
+Qed.
+
+Lemma set_collect_restr_fun : 
+  s' ⊆₁ s -> (restr_fun s f g) □₁ s' ≡₁ f □₁ s'.
+Proof. 
+  clear.
+  unfolder. ins. split. 
+  all : 
+    ins; desc; 
+    eexists; split; eauto; 
+    destruct (excluded_middle_informative (s y)); 
+    eauto; exfalso; intuition. 
 Qed.
 
 Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
