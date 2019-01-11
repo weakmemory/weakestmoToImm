@@ -203,16 +203,25 @@ Section SimRelCertLemmas.
     (* all: basic_solver. *)
   Admitted.
 
+  (* Lemma upds_backward {A} {B} (fn : A -> B) a b x (fnb : forall y, fn y = b -> a = y) : *)
+  (*   upd fn a b x = b -> a = x. *)
+  (* Proof. *)
+  (*   clear prog S G GPROG TC sc f. *)
+  (*   unfold upd. ins. *)
+  (*   destruct (excluded_middle_informative (x = a)); auto. *)
+  (* Qed. *)
+
   Lemma basic_step_simrel_a2e_h TC' h k k' e e' S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
     let h' := 
-        restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act))
+      restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act)) 
     in
     let h'' := upd_opt (upd h' (e2a S' e) e) (option_map (e2a S') e') e' in 
     simrel_a2e S' h'' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof. 
+    cdes BSTEP_. 
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor. eauto. }
 
@@ -249,7 +258,50 @@ Section SimRelCertLemmas.
     constructor.
     
     (* a2e_inj *)
-    { admit. }
+    { eapply inj_dom_s_union; 
+        [eapply inj_dom_s_union|].
+      { (* follows by induction *)
+        admit. }
+      { red. ins. subst y. 
+        rewrite updo_opt with (x := (e2a S' e)) in EQ; auto. 
+        rewrite upds in EQ.
+        assert (~ eq_opt (option_map (e2a S') e') x) as Hxe'.
+        { red. unfold eq_opt, upd_opt, option_map in *. 
+          ins. destruct e'; auto. 
+          subst x. rewrite upds in EQ.
+          exfalso. unfold opt_ext in *. omega. }
+        rewrite updo_opt in EQ; auto. 
+        unfold upd, restr_fun in EQ.
+        destruct (excluded_middle_informative (x = e2a S' e)); auto. 
+        destruct 
+            (excluded_middle_informative (cert_dom G TC (ES.cont_thread S' k') st' x))
+            as [DOMx | nDOMx].
+        { eapply basic_step_cert_dom in DOMx; eauto.
+          2-4 : apply SRCC. 
+          unfold set_union in DOMx. des; auto. 
+          { (* h x <> e forall x in cert_dom *)
+            admit. } 
+          exfalso. auto. }
+        exfalso. unfold opt_ext in *. destruct e'; omega. }
+      unfold upd_opt, eq_opt, option_map.      
+      destruct e' as [e'|]. 
+      2 : { basic_solver. }
+      red. ins. subst y. 
+      rewrite upds in EQ.
+      unfold upd, restr_fun in EQ. 
+      destruct (excluded_middle_informative (x = e2a S' e')); auto. 
+      destruct (excluded_middle_informative (x = e2a S' e)); auto. 
+      { cdes BSTEP_. unfold opt_ext in *. exfalso. omega. }
+      destruct 
+        (excluded_middle_informative (cert_dom G TC (ES.cont_thread S' k') st' x))
+        as [DOMx | nDOMx].
+      { eapply basic_step_cert_dom in DOMx; eauto.
+        2-4 : apply SRCC. 
+        unfold set_union in DOMx. des; auto. 
+        { (* h x <> e' forall x in cert_dom *)
+          admit. }
+        exfalso. auto. }
+      cdes BSTEP_. exfalso. unfold opt_ext in *. omega. }
 
     (* a2e_img *)
     { rewrite !set_collect_union.
