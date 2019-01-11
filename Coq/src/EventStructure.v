@@ -801,10 +801,6 @@ Lemma seqn_sb_alt WF x y (STID : same_tid x y) (SB : sb x y) :
   seqn x < seqn y. 
 Proof. eapply seqn_sb; unfolder; eauto 50. Qed.
 
-(* Lemma countNatP_select (s : nat -> Prop) n i j (LT : i < j) (HH : countNatP s n = j) :  *)
-(*   exists x, ⟪ IN : s' ⊆₁ s ⟫ /\ ⟪ CNTX : countNatP s' n = i ⟫. *)
-(* Proof. admit. Admitted. *)
-
 Lemma seqn_init WF y (Ey : Einit y) : seqn y = 0.
 Proof.
   unfold seqn.
@@ -1019,7 +1015,9 @@ Proof.
   { destruct n; simpls.
     { red in IMMs. desf. }
     assert (sb x z) as CC.
-    { admit. }
+    { assert ((immediate sb) ^^ n ⨾ immediate sb ⊆ sb) as DD.
+      2: by apply DD.
+      rewrite pow_rt, <- ct_end. by apply sb_clos_imm_split. }
     apply WF.(sb_seq_Eninit_r) in CC.
     generalize CC. basic_solver. }
   assert (same_tid z y) as AA.
@@ -1029,7 +1027,7 @@ Proof.
   assert (seqn y = 1 + seqn z) as HH.
   2: { rewrite SS in HH. inv HH. }
   apply seqn_immsb; auto.
-Admitted.
+Qed.
 
 Lemma seqn_pred_imm_i WF i n y (EE : Eninit y)
       (SS : seqn y = i + n) :
@@ -1052,27 +1050,26 @@ Qed.
 Lemma seqn_pred WF y n (Ey : E y) (LT : n < seqn y) : 
   exists x, 
     ⟪ SBxy : sb x y ⟫ /\ 
-    ⟪ STIDxy : same_tid x y ⟫ /\ 
-    ⟪ SEQNx : seqn x = n ⟫. 
+    ⟪ SEQNx : seqn x = n ⟫ /\
+    ⟪ STIDxy : same_tid x y ⟫.
 Proof.
-
-  (* set (EE := Ey). *)
-  (* apply WF.(seqn_after_null) in EE. *)
-  (* destruct EE as [z EE]. destruct_seq_l EE as Z0. destruct EE as [[|SB] TT]; subst. *)
-  (* { omega. } *)
-
-
-
-  (* unfold seqn. *)
-
-  (* remember (seqn y) as SY. *)
-  (* generalize dependent y. *)
-  (* induction SY. *)
-  (* { inv LT. } *)
-  (* inversion LT; subst. *)
-  (* unfold seqn in LT. *)
-
-admit. Admitted.
+  assert (exists i, seqn y = i + n) as [i HH].
+  { admit. (* It has to be somewhere in standard library... *) }
+  apply seqn_pred_imm_i in HH; auto.
+  2: { split; auto. intros EI. apply WF.(seqn_init) in EI.
+       rewrite EI in LT. omega. }
+  desf.
+  assert (sb^? x y) as YY.
+  { apply pow_rt in IMM. apply rtE in IMM.
+    destruct IMM as [IMM|IMM]; [left|right].
+    { apply IMM. }
+    apply sb_clos_imm_split; auto. }
+  destruct YY as [|YY]; subst.
+  { omega. }
+  exists x. splits; auto.
+  apply WF.(sb_tid).
+  apply seq_eqv_l. split; auto.
+Admitted.
 
 End EventStructure.
 End ES.
