@@ -207,104 +207,112 @@ Section SimRelCertLemmas.
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
-    let h' := upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e' in 
-    simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st'). 
+    let h' := 
+        restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act))
+    in
+    let h'' := upd_opt (upd h' (e2a S' e) e) (option_map (e2a S') e') e' in 
+    simrel_a2e S' h'' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof. 
     assert (ESstep.t_basic e e' S S') as BSTEP.
     { econstructor. eauto. }
+
+    assert 
+      (~ eq_opt (option_map (e2a S') e') (e2a S' e))
+      as NEQe'.
+    { unfold eq_opt.
+      destruct e' as [e'|]; simpl; red; ins.
+      erewrite basic_step_e2a_e with (e := e) in H; eauto.
+      2-4 : apply SRCC.
+      erewrite basic_step_e2a_e' in H; eauto.
+      2-4 : apply SRCC.
+      inv H. omega. }
+
+    assert 
+      (set_disjoint (eq (e2a S' e)) (eq_opt (option_map (e2a S') e'))) 
+      as DISJe'.
+    { unfold eq_opt.
+      destruct e'; simpl; red; ins.
+      erewrite basic_step_e2a_e in IN; eauto.
+      2-4 : apply SRCC.
+      erewrite basic_step_e2a_e' in IN'; eauto.
+      2-4 : apply SRCC.
+      inv IN. omega. }
+
+    assert 
+      (opt_same_ctor (option_map (e2a S') e') e') 
+      as CTORe'.
+    { unfold opt_same_ctor, option_map. by destruct e'. }
+
     simpl. 
     eapply simrel_a2e_set_equiv. 
     { eapply basic_step_cert_dom; eauto; apply SRCC. }
-    destruct e' as [e' | ]. 
+    constructor.
     
-    { assert (e2a S' e <> e2a S' e') as eeNEQ.
-      { erewrite basic_step_e2a_e; eauto; try apply SRCC. 
-        erewrite basic_step_e2a_e'; eauto; try apply SRCC. 
-        red. ins. inv H. omega. }
-      unfold upd_opt, option_map, eq_opt. 
-      constructor. 
-      (* a2e_inj *)
-      { admit. }
-      (* a2e_img *)
-      { rewrite !set_collect_union.
-        apply set_subset_union_l. split. 
-        { apply set_subset_union_l. split. 
-          { rewrite set_collect_updo.
-            2 : admit. 
-            rewrite set_collect_updo.
-            2 : eapply basic_step_cert_dom_ne; eauto; apply SRCC.
-            etransitivity.
-            { apply a2e_img. apply SRCC. }
-            eapply ESstep.basic_step_acts_set_mon; eauto. }
-          rewrite set_collect_eq.
-          rewrite updo; auto.  
-          rewrite upds.
-          erewrite ESstep.basic_step_acts_set; eauto. 
-          basic_solver. }
-        rewrite set_collect_eq.
-        rewrite upds.
-        erewrite ESstep.basic_step_acts_set; eauto. 
-        basic_solver. }
-      (* a2e_fix *)
-      rewrite fixset_union. split. 
-      { rewrite fixset_union. split. 
-        { eapply fixset_eq_dom. 
-          { unfold eq_dom, compose. 
-            intros x DOM.
-            rewrite updo.
-            2 : { red. intros HH. 
-                  admit. }
-                  (* eapply basic_step_cert_dom_ne'; eauto; try apply SRCC.  *)
-                  (* congruence. } *)
-            rewrite updo. 
-            2 : { red. intros HH. 
-                  eapply basic_step_cert_dom_ne; eauto; try apply SRCC. 
-                  congruence. }
-            erewrite basic_step_e2a_eq_dom; eauto.
-            { by fold (compose g h x). }
-            { apply SRCC. }
-            apply SRCC.(sr_a2e_h).
-            basic_solver. }
-          apply SRCC. }
-        unfolder. unfold compose. ins. 
-        rewrite <- SX, updo, upds; auto. }
-      unfolder. unfold compose. ins. 
-      rewrite <- SX, upds; auto. }
-    
-    unfold upd_opt, option_map, eq_opt. 
-    eapply simrel_a2e_set_equiv. 
-    { by rewrite set_union_empty_r. }
-    constructor. 
     (* a2e_inj *)
     { admit. }
+
     (* a2e_img *)
     { rewrite !set_collect_union.
-      apply set_subset_union_l. split. 
-      { etransitivity.
+      rewrite !set_subset_union_l.
+      splits.
+      { rewrite set_collect_updo_opt.
         { rewrite set_collect_updo.
-          { apply a2e_img. apply SRCC. }
-          eapply basic_step_cert_dom_ne; eauto; apply SRCC. }
-        eapply ESstep.basic_step_acts_set_mon; eauto. } 
-      rewrite set_collect_eq, upds.
+          2 : eapply basic_step_cert_dom_ne; eauto; apply SRCC.
+          etransitivity.
+          { erewrite set_collect_restr_fun.
+            { apply a2e_img. apply SRCC. }
+            erewrite basic_step_cert_dom with (S' := S'); eauto.
+            2-4 : apply SRCC. 
+            basic_solver. }
+          eapply ESstep.basic_step_acts_set_mon; eauto. }
+        { unfold eq_opt.
+          destruct e'; simpl; red; ins.
+          subst x. 
+          eapply basic_step_cert_dom_ne'; eauto; apply SRCC. }
+        unfold opt_same_ctor, option_map. 
+        by destruct e'. }
+      { rewrite set_collect_updo_opt; auto. 
+        rewrite set_collect_eq.
+        rewrite upds; auto.  
+        erewrite ESstep.basic_step_acts_set; eauto. 
+        basic_solver. }
+      unfold upd_opt, option_map, eq_opt. 
+      destruct e'; [|basic_solver]. 
+      rewrite set_collect_eq.
+      rewrite upds.
       erewrite ESstep.basic_step_acts_set; eauto. 
       basic_solver. }
+
     (* a2e_fix *)
-    rewrite fixset_union. split. 
-    { eapply fixset_eq_dom. 
+    rewrite !fixset_union. splits. 
+    { eapply fixset_eq_dom.
       { unfold eq_dom, compose. 
         intros x DOM.
+        rewrite updo_opt; auto. 
+        2 : { unfold eq_opt, option_map. 
+              destruct e'; auto. 
+              red. ins. desf.
+              eapply basic_step_cert_dom_ne'; eauto; apply SRCC. }
         rewrite updo.
-        { erewrite basic_step_e2a_eq_dom; eauto. 
+        2 : { red. intros HH. desf. 
+              eapply basic_step_cert_dom_ne; eauto; try apply SRCC.
+              apply BSTEP_. }
+        erewrite restr_fun_fst.
+        { erewrite basic_step_e2a_eq_dom; eauto.
           { by fold (compose g h x). }
           { apply SRCC. }
           apply SRCC.(sr_a2e_h).
           basic_solver. }
-        red. intros HH. 
-        eapply basic_step_cert_dom_ne; eauto; try apply SRCC. 
-        congruence. }
+        eapply basic_step_cert_dom; eauto; try apply SRCC.
+        basic_solver. }
       apply SRCC. }
-    unfolder. unfold compose. ins. 
-    by rewrite <- SX, upds. 
+    { unfold eq_dom, compose. 
+      intros x DOM. subst x. 
+      rewrite updo_opt; auto. 
+      by rewrite upds. }
+    unfold eq_opt, option_map, upd_opt. 
+    red. ins. destruct e'; [|by exfalso].
+    unfold compose. subst x. by rewrite upds. 
   Admitted.
 
   Lemma basic_step_nupd_simrel_a2e_h TC' h k k' e S' 
