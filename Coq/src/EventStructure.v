@@ -166,7 +166,7 @@ Record Wf :=
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
     sb_ninit : sb ⨾ ⦗Einit⦘ ≡ ∅₂;
-    sb_tid : ⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘ ⊆ same_tid;
+    sb_tid : ⦗Eninit⦘ ⨾ sb  ⊆ same_tid;
 
     sb_irr     : irreflexive sb;
     sb_trans   : transitive sb;
@@ -353,7 +353,8 @@ Proof.
   rewrite <- restr_restr.
   apply restr_rel_mori; auto.
   rewrite restr_relE.
-  apply (sb_tid WF).
+  rewrite <- seqA. rewrite WF.(sb_tid).
+  basic_solver.
 Qed.  
 
 Lemma same_thread_cf_free WF X (CFF : cf_free S X) : 
@@ -415,8 +416,7 @@ Proof.
   apply seq_eqv_r. split; [split|]; auto.
   { etransitivity; [by apply CF|].
     apply sb_tid; auto.
-    apply seq_eqv_l. split; auto.
-    apply seq_eqv_r. split; auto. }
+    apply seq_eqv_l. split; auto. }
   intros DD. apply CF.
   red in DD. desf.
   { generalize SB. basic_solver. }
@@ -743,11 +743,10 @@ Proof.
     { apply sbE in SBx; auto.  
       unfold seq, eqv_rel in SBx. 
       desf. } 
-    assert ((⦗Eninit⦘ ⨾ sb ⨾ ⦗Eninit⦘) eid x) as SBNIx.
-    { eapply sb_seq_Eninit_l; auto.
-      unfold seq, eqv_rel; eauto.  } 
+    assert ((⦗Eninit⦘ ⨾ sb) eid x) as SBNIx.
+    { apply seq_eqv_l. split; auto. } 
     splits; auto. 
-    { symmetry; eapply sb_tid; auto. }
+    { symmetry; apply sb_tid; auto. }
     red. ins. desf. 
     { eapply sb_irr; eauto. }
     eapply sb_irr, sb_trans; eauto. }
@@ -986,19 +985,25 @@ Proof.
     inv BB. simpls.
     exists z. splits; auto.
     2: { generalize IMM. basic_solver. }
-    admit. (* follows from AA *) }
+    split.
+    { destruct IMM as [IMM _]. apply WF.(sbE) in IMM.
+      generalize IMM. basic_solver. }
+    intros [EZ EI].
+    apply NIY. red. split; auto.
+      by rewrite <- AA. }
   assert (Eninit z) as NIZ.
   { apply WF.(sb_Einit_Eninit) in SB.
     generalize SB. basic_solver. }
   assert (same_tid z y) as ST.
-  { admit. }
+  { apply WF.(sb_tid). apply seq_eqv_l. split; auto.
+    apply IMM. }
   set (BB := IMM).
   apply WF.(seqn_immsb) in BB; auto.
   rewrite <- Heqn in *. inv BB.
   specialize_full IHn; eauto.
   desf. exists x0. splits; eauto.
   eexists. splits; eauto.
-Admitted.
+Qed.
 
 Lemma seqn_pred_imm WF n y (EE : Eninit y)
       (SS : seqn y = 1 + n) :
@@ -1011,9 +1016,15 @@ Proof.
   rewrite SS in IMM. simpls.
   destruct IMM as [z [IMMs IMM]].
   assert (Eninit z) as BB.
-  { admit. }
+  { destruct n; simpls.
+    { red in IMMs. desf. }
+    assert (sb x z) as CC.
+    { admit. }
+    apply WF.(sb_seq_Eninit_r) in CC.
+    generalize CC. basic_solver. }
   assert (same_tid z y) as AA.
-  { admit. }
+  { apply WF.(sb_tid). apply seq_eqv_l.
+    split; auto. apply IMM. }
   exists z. splits; eauto.
   assert (seqn y = 1 + seqn z) as HH.
   2: { rewrite SS in HH. inv HH. }
