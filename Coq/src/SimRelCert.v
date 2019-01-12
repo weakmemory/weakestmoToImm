@@ -347,8 +347,7 @@ Section SimRelCertLemmas.
               eapply basic_step_cert_dom_ne'; eauto; apply SRCC. }
         rewrite updo.
         2 : { red. intros HH. desf. 
-              eapply basic_step_cert_dom_ne; eauto; try apply SRCC.
-              apply BSTEP_. }
+              eapply basic_step_cert_dom_ne; eauto; try apply SRCC. }
         erewrite restr_fun_fst.
         { erewrite basic_step_e2a_eq_dom; eauto.
           { by fold (compose g h x). }
@@ -371,8 +370,11 @@ Section SimRelCertLemmas.
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') : 
-    let h' := upd h (e2a S' e) e in
-    simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st'). 
+    let h' := 
+      restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act)) 
+    in
+    let h'' := upd h' (e2a S' e) e in
+    simrel_a2e S' h'' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof.
     edestruct basic_step_simrel_a2e_h; eauto.
     unfold upd_opt, option_map in *. 
