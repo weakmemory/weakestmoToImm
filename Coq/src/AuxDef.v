@@ -99,6 +99,28 @@ Proof.
   exfalso. apply n. by apply H.
 Qed.
 
+Lemma updo_opt (A B : Type) (f : A -> B) a b x 
+      (NEQ : ~ eq_opt a x) 
+      (CTOR : opt_same_ctor a b) : 
+  upd_opt f a b x = f x.
+Proof. 
+  unfold upd_opt, eq_opt in *. 
+  destruct a, b; auto. 
+  apply updo. auto. 
+Qed.
+
+Lemma set_collect_updo_opt (A B : Type) (f : A -> B) a b s 
+      (DISJ : set_disjoint s (eq_opt a)) 
+      (CTOR : opt_same_ctor a b) : 
+  (upd_opt f a b) □₁ s ≡₁ f □₁ s.
+Proof. 
+  unfold upd_opt, eq_opt, set_disjoint in *. 
+  destruct a, b; auto. 
+  apply set_collect_updo. 
+  specialize (DISJ a).
+  intuition.
+Qed.
+
 Lemma countNatP_lt e n s s' (IN : s ⊆₁ s') (NSE : ~ s e) (SE : s' e) (LE : e < n) :
   countNatP s n < countNatP s' n.
 Proof.

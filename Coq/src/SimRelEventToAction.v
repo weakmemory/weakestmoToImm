@@ -381,6 +381,28 @@ Section SimRelEventToActionLemmas.
     desf. omega.
   Qed.
 
+  Lemma basic_step_cert_dom_ne' k k' e e' S' 
+        (st st' : thread_st (ES.cont_thread S k))
+        (SRK : simrel_cont prog S G TC)
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e (Some e') S S') 
+        (STCOV : C ∩₁ GTid (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
+    ~ (cert_dom G TC (ES.cont_thread S k) st) (e2a S' e').
+  Proof.
+    cdes BSTEP_.
+    red. intros HH.
+    eapply cert_dom_alt in HH; eauto.
+    destruct HH as [HA | HB].
+    { destruct HA as [_ NTID].
+      apply NTID.
+      erewrite <- e2a_tid.
+      eapply ESstep.basic_step_tid_e'; eauto. }
+    erewrite basic_step_e2a_e' in HB; eauto. 
+    2 : eapply BSTEP_.
+    eapply acts_rep in HB.
+    2 : eapply SRK; eauto.
+    desf. omega.
+  Qed.
+
   Lemma basic_step_cert_dom k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))
         (SRK : simrel_cont prog S G TC)
