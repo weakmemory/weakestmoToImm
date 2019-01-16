@@ -627,21 +627,14 @@ Proof.
 Qed.  
 
 Lemma cont_sb_prcl k lang st WF (KK : K (k, existT _ lang st)) : 
-  sb ⨾ ⦗ cont_sb_dom S k ⦘ ⊆ ⦗ cont_sb_dom S k ⦘ ⨾ sb.
-Proof.
-  unfold cont_sb_dom. 
-  intros x y HH. 
-  apply seq_eqv_r in HH.
-  destruct HH as [SB CONTy].
-  destruct k. 
-  { exfalso. eapply sb_ninit; auto. 
+  dom_rel (sb ⨾ ⦗ cont_sb_dom S k ⦘) ⊆₁ cont_sb_dom S k.
+Proof. 
+  intros x [y SB].
+  destruct_seq_r SB as YY. red in YY. desf.
+  { exfalso. eapply sb_ninit; eauto.
     apply seq_eqv_r. eauto. }
-  unfolder in CONTy. desf.
-  { unfolder; splits; eauto. }
-  unfolder; splits; eauto.
-  eexists; splits; [|auto].
-  right. eapply sb_trans; eauto. 
-Qed.
+  red. generalize WF.(sb_trans) YY SB. basic_solver 10.
+Qed. 
 
 Lemma cont_sb_nfrwd e k lang st WF 
       (KE : k = CEvent e) 

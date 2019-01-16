@@ -326,6 +326,17 @@ Proof.
   erewrite (FIX y); auto. 
 Qed.
 
+Lemma fixset_swap (f' : A -> B) (g' : B -> A) : 
+  fixset s (g' ∘ f') -> fixset (f' □₁ s) (f' ∘ g').
+Proof.
+  unfolder.
+  intros FIX x [y [DOM Fy]].
+  unfold compose. 
+  rewrite <- Fy.
+  fold (compose g' f' y).
+  rewrite FIX; auto. 
+Qed.
+
 Lemma inj_dom_s_inj_dom (INJ : inj_dom_s s f) : inj_dom s f.
 Proof. unfolder in *. ins. by apply INJ. Qed.
 
