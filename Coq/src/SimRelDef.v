@@ -5,7 +5,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf SimRelCont SimRelEventToAction. 
+        CertGraph CertRf SimRelCont SimRelEventToAction SimRelSubExec. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -126,21 +126,12 @@ Section SimRelDef.
 
       sr_e2a : simrel_e2a S G sc;
       sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
-
-      fco : f □ ⦗ fdom ⦘ ⨾ Gco ⨾ ⦗ fdom ⦘ ⊆ Sco;
-
-      fimgNcf : ES.cf_free S (f □₁ fdom);
       
-      complete_fdom :
-        (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
-
-      ewfI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| f □₁ I |>);
+      sr_exec_f : simrel_subexec S TC f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)); 
 
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       fvis : f □₁ fdom ⊆₁ vis S;
       finitIncl : SEinit ⊆₁ f □₁ GEinit;      
-
-      sb_fdom_dom : dom_rel (Ssb ⨾ ⦗ f □₁ fdom ⦘) ⊆₁ f □₁ fdom;
     }.
   
   Record simrel :=
@@ -209,30 +200,17 @@ Section SimRelDef.
 
       hgfix : fixset (ES.cont_sb_dom S q) (h ∘ g);
 
-      jfehI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘);
-
       sr_a2e_h : simrel_a2e S h (cert_dom G TC qtid state);
+
+      sr_exec_h : simrel_subexec S TC h (cert_dom G TC qtid state); 
 
       hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
       hlabTHRD : eq_dom contE certLab (Slab ∘ h);
-
-      hco : h □ ⦗ hdom ⦘ ⨾ Gco ⨾ ⦗ hdom ⦘ ⊆ Sco;
-
-      himgNcf : ES.cf_free S (h □₁ hdom);
-      
-      complete_hdom :
-        (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf);
 
       hfeq  : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; 
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
-
-      release_issh_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
-
-      ewhI : dom_rel Sew ⊆₁ dom_rel (Sew^? ;; <| h □₁ I |>);
-
-      sb_hdom_dom : dom_rel (Ssb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom;
     }.
 
   Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=

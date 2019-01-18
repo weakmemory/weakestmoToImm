@@ -6,7 +6,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      CombRelations SimTraversal SimulationRel AuxRel CertExecution2.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
         CertGraph CertRf ImmProperties 
-        SimRelDef SimRelCont SimRelEventToAction. 
+        SimRelDef SimRelCont SimRelEventToAction SimRelSubExec. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -147,7 +147,8 @@ Section SimRelProps.
       { eapply e2a_ew; eauto. apply SRC. }
       split; auto.
       destruct HH as [a [b [EW [EQx EQy]]]]; subst.
-      edestruct ewfI as [x HH]; eauto.
+      edestruct exec_ewI as [x HH]; eauto.
+      { apply SRC. }
       { eexists; eauto. }
       destruct_seq_r HH as FI.
       red in FI. destruct FI as [y [IY]]; subst.
@@ -305,17 +306,6 @@ Section SimRelProps.
     Lemma htid : eq_dom hdom (Stid ∘ h) Gtid.
     Proof. eapply a2e_tid. eapply SRCC. Qed.
 
-    Lemma hgfix_hhdom : fixset (h □₁ hdom) (h ∘ g).
-    Proof.
-      unfolder. 
-      intros x [y [DOM Hy]].
-      unfold compose. 
-      rewrite <- Hy.
-      fold (compose g h y).
-      erewrite a2e_fix; eauto.
-      apply SRCC.
-    Qed.
-
     Lemma himgInit : 
       SEinit ≡₁ h □₁ GEinit. 
     Proof. 
@@ -400,18 +390,6 @@ Section SimRelProps.
       unfolder. ins. desf. 
     Qed.
 
-    Lemma cont_sb_dom_dom :
-      dom_rel (Ssb ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ ES.cont_sb_dom S q.
-    Proof.
-      assert (ES.Wf S) as WF.
-      { apply SRCC. }
-      intros x [y SB].
-      destruct_seq_r SB as YY. red in YY. desf.
-      { exfalso. eapply ES.sb_ninit; eauto.
-        apply seq_eqv_r. eauto. }
-      red. generalize WF.(ES.sb_trans) YY SB. basic_solver 10.
-    Qed.
-
     Lemma hdom_sb_dom :
       dom_rel (Gsb ⨾ ⦗ hdom ⦘) ⊆₁ hdom.
     Proof.
@@ -482,7 +460,8 @@ Section SimRelProps.
            split; auto. }
       assert (~ Scf (h x') (h y')) as NCF.
       { intros JJ.
-        eapply SRCC.(himgNcf).
+        eapply exec_ncf. 
+        { apply SRCC.(sr_exec_h). }
         apply seq_eqv_l. split; [|apply seq_eqv_r; split; eauto].
         all: by eexists; split; [|by eauto]. }
       edestruct ES.same_thread as [PP _]; [by apply SRCC|].
@@ -514,191 +493,41 @@ Section SimRelProps.
       all: eapply a2e_fix; [by apply SRCC|]; auto. 
     Qed.
 
-    Lemma rfeI :
-      dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘).
-    Proof.
-      assert (ES.Wf S) as WF by apply SRCC.
-      unfold ES.rfe, ES.rf, ES.jfe.
-      rewrite crE at 1.
-      rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
-      unionL.
-      { etransitivity; [|by apply SRCC.(jfehI)].
-        unfold ES.jfe. basic_solver. }
-      intros x [y [[[z [EW JF]] CC] NSB]].
-      assert (~ Ssb z y) as AA.
-      { intros SB. apply CC.
-        apply ES.cf_sb_in_cf; auto.
-        eexists. split; eauto.
-        apply ES.ewc; auto. }
-      edestruct SRCC.(jfehI) as [v HH].
-      { eexists. split; eauto. }
-      destruct_seq_r HH as BB.
-      eexists.  apply seq_eqv_r. split; [|by eauto].
-      generalize WF.(ES.ew_trans) EW HH. basic_solver.
-    Qed.
-
-    Lemma releaseNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Srelease ⊆ Ssb^?.
-    Proof.
-      assert (ES.Wf S) as WF by apply SRCC.
-      unfold release at 1, rs. rewrite <- !seqA.
-      intros x y [z [HH RFRMW]].
-      apply clos_rt_rtn1 in RFRMW.
-      induction RFRMW as [|y w [u [RF RMW]]].
-      { generalize WF.(ES.sb_trans) HH. basic_solver 10. }
-      apply ES.rfi_union_rfe in RF. destruct RF as [RF|RF].
-      { apply WF.(ES.rmwi) in RMW. red in RF. 
-        generalize WF.(ES.sb_trans) IHRFRMW RF RMW. basic_solver 10. }
-      exfalso.
-      assert (~ (h □₁ C) x) as CC.
-      { generalize HH. basic_solver 10. }
-      apply CC. eapply release_issh_cov; eauto.
-      assert (dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘) y) as [yy DD].
-      { apply rfeI; auto. eexists. eauto. }
-      eexists. eexists. split; eauto.
-      unfold release, rs. apply clos_rtn1_rt in RFRMW.
-      generalize HH RFRMW. basic_solver 40.
-    Qed.
-
-    Lemma release_in_HCrelease_sb : Srelease ⊆ ⦗ h □₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
-    Proof.
-      arewrite (Srelease ⊆ ⦗h □₁ C ∪₁ set_compl (h □₁ C)⦘ ⨾ Srelease).
-      { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. apply union_mori; [done|].
-      apply releaseNCsb; auto.
-    Qed.
-
-    Lemma release_ew_hhdom : 
+    Lemma h_rel_ewD : 
       dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
-      rewrite crE. rewrite !seq_union_l, !seq_union_r, dom_union, seq_id_l.
-      unionL.
-      { rewrite release_in_HCrelease_sb, C_in_hdom.
-        generalize sb_hdom_dom. basic_solver 10. }
-      arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁
-                dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘)).
-      2: { rewrite release_issh_cov; eauto. by rewrite C_in_hdom. }
-      rewrite <- seqA.
-      intros x [y HH].
-      destruct_seq_r HH as HD.
-      destruct HH as [z [REL EW]].
-      edestruct ewhI as [a AA]; eauto.
-      { red. eauto. }
-      exists a.
-      generalize REL AA. basic_solver 10.
-    Qed.
-    
-    Lemma swNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
-    Proof.
-      assert (ES.Wf S) as WF by apply SRCC.
-      unfold sw.
-      arewrite (⦗set_compl (h □₁ C)⦘ ⨾ Srelease ⨾ Srf ⊆ Ssb).
-      2: { generalize WF.(ES.sb_trans). basic_solver. }
-      rewrite ES.rfi_union_rfe. rewrite !seq_union_r. unionL.
-      { sin_rewrite releaseNCsb; auto. unfold ES.rfi.
-        generalize WF.(ES.sb_trans). basic_solver. }
-      intros x y HH.
-      destruct_seq_l HH as DX. exfalso. apply DX.
-      destruct HH as [z [REL RFE]].
-      eapply release_issh_cov; eauto.
-      assert (dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘) z) as [zz DD].
-      { apply rfeI; auto. eexists. eauto. }
-      eexists. eexists. eauto.
+      eapply exec_rel_ewD; try apply SRCC. 
+      unfold cert_dom. basic_solver. 
     Qed.
 
-    Lemma sb_hdom_in_hsb : Ssb ⨾ ⦗ h □₁ hdom ⦘ ⊆ h □ Gsb.
+    Lemma h_hb_in_Chb_sb :
+      Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
     Proof.
-      assert (inj_dom_s hdom h) as HD by apply SRCC.
-      arewrite (Ssb ⨾ ⦗ h □₁ hdom ⦘ ⊆ ⦗ h □₁ hdom ⦘ ;; Ssb ⨾ ⦗ h □₁ hdom ⦘). 
-      { intros x y HH. apply seq_eqv_l. split; auto.
-        eapply sb_hdom_dom; eauto. eexists. eauto. }
-      rewrite <- restr_relE.
-      rewrite <- collect_rel_fixset. 
-      2: by apply hgfix_hhdom.
-      rewrite <- collect_rel_compose.
-      apply collect_rel_mori; auto.
-      rewrite inclusion_restr.
-      eapply e2a_sb; apply SRCC.
-    Qed.
-    
-    Lemma sbHC_dom : dom_rel (Ssb ⨾ ⦗ h □₁ C ⦘) ⊆₁ h □₁ C.
-    Proof.
-      rewrite <- seq_eqvK.
-      sin_rewrite C_in_hdom.
-      sin_rewrite sb_hdom_in_hsb; auto.
-      rewrite <- set_collect_eqv.
-      rewrite <- collect_rel_seq_r.
-      2: { sin_rewrite C_in_hdom. rewrite dom_eqv.
-           apply SRCC. }
-      rewrite sb_covered; [|by apply SRCC].
-      basic_solver.
+      eapply exec_hb_in_Chb_sb; try apply SRCC. 
+      unfold cert_dom. basic_solver. 
     Qed.
 
-    Lemma sbNCNC :
-      codom_rel (⦗ set_compl (h □₁ C) ⦘ ⨾ Ssb) ⊆₁ set_compl (h □₁ C).
-    Proof.
-      intros x [y HH]. destruct_seq_l HH as DX.
-      intros DY. apply DX.
-      apply sbHC_dom; auto. eexists. apply seq_eqv_r. eauto.
-    Qed.
-
-    Lemma hbNCsb : ⦗ set_compl (h □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
-    Proof.
-      assert (ES.Wf S) as WF by apply SRCC.
-      intros x y HH. destruct_seq_l HH as DX.
-      red in HH. apply clos_trans_tn1 in HH.
-      induction HH as [y [|HH]|y z [HH|HH]]; auto.
-      { apply swNCsb; auto. by apply seq_eqv_l. }
-      all: eapply ES.sb_trans; eauto.
-      apply swNCsb; auto. apply seq_eqv_l. split; auto.
-      apply sbNCNC; auto.
-      eexists. apply seq_eqv_l. eauto.
-    Qed.
-
-    Lemma hb_in_HChb_sb : Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
-    Proof.
-      arewrite (Shb ⊆ ⦗h □₁ C ∪₁ set_compl (h □₁ C)⦘ ⨾ Shb).
-      { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. apply union_mori; [done|].
-      apply hbNCsb; auto.
-    Qed.
-
-    Lemma hb_hhdom : 
+    Lemma h_hbD :
       dom_rel (Shb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
-      rewrite hb_in_HChb_sb.
-      rewrite seq_union_l, dom_union. unionL.
-      2: by eapply sb_hdom_dom; eauto.
-      rewrite C_in_hdom. basic_solver.
+      eapply exec_hbD; try apply SRCC. 
+      unfold cert_dom. basic_solver. 
     Qed.
 
-    Lemma hb_release_ew_hhdom : 
+    Lemma h_hb_release_ewD :
       dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof. 
-      rewrite crE with (r := Shb). 
-      relsf. split. 
-      { apply release_ew_hhdom. }
-      intros x [y [z [HB REL]]].
-      eapply hb_hhdom. 
-      eexists. apply seq_eqv_r. split; eauto.
-      apply release_ew_hhdom. basic_solver.
+      eapply exec_hb_release_ewD; try apply SRCC. 
+      unfold cert_dom. basic_solver. 
     Qed.
 
-    Lemma himg_necf : 
+    Lemma h_necfD :
       restr_rel (h □₁ hdom) Secf ⊆ ∅₂.
     Proof. 
-      unfold restr_rel, ecf. 
-      intros a b [ECF [Hx Hy]].
-      destruct ECF as [c [tHB [d [CF HB]]]].
-      eapply himgNcf; eauto. 
-      apply restr_relE. unfold restr_rel.
-      splits; eauto. 
-      { unfolder in tHB; desf. 
-        eapply hb_hhdom. basic_solver 10. }
-      unfolder in HB; desf. 
-      eapply hb_hhdom. basic_solver 10.
+      eapply exec_necfD; try apply SRCC. 
+      unfold cert_dom. basic_solver. 
     Qed.
-   
-  End SimRelCertProps. 
 
+  End SimRelCertProps. 
 
 End SimRelProps.

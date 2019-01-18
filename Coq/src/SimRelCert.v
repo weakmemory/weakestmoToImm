@@ -11,7 +11,7 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelDef SimRelProps SimRelCont SimRelEventToAction. 
+        SimRelDef SimRelProps SimRelCont SimRelEventToAction SimRelSubExec. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -50,6 +50,7 @@ Notation "'Scoi' S" := S.(ES.coi) (at level 10).
 Notation "'Scc' S" := S.(cc) (at level 10).
 Notation "'Ssw' S" := S.(sw) (at level 10).
 Notation "'Shb' S" := S.(hb) (at level 10).
+Notation "'Secf'" := (S.(Consistency.ecf)).
 
 Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
 Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
@@ -849,8 +850,8 @@ Section SimRelCertLemmas.
     assert (ESstep.t_basic e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
-    assert (ES.Wf S') as WFS'.
-    { admit. }
+    (* assert (ES.Wf S') as WFS'. *)
+    (* { admit. } *)
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
@@ -914,20 +915,19 @@ Section SimRelCertLemmas.
       unfolder in HH. 
       eapply cfk_hdom; eauto.
       split; [|basic_solver].
-      eapply release_ew_hhdom; eauto.
+      eapply h_rel_ewD; eauto.  
       unfolder. basic_solver 10. }
 
     intros x HH. 
     unfolder in HH. 
     eapply cfk_hdom; eauto.
     split; [|basic_solver].
-    eapply hb_hhdom; eauto.
+    eapply h_hbD; eauto.
     destruct HH as [z [HB HH]].
     unfolder. do 2 eexists; splits; eauto.
-    eapply release_ew_hhdom; eauto.
+    eapply h_rel_ewD; eauto.
     unfolder. basic_solver 10. 
-
-  Admitted.    
+  Qed.
 
   Lemma simrel_cert_load_step_hb_cf_thb_irr TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
@@ -943,11 +943,16 @@ Section SimRelCertLemmas.
     assert (ESstep.t_basic e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
-    (* assert (ES.Wf S') as WFS'. *)
-    (* { admit. } *)
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
+    (* assert  *)
+    (*   (restr_rel (h □₁ cert_dom G TC (ES.cont_thread S k) st) Secf ⊆ ∅₂)  *)
+    (*   as HDOM_nECF. *)
+    (* { eapply exec_necfD.  *)
+    (*   5 : apply SRCC.(sr_exec_h). *)
+    (*   all : try apply SRCC. *)
+    (*   unfold cert_dom. basic_solver. } *)
 
     erewrite ESstep.basic_step_nupd_cf; eauto.
     rewrite csE. relsf.
@@ -995,40 +1000,40 @@ Section SimRelCertLemmas.
 
     { unfold seq, cross_rel. 
       red. ins. desc.
-      eapply himg_necf; eauto.
-      red. splits.
+      eapply h_necfD; eauto. 
+      red; splits.
       { unfold ecf. basic_solver 10. }
       all : eapply cont_sb_dom_in_hhdom; eauto. }
 
     { unfold seq, cross_rel. 
       red. ins. desc.
-      eapply himg_necf; eauto.
+      eapply h_necfD; eauto. 
       red. splits.
       { unfold ecf. basic_solver 10. }
-      { eapply release_ew_hhdom; eauto.
+      { eapply h_rel_ewD; eauto.
         unfold singl_rel in *. desc.
         basic_solver 10. }
       eapply cont_sb_dom_in_hhdom; eauto. }
 
     { unfold seq, cross_rel. 
       red. ins. desc.
-      eapply himg_necf; eauto.
+      eapply h_necfD; eauto. 
       red. splits.
       { unfold ecf. basic_solver 10. }
       { eapply cont_sb_dom_in_hhdom; eauto. }
-      eapply release_ew_hhdom; eauto.
+      eapply h_rel_ewD; eauto.
       unfold singl_rel in *. desc.
       basic_solver 10. }
 
     unfold seq, cross_rel. 
     red. ins. desc.
-    eapply himg_necf; eauto.
+    eapply h_necfD; eauto.  
     red. splits.
     { unfold ecf. basic_solver 10. }
-    { eapply release_ew_hhdom; eauto.
+    { eapply h_rel_ewD; eauto.
       unfold singl_rel in *. desc.
       basic_solver 10. }
-    eapply release_ew_hhdom; eauto.
+    eapply h_rel_ewD; eauto.
     unfold singl_rel in *. desc.
     basic_solver 10.
   Qed.
@@ -1119,7 +1124,7 @@ Section SimRelCertLemmas.
       right. basic_solver. }
     eapply basic_step_nupd_hdom_cf_free; eauto. 
     apply seq_eqv_lr; splits; eauto; [|basic_solver]. 
-    left. eapply hb_hhdom; eauto. 
+    left. eapply h_hbD; try apply SRCC. 
     basic_solver 10. 
   Qed.
 
@@ -1140,6 +1145,10 @@ Section SimRelCertLemmas.
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
+    assert
+      (restr_rel (h □₁ cert_dom G TC (ES.cont_thread S k) st) (Scf S) ⊆ ∅₂)
+      as HnCF.
+    { rewrite restr_relE. eapply exec_ncf. apply SRCC. }
     cdes LSTEP.
     split; [|basic_solver].
     rewrite SSJF'.
@@ -1165,29 +1174,29 @@ Section SimRelCertLemmas.
     { erewrite cont_sb_dom_in_hhdom; eauto.
       rewrite seq_cross_singl_l; auto. 
       intros x y [[HDOMx EQy] CF]. subst y. 
-      eapply himgNcf; eauto. 
-      apply seq_eqv_lr. splits; eauto. }
+      eapply HnCF. red. splits; eauto. }
 
     { rewrite seqA, seq_cross_singl_l; auto. 
-      rewrite hb_in_HChb_sb; eauto. 
+      rewrite h_hb_in_Chb_sb; eauto. 
       rewrite !seq_union_l, inter_union_l.
       unionL. 
       { intros x y [HH CF].
-        eapply himgNcf; eauto.  
-        apply seq_eqv_lr. splits; [|apply CF|].  
+        eapply HnCF; eauto.  
+        red. splits; [apply CF | |].  
         { unfolder in HH. desf.
           unfolder. unfold cert_dom. 
           eexists. splits; eauto. 
           by left; left. }
         unfolder in HH; desf. }
       intros x y [HH CF].
-      eapply himgNcf; eauto.  
-      apply seq_eqv_lr. splits; [|apply CF|].  
+      eapply HnCF; eauto.  
+      red. splits; [apply CF | |].  
       { destruct HH as [z [SB [CONTz EQw]]].
         subst y. 
         assert ((Ssb S ⨾ ⦗ ES.cont_sb_dom S k ⦘) x z) as SBC.
         { unfolder; eauto. }
-        eapply ES.cont_sb_prcl in SBC; eauto. 
+        eapply dom_rel_helper_in in SBC.
+        2 : eapply ES.cont_sb_prcl; eauto. 
         eapply cont_sb_dom_in_hhdom; eauto. 
         unfolder in SBC. desf. }
       unfolder in HH; desf. }
@@ -1203,9 +1212,9 @@ Section SimRelCertLemmas.
     all : rewrite inclusion_minus_rel, !seqA.
 
     { intros x y [HH CF].
-      eapply himgNcf; eauto.  
-      apply seq_eqv_lr. splits; [|apply CF|].  
-      { eapply release_ew_hhdom; eauto.
+      eapply HnCF; eauto.  
+      red. splits; [apply CF | |].  
+      { eapply h_rel_ewD; eauto.
         unfolder. unfolder in HH.
         destruct HH as [z [REL HH]].
         destruct HH as [z' [rEW HH]].
@@ -1214,13 +1223,13 @@ Section SimRelCertLemmas.
       unfolder in HH. desf. }
 
     intros x y [HH CF].
-    eapply himgNcf; eauto.  
-    apply seq_eqv_lr. splits; [|apply CF|].  
-    { eapply hb_hhdom; eauto. 
+    eapply HnCF; eauto.  
+    red. splits; [apply CF | |].  
+    { eapply h_hbD; eauto. 
       destruct HH as [z [HB HH]].      
       unfolder. 
       do 2 eexists; splits; eauto. 
-      eapply release_ew_hhdom; eauto.      
+      eapply h_rel_ewD; eauto.      
       unfolder. unfolder in HH. 
       destruct HH as [z' [REL HH]].
       destruct HH as [z'' [rEW HH]].
@@ -1246,6 +1255,11 @@ Section SimRelCertLemmas.
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
+    assert
+      (restr_rel (h □₁ cert_dom G TC (ES.cont_thread S k) st) (Scf S) ⊆ ∅₂)
+      as HnCF.
+    { rewrite restr_relE. eapply exec_ncf. apply SRCC. }
+
     cdes LSTEP.
     split; [|basic_solver].
     rewrite SSJF'.
@@ -1274,15 +1288,15 @@ Section SimRelCertLemmas.
           solve_by_EE hbE. }
 
     { intros x y [HH CF].
-      eapply himgNcf; eauto.  
-      apply seq_eqv_lr. splits; [|apply CF|]. 
-      { eapply hb_hhdom; eauto. 
+      eapply HnCF; eauto.  
+      red. splits; [apply CF | |]. 
+      { eapply h_hbD; eauto. 
         destruct HH as [z [HB [z' [[EQz EQz'] HH]]]].
         subst z z'.
         unfolder; splits; eauto. } 
       unfolder in HH. desf. 
       { eapply cont_sb_dom_in_hhdom; eauto. }
-      eapply hb_hhdom; eauto. 
+      eapply h_hbD; eauto. 
       unfolder. do 2 eexists; splits; eauto. 
       eapply cont_sb_dom_in_hhdom; eauto. }
 
@@ -1299,9 +1313,9 @@ Section SimRelCertLemmas.
     { solve_by_EE ES.jfE. }
 
     intros x y [HH CF].
-    eapply himgNcf; eauto.  
-    apply seq_eqv_lr. splits; [|apply CF|]. 
-    { eapply hb_hhdom; eauto. 
+    eapply HnCF; eauto.  
+    red. splits; [apply CF | |]. 
+    { eapply h_hbD; eauto. 
       destruct HH as [z [HB [z' [[EQz EQz'] HH]]]].
       subst z z'. 
       unfolder; splits; eauto. }
@@ -1314,15 +1328,15 @@ Section SimRelCertLemmas.
       unfold singl_rel in *. desf. }
     destruct HBrREL as [z [[EQ | HB] RELew]].
     { subst z. 
-      eapply release_ew_hhdom; eauto. 
+      eapply h_rel_ewD; eauto. 
       destruct RELew as [z [REL HX]].
       destruct HX as [z' [rEW [EQz' _]]].
       subst z'. 
       do 2 eexists; splits; eauto. 
       eexists; splits; eauto; desf. }
-    eapply hb_hhdom; eauto. 
+    eapply h_hbD; eauto. 
     unfolder. exists z, z. splits; auto.
-    eapply release_ew_hhdom; eauto. 
+    eapply h_rel_ewD; eauto. 
     destruct RELew as [z' [REL HX]].
     destruct HX as [z'' [rEW [EQz'' _]]].
     subst z''. 

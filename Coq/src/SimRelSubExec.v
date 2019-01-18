@@ -303,7 +303,7 @@ Section SimRelSubExec.
       apply exec_rel_ewD; auto. basic_solver.
     Qed.
 
-    Lemma himg_necf 
+    Lemma exec_necfD 
           (CinD : C ⊆₁ a2eD) 
           (SRE2A : simrel_e2a S G sc)
           (SRA2E : simrel_a2e S a2e a2eD) : 
