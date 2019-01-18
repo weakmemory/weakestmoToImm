@@ -1419,8 +1419,12 @@ Section SimRelCertLemmas.
         { eapply simrel_cert_load_step_jfe_vis; eauto. }
         all : admit. }
 
-      exists (upd h (e2a S' e) e).
-      exists k'. exists S'.
+      set (h' :=
+         restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act))
+      ).
+      set (h'' := (upd h' (e2a S' e) e)).
+
+      exists h''. exists k'. exists S'.
       splits.
       { red. right. red. 
         exists e. exists None.
@@ -1433,7 +1437,7 @@ Section SimRelCertLemmas.
         { eapply basic_step_simrel_cont; eauto; apply SRCC. }
         { eapply simrel_cert_load_step_simrel_e2a; eauto. }
         { eapply basic_step_simrel_a2e_preserved; eauto; apply SRCC. }
-        1-4 : admit. 
+        { admit. }
         (* flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab *)
         { unfold eq_dom, compose. ins. 
           erewrite ESstep.basic_step_lab_eq_dom; eauto.
@@ -1447,27 +1451,32 @@ Section SimRelCertLemmas.
           { eapply fvis. apply SRCC. }
           eapply ESstep.load_step_vis_mon; eauto. }
         (* finitIncl : SEinit ⊆₁ f □₁ GEinit *)
-        { erewrite ESstep.basic_step_acts_init_set; eauto. apply SRCC. }
-        admit. }
-      1-8 : admit.
+        erewrite ESstep.basic_step_acts_init_set; eauto. apply SRCC. }
+      1-7 : admit.
       (* sr_a2e_h *)
       { eapply basic_step_nupd_simrel_a2e_h; eauto. }
-      1-3 : admit. 
-      (* himgNcf : ES.cf_free S (h □₁ hdom) *)
-      { eapply ES.cf_free_eq.
-        { symmetry. etransitivity.
-          { eapply set_collect_more; [eauto|].
-            etransitivity.
-            { eapply basic_step_cert_dom; eauto; apply SRCC. }
-            unfold eq_opt, option_map. 
-            rewrite set_union_empty_r. 
-            eauto. } 
-          rewrite set_collect_union.
-          erewrite set_collect_updo.
-          2 : admit. 
-          rewrite set_collect_eq.
-          by rewrite upds. }
-        eapply basic_step_nupd_hdom_cf_free; eauto. }
+      { constructor. 
+        { admit. }
+        (* himgNcf : ES.cf_free S (h □₁ hdom) *)
+        { eapply ES.cf_free_eq.
+          { symmetry. etransitivity.
+            { eapply set_collect_more; [eauto|].
+              etransitivity.
+              { eapply basic_step_cert_dom; eauto; apply SRCC. }
+              unfold eq_opt, option_map. 
+              rewrite set_union_empty_r. 
+              eauto. } 
+            subst h'' h'. 
+            rewrite set_collect_union.
+            erewrite set_collect_updo.
+            2 : admit. 
+            rewrite set_collect_eq.
+            rewrite upds. 
+            rewrite set_collect_restr_fun; [done|].
+            erewrite basic_step_nupd_cert_dom with (S' := S').
+            { basic_solver. }
+            all : eauto; try apply SRCC. }
+          eapply basic_step_nupd_hdom_cf_free; eauto. }
       all : admit. }
     all : admit. 
 
