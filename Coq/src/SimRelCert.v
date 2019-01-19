@@ -1381,6 +1381,14 @@ Section SimRelCertLemmas.
       erewrite basic_step_nupd_cert_dom with (st':=st'); 
         eauto; try apply SRCC. 
       basic_solver. }
+    assert (h'' □₁ I ≡₁ h □₁ I) as HIeq. 
+    { subst h'' h'. 
+      rewrite set_collect_updo.
+      { rewrite set_collect_restr_fun; auto.
+        admit. } 
+      red. intros HI. 
+      eapply issuedW in HI; [|apply SRCC].
+      admit. }
 
     simpl. constructor. 
     { rewrite HDOMeq. 
@@ -1438,7 +1446,13 @@ Section SimRelCertLemmas.
       eapply basic_step_nupd_hdom_cf_free; eauto.
       apply seq_eqv_lr. 
       splits; eauto; basic_solver. }
-    all: admit. 
+    { admit. }
+    (* exec_ewI : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘) *)
+    { rewrite EW'. 
+      (* looks like we have problem here due to `restr_fun` *)
+      (* arewrite (h'' □₁ I ≡₁ h □₁ I).  *) 
+      admit. }
+    admit. 
   Admitted.
 
   Lemma simrel_cert_lbl_step TC' h k
