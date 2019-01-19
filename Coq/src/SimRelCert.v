@@ -1344,6 +1344,103 @@ Section SimRelCertLemmas.
     eexists; splits; eauto; desf. 
   Qed.
 
+  Lemma simrel_cert_load_step_subexec TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    let h' := 
+      restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act)) 
+    in
+    let h'' := upd h' (e2a S' e) e in
+    simrel_subexec S' TC h'' (cert_dom G TC (ES.cont_thread S' k') st'). 
+  Proof. 
+    simpl.
+    set (h' := restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act))).
+    set (h'' := upd h' (e2a S' e) e). 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    assert (h'' □₁ (cert_dom G TC (ES.cont_thread S' k') st') ≡₁ 
+              h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e) 
+      as HDOMeq. 
+    { erewrite basic_step_nupd_cert_dom; eauto; try apply SRCC. 
+      subst h'' h'. 
+      rewrite set_collect_union, set_collect_eq.
+      rewrite upds. 
+      rewrite set_collect_updo.
+      2 : eapply basic_step_cert_dom_ne; eauto; apply SRCC.
+      rewrite set_collect_restr_fun; auto.  
+      erewrite basic_step_nupd_cert_dom with (st':=st'); 
+        eauto; try apply SRCC. 
+      basic_solver. }
+
+    simpl. constructor. 
+    { rewrite HDOMeq. 
+      apply set_subset_union_r. left.
+      rewrite id_union, seq_union_r, dom_union.
+      unionL.
+      { rewrite <- set_interK 
+          with (s := h □₁ cert_dom G TC (ES.cont_thread S k) st)
+          at 1.
+        rewrite id_inter.
+        rewrite a2e_img at 1; [|apply SRCC].
+        admit. }
+      rewrite ESstep.basic_step_nupd_sb; eauto.
+      rewrite seq_union_l, dom_union.
+      unionL. 
+      { arewrite_false (Ssb S ⨾ ⦗eq e⦘).
+        { ESstep.step_solver. }
+        basic_solver. }
+      rewrite dom_seq, dom_cross.
+      2 : red; basic_solver. 
+      erewrite cont_sb_dom_in_hhdom; eauto. }
+    (* exec_ncf : ES.cf_free S (h □₁ hdom) *)
+    { eapply ES.cf_free_eq.
+      { by rewrite HDOMeq. }
+      eapply basic_step_nupd_hdom_cf_free; eauto. }
+    (* exec_rfc : (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf) *)
+    { rewrite HDOMeq. 
+      rewrite set_inter_union_l.
+      rewrite id_union, seq_union_l, codom_union.
+      arewrite_false (⦗eq e⦘ ⨾ Srf S'). 
+      { admit. }
+      erewrite ESstep.load_step_rf; eauto.
+      relsf. split.
+      { arewrite (h □₁ cert_dom G TC (ES.cont_thread S k) st ∩₁ SR S' ≡₁ 
+                  h □₁ cert_dom G TC (ES.cont_thread S k) st ∩₁ SR S). 
+        { erewrite <- set_inter_absorb_r
+            with (s := h □₁ cert_dom G TC (ES.cont_thread S k) st)
+            at 1.
+          2 : { apply a2e_img. apply SRCC. }
+          rewrite set_interA.
+          arewrite (SE S ∩₁ SR S' ≡₁ SE S ∩₁ SR S).
+          { eapply ESstep.type_step_eq_dom; eauto. }          
+          rewrite <- set_interA.
+          rewrite set_inter_absorb_r with (s' := SE S); auto.
+          apply a2e_img. apply SRCC. }
+        left. by apply SRCC. }
+      intros x Hx. 
+      unfolder in Hx. desc. subst x.
+      right. red. eexists.
+      apply seq_eqv_l; splits; eauto.
+      red. splits. 
+      { unfolder. eexists. splits; eauto.
+        apply SSJF'. basic_solver. }
+      red. ins. 
+      eapply basic_step_nupd_hdom_cf_free; eauto.
+      apply seq_eqv_lr. 
+      splits; eauto; basic_solver. }
+    all: admit. 
+  Admitted.
+
   Lemma simrel_cert_lbl_step TC' h k
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -1457,7 +1554,7 @@ Section SimRelCertLemmas.
       { eapply basic_step_nupd_simrel_a2e_h; eauto. }
       { constructor. 
         { admit. }
-        (* himgNcf : ES.cf_free S (h □₁ hdom) *)
+        (* exec_ncf : ES.cf_free S (h □₁ hdom) *)
         { eapply ES.cf_free_eq.
           { symmetry. etransitivity.
             { eapply set_collect_more; [eauto|].
@@ -1477,6 +1574,8 @@ Section SimRelCertLemmas.
             { basic_solver. }
             all : eauto; try apply SRCC. }
           eapply basic_step_nupd_hdom_cf_free; eauto. }
+        (* exec_rfc : (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf) *)
+        { 
       all : admit. }
     all : admit. 
 
