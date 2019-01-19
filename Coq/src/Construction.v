@@ -476,6 +476,22 @@ Proof.
   basic_solver 10. 
 Qed.
 
+Lemma basic_step_sbEr e e' S S' 
+      (BSTEP : t_basic e e' S S') 
+      (WF: ES.Wf S) :
+  sb S' ⨾ ⦗E S⦘ ≡ sb S. 
+Proof. 
+  cdes BSTEP. cdes BSTEP_.
+  rewrite SB'.
+  rewrite !seq_union_l.
+  arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘). 
+  { step_solver. }
+  arewrite_false ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗E S⦘). 
+  { destruct e'; step_solver. }
+  rewrite ES.sbE; auto. 
+  basic_solver 10.
+Qed.
+
 Lemma basic_step_sb_mon e e' S S' 
       (BSTEP : t_basic e e' S S') :
   sb S ⊆ sb S'.
@@ -1317,6 +1333,22 @@ Proof.
   arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e); 
     basic_solver 10.
 Admitted.
+
+Lemma load_step_rf_dom e e' S S'
+      (BSTEP : t_basic e e' S S')
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) : 
+  dom_rel (rf S') ⊆₁ E S.
+Proof. 
+  erewrite load_step_rf; eauto. 
+  rewrite dom_union.
+  unionL.
+  { rewrite ES.rfE; auto. basic_solver. }
+  rewrite ES.ewE; auto. 
+  rewrite dom_rel_helper with (r := jf S').
+  2 : eapply load_step_jf_dom; eauto. 
+  basic_solver.
+Qed.
 
 Lemma load_step_rf_rmw e e' S S'
       (BSTEP : t_basic e e' S S')

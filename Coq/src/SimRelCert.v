@@ -1400,7 +1400,9 @@ Section SimRelCertLemmas.
           at 1.
         rewrite id_inter.
         rewrite a2e_img at 1; [|apply SRCC].
-        admit. }
+        rewrite <- seqA.
+        rewrite ESstep.basic_step_sbEr; eauto.
+        apply SRCC. }
       rewrite ESstep.basic_step_nupd_sb; eauto.
       rewrite seq_union_l, dom_union.
       unionL. 
@@ -1419,7 +1421,11 @@ Section SimRelCertLemmas.
       rewrite set_inter_union_l.
       rewrite id_union, seq_union_l, codom_union.
       arewrite_false (⦗eq e⦘ ⨾ Srf S'). 
-      { admit. }
+      { erewrite dom_rel_helper with (r := Srf S').
+        2 : eapply ESstep.load_step_rf_dom; eauto.  
+        arewrite_false (⦗eq e⦘ ⨾ ⦗SE S⦘). 
+        { ESstep.step_solver. }
+        basic_solver. }
       erewrite ESstep.load_step_rf; eauto.
       relsf. split.
       { arewrite (h □₁ cert_dom G TC (ES.cont_thread S k) st ∩₁ SR S' ≡₁ 
