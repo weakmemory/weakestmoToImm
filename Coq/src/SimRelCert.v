@@ -1344,6 +1344,70 @@ Section SimRelCertLemmas.
     eexists; splits; eauto; desf. 
   Qed.
 
+  Lemma simrel_cert_load_step_subexec_preserved TC' h k k' e S'
+        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
+        (EW' : Sew S' ≡ Sew S)
+        (CO' : Sco S' ≡ Sco S)
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    simrel_subexec S' TC f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)).
+  Proof. 
+    cdes BSTEP_; cdes SAJF.
+    assert (ESstep.t_basic e None S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ESstep.t_load e None S S') as LSTEP.
+    { econstructor; splits; auto. 
+      eapply weaken_sim_add_jf; eauto. }
+    constructor. 
+    (* exec_sb_prcl : dom_rel (Ssb ⨾ ⦗ f □₁ fdom ⦘) ⊆₁ f □₁ fdom; *)
+    { rewrite <- set_interK 
+          with (s := f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘)))
+          at 1.
+      rewrite id_inter.
+      rewrite a2e_img at 1; [|apply SRCC].
+      rewrite <- seqA.
+      rewrite ESstep.basic_step_sbEr; eauto.
+      apply SRCC. }
+    (* exec_ncf : ES.cf_free S (f □₁ fdom) *)
+    { red. 
+      rewrite <- set_interK 
+          with (s := f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘))).
+      rewrite id_inter.
+      rewrite a2e_img at 2 3; [|apply SRCC].
+      rewrite !seqA.
+      rewrite <- seqA with (r1 := ⦗SE S⦘).
+      rewrite <- seqA with (r2 := ⦗SE S⦘).
+      rewrite seqA with (r1 := ⦗SE S⦘).
+      rewrite <- restr_relE with (r := Scf S').
+      erewrite ESstep.basic_step_cf_restr; eauto. 
+      apply SRCC. }
+    (* exec_rfc : (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf) *)    
+    { rewrite ESstep.load_step_rf; eauto. 
+      rewrite seq_union_r, codom_union.
+      apply set_subset_union_r. left.
+      erewrite <- set_inter_absorb_r
+        with (s := f □₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘)))
+        at 1.
+      2 : { apply a2e_img. apply SRCC. }
+      rewrite set_interA.
+      arewrite (SE S ∩₁ SR S' ≡₁ SE S ∩₁ SR S).
+      { eapply ESstep.type_step_eq_dom; eauto. }          
+      rewrite <- set_interA.
+      rewrite set_inter_absorb_r with (s' := SE S); auto.
+      { apply SRCC. }
+      apply a2e_img. apply SRCC. }
+    (* exec_jfeI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+    { admit. }
+    (* exec_ewI : dom_rel Sew ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+    { rewrite EW'. apply SRCC. }
+    (* exec_rel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C; *)
+    erewrite ESstep.load_step_release; eauto. 
+    rewrite EW'. apply SRCC. 
+  Admitted.
+
   Lemma simrel_cert_load_step_subexec TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
