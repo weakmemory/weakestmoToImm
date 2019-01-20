@@ -121,6 +121,8 @@ Section SimRelCertLemmas.
 
   Notation "'fdom'" := ( C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘))) (only parsing).
 
+  
+
   Lemma simrel_cert_graph_start TC' thread 
         (SRC : simrel_common prog S G sc TC f)
         (TR_STEP : isim_trav_step G sc thread TC TC') : 
@@ -1400,7 +1402,37 @@ Section SimRelCertLemmas.
       { apply SRCC. }
       apply a2e_img. apply SRCC. }
     (* exec_jfeI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
-    { admit. }
+    { (* proof is similar to `jfe_vis`, should be refactored *)
+      rewrite EW'.
+      erewrite ESstep.load_step_jfe; eauto. 
+      rewrite dom_union. 
+      apply set_subset_union_l. split. 
+      { apply SRCC. }
+      unfold ES.jfe.
+      rewrite <- seq_eqv_minus_lr, SSJF', seq_union_l. 
+      arewrite (Sjf S ⨾ ⦗eq e⦘ ≡ ∅₂). 
+      { split; [|done]. ESstep.step_solver. }
+      arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e) by basic_solver. 
+      rewrite union_false_l.
+      eapply cert_rf_ntid_iss_sb in NEW_RF.
+      2-6 : apply SRCC.
+      destruct NEW_RF as [Iss | SB].
+      2 : admit. 
+      intros x [y [SINGL nSB]].
+      unfolder in SINGL. desc. subst x y.
+      apply seq_eqv_l in Iss. desc.
+      unfolder. do 2 eexists. splits; eauto.
+      eexists. split; [apply Iss|].
+      erewrite hfeq; [| apply SRCC |].
+      { arewrite (e2a S' w = e2a S w).
+        { erewrite basic_step_e2a_eq_dom with (S := S); eauto. 
+          eapply a2e_img; eauto. apply SRCC. }
+        fold (compose h (e2a S) w).
+        erewrite fixset_swap; eauto.
+        apply SRCC. }
+      right. red. split. 
+      { unfolder. do 2 eexists. splits; eauto. apply Iss. }
+      apply Iss. }
     (* exec_ewI : dom_rel Sew ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
     { rewrite EW'. apply SRCC. }
     (* exec_rel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C; *)
@@ -1618,7 +1650,7 @@ Section SimRelCertLemmas.
         { eapply basic_step_simrel_cont; eauto; apply SRCC. }
         { eapply simrel_cert_load_step_simrel_e2a; eauto. }
         { eapply basic_step_simrel_a2e_preserved; eauto; apply SRCC. }
-        { admit. }
+        { eapply simrel_cert_load_step_subexec_preserved; eauto. }
         (* flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab *)
         { unfold eq_dom, compose. ins. 
           erewrite ESstep.basic_step_lab_eq_dom; eauto.
@@ -1659,9 +1691,9 @@ Section SimRelCertLemmas.
             all : eauto; try apply SRCC. }
           eapply basic_step_nupd_hdom_cf_free; eauto. }
         (* exec_rfc : (h □₁ hdom) ∩₁ SR ⊆₁ codom_rel (⦗ h □₁ hdom ⦘ ⨾ Srf) *)
-        { 
+        { admit. }
       all : admit. }
-    all : admit. 
+    all : admit. }
 
   Admitted.
 
