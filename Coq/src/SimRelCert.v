@@ -1421,15 +1421,11 @@ Section SimRelCertLemmas.
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    let h' := 
-      restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act)) 
-    in
-    let h'' := upd h' (e2a S' e) e in
-    simrel_subexec S' TC h'' (cert_dom G TC (ES.cont_thread S' k') st'). 
+    let h' := upd h (e2a S' e) e in
+    simrel_subexec S' TC h' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof. 
     simpl.
-    set (h' := restr_fun (cert_dom G TC (ES.cont_thread S' k') st') h (fun _ => S'.(ES.next_act))).
-    set (h'' := upd h' (e2a S' e) e). 
+    set (h' := upd h (e2a S' e) e). 
     cdes BSTEP_; cdes SAJF.
     assert (ESstep.t_basic e None S S') as BSTEP.
     { econstructor; eauto. }
@@ -1437,27 +1433,37 @@ Section SimRelCertLemmas.
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
-    assert (h'' □₁ (cert_dom G TC (ES.cont_thread S' k') st') ≡₁ 
+    assert (h' □₁ (cert_dom G TC (ES.cont_thread S' k') st') ≡₁ 
               h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e) 
       as HDOMeq. 
     { erewrite basic_step_nupd_cert_dom; eauto; try apply SRCC. 
-      subst h'' h'. 
+      subst h'. 
       rewrite set_collect_union, set_collect_eq.
       rewrite upds. 
-      rewrite set_collect_updo.
-      2 : eapply basic_step_cert_dom_ne; eauto; apply SRCC.
-      rewrite set_collect_restr_fun; auto.  
-      erewrite basic_step_nupd_cert_dom with (st':=st'); 
-        eauto; try apply SRCC. 
-      basic_solver. }
-    assert (h'' □₁ I ≡₁ h □₁ I) as HIeq. 
-    { subst h'' h'. 
-      rewrite set_collect_updo.
-      { rewrite set_collect_restr_fun; auto.
-        admit. } 
-      red. intros HI. 
-      eapply issuedW in HI; [|apply SRCC].
-      admit. }
+      rewrite set_collect_updo; auto.
+      eapply basic_step_cert_dom_ne; eauto; apply SRCC. }
+
+    assert (h' □₁ C ≡₁ h □₁ C) as HCeq. 
+    { subst h'.
+      rewrite set_collect_updo; auto.
+      red. ins. 
+      eapply basic_step_cert_dom_ne; 
+        eauto; try apply SRCC.
+      unfold cert_dom. basic_solver. }
+      
+    assert (h' □₁ I ≡₁ h □₁ I) as HIeq. 
+    { subst h'.
+      rewrite set_collect_updo; auto.
+      red. intros Ie.
+      eapply issuedW in Ie.
+      2 : apply SRCC.
+      edestruct e2a_R. 
+      { eapply simrel_cert_load_step_simrel_e2a; eauto. }
+      { unfold set_collect, set_inter.
+        eexists; splits; eauto.
+        eapply ESstep.basic_step_acts_set; eauto.
+        basic_solver. }
+      type_solver. }
 
     simpl. constructor. 
     { rewrite HDOMeq. 
@@ -1523,11 +1529,11 @@ Section SimRelCertLemmas.
       splits; eauto; basic_solver. }
     { admit. }
     (* exec_ewI : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ I ⦘) *)
-    { rewrite EW'. 
-      (* looks like we have problem here due to `restr_fun` *)
-      (* arewrite (h'' □₁ I ≡₁ h □₁ I).  *) 
-      admit. }
-    admit. 
+    { rewrite EW', HIeq. apply SRCC. }
+    (* exec_rel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C; *)
+    rewrite EW', HCeq, HIeq.
+    erewrite ESstep.load_step_release; eauto.
+    apply SRCC. 
   Admitted.
 
   Lemma simrel_cert_lbl_step TC' h k
@@ -1638,7 +1644,7 @@ Section SimRelCertLemmas.
       1-7 : admit.
       (* sr_a2e_h *)
       { eapply basic_step_nupd_simrel_a2e_h; eauto. }
-      { admit. }
+      { eapply simrel_cert_load_step_subexec; eauto. }
       all : admit. }
     all : admit. 
 
