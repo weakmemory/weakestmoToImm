@@ -186,15 +186,18 @@ Section SimRelDef.
           ⟪ KK     : K (ll, existT _ _ st) ⟫
       end.
 
+  Record simrel_cstate := 
+    { cstate_stable : stable_state qtid state';
+      cstate_q_cont : Kstate (q, state);
+      cstate_reachable : (step qtid)＊ state state';
+      cstate_covered : C ∩₁ GTid qtid ⊆₁ contE; 
+    }.
+
   Record simrel_cert :=
     { sim_com : simrel_common;
 
-      cstate_stable : stable_state qtid state';
-      cstate_q_cont : Kstate (q, state);
-      cstate_reachable : (step qtid)＊ state state';
-      cstate_covered : C ∩₁ GTid qtid ⊆₁ contE;
-
       cert : cert_graph G sc TC TC' qtid state';
+      cstate : simrel_cstate; 
 
       tr_step : isim_trav_step G sc qtid TC TC';
 
@@ -204,10 +207,8 @@ Section SimRelDef.
 
       sr_exec_h : simrel_subexec S TC h (cert_dom G TC qtid state); 
 
-      hlabCI : eq_dom (C ∪₁ I) Glab (Slab ∘ h);
-      hlabTHRD : eq_dom contE certLab (Slab ∘ h);
-
-      hfeq  : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; 
+      hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
+      hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; 
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)

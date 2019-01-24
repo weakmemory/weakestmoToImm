@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel CertExecution2.
+     CombRelations SimTraversal SimTraversalProperties SimulationRel AuxRel CertExecution2.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
         CertGraph CertRf ImmProperties 
         SimRelDef SimRelCont SimRelEventToAction SimRelSubExec. 
@@ -298,9 +298,10 @@ Section SimRelProps.
 
     Lemma wf_cont_state : wf_thread_state (ES.cont_thread S q) state. 
     Proof. 
-      edestruct cstate_q_cont; eauto; desf. 
+      edestruct cstate_q_cont. 
+      { apply SRCC. }
       eapply contwf; eauto. 
-      apply SRCC.
+      apply SRCC. desf.
     Qed.
 
     Lemma htid : eq_dom hdom (Stid ∘ h) Gtid.
@@ -319,7 +320,7 @@ Section SimRelProps.
       SEinit ⊆₁ ES.cont_sb_dom S q.
     Proof. 
       eapply ES.cont_sb_dom_Einit; [apply SRCC|].
-      destruct SRCC.(cstate_q_cont).
+      edestruct cstate_q_cont; [apply SRCC|].
       desf. apply KK.
     Qed.
 
@@ -348,7 +349,7 @@ Section SimRelProps.
         2: by eauto with hahn.
         eapply contstateE; eauto.
         1-2: by apply SRCC.
-        edestruct cstate_q_cont; eauto. desf. }
+        edestruct cstate_q_cont; [apply SRCC|]. desf. }
       rewrite <- !set_collect_union.
       apply set_collect_mori; auto. 
       rewrite e2a_same_Einit.
@@ -360,7 +361,8 @@ Section SimRelProps.
       h □₁ hdom ∩₁ ES.cont_cf_dom S q ≡₁ ∅.
     Proof. 
       assert (ES.Wf S) as WFS by apply SRCC.
-      edestruct cstate_q_cont as [st [stEQ KK]]; eauto.
+      edestruct cstate_q_cont as [st [stEQ KK]]; 
+        [apply SRCC|].
       red; split; [|basic_solver].
       rewrite cert_dom_alt; [|apply SRCC].
       rewrite !set_collect_union. 
@@ -410,7 +412,7 @@ Section SimRelProps.
       { apply C_in_hdom. eapply init_covered; eauto.
         split; auto. }
       right.
-      edestruct cstate_q_cont as [lstate]; eauto. desf.
+      edestruct cstate_q_cont as [lstate]; [apply SRCC|]. desf.
       assert (wf_thread_state (ES.cont_thread S q) lstate) as WFT.
       { eapply contwf; [by apply SRCC|]. apply KK. }
       eapply acts_rep in YY; eauto. 
@@ -499,6 +501,17 @@ Section SimRelProps.
       2 : fold (compose g h x').
       all: eapply a2e_fix; [by apply SRCC|]; auto. 
     Qed.
+
+    Lemma hlabCI : 
+      eq_dom (C ∪₁ I) (Slab ∘ h) Glab.
+    Proof. 
+      red. ins. etransitivity.
+      { eapply hlab; eauto. basic_solver. }
+      eapply cslab; [apply SRCC|]. 
+      unfold D. do 4 left.
+      (* it should be easy, but it seems there are no suitable lemmas *)
+      admit. 
+    Admitted.
 
     Lemma h_rel_ewD : 
       dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  

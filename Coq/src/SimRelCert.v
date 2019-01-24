@@ -440,7 +440,7 @@ Section SimRelCertLemmas.
     assert (tc_coherent G sc TC') as TCCOH'. 
     { eapply isim_trav_step_coherence; apply SRCC. }
     assert ((K S) (k, existT Language.state (thread_lts (ES.cont_thread S k)) st)) as KK.
-    { edestruct cstate_q_cont; eauto. by desf. }
+    { edestruct cstate_q_cont; [apply SRCC|]. desf. }
     assert (wf_thread_state (ES.cont_thread S k) st) as WFST.
     { by apply SRCC. }
     edestruct cert_rf_complete as [w RFwa]; 
@@ -574,11 +574,10 @@ Section SimRelCertLemmas.
         exfalso. apply HH. 
         eapply dcertE in GCE; [|apply SRCC].
         by destruct GCE. }
-      symmetry. eapply hlabCI; [apply SRCC|].
+      eapply hlabCI; eauto.
       basic_solver. }
-    symmetry. 
     edestruct sb_tid_init as [STID | INITx]; eauto. 
-    { eapply hlabTHRD; [apply SRCC|].
+    { eapply hlab; eauto. right. 
       destruct CERTwa as [[Cwa | Iwa] | ACTSst]; auto.
       { eapply cstate_covered; [apply SRCC|].
         split; auto.
@@ -594,17 +593,7 @@ Section SimRelCertLemmas.
       split; auto.  
       eapply e2a_GE; [apply SRCC|].
       unfolder. eauto. }
-    etransitivity. 
-    { eapply cslab; [apply SRCC|].
-      unfold D. repeat left.
-      eapply sim_trav_step_covered_le; [|eauto].
-      econstructor. apply SRCC. }
-    etransitivity.
-    { symmetry. eapply flab; [apply SRCC|]. basic_solver. }
-    unfold compose. 
-    arewrite (f wa = h wa); [|auto].
-    eapply hfeq; [apply SRCC|].
-    by repeat left. 
+    eapply hlab; eauto. basic_solver.
   Qed.
 
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
@@ -1641,12 +1630,12 @@ Section SimRelCertLemmas.
           eapply ESstep.load_step_vis_mon; eauto. }
         (* finitIncl : SEinit ⊆₁ f □₁ GEinit *)
         erewrite ESstep.basic_step_acts_init_set; eauto. apply SRCC. }
-      1-7 : admit.
+      1-4 : admit.
       (* sr_a2e_h *)
       { eapply basic_step_nupd_simrel_a2e_h; eauto. }
       (* sr_exec_h *)
       { eapply simrel_cert_load_step_subexec; eauto. }
-      1-2 : admit. 
+      { admit. }
       (* hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; *)
       subst h'. 
       red. ins.
