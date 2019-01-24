@@ -96,7 +96,7 @@ Section SimRelEventToAction.
     }.
 
   Record simrel_a2e (a2e : actid -> eventid) (a2eD : actid -> Prop) := 
-    { a2e_inj : inj_dom_s a2eD a2e;
+    { a2e_inj : inj_dom a2eD a2e;
       a2e_img : a2e □₁ a2eD ⊆₁ SE;
       a2e_fix : fixset a2eD (e2a ∘ a2e);
       (* Do we really need this ? *)
@@ -662,7 +662,7 @@ Section SimRelEventToActionLemmas.
   Proof. 
     split; [symmetry in EQ|].
     all: intros HH; inv HH; constructor;
-      [ eapply inj_dom_s_more; eauto 
+      [ eapply inj_dom_more; eauto 
       | erewrite set_collect_more; eauto
       | eapply fixset_more; eauto ].
   Qed.

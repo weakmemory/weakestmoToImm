@@ -450,8 +450,11 @@ Section SimRelProps.
 
       assert (~ SEinit (h y')) as HYNINIT.
       { intros JJ. apply himgInit in JJ; auto.
-        red in JJ. desf. eapply SRCC.(sr_a2e_h) in JJ0; eauto. subst.
-        destruct JJ. desf. }
+        unfolder in JJ. desc. apply YNINIT.
+        erewrite a2e_inj; eauto; try apply SRCC.
+        unfold cert_dom. do 2 left. 
+        eapply init_covered; try apply SRCC.
+        basic_solver. }
 
       set (CC := SB). apply sb_tid_init in CC. desf.
       2: { apply ES.sb_init; [by apply SRCC|].
@@ -474,8 +477,12 @@ Section SimRelProps.
         rewrite <- CC. destruct x'; desf. }
       assert (~ SEinit (h x')) as HXNINIT.
       { intros JJ. apply himgInit in JJ; auto.
-        red in JJ. desf. eapply SRCC.(sr_a2e_h) in JJ0; eauto. subst.
-        destruct JJ. desf. }
+        unfolder in JJ. desc. apply XNINIT.
+        erewrite a2e_inj; try apply SRCC.(sr_a2e_h); eauto. 
+        unfold cert_dom. do 2 left.
+        eapply init_covered; try apply SRCC.
+        basic_solver. }
+
       destruct PP as [PP|]; [| |done].
       { apply seq_eqv_l. split.
         2: apply seq_eqv_r; split.

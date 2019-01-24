@@ -472,6 +472,19 @@ Proof. basic_solver 42. Qed.
 Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
 Proof. basic_solver 30. Qed.
 
+Lemma collect_rel_seq
+      (INJ : inj_dom (codom_rel r ∪₁ dom_rel r') f) : 
+  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
+Proof.
+  split; 
+    [by apply collect_rel_seqi|].
+  unfolder.
+  ins; desf; eauto.
+  repeat eexists; eauto.
+  erewrite INJ; eauto;
+    unfolder; eauto.
+Qed.
+
 Lemma collect_rel_seq_l
       (INJ : inj_dom_s (codom_rel r) f) : 
   f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
@@ -480,8 +493,8 @@ Proof.
   unfolder.
   ins; desf; eauto.
   repeat eexists; eauto.
-  apply INJ in H1; desf.
-  red. eauto.
+  apply INJ in H1; desf;
+  red; eauto.
 Qed.
 
 Lemma collect_rel_seq_r
@@ -839,6 +852,14 @@ Qed.
 Add Parametric Morphism A B : (@inj_dom_s A B) with signature 
   set_subset --> eq ==> impl as inj_dom_s_mori.
 Proof. unfold impl, inj_dom_s. basic_solver. Qed.
+
+Add Parametric Morphism A B : (@inj_dom A B) with signature 
+    set_equiv ==> eq ==> iff as inj_dom_more.
+Proof. 
+  intros s s' Heq f. red. 
+  unfold inj_dom in *.
+  splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
+Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_subset --> eq ==> impl as inj_dom_mori.

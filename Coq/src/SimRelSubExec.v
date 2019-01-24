@@ -204,21 +204,40 @@ Section SimRelSubExec.
       eexists. eexists. eauto.
     Qed.
 
-    Lemma SsbD_in_Gsb 
+    Lemma SsbD_in_GsbD 
           (SRE2A : simrel_e2a S G sc)
           (SRA2E : simrel_a2e S a2e a2eD) :
-      Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ Gsb.
+      Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ (Gsb ⨾ ⦗ a2eD ⦘).
     Proof.
-      arewrite (Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ ⦗ a2e □₁ a2eD ⦘ ⨾ Ssb ⨾ ⦗ a2e □₁ a2eD ⦘). 
-      { intros x y HH. apply seq_eqv_l. split; auto.
-        eapply exec_sb_prcl; eauto. eexists. eauto. }
+      erewrite dom_rel_helper with (r := Ssb ⨾ ⦗a2e □₁ a2eD⦘).
+      2 : by apply exec_sb_prcl. 
       rewrite <- restr_relE.
       rewrite <- collect_rel_fixset. 
       2 : eapply fixset_swap; apply SRA2E.
       rewrite <- collect_rel_compose.
       apply collect_rel_mori; auto.
+      rewrite restr_relE.
+      rewrite <- seq_eqvK at 2.
+      rewrite <- !seqA.
+      rewrite seqA with (r1 := ⦗a2e □₁ a2eD⦘). 
+      rewrite collect_rel_seqi.
+      rewrite <- restr_relE.
       rewrite inclusion_restr.
+      rewrite set_collect_eqv, set_collect_compose. 
+      rewrite <- fixset_set_fixpoint.
+      2 : eapply a2e_fix; apply SRA2E.
+      apply seq_mori; [|done].
       eapply e2a_sb; eauto. apply SRE2A. 
+    Qed.
+
+    Lemma SsbD_in_Gsb 
+          (SRE2A : simrel_e2a S G sc)
+          (SRA2E : simrel_a2e S a2e a2eD) :
+      Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ Gsb.
+    Proof.
+      etransitivity.
+      { by apply SsbD_in_GsbD. }
+      basic_solver 10.
     Qed.
 
     Lemma sbC_dom 
@@ -229,12 +248,16 @@ Section SimRelSubExec.
     Proof.
       rewrite <- seq_eqvK.
       sin_rewrite CinD.
-      sin_rewrite SsbD_in_Gsb; auto.
+      sin_rewrite SsbD_in_GsbD; auto.
       rewrite <- set_collect_eqv.
-      rewrite <- collect_rel_seq_r.
-      2: { sin_rewrite CinD. rewrite dom_eqv. apply SRA2E. }
-      rewrite sb_covered; eauto.
-      basic_solver.
+      rewrite <- collect_rel_seq.
+      { rewrite seqA. 
+        arewrite (⦗a2eD⦘ ⨾ ⦗C⦘ ⊆ ⦗C⦘).
+        rewrite sb_covered; eauto. basic_solver. }
+      rewrite codom_seq, codom_eqv, dom_eqv.
+      eapply inj_dom_mori; [| done |].
+      { red. rewrite CinD. rewrite set_unionK. auto. }
+      apply SRA2E.
     Qed.
 
     Lemma sb_nC_nC 
