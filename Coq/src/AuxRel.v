@@ -340,6 +340,34 @@ Qed.
 Lemma inj_dom_s_inj_dom (INJ : inj_dom_s s f) : inj_dom s f.
 Proof. unfolder in *. ins. by apply INJ. Qed.
 
+Lemma inj_dom_union 
+      (INJ : inj_dom s f) 
+      (INJ' : inj_dom s' f) 
+      (DISJ : set_disjoint (f □₁ s) (f □₁ s')) :
+  inj_dom (s ∪₁ s') f. 
+Proof. 
+  clear g h h' a b s'' q q' r r' r'' C.
+  unfolder in *. 
+  ins; desf; 
+    try (by exfalso; eapply DISJ; eauto).
+  { by apply INJ. }
+    by apply INJ'. 
+Qed.
+
+Lemma inj_dom_eq :
+  inj_dom (eq a) f. 
+Proof. 
+  clear g h h' b s'' q q' r r' r'' C.
+  basic_solver.
+Qed.
+
+Lemma inj_dom_eq_opt x :
+  inj_dom (eq_opt x) f. 
+Proof. 
+  clear g h h' b s'' q q' r r' r'' C.
+  basic_solver.
+Qed.
+
 Lemma inj_dom_s_union (INJ : inj_dom_s s f) (INJ' : inj_dom_s s' f) :
   inj_dom_s (s ∪₁ s') f. 
 Proof. 
