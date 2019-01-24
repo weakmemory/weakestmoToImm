@@ -1644,10 +1644,21 @@ Section SimRelCertLemmas.
       1-7 : admit.
       (* sr_a2e_h *)
       { eapply basic_step_nupd_simrel_a2e_h; eauto. }
+      (* sr_exec_h *)
       { eapply simrel_cert_load_step_subexec; eauto. }
-      all : admit. }
-    all : admit. 
+      1-2 : admit. 
+      (* hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; *)
+      subst h'. 
+      red. ins.
+      erewrite ESstep.basic_step_cont_thread_k in SX; eauto.
+      rewrite updo.
+      { eapply hfeq; eauto. }
+      red. ins. subst x.
+      eapply basic_step_cert_dom_ne; 
+        eauto; try apply SRCC.
+      unfold cert_dom. by left. }
 
+    all : admit. 
   Admitted.
 
   Lemma simrel_cert_step TC' h q state''
