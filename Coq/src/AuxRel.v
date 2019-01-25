@@ -881,6 +881,21 @@ Add Parametric Morphism A B : (@inj_dom_s A B) with signature
   set_subset --> eq ==> impl as inj_dom_s_mori.
 Proof. unfold impl, inj_dom_s. basic_solver. Qed.
 
+Add Parametric Morphism A B : (@eq_dom A B) with signature 
+    set_equiv ==> eq ==> eq ==> iff as eq_dom_more.
+Proof. 
+  intros s s' Heq f g. 
+  unfold eq_dom. 
+  split; ins; 
+    specialize (H x); 
+    apply H; auto; 
+    apply Heq; auto.
+Qed.
+
+Add Parametric Morphism A B : (@eq_dom A B) with signature 
+    set_subset --> eq ==> eq ==> impl as eq_dom_mori.
+Proof. basic_solver. Qed.
+
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
     set_equiv ==> eq ==> iff as inj_dom_more.
 Proof. 
@@ -891,7 +906,7 @@ Qed.
 
 Add Parametric Morphism A B : (@inj_dom A B) with signature 
   set_subset --> eq ==> impl as inj_dom_mori.
-Proof. unfold impl, inj_dom. basic_solver. Qed.
+Proof. basic_solver. Qed.
 
 Add Parametric Morphism A : (@fixset A) with signature 
     set_equiv ==> eq ==> iff as fixset_more.
