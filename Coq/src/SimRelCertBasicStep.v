@@ -11,17 +11,16 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelDef SimRelProps SimRelCont SimRelEventToAction SimRelSubExec. 
+        SimRelCont SimRelEventToAction SimRelSubExec SimRelDef SimRelCert SimRelProps. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section SimRelCertBasicStep.
 
+  Variable prog : Prog.t.
   Variable S : ES.t.
   Variable G : execution.
-  Variable prog : Prog.t.
-  Variable GPROG : program_execution prog G.
 
   Variable TC : trav_config.
   Variable sc : relation actid.
@@ -131,9 +130,9 @@ Section SimRelCertBasicStep.
     { unfold eq_opt.
       destruct e' as [e'|]; simpl; red; ins.
       erewrite basic_step_e2a_e with (e := e) in H; eauto.
-      2-4 : apply SRCC.
+      2-5 : apply SRCC.
       erewrite basic_step_e2a_e' in H; eauto.
-      2-4 : apply SRCC.
+      2-5 : apply SRCC.
       inv H. omega. }
 
     assert 
@@ -142,9 +141,9 @@ Section SimRelCertBasicStep.
     { unfold eq_opt.
       destruct e'; simpl; red; ins.
       erewrite basic_step_e2a_e in IN; eauto.
-      2-4 : apply SRCC.
+      2-5 : apply SRCC.
       erewrite basic_step_e2a_e' in IN'; eauto.
-      2-4 : apply SRCC.
+      2-5 : apply SRCC.
       inv IN. omega. }
 
     assert 

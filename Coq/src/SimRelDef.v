@@ -12,8 +12,11 @@ Local Open Scope program_scope.
 
 Section SimRelDef.
   Variable prog : Prog.t.
-
   Variable S : ES.t.
+  Variable G : execution.
+  Variable sc : relation actid.
+  Variable TC : trav_config.
+  Variable f : actid -> eventid.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -61,8 +64,6 @@ Section SimRelDef.
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
-  Variable G : execution.
-
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
@@ -89,10 +90,6 @@ Section SimRelDef.
   Notation "'Grelease'" := (G.(imm_s_hb.release)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
 
-  Variable sc : relation actid.
-
-  Variable TC : trav_config.
-
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
@@ -104,8 +101,6 @@ Section SimRelDef.
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
       irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
     }.
-
-  Variable f : actid -> eventid.
 
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
   
@@ -141,91 +136,5 @@ Section SimRelDef.
 
       release_issf_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
     }.
-
-  Variable TC': trav_config.
-
-  Notation "'C''"  := (covered TC').
-  Notation "'I''"  := (issued TC').
-
-  Variable h : actid -> eventid.
-
-  Variable q : cont_label.
-
-  Notation "'qtid'" := (ES.cont_thread S q) (only parsing).
-
-  (* A state in a continuation related to q in S. *)
-  Variable state : ProgToExecution.state.
-
-  (* A state, which is reachable from 'state' and which represents a graph certification. *)
-  Variable state' : ProgToExecution.state.
-
-  Notation "'E0'" := (E0 G TC' qtid).
-
-  Notation "'new_rf'" := (cert_rf G sc TC' qtid).
-  
-  Notation "'contG'" := state.(ProgToExecution.G).
-  Notation "'certG'" := state'.(ProgToExecution.G).
-
-  Notation "'contE'" := contG.(acts_set).
-  Notation "'certE'" := certG.(acts_set).
-
-  Notation "'certLab'" := (certLab G state').
-
-  (* Definition cert_dom thread state := *)
-  (*   (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid thread) ∪₁ *)
-  (*     state.(ProgToExecution.G).(acts_set)). *)
-  
-  Notation "'hdom'" := (cert_dom G TC (ES.cont_thread S q) state) (only parsing).
-
-  Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
-    fun l =>
-      match l with
-      | (ll, lstate) =>
-        exists (st : (thread_lts (ES.cont_thread S ll)).(Language.state)),
-          ⟪ SSTATE : lstate = st ⟫ /\
-          ⟪ KK     : K (ll, existT _ _ st) ⟫
-      end.
-
-  Record simrel_cstate := 
-    { cstate_stable : stable_state qtid state';
-      cstate_q_cont : Kstate (q, state);
-      cstate_reachable : (step qtid)＊ state state';
-      cstate_covered : C ∩₁ GTid qtid ⊆₁ contE; 
-    }.
-
-  Record simrel_cert :=
-    { sim_com : simrel_common;
-
-      cert : cert_graph G sc TC TC' qtid state';
-      cstate : simrel_cstate; 
-
-      tr_step : isim_trav_step G sc qtid TC TC';
-
-      hgfix : fixset (ES.cont_sb_dom S q) (h ∘ g);
-
-      sr_a2e_h : simrel_a2e S h (cert_dom G TC qtid state);
-
-      sr_exec_h : simrel_subexec S TC h (cert_dom G TC qtid state); 
-
-      hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
-      hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; 
-
-      (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
-      (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
-    }.
-
-  Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=
-    ⟪ RR : is_r (ES.lab S') r ⟫ /\
-    exists w,
-      ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
-      ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\
-      ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
-
-  Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop :=
-    ⟪ WW : is_w (ES.lab S') w ⟫ /\
-    exists (ws : eventid -> Prop),
-      ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\
-      ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
-      ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫.
 
 End SimRelDef.
