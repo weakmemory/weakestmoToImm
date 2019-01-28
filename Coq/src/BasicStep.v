@@ -500,6 +500,70 @@ Proof.
   desf; rewrite SB'; basic_solver. 
 Qed.
 
+Lemma basic_step_imm_sb_e a lang k k' st st' e e' S S'
+      (WF : ES.Wf S)
+      (kEVENT : k = CEvent a)
+      (BSTEP_ : t_ lang k k' st st' e e' S S') :
+  immediate (sb S') a e.
+Proof. 
+  cdes BSTEP_.
+  assert (t e e' S S') as BSTEP. 
+  { econstructor; eauto. }
+  eapply immediate_more.
+  { apply SB'. }
+  split. 
+  { unfold ES.cont_sb_dom. basic_solver 10. }
+  ins. unfold union in R2. desf.
+  3 : { unfolder in R2. unfold eq_opt, opt_ext in *. destruct e'; omega. }
+  { apply ES.sbE in R2; auto. 
+    unfolder in R2. omega. }
+  unfold cross_rel in R2. desc.
+  assert (E S c) as Ec.
+  { eapply ES.cont_sb_domE; eauto. }
+  unfold ES.cont_sb_dom in *. 
+  unfold union in R1. desf.
+  { unfolder in R2. desf.
+    { eapply ES.sb_irr; eauto. }
+    eapply ES.sb_irr, ES.sb_trans; eauto. }
+  { unfolder in R1. desc. subst.
+    eapply basic_step_acts_set_ne; eauto. }
+  unfolder in R1. desc. subst. 
+  destruct e'; auto; subst.
+  eapply basic_step_acts_set_ne'; eauto. 
+Qed.
+
+Lemma basic_step_imm_sb_e' lang k k' st st' e e' S S'
+      (WF : ES.Wf S)
+      (BSTEP_ : t_ lang k k' st st' e (Some e') S S') :
+  immediate (sb S') e e'.
+Proof. 
+  cdes BSTEP_.
+  assert (t e (Some e') S S') as BSTEP. 
+  { econstructor; eauto. }
+  eapply immediate_more.
+  { apply SB'. }
+  split. 
+  { unfold ES.cont_sb_dom. basic_solver 10. }
+  ins. unfold union in R2. desf.
+  { apply ES.sbE in R2; auto. 
+    unfolder in R2. omega. } 
+  {unfolder in R2. omega. }
+  unfold eq_opt, opt_ext in *.
+  unfold union in R1. desf.
+  { apply ES.sbE in R1; auto. 
+    unfolder in R1. omega. }
+  { destruct R1 as [KSB _].
+    eapply ES.cont_sb_domE in KSB; eauto. 
+    unfolder in KSB. omega. } 
+  unfold set_union, cross_rel in R1. desf.
+  { eapply ES.cont_sb_domE in R1; eauto. 
+    unfolder in R1. omega. }  
+  unfold set_union, cross_rel in R2. desf.
+  { eapply ES.cont_sb_domE in R2; eauto. 
+    unfolder in R2. omega. }   
+  omega.
+Qed.
+
 (******************************************************************************)
 (** ** basic_step : `cf` propeties *)
 (******************************************************************************)
@@ -985,34 +1049,29 @@ Proof.
   cdes BSTEP; cdes BSTEP_.
   red. intros x. ins.
   unfold ES.seqn.
-  arewrite ((tid S') x = (tid S) x).
-  { eapply basic_step_tid_eq_dom; eauto. }
-  arewrite (sb S' ⨾ ⦗eq x⦘ ≡ sb S ⨾ ⦗eq x⦘).
-  { rewrite SB'. relsf.
-    rewrite !seq_eqv_cross_r.
-    arewrite (eq x ∩₁ eq e ≡₁ ∅).
-    { split; [|basic_solver].
-      unfolder. ins. desf.
-      red in SX. omega. }
-    arewrite (eq x ∩₁ eq_opt e' ≡₁ ∅).
-    { split; [|basic_solver].
-      unfolder. ins. desf.
-      unfold opt_ext in EEQ. desf.
-      red in SX. omega. }
-    basic_solver. }
-  rewrite (dom_l WF.(ES.sbE)). rewrite !seqA.
-  seq_rewrite <- !id_inter.
-  arewrite ((Tid S' (tid S x)) ∩₁ E S ≡₁ (Tid S  (tid S x)) ∩₁ E S).
-  { split.
-    all: unfolder; ins; desf.
-    all: splits; auto.
-    all: rewrite <- H.
-    symmetry.
-    all: eapply basic_step_tid_eq_dom; eauto. }
+  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  arewrite (sb S' ⨾ ⦗eq x⦘ ≡ sb S ⨾ ⦗eq x⦘). 
+  { red. split. 
+    { rewrite <- seq_eqvK, <- seqA. 
+      arewrite (eq x ⊆₁ E S).
+      { basic_solver. }
+      rewrite <- seqA, basic_step_sbEr; eauto.
+      basic_solver. }
+    rewrite SB'. basic_solver. }
+  rewrite lib.AuxRel.seq_eqv_inter_lr.
+  rewrite ES.sbE at 1; auto.
+  rewrite <- restr_relE, <- restr_inter_absorb_r. 
+  rewrite basic_step_same_tid_restr; eauto.
+  rewrite restr_inter_absorb_r, restr_relE. 
+  rewrite <- ES.sbE; auto.
   erewrite countNatP_lt_eq. done.
   { eapply basic_step_next_act_lt; eauto. }
-  ins. apply dom_eqv1 in EE. apply EE. 
-Qed.
+  intros y [z HH]. 
+  apply seq_eqv_r in HH. 
+  destruct HH as [[SB _] _].
+  apply ES.sbE in SB; auto.
+  apply seq_eqv_lr in SB. by desc.
+Qed.  
 
 Lemma basic_step_seqn_kinit thread lang k k' st st' e e' S S' 
       (kINIT : k = CInit thread)
@@ -1021,30 +1080,30 @@ Lemma basic_step_seqn_kinit thread lang k k' st st' e e' S S'
   ES.seqn S' e = 0. 
 Proof.   
   cdes BSTEP_.
+  assert (t e e' S S') as BSTEP. 
+  { econstructor; eauto. }
   unfold ES.seqn.
-  arewrite (⦗Tid S' ((tid S') e)⦘ ⨾ sb S' ⨾ ⦗eq e⦘ ≡ ∅₂); 
+  arewrite (sb S' ∩ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ ∅₂); 
     [|by rewrite dom_empty; apply countNatP_empty].
-  split; [|basic_solver]. 
-  rewrite SB', cross_union_r. relsf. 
-  repeat apply inclusion_union_l.
-  { step_solver. }
-  2-3: destruct e'; by step_solver.
-  rewrite seq_eqv_lr. 
-  unfold ES.cont_sb_dom. 
-  desf; red.
-  intros x y [eqTID [CROSS EQy]]; desf.
-  eapply ES.init_tid_K; eauto. 
-  do 2 eexists; splits; eauto.  
-  unfold ES.cont_thread.
-  arewrite (thread = (tid S') (ES.next_act S)) .
-  { etransitivity; [|erewrite basic_step_tid_e; eauto].  
-    by unfold ES.cont_thread. }
-  assert (Einit S' x) as INITx. 
-  { eapply basic_step_acts_init_set; eauto.  
-    { econstructor; eauto. }
-    unfold cross_rel in CROSS; desf. } 
-  arewrite (tid_init = (tid S') x); auto. 
-  unfold ES.acts_init_set, set_inter in INITx; desf. 
+  split; [|done]. 
+  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  arewrite (sb S' ⨾ ⦗eq e⦘ ≡ ES.cont_sb_dom S k × eq e). 
+  { rewrite SB'. 
+    rewrite !seq_union_l.
+    arewrite_false (sb S ⨾ ⦗eq e⦘).
+    { step_solver. }
+    arewrite_false ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗eq e⦘).
+    { destruct e'; step_solver. }
+    basic_solver 10. }
+  unfold ES.cont_sb_dom. subst. 
+  unfold ES.same_tid.
+  unfolder; ins; desc; subst.
+  eapply ES.init_tid_K; eauto.
+  do 2 eexists; splits; eauto.
+  erewrite <- basic_step_tid_e; [|eauto].
+  assert (tid S' x = tid S x) as Hx. 
+  { eapply basic_step_tid_eq_dom; eauto. }
+  congruence. 
 Qed.
 
 Lemma basic_step_seqn_kevent x lang k k' st st' e e' S S' 
@@ -1071,23 +1130,22 @@ Proof.
      we can only assume well-formdness of `sb`. 
    *)
   unfold ES.seqn.
-  arewrite (⦗Tid S' (tid S' e)⦘ ⨾ sb S' ⨾ ⦗eq e⦘ ≡ (sb S' ∩ ES.same_tid S') ⨾ ⦗eq e⦘).
-  { basic_solver. }
-  arewrite (⦗Tid S' (tid S' x)⦘ ⨾ sb S' ⨾ ⦗eq x⦘ ≡ (sb S' ∩ ES.same_tid S') ⨾ ⦗eq x⦘).
-  { basic_solver. }
   assert (immediate (sb S' ∩ ES.same_tid S') x e) as IMMSB_STID. 
-  { admit. }
+  { apply immediate_inter. split. 
+    { eapply basic_step_imm_sb_e; eauto. }
+    red. erewrite basic_step_tid_e with (e := e); eauto.
+    unfold ES.cont_thread; subst.
+    eapply basic_step_tid_eq_dom; eauto. }
   erewrite trans_prcl_immediate_seqr_split with (y := e). 
   all: eauto using inter_trans, basic_step_sb_trans, ES.same_tid_trans, basic_step_sb_prcl. 
-  rewrite dom_cross.
-  2: { red. basic_solver. }
+  rewrite dom_cross; [| red; basic_solver].
   rewrite countNatP_union.
   { eapply Nat.add_wd; auto. 
-    eapply countNatP_eq.
-    admit. }
+    eapply countNatP_eq. 
+    eapply basic_step_acts_set_mon; eauto. }
   unfolder; ins; desf. 
   eapply basic_step_sb_irr; eauto.
-Admitted.
+Qed.
 
 Lemma basic_step_seqn_e' e e' S S' 
       (BSTEP : t e (Some e') S S') 
@@ -1095,48 +1153,20 @@ Lemma basic_step_seqn_e' e e' S S'
   ES.seqn S' e' = 1 + ES.seqn S' e. 
 Proof.   
   cdes BSTEP; cdes BSTEP_.  
-  assert (immediate (sb S') e e') as IMMSB. 
-  { apply immediateE.
-    unfold minus_rel, seq. 
-    split. 
-    { apply SB'. basic_solver. }
-    red. intros [x [SBz SBz']].
-    assert (x = e') as EQx. 
-    { apply SB' in SBz.
-      unfold union in SBz.
-      destruct SBz as [[SB | SBK] | HH].
-      { exfalso. 
-        eapply ES.sbE in SB; auto.  
-        apply seq_eqv_lr in SB.
-        eapply basic_step_acts_set_ne; eauto.
-        desf. }
-      { exfalso. 
-        eapply basic_step_acts_set_ne; eauto.
-        unfold cross_rel in SBK.
-        destruct SBK as [SBk _].
-        eapply ES.cont_sb_domE; eauto. }
-      unfold cross_rel, eq_opt in HH; desf. }
-    admit. 
-    (* eapply ES.sb_irr; [apply WF'|].
-    subst x; eauto. *) } 
-
   unfold ES.seqn. 
-  arewrite (⦗Tid S' (tid S' e')⦘ ⨾ sb S' ⨾ ⦗eq e'⦘ ≡ (sb S' ∩ ES.same_tid S') ⨾ ⦗eq e'⦘).
-  { basic_solver. }
-  arewrite (⦗Tid S' (tid S' e)⦘ ⨾ sb S' ⨾ ⦗eq e⦘ ≡ (sb S' ∩ ES.same_tid S') ⨾ ⦗eq e⦘).
-  { basic_solver. }
   assert (immediate (sb S' ∩ ES.same_tid S') e e') as IMMSB_STID. 
-  { admit. }
+  { apply immediate_inter. split. 
+    { eapply basic_step_imm_sb_e'; eauto. }
+    red. erewrite basic_step_tid_e, basic_step_tid_e'; eauto. }
   erewrite trans_prcl_immediate_seqr_split with (y := e'). 
   all: eauto using inter_trans, basic_step_sb_trans, ES.same_tid_trans, basic_step_sb_prcl. 
-  rewrite dom_cross.
-  2: { red. basic_solver. }
+  rewrite dom_cross; [| red; basic_solver].
   rewrite countNatP_union.
   { eapply Nat.add_wd; auto. 
     eapply countNatP_eq.
-    admit. }
+    unfold opt_ext in *. omega. }
   unfolder; ins; desf. 
   eapply basic_step_sb_irr; eauto.
-Admitted.
+Qed.
 
 End ESBasicStep.

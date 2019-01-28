@@ -154,7 +154,7 @@ Notation "'Acqrel'" := (is_acqrel lab).
 Notation "'Sc'" := (is_sc lab).
 
 Definition seqn (e : eventid) : nat := 
-  countNatP (dom_rel (⦗ Tid (tid e) ⦘ ⨾ sb ⨾ ⦗ eq e ⦘)) (next_act S).
+  countNatP (dom_rel (sb ∩ same_tid ⨾ ⦗ eq e ⦘)) (next_act S).
 
 Record Wf :=
   { initL : forall l, (exists b, E b /\ loc b = Some l) ->
@@ -779,11 +779,12 @@ Proof.
   intros a b [x [y [[SB STID] [SEQx SEQy]]]].
   rewrite <- SEQx, <- SEQy. 
   apply countNatP_lt with (e:=x); auto.
-  { intros z [v PP]. destruct_seq PP as [DD EE]; subst.
-    eexists. apply seq_eqv_l. split; auto.
-    { congruence. }
-    apply seq_eqv_r. split; [|by eauto].
-    eapply sb_trans; eauto. }
+  { intros z [v [u [[SB' STID'] EQx]]].
+    unfolder in EQx; desc; subst.
+    eexists. apply seq_eqv_r.
+    split; eauto. split.
+    { eapply sb_trans; eauto. }
+    eapply same_tid_trans; eauto. }
   { red; unfolder; ins; desf.
     eapply sb_irr; eauto. }
   { red; unfolder; eauto 10. }
@@ -797,12 +798,12 @@ Proof. eapply seqn_sb; unfolder; eauto 50. Qed.
 Lemma seqn_init WF y (Ey : Einit y) : seqn y = 0.
 Proof.
   unfold seqn.
-  arewrite (⦗Tid (tid y)⦘ ⨾ sb ⨾ ⦗eq y⦘ ≡ ∅₂).
+  arewrite (sb ∩ same_tid ⨾ ⦗eq y⦘ ≡ ∅₂).
   2: { rels. apply countNatP_empty. }
   split; [|basic_solver].
   arewrite (eq y ⊆₁ Einit) by (intros x HH; desf).
-  rewrite sb_ninit; auto.
-  rels.
+  rewrite <- lib.AuxRel.seq_eqv_inter_lr. 
+  rewrite sb_ninit; auto. rels.
 Qed.
 
 Lemma seqn_immsb WF x y 
@@ -811,28 +812,15 @@ Lemma seqn_immsb WF x y
   seqn y = 1 + seqn x.
 Proof. 
   unfold seqn.
-  arewrite (⦗Tid (tid x)⦘ ⨾ sb ⨾ ⦗eq x⦘ ≡ (sb ∩ same_tid) ⨾ ⦗eq x⦘).
-  { basic_solver. }
-  arewrite (⦗Tid (tid y)⦘ ⨾ sb ⨾ ⦗eq y⦘ ≡ (sb ∩ same_tid) ⨾ ⦗eq y⦘).
-  { basic_solver. }
   assert (immediate (sb ∩ same_tid) x y) as IMMSB_STID. 
-  { apply immediateE. 
-    unfolder. 
-    splits; auto. 
-    { by apply immediate_in. }
-    apply immediateE in IMMSB.
-    unfolder in IMMSB.
-    red. ins. 
-    apply IMMSB.
-    basic_solver. }
+  { eapply immediate_inter. red; split; auto. }
   erewrite trans_prcl_immediate_seqr_split with (y := y). 
   all: eauto using inter_trans, sb_trans, same_tid_trans, sb_prcl. 
-  rewrite dom_cross.
-  2: { red. basic_solver. }
+  rewrite dom_cross; [|red; basic_solver].
   rewrite countNatP_union.
-  { eapply Nat.add_wd; auto. 
-    eapply countNatP_eq.
-    apply immediate_in, sbE, seq_eqv_lr in IMMSB; desf. } 
+  { apply immediate_in, sbE, seq_eqv_lr in IMMSB; desf.
+    eapply Nat.add_wd; auto. 
+    by eapply countNatP_eq. } 
   unfolder; ins; desf. 
   eapply sb_irr; eauto.  
 Qed.

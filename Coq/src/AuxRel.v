@@ -801,9 +801,6 @@ Proof.
   all: exfalso; eapply CODOM; split; [eexists|]; eauto.
 Qed.
 
-Lemma immediate_in : immediate r ⊆ r. 
-Proof. basic_solver. Qed.
-
 Lemma inter_trans : transitive r -> transitive r' -> transitive (r ∩ r').
 Proof. 
   clear.
@@ -813,6 +810,13 @@ Proof.
   specialize (TR' x y z).
   intuition.
 Qed.
+
+Lemma immediate_in : immediate r ⊆ r. 
+Proof. basic_solver. Qed.
+
+Lemma immediate_inter : 
+  (immediate r) ∩ r' ⊆ immediate (r ∩ r').
+Proof. basic_solver. Qed.
 
 Lemma trans_prcl_immediate_seqr_split x y
       (TRANS : transitive r) (PRCL : prefix_clos r) (IMM : (immediate r) x y) :
