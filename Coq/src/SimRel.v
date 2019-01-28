@@ -1,21 +1,22 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimTraversalProperties SimulationRel AuxRel CertExecution2.
+     CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf ImmProperties 
-        SimRelDef SimRelCert SimRelCont SimRelEventToAction SimRelSubExec. 
+        CertGraph CertRf SimRelCont SimRelEventToAction SimRelSubExec. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
 
-Section SimRelProps.
-
+Section SimRel.
   Variable prog : Prog.t.
-
   Variable S : ES.t.
+  Variable G : execution.
+  Variable sc : relation actid.
+  Variable TC : trav_config.
+  Variable f : actid -> eventid.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -48,9 +49,6 @@ Section SimRelProps.
   Notation "'Srelease'" := (S.(Consistency.release)).
   Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Shb'" := (S.(Consistency.hb)).
-  Notation "'Secf'" := (S.(Consistency.ecf)).
-
-  Notation "'g'" := (e2a S). 
 
   Notation "'thread_syntax' tid"  := 
     (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
@@ -63,8 +61,6 @@ Section SimRelProps.
   
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
-
-  Variable G : execution.
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -92,22 +88,56 @@ Section SimRelProps.
   Notation "'Grelease'" := (G.(imm_s_hb.release)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
 
-  Variable TC : trav_config.
-
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Variable sc : relation actid.
-
   Notation "'Gvf'" := (furr G sc).
 
-  Variable f : actid -> eventid.
+  Record simrel_graph := 
+    { gprclos : forall thread m n (LT : m < n) (EE : GE (ThreadEvent thread n)),
+        GE (ThreadEvent thread m);
+      rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
+      irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
+    }.
 
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
+  
+  Record simrel_common :=
+    { noinitprog : ~ IdentMap.In tid_init prog;
+      gprog : program_execution prog G;
+      
+      gwf   : Execution.Wf G;
+      swf   : ES.Wf S;
+      
+      gcons : imm_consistent G sc;
+      scons : @es_consistent S Weakestmo;
+
+      tccoh : tc_coherent G sc TC;
+      
+      sr_cont : simrel_cont prog S G TC;
+      sr_graph : simrel_graph;
+
+      sr_e2a : simrel_e2a S G sc;
+      sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
+      
+      sr_exec_f : simrel_subexec S TC f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)); 
+
+      flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
+      fvis : f □₁ fdom ⊆₁ vis S;
+      finitIncl : SEinit ⊆₁ f □₁ GEinit;      
+    }.
+  
+  Record simrel :=
+    { src : simrel_common;
+      gE_trav : (e2a S) □₁ SE ⊆₁ fdom;
+      jfefI  : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
+
+      release_issf_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
+    }.
 
   Section SimRelCommonProps. 
     
-    Variable SRC : simrel_common prog S G sc TC f. 
+    Variable SRC : simrel_common.
 
     Lemma fimgInit : 
       SEinit ≡₁ f □₁ GEinit. 
@@ -123,24 +153,24 @@ Section SimRelProps.
       basic_solver.
     Qed.
 
-    Lemma gf_fixI : fixset I (g ∘ f). 
+    Lemma e2af_fixI : fixset I ((e2a S) ∘ f). 
     Proof. 
       eapply fixset_mori; 
         [| eauto | eapply SRC]. 
       red. basic_solver 10.
     Qed.
 
-    Lemma ginjfdom : inj_dom (f □₁ fdom) g.
+    Lemma e2a_inj_fdom : inj_dom (f □₁ fdom) (e2a S).
     Proof. eapply e2a_inj; apply SRC. Qed.
 
-    Lemma ginjfC : inj_dom (f □₁ C) g.
+    Lemma e2a_injfC : inj_dom (f □₁ C) (e2a S).
     Proof.
       eapply inj_dom_mori; eauto.
-      2: by apply ginjfdom.
+      2: by apply e2a_inj_fdom.
       red. basic_solver.
     Qed.
     
-    Lemma gewI : g □ Sew  ⊆ ⦗ I ⦘. 
+    Lemma e2a_ewI : (e2a S) □ Sew  ⊆ ⦗ I ⦘. 
     Proof.
       intros x y HH.
       assert (x = y) as EQxy; subst.
@@ -153,10 +183,10 @@ Section SimRelProps.
       destruct_seq_r HH as FI.
       red in FI. destruct FI as [y [IY]]; subst.
       destruct HH as [HH|HH]; subst.
-      { fold (compose g f y).
-        by rewrite gf_fixI. }
-      assert (g a = compose g f y) as XX.
-      2: { rewrite XX. by rewrite gf_fixI. }
+      { fold (compose (e2a S) f y).
+        by rewrite e2af_fixI. }
+      assert (e2a S a = compose (e2a S) f y) as XX.
+      2: { rewrite XX. by rewrite e2af_fixI. }
       eapply e2a_ew; [apply SRC|].
       eexists; eauto.
     Qed.
@@ -165,7 +195,7 @@ Section SimRelProps.
       exists (state : (thread_lts thread).(Language.state)) c,
         ⟪ QQ : K (c, existT _ _ state) ⟫ /\
         ⟪ QTID : thread = ES.cont_thread S c  ⟫ /\
-        ⟪ CsbqDOM : g □₁ ES.cont_sb_dom S c ⊆₁ covered TC ⟫ /\
+        ⟪ CsbqDOM : (e2a S) □₁ ES.cont_sb_dom S c ⊆₁ covered TC ⟫ /\
         ⟪ SSTATE : @sim_state G sim_normal C thread state ⟫.
     Proof.
       destruct SRC.
@@ -202,9 +232,9 @@ Section SimRelProps.
           eapply rmwclos with (r:=e) (w:=w); eauto. }
       assert (~ dom_rel Srmw (f e)) as NSRMW.
       { intros [w RMW].
-        apply NRMW. exists (g w).
+        apply NRMW. exists (e2a S w).
         eapply e2a_rmw; eauto.
-        arewrite (e = g (f e)).
+        arewrite (e = e2a S (f e)).
         { symmetry. admit. (* eapply gffix; eauto. basic_solver. *) }
         unfolder. eauto. }
       assert (~ GEinit e) as NINIT.
@@ -251,4 +281,4 @@ Section SimRelProps.
 
   End SimRelCommonProps.
 
-End SimRelProps.
+End SimRel.

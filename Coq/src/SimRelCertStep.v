@@ -11,8 +11,8 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure Construction Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelDef SimRelCert SimRelProps SimRelCont SimRelEventToAction SimRelSubExec
-        SimRelCertBasicStep. 
+        SimRelCont SimRelEventToAction SimRelSubExec
+        SimRel SimRelCert SimRelCertBasicStep. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
