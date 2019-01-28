@@ -294,16 +294,16 @@ Section EventToActionLemmas.
     unfold e2a.
     assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA.
     { red; split; ins;
-        [ erewrite <- ESstep.basic_step_tid_eq_dom
-        | erewrite ESstep.basic_step_tid_eq_dom
+        [ erewrite <- ESBasicStep.basic_step_tid_eq_dom
+        | erewrite ESBasicStep.basic_step_tid_eq_dom
         ]; eauto. }
     assert ((Sloc S') x = (Sloc S) x) as BB.
-    { eapply ESstep.basic_step_loc_eq_dom; eauto. }
+    { eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
     unfold opt_ext; desf; try by (exfalso; intuition).
     assert ((Stid S') x = (Stid S) x) as CC.
-    { eapply ESstep.basic_step_tid_eq_dom; eauto. }
+    { eapply ESBasicStep.basic_step_tid_eq_dom; eauto. }
     assert (ES.seqn S' x = ES.seqn S x) as DD.
-    { eapply ESstep.basic_step_seqn_eq_dom; eauto. }
+    { eapply ESBasicStep.basic_step_seqn_eq_dom; eauto. }
     congruence.
   Qed.
 

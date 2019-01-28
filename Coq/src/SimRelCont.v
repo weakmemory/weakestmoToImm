@@ -181,45 +181,6 @@ Section SimRelCont.
 
 End SimRelCont.
 
-Section EventToActionLemmas.
-  Variable prog : Prog.t.
-  Variable S : ES.t.
-  Variable G  : execution.
-  Variable GPROG : program_execution prog G.
-  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
-
-  Notation "'SE' S" := S.(ES.acts_set) (at level 10).
-  Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
-  Notation "'SEninit' S" := S.(ES.acts_ninit_set) (at level 10).
-  Notation "'Stid' S" := (S.(ES.tid)) (at level 10).
-  Notation "'Slab' S" := S.(ES.lab) (at level 10).
-  Notation "'Sloc' S" := (loc S.(ES.lab)) (at level 10).
-
-  (* Lemma basic_step_e2a_eq_dom e e' S' *)
-  (*       (WF : ES.Wf S) *)
-  (*       (BSTEP : ESBasicStep.t e e' S S') : *)
-  (*   eq_dom (SE S) (e2a S') (e2a S). *)
-  (* Proof. *)
-  (*   cdes BSTEP; cdes BSTEP_. *)
-  (*   red. intros x. ins. *)
-  (*   unfold e2a. *)
-  (*   assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA. *)
-  (*   { red; split; ins; *)
-  (*       [ erewrite <- ESstep.basic_step_tid_eq_dom *)
-  (*       | erewrite ESstep.basic_step_tid_eq_dom *)
-  (*       ]; eauto. } *)
-  (*   assert ((Sloc S') x = (Sloc S) x) as BB. *)
-  (*   { eapply ESstep.basic_step_loc_eq_dom; eauto. } *)
-  (*   unfold opt_ext; desf; try by (exfalso; intuition). *)
-  (*   assert ((Stid S') x = (Stid S) x) as CC. *)
-  (*   { eapply ESstep.basic_step_tid_eq_dom; eauto. } *)
-  (*   assert (ES.seqn S' x = ES.seqn S x) as DD. *)
-  (*   { eapply ESstep.basic_step_seqn_eq_dom; eauto. } *)
-  (*   congruence. *)
-  (* Qed. *)
-
-End EventToActionLemmas.
-
 Section SimRelContLemmas. 
   Variable prog : Prog.t.
   Variable S : ES.t.
@@ -286,7 +247,7 @@ Section SimRelContLemmas.
 
     assert (Stid S' (opt_ext e e') = ES.cont_thread S k) as TIDee.
     { edestruct e'; simpl;
-        [eapply ESstep.basic_step_tid_e' | eapply ESstep.basic_step_tid_e];
+        [eapply ESBasicStep.basic_step_tid_e' | eapply ESBasicStep.basic_step_tid_e];
         eauto. }
 
     assert (st'.(eindex) = 1 + ES.seqn S' (opt_ext e e')) as ST_IDX. 
@@ -302,25 +263,21 @@ Section SimRelContLemmas.
           subst l'. rewrite LBL in LABEL'. exfalso. auto. } 
         destruct HH as [IDX _]. 
         erewrite IDX. simpl. 
-        erewrite ESstep.basic_step_seqn_e'; eauto.
-        2 : { (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
-          admit. }             
+        erewrite ESBasicStep.basic_step_seqn_e'; eauto.
         arewrite (eindex st = ES.seqn S' e); [|omega].
         edestruct k. 
         { erewrite continit; eauto.
-          erewrite ESstep.basic_step_seqn_kinit; eauto. }
+          erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
         erewrite contseqn; eauto.
-        erewrite <- ESstep.basic_step_seqn_kevent; eauto.
-        admit. }
+        erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
       destruct HH as [_ [HH | HH]]. 
       { destruct HH as [IDX _]. 
         erewrite IDX. simpl. 
         edestruct k. 
         { erewrite continit; eauto.
-          erewrite ESstep.basic_step_seqn_kinit; eauto. }
+          erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
         erewrite contseqn; eauto.
-        erewrite <- ESstep.basic_step_seqn_kevent; eauto.
-        admit. }
+        erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
       destruct HH as [_ [_ [_ HH]]].
       destruct HH as [ordr [ordw [loc [valr [vaw [_ LBL]]]]]].
       subst l'. rewrite LBL in LABEL'. exfalso. auto. }
@@ -329,23 +286,23 @@ Section SimRelContLemmas.
 
     (* contlang *)
     { intros kk lang st'' INK.  
-      eapply ESstep.basic_step_cont_set in INK; eauto.
+      eapply ESBasicStep.basic_step_cont_set in INK; eauto.
       unfold set_union in INK. destruct INK as [HA | HB]. 
-      { erewrite ESstep.basic_step_cont_thread; eauto.
+      { erewrite ESBasicStep.basic_step_cont_thread; eauto.
           by eapply SRK in HA. }
       inversion HB.
       rewrite <- KCE.
-      erewrite ESstep.basic_step_cont_thread_k with (k' := k').
+      erewrite ESBasicStep.basic_step_cont_thread_k with (k' := k').
       all : eauto. }
 
     (* contwf *)
     { intros kk st'' KK. 
-      eapply ESstep.basic_step_cont_set in KK; eauto.
+      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
-      { erewrite ESstep.basic_step_cont_thread; eauto.
+      { erewrite ESBasicStep.basic_step_cont_thread; eauto.
         apply SRK.
-        erewrite <- ESstep.basic_step_cont_thread; eauto. }
+        erewrite <- ESBasicStep.basic_step_cont_thread; eauto. }
       assert (kk = CEvent (opt_ext e e')) as kkEQ.
       { by inversion KK. }
       rewrite <- kkEQ in *.
@@ -363,12 +320,12 @@ Section SimRelContLemmas.
 
     (* contstable *)
     { intros kk st'' KK. 
-      eapply ESstep.basic_step_cont_set in KK; eauto.
+      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
-      { erewrite ESstep.basic_step_cont_thread; eauto.
+      { erewrite ESBasicStep.basic_step_cont_thread; eauto.
         apply SRK.
-        erewrite <- ESstep.basic_step_cont_thread; eauto. }
+        erewrite <- ESBasicStep.basic_step_cont_thread; eauto. }
       assert (kk = CEvent (opt_ext e e')) as kkEQ.
       { by inversion KK. }
       rewrite <- kkEQ in *.
@@ -388,24 +345,24 @@ Section SimRelContLemmas.
     { intros thread lprog INP.
       edestruct SRK.(contrun) as [st'' [Kinit ISTEP]]; eauto.    
       eexists; split; eauto.
-      eapply ESstep.basic_step_cont_set; eauto.
+      eapply ESBasicStep.basic_step_cont_set; eauto.
       left. eauto. }
 
     (* contseqn *)
     { intros thread st'' KK. 
-      eapply ESstep.basic_step_cont_set in KK; eauto.
+      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
       { by eapply SRK. }
       exfalso. inversion KK. }
     { intros x st'' KK. 
-      eapply ESstep.basic_step_cont_set in KK; eauto.
+      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
       { assert (SE S x) as SEx.
         { eapply ES.K_inEninit; eauto. }
-        erewrite ESstep.basic_step_seqn_eq_dom; eauto.
-        eapply SRK. erewrite <- ESstep.basic_step_tid_eq_dom; eauto. }
+        erewrite ESBasicStep.basic_step_seqn_eq_dom; eauto.
+        eapply SRK. erewrite <- ESBasicStep.basic_step_tid_eq_dom; eauto. }
       assert (x = opt_ext e e') as xEQ.
       { by inversion KK. }
       rewrite xEQ, TIDee in KK. 
@@ -415,11 +372,11 @@ Section SimRelContLemmas.
 
     (* contpc *)
     intros x st'' PC KK. 
-    eapply ESstep.basic_step_cont_set in KK; eauto.
+    eapply ESBasicStep.basic_step_cont_set in KK; eauto.
     unfold set_union in KK. 
     destruct KK as [KK | KK].
     { assert (Stid S' x = Stid S x) as EQtid. 
-      { eapply ESstep.basic_step_tid_eq_dom; eauto.  
+      { eapply ESBasicStep.basic_step_tid_eq_dom; eauto.  
         eapply ES.K_inEninit; eauto. } 
       assert (e2a S' x = e2a S x) as EQe2a. 
       { eapply basic_step_e2a_eq_dom; eauto.  
@@ -453,60 +410,6 @@ Section SimRelContLemmas.
       { apply STEP. }
       desf; omega. }
     desf. omega. 
-  Admitted.  
-
-  (* Lemma basic_step_e2a_e k k' e e' S'  *)
-  (*       (st st' : thread_st (ES.cont_thread S k)) *)
-  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : *)
-  (*   e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)). *)
-  (* Proof.  *)
-  (*   cdes BSTEP_. *)
-  (*   assert (ESBasicStep.t e e' S S') as BSTEP. *)
-  (*   { econstructor; eauto. } *)
-  (*   assert (SE S' e) as SEe.  *)
-  (*   { eapply ESstep.basic_step_acts_set; eauto. basic_solver. } *)
-  (*   unfold e2a.  *)
-  (*   destruct (excluded_middle_informative ((Stid S') e = tid_init)) as [INIT | nINIT].  *)
-  (*   { exfalso. eapply ESstep.basic_step_acts_ninit_set_e; eauto. *)
-  (*     unfold ES.acts_init_set. basic_solver. }  *)
-  (*   erewrite ESstep.basic_step_tid_e; eauto.   *)
-  (*   edestruct k eqn:kEQ.  *)
-  (*   { erewrite ESstep.basic_step_seqn_kinit.  *)
-  (*     { erewrite continit; eauto. } *)
-  (*     all : subst k; eauto. } *)
-  (*   erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto.  *)
-  (*   { erewrite contseqn; eauto. } *)
-  (*   all : subst k; eauto.  *)
-  (*   (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *) *)
-  (*   admit.  *)
-  (* Admitted. *)
-
-  (* Lemma basic_step_e2a_e' k k' e e' S'  *)
-  (*       (st st' : thread_st (ES.cont_thread S k)) *)
-  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S') : *)
-  (*   e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)). *)
-  (* Proof.  *)
-  (*   cdes BSTEP_. *)
-  (*   assert (ESBasicStep.t e (Some e') S S') as BSTEP. *)
-  (*   { econstructor; eauto. } *)
-  (*   assert (SE S' e') as SEe'.  *)
-  (*   { eapply ESstep.basic_step_acts_set; eauto. basic_solver. } *)
-  (*   unfold e2a.  *)
-  (*   destruct (excluded_middle_informative ((Stid S') e' = tid_init)) as [INIT | nINIT].  *)
-  (*   { exfalso. eapply ESstep.basic_step_acts_ninit_set_e'; eauto. *)
-  (*     unfold ES.acts_init_set. basic_solver. }  *)
-  (*   erewrite ESstep.basic_step_tid_e'; eauto.   *)
-  (*   erewrite ESstep.basic_step_seqn_e'; eauto. *)
-  (*   2 : { admit. } *)
-  (*   edestruct k eqn:kEQ. *)
-  (*   { erewrite ESstep.basic_step_seqn_kinit. *)
-  (*     { erewrite continit; eauto. }  *)
-  (*     all : subst k; eauto. } *)
-  (*   erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto.  *)
-  (*   { erewrite contseqn; eauto. } *)
-  (*   all : subst k; eauto.  *)
-  (*   (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *) *)
-  (*   all: admit.  *)
-  (* Admitted.  *)
+  Qed.
 
 End SimRelContLemmas.

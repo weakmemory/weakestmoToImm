@@ -313,22 +313,20 @@ Section SimRelEventToActionLemmas.
     assert (ESBasicStep.t e e' S S') as BSTEP.
     { econstructor; eauto. }
     assert (SE S' e) as SEe. 
-    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
+    { eapply ESBasicStep.basic_step_acts_set; eauto. basic_solver. }
     unfold e2a. 
     destruct (excluded_middle_informative ((Stid S') e = tid_init)) as [INIT | nINIT]. 
-    { exfalso. eapply ESstep.basic_step_acts_ninit_set_e; eauto.
+    { exfalso. eapply ESBasicStep.basic_step_acts_ninit_set_e; eauto.
       unfold ES.acts_init_set. basic_solver. } 
-    erewrite ESstep.basic_step_tid_e; eauto.  
+    erewrite ESBasicStep.basic_step_tid_e; eauto.  
     edestruct k eqn:kEQ. 
-    { erewrite ESstep.basic_step_seqn_kinit. 
+    { erewrite ESBasicStep.basic_step_seqn_kinit. 
       { erewrite continit; eauto. }
       all : subst k; eauto. }
-    erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto. 
+    erewrite ESBasicStep.basic_step_seqn_kevent with (k := k); eauto. 
     { erewrite contseqn; eauto. }
     all : subst k; eauto. 
-    (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
-    admit. 
-  Admitted.
+  Qed.
 
   Lemma basic_step_e2a_e' k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))
@@ -340,24 +338,21 @@ Section SimRelEventToActionLemmas.
     assert (ESBasicStep.t e (Some e') S S') as BSTEP.
     { econstructor; eauto. }
     assert (SE S' e') as SEe'. 
-    { eapply ESstep.basic_step_acts_set; eauto. basic_solver. }
+    { eapply ESBasicStep.basic_step_acts_set; eauto. basic_solver. }
     unfold e2a. 
     destruct (excluded_middle_informative ((Stid S') e' = tid_init)) as [INIT | nINIT]. 
-    { exfalso. eapply ESstep.basic_step_acts_ninit_set_e'; eauto.
+    { exfalso. eapply ESBasicStep.basic_step_acts_ninit_set_e'; eauto.
       unfold ES.acts_init_set. basic_solver. } 
-    erewrite ESstep.basic_step_tid_e'; eauto.  
-    erewrite ESstep.basic_step_seqn_e'; eauto.
-    2 : { admit. }
+    erewrite ESBasicStep.basic_step_tid_e'; eauto.  
+    erewrite ESBasicStep.basic_step_seqn_e'; eauto.
     edestruct k eqn:kEQ.
-    { erewrite ESstep.basic_step_seqn_kinit.
+    { erewrite ESBasicStep.basic_step_seqn_kinit.
       { erewrite continit; eauto. } 
       all : subst k; eauto. }
-    erewrite ESstep.basic_step_seqn_kevent with (k := k); eauto. 
+    erewrite ESBasicStep.basic_step_seqn_kevent with (k := k); eauto. 
     { erewrite contseqn; eauto. }
     all : subst k; eauto. 
-    (* TODO: refactor basic_step_seqn lemmas to get rid of this assumption *)
-    all: admit. 
-  Admitted. 
+  Qed.
 
   Lemma basic_step_cert_dom_ne k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))
@@ -373,7 +368,7 @@ Section SimRelEventToActionLemmas.
     { destruct HA as [_ NTID].
       apply NTID.
       erewrite <- e2a_tid.
-      eapply ESstep.basic_step_tid_e; eauto. }
+      eapply ESBasicStep.basic_step_tid_e; eauto. }
     erewrite basic_step_e2a_e in HB; eauto. 
     2 : eapply BSTEP_.
     eapply acts_rep in HB.
@@ -395,7 +390,7 @@ Section SimRelEventToActionLemmas.
     { destruct HA as [_ NTID].
       apply NTID.
       erewrite <- e2a_tid.
-      eapply ESstep.basic_step_tid_e'; eauto. }
+      eapply ESBasicStep.basic_step_tid_e'; eauto. }
     erewrite basic_step_e2a_e' in HB; eauto. 
     2 : eapply BSTEP_.
     eapply acts_rep in HB.
@@ -415,7 +410,7 @@ Section SimRelEventToActionLemmas.
     assert (ESBasicStep.t e e' S S') as BSTEP. 
     { econstructor. eauto. }
     unfold cert_dom. 
-    erewrite ESstep.basic_step_cont_thread_k; eauto. 
+    erewrite ESBasicStep.basic_step_cont_thread_k; eauto. 
     rewrite !set_unionA.
     do 2 (eapply set_union_Propere; auto). 
     edestruct lbl_step_cases as [l [l' HH]].
@@ -523,7 +518,7 @@ Section SimRelEventToActionLemmas.
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
-    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e; eauto. }
+    { rewrite <- e2a_tid. erewrite ESBasicStep.basic_step_tid_e; eauto. }
     assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
     { eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
@@ -572,7 +567,7 @@ Section SimRelEventToActionLemmas.
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     assert (Gtid (e2a S' e') = ES.cont_thread S k) as GTIDe.
-    { rewrite <- e2a_tid. erewrite ESstep.basic_step_tid_e'; eauto. }
+    { rewrite <- e2a_tid. erewrite ESBasicStep.basic_step_tid_e'; eauto. }
     assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
     { eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
@@ -638,9 +633,9 @@ Section SimRelEventToActionLemmas.
     { econstructor; eauto. }
     unfold same_lab_u2v_dom.
     intros x SEx.
-    eapply ESstep.basic_step_acts_set in SEx; eauto.
+    eapply ESBasicStep.basic_step_acts_set in SEx; eauto.
     destruct SEx as [[SEx | SEx] | SEx].
-    { erewrite ESstep.basic_step_lab_eq_dom; eauto. 
+    { erewrite ESBasicStep.basic_step_lab_eq_dom; eauto. 
       unfold compose. 
         by erewrite basic_step_e2a_eq_dom; eauto; apply SRE2A. }
     { subst x.
@@ -676,7 +671,7 @@ Section SimRelEventToActionLemmas.
     { apply SRA2E. }
     { etransitivity.
       { apply SRA2E. }
-      eapply ESstep.basic_step_acts_set_mon; eauto. }
+      eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
     eapply fixset_eq_dom.
     2 : apply SRA2E.
     unfolder. unfold compose. 

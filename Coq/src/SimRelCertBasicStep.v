@@ -192,14 +192,14 @@ Section SimRelCertBasicStep.
       rewrite updo_opt; auto.
       rewrite upds.
       red. ins. destruct IN' as [IN' | IN'].
-      { eapply ESstep.basic_step_acts_set_ne; eauto.
+      { eapply ESBasicStep.basic_step_acts_set_ne; eauto.
         subst. eapply a2e_img; eauto. apply SRCC. }
       unfold eq_opt, option_map, upd_opt in IN'.
       destruct e' as [e'|]. 
       2 : { unfolder in IN'. by desc. }
       apply set_collect_eq in IN'.
       rewrite upds in IN'.
-      eapply ESstep.basic_step_acts_set_ne'; eauto.
+      eapply ESBasicStep.basic_step_acts_set_ne'; eauto.
       subst. eapply a2e_img; eauto. apply SRCC. }
         
     (* a2e_img *)
@@ -208,17 +208,17 @@ Section SimRelCertBasicStep.
       splits.
       { erewrite set_collect_eq_dom; eauto.
         rewrite a2e_img; try apply SRCC.
-        eapply ESstep.basic_step_acts_set_mon; eauto. }
+        eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
       { rewrite set_collect_updo_opt; auto. 
         rewrite set_collect_eq.
         rewrite upds; auto.  
-        erewrite ESstep.basic_step_acts_set; eauto. 
+        erewrite ESBasicStep.basic_step_acts_set; eauto. 
         basic_solver. }
       unfold upd_opt, option_map, eq_opt. 
       destruct e'; [|basic_solver]. 
       rewrite set_collect_eq.
       rewrite upds.
-      erewrite ESstep.basic_step_acts_set; eauto. 
+      erewrite ESBasicStep.basic_step_acts_set; eauto. 
       basic_solver. }
 
     (* a2e_fix *)
@@ -264,17 +264,17 @@ Section SimRelCertBasicStep.
     cdes BSTEP_. 
     constructor.
     (* cstate_stable : stable_state (ES.cont_thread S' k') st''; *)
-    { erewrite ESstep.basic_step_cont_thread_k; eauto.
+    { erewrite ESBasicStep.basic_step_cont_thread_k; eauto.
       eapply cstate_stable. apply SRCC. }
     (* cstate_q_cont : Kstate (k', st'); *)
     { red. exists st'. split; auto. 
-      eapply ESstep.basic_step_cont_set; eauto.
-      erewrite ESstep.basic_step_cont_thread_k with (S' := S'); eauto.
+      eapply ESBasicStep.basic_step_cont_set; eauto.
+      erewrite ESBasicStep.basic_step_cont_thread_k with (S' := S'); eauto.
       subst. basic_solver. }
     (* cstate_reachable : (step (ES.cont_thread S' k'))＊ st' st'' *)
     { admit. }
     (* cstate_covered : C ∩₁ GTid (ES.cont_thread S' k') ⊆₁ contE' *)
-    erewrite ESstep.basic_step_cont_thread_k; eauto.
+    erewrite ESBasicStep.basic_step_cont_thread_k; eauto.
     etransitivity.
     { eapply cstate_covered. apply SRCC. }
     unfold set_subset. 
