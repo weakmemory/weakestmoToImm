@@ -9,7 +9,7 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure Construction Consistency 
+Require Import AuxRel AuxDef EventStructure BasicStep Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction SimRelSubExec SimRel SimRelCert. 
 
@@ -114,12 +114,12 @@ Section SimRelCertBasicStep.
   Lemma basic_step_simrel_a2e_h TC' h k k' e e' S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
     let h' := upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e' in 
     simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof. 
     cdes BSTEP_. 
-    assert (ESstep.t_basic e e' S S') as BSTEP.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
     { econstructor. eauto. }
 
     set (h' := upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e').
@@ -192,14 +192,14 @@ Section SimRelCertBasicStep.
       rewrite updo_opt; auto.
       rewrite upds.
       red. ins. destruct IN' as [IN' | IN'].
-      { eapply ESstep.basic_step_acts_set_NE; eauto.
+      { eapply ESstep.basic_step_acts_set_ne; eauto.
         subst. eapply a2e_img; eauto. apply SRCC. }
       unfold eq_opt, option_map, upd_opt in IN'.
       destruct e' as [e'|]. 
       2 : { unfolder in IN'. by desc. }
       apply set_collect_eq in IN'.
       rewrite upds in IN'.
-      eapply ESstep.basic_step_acts_set_NE'; eauto.
+      eapply ESstep.basic_step_acts_set_ne'; eauto.
       subst. eapply a2e_img; eauto. apply SRCC. }
         
     (* a2e_img *)
@@ -245,7 +245,7 @@ Section SimRelCertBasicStep.
   Lemma basic_step_nupd_simrel_a2e_h TC' h k k' e S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') : 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') : 
     let h' := upd h (e2a S' e) e in
     simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof.
@@ -257,7 +257,7 @@ Section SimRelCertBasicStep.
   Lemma basic_step_simrel_cstate TC' h k k' e e' S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     simrel_cstate S' TC k' st' st''. 
   Proof. 

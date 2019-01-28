@@ -4,7 +4,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
      CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure Consistency Construction ImmProperties.
+Require Import AuxRel AuxDef EventStructure Consistency BasicStep ImmProperties.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -286,7 +286,7 @@ Section EventToActionLemmas.
   Notation "'Grmw'" := G.(rmw).
 
   Lemma basic_step_e2a_eq_dom e e' S'
-        (BSTEP : ESstep.t_basic e e' S S') :
+        (BSTEP : ESBasicStep.t e e' S S') :
     eq_dom (SE S) (e2a S') (e2a S).
   Proof.
     cdes BSTEP; cdes BSTEP_.

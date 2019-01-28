@@ -9,7 +9,7 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure Construction Consistency 
+Require Import AuxRel AuxDef EventStructure BasicStep Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction SimRelSubExec
         SimRel SimRelCert SimRelCertBasicStep. 
@@ -210,7 +210,7 @@ Section SimRelCertLemmas.
   Lemma basic_step_hdom_cf_free TC' h k k' e e' S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e e' S S') : 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
     ES.cf_free S' (h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e ∪₁ eq_opt e').
   Proof. 
     eapply ESstep.basic_step_cf_free; 
@@ -221,7 +221,7 @@ Section SimRelCertLemmas.
   Lemma basic_step_nupd_hdom_cf_free TC' h k k' e S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') : 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') : 
     ES.cf_free S' (h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e).
   Proof. 
     eapply ES.cf_free_eq.
@@ -236,7 +236,7 @@ Section SimRelCertLemmas.
         (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') 
         (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl]) :
     exists k' e e' S',
-      ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ ES_BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
       ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
       ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
       ⟪ JF' : S'.(ES.jf) ≡ jf ⟫ /\
@@ -279,7 +279,7 @@ Section SimRelCertLemmas.
         (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
         (RR : exists is_ex ord loc val, ⟪ LBL_LD : lbl = Aload is_ex ord loc val ⟫) :
     exists k' e e' S', 
-      ⟪ ES_BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ ES_BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
       ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
       ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
       ⟪ CAJF : sim_add_jf S G sc TC TC' h k st e S' ⟫ /\
@@ -356,13 +356,13 @@ Section SimRelCertLemmas.
   Lemma weaken_sim_add_jf TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
-        (BSTEP_ : ESstep.t_basic_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
         (SAJF : sim_add_jf S G sc TC TC' h k st e S') : 
     ESstep.add_jf e S S'.
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e e' S S') as BSTEP.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
     { econstructor. eauto. }
     assert (SE S w) as SEw.
     { eapply a2e_img; eauto. apply SRCC. }
@@ -448,7 +448,7 @@ Section SimRelCertLemmas.
 
   Lemma simrel_cert_esstep_e2a_eqr TC' h k st st' e e' S' r r' r''
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st') 
-        (ESSTEP : ESstep.t_basic e e' S S')
+        (ESSTEP : ESBasicStep.t e e' S S')
         (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
         (rEQ : r' ≡ r) 
         (rIN : (e2a S) □ r ⊆ r'') : 
@@ -462,7 +462,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_simrel_e2a TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -470,7 +470,7 @@ Section SimRelCertLemmas.
     simrel_e2a S' G sc.  
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor. eauto. }
     assert (ESstep.t_load e None S S') as LSTEP.
     { econstructor; splits; auto. 
@@ -540,7 +540,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_jfe_vis TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -548,7 +548,7 @@ Section SimRelCertLemmas.
     dom_rel (Sjfe S') ⊆₁ (vis S'). 
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -616,7 +616,7 @@ Section SimRelCertLemmas.
         destruct HA as [nINITw [CRS_SB nINITe]].
         apply crsE in CRS_SB.
         destruct CRS_SB as [[AA | BB] | CC].
-        { unfolder in AA. eapply ESstep.basic_step_acts_set_NE; eauto.
+        { unfolder in AA. eapply ESstep.basic_step_acts_set_ne; eauto.
           desf; congruence. }
         { intuition. }
         unfold transp in CC. 
@@ -624,11 +624,11 @@ Section SimRelCertLemmas.
         destruct CC as [DD | EE].
         { eapply ES.sbE in DD; eauto.  
           apply seq_eqv_lr in DD.
-          eapply ESstep.basic_step_acts_set_NE; eauto.
+          eapply ESstep.basic_step_acts_set_ne; eauto.
           desf. }
         destruct EE as [CONT_SB _].
         eapply ES.cont_sb_domE in CONT_SB; eauto. 
-        eapply ESstep.basic_step_acts_set_NE; eauto. } 
+        eapply ESstep.basic_step_acts_set_ne; eauto. } 
       eapply basic_step_hdom_cf_free; eauto. 
       apply seq_eqv_lr. splits. 
       { left; left. unfolder; eauto. }
@@ -653,7 +653,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_hb_cf_irr TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -661,7 +661,7 @@ Section SimRelCertLemmas.
     irreflexive (Shb S' ⨾ Scf S').
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     (* assert (ES.Wf S') as WFS'. *)
@@ -686,7 +686,7 @@ Section SimRelCertLemmas.
 
     { intros x [y [HB [KCF EQe]]]. 
       subst x. apply hbE, seq_eqv_lr in HB; auto. desf.
-      eapply ESstep.basic_step_acts_set_NE; eauto. }
+      eapply ESstep.basic_step_acts_set_ne; eauto. }
 
     { intros x [z [[KSB EQe] [_ KCF]]]. subst z. 
       eapply ES.cont_cf_cont_sb in KCF; eauto.
@@ -746,7 +746,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_hb_cf_thb_irr TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -754,7 +754,7 @@ Section SimRelCertLemmas.
     irreflexive ((Shb S')⁻¹ ⨾ (Scf S') ⨾ (Shb S')).
   Proof.
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -855,7 +855,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -863,7 +863,7 @@ Section SimRelCertLemmas.
     Sjf S' ∩ Scf S' ≡ ∅₂.
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -893,7 +893,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_hb_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -901,7 +901,7 @@ Section SimRelCertLemmas.
     (Shb S' ⨾ Sjf S') ∩ Scf S' ≡ ∅₂.
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -945,7 +945,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_hb_tjf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -953,7 +953,7 @@ Section SimRelCertLemmas.
     (Shb S' ⨾ (Sjf S')⁻¹) ∩ Scf S' ≡ ∅₂.
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -1055,7 +1055,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_hb_jf_thb_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -1063,7 +1063,7 @@ Section SimRelCertLemmas.
     (Shb S' ⨾ Sjf S' ⨾ (Shb S')⁻¹) ∩ Scf S' ≡ ∅₂.
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -1161,7 +1161,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_subexec_preserved TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -1169,7 +1169,7 @@ Section SimRelCertLemmas.
     simrel_subexec S' TC f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)).
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -1255,7 +1255,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_updh_CIcontE TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -1264,7 +1264,7 @@ Section SimRelCertLemmas.
     eq_dom (C ∪₁ I ∪₁ acts_set st.(ProgToExecution.G)) (upd h (e2a S' e) e) h. 
   Proof. 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     red. ins. 
     rewrite updo; auto. 
@@ -1290,7 +1290,7 @@ Section SimRelCertLemmas.
   Lemma simrel_cert_load_step_subexec TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESstep.t_basic_ (cont_lang S k) k k' st st' e None S S') 
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
         (SAJF : sim_add_jf S G sc TC TC' h k st e S')
         (EW' : Sew S' ≡ Sew S)
         (CO' : Sco S' ≡ Sco S)
@@ -1301,7 +1301,7 @@ Section SimRelCertLemmas.
     simpl.
     set (h' := upd h (e2a S' e) e). 
     cdes BSTEP_; cdes SAJF.
-    assert (ESstep.t_basic e None S S') as BSTEP.
+    assert (ESBasicStep.t e None S S') as BSTEP.
     { econstructor; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     assert (ESstep.t_load e None S S') as LSTEP.
@@ -1424,7 +1424,7 @@ Section SimRelCertLemmas.
     edestruct lbl_step_cases as [lbl [lbl' CASES]]; eauto. 
     desf.
     { edestruct simrel_cert_add_jf as [k' [e [e' [S' HH]]]]; eauto 10; desf.  
-      assert (ESstep.t_basic e e' S S') as BSTEP. 
+      assert (ESBasicStep.t e e' S S') as BSTEP. 
       { econstructor; eauto. }
       unfold option_map in LBL'.
       destruct e'; desf.
