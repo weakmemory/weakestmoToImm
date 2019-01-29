@@ -92,7 +92,7 @@ Section SimRelEventToAction.
       e2a_ew  : e2a □ Sew  ⊆ eq;
       e2a_co  : e2a □ Sco  ⊆ Gco;
       
-      e2a_rfrmw : e2a □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
+      e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
     }.
 
   Record simrel_a2e (a2e : actid -> eventid) (a2eD : actid -> Prop) := 
@@ -181,7 +181,7 @@ Section SimRelEventToAction.
       rewrite !set_collect_eqv.
       rewrite !e2a_W.
       repeat apply seq_mori; eauto with hahn.
-      2: { rewrite collect_rel_crt. eauto using clos_refl_trans_mori, e2a_rfrmw. }
+      2: { rewrite collect_rel_crt. eauto using clos_refl_trans_mori, e2a_jfrmw. }
       rewrite ES.sbE; auto.
       rewrite wf_sbE.
       rewrite <- !restr_relE.

@@ -69,13 +69,13 @@ Definition vis e :=
 
 (* release sequence *)
 
-Definition rs := ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (rf ⨾ rmw)＊.
+Definition rs := ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (jf ⨾ rmw)＊.
 
 Definition release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs.
 
 (* synchronizes with *)
 
-Definition sw := release ⨾ rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
+Definition sw := release ⨾ jf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
 
 (* happens before *)
 
@@ -178,7 +178,7 @@ Proof.
   unfold sw.
   rewrite crE. relsf.
   unionL. 
-  { rewrite ES.rfD; auto.
+  { rewrite ES.jfD; auto.
     rewrite ES.acts_init_set_inW; auto.
     type_solver. }
   rewrite !seqA.
@@ -286,42 +286,42 @@ Qed.
 
 Lemma releaseE : release ≡ ⦗E⦘ ⨾ release ⨾ ⦗E⦘.
 Proof.
-unfold release.
-rewrite rsE.
-rewrite (ES.sbE WF) at 1.
-basic_solver 42.
+  unfold release.
+  rewrite rsE.
+  rewrite (ES.sbE WF) at 1.
+  basic_solver 42.
 Qed.
 
 Lemma swE_right : sw ≡ sw ⨾ ⦗E⦘.
 Proof.
-split; [|basic_solver].
-unfold sw.
-rewrite (ES.sbE WF) at 1 2.
-rewrite (ES.rfE WF) at 1.
-basic_solver 42.
+  split; [|basic_solver].
+  unfold sw.
+  rewrite (ES.sbE WF) at 1 2.
+  rewrite (ES.jfE WF) at 1.
+  basic_solver 42.
 Qed.
 
 Lemma swE : sw ≡ ⦗E⦘ ⨾ sw ⨾ ⦗E⦘.
 Proof.
-split; [|basic_solver].
-rewrite swE_right at 1.
-hahn_frame.
-unfold sw.
-rewrite releaseE.
-rewrite (dom_l (ES.rfE WF)).
-rewrite (dom_l (ES.sbE WF)).
-basic_solver 40.
+  split; [|basic_solver].
+  rewrite swE_right at 1.
+  hahn_frame.
+  unfold sw.
+  rewrite releaseE.
+  rewrite (dom_l (ES.jfE WF)).
+  rewrite (dom_l (ES.sbE WF)).
+  basic_solver 40.
 Qed.
 
 Lemma hbE : hb ≡ ⦗E⦘ ⨾ hb ⨾ ⦗E⦘.
 Proof.
-split; [|basic_solver].
-unfold hb.
-rewrite <- inclusion_ct_seq_eqv_r, <- inclusion_ct_seq_eqv_l.
-apply inclusion_t_t.
-rewrite (ES.sbE WF) at 1.
-rewrite swE at 1.
-basic_solver 42.
+  split; [|basic_solver].
+  unfold hb.
+  rewrite <- inclusion_ct_seq_eqv_r, <- inclusion_ct_seq_eqv_l.
+  apply inclusion_t_t.
+  rewrite (ES.sbE WF) at 1.
+  rewrite swE at 1.
+  basic_solver 42.
 Qed.
 
 (******************************************************************************)
@@ -341,30 +341,30 @@ Qed.
 
 Lemma rsD : rs ≡ ⦗W⦘ ⨾ rs ⨾ ⦗W⦘.
 Proof.
-split; [|basic_solver].
-unfold rs.
-rewrite rtE; relsf; unionL; [basic_solver 12|].
-rewrite (dom_r (ES.rmwD WF)) at 1.
-rewrite <- !seqA.
-rewrite inclusion_ct_seq_eqv_r.
-basic_solver 42.
+  split; [|basic_solver].
+  unfold rs.
+  rewrite rtE; relsf; unionL; [basic_solver 12|].
+  rewrite (dom_r (ES.rmwD WF)) at 1.
+  rewrite <- !seqA.
+  rewrite inclusion_ct_seq_eqv_r.
+  basic_solver 42.
 Qed.
 
 Lemma releaseD : release ≡ ⦗FW ∩₁ Rel⦘ ⨾ release ⨾ ⦗W⦘.
 Proof.
-split; [|basic_solver].
-unfold release.
-rewrite rsD at 1.
-basic_solver 42.
+  split; [|basic_solver].
+  unfold release.
+  rewrite rsD at 1.
+  basic_solver 42.
 Qed.
 
 Lemma swD : sw ≡ ⦗FW ∩₁ Rel⦘ ⨾ sw ⨾ ⦗FR ∩₁ Acq⦘.
 Proof.
-split; [|basic_solver].
-unfold sw.
-rewrite releaseD at 1.
-rewrite (ES.rfD WF) at 1.
-basic_solver 42.
+  split; [|basic_solver].
+  unfold sw.
+  rewrite releaseD at 1.
+  rewrite (ES.jfD WF) at 1.
+  basic_solver 42.
 Qed.
 
 Lemma mcoD : mco m ≡ ⦗ W ⦘ ⨾ mco m ⨾ ⦗ W ⦘.
@@ -388,7 +388,7 @@ Qed.
 (** ** Alternative representations of sets and relations *)
 (******************************************************************************)
 
-Lemma rs_alt : rs ≡ ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (rf ⨾ rmw)＊.
+Lemma rs_alt : rs ≡ ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (jf ⨾ rmw)＊.
 Proof. 
   unfold rs.
   rewrite (ES.sbE WF).
@@ -403,12 +403,12 @@ Proof.
   basic_solver 42.
 Qed.
 
-Lemma sw_alt : sw ≡ release ⨾ rf ⨾ (sb ⨾ ⦗E ∩₁ F⦘)^? ⨾ ⦗E ∩₁ FR ∩₁ Acq⦘.
+Lemma sw_alt : sw ≡ release ⨾ jf ⨾ (sb ⨾ ⦗E ∩₁ F⦘)^? ⨾ ⦗E ∩₁ FR ∩₁ Acq⦘.
 Proof.
   rewrite swD.
   unfold sw.
   rewrite releaseD.
-  rewrite (ES.sbE WF), (ES.rfE WF).
+  rewrite (ES.sbE WF), (ES.jfE WF).
   basic_solver 42.
 Qed.
 

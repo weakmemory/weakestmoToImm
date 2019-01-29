@@ -358,6 +358,21 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma load_step_jf_rmw e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S')
+      (LSTEP: t_load e e' S S') 
+      (wfE: ES.Wf S) : 
+  jf S' ⨾ rmw S' ≡ jf S ⨾ rmw S.
+Proof. 
+  cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
+  rewrite ESBasicStep.basic_step_nupd_rmw; [|subst;eauto].
+  rewrite JF'.
+  rewrite seq_union_l. 
+  arewrite_false (singl_rel w e ⨾ rmw S).
+  { ESBasicStep.step_solver. }
+  basic_solver.
+Qed.
+
 Lemma load_step_rf_rmw e e' S S'
       (BSTEP : ESBasicStep.t e e' S S')
       (LSTEP: t_load e e' S S') 
@@ -569,7 +584,7 @@ Proof.
   assert (ES.Wf S') as wfE'.
   { admit. (* eapply step_wf; unfold t_; eauto. *) }
   rewrite !rs_alt; auto.
-  rewrite ESBasicStep.basic_step_nupd_sb, load_step_w, load_step_rf_rmw; eauto.
+  rewrite ESBasicStep.basic_step_nupd_sb, load_step_w, load_step_jf_rmw; eauto.
   do 2 rewrite crE.
   relsf.
   apply union_more; auto.
@@ -617,15 +632,16 @@ Lemma load_step_sw e e' S S'
       (BSTEP : ESBasicStep.t e e' S S')
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
-  sw S' ≡ sw S ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘. 
+  sw S' ≡ sw S ∪ release S ⨾ jf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘. 
 Proof.
   assert (e' = None) by inv LSTEP. subst.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   assert (ES.Wf S') as wfE'.
   { admit. (* eapply step_wf; unfold t_; eauto. *) }
   rewrite !sw_alt; auto.
+  rewrite JF'.
   rewrite 
-    load_step_release, load_step_rf, load_step_f, load_step_acq,
+    load_step_release, load_step_f, load_step_acq,
     ESBasicStep.basic_step_nupd_sb;
     eauto.
   rewrite id_union.
@@ -634,23 +650,22 @@ Proof.
   rewrite !unionA.
   apply union_more; auto.
   apply union_more; auto.
-  arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗E S ∩₁ F S⦘ ≡ ∅₂) 
-    by split; [|done]; ESBasicStep.step_solver.
-  arewrite (⦗E S ∩₁ F S⦘ ⨾ ⦗eq e ∩₁ Acq S'⦘ ≡ ∅₂) 
-    by split; [|done]; ESBasicStep.step_solver.
-  rewrite <- (seqA ((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S')).
-  arewrite 
-    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ sb S ≡ ∅₂) 
-    by split; [|done]; ESBasicStep.step_solver.
-  relsf.
-  rewrite id_union, seq_union_r.
-  arewrite 
-    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ ⦗E S ∩₁ F S ∩₁ Acq S⦘ ≡ ∅₂) 
-    by split; [|done]; ESBasicStep.step_solver.
-  arewrite 
-    (((jf S' ⨾ ⦗eq e⦘ ∪ ew S ⨾ jf S' ⨾ ⦗eq e⦘) \ cf S') ⨾ ⦗E S ∩₁ R S ∩₁ Acq S⦘ ≡ ∅₂) 
-    by split; [|done]; ESBasicStep.step_solver.
-  basic_solver 42.
+  rewrite id_union, !id_inter, !seq_union_r.
+  arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘).
+  { ESBasicStep.step_solver. }
+  arewrite_false (⦗E S⦘ ⨾ ⦗F S⦘ ⨾ ⦗eq e⦘).
+  { ESBasicStep.step_solver. }
+  arewrite_false (jf S ⨾ ⦗eq e⦘).
+  { ESBasicStep.step_solver. }
+  rewrite <- !seqA with (r1 := singl_rel w e).
+  arewrite_false (singl_rel w e ⨾ ⦗E S⦘).
+  { ESBasicStep.step_solver. }
+  rewrite <- !seqA with (r1 := singl_rel w e).
+  arewrite_false (singl_rel w e ⨾ sb S).
+  { ESBasicStep.step_solver. }
+  arewrite_false (jf S ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘). 
+  { ESBasicStep.step_solver. }
+  basic_solver 20.
 Admitted.
 
 Lemma load_step_hb lang k k' st st' e e' S S' 
@@ -658,7 +673,7 @@ Lemma load_step_hb lang k k' st st' e e' S S'
       (LSTEP: t_load e e' S S') 
       (wfE: ES.Wf S) :
   hb S' ≡ hb S ∪ 
-     (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘). 
+     (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ jf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘). 
 Proof.
   assert (e' = None) by inv LSTEP. subst.
   assert (ESBasicStep.t e None S S') as BSTEP.
@@ -675,8 +690,6 @@ Proof.
     fold (hb S).
     basic_solver. }
   all : split; [|done].
-  all : rewrite load_step_rf; eauto.
-  all : rewrite ESBasicStep.basic_step_cf; eauto.
   all : rewrite JF'.
   all : relsf; unionL.
   all : by ESBasicStep.step_solver.
@@ -705,11 +718,9 @@ Proof.
   rewrite load_step_hb; eauto.
   rewrite seq_union_l, !seqA.
   arewrite (
-      (ES.cont_sb_dom S k × eq e ∪ release S ⨾ rf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘) ⨾ ⦗E S⦘ ≡ ∅₂
+      (ES.cont_sb_dom S k × eq e ∪ release S ⨾ jf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘) ⨾ ⦗E S⦘ ≡ ∅₂
   ). 
  { split; [|done]. 
-   rewrite load_step_rf; eauto.
-   rewrite ESBasicStep.basic_step_cf; eauto.
    rewrite JF'.
    ESBasicStep.step_solver. }
   rewrite hbE; auto.

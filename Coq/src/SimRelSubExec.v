@@ -141,22 +141,22 @@ Section SimRelSubExec.
     Lemma exec_rel_nCsb : ⦗ set_compl (a2e □₁ C) ⦘ ⨾ Srelease ⊆ Ssb^?.
     Proof.
       unfold release at 1, rs. rewrite <- !seqA.
-      intros x y [z [HH RFRMW]].
-      apply clos_rt_rtn1 in RFRMW.
-      induction RFRMW as [|y w [u [RF RMW]]].
+      intros x y [z [HH JFRMW]].
+      apply clos_rt_rtn1 in JFRMW.
+      induction JFRMW as [|y w [u [JF RMW]]].
       { generalize WF.(ES.sb_trans) HH. basic_solver 10. }
-      apply ES.rfi_union_rfe in RF. destruct RF as [RF|RF].
-      { apply WF.(ES.rmwi) in RMW. red in RF. 
-        generalize WF.(ES.sb_trans) IHRFRMW RF RMW. basic_solver 10. }
+      apply ES.jfi_union_jfe in JF. destruct JF as [JF|JF].
+      { apply WF.(ES.rmwi) in RMW. red in JF. 
+        generalize WF.(ES.sb_trans) IHJFRMW JF RMW. basic_solver 10. }
       exfalso.
       assert (~ (a2e □₁ C) x) as CC.
       { generalize HH. basic_solver 10. }
       apply CC. eapply exec_rel_iss_cov; eauto.
       assert (dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘) y) as [yy DD].
-      { apply exec_rfeI; auto. eexists. eauto. }
+      { apply exec_jfeI; auto. eexists. eauto. }
       eexists. eexists. split; eauto.
-      unfold release, rs. apply clos_rtn1_rt in RFRMW.
-      generalize HH RFRMW. basic_solver 40.
+      unfold release, rs. apply clos_rtn1_rt in JFRMW.
+      generalize HH JFRMW. basic_solver 40.
     Qed.
 
     Lemma exec_rel_in_Crel_sb : Srelease ⊆ ⦗ a2e □₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
@@ -190,17 +190,17 @@ Section SimRelSubExec.
     Lemma exec_sw_nCsb : ⦗ set_compl (a2e □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
     Proof.
       unfold sw.
-      arewrite (⦗set_compl (a2e □₁ C)⦘ ⨾ Srelease ⨾ Srf ⊆ Ssb).
+      arewrite (⦗set_compl (a2e □₁ C)⦘ ⨾ Srelease ⨾ Sjf ⊆ Ssb).
       2: { generalize WF.(ES.sb_trans). basic_solver. }
-      rewrite ES.rfi_union_rfe. rewrite !seq_union_r. unionL.
-      { sin_rewrite exec_rel_nCsb; auto. unfold ES.rfi.
+      rewrite ES.jfi_union_jfe. rewrite !seq_union_r. unionL.
+      { sin_rewrite exec_rel_nCsb; auto. unfold ES.jfi.
         generalize WF.(ES.sb_trans). basic_solver. }
       intros x y HH.
       destruct_seq_l HH as DX. exfalso. apply DX.
       destruct HH as [z [REL RFE]].
       eapply exec_rel_iss_cov; eauto.
       assert (dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘) z) as [zz DD].
-      { apply exec_rfeI; auto. eexists. eauto. }
+      { apply exec_jfeI; auto. eexists. eauto. }
       eexists. eexists. eauto.
     Qed.
 

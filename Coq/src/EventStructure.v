@@ -66,6 +66,13 @@ Definition rf (S : t) := S.(ew)^? ⨾ S.(jf) \ S.(cf).
 Definition rfe (S : t) := S.(rf) \ S.(sb).
 Definition rfi (S : t) := S.(rf) ∩ S.(sb).
 
+Lemma jfi_union_jfe (S : t) : S.(jf) ≡ S.(jfi) ∪ S.(jfe).
+Proof.
+  unfold jfe, jfi. split; [|by eauto with hahn].
+  unfolder. ins. destruct (classic (sb S x y)) as [AA|AA].
+  all: generalize H AA; basic_solver.
+Qed.
+
 Lemma rfi_union_rfe (S : t) : S.(rf) ≡ S.(rfi) ∪ S.(rfe).
 Proof.
   unfold rfe, rfi. split; [|by eauto with hahn].

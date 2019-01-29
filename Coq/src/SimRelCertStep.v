@@ -533,8 +533,8 @@ Section SimRelCertLemmas.
     eapply simrel_cert_esstep_e2a_eqr. 
     5 : apply SRCC.
     1-2 : eauto. 
-    { rewrite ES.rfE, ES.rmwE; auto. basic_solver 10. }
-    eapply ESstep.load_step_rf_rmw; eauto. 
+    { rewrite ES.jfE, ES.rmwE; auto. basic_solver 10. }
+    eapply ESstep.load_step_jf_rmw; eauto. 
   Qed.
       
   Lemma simrel_cert_load_step_jfe_vis TC' h k k' e S'
@@ -670,11 +670,12 @@ Section SimRelCertLemmas.
     { econstructor; splits; auto. 
       eapply weaken_sim_add_jf; eauto. }
 
-    erewrite ESstep.load_step_hb; eauto. 
-    erewrite ESBasicStep.basic_step_nupd_cf; eauto. 
-    erewrite ESstep.load_step_rf; eauto.
+    erewrite ESstep.load_step_hb; eauto.
     rewrite SSJF'. 
-    rewrite inclusion_minus_rel.
+    erewrite ESBasicStep.basic_step_nupd_cf; eauto.
+    (* erewrite ESstep.load_step_jf; eauto. *)
+    (* rewrite SSJF'.  *)
+    (* rewrite inclusion_minus_rel. *)
     rewrite crE, csE. relsf.
     rewrite !seqA.
     rewrite !irreflexive_union.
@@ -787,30 +788,30 @@ Section SimRelCertLemmas.
     
     erewrite ESstep.load_step_hb; eauto. 
     rewrite transp_union. relsf.
-    rewrite ESstep.load_step_rf; eauto.
-    rewrite inclusion_minus_rel.
+    (* rewrite ESstep.load_step_rf; eauto. *)
+    (* rewrite inclusion_minus_rel. *)
     rewrite SSJF'.
-    rewrite transp_union.
-    rewrite seq_union_l with (r := ⦗eq e⦘).
-    arewrite_false (Sjf S ⨾ ⦗eq e⦘); 
+    rewrite transp_union. relsf.
+    (* rewrite seq_union_l with (r := ⦗eq e⦘). *)
+    arewrite_false (Sjf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘); 
       [ESBasicStep.step_solver|].
-    rewrite union_false_l.
-    arewrite 
-      ((Srf S ∪ (Sew S)^? ⨾ singl_rel w e ⨾ ⦗eq e⦘) ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ≡
-                 (Sew S)^? ⨾ singl_rel w e ⨾ ⦗SAcq S'⦘).
-    { rewrite seq_union_l.
-      arewrite_false (Srf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘).
-      { ESBasicStep.step_solver. }
-      basic_solver 10. }
-    rewrite !transp_seq, !transp_cross,
-            !transp_eqv_rel, transp_singl_rel.
+    (* rewrite union_false_l. *)
+    (* arewrite  *)
+    (*   ((Sjf S ∪ singl_rel w e ⨾ ⦗eq e⦘) ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ≡ *)
+    (*              singl_rel w e ⨾ ⦗SAcq S'⦘). *)
+    (* { rewrite seq_union_l. *)
+    (*   arewrite_false (Srf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘). *)
+    (*   { ESBasicStep.step_solver. } *)
+    (*   basic_solver 10. } *)
+    rewrite ?transp_union, ?transp_seq, ?transp_cross,
+            ?transp_eqv_rel, ?transp_singl_rel.
     relsf.
     rewrite !irreflexive_union.
     splits.
     
     { eapply ecf_irr_thb_cf_hb_irr. apply SRCC. }
     all : try by ESBasicStep.step_solver.
-    all : rewrite transp_cr with (r := Shb S).
+    all : try rewrite transp_cr with (r := Shb S).
 
     { unfold seq, cross_rel. 
       red. ins. desc.
@@ -969,6 +970,7 @@ Section SimRelCertLemmas.
     erewrite ESBasicStep.basic_step_nupd_cf; eauto. 
     erewrite ESstep.load_step_hb; eauto. 
     rewrite crE, csE, transp_union, transp_cross, transp_singl_rel. 
+    rewrite SSJF'. 
     relsf. 
     rewrite !inter_union_r, !inter_union_l. 
 
@@ -978,12 +980,13 @@ Section SimRelCertLemmas.
 
     unionL.
     { apply jf_necf_hb_tjf_ncf; apply SRCC. }
+    all : try by (rewrite ?singlE; ESBasicStep.step_solver).
     
-    1-4, 10-14, 21-24 : solve_by_EE ES.jfE.
-    1,6, 11-12, 14, 16 : solve_by_EE hbE.
-    5-8 : solve_by_EE singlE.
-    5 : solve_by_EE ES.cont_sb_domE.
-    5 : solve_by_EE releaseE. 
+    (* 1-4, 10-14, 21-24 : solve_by_EE ES.jfE. *)
+    (* 1,6, 11-12, 14, 16 : solve_by_EE hbE. *)
+    (* 5-8 : solve_by_EE singlE. *)
+    (* 5 : solve_by_EE ES.cont_sb_domE. *)
+    (* 5 : solve_by_EE releaseE.  *)
 
     { erewrite cont_sb_dom_in_hhdom; eauto.
       rewrite seq_cross_singl_l; auto. 
@@ -1015,40 +1018,35 @@ Section SimRelCertLemmas.
         unfolder in SBC. desf. }
       unfolder in HH; desf. }
 
-    all : 
-      erewrite ESstep.load_step_rf, SSJF'; eauto; 
-      rewrite !seq_union_l, !seq_union_r, !minus_union_l; 
-      relsf; rewrite !inter_union_l; unionL.
+    (* all : *)
+    (*   (* erewrite ESstep.load_step_rf, SSJF'; eauto; *) *)
+    (*   rewrite !seq_union_l, !seq_union_r, !minus_union_l; *)
+    (*   relsf; rewrite !inter_union_l; unionL. *)
 
-    1,4 : solve_by_EE ES.rfE.
-    1,3 : solve_by_EE ES.jfE.
+    (* 1,4 : solve_by_EE ES.rfE. *)
+    (* 1,3 : solve_by_EE ES.jfE. *)
 
-    all : rewrite inclusion_minus_rel, !seqA.
+    (* all : rewrite inclusion_minus_rel, !seqA. *)
 
     { intros x y [HH CF].
       eapply HnCF; eauto.  
       red. splits; [apply CF | |].  
       { eapply h_rel_ewD; eauto.
-        unfolder. unfolder in HH.
-        destruct HH as [z [REL HH]].
-        destruct HH as [z' [rEW HH]].
-        do 2 eexists; splits; eauto. 
-        eexists; splits; eauto; desf. }
+        unfolder. unfolder in HH. desc.
+        (* destruct HH as [z [REL HH]]. *)
+        (* destruct HH as [z' [rEW HH]]. *)
+        do 2 eexists; splits; eauto. }
       unfolder in HH. desf. }
 
     intros x y [HH CF].
     eapply HnCF; eauto.  
     red. splits; [apply CF | |].  
     { eapply h_hbD; eauto. 
-      destruct HH as [z [HB HH]].      
-      unfolder. 
+      unfolder. unfolder in HH. desc.
       do 2 eexists; splits; eauto. 
       eapply h_rel_ewD; eauto.      
-      unfolder. unfolder in HH. 
-      destruct HH as [z' [REL HH]].
-      destruct HH as [z'' [rEW HH]].
-      do 2 eexists; splits; eauto. 
-      eexists; splits; eauto; desf. }
+      unfolder. 
+      do 2 eexists; splits; eauto. }
     unfolder in HH. desf. 
   Qed.
 
@@ -1076,9 +1074,9 @@ Section SimRelCertLemmas.
 
     cdes LSTEP.
     split; [|basic_solver].
-    rewrite SSJF'.
     erewrite ESBasicStep.basic_step_nupd_cf; eauto. 
     erewrite ESstep.load_step_hb; eauto.
+    rewrite SSJF'.
     rewrite !seq_union_r, !seq_union_l, !seq_union_r.
     rewrite !transp_union, !transp_seq, !transp_cross, transp_eqv_rel. 
     relsf. rewrite !seqA.
@@ -1091,15 +1089,7 @@ Section SimRelCertLemmas.
 
     unionL.
     { eapply jf_necf_hb_jf_thb_ncf; eapply SRCC. }
-
-    1-2,6-8,12-14,19-20,24-26,30-32 : solve_by_EE ES.jfE.
-    1,10-11,17 : solve_by_EE hbE.
-    3-8,11-15 : solve_by_EE singlE.
-    
-    3 : { rewrite ES.cont_sb_domE; eauto. 
-          solve_by_EE hbE. }
-    3 : { rewrite releaseE; eauto. 
-          solve_by_EE hbE. }
+    all : try by (rewrite ?singlE; ESBasicStep.step_solver).
 
     { intros x y [HH CF].
       eapply HnCF; eauto.  
@@ -1114,18 +1104,6 @@ Section SimRelCertLemmas.
       unfolder. do 2 eexists; splits; eauto. 
       eapply cont_sb_dom_in_hhdom; eauto. }
 
-    rewrite ESstep.load_step_rf; eauto.   
-    rewrite transp_union. relsf.
-    rewrite inter_union_l. 
-    unionL.
-    { solve_by_EE ES.rfE. }
-    
-    rewrite inclusion_minus_rel.
-    rewrite SSJF'. 
-    rewrite !transp_seq, transp_union, transp_singl_rel.
-    relsf. rewrite inter_union_l. unionL. 
-    { solve_by_EE ES.jfE. }
-
     intros x y [HH CF].
     eapply HnCF; eauto.  
     red. splits; [apply CF | |]. 
@@ -1136,10 +1114,7 @@ Section SimRelCertLemmas.
     assert (((Shb S)^? ⨾ release S ⨾ (Sew S)^? ⨾ singl_rel w e) y e) as HBrREL. 
     { unfold seq, eqv_rel, transp in HH. desf. 
       unfold seq. 
-      eexists; splits; eauto. 
-      eexists; splits; eauto. 
-      eexists; splits; eauto. 
-      unfold singl_rel in *. desf. }
+      eexists; splits; eauto. }
     destruct HBrREL as [z [[EQ | HB] RELew]].
     { subst z. 
       eapply h_rel_ewD; eauto. 
