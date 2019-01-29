@@ -56,32 +56,35 @@ Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
 
-Definition add_jf (r : eventid) (S S' : ES.t) : Prop :=
+Definition add_jf w r S S' : Prop :=  
+  ⟪ ER : E S' r ⟫ /\
   ⟪ RR : R S' r ⟫ /\
-  exists w,
-    ⟪ EW  : S.(ES.acts_set) w ⟫ /\
-    ⟪ WW  : W S' w ⟫ /\
-    ⟪ LOC : same_loc S' w r ⟫ /\
-    ⟪ VAL : same_val S' w r ⟫ /\
-    ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
+  ⟪ EW : E S w ⟫ /\
+  ⟪ WW : W S w ⟫ /\
+  ⟪ LOC : same_loc S' w r ⟫ /\
+  ⟪ VAL : same_val S' w r ⟫ /\
+  ⟪ JF' : jf S' ≡ jf S ∪ singl_rel w r ⟫.
 
-Definition add_ew (w : eventid) (S S' : ES.t) : Prop :=
+Definition add_ew ws w S S' : Prop :=   
+  ⟪ EW : E S' w ⟫ /\
   ⟪ WW : W S' w ⟫ /\
-  exists (ws : eventid -> Prop),
-    ⟪ WWS   : ws ⊆₁ W S ⟫ /\
-    ⟪ LOCWS : ws ⊆₁ same_loc S w ⟫ /\
-    ⟪ VALWS : ws ⊆₁ same_val S w ⟫ /\
-    ⟪ CFWS  : ws ⊆₁ S.(ES.cf) w ⟫ /\
-    ⟪ REPR :
-      S'.(ES.ew) ≡ S.(ES.ew) ∪ ws × eq w ∪ eq w × ws ⟫.
+  ⟪ WWS : ws ⊆₁ W S ⟫ /\
+  ⟪ LOCWS : ws ⊆₁ same_loc S w ⟫ /\
+  ⟪ VALWS : ws ⊆₁ same_val S w ⟫ /\
+  ⟪ CFWS : ws ⊆₁ cf S' w ⟫ /\
+  ⟪ EW' : ew S' ≡ ew S ∪ (ws × eq w)^⋈ ⟫. 
 
-Definition add_co (w : eventid) (S S' : ES.t) : Prop :=
-  let A := S.(ES.acts_set) ∩₁ W S ∩₁ (same_loc S w) \₁ (S.(ES.cf)^? w) in
-  ⟪ WW : W S' w ⟫ /\
-  exists (ws : eventid -> Prop),
-    ⟪ WWS : ws ⊆₁ A ⟫ /\
-    ⟪ REPR :
-      S'.(ES.co) ≡ S.(ES.co) ∪ S.(ES.ew) ∪ ws × eq w ∪ eq w × (A \₁ ws) ⟫.
+Definition add_co w w' S S' : Prop := 
+  ⟪ EW : E S w ⟫ /\
+  ⟪ WW : W S w ⟫ /\  
+  ⟪ EW' : E S' w' ⟫ /\
+  ⟪ WW' : W S' w' ⟫ /\  
+  ⟪ LOC : same_loc S' w w' ⟫ /\
+  ⟪ NCF : ~ cf S' w w' ⟫ /\
+  ⟪ CO' : co S' ≡ co S ∪ 
+             dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗eq w⦘) × eq w' ∪ 
+             eq w' × codom_rel (⦗eq w⦘ ⨾ (co S)^?)
+  ⟫.
 
 Definition t_fence
            (e  : eventid)
@@ -89,36 +92,39 @@ Definition t_fence
            (S S' : ES.t) : Prop :=
   ⟪ ENONE : e' = None ⟫ /\
   ⟪ FF  : F S' e ⟫ /\
-  ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ⟫ /\
-  ⟪ EW' : S'.(ES.ew) ≡ S.(ES.ew) ⟫ /\
-  ⟪ CO' : S'.(ES.co) ≡ S.(ES.co) ⟫.
+  ⟪ JF' : jf S' ≡ jf S ⟫ /\
+  ⟪ EW' : ew S' ≡ ew S ⟫ /\
+  ⟪ CO' : co S' ≡ co S ⟫.
 
 Definition t_load
            (e  : eventid)
            (e' : option eventid)
            (S S' : ES.t) : Prop :=
-  ⟪ ENONE : e' = None ⟫ /\
-  ⟪ AJF : add_jf e S S' ⟫ /\
-  ⟪ EW' : S'.(ES.ew) ≡ S.(ES.ew) ⟫ /\
-  ⟪ CO' : S'.(ES.co) ≡ S.(ES.co) ⟫.
+  exists w, 
+    ⟪ ENONE : e' = None ⟫ /\
+    ⟪ AJF : add_jf w e S S' ⟫ /\
+    ⟪ EW' : ew S' ≡ ew S ⟫ /\
+    ⟪ CO' : co S' ≡ co S ⟫.
 
 Definition t_store
            (e  : eventid)
            (e' : option eventid)
            (S S' : ES.t) : Prop :=
-  ⟪ ENONE : e' = None ⟫ /\
-  ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ⟫ /\
-  ⟪ AEW : add_ew e S S' ⟫ /\
-  ⟪ ACO : add_co e S S' ⟫.
+  exists ws w, 
+    ⟪ ENONE : e' = None ⟫ /\
+    ⟪ JF' : jf S' ≡ jf S ⟫ /\
+    ⟪ AEW : add_ew ws e S S' ⟫ /\
+    ⟪ ACO : add_co w e S S' ⟫.
 
 Definition t_update
            (e  : eventid)
            (e' : option eventid)
-           (S S' : ES.t) : Prop := exists w,
-  ⟪ ESOME : e' = Some w ⟫ /\
-  ⟪ AJF : add_jf e S S' ⟫ /\
-  ⟪ AEW : add_ew w S S' ⟫ /\
-  ⟪ ACO : add_co w S S' ⟫.
+           (S S' : ES.t) : Prop := 
+  exists rw ws ww w',
+    ⟪ ESOME : e' = Some w' ⟫ /\
+    ⟪ AJF : add_jf rw e S S' ⟫ /\
+    ⟪ AEW : add_ew ws w' S S' ⟫ /\
+    ⟪ ACO : add_co ww w' S S' ⟫.
 
 Definition t_ e e' S S' :=
   t_fence e e' S S' \/ t_load e e' S S' \/ t_store e e' S S' \/ t_update e e' S S'.
@@ -137,14 +143,15 @@ Lemma load_step_E e e' S S'
       (LSTEP: t_load e e' S S') :
   E S' ≡₁ E S ∪₁ eq e.
 Proof. 
-  assert (e' = None) by inv LSTEP. subst.
-    by apply ESBasicStep.basic_step_nupd_acts_set.
+  cdes LSTEP. subst. 
+  by apply ESBasicStep.basic_step_nupd_acts_set.
 Qed.
 
 Lemma load_step_R e e' S S'
       (LSTEP: t_load e e' S S') :
   R S' e.
-Proof. apply LSTEP. Qed.
+Proof. by cdes LSTEP; cdes AJF. Qed.
+
 
 Lemma load_step_r e e' S S'
       (BSTEP : ESBasicStep.t e e' S S')
@@ -327,12 +334,12 @@ Lemma load_step_rf e e' S S'
   rf S' ≡ rf S ∪ (ew S)^? ⨾ jf S' ⨾ ⦗eq e⦘ \ cf S'.
 Proof.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
-  unfold "rf" at 1.
+  unfold ES.rf at 1.
   rewrite EW', JF'.
   autorewrite with hahn hahn_full.
   rewrite minus_union_l.
   arewrite ((ew S)^? ⨾ jf S \ cf S' ≡ rf S).
-  { unfold "rf".
+  { unfold ES.rf.
     admit. }
   arewrite ((ew S)^? ⨾ jf S ⨾ ⦗eq e⦘ ≡ ∅₂).
   { rewrite ES.jfE; auto.
@@ -381,7 +388,7 @@ Lemma load_step_rf_rmw e e' S S'
 Proof. 
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
   rewrite ESBasicStep.basic_step_nupd_rmw; eauto.
-  unfold "rf". 
+  unfold ES.rf. 
   rewrite JF', EW'.
   rewrite seq_union_r, minus_union_l, seq_union_l.
   arewrite (((ew S)^? ⨾ singl_rel w e \ cf S') ⨾ rmw S ≡ ∅₂). 
@@ -445,8 +452,6 @@ Proof.
       { unfold ES.jfe. 
         rewrite JF', <- seq_eqv_minus_lr. 
         rewrite wfE.(ES.jfE), wfE.(ES.jfD).
-        assert (is_w (lab S) w) as WW'. 
-        { eapply ESBasicStep.type_step_eq_dom with (S' := S'); eauto. done. }
         unfolder; splits; ins; desf; [omega | type_solver]. } 
       rewrite seqA. 
       rewrite <- seqA with (r2 := jfe S').
@@ -466,8 +471,6 @@ Proof.
       unfold ES.jfe. 
       rewrite JF', <- seq_eqv_minus_lr. 
       rewrite wfE.(ES.jfE), wfE.(ES.jfD).
-      assert (is_w (lab S) w) as WW'. 
-      { eapply ESBasicStep.type_step_eq_dom with (S' := S'); eauto. done. }
       unfolder; splits; ins; desf; [omega | type_solver]. }  
     rewrite union_false_l, <- !seqA. 
     apply seq_more; auto. 
@@ -579,7 +582,6 @@ Lemma load_step_rs e e' S S'
       (wfE: ES.Wf S) :
   rs S' ≡ rs S.
 Proof.
-  assert (e' = None) by inv LSTEP. subst.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.
   assert (ES.Wf S') as wfE'.
   { admit. (* eapply step_wf; unfold t_; eauto. *) }
@@ -611,7 +613,6 @@ Lemma load_step_release e e' S S'
       (wfE: ES.Wf S) :
   release S' ≡ release S. 
 Proof. 
-  assert (e' = None) by inv LSTEP. subst.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   assert (ES.Wf S') as wfE'.
   { admit. (* eapply step_wf; unfold t_; eauto. *) }
@@ -634,7 +635,6 @@ Lemma load_step_sw e e' S S'
       (wfE: ES.Wf S) :
   sw S' ≡ sw S ∪ release S ⨾ jf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘. 
 Proof.
-  assert (e' = None) by inv LSTEP. subst.
   cdes LSTEP; cdes AJF; cdes BSTEP; cdes BSTEP_.  
   assert (ES.Wf S') as wfE'.
   { admit. (* eapply step_wf; unfold t_; eauto. *) }
@@ -675,11 +675,10 @@ Lemma load_step_hb lang k k' st st' e e' S S'
   hb S' ≡ hb S ∪ 
      (hb S)^? ⨾ (ES.cont_sb_dom S k × eq e ∪ release S ⨾ jf S' ⨾ ⦗Acq S'⦘ ⨾ ⦗eq e⦘). 
 Proof.
-  assert (e' = None) by inv LSTEP. subst.
+  cdes LSTEP; cdes AJF; cdes BSTEP_.
   assert (ESBasicStep.t e None S S') as BSTEP.
-  { econstructor. eauto. }
-  cdes LSTEP; cdes AJF; cdes BSTEP_; desf.
-  unfold hb at 1.
+  { subst. econstructor. eauto. }
+  desf. unfold hb at 1.
   rewrite ESBasicStep.basic_step_nupd_sb, load_step_sw; eauto.
   rewrite unionA.
   rewrite (unionAC (ES.cont_sb_dom S k × eq (ES.next_act S))).
