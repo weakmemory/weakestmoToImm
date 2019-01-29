@@ -57,6 +57,12 @@ Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
 
+Definition sb_delta S k e e' : relation eventid := 
+  ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'.
+
+Definition rmw_delta e e' : relation eventid := 
+  eq e × eq_opt e'.
+
 Definition t_
            (lang : Language.t)
            (k k' : cont_label)
@@ -77,9 +83,8 @@ Definition t_
     ⟪ LABEL' : opt_same_ctor e' lbl' ⟫ /\
     ⟪ LAB'   : S'.(ES.lab) = upd_opt (upd S.(ES.lab) e lbl ) e' lbl' ⟫ /\
     ⟪ TID'   : S'.(ES.tid) = upd_opt (upd S.(ES.tid) e thrd) e' (Some thrd) ⟫ /\
-    ⟪ SB'    : S'.(ES.sb) ≡ S.(ES.sb) ∪ ES.cont_sb_dom S k × eq e ∪ 
-                                      (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⟫ /\
-    ⟪ RMW'   : S'.(ES.rmw) ≡ S.(ES.rmw) ∪ eq e × eq_opt e' ⟫.
+    ⟪ SB'    : S'.(ES.sb) ≡ S.(ES.sb) ∪ sb_delta S k e e' ⟫ /\
+    ⟪ RMW'   : S'.(ES.rmw) ≡ S.(ES.rmw) ∪ rmw_delta e e' ⟫.
 
 Definition t
            (e  : eventid)
@@ -451,7 +456,7 @@ Lemma basic_step_nupd_sb lang k k' st st' e S S'
   sb S' ≡ sb S ∪ ES.cont_sb_dom S k × eq e.  
 Proof.                                       
   cdes BSTEP_.
-  unfold eq_opt in SB'.
+  unfold sb_delta, eq_opt in SB'.
   rewrite cross_false_r in SB'. 
   rewrite union_false_r in SB'.
   apply SB'.
@@ -463,6 +468,7 @@ Lemma basic_step_sb_restr e e' S S'
   restr_rel (E S) (sb S') ≡ sb S.  
 Proof. 
   cdes BSTEP; cdes BSTEP_.
+  unfold sb_delta in SB'.
   rewrite SB', cross_union_r, !restr_union. 
   arewrite (restr_rel (E S) (ES.cont_sb_dom S k × eq e) ≡ ∅₂).
   { rewrite restr_relE. split; [|done]. step_solver. }
@@ -482,6 +488,7 @@ Lemma basic_step_sbEr e e' S S'
   sb S' ⨾ ⦗E S⦘ ≡ sb S. 
 Proof. 
   cdes BSTEP. cdes BSTEP_.
+  unfold sb_delta in SB'.
   rewrite SB'.
   rewrite !seq_union_l.
   arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘). 
@@ -511,6 +518,7 @@ Proof.
   { econstructor; eauto. }
   eapply immediate_more.
   { apply SB'. }
+  unfold sb_delta in *.
   split. 
   { unfold ES.cont_sb_dom. basic_solver 10. }
   ins. unfold union in R2. desf.
@@ -542,6 +550,7 @@ Proof.
   { econstructor; eauto. }
   eapply immediate_more.
   { apply SB'. }
+  unfold sb_delta in *.
   split. 
   { unfold ES.cont_sb_dom. basic_solver 10. }
   ins. unfold union in R2. desf.
@@ -576,6 +585,7 @@ Proof.
   assert (t e e' S S') as BSTEP.
   { unfold t. do 5 eexists. eauto. }
   cdes BSTEP_.
+  unfold sb_delta in *.
   unfold "cf" at 1.
   rewrite <- restr_relE.
   rewrite basic_step_acts_ninit_set; eauto.
@@ -932,6 +942,7 @@ Lemma basic_step_nupd_rmw e S S'
   rmw S' ≡ rmw S.  
 Proof.                                       
   cdes BSTEP; cdes BSTEP_.
+  unfold rmw_delta in *.
   unfold eq_opt in RMW'.
   rewrite cross_false_r in RMW'. 
   rewrite union_false_r in RMW'.
@@ -1082,6 +1093,7 @@ Proof.
   cdes BSTEP_.
   assert (t e e' S S') as BSTEP. 
   { econstructor; eauto. }
+  unfold sb_delta in *.
   unfold ES.seqn.
   arewrite (sb S' ∩ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ ∅₂); 
     [|by rewrite dom_empty; apply countNatP_empty].
