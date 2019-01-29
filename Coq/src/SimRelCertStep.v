@@ -17,7 +17,7 @@ Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency
 Set Implicit Arguments.
 Local Open Scope program_scope.
 
-Section SimRelLemmas.
+Section SimRelStep.
 
 Variable prog : Prog.t.
 Variable S : ES.t.
@@ -1560,4 +1560,4 @@ Section SimRelCertLemmas.
 
 End SimRelCertLemmas.
 
-End SimRelLemmas.
+End SimRelStep.
