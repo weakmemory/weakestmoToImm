@@ -63,6 +63,8 @@ Definition sb_delta S k e e' : relation eventid :=
 Definition rmw_delta e e' : relation eventid := 
   eq e × eq_opt e'.
 
+Hint Unfold sb_delta rmw_delta : ESStepDb.
+
 Definition t_
            (lang : Language.t)
            (k k' : cont_label)
@@ -456,7 +458,8 @@ Lemma basic_step_nupd_sb lang k k' st st' e S S'
   sb S' ≡ sb S ∪ ES.cont_sb_dom S k × eq e.  
 Proof.                                       
   cdes BSTEP_.
-  unfold sb_delta, eq_opt in SB'.
+  autounfold with ESStepDb in *.  
+
   rewrite cross_false_r in SB'. 
   rewrite union_false_r in SB'.
   apply SB'.
@@ -468,7 +471,7 @@ Lemma basic_step_sb_restr e e' S S'
   restr_rel (E S) (sb S') ≡ sb S.  
 Proof. 
   cdes BSTEP; cdes BSTEP_.
-  unfold sb_delta in SB'.
+  autounfold with ESStepDb in *.  
   rewrite SB', cross_union_r, !restr_union. 
   arewrite (restr_rel (E S) (ES.cont_sb_dom S k × eq e) ≡ ∅₂).
   { rewrite restr_relE. split; [|done]. step_solver. }
@@ -482,13 +485,13 @@ Proof.
   basic_solver 10. 
 Qed.
 
-Lemma basic_step_sbEr e e' S S' 
+Lemma basic_step_sbE e e' S S' 
       (BSTEP : t e e' S S') 
       (WF: ES.Wf S) :
   sb S' ⨾ ⦗E S⦘ ≡ sb S. 
 Proof. 
   cdes BSTEP. cdes BSTEP_.
-  unfold sb_delta in SB'.
+  autounfold with ESStepDb in *.  
   rewrite SB'.
   rewrite !seq_union_l.
   arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘). 
@@ -518,7 +521,7 @@ Proof.
   { econstructor; eauto. }
   eapply immediate_more.
   { apply SB'. }
-  unfold sb_delta in *.
+  autounfold with ESStepDb in *.  
   split. 
   { unfold ES.cont_sb_dom. basic_solver 10. }
   ins. unfold union in R2. desf.
@@ -550,7 +553,7 @@ Proof.
   { econstructor; eauto. }
   eapply immediate_more.
   { apply SB'. }
-  unfold sb_delta in *.
+  autounfold with ESStepDb in *.  
   split. 
   { unfold ES.cont_sb_dom. basic_solver 10. }
   ins. unfold union in R2. desf.
@@ -585,7 +588,7 @@ Proof.
   assert (t e e' S S') as BSTEP.
   { unfold t. do 5 eexists. eauto. }
   cdes BSTEP_.
-  unfold sb_delta in *.
+  autounfold with ESStepDb in *.  
   unfold "cf" at 1.
   rewrite <- restr_relE.
   rewrite basic_step_acts_ninit_set; eauto.
@@ -1066,7 +1069,7 @@ Proof.
     { rewrite <- seq_eqvK, <- seqA. 
       arewrite (eq x ⊆₁ E S).
       { basic_solver. }
-      rewrite <- seqA, basic_step_sbEr; eauto.
+      rewrite <- seqA, basic_step_sbE; eauto.
       basic_solver. }
     rewrite SB'. basic_solver. }
   rewrite lib.AuxRel.seq_eqv_inter_lr.
@@ -1093,7 +1096,7 @@ Proof.
   cdes BSTEP_.
   assert (t e e' S S') as BSTEP. 
   { econstructor; eauto. }
-  unfold sb_delta in *.
+  autounfold with ESStepDb in *.  
   unfold ES.seqn.
   arewrite (sb S' ∩ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ ∅₂); 
     [|by rewrite dom_empty; apply countNatP_empty].
