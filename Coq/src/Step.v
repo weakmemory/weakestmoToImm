@@ -147,7 +147,7 @@ Definition t (m : model) (S S' : ES.t) : Prop := exists e e',
   ⟪ CON : @es_consistent S' m ⟫.
 
 (******************************************************************************)
-(** ** add_jf properties *)
+(** ** Step (add_jf) properties *)
 (******************************************************************************)
 
 Definition jfi_delta S k w r : relation eventid := 
@@ -777,17 +777,22 @@ Proof.
   rewrite swE; auto. basic_solver 5.
 Qed.
 
+Definition hb_delta S S' k w e e' : relation eventid := 
+  (hb S)^? ⨾ (ESBasicStep.sb_delta S k e e' ∪ sw_delta S S' w e) ⨾ (eq e × eq_opt e')^? . 
+
+Hint Unfold hb_delta : ESStepDb.
+
 Lemma step_add_jf_hb lang k k' st st' w e e' S S' 
       (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
       (AJF : add_jf w e S S') 
       (nF' : eq_opt e' ∩₁ F S' ⊆₁ ∅)
       (wfE: ES.Wf S) :
-  hb S' ≡ hb S ∪ 
-     (hb S)^? ⨾ (ESBasicStep.sb_delta S k e e' ∪ sw_delta S S' w e) ⨾ (eq e × eq_opt e')^? . 
+  hb S' ≡ hb S ∪ hb_delta S S' k w e e'.
 Proof.
   cdes AJF; cdes BSTEP_.
   assert (ESBasicStep.t e e' S S') as BSTEP.
   { subst. econstructor. eauto. }
+  unfold hb_delta.
   unfold hb at 1.
   rewrite SB'. 
   rewrite step_add_jf_sw; eauto.
@@ -879,6 +884,63 @@ Proof.
   { ESBasicStep.step_solver. }
   basic_solver 10. 
 Qed.
+
+Lemma step_add_jf_hb_delta_dom lang k k' st st' w e e' S S' 
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wfE: ES.Wf S) :
+  dom_rel (hb_delta S S' k w e e') ⊆₁ E S ∪₁ eq e.
+Proof. 
+  cdes AJF; cdes BSTEP_.
+  unfold hb_delta.
+  rewrite crE, !seq_union_l, seq_id_l. 
+  rewrite !dom_union, !dom_seq.
+  rewrite !set_subset_union_l.
+  splits. 
+  { eapply ESBasicStep.basic_step_sb_delta_dom; eauto. }
+  all : ESBasicStep.step_solver.
+Qed. 
+
+Lemma step_add_jf_hb_dom w e e' S S' 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AJF : add_jf w e S S') 
+      (nF' : eq_opt e' ∩₁ F S' ⊆₁ ∅)
+      (wfE: ES.Wf S) :
+  dom_rel (hb S') ⊆₁ E S ∪₁ eq e.
+Proof. 
+  cdes AJF; cdes BSTEP; cdes BSTEP_.
+  rewrite step_add_jf_hb; eauto.
+  rewrite dom_union.
+  rewrite step_add_jf_hb_delta_dom; eauto.
+  rewrite hbE; auto.
+  basic_solver.
+Qed. 
+
+Lemma step_add_jf_hb_deltaE lang k k' st st' w e e' S S' 
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wfE: ES.Wf S) :
+  hb_delta S S' k w e e' ⨾ ⦗E S⦘ ≡ ∅₂.
+Proof. 
+  cdes AJF; cdes BSTEP_.
+  split; [|done].
+  unfold hb_delta.
+  ESBasicStep.step_solver.
+Qed. 
+
+Lemma step_add_jf_hbE w e e' S S' 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AJF : add_jf w e S S') 
+      (nF' : eq_opt e' ∩₁ F S' ⊆₁ ∅)
+      (wfE: ES.Wf S) :
+  hb S' ⨾ ⦗E S⦘ ≡ hb S.
+Proof. 
+  cdes AJF; cdes BSTEP; cdes BSTEP_.
+  rewrite step_add_jf_hb; eauto.
+  relsf.
+  rewrite step_add_jf_hb_deltaE; eauto.
+  rewrite hbE; auto. basic_solver 5.
+Qed. 
 
 (******************************************************************************)
 (** ** Step (same jf) properties *)
