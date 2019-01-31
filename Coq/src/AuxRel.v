@@ -73,6 +73,9 @@ Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
 Variables r r' r'': relation A.
 
+Lemma seq_eqv : ⦗s⦘ ⨾ ⦗s'⦘ ≡ ⦗s ∩₁ s'⦘.
+Proof. basic_solver. Qed.
+
 Lemma seqA_rev : r ⨾ r' ⨾ r'' ⊆ (r ⨾ r') ⨾ r''.
 Proof. apply seqA. Qed.
 
@@ -676,6 +679,14 @@ Proof.
   rewrite inclusion_t_rt.
   basic_solver.
 Qed. 
+
+Lemma restr_clos_trans_eq (Hrestr : r ≡ restr_rel s r) : 
+  clos_trans (r) ≡ restr_rel s (clos_trans (r)).
+Proof. 
+  split; [|basic_solver].
+  rewrite <- restr_clos_trans. 
+  by rewrite Hrestr at 1.
+Qed.
 
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
