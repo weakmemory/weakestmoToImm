@@ -178,6 +178,8 @@ Definition t
    where `e` is a new event added by step `S -> S'`,
    using the fact that `sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘` *)
 Ltac step_solver := 
+  autounfold with ESStepDb in *; 
+  unfold eq_opt, opt_ext in *; 
   rewrite 1?ES.sbE, 1?ES.rmwE, 1?ES.cfE, 
     1?ES.cont_sb_domE, 1?ES.cont_cf_domE,
     1?ES.jfE, 1?ES.jfiE, 1?ES.jfeE,
@@ -459,30 +461,24 @@ Lemma basic_step_nupd_sb lang k k' st st' e S S'
 Proof.                                       
   cdes BSTEP_.
   autounfold with ESStepDb in *.  
-
   rewrite cross_false_r in SB'. 
   rewrite union_false_r in SB'.
   apply SB'.
 Qed.
 
-Lemma basic_step_sb_restr e e' S S' 
-      (BSTEP : t e e' S S') 
+Lemma basic_step_sb_delta_dom lang k k' st st' e e' S S'
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
       (WF: ES.Wf S) :
-  restr_rel (E S) (sb S') ≡ sb S.  
+  dom_rel (sb_delta S k e e') ⊆₁ E S ∪₁ eq e.
+Proof. cdes BSTEP_. step_solver. Qed.
+
+Lemma basic_step_sb_deltaE lang k k' st st' e e' S S'
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (WF: ES.Wf S) :
+  sb_delta S k e e' ⨾ ⦗E S⦘ ≡ ∅₂.
 Proof. 
-  cdes BSTEP; cdes BSTEP_.
-  autounfold with ESStepDb in *.  
-  rewrite SB', cross_union_r, !restr_union. 
-  arewrite (restr_rel (E S) (ES.cont_sb_dom S k × eq e) ≡ ∅₂).
-  { rewrite restr_relE. split; [|done]. step_solver. }
-  arewrite (restr_rel (E S) (ES.cont_sb_dom S k × eq_opt e') ≡ ∅₂).
-  { unfold eq_opt. 
-    destruct e'; [|basic_solver].
-    split; [|done]. step_solver. }
-  arewrite (restr_rel (E S) (eq e × eq_opt e') ≡ ∅₂).
-  { split; [|done]. step_solver. }
-  rewrite ES.sbE at 2; auto. 
-  basic_solver 10. 
+  cdes BSTEP_.
+  split; [|done]. step_solver.
 Qed.
 
 Lemma basic_step_sbE e e' S S' 
@@ -491,13 +487,9 @@ Lemma basic_step_sbE e e' S S'
   sb S' ⨾ ⦗E S⦘ ≡ sb S. 
 Proof. 
   cdes BSTEP. cdes BSTEP_.
-  autounfold with ESStepDb in *.  
   rewrite SB'.
   rewrite !seq_union_l.
-  arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗E S⦘). 
-  { step_solver. }
-  arewrite_false ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗E S⦘). 
-  { destruct e'; step_solver. }
+  rewrite basic_step_sb_deltaE; eauto.
   rewrite ES.sbE; auto. 
   basic_solver 10.
 Qed.
@@ -507,7 +499,7 @@ Lemma basic_step_sb_mon e e' S S'
   sb S ⊆ sb S'.
 Proof.
   cdes BSTEP; cdes BSTEP_.
-  desf; rewrite SB'; basic_solver. 
+  rewrite SB'; basic_solver. 
 Qed.
 
 Lemma basic_step_imm_sb_e a lang k k' st st' e e' S S'
@@ -525,9 +517,9 @@ Proof.
   split. 
   { unfold ES.cont_sb_dom. basic_solver 10. }
   ins. unfold union in R2. desf.
-  3 : { unfolder in R2. unfold eq_opt, opt_ext in *. destruct e'; omega. }
+  3 : unfolder in R2; step_solver. 
   { apply ES.sbE in R2; auto. 
-    unfolder in R2. omega. }
+    unfolder in R2. step_solver. }
   unfold cross_rel in R2. desc.
   assert (E S c) as Ec.
   { eapply ES.cont_sb_domE; eauto. }
@@ -559,7 +551,7 @@ Proof.
   ins. unfold union in R2. desf.
   { apply ES.sbE in R2; auto. 
     unfolder in R2. omega. } 
-  {unfolder in R2. omega. }
+  { unfolder in R2. omega. }
   unfold eq_opt, opt_ext in *.
   unfold union in R1. desf.
   { apply ES.sbE in R1; auto. 
@@ -702,7 +694,7 @@ Proof.
         { erewrite minus_eqv_absorb_rr; auto.
           rewrite csE, transp_cross, seq_union_l.
           arewrite (ES.cont_sb_dom S k × eq_opt e' ⨾ ⦗eq e⦘ ≡ ∅₂).
-          { edestruct e'; unfold eq_opt; split; try done; step_solver. }
+          { split; try done; step_solver. }
           rewrite union_false_l.
           split; [|done]. step_solver. }
 
@@ -714,14 +706,14 @@ Proof.
             (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ eq e × eq_opt e') ⨾ ⦗eq e⦘ ≡ 
              ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e⦘).
           { erewrite minus_eqv_absorb_rr; auto.
-            edestruct e'; unfold eq_opt; split; try done; step_solver. }
+            split; try done; step_solver. }
           arewrite 
             (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ eq_opt e' × eq e) ⨾ ⦗eq e⦘ ≡ 
              ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e⦘).
           { rewrite <- seqA.
             erewrite minus_eqv_absorb_rl; [by rewrite seqA|]. 
             unfold ES.acts_ninit_set.
-            edestruct e'; unfold eq_opt; split; try done; step_solver. }
+            split; try done; step_solver. }
           basic_solver. }
 
         rewrite interK, interA, interK, interC, <- interA, interK.
@@ -1108,7 +1100,7 @@ Proof.
     arewrite_false (sb S ⨾ ⦗eq e⦘).
     { step_solver. }
     arewrite_false ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗eq e⦘).
-    { destruct e'; step_solver. }
+    { step_solver. }
     basic_solver 10. }
   unfold ES.cont_sb_dom. subst. 
   unfold ES.same_tid.
