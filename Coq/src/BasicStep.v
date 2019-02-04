@@ -973,7 +973,27 @@ Lemma basic_step_sb_trans e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) :
   transitive (sb S'). 
-Proof. admit. Admitted.
+Proof.
+  apply transitiveI.
+  cdes BSTEP. cdes BSTEP_.
+  rewrite SB'.
+  rewrite seq_union_r, !seq_union_l.
+  unionL.
+  { generalize WF.(ES.sb_trans). basic_solver. }
+  { rewrite (dom_l WF.(ES.sbE)) at 1.
+    rewrite <- seqA.
+    rewrite basic_step_sb_deltaE; eauto. basic_solver. }
+  2: { arewrite (sb_delta S k e e' ⊆ <| E S ∪₁ eq e |> ;; sb_delta S k e e')
+                at 2.
+       { generalize (basic_step_sb_delta_dom BSTEP_ WF). basic_solver. }
+       rewrite id_union, !seq_union_l, !seq_union_r.
+       unionL.
+       { rewrite <- seqA.
+         rewrite basic_step_sb_deltaE; eauto.
+         basic_solver. }
+       arewrite (⦗eq e⦘ ⨾ sb_delta S k e e' ⊆ eq e × eq_opt e').
+       2: { unfold sb_delta.
+Admitted.
 
 Lemma basic_step_sb_prcl e e' S S'
       (BSTEP : t e e' S S')
