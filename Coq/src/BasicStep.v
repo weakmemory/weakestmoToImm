@@ -954,7 +954,20 @@ Lemma basic_step_sb_irr e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) :
   irreflexive (sb S'). 
-Proof. admit. Admitted.
+Proof.
+  cdes BSTEP. cdes BSTEP_.
+  rewrite SB'.
+  apply irreflexive_union. split.
+  { apply WF. }
+  unfold sb_delta. rewrite cross_union_r.
+  repeat (apply irreflexive_union; split).
+  3: { unfolder. ins; desf. simpls. omega. }
+  all: unfolder; intros x [HH]; repeat (simpls; desf).
+  2: assert (~ E S (Datatypes.S (ES.next_act S))) as XX.
+  assert (~ E S (ES.next_act S)) as XX.
+  1,3: intros XX; red in XX; omega.
+  all: apply XX; eapply ES.cont_sb_domE; eauto.
+Qed.
 
 Lemma basic_step_sb_trans e e' S S'
       (BSTEP : t e e' S S')
