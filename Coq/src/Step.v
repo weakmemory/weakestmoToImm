@@ -1100,26 +1100,6 @@ Proof.
   rewrite ccE. basic_solver.
 Qed.
 
-Lemma step_same_jf_sw e e' S S'
-      (BSTEP : ESBasicStep.t e e' S S') 
-      (JF' : jf S' ≡ jf S) 
-      (wfE: ES.Wf S) :
-  cc S' ⨾ ⦗E S⦘ ≡ cc S.
-Proof. 
-  cdes BSTEP; cdes BSTEP_.
-  rewrite step_same_jf_cc; eauto.
-  rewrite seq_union_l.
-  rewrite interC.
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
-  rewrite !seqA.
-  arewrite_false 
-    (ESBasicStep.sb_delta S k e e' ⨾ ⦗E S⦘).
-  { ESBasicStep.step_solver. }
-  relsf.
-  rewrite ccE. basic_solver.
-Qed.
-
-
 (******************************************************************************)
 (** ** Step properties *)
 (******************************************************************************)
