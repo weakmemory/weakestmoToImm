@@ -969,6 +969,63 @@ Proof.
   all: apply XX; eapply ES.cont_sb_domE; eauto.
 Qed.
 
+Lemma basic_step_sb_delta_prcl e e' S S' k k' lang st st'
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  sb S ⨾ sb_delta S k e e' ⊆ sb_delta S k e e'.
+Proof.
+  assert (forall X,
+             sb S ⨾ ES.cont_sb_dom S k × X ⊆
+                ES.cont_sb_dom S k × X) as AA.
+  { unfolder; ins; desf. split; auto.
+    eapply ES.cont_sb_prcl; eauto.
+    { cdes BSTEP_. eauto. }
+    eexists. apply seq_eqv_r. split; eauto. }
+  unfold sb_delta.
+  rewrite !seq_union_r.
+  apply union_mori.
+  { apply AA. }
+  rewrite !cross_union_r, !seq_union_r.
+  unionR left. unionL.
+  { apply AA. }
+  rewrite (dom_r WF.(ES.sbE)), !seqA.
+  rewrite seq_eqv_cross_l.
+  arewrite (E S ∩₁ eq e ⊆₁ ∅).
+  2: basic_solver.
+  unfolder; ins; desf. cdes BSTEP_; desf. omega.
+Qed.
+
+Lemma basic_step_sb_delta_transitive e e' S S' k k' lang st st'
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  transitive (sb_delta S k e e').
+Proof.
+  apply transitiveI.
+  arewrite (sb_delta S k e e' ⊆
+            <| E S ∪₁ eq e |> ;; sb_delta S k e e')
+  at 2.
+  { generalize (basic_step_sb_delta_dom BSTEP_ WF). basic_solver. }
+  rewrite id_union, !seq_union_l, !seq_union_r.
+  unionL.
+  { rewrite <- seqA.
+    rewrite basic_step_sb_deltaE; eauto.
+    basic_solver. }
+  arewrite (⦗eq e⦘ ⨾ sb_delta S k e e' ⊆ eq e × eq_opt e').
+  { unfold sb_delta.
+    rewrite ES.cont_sb_domE; eauto.
+    2: { cdes BSTEP_. eauto. }
+    rewrite cross_union_r, !seq_union_r, !seq_eqv_cross_l.
+    arewrite (eq e ∩₁ E S ⊆₁ ∅).
+    { unfolder; ins; desf. cdes BSTEP_; subst. omega. }
+    unionL; basic_solver. }
+  unfold sb_delta.
+  rewrite cross_union_r, !seq_union_l.
+  assert (forall ee, eq_opt e' ee -> eq e ee -> False) as XX.
+  2: { generalize XX. basic_solver. }
+  intros ee AA BB; subst.
+  cdes BSTEP_; subst. red in AA. desf; simpls. omega.
+Qed.
+
 Lemma basic_step_sb_trans e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) :
@@ -983,17 +1040,11 @@ Proof.
   { rewrite (dom_l WF.(ES.sbE)) at 1.
     rewrite <- seqA.
     rewrite basic_step_sb_deltaE; eauto. basic_solver. }
-  2: { arewrite (sb_delta S k e e' ⊆ <| E S ∪₁ eq e |> ;; sb_delta S k e e')
-                at 2.
-       { generalize (basic_step_sb_delta_dom BSTEP_ WF). basic_solver. }
-       rewrite id_union, !seq_union_l, !seq_union_r.
-       unionL.
-       { rewrite <- seqA.
-         rewrite basic_step_sb_deltaE; eauto.
-         basic_solver. }
-       arewrite (⦗eq e⦘ ⨾ sb_delta S k e e' ⊆ eq e × eq_opt e').
-       2: { unfold sb_delta.
-Admitted.
+  { rewrite basic_step_sb_delta_prcl; eauto. eauto with hahn. }
+  unionR right.
+  apply transitiveI.
+  eapply basic_step_sb_delta_transitive; eauto.
+Qed.
 
 Lemma basic_step_sb_prcl e e' S S'
       (BSTEP : t e e' S S')
