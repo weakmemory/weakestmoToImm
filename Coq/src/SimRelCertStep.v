@@ -12,7 +12,7 @@ From imm Require Import Events Execution
 Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction SimRelSubExec
-        SimRel SimRelCert SimRelCertBasicStep SimRelAddJF. 
+        SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO.  
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -26,9 +26,6 @@ Section SimRelCertStep.
   Variable TC' : trav_config.
   Variable f : actid -> eventid.
   Variable h : actid -> eventid.
-  (* Variable k : cont_label. *)
-  (* Variable st st' st'' : Language.state (thread_lts (ES.cont_thread S k)). *)
-  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -243,11 +240,33 @@ Section SimRelCertStepProps.
     (* all: basic_solver. *)
   Admitted.
 
+  Lemma simrel_cert_step_step_ k k' e e' S S'
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CertSTEP_ : cert_step_ st e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+    ESstep.t_ e e' S S'. 
+  Proof. 
+    unfold ESstep.t_.
+    unfold_cert_step CertSTEP_.
+    { left. econstructor; splits; auto. }
+    { right; left. econstructor; splits; auto.
+      eapply weaken_sim_add_jf; eauto. }
+    { right; right; left. 
+      econstructor. eexists. splits; auto.
+      all : admit. }
+    right; right; right. 
+    econstructor. 
+    do 3 eexists. splits; eauto.
+    all : admit. 
+  Admitted.
+
   Lemma simrel_cert_step_jfe_vis k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-        (CertSTEP : cert_step_ st e e' S S')
+        (CertSTEP_ : cert_step_ st e e' S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     dom_rel (Sjfe S') ⊆₁ (vis S'). 
   Proof. 
@@ -255,14 +274,14 @@ Section SimRelCertStepProps.
     assert (ESBasicStep.t e e' S S') as BSTEP.
     { econstructor; eauto. }
     assert (ESstep.t_ e e' S S') as WMO_STEP_.
-    { admit. }
+    { eapply simrel_cert_step_step_; eauto. }
     assert (ES.Wf S) as WFS by apply SRCC.
     etransitivity. 
     2 : eapply ESstep.step_vis_mon; eauto.
-    unfold_cert_step CertSTEP.
+    unfold_cert_step CertSTEP_.
     all : try (by eapply sim_step_add_jfe_vis; eauto).
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
-  Admitted.
+  Qed.
 
   Lemma basic_step_hdom_cf_free TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
@@ -594,114 +613,114 @@ Section SimRelCertStepProps.
     eapply ESstep.load_step_jf_rmw; eauto. 
   Qed.
       
-  Lemma simrel_cert_load_step_jfe_vis TC' h k k' e S'
-        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
-        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
-        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
-        (EW' : Sew S' ≡ Sew S)
-        (CO' : Sco S' ≡ Sco S)
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    dom_rel (Sjfe S') ⊆₁ (vis S'). 
-  Proof. 
-    cdes BSTEP_; cdes SAJF.
-    assert (ESBasicStep.t e None S S') as BSTEP.
-    { econstructor; eauto. }
-    assert (ES.Wf S) as WFS by apply SRCC.
-    assert (ESstep.t_load e None S S') as LSTEP.
-    { econstructor; splits; auto. 
-      eapply weaken_sim_add_jf; eauto. }
-    cdes LSTEP.
-    assert (ES.Wf S') as WFS'.
-    { admit. }
-    destruct wHDOM as [wa [CERTwa Hwa]].
-    assert (SE S w) as SEw.
-    { rewrite <- Hwa.
-      eapply a2e_img.
-      2 : unfolder; splits; eauto. 
-      apply SRCC. }
-    erewrite ESstep.load_step_jfe; eauto. 
-    rewrite dom_union. 
-    apply set_subset_union_l. split. 
-    { etransitivity. 
-      { eapply jfe_vis; apply SRCC. }
-      eapply ESstep.load_step_vis_mon; eauto. }
-    unfold ES.jfe.
-    rewrite <- seq_eqv_minus_lr, SSJF', seq_union_l. 
-    arewrite (Sjf S ⨾ ⦗eq e⦘ ≡ ∅₂). 
-    { split; [|basic_solver].
-      rewrite WFS.(ES.jfE).
-      unfolder; splits; ins; desf; omega. }
-    arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e) by basic_solver. 
-    rewrite union_false_l.
-    unfolder. intros x [y [[EQx EQy] nSB]]. 
-    subst x y. 
-    eapply cert_rf_ntid_iss_sb in NEW_RF.
-    2-6 : apply SRCC.
-    assert (e2a S' w = wa) as E2Aw.
-    { erewrite basic_step_e2a_eq_dom with (S := S); eauto. 
-      rewrite <- Hwa.
-      fold (compose g h wa).
-      eapply a2e_fix; eauto. apply SRCC. }
-    eapply ESstep.load_step_vis_mon; eauto.
-    destruct NEW_RF as [Iss | SB].
-    { eapply fvis; [apply SRCC|].
-      rewrite E2Aw in *. 
-      apply seq_eqv_l in Iss.
-      destruct Iss as [[NTIDwa Iwa] _].
-      unfold set_collect. 
-      exists wa. split; [basic_solver 10|].
-      erewrite hfeq; eauto. 
-      basic_solver 10. }
-    edestruct sb_tid_init as [STID | INITw]; eauto. 
-    { exfalso. 
-      do 2 erewrite <- e2a_tid in STID.
-      assert (Stid S' e <> tid_init) as TIDe.
-      { erewrite ESBasicStep.basic_step_tid_e; eauto. 
-        red. ins. eapply ES.init_tid_K. 
-        2: eauto. eauto. }
-      assert ((⦗SEninit S'⦘ ⨾ ES.same_tid S' ⨾ ⦗SEninit S'⦘) w e) as HH. 
-      { apply seq_eqv_lr. 
-        unfold ES.acts_ninit_set, ES.acts_init_set.
-        unfolder; splits; intuition.  
-        { eapply ESBasicStep.basic_step_acts_set; eauto. basic_solver. }
-        { congruence. }
-        unfold opt_ext in *. omega. }
-      apply ES.same_thread in HH; auto.  
-      destruct HH as [HA | HB].
-      { apply seq_eqv_lr in HA.
-        destruct HA as [nINITw [CRS_SB nINITe]].
-        apply crsE in CRS_SB.
-        destruct CRS_SB as [[AA | BB] | CC].
-        { unfolder in AA. eapply ESBasicStep.basic_step_acts_set_ne; eauto.
-          desf; congruence. }
-        { intuition. }
-        unfold transp in CC. 
-        eapply ESBasicStep.basic_step_nupd_sb in CC; eauto.  
-        destruct CC as [DD | EE].
-        { eapply ES.sbE in DD; eauto.  
-          apply seq_eqv_lr in DD.
-          eapply ESBasicStep.basic_step_acts_set_ne; eauto.
-          desf. }
-        destruct EE as [CONT_SB _].
-        eapply ES.cont_sb_domE in CONT_SB; eauto. 
-        eapply ESBasicStep.basic_step_acts_set_ne; eauto. } 
-      eapply basic_step_hdom_cf_free; eauto. 
-      apply seq_eqv_lr. splits. 
-      { left; left. unfolder; eauto. }
-      { eapply HB. }
-      by left; right. }
-    exfalso. 
-    apply nSB.
-    eapply ESBasicStep.basic_step_nupd_sb; eauto. 
-    right; unfolder; splits; auto. 
-    eapply ES.cont_sb_dom_Einit; eauto.
-    eapply himgInit; eauto. 
-    rewrite <- Hwa in *. 
-    unfolder; eexists; splits; eauto. 
-    { unfold sb in SB. apply seq_eqv_lr in SB. desf. }
-    congruence.
-  Admitted.  
+  (* Lemma simrel_cert_load_step_jfe_vis TC' h k k' e S' *)
+  (*       (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S')  *)
+  (*       (SAJF : sim_add_jf S G sc TC TC' h k st e S') *)
+  (*       (EW' : Sew S' ≡ Sew S) *)
+  (*       (CO' : Sco S' ≡ Sco S) *)
+  (*       (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :  *)
+  (*   dom_rel (Sjfe S') ⊆₁ (vis S').  *)
+  (* Proof.  *)
+  (*   cdes BSTEP_; cdes SAJF. *)
+  (*   assert (ESBasicStep.t e None S S') as BSTEP. *)
+  (*   { econstructor; eauto. } *)
+  (*   assert (ES.Wf S) as WFS by apply SRCC. *)
+  (*   assert (ESstep.t_load e None S S') as LSTEP. *)
+  (*   { econstructor; splits; auto.  *)
+  (*     eapply weaken_sim_add_jf; eauto. } *)
+  (*   cdes LSTEP. *)
+  (*   assert (ES.Wf S') as WFS'. *)
+  (*   { admit. } *)
+  (*   destruct wHDOM as [wa [CERTwa Hwa]]. *)
+  (*   assert (SE S w) as SEw. *)
+  (*   { rewrite <- Hwa. *)
+  (*     eapply a2e_img. *)
+  (*     2 : unfolder; splits; eauto.  *)
+  (*     apply SRCC. } *)
+  (*   erewrite ESstep.load_step_jfe; eauto.  *)
+  (*   rewrite dom_union.  *)
+  (*   apply set_subset_union_l. split.  *)
+  (*   { etransitivity.  *)
+  (*     { eapply jfe_vis; apply SRCC. } *)
+  (*     eapply ESstep.load_step_vis_mon; eauto. } *)
+  (*   unfold ES.jfe. *)
+  (*   rewrite <- seq_eqv_minus_lr, SSJF', seq_union_l.  *)
+  (*   arewrite (Sjf S ⨾ ⦗eq e⦘ ≡ ∅₂).  *)
+  (*   { split; [|basic_solver]. *)
+  (*     rewrite WFS.(ES.jfE). *)
+  (*     unfolder; splits; ins; desf; omega. } *)
+  (*   arewrite (singl_rel w e ⨾ ⦗eq e⦘ ≡ singl_rel w e) by basic_solver.  *)
+  (*   rewrite union_false_l. *)
+  (*   unfolder. intros x [y [[EQx EQy] nSB]].  *)
+  (*   subst x y.  *)
+  (*   eapply cert_rf_ntid_iss_sb in NEW_RF. *)
+  (*   2-6 : apply SRCC. *)
+  (*   assert (e2a S' w = wa) as E2Aw. *)
+  (*   { erewrite basic_step_e2a_eq_dom with (S := S); eauto.  *)
+  (*     rewrite <- Hwa. *)
+  (*     fold (compose g h wa). *)
+  (*     eapply a2e_fix; eauto. apply SRCC. } *)
+  (*   eapply ESstep.load_step_vis_mon; eauto. *)
+  (*   destruct NEW_RF as [Iss | SB]. *)
+  (*   { eapply fvis; [apply SRCC|]. *)
+  (*     rewrite E2Aw in *.  *)
+  (*     apply seq_eqv_l in Iss. *)
+  (*     destruct Iss as [[NTIDwa Iwa] _]. *)
+  (*     unfold set_collect.  *)
+  (*     exists wa. split; [basic_solver 10|]. *)
+  (*     erewrite hfeq; eauto.  *)
+  (*     basic_solver 10. } *)
+  (*   edestruct sb_tid_init as [STID | INITw]; eauto.  *)
+  (*   { exfalso.  *)
+  (*     do 2 erewrite <- e2a_tid in STID. *)
+  (*     assert (Stid S' e <> tid_init) as TIDe. *)
+  (*     { erewrite ESBasicStep.basic_step_tid_e; eauto.  *)
+  (*       red. ins. eapply ES.init_tid_K.  *)
+  (*       2: eauto. eauto. } *)
+  (*     assert ((⦗SEninit S'⦘ ⨾ ES.same_tid S' ⨾ ⦗SEninit S'⦘) w e) as HH.  *)
+  (*     { apply seq_eqv_lr.  *)
+  (*       unfold ES.acts_ninit_set, ES.acts_init_set. *)
+  (*       unfolder; splits; intuition.   *)
+  (*       { eapply ESBasicStep.basic_step_acts_set; eauto. basic_solver. } *)
+  (*       { congruence. } *)
+  (*       unfold opt_ext in *. omega. } *)
+  (*     apply ES.same_thread in HH; auto.   *)
+  (*     destruct HH as [HA | HB]. *)
+  (*     { apply seq_eqv_lr in HA. *)
+  (*       destruct HA as [nINITw [CRS_SB nINITe]]. *)
+  (*       apply crsE in CRS_SB. *)
+  (*       destruct CRS_SB as [[AA | BB] | CC]. *)
+  (*       { unfolder in AA. eapply ESBasicStep.basic_step_acts_set_ne; eauto. *)
+  (*         desf; congruence. } *)
+  (*       { intuition. } *)
+  (*       unfold transp in CC.  *)
+  (*       eapply ESBasicStep.basic_step_nupd_sb in CC; eauto.   *)
+  (*       destruct CC as [DD | EE]. *)
+  (*       { eapply ES.sbE in DD; eauto.   *)
+  (*         apply seq_eqv_lr in DD. *)
+  (*         eapply ESBasicStep.basic_step_acts_set_ne; eauto. *)
+  (*         desf. } *)
+  (*       destruct EE as [CONT_SB _]. *)
+  (*       eapply ES.cont_sb_domE in CONT_SB; eauto.  *)
+  (*       eapply ESBasicStep.basic_step_acts_set_ne; eauto. }  *)
+  (*     eapply basic_step_hdom_cf_free; eauto.  *)
+  (*     apply seq_eqv_lr. splits.  *)
+  (*     { left; left. unfolder; eauto. } *)
+  (*     { eapply HB. } *)
+  (*     by left; right. } *)
+  (*   exfalso.  *)
+  (*   apply nSB. *)
+  (*   eapply ESBasicStep.basic_step_nupd_sb; eauto.  *)
+  (*   right; unfolder; splits; auto.  *)
+  (*   eapply ES.cont_sb_dom_Einit; eauto. *)
+  (*   eapply himgInit; eauto.  *)
+  (*   rewrite <- Hwa in *.  *)
+  (*   unfolder; eexists; splits; eauto.  *)
+  (*   { unfold sb in SB. apply seq_eqv_lr in SB. desf. } *)
+  (*   congruence. *)
+  (* Admitted.   *)
 
   Ltac solve_by_EE EE := 
     rewrite EE; eauto;

@@ -115,8 +115,6 @@ Section SimRelAddJF.
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
   Definition sim_add_jf thread st (w r' : eventid) (S S' : ES.t) : Prop :=
-    (* ⟪ wE : SE S w ⟫ /\ *)
-    (* ⟪ wW : SW S w ⟫ /\ *)
     ⟪ rE' : SE S' r' ⟫ /\
     ⟪ rR' : SR S' r' ⟫ /\
     ⟪ hCertDOM : (h □₁ (cert_dom G TC thread st)) w ⟫ /\
