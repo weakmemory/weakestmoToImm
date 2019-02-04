@@ -121,7 +121,7 @@ Section SimRelAddJF.
     ⟪ rR' : SR S' r' ⟫ /\
     ⟪ hCertDOM : (h □₁ (cert_dom G TC thread st)) w ⟫ /\
     ⟪ CertRF : (cert_rf G sc TC' thread) (e2a S' w) (e2a S' r') ⟫ /\
-    ⟪ SJF' : Sjf S' ≡ Sjf S ∪ ESstep.jf_delta w r' ⟫.
+    ⟪ JF' : Sjf S' ≡ Sjf S ∪ ESstep.jf_delta w r' ⟫.
 
   Section SimRelAddJFProps. 
 
@@ -225,14 +225,15 @@ Section SimRelAddJF.
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
           (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') : 
-      ((h □₁ I) ∩₁ (SNTid_ S (ES.cont_thread S k)) ∪₁ ES.cont_sb_dom S k) w. 
+      (h □₁ (I ∩₁ (GNtid_ (ES.cont_thread S k))) ∪₁ ES.cont_sb_dom S k) w. 
     Proof. 
-      edestruct weaken_sim_add_jf as [_ [_ AJF]]; eauto.
-      cdes BSTEP_; cdes SAJF. desc.
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
       assert (ESBasicStep.t e e' S S') as BSTEP.
       { econstructor. eauto. }
       assert (ES.Wf S) as WF.
       { apply SRCC. }
+      cdes BSTEP_; cdes SAJF; cdes AJF. 
       assert (e2a S' w = e2a S w) as e2aEQw.
       { eapply basic_step_e2a_eq_dom; eauto. }
       assert (h (e2a S w) = w) as he2aEQw.
@@ -246,9 +247,7 @@ Section SimRelAddJF.
       { unfolder. left. 
         unfolder in Iss. 
         destruct Iss as [[NTID Iss] _].
-        splits; [eexists|]; splits; eauto. 
-        red. ins. apply NTID.
-        by rewrite <- e2a_tid. }
+        eexists; splits; eauto. }
       unfolder. right. 
       edestruct sb_tid_init as [STID | INITw]; eauto. 
       { assert ((SE S ∩₁ Stid_ S (ES.cont_thread S k)) w) as HH. 
@@ -266,6 +265,33 @@ Section SimRelAddJF.
       unfolder; eexists; splits; eauto.
       eapply wf_sbE, seq_eqv_lr in SB. 
       basic_solver.
+    Qed.
+
+    Lemma sim_step_add_jfe_vis w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') : 
+      dom_rel (Sjfe S') ⊆₁ vis S. 
+    Proof. 
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      cdes BSTEP_; cdes SAJF; cdes AJF. 
+      erewrite ESstep.step_add_jf_jfe; eauto.
+      rewrite dom_union. 
+      apply set_subset_union_l. split. 
+      { apply SRCC. }
+      autounfold with ESStepDb.
+      unfolder. ins. desc. subst.
+      eapply hvis; [apply SRCC|].
+      edestruct sim_step_add_jf_iss_sb as [Iss | SB]; eauto. 
+      { generalize Iss. basic_solver 10. }
+      exfalso. auto. 
     Qed.
 
   End SimRelAddJFProps. 
