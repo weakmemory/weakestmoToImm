@@ -95,84 +95,9 @@ Definition t
   exists lang k k' st st', 
     ⟪ BSTEP_ : t_ lang k k' st st' e e' S S' ⟫.
 
-(* Definition add_jf (r : eventid) (S S' : ES.t) : Prop := *)
-(*   ⟪ RR : R S' r ⟫ /\ *)
-(*   exists w, *)
-(*     ⟪ EW  : S.(ES.acts_set) w ⟫ /\ *)
-(*     ⟪ WW  : W S' w ⟫ /\ *)
-(*     ⟪ LOC : same_loc S' w r ⟫ /\ *)
-(*     ⟪ VAL : same_val S' w r ⟫ /\ *)
-(*     ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫. *)
-
-(* Definition add_ew (w : eventid) (S S' : ES.t) : Prop := *)
-(*   ⟪ WW : W S' w ⟫ /\ *)
-(*   exists (ws : eventid -> Prop), *)
-(*     ⟪ WWS   : ws ⊆₁ W S ⟫ /\ *)
-(*     ⟪ LOCWS : ws ⊆₁ same_loc S w ⟫ /\ *)
-(*     ⟪ VALWS : ws ⊆₁ same_val S w ⟫ /\ *)
-(*     ⟪ CFWS  : ws ⊆₁ S.(ES.cf) w ⟫ /\ *)
-(*     ⟪ REPR : *)
-(*       S'.(ES.ew) ≡ S.(ES.ew) ∪ ws × eq w ∪ eq w × ws ⟫. *)
-
-(* Definition add_co (w : eventid) (S S' : ES.t) : Prop := *)
-(*   let A := S.(ES.acts_set) ∩₁ W S ∩₁ (same_loc S w) \₁ (S.(ES.cf)^? w) in *)
-(*   ⟪ WW : W S' w ⟫ /\ *)
-(*   exists (ws : eventid -> Prop), *)
-(*     ⟪ WWS : ws ⊆₁ A ⟫ /\ *)
-(*     ⟪ REPR : *)
-(*       S'.(ES.co) ≡ S.(ES.co) ∪ S.(ES.ew) ∪ ws × eq w ∪ eq w × (A \₁ ws) ⟫. *)
-
-(* Definition t_fence  *)
-(*            (e  : eventid) *)
-(*            (e' : option eventid)  *)
-(*            (S S' : ES.t) : Prop :=  *)
-(*   ⟪ ENONE : e' = None ⟫ /\ *)
-(*   ⟪ FF  : F S' e ⟫ /\ *)
-(*   ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ⟫ /\ *)
-(*   ⟪ EW' : S'.(ES.ew) ≡ S.(ES.ew) ⟫ /\ *)
-(*   ⟪ CO' : S'.(ES.co) ≡ S.(ES.co) ⟫. *)
-
-(* Definition t_load  *)
-(*            (e  : eventid) *)
-(*            (e' : option eventid)  *)
-(*            (S S' : ES.t) : Prop :=  *)
-(*   ⟪ ENONE : e' = None ⟫ /\ *)
-(*   ⟪ AJF : add_jf e S S' ⟫ /\ *)
-(*   ⟪ EW' : S'.(ES.ew) ≡ S.(ES.ew) ⟫ /\ *)
-(*   ⟪ CO' : S'.(ES.co) ≡ S.(ES.co) ⟫. *)
-
-(* Definition t_store  *)
-(*            (e  : eventid) *)
-(*            (e' : option eventid)  *)
-(*            (S S' : ES.t) : Prop :=  *)
-(*   ⟪ ENONE : e' = None ⟫ /\ *)
-(*   ⟪ JF' : S'.(ES.jf) ≡ S.(ES.jf) ⟫ /\ *)
-(*   ⟪ AEW : add_ew e S S' ⟫ /\ *)
-(*   ⟪ ACO : add_co e S S' ⟫. *)
-
-(* Definition t_update  *)
-(*            (e  : eventid) *)
-(*            (e' : option eventid)  *)
-(*            (S S' : ES.t) : Prop := exists w, *)
-(*   ⟪ ESOME : e' = Some w ⟫ /\ *)
-(*   ⟪ AJF : add_jf e S S' ⟫ /\ *)
-(*   ⟪ AEW : add_ew w S S' ⟫ /\ *)
-(*   ⟪ ACO : add_co w S S' ⟫. *)
-
-(* Definition t_ e e' S S' :=  *)
-(*   t_fence e e' S S' \/ t_load e e' S S' \/ t_store e e' S S' \/ t_update e e' S S'. *)
-
-(* Definition t (m : model) (S S' : ES.t) : Prop := exists e e', *)
-(*   ⟪ TT  : t_ e e' S S' ⟫ /\ *)
-(*   ⟪ BSTEP : t_basic e e' S S' ⟫ /\ *)
-(*   ⟪ CON : @es_consistent S' m ⟫. *)
-
 (******************************************************************************)
 (** ** Some useful tactics *)
 (******************************************************************************)
-
-(* Ltac unfold_t_ H :=  *)
-(*   unfold t_, t_fence, t_load, t_store, t_update in H; desf.  *)
 
 (* tries to solve goals like `sb ⨾ ⦗eq e⦘ ⊆ ∅₂`,
    where `e` is a new event added by step `S -> S'`,
