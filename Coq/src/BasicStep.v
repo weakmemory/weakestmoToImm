@@ -1062,13 +1062,6 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma basic_step_ninit_sb_prcl e e' S S'
-      (BSTEP : t e e' S S')
-      (WF : ES.Wf S) : 
-  prefix_clos (<| Eninit S' |> ;; sb S').
-Proof.
-Admitted.
-
 Lemma basic_step_sb_prcl e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) : 
@@ -1079,12 +1072,103 @@ Proof.
   rewrite basic_step_sb_same_thread'; eauto.
   red. ins; desf.
   destruct Ryz as [YY|YY].
-  { destruct Rxz as [XX|[SB ST]].
-    { generalize (WF.(ES.sb_prcl) XX YY).
-      basic_solver 10. }
-    red in SB.
-    admit. }
-Admitted.
+  { assert ((sb S ∩ ES.same_tid S) x z) as HH.
+    2: { generalize (WF.(ES.sb_prcl) HH YY).
+         basic_solver 10. }
+    destruct Rxz as [|[SB ST]]; auto.
+    exfalso. eapply basic_step_sb_deltaE; eauto.
+    apply seq_eqv_r. split; eauto.
+    destruct YY as [YY _]. apply WF.(ES.sbE) in YY.
+    generalize YY. basic_solver. }
+  destruct Rxz as [XX|XX].
+  { exfalso. eapply basic_step_sb_deltaE; eauto.
+    apply seq_eqv_r. split; [by apply YY|].
+    destruct XX as [XX _]. apply WF.(ES.sbE) in XX.
+    generalize XX. basic_solver. }
+  destruct XX as [SBX TX]. destruct YY as [SBY TY].
+  assert (ES.same_tid S' x y) as AA.
+  { eapply ES.same_tid_trans; eauto. 
+      by apply ES.same_tid_sym. }
+  assert (ES.same_tid S' y x) as BB by (by apply ES.same_tid_sym).
+  assert ((E S ∪₁ eq (ES.next_act S)) x) as EX.
+  { eapply basic_step_sb_delta_dom; eauto.
+    eexists; eauto. }
+  assert ((E S ∪₁ eq (ES.next_act S)) y) as EY.
+  { eapply basic_step_sb_delta_dom; eauto.
+    eexists; eauto. }
+  destruct EX as [EX|]; subst.
+  2: { destruct EY as [EY|]; subst; red.
+       2: by intuition.
+       do 2 right. red. right.
+       split; auto. red. left.
+       assert (y <> ES.next_act S) as DD.
+       { intros HH; subst. red in EY. omega. }
+       red in SBY. generalize SBY DD. basic_solver. }
+  assert (x <> ES.next_act S) as NNX.
+  { intros HH; subst. red in EX. omega. }
+  destruct EY as [EY|]; subst.
+  2: { red. right. left. red. right.
+       split; auto. red. left.
+       red in SBX. generalize SBX NNX. basic_solver. }
+  assert (y <> ES.next_act S) as NNY.
+  { intros HH; subst. red in EY. omega. }
+  assert ((sb S ∩ ES.same_tid S)⁼ x y) as DD.
+  2: { generalize DD. basic_solver 10. }
+  assert ((ES.same_tid S) x y) as SX.
+  { eapply inclusion_restr.
+    apply (basic_step_same_tid_restr BSTEP).
+    red. splits; auto. }
+  assert ((ES.same_tid S) y x) as SY by (by apply ES.same_tid_sym).
+  assert ((sb S)⁼ x y) as DD.
+  2: { generalize SX SY DD. basic_solver. }
+
+  assert ((tid S') z = ES.cont_thread S k) as TT.
+  { rewrite TID'.
+    do 2 red in SBX. desf.
+    { red in SBX; desf.
+      unfold upd_opt; desf; simpls; desf.
+      2: by rewrite upds.
+        by rewrite updo; [rewrite upds|desf]. }
+    unfold upd_opt. 
+    red in SBX; desf. red in SBX0; desf.
+      by rewrite upds. }
+  assert (ES.cont_thread S k <> tid_init) as TNI.
+  { intros XX. eapply WF.(ES.init_tid_K); eauto. }
+  rewrite <- TT in TNI.
+  
+  assert (tid S' x = tid S x) as TXE.
+  { eapply basic_step_tid_eq_dom; eauto. }
+  assert (tid S' y = tid S y) as TYE.
+  { eapply basic_step_tid_eq_dom; eauto. }
+
+  assert (Eninit S x) as NIX.
+  { red. split; auto. intros NN. destruct NN as [_ NN].
+    apply TNI. rewrite <- TX. by rewrite TXE. }
+  assert (Eninit S y) as NIY.
+  { red. split; auto. intros NN. destruct NN as [_ NN].
+    apply TNI. rewrite <- TY. by rewrite TYE. }
+
+  assert (ES.cont_sb_dom S k x) as CX.
+  { red in SBX. generalize NNX SBX. basic_solver. }
+  assert (ES.cont_sb_dom S k y) as CY.
+  { red in SBY. generalize NNY SBY. basic_solver. }
+  red in CX. red in CY; desf.
+  { exfalso. apply NIX. apply CX. }
+  destruct CX as [ex CX]. apply seq_eqv_r in CX; desf.
+  destruct CY as [ey CY]. apply seq_eqv_r in CY; desf.
+  destruct CX as [|CX]; subst.
+  { destruct CY as [|CY]; subst.
+    2: generalize CY.
+    all: basic_solver. }
+  destruct CY as [|CY]; subst.
+  { generalize CX. basic_solver. }
+  destruct (classic (x = y)) as [|NEQ]; subst.
+  { basic_solver. }
+  red. right. eapply WF.(ES.sb_tot) with (e:=ey); eauto.
+  { apply WF.(ES.sbE) in CX. generalize CX. basic_solver. }
+  all: split; [|by try apply NIX; try apply NIY]. 
+  all: eexists; apply seq_eqv_r; split; eauto.
+Qed.
 
 (******************************************************************************)
 (** ** seqn properties *)
