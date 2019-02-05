@@ -774,7 +774,38 @@ Proof.
     rewrite <- EQz, EQeid in *; auto. 
     all: exfalso; apply NSBDOM; do 2 exists eid; auto. }
   exfalso; auto. 
-Qed.   
+Qed.
+
+Lemma cont_thread_sb_cf k lang st WF (KK : K (k, existT _ lang st)) : 
+  (E ∩₁ Tid (cont_thread S k)) ≡₁ (cont_sb_dom S k \₁ Einit) ∪₁ cont_cf_dom S k. 
+Proof. 
+  rewrite set_unionC.
+  erewrite cont_cf_cont_sb; eauto.
+  arewrite 
+    (E ∩₁ Tid (cont_thread S k) \₁ cont_sb_dom S k ≡₁ 
+     E ∩₁ Tid (cont_thread S k) \₁ (cont_sb_dom S k \₁ Einit)).
+  { rewrite set_minus_minus_r.
+    arewrite (E ∩₁ Tid (cont_thread S k) ∩₁ Einit ≡₁ ∅).
+    { split; [|done].
+      unfolder. ins. desc.
+      eapply init_tid_K; eauto.
+      do 2 eexists. splits; eauto. 
+      congruence. }
+    basic_solver. }
+  apply set_union_minus.
+  red. intros x [KSB NINIT]. split. 
+  { eapply cont_sb_domE; eauto. }
+  unfold cont_thread, cont_sb_dom in *. 
+  destruct k.
+  { exfalso. auto. }
+  unfolder in KSB. desf.
+  apply sb_Einit_Eninit in KSB; auto.
+  unfold union in KSB; desf.
+  { destruct KSB as [INIT _]. exfalso. auto. }
+  eapply sb_tid; auto.
+  apply seq_eqv_lr in KSB. 
+  basic_solver.
+Qed.
 
 (******************************************************************************)
 (** ** seqn properites *)

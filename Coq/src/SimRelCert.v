@@ -159,19 +159,19 @@ Section SimRelCert.
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
     }.
 
-  Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop :=
-    ⟪ RR : is_r (ES.lab S') r ⟫ /\
-    exists w,
-      ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\
-      ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\
-      ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫.
+  (* Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop := *)
+  (*   ⟪ RR : is_r (ES.lab S') r ⟫ /\ *)
+  (*   exists w, *)
+  (*     ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\ *)
+  (*     ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\ *)
+  (*     ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫. *)
 
-  Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop :=
-    ⟪ WW : is_w (ES.lab S') w ⟫ /\
-    exists (ws : eventid -> Prop),
-      ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\
-      ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
-      ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫.
+  (* Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop := *)
+  (*   ⟪ WW : is_w (ES.lab S') w ⟫ /\ *)
+  (*   exists (ws : eventid -> Prop), *)
+  (*     ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\ *)
+  (*     ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\ *)
+  (*     ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫. *)
 
   Section SimRelCertProps. 
     
@@ -443,6 +443,16 @@ Section SimRelCert.
     Proof. 
       eapply exec_necfD; try apply SRCC. 
       unfold cert_dom. basic_solver. 
+    Qed.
+
+    Lemma hvis : 
+      h □₁ (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) ⊆₁ vis S. 
+    Proof. 
+      etransitivity. 
+      { eapply set_collect_eq_dom. apply SRCC. }
+      etransitivity; [| eapply fvis; apply SRCC]. 
+      apply set_collect_mori; [done|].
+      basic_solver 10.
     Qed.
 
   End SimRelCertProps. 
