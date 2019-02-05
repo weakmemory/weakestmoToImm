@@ -1046,11 +1046,45 @@ Proof.
   eapply basic_step_sb_delta_transitive; eauto.
 Qed.
 
+
+Lemma basic_step_sb_same_thread' e e' S S'
+      (BSTEP : t e e' S S')
+      (WF : ES.Wf S) : 
+  sb S ∩ ES.same_tid S' ≡ sb S ∩ ES.same_tid S.
+Proof.
+  rewrite WF.(ES.sbE) at 1.
+  rewrite seq_eqv_inter_ll, lib.AuxRel.seq_eqv_inter_lr.
+  rewrite interC.
+  rewrite <- lib.AuxRel.seq_eqv_inter_lr, <- seq_eqv_inter_ll.
+  rewrite <- restr_relE.
+  rewrite basic_step_same_tid_restr; eauto.
+  rewrite restr_relE. rewrite WF.(ES.sbE) at 2.
+  basic_solver.
+Qed.
+
+Lemma basic_step_ninit_sb_prcl e e' S S'
+      (BSTEP : t e e' S S')
+      (WF : ES.Wf S) : 
+  prefix_clos (<| Eninit S' |> ;; sb S').
+Proof.
+Admitted.
+
 Lemma basic_step_sb_prcl e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) : 
   prefix_clos (sb S' ∩ ES.same_tid S').
-Proof. admit. Admitted.
+Proof.
+  cdes BSTEP. cdes BSTEP_. 
+  rewrite SB'. rewrite inter_union_l.
+  rewrite basic_step_sb_same_thread'; eauto.
+  red. ins; desf.
+  destruct Ryz as [YY|YY].
+  { destruct Rxz as [XX|[SB ST]].
+    { generalize (WF.(ES.sb_prcl) XX YY).
+      basic_solver 10. }
+    red in SB.
+    admit. }
+Admitted.
 
 (******************************************************************************)
 (** ** seqn properties *)
