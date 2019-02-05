@@ -892,6 +892,17 @@ Proof.
   splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
 Qed.
 
+Add Parametric Morphism A : (@prefix_clos A) with signature 
+    same_relation ==> iff as prefix_clos_more.
+Proof. 
+  intros x y EQ. unfold prefix_clos. split; ins.
+  eapply clos_refl_sym_more; [symmetry|]; eauto.
+  2: eapply clos_refl_sym_more; eauto.
+  all: apply EQ in Rxz.
+  all: apply EQ in Ryz.
+  all: eapply H; eauto.
+Qed.
+
 Add Parametric Morphism A B : (@inj_dom_s A B) with signature 
   set_subset --> eq ==> impl as inj_dom_s_mori.
 Proof. unfold impl, inj_dom_s. basic_solver. Qed.
