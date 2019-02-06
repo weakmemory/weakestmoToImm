@@ -63,7 +63,10 @@ Definition sb_delta S k e e' : relation eventid :=
 Definition rmw_delta e e' : relation eventid := 
   eq e × eq_opt e'.
 
-Hint Unfold sb_delta rmw_delta : ESStepDb.
+Definition cf_delta S k e e' : relation eventid := 
+  (ES.cont_cf_dom S k × eq e)^⋈ ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
+
+Hint Unfold sb_delta rmw_delta cf_delta : ESStepDb.
 
 Definition t_
            (lang : Language.t)
@@ -500,7 +503,7 @@ Qed.
 Lemma basic_step_cf lang k k' st st' e e' S S' 
       (BSTEP_ : t_ lang k k' st st' e e' S S') 
       (wfE: ES.Wf S) :
-  cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈ ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
+  cf S' ≡ cf S ∪ cf_delta S k e e'.
 Proof.
   assert (t e e' S S') as BSTEP.
   { unfold t. do 5 eexists. eauto. }
@@ -789,9 +792,9 @@ Lemma basic_step_nupd_cf lang k k' st st' e S S'
       (BSTEP_ : t_ lang k k' st st' e None S S') 
       (wfE: ES.Wf S) :
   cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈.
-Proof. 
+Proof.
   erewrite basic_step_cf; eauto. 
-  unfold eq_opt.
+  unfold cf_delta, eq_opt.
   basic_solver 42.
 Qed.
 
@@ -802,6 +805,7 @@ Lemma basic_step_cf_restr e e' S S'
 Proof. 
   cdes BSTEP; cdes BSTEP_.
   erewrite basic_step_cf; eauto. 
+  unfold cf_delta.
   rewrite !restr_union.
   rewrite !restr_relE.
   arewrite (⦗E S⦘ ⨾ (ES.cont_cf_dom S k × eq e) ^⋈ ⨾ ⦗E S⦘ ≡ ∅₂)
@@ -819,7 +823,6 @@ Lemma basic_step_cf_mon e e' S S'
 Proof.
   cdes BSTEP; cdes BSTEP_.
   erewrite basic_step_cf with (S':=S'); eauto.  
-  rewrite unionA.
   apply inclusion_union_r1.
 Qed.  
 
@@ -834,6 +837,7 @@ Proof.
   cdes BSTEP_.
   unfold ES.cf_free. 
   erewrite basic_step_cf; eauto. 
+  unfold cf_delta.
   rewrite !id_union, !csE.  
   relsf. unionL; auto.  
 
