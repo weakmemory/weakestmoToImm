@@ -251,6 +251,31 @@ Proof.
   ESBasicStep.step_solver.
 Qed.
 
+Lemma step_add_jf_hb_delta_dom lang k k' st st' w e e' S S' 
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S) :
+  dom_rel (hb_delta S S' k w e e') ⊆₁ E S ∪₁ eq e.
+Proof. 
+  cdes BSTEP_.
+  unfold hb_delta.
+  rewrite crE, !seq_union_l, seq_id_l. 
+  rewrite !dom_union, !dom_seq.
+  rewrite !set_subset_union_l.
+  splits. 
+  { eapply ESBasicStep.basic_step_sb_delta_dom; eauto. }
+  all : ESBasicStep.step_solver.
+Qed. 
+
+Lemma step_add_jf_hb_deltaE lang k k' st st' w e e' S S' 
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S) :
+  hb_delta S S' k w e e' ⨾ ⦗E S⦘ ≡ ∅₂.
+Proof. 
+  cdes BSTEP_.
+  split; [|done].
+  ESBasicStep.step_solver.
+Qed.
+
 Lemma hb_delta_alt lang k k' st st' w e e' S S'
       (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
       (wfE: ES.Wf S) :
@@ -934,22 +959,6 @@ Proof.
   rewrite hb_delta_alt; eauto.
 Qed.
 
-Lemma step_add_jf_hb_delta_dom lang k k' st st' w e e' S S' 
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wfE: ES.Wf S) :
-  dom_rel (hb_delta S S' k (Some w) e e') ⊆₁ E S ∪₁ eq e.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  unfold hb_delta.
-  rewrite crE, !seq_union_l, seq_id_l. 
-  rewrite !dom_union, !dom_seq.
-  rewrite !set_subset_union_l.
-  splits. 
-  { eapply ESBasicStep.basic_step_sb_delta_dom; eauto. }
-  all : ESBasicStep.step_solver.
-Qed. 
-
 Lemma step_add_jf_hb_dom w e e' S S' 
       (BSTEP : ESBasicStep.t e e' S S') 
       (AJF : add_jf w e S S') 
@@ -963,18 +972,6 @@ Proof.
   rewrite step_add_jf_hb_delta_dom; eauto.
   rewrite hbE; auto.
   basic_solver.
-Qed. 
-
-Lemma step_add_jf_hb_deltaE lang k k' st st' w e e' S S' 
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wfE: ES.Wf S) :
-  hb_delta S S' k (Some w) e e' ⨾ ⦗E S⦘ ≡ ∅₂.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  split; [|done].
-  unfold hb_delta, sw_delta.
-  ESBasicStep.step_solver.
 Qed. 
 
 Lemma step_add_jf_hbE w e e' S S' 
