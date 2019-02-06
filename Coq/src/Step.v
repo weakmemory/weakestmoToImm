@@ -251,6 +251,94 @@ Proof.
   ESBasicStep.step_solver.
 Qed.
 
+Lemma hb_delta_alt lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S) :
+  hb_delta S S' k w e e' ≡ 
+    (hb S)^? ⨾ ((ESBasicStep.sb_delta S k e e' ∪ sw_delta S S' k w e e') ⨾ (hb S)^?)⁺.
+Proof. 
+  cdes BSTEP_.
+  unfold hb_delta. 
+  apply seq_more; auto.
+  rewrite !crE. relsf.
+  rewrite hbE; auto.
+  arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ ⦗E S⦘).
+  { eapply ESBasicStep.basic_step_sb_deltaE; eauto. }
+  arewrite_false (sw_delta S S' k w e e' ⨾ ⦗E S⦘).
+  { eapply step_add_jf_sw_deltaE; eauto. }
+  relsf.
+  rewrite ct_begin, rtE. relsf.
+  rewrite !unionA.
+  do 3 (apply union_more; auto).
+  { rewrite ct_begin, rtE. relsf.
+    rewrite <- !seqA.
+    arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ sw_delta S S' k w e e'). 
+    { ESBasicStep.step_solver. }
+    rewrite <- !seqA.
+    arewrite 
+      (ESBasicStep.sb_delta S k e e' ⨾ ESBasicStep.sb_delta S k e e' ≡ 
+                            ESBasicStep.sb_delta S k e e' ⨾ eq e × eq_opt e').
+    { rewrite dom_rel_helper with (r := ESBasicStep.sb_delta S k e e') at 2.
+      2 : eapply ESBasicStep.basic_step_sb_delta_dom; eauto.
+      rewrite id_union. relsf. 
+      arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ ⦗E S⦘).
+      { ESBasicStep.step_solver. }
+      relsf.
+      apply seq_more; auto.
+      unfold ESBasicStep.sb_delta. 
+      rewrite cross_union_r. relsf.
+      arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq e). 
+      { ESBasicStep.step_solver. }
+      arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq_opt e'). 
+      { ESBasicStep.step_solver. }
+      basic_solver 20. }
+    relsf.
+    rewrite ct_begin, rtE. relsf.
+
+    arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
+    { ESBasicStep.step_solver. }
+    arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
+    { ESBasicStep.step_solver. }
+    arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k w e e').
+    { ESBasicStep.step_solver. }
+    arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k w e e').
+    { ESBasicStep.step_solver. }
+    basic_solver 10. }
+
+  rewrite ct_begin, rtE. relsf.
+  rewrite <- !seqA.
+  arewrite_false (sw_delta S S' k w e e' ⨾ sw_delta S S' k w e e'). 
+  { unfold sw_delta. ESBasicStep.step_solver. }
+  rewrite <- !seqA.
+  arewrite 
+    (sw_delta S S' k w e e' ⨾ ESBasicStep.sb_delta S k e e' ≡ 
+              sw_delta S S' k w e e' ⨾ eq e × eq_opt e').
+  { rewrite dom_rel_helper with (r := ESBasicStep.sb_delta S k e e').
+    2 : eapply ESBasicStep.basic_step_sb_delta_dom; eauto.
+    rewrite id_union. relsf. 
+    arewrite_false (sw_delta S S' k w e e' ⨾ ⦗E S⦘).
+    { unfold sw_delta. ESBasicStep.step_solver. }
+    unfold ESBasicStep.sb_delta. 
+    rewrite cross_union_r. relsf.
+    arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq e).
+    { ESBasicStep.step_solver. }
+    arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq_opt e').
+    { ESBasicStep.step_solver. }
+    basic_solver 10. }
+  
+  relsf.
+  rewrite ct_begin, rtE. relsf.
+  arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
+  { ESBasicStep.step_solver. }
+  arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
+  { ESBasicStep.step_solver. }
+  arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k w e e').
+  { ESBasicStep.step_solver. }
+  arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k w e e').
+  { ESBasicStep.step_solver. }
+  basic_solver 10.   
+Qed.
+
 (******************************************************************************)
 (** ** Auxiliary lemmas *)
 (******************************************************************************)
@@ -832,7 +920,6 @@ Proof.
   cdes AJF; cdes BSTEP_.
   assert (ESBasicStep.t e e' S S') as BSTEP.
   { subst. econstructor. eauto. }
-  unfold hb_delta.
   unfold hb at 1.
   rewrite SB'. 
   rewrite step_add_jf_sw; eauto.
@@ -844,86 +931,7 @@ Proof.
   unfold hb. 
   apply union_more; auto.
   rewrite <- cr_of_ct.
-  apply seq_more; auto.
-  rewrite !crE. relsf.
-  rewrite restr_clos_trans_eq with (r := sb S ∪ sw S) (s := E S).
-  2 : { rewrite ES.sbE, swE; auto. basic_solver 10. } 
-  rewrite restr_relE.
-  arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ ⦗E S⦘).
-  { ESBasicStep.step_solver. }
-  arewrite_false (sw_delta S S' k (Some w) e e' ⨾ ⦗E S⦘).
-  { eapply step_add_jf_sw_deltaE; eauto. }
-  relsf.
-  rewrite ct_begin, rtE. relsf.
-  rewrite !unionA.
-  do 3 (apply union_more; auto).
-  { rewrite ct_begin, rtE. relsf.
-    rewrite <- !seqA.
-    arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ sw_delta S S' k (Some w) e e'). 
-    { ESBasicStep.step_solver. }
-    rewrite <- !seqA.
-    arewrite 
-      (ESBasicStep.sb_delta S k e e' ⨾ ESBasicStep.sb_delta S k e e' ≡ 
-                            ESBasicStep.sb_delta S k e e' ⨾ eq e × eq_opt e').
-    { rewrite dom_rel_helper with (r := ESBasicStep.sb_delta S k e e') at 2.
-      2 : eapply ESBasicStep.basic_step_sb_delta_dom; eauto.
-      rewrite id_union. relsf. 
-      arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ ⦗E S⦘).
-      { ESBasicStep.step_solver. }
-      relsf.
-      apply seq_more; auto.
-      unfold ESBasicStep.sb_delta. 
-      rewrite cross_union_r. relsf.
-      arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq e). 
-      { ESBasicStep.step_solver. }
-      arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq_opt e'). 
-      { ESBasicStep.step_solver. }
-      basic_solver 20. }
-    relsf.
-    rewrite ct_begin, rtE. relsf.
-
-    arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
-    { ESBasicStep.step_solver. }
-    arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
-    { ESBasicStep.step_solver. }
-    arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k (Some w) e e').
-    { ESBasicStep.step_solver. }
-    arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k (Some w) e e').
-    { ESBasicStep.step_solver. }
-    basic_solver 10. }
-
-  rewrite ct_begin, rtE. relsf.
-  rewrite <- !seqA.
-  arewrite_false (sw_delta S S' k (Some w) e e' ⨾ sw_delta S S' k (Some w) e e'). 
-  { unfold sw_delta. ESBasicStep.step_solver. }
-  rewrite <- !seqA.
-  arewrite 
-    (sw_delta S S' k (Some w) e e' ⨾ ESBasicStep.sb_delta S k e e' ≡ 
-              sw_delta S S' k (Some w) e e' ⨾ eq e × eq_opt e').
-  { rewrite dom_rel_helper with (r := ESBasicStep.sb_delta S k e e').
-    2 : eapply ESBasicStep.basic_step_sb_delta_dom; eauto.
-    rewrite id_union. relsf. 
-    arewrite_false (sw_delta S S' k (Some w) e e' ⨾ ⦗E S⦘).
-    { unfold sw_delta. ESBasicStep.step_solver. }
-    unfold ESBasicStep.sb_delta. 
-    rewrite cross_union_r. relsf.
-    arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq e).
-    { ESBasicStep.step_solver. }
-    arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq_opt e').
-    { ESBasicStep.step_solver. }
-    basic_solver 10. }
-  
-  relsf.
-  rewrite ct_begin, rtE. relsf.
-  arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
-  { ESBasicStep.step_solver. }
-  arewrite_false (eq e × eq_opt e' ⨾ ESBasicStep.sb_delta S k e e').
-  { ESBasicStep.step_solver. }
-  arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k (Some w) e e').
-  { ESBasicStep.step_solver. }
-  arewrite_false (eq e × eq_opt e' ⨾ sw_delta S S' k (Some w) e e').
-  { ESBasicStep.step_solver. }
-  basic_solver 10. 
+  rewrite hb_delta_alt; eauto.
 Qed.
 
 Lemma step_add_jf_hb_delta_dom lang k k' st st' w e e' S S' 
@@ -1213,9 +1221,23 @@ Lemma step_same_jf_hb lang k k' st st' e e' S S'
       (RMW' : rmw S' ≡ rmw S) 
       (wfE: ES.Wf S) :
   hb S' ≡ hb S ∪ hb_delta S S' k None e e'.
-Proof. 
-  
-  
+Proof.
+  cdes BSTEP_.
+  assert (ESBasicStep.t e e' S S') as BSTEP.
+  { subst. econstructor. eauto. }
+  unfold hb at 1.
+  rewrite SB'. 
+  rewrite step_same_jf_sw; eauto.
+  arewrite 
+    (sb S ∪ ESBasicStep.sb_delta S k e e' ∪ (sw S ∪ sw_delta S S' k None e e') ≡
+     (ESBasicStep.sb_delta S k e e' ∪ sw_delta S S' k None e e') ∪ (sb S ∪ sw S))
+    by basic_solver.
+  rewrite ct_unionE.
+  unfold hb. 
+  apply union_more; auto.
+  rewrite <- cr_of_ct.
+  rewrite hb_delta_alt; eauto.
+Qed.
 
 (******************************************************************************)
 (** ** Step properties *)
