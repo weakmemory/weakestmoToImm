@@ -103,7 +103,7 @@ Definition t
    where `e` is a new event added by step `S -> S'`,
    using the fact that `sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘` *)
 Ltac step_solver := 
-  autounfold with ESStepDb in *; 
+  repeat autounfold with ESStepDb in *; 
   unfold eq_opt, opt_ext in *; 
   rewrite 1?ES.sbE, 1?ES.rmwE, 1?ES.cfE, 
     1?ES.cont_sb_domE, 1?ES.cont_cf_domE,
