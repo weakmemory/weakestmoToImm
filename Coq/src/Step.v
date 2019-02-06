@@ -165,6 +165,93 @@ Definition hb_delta S S' k w e e' : relation eventid :=
 Hint Unfold jfi_delta jfe_delta sw_delta hb_delta : ESStepDb.
 
 (******************************************************************************)
+(** ** Deltas lemmas *)
+(******************************************************************************)
+
+Lemma step_add_jf_jf_delta_dom w e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wf : ES.Wf S) : 
+  dom_rel (jf_delta w e) ⊆₁ E S.
+Proof. 
+  cdes AJF; cdes BSTEP; cdes BSTEP_.
+  ESBasicStep.step_solver.
+Qed.  
+
+Lemma step_add_jf_jf_deltaE w e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wf : ES.Wf S) : 
+  jf_delta w e ⨾ ⦗E S⦘ ≡ ∅₂. 
+Proof. 
+  cdes AJF; cdes BSTEP; cdes BSTEP_.
+  split; [|done].
+  ESBasicStep.step_solver.
+Qed.  
+
+Lemma step_add_jf_jfi_delta_dom lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wf : ES.Wf S) : 
+  dom_rel (jfi_delta S k w e) ⊆₁ E S.
+Proof. 
+  cdes AJF; cdes BSTEP_.
+  ESBasicStep.step_solver.
+Qed.  
+
+Lemma step_add_jf_jfe_delta_dom lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wf : ES.Wf S) : 
+  dom_rel (jfe_delta S k w e) ⊆₁ E S.
+Proof. 
+  cdes AJF; cdes BSTEP_.
+  ESBasicStep.step_solver.
+Qed.
+
+Lemma step_add_jf_jfi_deltaE lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wf : ES.Wf S) : 
+  jfi_delta S k w e ⨾ ⦗E S⦘ ≡ ∅₂.
+Proof. 
+  cdes AJF; cdes BSTEP_.
+  split; [|done].
+  ESBasicStep.step_solver.
+Qed.  
+
+Lemma step_add_jf_jfe_deltaE lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (AJF : add_jf w e S S') 
+      (wf : ES.Wf S) : 
+  jfe_delta S k w e ⨾ ⦗E S⦘ ≡ ∅₂.
+Proof. 
+  cdes AJF; cdes BSTEP_.
+  split; [|done].
+  ESBasicStep.step_solver.
+Qed.  
+
+Lemma step_add_jf_sw_delta_dom lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S) :
+  dom_rel (sw_delta S S' k w e e') ⊆₁ E S.
+Proof. 
+  cdes BSTEP_.
+  ESBasicStep.step_solver.
+Qed.
+
+Lemma step_add_jf_sw_deltaE lang k k' st st' w e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S) :
+  sw_delta S S' k w e e' ⨾ ⦗E S⦘ ≡ ∅₂.
+Proof. 
+  cdes BSTEP_.
+  split; [|done]. 
+  unfold sw_delta.
+  ESBasicStep.step_solver.
+Qed.
+
+(******************************************************************************)
 (** ** Auxiliary lemmas *)
 (******************************************************************************)
 
@@ -251,16 +338,6 @@ Admitted.
 (** ** Step (add_jf) properties *)
 (******************************************************************************)
 
-Lemma step_add_jf_jf_delta_dom w e e' S S'
-      (BSTEP : ESBasicStep.t e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wf : ES.Wf S) : 
-  dom_rel (jf_delta w e) ⊆₁ E S.
-Proof. 
-  cdes AJF; cdes BSTEP. cdes BSTEP_.
-  ESBasicStep.step_solver.
-Qed.  
-
 Lemma step_add_jf_jf_dom w e e' S S'
       (BSTEP : ESBasicStep.t e e' S S')
       (AJF : add_jf w e S S') 
@@ -273,17 +350,6 @@ Proof.
   rewrite step_add_jf_jf_delta_dom; eauto.
   basic_solver.
 Qed.
-
-Lemma step_add_jf_jf_deltaE w e e' S S'
-      (BSTEP : ESBasicStep.t e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wf : ES.Wf S) : 
-  jf_delta w e ⨾ ⦗E S⦘ ≡ ∅₂. 
-Proof. 
-  cdes AJF; cdes BSTEP. cdes BSTEP_.
-  split; [|done].
-  ESBasicStep.step_solver.
-Qed.  
 
 Lemma step_add_jf_jfE w e e' S S'
       (BSTEP : ESBasicStep.t e e' S S') 
@@ -353,16 +419,6 @@ Proof.
   red. ins. desc. auto.
 Qed.
 
-Lemma step_add_jf_jfi_delta_dom lang k k' st st' w e e' S S'
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wf : ES.Wf S) : 
-  dom_rel (jfi_delta S k w e) ⊆₁ E S.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  ESBasicStep.step_solver.
-Qed.  
-
 Lemma step_add_jf_jfi_dom w e e' S S'
       (BSTEP : ESBasicStep.t e e' S S')
       (AJF : add_jf w e S S') 
@@ -373,16 +429,6 @@ Proof.
   unfolder; ins; desf.
   eapply step_add_jf_jf_dom; eauto. 
   basic_solver.
-Qed.
-
-Lemma step_add_jf_jfe_delta_dom lang k k' st st' w e e' S S'
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wf : ES.Wf S) : 
-  dom_rel (jfe_delta S k w e) ⊆₁ E S.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  ESBasicStep.step_solver.
 Qed.
 
 Lemma step_add_jf_jfe_dom w e e' S S'
@@ -397,17 +443,6 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma step_add_jf_jfi_deltaE lang k k' st st' w e e' S S'
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wf : ES.Wf S) : 
-  jfi_delta S k w e ⨾ ⦗E S⦘ ≡ ∅₂.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  split; [|done].
-  ESBasicStep.step_solver.
-Qed.  
-
 Lemma step_add_jf_jfiE w e e' S S'
       (BSTEP : ESBasicStep.t e e' S S') 
       (AJF : add_jf w e S S') 
@@ -420,17 +455,6 @@ Proof.
   rewrite step_add_jf_jfi_deltaE; eauto.
   rewrite ES.jfiE; auto. basic_solver 5.
 Qed.
-
-Lemma step_add_jf_jfe_deltaE lang k k' st st' w e e' S S'
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wf : ES.Wf S) : 
-  jfe_delta S k w e ⨾ ⦗E S⦘ ≡ ∅₂.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  split; [|done].
-  ESBasicStep.step_solver.
-Qed.  
 
 Lemma step_add_jf_jfeE w e e' S S'
       (BSTEP : ESBasicStep.t e e' S S') 
@@ -773,16 +797,6 @@ Proof.
   basic_solver 10.
 Admitted.  
 
-Lemma step_add_jf_sw_delta_dom lang k k' st st' w e e' S S'
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wfE: ES.Wf S) :
-  dom_rel (sw_delta S S' k (Some w) e e') ⊆₁ E S.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  ESBasicStep.step_solver.
-Qed.
-
 Lemma step_add_jf_sw_dom lang k k' st st' w e e' S S'
       (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
       (AJF : add_jf w e S S') 
@@ -792,18 +806,6 @@ Lemma step_add_jf_sw_dom lang k k' st st' w e e' S S'
 Proof. 
   cdes AJF; cdes BSTEP_.
   rewrite step_add_jf_sw; eauto.
-  ESBasicStep.step_solver.
-Qed.
-
-Lemma step_add_jf_sw_deltaE lang k k' st st' w e e' S S'
-      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
-      (AJF : add_jf w e S S') 
-      (wfE: ES.Wf S) :
-  sw_delta S S' k (Some w) e e' ⨾ ⦗E S⦘ ≡ ∅₂.
-Proof. 
-  cdes AJF; cdes BSTEP_.
-  split; [|done]. 
-  unfold sw_delta.
   ESBasicStep.step_solver.
 Qed.
 
