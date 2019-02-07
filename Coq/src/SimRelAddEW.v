@@ -118,7 +118,7 @@ Section SimRelAddEW.
     ⟪ wE' : SE S' w' ⟫ /\
     ⟪ wW' : SW S' w' ⟫ /\
     ⟪ wsE2A : e2a S' □₁ ws ⊆₁ eq (e2a S' w') ⟫ /\
-    ⟪ wsI : ws ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\
+    ⟪ wsI : ws ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ h □₁ I ⦘) ⟫ /\
     ⟪ EW' : Sew S' ≡ Sew S ∪ ESstep.ew_delta ws w' ⟫. 
 
 End SimRelAddEW.

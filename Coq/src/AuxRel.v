@@ -108,7 +108,10 @@ Proof. basic_solver 10. Qed.
 
 Lemma crs_restr2 : restr_rel s r⁼ ≡ restr_rel s ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
 Proof. basic_solver 10. Qed.
-  
+
+Lemma cr_sym : symmetric r -> symmetric r^?.
+Proof. basic_solver. Qed.
+
 Lemma cs_sym : symmetric r^⋈.
 Proof. basic_solver. Qed.
 

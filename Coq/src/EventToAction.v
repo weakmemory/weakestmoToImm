@@ -215,8 +215,6 @@ Section EventToAction.
   Variable a2e : actid -> eventid.
   Variable aD : actid -> Prop.
   
-  (* Stid e = Gtid (e2a e). *)
-
   Lemma a2e_tid 
         (FIX : fixset aD (e2a ∘ a2e)) : 
     eq_dom aD (Stid ∘ a2e) Gtid.
