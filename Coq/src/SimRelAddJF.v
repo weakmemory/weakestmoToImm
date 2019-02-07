@@ -127,8 +127,8 @@ Section SimRelAddJF.
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
-          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') : 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
       ESstep.add_jf w e S S'.
     Proof. 
       cdes BSTEP_; cdes SAJF.
@@ -221,8 +221,8 @@ Section SimRelAddJF.
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
-          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') : 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
       (h □₁ (I ∩₁ (GNtid_ (ES.cont_thread S k))) ∪₁ ES.cont_sb_dom S k) w. 
     Proof. 
       assert (ESstep.add_jf w e S S') as AJF. 
@@ -265,12 +265,105 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
+    (* Lemma simrel_cert_step_add_jf_hb_cf_irr w k k' e e' S S'  *)
+    (*       (st st' st'' : thread_st (ES.cont_thread S k)) *)
+    (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')  *)
+    (*       (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')  *)
+    (*       (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') *)
+    (*       (nF' : eq_opt e' ∩₁ SF S' ⊆₁ ∅) *)
+    (*       (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : *)
+    (*   irreflexive (Shb S' ⨾ Scf S'). *)
+    (* Proof.  *)
+    (*   assert (ESstep.add_jf w e S S') as AJF.  *)
+    (*   { eapply weaken_sim_add_jf; eauto. }  *)
+    (*   assert (ESBasicStep.t e e' S S') as BSTEP. *)
+    (*   { econstructor. eauto. } *)
+    (*   assert (ES.Wf S) as WF. *)
+    (*   { apply SRCC. } *)
+    (*   cdes BSTEP_; cdes SAJF; cdes AJF.  *)
+    (*   erewrite ESstep.step_add_jf_hb; eauto. *)
+      
+
+    (*   erewrite ESstep.load_step_hb; eauto. *)
+    (*   rewrite SSJF'.  *)
+    (*   erewrite ESBasicStep.basic_step_nupd_cf; eauto. *)
+    (*   (* erewrite ESstep.load_step_jf; eauto. *) *)
+    (*   (* rewrite SSJF'.  *) *)
+    (*   (* rewrite inclusion_minus_rel. *) *)
+    (*   rewrite crE, csE. relsf. *)
+    (*   rewrite !seqA. *)
+    (*   rewrite !irreflexive_union. *)
+    (*   splits. *)
+
+    (*   all : try by (eapply empty_irr; split; try done; ESBasicStep.step_solver). *)
+
+    (*   { eapply ecf_irr_hb_cf_irr. apply SRCC. } *)
+
+    (*   { intros x [y [HB [KCF EQe]]].  *)
+    (*     subst x. apply hbE, seq_eqv_lr in HB; auto. desf. *)
+    (*     eapply ESBasicStep.basic_step_acts_set_ne; eauto. } *)
+
+    (*   { intros x [z [[KSB EQe] [_ KCF]]]. subst z.  *)
+    (*     eapply ES.cont_cf_cont_sb in KCF; eauto. *)
+    (*     destruct KCF as [_ NKSB]. by apply NKSB. } *)
+
+    (*   { intros x HH. *)
+    (*     destruct HH as [y [HB HH]]. *)
+    (*     destruct HH as [z [[KSB EQe] HH]]. subst z. *)
+    (*     destruct HH as [_ KCF]. *)
+    (*     unfold ES.cont_sb_dom, ES.cont_cf_dom in KSB, KCF. *)
+    (*     destruct k. *)
+
+    (*     { eapply hb_ninit; [apply WFS|]. *)
+    (*       apply seq_eqv_r. eauto. } *)
+        
+    (*     destruct KCF as [CF | SB]. *)
+
+    (*     { destruct CF as [z HX].  *)
+    (*       apply seq_eqv_r in HX. desf. *)
+    (*       apply ES.cf_sym in HX. *)
+    (*       eapply ecf_irr_hb_cf_irr. *)
+    (*       { apply SRCC. } *)
+    (*       eexists; splits; [|eauto]. *)
+    (*       destruct KSB as [z' HY]. *)
+    (*       apply seq_eqv_r in HY. desf. *)
+    (*       apply crE in HY.  *)
+    (*       unfolder in HY. desf. *)
+    (*       eapply hb_trans; eauto.  *)
+    (*       eapply sb_in_hb; eauto. } *)
+
+    (*     eapply coh; [apply SRCC|]. *)
+    (*     unfolder.  *)
+    (*     exists x. split; [| by left]. *)
+    (*     eapply hb_trans; eauto. *)
+    (*     unfolder in KSB. unfolder in SB. desf. *)
+    (*     { by eapply sb_in_hb. } *)
+    (*     eapply hb_trans; eapply sb_in_hb; eauto. } *)
+
+    (*   { intros x HH. *)
+    (*     unfolder in HH.  *)
+    (*     eapply cfk_hdom; eauto. *)
+    (*     split; [|basic_solver]. *)
+    (*     eapply h_rel_ewD; eauto.   *)
+    (*     unfolder. basic_solver 10. } *)
+
+    (*   intros x HH.  *)
+    (*   unfolder in HH.  *)
+    (*   eapply cfk_hdom; eauto. *)
+    (*   split; [|basic_solver]. *)
+    (*   eapply h_hbD; eauto. *)
+    (*   destruct HH as [z [HB HH]]. *)
+    (*   unfolder. do 2 eexists; splits; eauto. *)
+    (*   eapply h_rel_ewD; eauto. *)
+    (*   unfolder. basic_solver 10.  *)
+    (* Qed. *)
+
     Lemma sim_step_add_jfe_vis w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
-          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') : 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
       dom_rel (Sjfe S') ⊆₁ vis S. 
     Proof. 
       assert (ESstep.add_jf w e S S') as AJF. 
