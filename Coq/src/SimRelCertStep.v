@@ -295,8 +295,7 @@ Section SimRelCertStepProps.
       etransitivity; [| apply set_subset_empty_l]. 
       ESBasicStep.step_solver. }
 
-    { rewrite cont_sb_dom_in_hhdom; eauto.
-      do 4 rewrite <- seqA.
+    { do 4 rewrite <- seqA.
       rewrite dom_seq, !seqA.
       rewrite <- seqA.
       intros x [y [z [HA HB]]].
@@ -383,6 +382,39 @@ Section SimRelCertStepProps.
     all : eapply cfk_hdom; eauto.
     all : basic_solver.
   Qed.
+
+  Lemma simrel_cert_step_thb_cf_hb_irr k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CertSTEP_ : cert_step_ st e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    irreflexive ((Shb S')⁻¹ ⨾ (Scf S') ⨾ (Shb S')).
+  Proof.
+    cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ESstep.t_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    erewrite ESstep.step_hb; eauto.
+    erewrite ESBasicStep.basic_step_cf; eauto.
+    unfold ESBasicStep.cf_delta.
+    erewrite dom_rel_helper with (r := ESstep.hb_delta S S' k e e').
+    2 : { eapply simrel_cert_step_hb_delta_dom; eauto. }
+    rewrite !transp_union.
+    relsf. rewrite !irreflexive_union. splits.
+
+    { eapply ecf_irr_thb_cf_hb_irr. apply SRCC. }
+
+    1-8 : ESBasicStep.step_solver.
+
+    all : rewrite !id_union, !transp_seq, !transp_union, !transp_eqv_rel. 
+    all : relsf; rewrite !seqA, !irreflexive_union; splits.
+    
+    2-4 : ESBasicStep.step_solver.
+  Admitted.
 
   Lemma simrel_cert_step_jfe_vis k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
@@ -942,114 +974,114 @@ Section SimRelCertStepProps.
   (*   unfolder. basic_solver 10.  *)
   (* Qed. *)
 
-  Lemma simrel_cert_load_step_hb_cf_thb_irr TC' h k k' e S'
-        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
-        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
-        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
-        (EW' : Sew S' ≡ Sew S)
-        (CO' : Sco S' ≡ Sco S)
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    irreflexive ((Shb S')⁻¹ ⨾ (Scf S') ⨾ (Shb S')).
-  Proof.
-    cdes BSTEP_; cdes SAJF.
-    assert (ESBasicStep.t e None S S') as BSTEP.
-    { econstructor; eauto. }
-    assert (ES.Wf S) as WFS by apply SRCC.
-    assert (ESstep.t_load e None S S') as LSTEP.
-    { econstructor; splits; auto. 
-      eapply weaken_sim_add_jf; eauto. }
-    (* assert  *)
-    (*   (restr_rel (h □₁ cert_dom G TC (ES.cont_thread S k) st) Secf ⊆ ∅₂)  *)
-    (*   as HDOM_nECF. *)
-    (* { eapply exec_necfD.  *)
-    (*   5 : apply SRCC.(sr_exec_h). *)
-    (*   all : try apply SRCC. *)
-    (*   unfold cert_dom. basic_solver. } *)
+  (* Lemma simrel_cert_load_step_hb_cf_thb_irr TC' h k k' e S' *)
+  (*       (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S')  *)
+  (*       (SAJF : sim_add_jf S G sc TC TC' h k st e S') *)
+  (*       (EW' : Sew S' ≡ Sew S) *)
+  (*       (CO' : Sco S' ≡ Sco S) *)
+  (*       (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :  *)
+  (*   irreflexive ((Shb S')⁻¹ ⨾ (Scf S') ⨾ (Shb S')). *)
+  (* Proof. *)
+  (*   cdes BSTEP_; cdes SAJF. *)
+  (*   assert (ESBasicStep.t e None S S') as BSTEP. *)
+  (*   { econstructor; eauto. } *)
+  (*   assert (ES.Wf S) as WFS by apply SRCC. *)
+  (*   assert (ESstep.t_load e None S S') as LSTEP. *)
+  (*   { econstructor; splits; auto.  *)
+  (*     eapply weaken_sim_add_jf; eauto. } *)
+  (*   (* assert  *) *)
+  (*   (*   (restr_rel (h □₁ cert_dom G TC (ES.cont_thread S k) st) Secf ⊆ ∅₂)  *) *)
+  (*   (*   as HDOM_nECF. *) *)
+  (*   (* { eapply exec_necfD.  *) *)
+  (*   (*   5 : apply SRCC.(sr_exec_h). *) *)
+  (*   (*   all : try apply SRCC. *) *)
+  (*   (*   unfold cert_dom. basic_solver. } *) *)
 
-    erewrite ESBasicStep.basic_step_nupd_cf; eauto.
-    rewrite csE. relsf.
-    arewrite 
-      ((Shb S')⁻¹ ⨾ ES.cont_cf_dom S k × eq e ⨾ Shb S' ≡ ∅₂). 
-    { split; [|done].
-      erewrite dom_rel_helper_in with (r := (Shb S')).
-      2 : eapply ESstep.load_step_hb_dom; eauto.
-      unfolder; ins; splits; desf; omega. }
-    arewrite 
-      ((Shb S')⁻¹ ⨾ eq e × ES.cont_cf_dom S k ⨾ Shb S' ≡ ∅₂).
-    { split; [|done].
-      erewrite dom_rel_helper_in with (r := (Shb S')).
-      2 : eapply ESstep.load_step_hb_dom; eauto.
-      rewrite transp_seq, transp_eqv_rel.
-      unfolder; ins; splits; desf; omega. }
-    rewrite !union_false_r.
+  (*   erewrite ESBasicStep.basic_step_nupd_cf; eauto. *)
+  (*   rewrite csE. relsf. *)
+  (*   arewrite  *)
+  (*     ((Shb S')⁻¹ ⨾ ES.cont_cf_dom S k × eq e ⨾ Shb S' ≡ ∅₂).  *)
+  (*   { split; [|done]. *)
+  (*     erewrite dom_rel_helper_in with (r := (Shb S')). *)
+  (*     2 : eapply ESstep.load_step_hb_dom; eauto. *)
+  (*     unfolder; ins; splits; desf; omega. } *)
+  (*   arewrite  *)
+  (*     ((Shb S')⁻¹ ⨾ eq e × ES.cont_cf_dom S k ⨾ Shb S' ≡ ∅₂). *)
+  (*   { split; [|done]. *)
+  (*     erewrite dom_rel_helper_in with (r := (Shb S')). *)
+  (*     2 : eapply ESstep.load_step_hb_dom; eauto. *)
+  (*     rewrite transp_seq, transp_eqv_rel. *)
+  (*     unfolder; ins; splits; desf; omega. } *)
+  (*   rewrite !union_false_r. *)
     
-    erewrite ESstep.load_step_hb; eauto. 
-    rewrite transp_union. relsf.
-    (* rewrite ESstep.load_step_rf; eauto. *)
-    (* rewrite inclusion_minus_rel. *)
-    rewrite SSJF'.
-    rewrite transp_union. relsf.
-    (* rewrite seq_union_l with (r := ⦗eq e⦘). *)
-    arewrite_false (Sjf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘); 
-      [ESBasicStep.step_solver|].
-    (* rewrite union_false_l. *)
-    (* arewrite  *)
-    (*   ((Sjf S ∪ singl_rel w e ⨾ ⦗eq e⦘) ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ≡ *)
-    (*              singl_rel w e ⨾ ⦗SAcq S'⦘). *)
-    (* { rewrite seq_union_l. *)
-    (*   arewrite_false (Srf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘). *)
-    (*   { ESBasicStep.step_solver. } *)
-    (*   basic_solver 10. } *)
-    rewrite ?transp_union, ?transp_seq, ?transp_cross,
-            ?transp_eqv_rel, ?transp_singl_rel.
-    relsf.
-    rewrite !irreflexive_union.
-    splits.
+  (*   erewrite ESstep.load_step_hb; eauto.  *)
+  (*   rewrite transp_union. relsf. *)
+  (*   (* rewrite ESstep.load_step_rf; eauto. *) *)
+  (*   (* rewrite inclusion_minus_rel. *) *)
+  (*   rewrite SSJF'. *)
+  (*   rewrite transp_union. relsf. *)
+  (*   (* rewrite seq_union_l with (r := ⦗eq e⦘). *) *)
+  (*   arewrite_false (Sjf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘);  *)
+  (*     [ESBasicStep.step_solver|]. *)
+  (*   (* rewrite union_false_l. *) *)
+  (*   (* arewrite  *) *)
+  (*   (*   ((Sjf S ∪ singl_rel w e ⨾ ⦗eq e⦘) ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘ ≡ *) *)
+  (*   (*              singl_rel w e ⨾ ⦗SAcq S'⦘). *) *)
+  (*   (* { rewrite seq_union_l. *) *)
+  (*   (*   arewrite_false (Srf S ⨾ ⦗SAcq S'⦘ ⨾ ⦗eq e⦘). *) *)
+  (*   (*   { ESBasicStep.step_solver. } *) *)
+  (*   (*   basic_solver 10. } *) *)
+  (*   rewrite ?transp_union, ?transp_seq, ?transp_cross, *)
+  (*           ?transp_eqv_rel, ?transp_singl_rel. *)
+  (*   relsf. *)
+  (*   rewrite !irreflexive_union. *)
+  (*   splits. *)
     
-    { eapply ecf_irr_thb_cf_hb_irr. apply SRCC. }
-    all : try by ESBasicStep.step_solver.
-    all : try rewrite transp_cr with (r := Shb S).
+  (*   { eapply ecf_irr_thb_cf_hb_irr. apply SRCC. } *)
+  (*   all : try by ESBasicStep.step_solver. *)
+  (*   all : try rewrite transp_cr with (r := Shb S). *)
 
-    { unfold seq, cross_rel. 
-      red. ins. desc.
-      eapply h_necfD; eauto. 
-      red; splits.
-      { unfold ecf. basic_solver 10. }
-      all : eapply cont_sb_dom_in_hhdom; eauto. }
+  (*   { unfold seq, cross_rel.  *)
+  (*     red. ins. desc. *)
+  (*     eapply h_necfD; eauto.  *)
+  (*     red; splits. *)
+  (*     { unfold ecf. basic_solver 10. } *)
+  (*     all : eapply cont_sb_dom_in_hhdom; eauto. } *)
 
-    { unfold seq, cross_rel. 
-      red. ins. desc.
-      eapply h_necfD; eauto. 
-      red. splits.
-      { unfold ecf. basic_solver 10. }
-      { eapply h_rel_ewD; eauto.
-        unfold singl_rel in *. desc.
-        basic_solver 10. }
-      eapply cont_sb_dom_in_hhdom; eauto. }
+  (*   { unfold seq, cross_rel.  *)
+  (*     red. ins. desc. *)
+  (*     eapply h_necfD; eauto.  *)
+  (*     red. splits. *)
+  (*     { unfold ecf. basic_solver 10. } *)
+  (*     { eapply h_rel_ewD; eauto. *)
+  (*       unfold singl_rel in *. desc. *)
+  (*       basic_solver 10. } *)
+  (*     eapply cont_sb_dom_in_hhdom; eauto. } *)
 
-    { unfold seq, cross_rel. 
-      red. ins. desc.
-      eapply h_necfD; eauto. 
-      red. splits.
-      { unfold ecf. basic_solver 10. }
-      { eapply cont_sb_dom_in_hhdom; eauto. }
-      eapply h_rel_ewD; eauto.
-      unfold singl_rel in *. desc.
-      basic_solver 10. }
+  (*   { unfold seq, cross_rel.  *)
+  (*     red. ins. desc. *)
+  (*     eapply h_necfD; eauto.  *)
+  (*     red. splits. *)
+  (*     { unfold ecf. basic_solver 10. } *)
+  (*     { eapply cont_sb_dom_in_hhdom; eauto. } *)
+  (*     eapply h_rel_ewD; eauto. *)
+  (*     unfold singl_rel in *. desc. *)
+  (*     basic_solver 10. } *)
 
-    unfold seq, cross_rel. 
-    red. ins. desc.
-    eapply h_necfD; eauto.  
-    red. splits.
-    { unfold ecf. basic_solver 10. }
-    { eapply h_rel_ewD; eauto.
-      unfold singl_rel in *. desc.
-      basic_solver 10. }
-    eapply h_rel_ewD; eauto.
-    unfold singl_rel in *. desc.
-    basic_solver 10.
-  Qed.
+  (*   unfold seq, cross_rel.  *)
+  (*   red. ins. desc. *)
+  (*   eapply h_necfD; eauto.   *)
+  (*   red. splits. *)
+  (*   { unfold ecf. basic_solver 10. } *)
+  (*   { eapply h_rel_ewD; eauto. *)
+  (*     unfold singl_rel in *. desc. *)
+  (*     basic_solver 10. } *)
+  (*   eapply h_rel_ewD; eauto. *)
+  (*   unfold singl_rel in *. desc. *)
+  (*   basic_solver 10. *)
+  (* Qed. *)
   
   Lemma simrel_cert_load_step_jf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))

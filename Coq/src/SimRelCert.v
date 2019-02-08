@@ -253,26 +253,6 @@ Section SimRelCert.
       eapply GEinit_in_hdom; apply SRCC.
     Qed.
 
-    (* Lemma h_I_ntid_in_hhdom :  *)
-    (*   h □₁ I ∩₁ SNTid qtid ⊆₁ h □₁ hdom. *)
-    (* Proof.  *)
-    (*   arewrite ( *)
-    (*     h □₁ I ∩₁ SNTid (ES.cont_thread S q) ⊆₁ h □₁ (I ∩₁ GNTid (ES.cont_thread S q)) *)
-    (*   ). *)
-    (*   { unfolder; intros x [HH SNTID]. desf. *)
-    (*     eexists; splits; eauto. *)
-    (*     red. intros GNTID.  *)
-    (*       eapply SNTID. *)
-    (*       fold (compose Stid h y). *)
-    (*       erewrite a2e_tid; auto. *)
-    (*       { eapply SRCC. } *)
-    (*       unfold cert_dom.  *)
-          
-
-    (*   apply set_collect_mori; auto. *)
-    (*   unfold cert_dom. basic_solver 10. *)
-    (* Qed. *)
-
     Lemma cfk_hdom : 
       h □₁ hdom ∩₁ ES.cont_cf_dom S q ≡₁ ∅.
     Proof. 
@@ -460,9 +440,10 @@ Section SimRelCert.
     Qed.
 
     Lemma h_jfD : 
-      dom_rel (Sjf ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
+      dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
     Proof.
       assert (ES.Wf S) as WFS by apply SRCC.
+      rewrite cont_sb_dom_in_hhdom.
       intros x [y [z [JF [EQz certDy]]]]. subst z.
       edestruct exec_rfc as [z [a [[EQa certDz] RF]]].
       { apply SRCC.(sr_exec_h). }
