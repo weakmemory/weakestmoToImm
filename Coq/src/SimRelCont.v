@@ -133,7 +133,7 @@ Section SimRelCont.
           { red. ins. congruence. }
           exists x; splits. 
           { unfold ES.cont_sb_dom. unfolder. eauto 10. }
-          { intuition. }
+          { unfold ES.acts_init_set. unfolder. intuition. }
           unfold e2a. 
           destruct 
             (excluded_middle_informative (Stid x = tid_init))
@@ -141,7 +141,7 @@ Section SimRelCont.
             [intuition | congruence]. }
         exists eid; splits.
         { unfold ES.cont_sb_dom. basic_solver 10. }
-        { intuition. }
+        { unfold ES.acts_init_set. unfolder. intuition. }
         unfold e2a. 
         destruct 
           (excluded_middle_informative (Stid eid = tid_init))
@@ -149,9 +149,7 @@ Section SimRelCont.
           [intuition | congruence]. }
       unfolder. intros a [e [[SB NINIT] gEQ]]. 
       edestruct k eqn:kEQ.
-      { unfold ES.cont_sb_dom, ES.acts_init_set in SB.
-        destruct SB as [SEe TIDe].
-        exfalso. apply NINIT. splits; auto. }
+      { unfold ES.cont_sb_dom, ES.acts_init_set in *. exfalso. auto. }
       rewrite <- gEQ.
       erewrite e2a_ninit; auto. 
       2 : { unfold ES.acts_ninit_set. 

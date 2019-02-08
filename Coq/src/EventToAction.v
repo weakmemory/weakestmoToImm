@@ -112,7 +112,8 @@ Section EventToAction.
         (EE : e2a □₁ SE ⊆₁ GE) : 
     e2a □₁ SEninit ⊆₁ GEninit.
   Proof. 
-    unfold e2a, ES.acts_ninit_set. unfolder. 
+    unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set. 
+    unfold e2a. unfolder. 
     ins; split; desf; auto.
     { exfalso; auto. }
     apply EE. unfolder.
@@ -144,7 +145,8 @@ Section EventToAction.
     rewrite collect_rel_if_else.
     2,3 : 
       rewrite WF.(ES.sb_seq_Eninit_l);
-      unfold ES.acts_ninit_set; basic_solver.
+      unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set; 
+      basic_solver.
     intros x y HH. red in HH. desf. red.
     assert (Stid x' = Stid y') as TT.
     { apply WF.(ES.sb_tid). generalize HH. basic_solver. }

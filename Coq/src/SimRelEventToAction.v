@@ -115,8 +115,10 @@ Section SimRelEventToAction.
     Proof. 
       split. 
       { eapply e2a_Einit; eauto. apply SRE2A. }
+      unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set. 
       unfolder. intros a [INITa GEa].
       edestruct e2a_GEinit as [e [[INITe SEe] gEQ]].
+      
       1-2 : unfolder; eauto.  
       eexists; splits; eauto. 
     Qed.
