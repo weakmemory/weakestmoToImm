@@ -1308,6 +1308,33 @@ Proof.
   cdes AEW. type_solver.
 Qed.
 
+Lemma step_hb_dom e e' S S' 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (STEP : t_ e e' S S')
+      (wfE: ES.Wf S) :
+  dom_rel (hb S') ⊆₁ E S ∪₁ eq e.
+Proof. 
+  cdes BSTEP.
+  rewrite step_hb; eauto.
+  rewrite dom_union.
+  rewrite basic_step_hb_delta_dom; eauto.
+  rewrite hbE; auto.
+  basic_solver.
+Qed. 
+
+Lemma step_hbE e e' S S' 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (STEP : t_ e e' S S')
+      (wfE: ES.Wf S) :
+  hb S' ⨾ ⦗E S⦘ ≡ hb S.
+Proof. 
+  cdes BSTEP.
+  rewrite step_hb; eauto.
+  relsf.
+  rewrite basic_step_hb_deltaE; eauto.
+  rewrite hbE; auto. basic_solver 5.
+Qed. 
+
 (******************************************************************************)
 (** ** Load step properties *)
 (******************************************************************************)
