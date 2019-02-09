@@ -346,17 +346,12 @@ Section SimRelCertStepProps.
 
     { eapply ecf_irr_hb_cf_irr. apply SRCC. }
 
-    { eapply empty_irr.
-      split; [|done].
-      ESBasicStep.step_solver. }
+    { ESBasicStep.step_solver. } 
 
     { autounfold with ESStepDb.
       rewrite !csE, !transp_cross.
       relsf. rewrite !irreflexive_union. splits.
-      2,4 : by (
-        eapply empty_irr; split; [|done];
-        ESBasicStep.step_solver
-      ).
+      2,4 : by ESBasicStep.step_solver.
       { intros x [y [HB [KCF EQe]]].
         subst x. apply hbE, seq_eqv_lr in HB; auto. desf.
         eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
@@ -411,10 +406,54 @@ Section SimRelCertStepProps.
     1-8 : ESBasicStep.step_solver.
 
     all : rewrite !id_union, !transp_seq, !transp_union, !transp_eqv_rel. 
-    all : relsf; rewrite !seqA, !irreflexive_union; splits.
-    
-    2-4 : ESBasicStep.step_solver.
-  Admitted.
+    all : relsf; rewrite !seqA.
+
+    { arewrite_false (Scf S ⨾ ⦗eq e⦘).
+      { ESBasicStep.step_solver. }
+      arewrite_false (⦗eq e⦘ ⨾ Scf S).
+      { ESBasicStep.step_solver. }
+      relsf. 
+      unfolder. ins. desc. subst.
+      eapply exec_ncf.
+      { apply SRCC.(sr_exec_h). }
+      unfolder. eauto 20. }
+
+    { erewrite a2e_img with (a2e := h) at 1 2.
+      2 : { apply SRCC.(sr_a2e_h). }
+      arewrite_false 
+        (⦗SE S⦘ ⨾ (ES.cont_cf_dom S k × eq e) ^⋈ ⨾ ⦗SE S⦘).
+      { ESBasicStep.step_solver. }
+      arewrite_false 
+        (⦗eq e⦘ ⨾ (ES.cont_cf_dom S k × eq e) ^⋈ ⨾ ⦗eq e⦘).
+      { ESBasicStep.step_solver. }
+      relsf.
+
+      rewrite !csE. relsf.
+      arewrite_false (eq e × ES.cont_cf_dom S k ⨾ ⦗eq e⦘).
+      { ESBasicStep.step_solver. }
+      arewrite_false (⦗eq e⦘ ⨾ ES.cont_cf_dom S k × eq e).
+      { ESBasicStep.step_solver. }
+      relsf. rewrite !irreflexive_union. splits.
+      all : unfolder; ins; desc; subst.
+      all : eapply cfk_hdom; eauto.
+      all : basic_solver. }
+
+    erewrite a2e_img with (a2e := h).
+    2 : { apply SRCC.(sr_a2e_h). }
+    arewrite_false 
+      (⦗SE S⦘ ⨾ (ES.cont_cf_dom S k × eq_opt e') ^⋈ ⨾ ⦗SE S⦘).
+    { ESBasicStep.step_solver. }
+    arewrite_false 
+      (⦗SE S⦘ ⨾ (ES.cont_cf_dom S k × eq_opt e') ^⋈ ⨾ ⦗eq e⦘).
+    { ESBasicStep.step_solver. }
+    arewrite_false 
+      (⦗eq e⦘ ⨾ (ES.cont_cf_dom S k × eq_opt e') ^⋈ ⨾ ⦗SE S⦘).
+    { ESBasicStep.step_solver. }
+    arewrite_false 
+      (⦗eq e⦘ ⨾ (ES.cont_cf_dom S k × eq_opt e') ^⋈ ⨾ ⦗eq e⦘).
+    { ESBasicStep.step_solver. }
+    basic_solver.
+  Qed.
 
   Lemma simrel_cert_step_jfe_vis k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
