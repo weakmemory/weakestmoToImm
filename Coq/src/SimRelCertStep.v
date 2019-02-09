@@ -476,6 +476,25 @@ Section SimRelCertStepProps.
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
+  Lemma simrel_cert_step_consistent k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CertSTEP_ : cert_step_ st e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    @es_consistent S' Weakestmo. 
+  Proof. 
+    constructor.
+    { eapply ecf_irr_alt. split.
+      { eapply simrel_cert_step_hb_cf_irr; eauto. }
+      eapply simrel_cert_step_thb_cf_hb_irr; eauto. }
+    { admit. }
+    { eapply simrel_cert_step_jfe_vis; eauto. }
+    { admit. }
+    { admit. }
+    admit. 
+  Admitted.
+
   Lemma basic_step_hdom_cf_free TC' h k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
