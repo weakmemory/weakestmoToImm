@@ -265,6 +265,96 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
+    Lemma simrel_basic_step_hb_sb_delta_dom k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+      dom_rel ((Shb S)^? ⨾ (ESBasicStep.sb_delta S k e e')) ⊆₁ 
+              h □₁ cert_dom G TC (ES.cont_thread S k) st ∪₁ eq e. 
+    Proof. 
+      cdes BSTEP_.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor; eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      repeat autounfold with ESStepDb.
+      arewrite (
+        ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ≡
+                 ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e') ∪ eq e × eq_opt e'
+      ) by basic_solver.
+      relsf. splits.
+      { rewrite cont_sb_dom_in_hhdom; eauto.
+        intros x [y [z [[EQxy | HB] [certD _]]]].
+        { basic_solver. }
+        left. eapply h_hbD; eauto. basic_solver 10. }
+      rewrite crE, seq_union_l, seq_id_l, dom_union. 
+      unionL. splits.
+      { basic_solver. }
+      etransitivity; [| apply set_subset_empty_l]. 
+      ESBasicStep.step_solver. 
+    Qed.
+
+    Lemma simrel_basic_step_hb_rel_jf_sb_delta_dom k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+      dom_rel ((Shb S)^? ⨾ release S ⨾ Sjf S ⨾ ESBasicStep.sb_delta S k e e') ⊆₁ 
+              h □₁ cert_dom G TC (ES.cont_thread S k) st. 
+    Proof. 
+      cdes BSTEP_.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor; eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      repeat autounfold with ESStepDb.
+      arewrite (
+        ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ≡
+                 ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e') ∪ eq e × eq_opt e'
+      ) by basic_solver.
+      relsf. splits.
+      { rewrite <- seqA.
+        intros x [y [z [HA HB]]].
+        eapply h_hb_release_ewD; eauto.
+        edestruct h_jfD as [a Ha]; eauto.
+        { generalize HB. basic_solver 10. }
+        eexists. apply seqA. 
+        eexists; splits; eauto. }
+      etransitivity; [| apply set_subset_empty_l]. 
+      ESBasicStep.step_solver. 
+    Qed.
+
+    Lemma simrel_step_add_jf_hb_delta_dom w k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+      dom_rel (ESstep.hb_delta S S' k e e') ⊆₁ 
+              h □₁ cert_dom G TC (ES.cont_thread S k) st ∪₁ eq e. 
+    Proof. 
+      cdes BSTEP_; cdes SAJF.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor; eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      unfold ESstep.hb_delta, ESstep.sw_delta. 
+      relsf. rewrite !seqA. splits.
+      { rewrite <- seqA, dom_seq.
+        eapply simrel_basic_step_hb_sb_delta_dom; eauto. }
+      { do 3 rewrite <- seqA. rewrite dom_seq, !seqA.
+        left; eapply simrel_basic_step_hb_rel_jf_sb_delta_dom; eauto. }
+      rewrite JF'. relsf. splits.
+      { etransitivity; [| apply set_subset_empty_l]. 
+        ESBasicStep.step_solver. }
+      do 3 rewrite <- seqA. rewrite dom_seq, !seqA.
+      unfold ESstep.jf_delta.
+      intros x [y HH]. 
+      left; eapply h_hb_release_ewD; eauto.
+      generalize HH; basic_solver 20.
+    Qed.
+
     Lemma simrel_step_add_jf_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
@@ -366,9 +456,24 @@ Section SimRelAddJF.
       2,4 : ESBasicStep.step_solver. 
 
       { apply jf_necf_hb_jf_thb_ncf; apply SRCC. }
-
-      admit. 
-    Admitted.
+      
+      unfold ESstep.jf_delta.
+      intros x y [HH CF].
+      destruct HH as [a [HB [b [JFd HBd]]]].
+      eapply exec_ncf.
+      { apply SRCC.(sr_exec_h). }
+      apply seq_eqv_lr. 
+      splits; [|apply CF|].
+      { eapply h_hbD; eauto.
+        unfolder in JFd. desc. subst a b.
+        basic_solver 10. }
+      unfold transp in HBd.
+      edestruct simrel_step_add_jf_hb_delta_dom as [HX | HY]; eauto.
+      { basic_solver. }
+      exfalso. subst y.
+      apply ES.cfE, seq_eqv_lr in CF.
+      ESBasicStep.step_solver. 
+    Qed.
 
     Lemma simrel_step_add_jf_jf_necf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
