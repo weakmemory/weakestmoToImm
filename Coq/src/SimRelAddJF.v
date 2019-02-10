@@ -51,7 +51,7 @@ Section SimRelAddJF.
   Notation "'Scc' S" := S.(cc) (at level 10).
   Notation "'Ssw' S" := S.(sw) (at level 10).
   Notation "'Shb' S" := S.(hb) (at level 10).
-  Notation "'Secf'" := (S.(Consistency.ecf)).
+  Notation "'Secf' S" := (S.(Consistency.ecf)) (at level 10).
 
   Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
   Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
@@ -265,6 +265,17 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
+    Lemma simrel_step_add_jf_jf_ncf w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+      Sjf S' ∩ Scf S' ≡ ∅₂.
+    Proof. 
+      admit. 
+    Admitted.
+
     Lemma simrel_step_add_jf_hb_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
@@ -304,8 +315,78 @@ Section SimRelAddJF.
 
       all : by ESBasicStep.step_solver. 
     Qed.
+
+    Lemma simrel_step_add_jf_hb_tjf_ncf w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (nF' : eq_opt e' ∩₁ SF S' ⊆₁ ∅) :
+      (Shb S' ⨾ (Sjf S')⁻¹) ∩ Scf S' ≡ ∅₂.
+    Proof. 
+      admit. 
+    Admitted.
+
+    Lemma simrel_step_add_jf_hb_jf_thb_ncf w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (nF' : eq_opt e' ∩₁ SF S' ⊆₁ ∅) :
+      (Shb S' ⨾ Sjf S' ⨾ (Shb S')⁻¹) ∩ Scf S' ≡ ∅₂.
+    Proof. 
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      cdes BSTEP_; cdes SAJF; cdes AJF. 
+      split; [|done].
+      rewrite JF'.
+      erewrite ESstep.step_add_jf_hb; eauto. 
+      rewrite transp_union. relsf.
+      
+      arewrite_false (ESstep.jf_delta w e ⨾ (Shb S)⁻¹).
+      { ESBasicStep.step_solver. }
+      arewrite_false (ESstep.hb_delta S S' k e e' ⨾ Sjf S).
+      { ESBasicStep.step_solver. }
+      arewrite_false (Sjf S ⨾ (ESstep.hb_delta S S' k e e')⁻¹).
+      { ESBasicStep.step_solver. }
+      arewrite_false (ESstep.hb_delta S S' k e e' ⨾ ESstep.jf_delta w e).
+      { ESBasicStep.step_solver. }
+      relsf.
+
+      erewrite ESBasicStep.basic_step_cf; eauto.
+      relsf. rewrite !inter_union_l, !inter_union_r. 
+      unionL.
+
+      2,4 : ESBasicStep.step_solver. 
+
+      { apply jf_necf_hb_jf_thb_ncf; apply SRCC. }
+
+      admit. 
+    Admitted.
+
+    Lemma simrel_step_add_jf_jf_necf w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (nF' : eq_opt e' ∩₁ SF S' ⊆₁ ∅) :
+      Sjf S' ∩ Secf S' ≡ ∅₂. 
+    Proof. 
+      apply jf_necf_alt. splits.
+      { eapply simrel_step_add_jf_jf_ncf; eauto. }
+      { eapply simrel_step_add_jf_hb_jf_ncf; eauto. } 
+      { eapply simrel_step_add_jf_hb_tjf_ncf; eauto. }
+      eapply simrel_step_add_jf_hb_jf_thb_ncf; eauto.
+    Qed.
         
-    Lemma sim_step_add_jfe_vis w k k' e e' S S' 
+    Lemma simrel_step_add_jf_jfe_vis w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
