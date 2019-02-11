@@ -441,8 +441,43 @@ Section SimRelAddJF.
           (nF' : eq_opt e' ∩₁ SF S' ⊆₁ ∅) :
       (Shb S' ⨾ (Sjf S')⁻¹) ∩ Scf S' ≡ ∅₂.
     Proof. 
-      admit. 
-    Admitted.
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      cdes BSTEP_; cdes SAJF; cdes AJF. 
+      split; [|done].
+      rewrite JF'.
+      erewrite ESstep.step_add_jf_hb; eauto. 
+      erewrite ESBasicStep.basic_step_cf; eauto.
+      rewrite !transp_union.
+      relsf. rewrite !inter_union_l, !inter_union_r. 
+      unionL.
+
+      { apply jf_necf_hb_tjf_ncf; apply SRCC. }
+
+      all : try by ESBasicStep.step_solver.
+
+      erewrite dom_rel_helper with (r := ESstep.hb_delta S S' k e e').
+      2 : { eapply simrel_step_add_jf_hb_delta_dom; eauto. }
+      rewrite id_union. relsf.
+      rewrite !inter_union_l.
+      unionL.
+      
+      2 : by ESBasicStep.step_solver. 
+
+      unfold ESstep.jf_delta.
+      rewrite transp_singl_rel.
+      intros x y [HH CF].
+      destruct HH as [a [[b [certD HBd]] JFd]].
+      eapply exec_ncf.
+      { apply SRCC.(sr_exec_h). }
+      apply seq_eqv_lr. 
+      splits; [apply certD| apply CF |]. 
+      unfold singl_rel in JFd. desf.
+    Qed.
 
     Lemma simrel_step_add_jf_hb_jf_thb_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
