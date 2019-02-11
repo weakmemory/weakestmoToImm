@@ -324,6 +324,14 @@ Proof.
   basic_solver 42.
 Qed.
 
+Lemma ecfE : ecf ≡ ⦗E⦘ ⨾ ecf ⨾ ⦗E⦘.
+Proof.
+  split; [|basic_solver].
+  unfold ecf.
+  rewrite ES.cfE, hbE.
+  basic_solver 42.
+Qed.
+
 (******************************************************************************)
 (** ** Domains and codomains  *)
 (******************************************************************************)
