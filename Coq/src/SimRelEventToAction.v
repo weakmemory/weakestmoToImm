@@ -621,6 +621,24 @@ Section SimRelEventToActionLemmas.
     eapply basic_step_e2a_E0_e; eauto. 
   Qed.
 
+  Lemma basic_step_e2a_certlab_e' TC' k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRK : simrel_cont prog S G TC)
+        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     Slab S' e' = certLab G st'' (e2a S' e').
+  Proof. 
+    unfold certLab.
+    destruct 
+      (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S' e'))) 
+      as [GCE | nGCE].
+    { eapply basic_step_e2a_lab_e'; eauto. }
+    exfalso. apply nGCE. 
+    eapply dcertE; eauto.
+    eapply basic_step_e2a_E0_e'; eauto. 
+  Qed.
+
   Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRK : simrel_cont prog S G TC)

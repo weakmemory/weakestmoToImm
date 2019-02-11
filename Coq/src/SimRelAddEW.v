@@ -198,7 +198,7 @@ Section SimRelAddEW.
         unfold compose.
         destruct EWr as [EQ | EW].
         { basic_solver. }
-        admit. }
+        eapply ES.ewlab; auto. }
       rewrite EQaLAB.
       destruct wEE' as [E | E'].
       { subst w'.
@@ -212,6 +212,13 @@ Section SimRelAddEW.
         admit. }
       destruct e' as [e'|]; [|done].
       unfold eq_opt in E'. subst w'.
+      erewrite basic_step_e2a_certlab_e'; eauto. 
+      2-3 : apply SRCC.
+      rewrite EQaE2A.
+      eapply cslab; [apply SRCC|].
+      do 4 left. right. 
+      eapply step_mon; eauto.
+      econstructor.
       admit. 
     Admitted.
       
@@ -246,52 +253,16 @@ Section SimRelAddEW.
         rewrite ES.ewD; auto. basic_solver. }
       (* LOCWS : ws ⊆₁ same_loc S' w' *)
       { intros x WSx.
-        assert ((restr_rel (SE S') (same_loc (Slab S'))) w' x)
-          as HH. 
-        { eapply same_lab_u2v_dom_same_loc.
-          { eapply basic_step_e2a_same_lab_u2v; eauto; apply SRCC. }
-          unfolder; splits; eauto.
-          { unfold same_loc, loc. 
-            erewrite sim_add_ew_ws_same_lab; eauto.
-            basic_solver. }
-          eapply ESBasicStep.basic_step_acts_set_mon; eauto. 
-          eapply sim_add_ew_wsE; eauto. }
-        unfolder in HH. desf. } 
+        unfold same_loc, loc.
+        erewrite sim_add_ew_ws_lab; eauto.
+        basic_solver. }
       (* VALWS : ws ⊆₁ same_val S' w' *)
       { intros x WSx.
-        destruct 
-          (excluded_middle_informative (I (e2a S' w')))
-          as [Iw' | nIw'].
-        { unfold same_val, val.
-          arewrite ((Slab S') x = (Slab S') w'); auto.
-          edestruct wsI as [y wsIy]; eauto.
-          destruct wsIy as [z [[EQxz | EW] [EQyz [a [Ia EQa]]]]].
-          admit. }
-        exfalso. apply nIw'. 
-        edestruct wsI as [y wsIy]; eauto.
-        destruct wsIy as [z [[EQxz | EW] [EQyz [a [Ia EQa]]]]].
-        { subst x y z. 
-          erewrite wsE2A; eauto.
-          unfolder; eexists; splits; eauto.
-          erewrite basic_step_e2a_eq_dom; eauto.
-          { eapply a2e_fix. 
-            { apply SRCC.(sim_com). }
-            basic_solver 10. }
-          eapply a2e_img.
-          { apply SRCC.(sim_com). }
-          basic_solver 10. }
-        subst y z. 
-        erewrite wsE2A; eauto.
-        unfolder; eexists; splits; eauto.
-        erewrite basic_step_e2a_eq_dom; eauto.
-        { etransitivity. 
-          { eapply e2a_ew; [apply SRCC|].
-            basic_solver 10. }
-          eapply a2e_fix. 
-          { apply SRCC.(sim_com). }
-          basic_solver 10. }
-        apply ES.ewE, seq_eqv_lr in EW; desf. }
-      all : admit. 
+        unfold same_val, val.
+        erewrite sim_add_ew_ws_lab; eauto.
+        basic_solver. }
     Admitted.
+
+  End SimRelAddEWProps. 
 
 End SimRelAddEW.
