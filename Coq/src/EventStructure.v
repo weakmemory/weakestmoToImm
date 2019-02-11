@@ -127,6 +127,7 @@ Notation "'lab'" := S.(ES.lab).
 Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
 
+Notation "'same_lab'" := (same_lab S).
 Notation "'same_tid'" := (same_tid S).
 Notation "'same_loc'" := (same_loc lab).
 
@@ -207,11 +208,16 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
-    ewl : ew ⊆ same_loc ;
-    ewv : funeq val ew ;
-    ewc : ew ⊆ cf ;
-    ew_trans : transitive ew ;
-    ew_sym : symmetric ew ;
+    (* not sure about that, but if we don't need 
+       an x_mode field of labels then it's fine
+       (since `mode = rlx` and `loc`/`val` should be equal)
+     *)
+    ewlab : ew ⊆ same_lab;
+    (* ewl : ew ⊆ same_loc ; *)
+    (* ewv : funeq val ew ; *)
+    ewc : ew ⊆ cf;
+    ew_trans : transitive ew;
+    ew_sym : symmetric ew;
 
     ew_co_in_co : ew ⨾ co ⊆ co;
 
@@ -222,7 +228,7 @@ Record Wf :=
         snd c = snd c';
     event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
         exists c, K (CEvent e, c);
-    K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;  
+    K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
   }.
 
 Implicit Type WF : Wf.
@@ -473,6 +479,20 @@ Qed.
 (** ** ew properties *)
 (******************************************************************************)
 
+Lemma ewl WF : ew ⊆ same_loc.
+Proof. 
+  rewrite ewlab; auto.
+  unfold ES.same_lab, Events.same_loc, Events.loc. 
+  basic_solver.
+Qed.
+
+Lemma ewv WF : funeq val ew.
+Proof. 
+  rewrite ewlab; auto.
+  unfold funeq, ES.same_lab, Events.val.
+  basic_solver.
+Qed.
+
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 
@@ -540,6 +560,7 @@ Proof.
   rewrite inclusion_minus_rel.
   rewrite WF.(jfl).
   rewrite WF.(ewl).
+  
   generalize same_loc_trans.
   basic_solver.
 Qed.
