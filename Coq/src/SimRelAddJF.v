@@ -363,8 +363,34 @@ Section SimRelAddJF.
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
       Sjf S' ∩ Scf S' ≡ ∅₂.
     Proof. 
-      admit. 
-    Admitted.
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      cdes BSTEP_; cdes SAJF; cdes AJF. 
+      split; [|done].
+      rewrite JF'.
+      erewrite ESBasicStep.basic_step_cf; eauto.
+      rewrite !inter_union_l, !inter_union_r. 
+      unionL.
+
+      { apply jf_necf_jf_ncf; apply SRCC. } 
+
+      1-2 : by ESBasicStep.step_solver.
+
+      autounfold with ESStepDb.
+      rewrite !csE, !transp_cross.
+      rewrite !inter_union_r. 
+      unionL.
+
+      2-4 : by ESBasicStep.step_solver.
+
+      unfolder. ins. desf.
+      eapply cfk_hdom; eauto.  
+      basic_solver.
+    Qed.
 
     Lemma simrel_step_add_jf_hb_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
