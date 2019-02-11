@@ -108,7 +108,10 @@ Proof. basic_solver 10. Qed.
 
 Lemma crs_restr2 : restr_rel s r⁼ ≡ restr_rel s ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
 Proof. basic_solver 10. Qed.
-  
+
+Lemma cr_sym : symmetric r -> symmetric r^?.
+Proof. basic_solver. Qed.
+
 Lemma cs_sym : symmetric r^⋈.
 Proof. basic_solver. Qed.
 
@@ -144,6 +147,9 @@ Proof. basic_solver. Qed.
 
 Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
 Proof. basic_solver. Qed.
+
+Lemma seq_cross_eq x : s × eq x ⨾ eq x × s' ≡ s × s'.
+Proof. basic_solver 10. Qed.
 
 Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
 Proof. basic_solver. Qed.

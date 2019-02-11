@@ -38,6 +38,7 @@ Section SimRelCert.
   Notation "'K'" := S.(ES.cont_set).
 
   Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'SNTid' t" := (fun x => Stid x <> t) (at level 1).
 
   Notation "'SR'" := (fun a => is_true (is_r Slab a)).
   Notation "'SW'" := (fun a => is_true (is_w Slab a)).
@@ -436,6 +437,24 @@ Section SimRelCert.
     Proof. 
       eapply exec_hb_release_ewD; try apply SRCC. 
       unfold cert_dom. basic_solver. 
+    Qed.
+
+    Lemma h_jfD : 
+      dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
+    Proof.
+      assert (ES.Wf S) as WFS by apply SRCC.
+      rewrite cont_sb_dom_in_hhdom.
+      intros x [y [z [JF [EQz certDy]]]]. subst z.
+      edestruct exec_rfc as [z [a [[EQa certDz] RF]]].
+      { apply SRCC.(sr_exec_h). }
+      { split; eauto. apply ES.jfD, seq_eqv_lr in JF; desf. }
+      subst a.
+      destruct RF as [[a [EW JF']] _].
+      eapply ES.jff in JF'; auto.
+      specialize (JF' JF). subst a.
+      do 2 eexists. split.
+      { eapply cr_sym; eauto. by apply ES.ew_sym. }
+      basic_solver.
     Qed.
 
     Lemma h_necfD :

@@ -112,7 +112,7 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
-Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb.
+(* Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb. *)
 
 Section EventStructure.
 
@@ -316,7 +316,7 @@ Lemma ncfEinit : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
 Proof. unfold ES.cf, ES.acts_ninit_set. basic_solver. Qed.
 
 Lemma cf_irr : irreflexive cf.
-Proof. basic_solver. Qed.
+Proof. unfold ES.cf. basic_solver. Qed.
 
 Lemma cf_sym : symmetric cf.
 Proof. 
@@ -379,9 +379,13 @@ Proof.
   basic_solver 42.
 Qed.
 
-Lemma n_sb_cf x y (Ex : E x) (Ey : E y) : ~ (sb x y /\ cf x y).
+Lemma n_sb_cf WF x y : ~ (sb x y /\ cf x y).
 Proof. 
   red. intros [SB CF].
+  assert (E x) as Ex.
+  { apply sbE, seq_eqv_lr in SB; auto. desf. }
+  assert (E y) as Ey.
+  { apply sbE, seq_eqv_lr in SB; auto. desf. }
   destruct 
     (excluded_middle_informative (Einit x), excluded_middle_informative (Einit y)) 
     as [[INITx | nINITx]  [INITy | nINITy]].
@@ -697,6 +701,7 @@ Proof.
   { destruct cfKe as [Ee TIDe]. desf. }
   assert (Eninit eid) as NINITeid.
   { eapply K_inEninit; eauto. }
+  unfold ES.cf in cfKe.
   unfolder in cfKe; desf.
   fold (ES.same_tid S e z).
   apply same_tid_sym.
@@ -735,7 +740,7 @@ Proof.
       { by eapply cf_same_tid. }
       red; ins; desf. 
       { eapply cf_irr; eauto. } 
-      eapply n_sb_cf; [apply Ex | apply Eeid | eauto]. }
+      eapply n_sb_cf; eauto. }
     unfold dom_rel, codom_rel, seq, eqv_rel, clos_refl in *. 
     destruct SBx as [a [b [[EQab EQeid] SBx]]].
     rewrite <- EQab, <- EQeid in *.
@@ -787,6 +792,7 @@ Proof.
   { rewrite set_minus_minus_r.
     arewrite (E ∩₁ Tid (cont_thread S k) ∩₁ Einit ≡₁ ∅).
     { split; [|done].
+      unfold ES.acts_init_set.
       unfolder. ins. desc.
       eapply init_tid_K; eauto.
       do 2 eexists. splits; eauto. 
@@ -907,20 +913,14 @@ Proof.
   apply WF.(sbE) in REL. by destruct_seq REL as [YY XX].
 Qed.
 
-Lemma sb_dom_cf_free WF y : cf_free S (dom_rel (sb ⨾ ⦗eq y⦘)).
+Lemma sb_dom_cf_free WF x : cf_free S (dom_rel (sb ⨾ ⦗eq x⦘)).
 Proof.
-  red. unfolder. ins; desf.
-  apply H7.
-  destruct (classic (z1 = y0)) as [|NEQ]; subst.
-  { by left. }
-  right.
-  edestruct WF.(sb_tot) with (e := y2) as [AA|AA].
-  4: by eauto.
-  { apply WF.(sbE) in H. generalize H. basic_solver. }
-  1,2: split; [eexists; apply seq_eqv_r; eauto|]; auto.
-  { apply H8. }
-  { apply H6. }
-  all: intuition.
+  red. unfolder. ins. desf. 
+  eapply n_sb_cf; splits; eauto.
+  eapply cf_sb_in_cf; auto.
+  eexists; splits.
+  { eapply cf_sym; eauto. }
+  done.
 Qed.
 
 Lemma sb_imm_split_r WF : sb ≡ sb^? ;; immediate sb.
