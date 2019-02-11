@@ -52,7 +52,7 @@ Section SimRelCertStep.
   Notation "'Scc' S" := S.(cc) (at level 10).
   Notation "'Ssw' S" := S.(sw) (at level 10).
   Notation "'Shb' S" := S.(hb) (at level 10).
-  Notation "'Secf'" := (S.(Consistency.ecf)).
+  Notation "'Secf' S" := (S.(Consistency.ecf)) (at level 10).
 
   Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
   Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
@@ -455,6 +455,33 @@ Section SimRelCertStepProps.
     basic_solver.
   Qed.
 
+  Lemma simrel_cert_step_jf_necf k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+        (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (CertSTEP_ : cert_step_ st e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    Sjf S' ∩ Secf S' ≡ ∅₂. 
+  Proof. 
+    cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ESstep.t_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    unfold_cert_step CertSTEP_.
+    1,3 : 
+      eapply ESstep.step_same_jf_jf_necf; 
+      eauto; try apply SRCC;
+      eapply ESBasicStep.basic_step_nupd_rmw;
+      subst; eauto.
+    { eapply simrel_step_add_jf_jf_necf; eauto.
+      subst. basic_solver. }
+    eapply simrel_step_add_jf_jf_necf; eauto.
+    cdes AEW. type_solver.
+  Qed.
+
   Lemma simrel_cert_step_jfe_vis k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -472,7 +499,7 @@ Section SimRelCertStepProps.
     etransitivity. 
     2 : eapply ESstep.step_vis_mon; eauto.
     unfold_cert_step CertSTEP_.
-    all : try (by eapply sim_step_add_jfe_vis; eauto).
+    all : try (by eapply simrel_step_add_jf_jfe_vis; eauto).
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
@@ -484,11 +511,16 @@ Section SimRelCertStepProps.
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     @es_consistent S' Weakestmo. 
   Proof. 
+    cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
     constructor.
     { eapply ecf_irr_alt. split.
       { eapply simrel_cert_step_hb_cf_irr; eauto. }
       eapply simrel_cert_step_thb_cf_hb_irr; eauto. }
-    { admit. }
+    { eapply simrel_cert_step_jf_necf; eauto. }
     { eapply simrel_cert_step_jfe_vis; eauto. }
     { admit. }
     { admit. }
@@ -1179,57 +1211,57 @@ Section SimRelCertStepProps.
     unfolder; splits; ins; desf; omega. 
   Qed.
 
-  Lemma simrel_cert_load_step_hb_jf_ncf TC' h k k' e S'
-        (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
-        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') 
-        (SAJF : sim_add_jf S G sc TC TC' h k st e S')
-        (EW' : Sew S' ≡ Sew S)
-        (CO' : Sco S' ≡ Sco S)
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    (Shb S' ⨾ Sjf S') ∩ Scf S' ≡ ∅₂.
-  Proof. 
-    cdes BSTEP_; cdes SAJF.
-    assert (ESBasicStep.t e None S S') as BSTEP.
-    { econstructor; eauto. }
-    assert (ES.Wf S) as WFS by apply SRCC.
-    assert (ESstep.t_load e None S S') as LSTEP.
-    { econstructor; splits; auto. 
-      eapply weaken_sim_add_jf; eauto. }
-    cdes LSTEP.
-    split; [|basic_solver].
-    erewrite ESBasicStep.basic_step_nupd_cf; eauto. 
-    erewrite ESstep.load_step_hb; eauto. 
-    relsf. rewrite !seqA.
-    assert (Sjf S' ≡ ⦗SE S⦘ ⨾ Sjf S') as JFdomE.
-    { eapply dom_rel_helper. 
-      eapply ESstep.load_step_jf_dom; eauto. }
-    rewrite JFdomE.
-    arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗SE S⦘ ⨾ Sjf S' ≡ ∅₂).
-    { unfolder; splits; ins; desf; omega. }
-    arewrite (⦗eq e⦘ ⨾ ⦗SE S⦘ ⨾ Sjf S' ≡ ∅₂). 
-    { unfolder; splits; ins; desf; omega. }
-    relsf. 
-    rewrite csE, transp_cross.
-    rewrite <- JFdomE, SSJF'. 
-    rewrite seq_union_r, !inter_union_r, !inter_union_l.
+  (* Lemma simrel_cert_load_step_hb_jf_ncf TC' h k k' e S' *)
+  (*       (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S')  *)
+  (*       (SAJF : sim_add_jf S G sc TC TC' h k st e S') *)
+  (*       (EW' : Sew S' ≡ Sew S) *)
+  (*       (CO' : Sco S' ≡ Sco S) *)
+  (*       (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :  *)
+  (*   (Shb S' ⨾ Sjf S') ∩ Scf S' ≡ ∅₂. *)
+  (* Proof.  *)
+  (*   cdes BSTEP_; cdes SAJF. *)
+  (*   assert (ESBasicStep.t e None S S') as BSTEP. *)
+  (*   { econstructor; eauto. } *)
+  (*   assert (ES.Wf S) as WFS by apply SRCC. *)
+  (*   assert (ESstep.t_load e None S S') as LSTEP. *)
+  (*   { econstructor; splits; auto.  *)
+  (*     eapply weaken_sim_add_jf; eauto. } *)
+  (*   cdes LSTEP. *)
+  (*   split; [|basic_solver]. *)
+  (*   erewrite ESBasicStep.basic_step_nupd_cf; eauto.  *)
+  (*   erewrite ESstep.load_step_hb; eauto.  *)
+  (*   relsf. rewrite !seqA. *)
+  (*   assert (Sjf S' ≡ ⦗SE S⦘ ⨾ Sjf S') as JFdomE. *)
+  (*   { eapply dom_rel_helper.  *)
+  (*     eapply ESstep.load_step_jf_dom; eauto. } *)
+  (*   rewrite JFdomE. *)
+  (*   arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗SE S⦘ ⨾ Sjf S' ≡ ∅₂). *)
+  (*   { unfolder; splits; ins; desf; omega. } *)
+  (*   arewrite (⦗eq e⦘ ⨾ ⦗SE S⦘ ⨾ Sjf S' ≡ ∅₂).  *)
+  (*   { unfolder; splits; ins; desf; omega. } *)
+  (*   relsf.  *)
+  (*   rewrite csE, transp_cross. *)
+  (*   rewrite <- JFdomE, SSJF'.  *)
+  (*   rewrite seq_union_r, !inter_union_r, !inter_union_l. *)
     
-    unionL. 
-    { apply jf_necf_hb_jf_ncf; apply SRCC. }
-    { solve_by_EE ES.cfE. }
-    { solve_by_EE ES.jfE. }
-    2,3 : solve_by_EE hbE.
+  (*   unionL.  *)
+  (*   { apply jf_necf_hb_jf_ncf; apply SRCC. } *)
+  (*   { solve_by_EE ES.cfE. } *)
+  (*   { solve_by_EE ES.jfE. } *)
+  (*   2,3 : solve_by_EE hbE. *)
 
-    intros x y [[z [HB [EQz _]]] [KCF EQy]]. 
-    subst y z.
-    assert (Scf S' x e) as CFE.
-    { eapply ESBasicStep.basic_step_nupd_cf; eauto. 
-      right. basic_solver. }
-    eapply basic_step_nupd_hdom_cf_free; eauto. 
-    apply seq_eqv_lr; splits; eauto; [|basic_solver]. 
-    left. eapply h_hbD; try apply SRCC. 
-    basic_solver 10. 
-  Qed.
+  (*   intros x y [[z [HB [EQz _]]] [KCF EQy]].  *)
+  (*   subst y z. *)
+  (*   assert (Scf S' x e) as CFE. *)
+  (*   { eapply ESBasicStep.basic_step_nupd_cf; eauto.  *)
+  (*     right. basic_solver. } *)
+  (*   eapply basic_step_nupd_hdom_cf_free; eauto.  *)
+  (*   apply seq_eqv_lr; splits; eauto; [|basic_solver].  *)
+  (*   left. eapply h_hbD; try apply SRCC.  *)
+  (*   basic_solver 10.  *)
+  (* Qed. *)
 
   Lemma simrel_cert_load_step_hb_tjf_ncf TC' h k k' e S'
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
