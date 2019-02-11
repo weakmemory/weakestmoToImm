@@ -78,9 +78,10 @@ Hint Unfold ew_delta : ESStepDb.
 Definition add_ew ws w' S S' : Prop :=   
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\
+  ⟪ wsE : ws ⊆₁ E S ⟫ /\
   ⟪ wsW : ws ⊆₁ W S ⟫ /\
-  ⟪ LOCWS : ws ⊆₁ same_loc S w' ⟫ /\
-  ⟪ VALWS : ws ⊆₁ same_val S w' ⟫ /\
+  ⟪ LOCWS : ws ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ VALWS : ws ⊆₁ same_val S' w' ⟫ /\
   ⟪ CFWS : ws ⊆₁ cf S' w' ⟫ /\
   ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ws w' ⟫. 
 
