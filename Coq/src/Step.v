@@ -1243,6 +1243,99 @@ Proof.
   rewrite basic_step_hb_delta_alt; eauto.
 Qed.
 
+Lemma step_same_jf_hb_dom e e' S S' 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (JF' : jf S' ≡ jf S) 
+      (RMW' : rmw S' ≡ rmw S) 
+      (wfE: ES.Wf S) :
+  dom_rel (hb S') ⊆₁ E S ∪₁ eq e.
+Proof. 
+  cdes BSTEP.
+  rewrite step_same_jf_hb; eauto.
+  rewrite dom_union.
+  rewrite basic_step_hb_delta_dom; eauto.
+  rewrite hbE; auto.
+  basic_solver.
+Qed. 
+
+Lemma step_same_jf_hbE e e' S S' 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (JF' : jf S' ≡ jf S) 
+      (RMW' : rmw S' ≡ rmw S) 
+      (wfE: ES.Wf S) :
+  hb S' ⨾ ⦗E S⦘ ≡ hb S.
+Proof. 
+  cdes BSTEP.
+  rewrite step_same_jf_hb; eauto.
+  relsf.
+  rewrite basic_step_hb_deltaE; eauto.
+  rewrite hbE; auto. basic_solver 5.
+Qed. 
+
+Lemma step_same_jf_ecf_restr e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (JF' : jf S' ≡ jf S) 
+      (RMW' : rmw S' ≡ rmw S) 
+      (wfE: ES.Wf S) :
+  restr_rel (E S) (ecf S') ≡ ecf S. 
+Proof. 
+  cdes BSTEP.
+  unfold ecf.
+  rewrite !crE. relsf.
+  rewrite !restr_union.
+  repeat apply union_more.
+  { eapply ESBasicStep.basic_step_cf_restr; eauto. }
+  { rewrite restr_relE, !seqA.
+    arewrite (⦗E S⦘ ⨾ (hb S')⁻¹ ≡ (hb S)⁻¹ ⨾ ⦗E S⦘).
+    { rewrite <- transp_eqv_rel, <- transp_seq.
+      rewrite step_same_jf_hbE; eauto.
+      rewrite hbE; auto.
+      basic_solver 10. }
+    rewrite <- restr_relE.
+    rewrite ESBasicStep.basic_step_cf_restr; eauto. }
+  { rewrite restr_relE, !seqA.
+    rewrite step_same_jf_hbE; eauto.
+    rewrite hbE; auto.
+    arewrite (⦗E S⦘ ⨾ cf S' ⨾ ⦗E S⦘ ≡ cf S).
+    { rewrite <- restr_relE.
+      rewrite ESBasicStep.basic_step_cf_restr; eauto. }
+    rewrite hbE; auto.
+    basic_solver 10. }
+  rewrite restr_relE, !seqA.
+  arewrite (⦗E S⦘ ⨾ (hb S')⁻¹ ≡ (hb S)⁻¹ ⨾ ⦗E S⦘).
+  { rewrite <- transp_eqv_rel, <- transp_seq. 
+    rewrite step_same_jf_hbE; eauto.
+    rewrite hbE; auto.
+    basic_solver 10. }
+  arewrite ((hb S') ⨾ ⦗E S⦘ ≡ ⦗E S⦘ ⨾ (hb S) ).
+  { rewrite step_same_jf_hbE; eauto.
+    rewrite hbE; auto.
+    basic_solver 10. }
+  arewrite (⦗E S⦘ ⨾ cf S' ⨾ ⦗E S⦘ ≡ cf S).
+  { rewrite <- restr_relE.
+    rewrite ESBasicStep.basic_step_cf_restr; eauto. }
+  done.
+Qed.
+
+Lemma step_same_jf_jf_necf e e' S S'
+      (BSTEP_ : ESBasicStep.t e e' S S') 
+      (JF' : jf S' ≡ jf S) 
+      (RMW' : rmw S' ≡ rmw S) 
+      (wfE: ES.Wf S) 
+      (JF_nECF : jf S ∩ ecf S ≡ ∅₂) :
+  jf S' ∩ ecf S' ≡ ∅₂. 
+Proof. 
+  split; [|done].
+  rewrite JF'.
+  rewrite ES.jfE; auto.
+  rewrite <- restr_relE.
+  rewrite <- restr_inter_absorb_r.
+  rewrite step_same_jf_ecf_restr; eauto.
+  rewrite restr_relE.
+  rewrite <- ES.jfE; auto.
+  apply JF_nECF.
+Qed.
+
 (******************************************************************************)
 (** ** Step properties *)
 (******************************************************************************)

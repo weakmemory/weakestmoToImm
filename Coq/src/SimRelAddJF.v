@@ -551,7 +551,7 @@ Section SimRelAddJF.
       { eapply simrel_step_add_jf_hb_tjf_ncf; eauto. }
       eapply simrel_step_add_jf_hb_jf_thb_ncf; eauto.
     Qed.
-        
+    
     Lemma simrel_step_add_jf_jfe_vis w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
