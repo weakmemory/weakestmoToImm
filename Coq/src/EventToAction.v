@@ -28,6 +28,7 @@ Section EventToAction.
   Notation "'K'"  := S.(ES.cont_set).
 
   Notation "'Ssb'" := (S.(ES.sb)).
+  Notation "'Scf'" := (S.(ES.cf)).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -50,7 +51,18 @@ Section EventToAction.
   (** ** e2a general properties *)
   (******************************************************************************)
 
-  Lemma e2a_init (WF : ES.Wf S) e (EINITe : SEinit e) : 
+  Lemma e2a_init e (EINITe : SEinit e) : 
+    e2a e = InitEvent (opt_ext BinNums.xH (Sloc e)). 
+  Proof. 
+    unfold ES.acts_ninit_set, ES.acts_init_set in EINITe.
+    destruct EINITe as [SEe STIDe].
+    unfold e2a.
+    destruct 
+      (excluded_middle_informative (Stid e = tid_init)); 
+      [auto | congruence]. 
+  Qed.
+
+  Lemma e2a_init_loc (WF : ES.Wf S) e (EINITe : SEinit e) : 
     exists l, 
       ⟪ SLOC : Sloc e = Some l⟫ /\
       ⟪ E2Ai : e2a e = InitEvent l⟫. 
@@ -60,15 +72,11 @@ Section EventToAction.
     assert (Sloc e = Some l) as SLOC. 
     { unfold loc. by rewrite SLAB. }
     splits; auto. 
-    unfold ES.acts_init_set in EINITe.
-    destruct EINITe as [_ TIDIe].
-    unfold e2a. 
-    destruct (excluded_middle_informative (Stid e = tid_init)); 
-      [|congruence]. 
+    rewrite e2a_init; auto.
     unfold opt_ext. by rewrite SLOC. 
   Qed.
 
-  Lemma e2a_ninit (WF : ES.Wf S) e (ENINITe : SEninit e) : 
+  Lemma e2a_ninit e (ENINITe : SEninit e) : 
     e2a e = ThreadEvent (Stid e) (ES.seqn S e).
   Proof. 
     unfold ES.acts_ninit_set, ES.acts_init_set in ENINITe.
@@ -184,9 +192,9 @@ Section EventToAction.
       assert (SEinit y) as EINITy. 
       { unfold ES.acts_init_set, set_inter.
         split; auto. }
-      edestruct e2a_init as [lx [SLOCx GEx]]; 
+      edestruct e2a_init_loc as [lx [SLOCx GEx]]; 
         [auto | apply EINITx |].
-      edestruct e2a_init as [ly [SLOCy GEy]]; 
+      edestruct e2a_init_loc as [ly [SLOCy GEy]]; 
         [auto | apply EINITy |].
       eapply WF.(ES.init_uniq); auto; congruence. }
     all: unfold e2a in *; desf.

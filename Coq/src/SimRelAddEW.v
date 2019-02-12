@@ -221,6 +221,69 @@ Section SimRelAddEW.
       econstructor.
       admit. 
     Admitted.
+
+    Lemma sim_add_ew_ws_cf ws w' k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAEW : sim_add_ew ws w' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      ws ⊆₁ Scf S' w'. 
+    Proof. 
+      cdes BSTEP_; cdes SAEW.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (ws ⊆₁ ES.cont_cf_dom S k) as wsKCF.
+      { intros x Hx.
+        assert (SE S x) as Ex.
+        { eapply sim_add_ew_wsE; eauto. }
+        assert (e2a S' x = e2a S' w') as EQE2A.
+        { erewrite wsE2A; eauto. basic_solver. }
+        erewrite e2a_ninit with (e := w') in EQE2A; auto.
+        2 : { eapply ESBasicStep.basic_step_acts_ninit_set; eauto.
+              generalize wEE'. basic_solver. }
+        erewrite e2a_ninit with (e := x) in EQE2A; auto.
+        2 : { red. unfolder. split.
+              { eapply ESBasicStep.basic_step_nupd_acts_mon; eauto. }
+              intros SEix. erewrite e2a_init in EQE2A; auto. congruence. }
+        inversion EQE2A as [[STID SSEQ]]. 
+        erewrite ESBasicStep.basic_step_tid_eq_dom 
+          with (x := x)
+          in STID; eauto. 
+        erewrite ESBasicStep.basic_step_seqn_eq_dom 
+          with (x := x)
+          in SSEQ; eauto.
+        assert (Stid S x = ES.cont_thread S k) as TIDxKCF. 
+        { destruct wEE' as [EQ | EQopt].
+          { subst w'. rewrite STID.
+            eapply ESBasicStep.basic_step_tid_e; eauto. }
+          unfold eq_opt in EQopt. 
+          destruct e' as [e'|]; [|done].
+          subst w'. rewrite STID.
+          eapply ESBasicStep.basic_step_tid_e'; eauto. }
+        destruct k. 
+        { unfold ES.cont_cf_dom; split; auto. }
+        eapply ES.seqn_lt_cont_cf_dom; eauto.
+        rewrite SSEQ. 
+        destruct wEE' as [EQ | EQopt].
+        { subst w'. 
+          erewrite ESBasicStep.basic_step_seqn_kevent
+            with (e := e); eauto. }
+        unfold eq_opt in EQopt. 
+        destruct e' as [e'|]; [|done].
+        subst w'. 
+        erewrite ESBasicStep.basic_step_seqn_e'
+            with (e' := e'); eauto.
+        erewrite ESBasicStep.basic_step_seqn_kevent
+            with (e := e); eauto. }
+      intros x Hx.
+      eapply ESBasicStep.basic_step_cf; eauto.
+      autounfold with ESStepDb.
+      generalize wEE'. basic_solver 10.
+    Qed.
       
     Lemma weaken_sim_add_ew ws w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
@@ -261,7 +324,9 @@ Section SimRelAddEW.
         unfold same_val, val.
         erewrite sim_add_ew_ws_lab; eauto.
         basic_solver. }
-    Admitted.
+      (* CFWS : ws ⊆₁ cf S' w' *)
+      eapply sim_add_ew_ws_cf; eauto.
+    Qed.
 
   End SimRelAddEWProps. 
 

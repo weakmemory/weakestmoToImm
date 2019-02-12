@@ -370,6 +370,19 @@ Proof.
   basic_solver.
 Qed.  
 
+Lemma same_thread_alt WF x y 
+      (Enix : Eninit x) 
+      (Eniy : Eninit y) 
+      (EQtid : tid x = tid y) :
+  sb⁼ x y \/ cf x y. 
+Proof. 
+  edestruct same_thread as [HH _]; auto.
+  assert ((⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘) x y) as STID.
+  { basic_solver. }
+  specialize (HH x y STID).
+  generalize HH. basic_solver 10.
+Qed.
+
 Lemma same_thread_cf_free WF X (CFF : cf_free S X) : 
   ⦗Eninit ∩₁ X⦘ ⨾ same_tid ⨾ ⦗Eninit ∩₁ X⦘ ≡ ⦗Eninit ∩₁ X⦘ ⨾ sb⁼ ⨾ ⦗Eninit ∩₁ X⦘.
 Proof.
@@ -1110,6 +1123,13 @@ Proof.
   apply WF.(sb_tid).
   apply seq_eqv_l. split; auto.
 Admitted.
+
+Lemma seqn_lt_cont_cf_dom WF k eid x 
+      (kEvent : k = CEvent eid) 
+      (EQtid : tid eid = tid x)
+      (LTseqn : seqn eid < seqn x) : 
+  cont_cf_dom S k x.
+Proof. admit. Admitted.
 
 End EventStructure.
 End ES.
