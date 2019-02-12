@@ -94,7 +94,7 @@ Section SimRelAddJF.
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
-  Notation "'Gvf'" := (G.(furr)).
+  Notation "'Gvf'" := (furr G sc).
   Notation "'Gppo'" := (G.(ppo)).
 
   Notation "'C'"  := (covered TC).
@@ -263,6 +263,27 @@ Section SimRelAddJF.
       unfolder; eexists; splits; eauto.
       eapply wf_sbE, seq_eqv_lr in SB. 
       basic_solver.
+    Qed.
+
+    Lemma sim_step_add_jf_e2a_jf_delta w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+      e2a S' □ ESstep.jf_delta w e ⊆ Gvf.
+    Proof. 
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      cdes BSTEP_; cdes SAJF; cdes AJF. 
+      autounfold with ESStepDb.
+      unfolder. ins. desf.
+      eapply vf_in_furr; [by apply SRCC|].
+      eapply cert_rf_in_vf; eauto. 
     Qed.
 
     Lemma simrel_basic_step_hb_sb_delta_dom k k' e e' S S'

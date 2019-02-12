@@ -362,12 +362,17 @@ Section SimRelCertStepProps.
       erewrite basic_step_e2a_e; eauto; try apply SRCC.
       erewrite basic_step_e2a_e'; eauto; try apply SRCC.
       basic_solver. }
-    (* e2a_jf  : e2a □ Sjf  ⊆ Gvf *)
+    (* e2a_jf : e2a □ Sjf  ⊆ Gvf *)
     { unfold_cert_step CertSTEP_.
       1,3 : 
         eapply simrel_cert_step_e2a_eqr; eauto;
         try apply ES.jfE; apply SRCC.
-      all : admit. }
+      all : cdes AJF. 
+      all : rewrite JF'.
+      all : rewrite collect_rel_union.
+      all : unionL.
+      1,3 : eapply simrel_cert_step_e2a_eqr; eauto; apply SRCC.
+      all : eapply sim_step_add_jf_e2a_jf_delta; eauto. }
     (* e2a_ew  : e2a □ Sew  ⊆ ⦗I⦘ *)
     { unfold_cert_step CertSTEP_.
       1,2 : 
