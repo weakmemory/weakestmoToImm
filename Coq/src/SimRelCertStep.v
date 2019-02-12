@@ -148,7 +148,7 @@ Section SimRelCertStep.
     exists ws w,
       ⟪ ENONE : e' = None ⟫ /\
       ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
-      ⟪ AEW : sim_add_ew TC h ws e S S' ⟫ /\
+      ⟪ AEW : sim_add_ew TC f ws e S S' ⟫ /\
       ⟪ ACO : sim_add_co G w e S S' ⟫.
 
   Definition cert_step_update
@@ -160,7 +160,7 @@ Section SimRelCertStep.
     exists rw ws ww w',
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC TC' h thread st rw e S S' ⟫ /\ 
-      ⟪ AEW : sim_add_ew TC h ws w' S S' ⟫ /\
+      ⟪ AEW : sim_add_ew TC f ws w' S S' ⟫ /\
       ⟪ ACO : sim_add_co G ww w' S S' ⟫.
 
   Definition cert_step_ 
@@ -253,13 +253,17 @@ Section SimRelCertStepProps.
     { right; left. econstructor; splits; auto.
       eapply weaken_sim_add_jf; eauto. }
     { right; right; left. 
-      econstructor. eexists. splits; auto.
-      all : admit. }
+      econstructor. 
+      eexists; splits; auto.
+      { eapply weaken_sim_add_ew; eauto. basic_solver. }
+      eapply weaken_sim_add_co; eauto. basic_solver. }
     right; right; right. 
     econstructor. 
-    do 3 eexists. splits; eauto.
-    all : admit. 
-  Admitted.
+    do 3 eexists; splits; eauto.
+    { eapply weaken_sim_add_jf; eauto. }
+    { eapply weaken_sim_add_ew; eauto. basic_solver. }
+    eapply weaken_sim_add_co; eauto. basic_solver.
+  Qed.
 
   Lemma simrel_cert_step_e2a_eqr k k' e e' S S' r r' r''
         (st st' st'' : thread_st (ES.cont_thread S k))

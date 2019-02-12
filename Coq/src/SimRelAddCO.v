@@ -122,4 +122,27 @@ Section SimRelAddCO.
     ⟪ wE2AimmCO : (immediate Gco) (e2a S' w) (e2a S' w') ⟫ /\
     ⟪ CO' : Sco S' ≡ Sco S ∪ ESstep.co_delta S w w' ⟫.
 
+  Section SimRelAddCOProps. 
+  
+  Lemma weaken_sim_add_co w w' k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SACO : sim_add_co w w' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      ESstep.add_co w w' S S'.
+  Proof. 
+    cdes BSTEP_; cdes SACO.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    
+    constructor; splits; auto.
+    all : admit.
+  Admitted.
+
+  End SimRelAddCOProps. 
+
 End SimRelAddCO.
