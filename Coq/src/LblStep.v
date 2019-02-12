@@ -267,7 +267,8 @@ Lemma lbl_step_cases thread lbls state state'
         ( (exists ord loc val, ⟪ LBL_LD : lbl = Aload false ord loc val ⟫) \/
           (exists ord loc val, ⟪ LBL_LD_EX : lbl = Aload true ord loc val ⟫) \/
           (exists ord loc val, ⟪ LBL_ST : lbl = Astore Xpln ord loc val ⟫) \/
-          (exists ord, ⟪ LBL_F : lbl = Afence ord ⟫) ) ) \/
+          (exists ord, ⟪ LBL_F : lbl = Afence ord ⟫) ) /\
+        ⟪ GRMW : rmw state'.(G) = rmw state.(G) ⟫ ) \/
       ( ⟪ EINDEX : state'.(eindex) = 2 + state.(eindex) ⟫ /\
         ⟪ ACTS : acts_set state'.(G) ≡₁ 
                  acts_set state.(G) ∪₁ 
@@ -275,9 +276,11 @@ Lemma lbl_step_cases thread lbls state state'
         ⟪ GLAB : lab state'.(G) = 
                  upd_opt (upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl) 
                               (Some (ThreadEvent thread (1 + state.(eindex)))) lbl' ⟫ /\
-        exists ordr ordw loc valr valw, 
+        (exists ordr ordw loc valr valw, 
           ⟪ LBL_LD_EX : lbl = Aload true ordr loc valr ⟫ /\
-          ⟪ LBL_ST_EX : lbl' = Some (Astore Xacq ordw loc valw) ⟫ )).
+          ⟪ LBL_ST_EX : lbl' = Some (Astore Xacq ordw loc valw) ⟫ ) /\
+        ⟪ GRMW : rmw state'.(G) ≡ rmw state.(G) ∪ 
+                 eq (ThreadEvent thread state.(eindex)) × eq (ThreadEvent thread (1 + state.(eindex))) ⟫ )).
 Proof. 
   eapply ilbl_step_alt in ILBL_STEP; desf. 
   cdes ISTEP. 
@@ -298,6 +301,8 @@ Proof.
         | erewrite eps_steps_same_G; eauto;
           unfold add in UG; rewrite UG;
           unfold acts_set; simpl; basic_solver
+        | erewrite eps_steps_same_G; [|eauto];
+          unfold add in UG; by rewrite UG
         ]
       ].
 
@@ -320,6 +325,9 @@ Proof.
           unfold add in UG; unfold add_rmw in UG; rewrite UG;
           unfold acts_set, upd_opt; simpl;
           rewrite Nat.add_1_r; basic_solver           
+        | erewrite eps_steps_same_G; [|eauto];
+          unfold add_rmw in UG; rewrite UG; simpl;
+          rewrite Nat.add_comm; basic_solver
         ]
       ].
 

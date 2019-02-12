@@ -276,7 +276,7 @@ Section SimRelContLemmas.
           erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
         erewrite contseqn; eauto.
         erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
-      destruct HH as [_ [_ [_ HH]]].
+      destruct HH as [_ [_ [_ [HH _]]]].
       destruct HH as [ordr [ordw [loc [valr [vaw [_ LBL]]]]]].
       subst l'. rewrite LBL in LABEL'. exfalso. auto. }
 

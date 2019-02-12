@@ -429,7 +429,7 @@ Section SimRelEventToActionLemmas.
       apply set_union_Propere; auto. 
       erewrite basic_step_e2a_e; eauto. 
       basic_solver. }
-    destruct HB as [_ [ACTS [_ LBLS]]].
+    destruct HB as [_ [ACTS [_ [LBLS _]]]].
     destruct LBLS as [ordr [ordw [loc [valr [valw [LA LB]]]]]].
     unfold eq_opt, option_map, opt_same_ctor in *.
     destruct e'; [|desf].

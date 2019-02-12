@@ -336,7 +336,32 @@ Section SimRelCertStepProps.
         try eapply ESBasicStep.basic_step_nupd_rmw; 
         try apply ES.rmwE; subst e'; eauto;
         apply SRCC.
-      admit. }
+      rewrite RMW'. 
+      unfold ESBasicStep.rmw_delta.
+      rewrite collect_rel_union. 
+      unionL.
+      { eapply simrel_cert_step_e2a_eqr; eauto.
+         { by apply ES.rmwE. }
+         apply SRCC. }
+      unfold eq_opt. subst e'.
+      rewrite collect_rel_cross, !set_collect_eq.
+      etransitivity; [|eapply inclusion_restr].
+      rewrite restr_relE.
+      erewrite <- dcertRMW; [|apply SRCC].
+      etransitivity.
+      2 : { eapply steps_preserve_rmw.
+            eapply ilbl_steps_in_steps; eauto. }
+      edestruct cstate_q_cont; [apply SRCC|]. desc.
+      edestruct lbl_step_cases as [l [l' HH]].
+      { eapply wf_cont_state; eauto. }
+      { apply STEP. }
+      destruct HH as [EE HH].
+      apply opt_to_list_app_singl in EE.
+      unfold opt_same_ctor in *. desf.
+      rewrite GRMW.
+      erewrite basic_step_e2a_e; eauto; try apply SRCC.
+      erewrite basic_step_e2a_e'; eauto; try apply SRCC.
+      basic_solver. }
     (* e2a_jf  : e2a □ Sjf  ⊆ Gvf *)
     { unfold_cert_step CertSTEP_.
       1,3 : 
