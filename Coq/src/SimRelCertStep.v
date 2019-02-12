@@ -373,7 +373,13 @@ Section SimRelCertStepProps.
       1,2 : 
         eapply simrel_cert_step_e2a_eqr; eauto;
         try apply ES.ewE; apply SRCC.
-      all : admit. }
+      all : cdes AEW. 
+      all : rewrite EW'.
+      all : rewrite collect_rel_union.
+      all : unionL.
+      1,3 : eapply simrel_cert_step_e2a_eqr; eauto; apply SRCC.
+      all : eapply sim_add_ew_e2a_ew_delta_eq; eauto.
+      all : try rewrite ESOME; basic_solver.
     (* e2a_co  : e2a □ Sco  ⊆ Gco *)
     { unfold_cert_step CertSTEP_.
       1,2 : 

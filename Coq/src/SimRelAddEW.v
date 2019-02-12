@@ -328,6 +328,29 @@ Section SimRelAddEW.
       eapply sim_add_ew_ws_cf; eauto.
     Qed.
 
+    Lemma sim_add_ew_e2a_ew_delta_eq ws w' k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAEW : sim_add_ew ws w' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      e2a S' □ ESstep.ew_delta ws w' ⊆ eq. 
+    Proof. 
+      cdes BSTEP_; cdes SAEW.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      autounfold with ESStepDb.
+      rewrite csE, transp_cross.
+      rewrite collect_rel_union, 
+              !collect_rel_cross,
+              !set_collect_eq.
+      rewrite !wsE2A.
+      basic_solver.
+    Qed.
+
   End SimRelAddEWProps. 
 
 End SimRelAddEW.
