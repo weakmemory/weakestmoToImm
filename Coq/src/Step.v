@@ -75,29 +75,30 @@ Definition ew_delta ws w : relation eventid :=
 
 Hint Unfold ew_delta : ESStepDb.
 
-Definition add_ew ws w' S S' : Prop :=   
+Definition add_ew ews w' S S' : Prop :=   
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\
-  ⟪ wsE : ws ⊆₁ E S ⟫ /\
-  ⟪ wsW : ws ⊆₁ W S ⟫ /\
-  ⟪ LOCWS : ws ⊆₁ same_loc S' w' ⟫ /\
-  ⟪ VALWS : ws ⊆₁ same_val S' w' ⟫ /\
-  ⟪ CFWS : ws ⊆₁ cf S' w' ⟫ /\
-  ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ws w' ⟫. 
+  ⟪ wsE : ews ⊆₁ E S ⟫ /\
+  ⟪ wsW : ews ⊆₁ W S ⟫ /\
+  ⟪ LOCWS : ews ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ VALWS : ews ⊆₁ same_val S' w' ⟫ /\
+  ⟪ CFWS : ews ⊆₁ cf S' w' ⟫ /\
+  ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ews w' ⟫. 
 
-Definition co_delta S w w' : relation eventid := 
-  dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗eq w⦘) × eq w' ∪ eq w' × codom_rel (⦗eq w⦘ ⨾ (co S)^?).
+Definition co_ws S S' w' := 
+  E S ∩₁ W S ∩₁ same_loc S' w' \₁ cf S' w'.
 
-Hint Unfold ew_delta : ESStepDb.
+Definition co_delta S S' ws w' : relation eventid := 
+  dom_rel (((co S)^? ⨾ ew S)^? ⨾ ⦗ws⦘) × eq w' 
+           ∪ eq w' × codom_rel (⦗co_ws S S' w' \₁ ws⦘ ⨾ (ew S ⨾ (co S)^?)^?).
 
-Definition add_co w w' S S' : Prop := 
-  ⟪ wE : E S w ⟫ /\
-  ⟪ wW : W S w ⟫ /\  
+Hint Unfold co_ws co_delta : ESStepDb.
+
+Definition add_co ws w' S S' : Prop := 
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\  
-  ⟪ LOC : same_loc S' w w' ⟫ /\
-  ⟪ NCF : ~ cf S' w w' ⟫ /\
-  ⟪ CO' : co S' ≡ co S ∪ co_delta S w w' ⟫.
+  ⟪ wsCO : ws ⊆₁ co_ws S S' w' ⟫ /\
+  ⟪ CO' : co S' ≡ co S ∪ co_delta S S' ws w' ⟫.
 
 Definition t_fence
            (e  : eventid)
@@ -123,21 +124,21 @@ Definition t_store
            (e  : eventid)
            (e' : option eventid)
            (S S' : ES.t) : Prop :=
-  exists ws w, 
+  exists ews ws, 
     ⟪ ENONE : e' = None ⟫ /\
     ⟪ JF' : jf S' ≡ jf S ⟫ /\
-    ⟪ AEW : add_ew ws e S S' ⟫ /\
-    ⟪ ACO : add_co w e S S' ⟫.
+    ⟪ AEW : add_ew ews e S S' ⟫ /\
+    ⟪ ACO : add_co ws e S S' ⟫.
 
 Definition t_update
            (e  : eventid)
            (e' : option eventid)
            (S S' : ES.t) : Prop := 
-  exists rw ws ww w',
+  exists w ews ws w',
     ⟪ ESOME : e' = Some w' ⟫ /\
-    ⟪ AJF : add_jf rw e S S' ⟫ /\
-    ⟪ AEW : add_ew ws w' S S' ⟫ /\
-    ⟪ ACO : add_co ww w' S S' ⟫.
+    ⟪ AJF : add_jf w e S S' ⟫ /\
+    ⟪ AEW : add_ew ews w' S S' ⟫ /\
+    ⟪ ACO : add_co ws w' S S' ⟫.
 
 Definition t_ e e' S S' :=
   t_fence e e' S S' \/ t_load e e' S S' \/ t_store e e' S S' \/ t_update e e' S S'.

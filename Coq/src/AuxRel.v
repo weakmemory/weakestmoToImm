@@ -243,6 +243,9 @@ Proof.
   unfolder; splits; ins; splits; desf; unfold not; ins; desf. 
 Qed.
   
+Lemma set_minus_inter_set_compl : s \₁ s' ≡₁ s ∩₁ set_compl s'.
+Proof. basic_solver. Qed.
+
 Lemma minus_inter_compl : r \ r' ≡ r ∩ compl_rel r'.
 Proof. basic_solver. Qed.
 

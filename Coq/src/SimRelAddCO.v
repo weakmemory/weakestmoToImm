@@ -114,24 +114,25 @@ Section SimRelAddCO.
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
-  Definition sim_add_co (w w' : eventid) (S S' : ES.t) : Prop :=
-    ⟪ wE : SE S w ⟫ /\
-    ⟪ wW : SW S w ⟫ /\  
+  Definition sim_add_co ws (w' : eventid) (S S' : ES.t) : Prop :=
     ⟪ wE' : SE S' w' ⟫ /\
     ⟪ wW' : SW S' w' ⟫ /\  
-    ⟪ wE2AimmCO : (immediate Gco) (e2a S' w) (e2a S' w') ⟫ /\
-    ⟪ CO' : Sco S' ≡ Sco S ∪ ESstep.co_delta S w w' ⟫.
+    ⟪ wsE : ws ⊆₁ SE S ⟫ /\  
+    ⟪ wsW : ws ⊆₁ SW S ⟫ /\  
+    ⟪ wsNCF : ws ∩₁ Scf S' w' ⊆₁ ∅ ⟫ /\  
+    ⟪ wsE2A : e2a S □₁ ws ⊆₁ fun w => Gco w (e2a S' w') ⟫ /\  
+    ⟪ CO' : Sco S' ≡ Sco S ∪ ESstep.co_delta S S' ws w' ⟫.
 
   Section SimRelAddCOProps. 
   
-  Lemma weaken_sim_add_co w w' k k' e e' S S' 
+  Lemma weaken_sim_add_co ws w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-          (SACO : sim_add_co w w' S S') 
+          (SACO : sim_add_co ws w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      ESstep.add_co w w' S S'.
+      ESstep.add_co ws w' S S'.
   Proof. 
     cdes BSTEP_; cdes SACO.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -140,6 +141,7 @@ Section SimRelAddCO.
     { apply SRCC. }
     
     constructor; splits; auto.
+    unfold ESstep.co_ws.
     all : admit.
   Admitted.
 
