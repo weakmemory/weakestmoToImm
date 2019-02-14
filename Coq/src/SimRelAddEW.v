@@ -12,7 +12,7 @@ From imm Require Import Events Execution
 Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction SimRelSubExec
-        SimRel SimRelCert. 
+        SimRel SimRelCert SimRelCertBasicStep. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -328,20 +328,24 @@ Section SimRelAddEW.
       eapply sim_add_ew_ws_cf; eauto.
     Qed.
 
-    Lemma sim_add_ew_e2a_ew_delta_eq ws w' k k' e e' S S' 
+    Lemma sim_add_ew_e2a_ew_eq ws w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAEW : sim_add_ew ws w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      e2a S' □ ESstep.ew_delta ws w' ⊆ eq. 
+      e2a S' □ Sew S' ⊆ eq. 
     Proof. 
       cdes BSTEP_; cdes SAEW.
       assert (ESBasicStep.t e e' S S') as BSTEP.
       { econstructor. eauto. }
       assert (ES.Wf S) as WFS.
       { apply SRCC. }
+      rewrite EW'.
+      rewrite collect_rel_union.
+      unionL.
+      { eapply simrel_cert_basic_step_e2a_eqr; eauto; apply SRCC. }
       autounfold with ESStepDb.
       rewrite csE, transp_cross.
       rewrite collect_rel_union, 
