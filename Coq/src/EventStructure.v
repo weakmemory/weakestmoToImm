@@ -1107,7 +1107,7 @@ Lemma seqn_pred WF y n (Ey : E y) (LT : n < seqn y) :
     ⟪ STIDxy : same_tid x y ⟫.
 Proof.
   assert (exists i, seqn y = i + n) as [i HH].
-  { admit. (* It has to be somewhere in standard library... *) }
+  { exists (seqn y - n). omega. }
   apply seqn_pred_imm_i in HH; auto.
   2: { split; auto. intros EI. apply WF.(seqn_init) in EI.
        rewrite EI in LT. omega. }
@@ -1122,7 +1122,7 @@ Proof.
   exists x. splits; auto.
   apply WF.(sb_tid).
   apply seq_eqv_l. split; auto.
-Admitted.
+Qed.
 
 Lemma seqn_lt_cont_cf_dom WF k eid x 
       (kEvent : k = CEvent eid) 
