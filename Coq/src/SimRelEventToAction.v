@@ -510,6 +510,35 @@ Section SimRelEventToActionLemmas.
     eapply basic_step_e2a_E0_e'; eauto.
   Qed.
 
+  Lemma basic_step_e2a_GE TC' k k' e e' S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRK : simrel_cont prog S G TC)
+        (SRE2A : simrel_e2a S G sc)
+        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (TCCOH : tc_coherent G sc TC')
+        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+     e2a S' □₁ SE S' ⊆₁ GE.
+  Proof. 
+    cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    rewrite ESBasicStep.basic_step_acts_set; eauto.  
+    rewrite !set_collect_union. 
+    rewrite !set_subset_union_l.
+    splits. 
+    { erewrite set_collect_eq_dom; [eapply SRE2A|].
+      eapply basic_step_e2a_eq_dom; eauto. } 
+    { rewrite set_collect_eq.
+      apply eq_predicate. 
+      eapply basic_step_e2a_GE_e; eauto. }
+    destruct e' as [e'|]; [|basic_solver]. 
+    unfold eq_opt. 
+    rewrite set_collect_eq.
+    apply eq_predicate. 
+    eapply basic_step_e2a_GE_e'; eauto. 
+  Qed.
+
   Lemma basic_step_e2a_lab_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRK : simrel_cont prog S G TC)
