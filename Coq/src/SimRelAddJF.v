@@ -217,7 +217,7 @@ Section SimRelAddJF.
       eapply hlab; eauto. basic_solver.
     Qed.
 
-    Lemma sim_step_add_jf_iss_sb w k k' e e' S S' 
+    Lemma sim_add_jf_iss_sb w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -265,7 +265,7 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
-    Lemma sim_step_add_jf_e2a_jf_delta w k k' e e' S S' 
+    Lemma sim_add_jf_e2a_jf_delta_vf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -346,7 +346,7 @@ Section SimRelAddJF.
       ESBasicStep.step_solver. 
     Qed.
 
-    Lemma simrel_step_add_jf_hb_delta_dom w k k' e e' S S'
+    Lemma sim_add_jf_hb_delta_dom w k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
         (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -376,7 +376,7 @@ Section SimRelAddJF.
       generalize HH; basic_solver 20.
     Qed.
 
-    Lemma simrel_step_add_jf_jf_ncf w k k' e e' S S' 
+    Lemma sim_add_jf_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -413,7 +413,7 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
-    Lemma simrel_step_add_jf_hb_jf_ncf w k k' e e' S S' 
+    Lemma sim_add_jf_hb_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -453,7 +453,7 @@ Section SimRelAddJF.
       all : by ESBasicStep.step_solver. 
     Qed.
 
-    Lemma simrel_step_add_jf_hb_tjf_ncf w k k' e e' S S' 
+    Lemma sim_add_jf_hb_tjf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -482,7 +482,7 @@ Section SimRelAddJF.
       all : try by ESBasicStep.step_solver.
 
       erewrite dom_rel_helper with (r := ESstep.hb_delta S S' k e e').
-      2 : { eapply simrel_step_add_jf_hb_delta_dom; eauto. }
+      2 : { eapply sim_add_jf_hb_delta_dom; eauto. }
       rewrite id_union. relsf.
       rewrite !inter_union_l.
       unionL.
@@ -500,7 +500,7 @@ Section SimRelAddJF.
       unfold singl_rel in JFd. desf.
     Qed.
 
-    Lemma simrel_step_add_jf_hb_jf_thb_ncf w k k' e e' S S' 
+    Lemma sim_add_jf_hb_jf_thb_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -550,14 +550,14 @@ Section SimRelAddJF.
         unfolder in JFd. desc. subst a b.
         basic_solver 10. }
       unfold transp in HBd.
-      edestruct simrel_step_add_jf_hb_delta_dom as [HX | HY]; eauto.
+      edestruct sim_add_jf_hb_delta_dom as [HX | HY]; eauto.
       { basic_solver. }
       exfalso. subst y.
       apply ES.cfE, seq_eqv_lr in CF.
       ESBasicStep.step_solver. 
     Qed.
 
-    Lemma simrel_step_add_jf_jf_necf w k k' e e' S S' 
+    Lemma sim_add_jf_jf_necf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -567,13 +567,13 @@ Section SimRelAddJF.
       Sjf S' ∩ Secf S' ≡ ∅₂. 
     Proof. 
       apply jf_necf_alt. splits.
-      { eapply simrel_step_add_jf_jf_ncf; eauto. }
-      { eapply simrel_step_add_jf_hb_jf_ncf; eauto. } 
-      { eapply simrel_step_add_jf_hb_tjf_ncf; eauto. }
-      eapply simrel_step_add_jf_hb_jf_thb_ncf; eauto.
+      { eapply sim_add_jf_jf_ncf; eauto. }
+      { eapply sim_add_jf_hb_jf_ncf; eauto. } 
+      { eapply sim_add_jf_hb_tjf_ncf; eauto. }
+      eapply sim_add_jf_hb_jf_thb_ncf; eauto.
     Qed.
     
-    Lemma simrel_step_add_jf_jfe_vis w k k' e e' S S' 
+    Lemma sim_add_jf_jfe_vis w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -595,7 +595,7 @@ Section SimRelAddJF.
       autounfold with ESStepDb.
       unfolder. ins. desc. subst.
       eapply hvis; [apply SRCC|].
-      edestruct sim_step_add_jf_iss_sb as [Iss | SB]; eauto. 
+      edestruct sim_add_jf_iss_sb as [Iss | SB]; eauto. 
       { generalize Iss. basic_solver 10. }
       exfalso. auto. 
     Qed.

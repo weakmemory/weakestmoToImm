@@ -372,7 +372,7 @@ Section SimRelCertStepProps.
       all : rewrite collect_rel_union.
       all : unionL.
       1,3 : eapply simrel_cert_step_e2a_eqr; eauto; apply SRCC.
-      all : eapply sim_step_add_jf_e2a_jf_delta; eauto. }
+      all : eapply sim_add_jf_e2a_jf_delta_vf; eauto. }
     (* e2a_ew  : e2a □ Sew  ⊆ ⦗I⦘ *)
     { unfold_cert_step CertSTEP_.
       1,2 : 
@@ -384,7 +384,7 @@ Section SimRelCertStepProps.
       all : unionL.
       1,3 : eapply simrel_cert_step_e2a_eqr; eauto; apply SRCC.
       all : eapply sim_add_ew_e2a_ew_delta_eq; eauto.
-      all : try rewrite ESOME; basic_solver.
+      all : try rewrite ESOME; basic_solver. }
     (* e2a_co  : e2a □ Sco  ⊆ Gco *)
     { unfold_cert_step CertSTEP_.
       1,2 : 
@@ -644,9 +644,9 @@ Section SimRelCertStepProps.
       eauto; try apply SRCC;
       eapply ESBasicStep.basic_step_nupd_rmw;
       subst; eauto.
-    { eapply simrel_step_add_jf_jf_necf; eauto.
+    { eapply sim_add_jf_jf_necf; eauto.
       subst. basic_solver. }
-    eapply simrel_step_add_jf_jf_necf; eauto.
+    eapply sim_add_jf_jf_necf; eauto.
     cdes AEW. type_solver.
   Qed.
 
@@ -667,7 +667,7 @@ Section SimRelCertStepProps.
     etransitivity. 
     2 : eapply ESstep.step_vis_mon; eauto.
     unfold_cert_step CertSTEP_.
-    all : try (by eapply simrel_step_add_jf_jfe_vis; eauto).
+    all : try (by eapply sim_add_jf_jfe_vis; eauto).
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
