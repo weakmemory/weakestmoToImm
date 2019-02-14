@@ -125,7 +125,7 @@ Section SimRelAddCO.
 
   Section SimRelAddCOProps. 
   
-  Lemma weaken_sim_add_co ws w' k k' e e' S S' 
+    Lemma weaken_sim_add_co ws w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
@@ -133,17 +133,40 @@ Section SimRelAddCO.
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
       ESstep.add_co ws w' S S'.
-  Proof. 
-    cdes BSTEP_; cdes SACO.
-    assert (ESBasicStep.t e e' S S') as BSTEP.
-    { econstructor. eauto. }
-    assert (ES.Wf S) as WFS.
-    { apply SRCC. }
-    
-    constructor; splits; auto.
-    unfold ESstep.co_ws.
-    all : admit.
-  Admitted.
+    Proof. 
+      cdes BSTEP_; cdes SACO.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      
+      constructor; splits; auto.
+      unfold ESstep.co_ws.
+      rewrite set_minus_inter_set_compl.
+      rewrite !set_subset_inter_r. 
+      splits; auto.
+      { intros w Wx.
+        assert ((restr_rel (SE S') (same_loc (Slab S'))) w' w) as SLOC.
+        { eapply same_lab_u2v_dom_same_loc.
+          { eapply basic_step_e2a_same_lab_u2v; eauto; apply SRCC. }
+          red; splits; auto.
+          { assert 
+              (same_loc (Glab ∘ e2a S') w' w <-> same_loc Glab (e2a S' w') (e2a S' w)) 
+              as HH. 
+            { basic_solver. }
+            apply HH.
+            apply same_loc_sym.
+            edestruct loceq_same_loc as [E2A_CO E2A_SLOC].
+            { apply loceq_co; apply SRCC. }
+            { eapply wsE2A. basic_solver. }
+            arewrite (e2a S' w = e2a S w); auto.
+            eapply basic_step_e2a_eq_dom; eauto. }
+          eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
+        red in SLOC. desf. }
+      unfold set_compl.
+      intros x Wx CF. 
+      eapply wsNCF. basic_solver.
+    Qed.
 
   End SimRelAddCOProps. 
 

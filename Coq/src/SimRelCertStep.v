@@ -145,11 +145,11 @@ Section SimRelCertStep.
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop :=
-    exists ws w,
+    exists ews ws,
       ⟪ ENONE : e' = None ⟫ /\
       ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
-      ⟪ AEW : sim_add_ew TC f ws e S S' ⟫ /\
-      ⟪ ACO : sim_add_co G w e S S' ⟫.
+      ⟪ AEW : sim_add_ew TC f ews e S S' ⟫ /\
+      ⟪ ACO : sim_add_co G ws e S S' ⟫.
 
   Definition cert_step_update
              (thread : thread_id)
@@ -157,11 +157,11 @@ Section SimRelCertStep.
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
-    exists rw ws ww w',
+    exists w ews ws w',
       ⟪ ESOME : e' = Some w' ⟫ /\ 
-      ⟪ AJF : sim_add_jf G sc TC TC' h thread st rw e S S' ⟫ /\ 
-      ⟪ AEW : sim_add_ew TC f ws w' S S' ⟫ /\
-      ⟪ ACO : sim_add_co G ww w' S S' ⟫.
+      ⟪ AJF : sim_add_jf G sc TC TC' h thread st w e S S' ⟫ /\ 
+      ⟪ AEW : sim_add_ew TC f ews w' S S' ⟫ /\
+      ⟪ ACO : sim_add_co G ws w' S S' ⟫.
 
   Definition cert_step_ 
              (thread : thread_id)
