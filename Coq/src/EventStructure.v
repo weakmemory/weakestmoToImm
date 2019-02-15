@@ -165,8 +165,8 @@ Definition seqn (e : eventid) : nat :=
   countNatP (dom_rel (sb ∩ same_tid ⨾ ⦗ eq e ⦘)) (next_act S).
 
 Record Wf :=
-  { initL : forall l, (exists b, E b /\ loc b = Some l) ->
-                      exists a, Einit a /\ loc a = Some l ;
+  { initL : forall l b (EB : E b) (LB : loc b = Some l),
+      exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
         exists l, lab e = Astore Xpln Opln l 0 ;
     init_uniq : inj_dom Einit loc;
@@ -223,11 +223,14 @@ Record Wf :=
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
-    init_tid_K : ~ (exists c k, K (k, c) /\ cont_thread S k = tid_init);
+    init_tid_K :
+      ~ (exists c k,
+            << KK  : K (k, c) >> /\
+            << CTK : cont_thread S k = tid_init >>);
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
     event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
-        exists c, K (CEvent e, c);
+        exists c, << KC : K (CEvent e, c) >>;
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
   }.
 

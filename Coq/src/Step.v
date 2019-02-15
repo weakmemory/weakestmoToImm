@@ -1538,6 +1538,44 @@ Proof.
   erewrite <- ESBasicStep.basic_step_mod_eq_dom in HH; eauto.
 Qed.  
 
+Lemma step_wf S S'
+      (STEP : t Weakestmo S S')
+      (WF : ES.Wf S) :
+  ES.Wf S'.
+Proof.
+  cdes STEP.
+  constructor.
+  { ins; desf.
+    (* TODO :
+       Currently, it's not provable.
+       We need to state somehow that there is an initial write for
+       every location mentioned in the program used to construct
+       an event structure. *)
+    admit. }
+  { ins.
+    set (EE:=INIT).
+    eapply ESBasicStep.basic_step_acts_init_set with (S:=S) in EE; eauto.
+    apply WF.(ES.init_lab) in EE. desf.
+    eexists.
+    assert ((E S) e0) as HH.
+    { eapply ESBasicStep.basic_step_acts_init_set with (S:=S) in INIT; eauto.
+      apply INIT. }
+    edestruct ESBasicStep.basic_step_tid_eq_dom; eauto.
+    rewrite <- EE.
+    eapply ESBasicStep.basic_step_lab_eq_dom; eauto. }
+  { rewrite ESBasicStep.basic_step_acts_init_set with (S:=S); eauto.
+    red. ins.
+    erewrite ESBasicStep.basic_step_loc_eq_dom in EQ; eauto.
+    2: by apply SX.
+    erewrite ESBasicStep.basic_step_loc_eq_dom with (S:=S) (S':=S')in EQ;
+      eauto.
+    2: by apply SY.
+    eapply WF; auto. }
+  {
+
+Admitted.
+
+
 (* Lemma load_step_rf e e' S S' *)
 (*       (BSTEP : ESBasicStep.t e e' S S') *)
 (*       (LSTEP: t_load e e' S S')  *)

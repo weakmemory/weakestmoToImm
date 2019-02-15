@@ -937,13 +937,6 @@ Qed.
 (** ** Well-formedness *)
 (******************************************************************************)
 
-(* Lemma step_wf e e' S S' *)
-(*       (BSTEP : t e e' S S') *)
-(*       (ISTEP: t_ e e' S S')  *)
-(*       (wfE: ES.Wf S) : *)
-(*   ES.Wf S'. *)
-(* Proof. Admitted. *)
-
 Lemma basic_step_sb_irr e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) :
