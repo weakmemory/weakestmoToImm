@@ -89,8 +89,8 @@ Definition co_ws w' S S' :=
   E S ∩₁ W S ∩₁ same_loc S' w' \₁ cf S' w'.
 
 Definition co_delta ws w' S S' : relation eventid := 
-  dom_rel (((co S)^? ⨾ ew S)^? ⨾ ⦗ws⦘) × eq w' 
-           ∪ eq w' × codom_rel (⦗co_ws w' S S' \₁ ws⦘ ⨾ (ew S ⨾ (co S)^?)^?).
+  dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗ws⦘) × eq w' ∪ 
+          eq w' × (co_ws w' S S' \₁ dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗ws⦘)).
 
 Hint Unfold co_ws co_delta : ESStepDb.
 
