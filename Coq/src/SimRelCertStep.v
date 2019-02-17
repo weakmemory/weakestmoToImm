@@ -145,11 +145,11 @@ Section SimRelCertStep.
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop :=
-    exists ews ws,
+    exists ews,
       ⟪ ENONE : e' = None ⟫ /\
       ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
       ⟪ AEW : sim_add_ew TC f ews e S S' ⟫ /\
-      ⟪ ACO : sim_add_co G ws e S S' ⟫.
+      ⟪ ACO : sim_add_co G e S S' ⟫.
 
   Definition cert_step_update
              (thread : thread_id)
@@ -157,11 +157,11 @@ Section SimRelCertStep.
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
-    exists w ews ws w',
+    exists w ews w',
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC TC' h thread st w e S S' ⟫ /\ 
       ⟪ AEW : sim_add_ew TC f ews w' S S' ⟫ /\
-      ⟪ ACO : sim_add_co G ws w' S S' ⟫.
+      ⟪ ACO : sim_add_co G w' S S' ⟫.
 
   Definition cert_step_ 
              (thread : thread_id)
@@ -362,7 +362,8 @@ Section SimRelCertStepProps.
       1,2 : 
         eapply simrel_cert_basic_step_e2a_eqr; eauto;
         try apply ES.coE; apply SRCC.
-      all : admit. }
+      all : eapply sim_add_co_e2a_co; eauto.
+      all : basic_solver. }
     (* e2a_rf_rmw : e2a □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw *)
     assert (Sjf S ⨾ Srmw S ≡ ⦗ SE S ⦘ ⨾ (Sjf S ⨾ Srmw S) ⨾ ⦗ SE S ⦘) 
       as jf_rmwE.
