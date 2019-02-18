@@ -145,11 +145,10 @@ Section SimRelCertStep.
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop :=
-    exists ews,
-      ⟪ ENONE : e' = None ⟫ /\
-      ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
-      ⟪ AEW : sim_add_ew TC f ews e S S' ⟫ /\
-      ⟪ ACO : sim_add_co G e S S' ⟫.
+    ⟪ ENONE : e' = None ⟫ /\
+    ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
+    ⟪ AEW : sim_add_ew TC f e S S' ⟫ /\
+    ⟪ ACO : sim_add_co G e S S' ⟫.
 
   Definition cert_update_step
              (thread : thread_id)
@@ -157,10 +156,10 @@ Section SimRelCertStep.
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
-    exists w ews w',
+    exists w w',
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC TC' h thread st w e S S' ⟫ /\ 
-      ⟪ AEW : sim_add_ew TC f ews w' S S' ⟫ /\
+      ⟪ AEW : sim_add_ew TC f w' S S' ⟫ /\
       ⟪ ACO : sim_add_co G w' S S' ⟫.
 
   Definition cert_step_ 
@@ -366,6 +365,33 @@ Section SimRelCertStepProps.
   (*   eapply a2e_img; eauto. apply SRCC.  *)
   (* Qed. *)
 
+  Lemma simrel_cert_fence_step k lbl S
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+        (ILBL_STEP : ilbl_step (ES.cont_thread S k) [lbl] st st') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+        (FF : exists ord, ⟪ LBL_LD : lbl = Afence ord ⟫) :
+    exists k' e e' S', 
+      ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ CertLSTEP  : cert_fence_step e e' S S' ⟫.
+  Proof. 
+    assert ((K S) (k, existT Language.state (thread_lts (ES.cont_thread S k)) st)) as KK.
+    { edestruct cstate_q_cont; [apply SRCC|]. desf. }
+    assert (wf_thread_state (ES.cont_thread S k) st) as WFST.
+    { by apply SRCC. }
+    edestruct lbl_step_cases as [la [lb [LBLS HH]]]; eauto. desf.
+    rewrite opt_to_list_none in LBLS. inv LBLS.
+    exists (CEvent (ES.next_act S)). 
+    exists (ES.next_act S). exists None.
+    eexists (ES.mk _ _ _ _ _ _ _ _ _).
+    splits.
+    { red; splits; simpl; eauto.
+      eexists. exists None. 
+      splits; simpl; eauto. }
+    red; splits; simpl; eauto. 
+    unfold is_f. by rewrite upds.
+  Qed.
+  
   Lemma simrel_cert_sim_add_jf k lbl lbl' lbls S ew co
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
@@ -464,6 +490,42 @@ Section SimRelCertStepProps.
       ⟪ CertLSTEP  : cert_load_step st e e' S S' ⟫ /\
       ⟪ LBL  : lbl = S'.(ES.lab) e ⟫.
   Proof. 
+    edestruct simrel_cert_sim_add_jf as [k' [ w [e [e' [S' HH]]]]]; eauto.
+    { erewrite opt_to_list_none. done. }    
+    desf.
+    do 4 eexists; splits; eauto.
+    econstructor; splits; eauto.
+    unfold option_map in LBL'.
+    destruct e'; done. 
+  Qed.
+
+  Lemma simrel_cert_store_step k lbl S
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+        (ILBL_STEP : ilbl_step (ES.cont_thread S k) [lbl] st st') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+        (RR : exists ord loc val, ⟪ LBL_ST : lbl = Astore Xpln ord loc val ⟫) :
+    exists k' e e' S', 
+      ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ CertLSTEP  : cert_store_step st e e' S S' ⟫ /\
+      ⟪ LBL  : lbl = S'.(ES.lab) e ⟫.
+  Proof. 
+    edestruct simrel_cert_basic_step as [k' [e [e' [S' HH]]]]; eauto.
+    { erewrite opt_to_list_none. done. }    
+    desf; do 4 eexists; splits; eauto.
+    cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (SE S' e) as SEe.
+    { eapply ESBasicStep.basic_step_acts_set; eauto. basic_solver. }
+    assert (SW S' e) as SWe.
+    { unfold is_w. by rewrite <- LBL. }
+    econstructor; splits; eauto.
+    { unfold option_map in LBL'.
+      destruct e'; done. }
+    all : econstructor; splits; eauto.
+    { subst e. eapply SiEW'.
+    2 : { apply SEe.
     edestruct simrel_cert_sim_add_jf as [k' [ w [e [e' [S' HH]]]]]; eauto.
     { erewrite opt_to_list_none. done. }    
     desf.
