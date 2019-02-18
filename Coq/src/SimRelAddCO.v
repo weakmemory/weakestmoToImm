@@ -118,7 +118,7 @@ Section SimRelAddCO.
     ⟪ wE : SE S w ⟫ /\
     ⟪ wW : SW S w ⟫ /\  
     ⟪ wNCF : ~ (Scf S') w' w ⟫ /\
-    ⟪ wE2A : Gco (e2a S' w) (e2a S' w') ⟫.
+    ⟪ wE2Aco : Gco (e2a S' w) (e2a S' w') ⟫.
 
   Definition sim_add_co (w' : eventid) (S S' : ES.t) : Prop :=
     ⟪ wE' : SE S' w' ⟫ /\
@@ -156,7 +156,7 @@ Section SimRelAddCO.
       apply same_loc_sym.
       edestruct loceq_same_loc as [E2A_CO E2A_SLOC].
       { apply loceq_co; eauto. }
-      { apply wE2A. }
+      { apply wE2Aco. }
       done. 
     Qed.
 
