@@ -376,21 +376,21 @@ Section SimRelCertStepProps.
       ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
       ⟪ CertLSTEP  : cert_fence_step e e' S S' ⟫.
   Proof. 
-    assert ((K S) (k, existT Language.state (thread_lts (ES.cont_thread S k)) st)) as KK.
-    { edestruct cstate_q_cont; [apply SRCC|]. desf. }
-    assert (wf_thread_state (ES.cont_thread S k) st) as WFST.
-    { by apply SRCC. }
-    edestruct lbl_step_cases as [la [lb [LBLS HH]]]; eauto. desf.
-    rewrite opt_to_list_none in LBLS. inv LBLS.
-    exists (CEvent (ES.next_act S)). 
-    exists (ES.next_act S). exists None.
-    eexists (ES.mk _ _ _ _ _ _ _ _ _).
-    splits.
-    { red; splits; simpl; eauto.
-      eexists. exists None. 
-      splits; simpl; eauto. }
-    red; splits; simpl; eauto. 
-    unfold is_f. by rewrite upds.
+    desf.
+    edestruct simrel_cert_basic_step as [k' [e [e' [S' HH]]]]; eauto.
+    { erewrite opt_to_list_none. done. }    
+    desf. cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (SE S' e) as SEe.
+    { eapply ESBasicStep.basic_step_acts_set; eauto. 
+      basic_solver. }
+    assert (SF S' e) as SFe.
+    { unfold is_f. by rewrite <- LBL. }
+    assert (e' = None) as e'None.
+    { ESBasicStep.step_solver. }
+    desf; do 5 eexists; splits; eauto.
+    econstructor; splits; eauto.
   Qed.
 
   Lemma simrel_cert_store_step k lbl S
