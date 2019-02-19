@@ -140,18 +140,18 @@ Section SimRelCertStep.
       ⟪ CO' : Sco S' ≡ Sco S ⟫.
 
   Definition cert_store_step
-             (thread : thread_id)
-             (st : thread_st thread)
+             (k : cont_label)
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop :=
     ⟪ ENONE : e' = None ⟫ /\
     ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
     ⟪ AEW : sim_add_ew TC f e S S' ⟫ /\
-    ⟪ ACO : sim_add_co G e S S' ⟫.
+    ⟪ ACO : sim_add_co G k e S S' ⟫.
 
   Definition cert_update_step
              (thread : thread_id)
+             (k : cont_label)
              (st : thread_st thread)
              (e  : eventid)
              (e' : option eventid)
@@ -160,25 +160,26 @@ Section SimRelCertStep.
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC TC' h thread st w e S S' ⟫ /\ 
       ⟪ AEW : sim_add_ew TC f w' S S' ⟫ /\
-      ⟪ ACO : sim_add_co G w' S S' ⟫.
+      ⟪ ACO : sim_add_co G k w' S S' ⟫.
 
   Definition cert_step_ 
              (thread : thread_id)
+             (k : cont_label)
              (st : thread_st thread)
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
     cert_fence_step e e' S S' \/ 
     cert_load_step  st e e' S S' \/ 
-    cert_store_step st e e' S S' \/ 
-    cert_update_step st e e' S S'. 
+    cert_store_step k e e' S S' \/ 
+    cert_update_step k st e e' S S'. 
 
   Definition cert_step 
              (e  : eventid)
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
     exists k k' (st st' : thread_st (ES.cont_thread S k)),  
-      ⟪ CertTT : cert_step_ st e e' S S' ⟫ /\
+      ⟪ CertTT : cert_step_ k st e e' S S' ⟫ /\
       ⟪ BSTEP : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫. 
 
   Ltac unfold_cert_step H := 
@@ -391,6 +392,98 @@ Section SimRelCertStepProps.
     red; splits; simpl; eauto. 
     unfold is_f. by rewrite upds.
   Qed.
+
+  (* we'll need this hack because of the way 
+     `loc` is defined in IMM *)
+  Definition loc_lab lbl :=
+    match lbl with
+    | Aload _ _ l _
+    | Astore _ _ l _ => Some l
+    | _ => None
+    end.
+
+  Lemma simrel_cert_store_step k lbl S
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+        (ILBL_STEP : ilbl_step (ES.cont_thread S k) [lbl] st st') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+        (WW : exists ord loc val, ⟪ LBL_ST : lbl = Astore Xpln ord loc val ⟫) :
+    exists k' e e' S', 
+      ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ CertLSTEP  : cert_store_step k e e' S S' ⟫.
+  Proof. 
+    desf.
+    edestruct simrel_cert_basic_step as [k' [e [e' [S' HH]]]]; eauto.
+    { erewrite opt_to_list_none. done. }    
+    desf. cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (SE S' e) as SEe.
+    { eapply ESBasicStep.basic_step_acts_set; eauto. 
+      basic_solver. }
+    assert (SW S' e) as SWe.
+    { unfold is_w. by rewrite <- LBL. }
+    assert (e' = None) as e'None.
+    { ESBasicStep.step_solver. }
+    desf; do 5 eexists; splits; eauto.
+    econstructor; splits; eauto.
+    all : econstructor; splits; eauto.   
+    { unfold ESstep.ew_delta, sim_ews. 
+      erewrite basic_step_e2a_e with (e := ES.next_act S); 
+        eauto; try apply SRCC. }
+    unfold ESstep.co_delta, sim_ws. 
+    arewrite (
+     ESstep.co_ws (ES.next_act S) S S' ≡₁ 
+       SE S ∩₁ SW S ∩₁ (fun w => Sloc S w = loc_lab lbl) \₁ ES.cont_cf_dom S k
+    ).
+    { unfold ESstep.co_ws.
+      arewrite (
+        SE S ∩₁ SW S ∩₁ same_loc (Slab S') (ES.next_act S) \₁ (Scf S') (ES.next_act S) ≡
+        )
+      rewrite <- set_interK with (s := SE S).
+      repeat apply set_inter_Propere; auto. 
+      { unfold same_loc. unfold Events.loc.
+        
+    
+    { admit. }
+    { econstructor; splits; eauto.
+      { admit. }
+      { admit. }
+      cdes BSTEP_. rewrite EVENT.
+      unfold ESstep.ew_delta, sim_ews. 
+      erewrite basic_step_e2a_e with (e := ES.next_act S); 
+        eauto; try apply SRCC.
+      subst. eapply BSTEP_. }
+      apply STEP.
+      eapply EW'.
+          
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    econstructor; splits; eauto.
+    
+
+    edestruct lbl_step_cases as [la [lb [LBLS HH]]]; eauto. desf.
+    rewrite opt_to_list_none in LBLS. inv LBLS.
+    exists (CEvent (ES.next_act S)). 
+    exists (ES.next_act S). exists None.
+    eexists (ES.mk _ _ _ _ _ _ _ _ _).
+    splits.
+    { red; splits; simpl; eauto.
+      eexists. exists None. 
+      splits; simpl; eauto. }
+    red; splits; simpl; eauto. 
+    { red; splits; simpl; eauto. 
+      { basic_solver. }
+      { unfold is_w. by rewrite upds. }
+      unfold ESstep.ew_delta, sim_ews. 
+      erewrite basic_step_e2a_e with (e := ES.next_act S); 
+        eauto; try apply SRCC.
+      2 : { 
+      2 : apply SRCC.
+      { 
+      simpl.
+    
+    
   
   Lemma simrel_cert_sim_add_jf k lbl lbl' lbls S ew co
         (st st' st'' : thread_st (ES.cont_thread S k))

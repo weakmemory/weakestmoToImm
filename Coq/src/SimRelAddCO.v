@@ -114,38 +114,80 @@ Section SimRelAddCO.
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
-  Definition sim_ws (w' : eventid) (S S' : ES.t) := fun w => 
+  Definition sim_ws (k : cont_label) (w' : eventid) (S S' : ES.t) := fun w => 
     ⟪ wE : SE S w ⟫ /\
     ⟪ wW : SW S w ⟫ /\  
-    ⟪ wNCF : ~ (Scf S') w' w ⟫ /\
-    ⟪ wE2Aco : Gco (e2a S' w) (e2a S' w') ⟫.
+    ⟪ wNCF : ~ ES.cont_cf_dom S k w ⟫ /\
+    ⟪ wE2Aco : Gco (e2a S w) (e2a S' w') ⟫.
 
-  Definition sim_add_co (w' : eventid) (S S' : ES.t) : Prop :=
+  Definition sim_add_co (k : cont_label) (w' : eventid) (S S' : ES.t) : Prop :=
     ⟪ wE' : SE S' w' ⟫ /\
     ⟪ wW' : SW S' w' ⟫ /\  
     (* ⟪ wsE : ws ⊆₁ SE S ⟫ /\ *)
     (* ⟪ wsW : ws ⊆₁ SW S ⟫ /\ *)
     (* ⟪ wsNCF : ws ∩₁ Scf S' w' ⊆₁ ∅ ⟫ /\ *)
     (* ⟪ wsE : ws ⊆₁ fun w => Gco (e2a S' w) (e2a S' w') ⟫ /\   *)
-    ⟪ CO' : Sco S' ≡ Sco S ∪ ESstep.co_delta (sim_ws w' S S') w' S S' ⟫.
+    ⟪ CO' : Sco S' ≡ Sco S ∪ ESstep.co_delta (sim_ws k w' S S') w' S S' ⟫.
 
   Section SimRelAddCOProps. 
 
-    Lemma sim_wsE w' S S' :
-      sim_ws w' S S' ⊆₁ SE S.
+    Lemma sim_wsE k w' S S' :
+      sim_ws k w' S S' ⊆₁ SE S.
     Proof. unfold sim_ws. basic_solver. Qed.
 
-    Lemma sim_wsW w' S S' :
-      sim_ws w' S S' ⊆₁ SW S.
+    Lemma sim_wsW k w' S S' :
+      sim_ws k w' S S' ⊆₁ SW S.
     Proof. unfold sim_ws. basic_solver. Qed.
 
-    Lemma sim_ws_nCF w' S S' (WFS : ES.Wf S) :
-      sim_ws w' S S' ⊆₁ set_compl (Scf S' w').
-    Proof. unfold sim_ws. basic_solver. Qed.
-
-    Lemma sim_ws_same_loc_e2a w' S S' (WFS : ES.Wf S) (WFG : Wf G) :
-      sim_ws w' S S' ⊆₁ same_loc (Glab ∘ (e2a S')) w'.
+    Lemma sim_ws_e2a_co k w' S S' :
+      e2a S □₁ sim_ws k w' S S' ⊆₁ fun w => Gco w (e2a S' w').
     Proof. 
+      unfold sim_ws. unfolder.
+      ins. desc. basic_solver.
+    Qed.
+
+    Lemma sim_ws_basic_step_nCF w' k k' e e' S S'
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') :
+      sim_ws k w' S S' ⊆₁ set_compl (Scf S' w').
+    Proof. 
+      cdes BSTEP_.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      unfold sim_ws. red. ins. desc.
+      intros CF.
+      eapply ESBasicStep.basic_step_cf in CF; eauto.
+      unfold ESBasicStep.cf_delta in CF.
+      assert (~ SE S w') as nEw'.
+      { red. ins. destruct wEE' as [HA | HB]; desf.
+        { eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
+        unfold eq_opt in HB. 
+        destruct e' as [e'|]; desf.
+        eapply ESBasicStep.basic_step_acts_set_ne'; eauto. }
+      unfolder in CF. desf.
+      { apply nEw'. apply ES.cfE, seq_eqv_lr in CF. desf. }
+      all : apply nEw'; eapply ES.cont_cf_domE in CF; eauto. 
+    Qed.
+
+    Lemma sim_ws_basic_step_loc_e2a w' k k' e e' S S'
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') :
+      sim_ws k w' S S' ⊆₁ same_loc (Glab ∘ (e2a S')) w'.
+    Proof. 
+      cdes BSTEP_. 
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Wf G) as WFG.
+      { apply SRCC. }
       unfold sim_ws.
       intros w Wx. desc.
       assert 
@@ -157,23 +199,16 @@ Section SimRelAddCO.
       edestruct loceq_same_loc as [E2A_CO E2A_SLOC].
       { apply loceq_co; eauto. }
       { apply wE2Aco. }
-      done. 
+      erewrite basic_step_e2a_eq_dom; eauto.
     Qed.
 
-    Lemma sim_ws_e2a_co w' S S' :
-      e2a S' □₁ sim_ws w' S S' ⊆₁ fun w => Gco w (e2a S' w').
-    Proof. 
-      unfold sim_ws. unfolder.
-      ins. desc. basic_solver.
-    Qed.
-
-    Lemma sim_ws_basic_step_loc_ws w' k k' e e' S S'
+    Lemma sim_ws_basic_step_loc w' k k' e e' S S'
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
-      sim_ws w' S S' ⊆₁ same_loc (Slab S') w'.
+      sim_ws k w' S S' ⊆₁ same_loc (Slab S') w'.
     Proof.
       cdes BSTEP_. 
       assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -187,7 +222,7 @@ Section SimRelAddCO.
       { eapply same_lab_u2v_dom_same_loc.
         { eapply basic_step_e2a_same_lab_u2v; eauto; apply SRCC. }
         red; splits; auto.
-        { eapply sim_ws_same_loc_e2a; eauto. }
+        { eapply sim_ws_basic_step_loc_e2a; eauto. }
         { eapply ESBasicStep.basic_step_acts_set; eauto.
           generalize wEE'. basic_solver. }
         eapply ESBasicStep.basic_step_acts_set_mon; eauto. 
@@ -201,7 +236,7 @@ Section SimRelAddCO.
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
-      sim_ws w' S S' ⊆₁ ESstep.co_ws w' S S'.
+      sim_ws k w' S S' ⊆₁ ESstep.co_ws w' S S'.
     Proof. 
       assert (ES.Wf S) as WFS.
       { apply SRCC. }
@@ -210,17 +245,17 @@ Section SimRelAddCO.
       rewrite !set_subset_inter_r. 
       splits. 
       all : eauto using 
-        sim_wsE, sim_wsW, sim_ws_nCF, sim_ws_basic_step_loc_ws. 
+        sim_wsE, sim_wsW, sim_ws_basic_step_nCF, sim_ws_basic_step_loc. 
     Qed.
     
     Lemma weaken_sim_add_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-          (SACO : sim_add_co w' S S') 
+          (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      ESstep.add_co (sim_ws w' S S') w' S S'.
+      ESstep.add_co (sim_ws k w' S S') w' S S'.
     Proof. 
       cdes BSTEP_; cdes SACO.
       constructor; splits; eauto using sim_ws_basic_step_co_ws.
@@ -248,7 +283,7 @@ Section SimRelAddCO.
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
-      e2a S' □₁ (sim_ws w' S S') ≡₁ e2a S □₁ (sim_ws w' S S').
+      e2a S' □₁ (sim_ws k w' S S') ≡₁ e2a S □₁ (sim_ws k w' S S').
     Proof.   
       cdes BSTEP_.
       assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -266,8 +301,8 @@ Section SimRelAddCO.
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
-      e2a S' □₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws w' S S'⦘) ≡₁ 
-          e2a S □₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws w' S S'⦘).
+      e2a S' □₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘) ≡₁ 
+          e2a S □₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘).
     Proof. 
         cdes BSTEP_.
       assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -278,7 +313,7 @@ Section SimRelAddCO.
       red. ins. 
       eapply basic_step_e2a_eq_dom; eauto.
       generalize SX. generalize x.
-      fold (set_subset (dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws w' S S'⦘)) (SE S)).
+      fold (set_subset (dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘)) (SE S)).
       rewrite ES.coE, ES.ewE, sim_wsE; auto.
       basic_solver.
     Qed.
@@ -287,8 +322,8 @@ Section SimRelAddCO.
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
-      e2a S' □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws w' S S'⦘)) ≡₁ 
-          e2a S □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws w' S S'⦘)).
+      e2a S' □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘)) ≡₁ 
+          e2a S □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘)).
     Proof.   
       cdes BSTEP_.
       assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -306,10 +341,10 @@ Section SimRelAddCO.
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')
-          (SACO : sim_add_co w' S S')
+          (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
           (wEE' : (eq e ∪₁ eq_opt e') w') :
-      e2a S □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws w' S S'⦘)) ⊆₁
+      e2a S □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘)) ⊆₁
           fun w => Gco (e2a S' w') w.
     Proof.
       cdes BSTEP_; cdes SACO.
@@ -358,16 +393,17 @@ Section SimRelAddCO.
       eexists; eauto. 
       unfold sim_ws. 
       splits; auto.
-      arewrite (e2a S' w = e2a S w).
-      { eapply basic_step_e2a_eq_dom; eauto. }
-      done.
+      red. ins. apply wNCF.
+      eapply ESBasicStep.basic_step_cf; eauto.
+      autounfold with ESStepDb.
+      generalize H wEE'. basic_solver 10. 
     Admitted.
 
     Lemma sim_add_co_e2a_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-          (SACO : sim_add_co w' S S') 
+          (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
       e2a S' □ Sco S' ⊆ Gco.
@@ -392,11 +428,10 @@ Section SimRelAddCO.
         rewrite !cross_union_r.
         unionL.
         { red. intros x y [Wx EQy]. subst y.
-          eapply sim_ws_e2a_co, basic_step_e2a_sim_ws_eq; eauto. }
+          eapply sim_ws_e2a_co; eauto. }
         { red. intros x y [Wx EQy]. 
           unfolder in Wx. desf.
           eapply sim_ws_e2a_co; eauto.
-          eapply basic_step_e2a_sim_ws_eq; eauto.
           unfolder. 
           eexists; splits; eauto; subst.
           symmetry. eapply e2a_ew; [apply SRCC|].
@@ -406,14 +441,12 @@ Section SimRelAddCO.
           eapply co_trans; [apply SRCC | |]; eauto. 
           { eapply e2a_co; [apply SRCC|]. basic_solver 10. }
           eapply sim_ws_e2a_co; eauto.
-          eapply basic_step_e2a_sim_ws_eq; eauto.
           basic_solver. }
         red. intros x y [Wx EQy]. 
         unfolder in Wx. desf.
         eapply co_trans; [apply SRCC | |]; eauto. 
         { eapply e2a_co; [apply SRCC|]. basic_solver 10. }
         eapply sim_ws_e2a_co; eauto.
-        eapply basic_step_e2a_sim_ws_eq; eauto.
         unfolder. 
         eexists; splits; eauto; subst.
         symmetry. eapply e2a_ew; [apply SRCC|].

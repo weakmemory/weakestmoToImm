@@ -115,7 +115,7 @@ Section SimRelAddEW.
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
   
   Definition sim_ews (w' : eventid) (S S' : ES.t) := fun w => 
-    ⟪ wsE2Aeq : e2a S' w = e2a S' w' ⟫ /\
+    ⟪ wsE2Aeq : e2a S w = e2a S' w' ⟫ /\
     ⟪ wEWI : dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘) w ⟫.
 
   Definition sim_add_ew (w' : eventid) (S S' : ES.t) : Prop :=
@@ -126,10 +126,6 @@ Section SimRelAddEW.
     ⟪ EW' : Sew S' ≡ Sew S ∪ ESstep.ew_delta (sim_ews w' S S') w' ⟫. 
 
   Section SimRelAddEWProps. 
-
-    Lemma sim_ews_eq w' S S' :
-      e2a S' □₁ sim_ews w' S S' ⊆₁ eq (e2a S' w').
-    Proof. unfold sim_ews. basic_solver. Qed.
 
     Lemma sim_ewsE w' k S S' 
           (st st' : thread_st (ES.cont_thread S k))
@@ -175,14 +171,18 @@ Section SimRelAddEW.
       basic_solver.
     Qed.
 
+    Lemma sim_ews_e2a_eq w' S S' :
+      e2a S □₁ sim_ews w' S S' ⊆₁ eq (e2a S' w').
+    Proof. unfold sim_ews. basic_solver. Qed.
+
     Lemma sim_ews_lab_e2a w' k S S' 
           (st st' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st') :
-      (Glab ∘ e2a S') □₁ (sim_ews w' S S') ⊆₁ eq ((Glab ∘ (e2a S')) w').
+      (Glab ∘ e2a S) □₁ (sim_ews w' S S') ⊆₁ eq ((Glab ∘ (e2a S')) w').
     Proof. 
       unfold compose. 
       intros a [x [WSx LABx]]. subst a.
-      arewrite (e2a S' x = e2a S' w'); auto.
+      arewrite (e2a S x = e2a S' w'); auto.
       generalize WSx. unfold sim_ews.
       basic_solver.
     Qed.
@@ -193,7 +193,7 @@ Section SimRelAddEW.
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      (Slab S') □₁ sim_ews w' S S' ⊆₁ eq (Slab S' w').
+      (Slab S) □₁ sim_ews w' S S' ⊆₁ eq (Slab S' w').
     Proof. 
       assert (ESBasicStep.t e e' S S') as BSTEP.
       { econstructor. eauto. }
@@ -214,6 +214,8 @@ Section SimRelAddEW.
         basic_solver 10. }
       assert (e2a S' w' = a) as EQaE2A.
       { erewrite <- wsE2Aeq; eauto.
+        arewrite (e2a S x = e2a S' x).
+        { symmetry. erewrite basic_step_e2a_eq_dom; eauto. }
         destruct EWr as [EQ | EW].
         { basic_solver. }
         rewrite <- EQfaE2A. 
@@ -225,10 +227,8 @@ Section SimRelAddEW.
         { basic_solver 6. }
         eapply ES.ewE, seq_eqv_lr in EW; auto. desf. }
       subst l.
-      assert (Slab S' x = Glab a) as EQaLAB.
-      { erewrite ESBasicStep.basic_step_lab_eq_dom
-          with (x := x); eauto.
-        erewrite <- flab; [| apply SRCC| basic_solver].
+      assert (Slab S x = Glab a) as EQaLAB.
+      { erewrite <- flab; [| apply SRCC| basic_solver].
         unfold compose.
         destruct EWr as [EQ | EW].
         { basic_solver. }
@@ -273,22 +273,21 @@ Section SimRelAddEW.
       { intros x Hx.
         assert (SE S x) as Ex.
         { eapply sim_ewsE; eauto. }
-        assert (e2a S' x = e2a S' w') as EQE2A.
+        assert (e2a S x = e2a S' w') as EQE2A.
         { unfold sim_ews in Hx. desf. }
         erewrite e2a_ninit with (e := w') in EQE2A; auto.
         2 : { eapply ESBasicStep.basic_step_acts_ninit_set; eauto.
               generalize wEE'. basic_solver. }
         erewrite e2a_ninit with (e := x) in EQE2A; auto.
-        2 : { red. unfolder. split.
-              { eapply ESBasicStep.basic_step_nupd_acts_mon; eauto. }
+        2 : { red. unfolder. split; auto.
               intros SEix. erewrite e2a_init in EQE2A; auto. congruence. }
         inversion EQE2A as [[STID SSEQ]]. 
-        erewrite ESBasicStep.basic_step_tid_eq_dom 
-          with (x := x)
-          in STID; eauto. 
-        erewrite ESBasicStep.basic_step_seqn_eq_dom 
-          with (x := x)
-          in SSEQ; eauto.
+        (* erewrite ESBasicStep.basic_step_tid_eq_dom  *)
+        (*   with (x := x) *)
+        (*   in STID; eauto.  *)
+        (* erewrite ESBasicStep.basic_step_seqn_eq_dom  *)
+        (*   with (x := x) *)
+        (*   in SSEQ; eauto. *)
         assert (Stid S x = ES.cont_thread S k) as TIDxKCF. 
         { destruct wEE' as [EQ | EQopt].
           { subst w'. rewrite STID.
@@ -341,11 +340,17 @@ Section SimRelAddEW.
       (* LOCWS : ws ⊆₁ same_loc S' w' *)
       { intros x WSx.
         unfold same_loc, loc.
+        arewrite (Slab S' x = Slab S x).
+        { erewrite ESBasicStep.basic_step_lab_eq_dom; eauto.
+          eapply sim_ewsE; eauto. }
         erewrite sim_ews_lab; eauto.
         basic_solver. }
       (* VALWS : ws ⊆₁ same_val S' w' *)
       { intros x WSx.
         unfold same_val, val.
+        arewrite (Slab S' x = Slab S x).
+        { erewrite ESBasicStep.basic_step_lab_eq_dom; eauto.
+          eapply sim_ewsE; eauto. }
         erewrite sim_ews_lab; eauto.
         basic_solver. }
       (* CFWS : ws ⊆₁ cf S' w' *)
@@ -375,8 +380,11 @@ Section SimRelAddEW.
       rewrite collect_rel_union, 
               !collect_rel_cross,
               !set_collect_eq.
-      rewrite !sim_ews_eq.
-      basic_solver.
+      erewrite set_collect_eq_dom.
+      { rewrite !sim_ews_e2a_eq. basic_solver. }
+      eapply eq_dom_mori; eauto.
+      2 : eapply basic_step_e2a_eq_dom; eauto.
+      eapply sim_ewsE; eauto. 
     Qed.
 
   End SimRelAddEWProps. 
