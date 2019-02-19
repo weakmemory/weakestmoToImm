@@ -129,7 +129,7 @@ Section SimRelAddEW.
 
     Lemma sim_ewsE w' k S S' 
           (st st' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st') :
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st') :
       sim_ews w' S S' ⊆₁ SE S.
     Proof. 
       unfold sim_ews. 
@@ -149,7 +149,7 @@ Section SimRelAddEW.
 
     Lemma sim_ewsW w' k S S' 
           (st st' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st') :
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st') :
       sim_ews w' S S' ⊆₁ SW S.
     Proof. 
       assert (ES.Wf S) as WFS.
@@ -177,7 +177,7 @@ Section SimRelAddEW.
 
     Lemma sim_ews_lab_e2a w' k S S' 
           (st st' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st') :
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st') :
       (Glab ∘ e2a S) □₁ (sim_ews w' S S') ⊆₁ eq ((Glab ∘ (e2a S')) w').
     Proof. 
       unfold compose. 
@@ -189,7 +189,7 @@ Section SimRelAddEW.
 
     Lemma sim_ews_lab w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
@@ -258,7 +258,7 @@ Section SimRelAddEW.
 
     Lemma sim_ews_cf w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
@@ -319,7 +319,7 @@ Section SimRelAddEW.
       
     Lemma weaken_sim_add_ew w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAEW : sim_add_ew w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
@@ -359,7 +359,7 @@ Section SimRelAddEW.
 
     Lemma sim_add_ew_e2a_ew_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAEW : sim_add_ew w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 

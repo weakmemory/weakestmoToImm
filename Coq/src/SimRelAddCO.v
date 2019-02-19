@@ -148,7 +148,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_nCF w' k k' e e' S S'
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
       sim_ws k w' S S' ⊆₁ set_compl (Scf S' w').
@@ -175,7 +175,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_loc_e2a w' k k' e e' S S'
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
@@ -204,7 +204,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_loc w' k k' e e' S S'
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
@@ -232,7 +232,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_co_ws w' k k' e e' S S'
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
@@ -250,7 +250,7 @@ Section SimRelAddCO.
     
     Lemma weaken_sim_add_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
@@ -263,7 +263,7 @@ Section SimRelAddCO.
     
     Lemma basic_step_e2a_co_ws_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
       e2a S' □₁ (ESstep.co_ws w' S S') ≡₁ e2a S □₁ (ESstep.co_ws w' S S').
     Proof.   
@@ -281,7 +281,7 @@ Section SimRelAddCO.
 
     Lemma basic_step_e2a_sim_ws_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
       e2a S' □₁ (sim_ws k w' S S') ≡₁ e2a S □₁ (sim_ws k w' S S').
     Proof.   
@@ -299,7 +299,7 @@ Section SimRelAddCO.
 
     Lemma basic_step_e2a_co_ew_sim_ws_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
       e2a S' □₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘) ≡₁ 
           e2a S □₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘).
@@ -320,7 +320,7 @@ Section SimRelAddCO.
 
     Lemma basic_step_e2a_co_ws_minus_co_ew_sim_ws_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') :
       e2a S' □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘)) ≡₁ 
           e2a S □₁ (ESstep.co_ws w' S S' \₁ dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗sim_ws k w' S S'⦘)).
@@ -339,7 +339,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_co_ws_minus_co w' k k' e e' S S'
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
@@ -401,7 +401,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 

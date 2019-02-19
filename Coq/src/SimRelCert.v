@@ -18,16 +18,16 @@ Section SimRelCert.
   Variable G : execution.
   Variable sc : relation actid.
   Variable TC : trav_config.
-  Variable f : actid -> eventid.
   Variable TC': trav_config.
+  Variable f : actid -> eventid.
   Variable h : actid -> eventid.
-  Variable q : cont_label.
+  Variable k : cont_label.
 
-  (* A state in a continuation related to q in S. *)
-  Variable state : ProgToExecution.state.
+  (* A state in a continuation related to k in S. *)
+  Variable st : ProgToExecution.state.
 
   (* A state, which is reachable from 'state' and which represents a graph certification. *)
-  Variable state' : ProgToExecution.state.
+  Variable st' : ProgToExecution.state.
   
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -106,22 +106,22 @@ Section SimRelCert.
 
   Notation "'Gvf'" := (furr G sc).
 
-  Notation "'qtid'" := (ES.cont_thread S q) (only parsing).
+  Notation "'ktid'" := (ES.cont_thread S k) (only parsing).
 
-  Notation "'E0'" := (E0 G TC' qtid).
+  Notation "'E0'" := (E0 G TC' ktid).
 
-  Notation "'new_rf'" := (cert_rf G sc TC' qtid).
+  Notation "'new_rf'" := (cert_rf G sc TC' ktid).
   
-  Notation "'contG'" := state.(ProgToExecution.G).
-  Notation "'certG'" := state'.(ProgToExecution.G).
+  Notation "'contG'" := st.(ProgToExecution.G).
+  Notation "'certG'" := st'.(ProgToExecution.G).
 
   Notation "'contE'" := contG.(acts_set).
   Notation "'certE'" := certG.(acts_set).
 
-  Notation "'certLab'" := (certLab G state').
+  Notation "'certLab'" := (certLab G st').
 
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
-  Notation "'hdom'" := (cert_dom G TC (ES.cont_thread S q) state) (only parsing).
+  Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
 
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>
@@ -133,28 +133,28 @@ Section SimRelCert.
       end.
 
   Record simrel_cstate := 
-    { cstate_stable : stable_state qtid state';
-      cstate_q_cont : Kstate (q, state);
-      cstate_reachable : (step qtid)＊ state state';
-      cstate_covered : C ∩₁ GTid qtid ⊆₁ contE; 
+    { cstate_stable : stable_state ktid st';
+      cstate_q_cont : Kstate (k, st);
+      cstate_reachable : (step ktid)＊ st st';
+      cstate_covered : C ∩₁ GTid ktid ⊆₁ contE; 
     }.
 
   Record simrel_cert :=
     { sim_com : simrel_common prog S G sc TC f;
 
-      cert : cert_graph G sc TC TC' qtid state';
+      cert : cert_graph G sc TC TC' ktid st';
       cstate : simrel_cstate; 
 
-      tr_step : isim_trav_step G sc qtid TC TC';
+      tr_step : isim_trav_step G sc ktid TC TC';
 
-      hgfix : fixset (ES.cont_sb_dom S q) (h ∘ (e2a S));
+      hgfix : fixset (ES.cont_sb_dom S k) (h ∘ (e2a S));
 
-      sr_a2e_h : simrel_a2e S h (cert_dom G TC qtid state);
+      sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
 
-      sr_exec_h : simrel_subexec S TC h (cert_dom G TC qtid state); 
+      sr_exec_h : simrel_subexec S TC h (cert_dom G TC ktid st); 
 
       hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
-      hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; 
+      hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h; 
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
@@ -190,7 +190,7 @@ Section SimRelCert.
     Qed.
 
     Lemma wf_cont_state : 
-      wf_thread_state (ES.cont_thread S q) state. 
+      wf_thread_state (ES.cont_thread S k) st. 
     Proof. 
       edestruct cstate_q_cont. 
       { apply SRCC. }
@@ -212,7 +212,7 @@ Section SimRelCert.
     Admitted.
     
     Lemma SEinit_in_cont_sb_dom : 
-      SEinit ⊆₁ ES.cont_sb_dom S q.
+      SEinit ⊆₁ ES.cont_sb_dom S k.
     Proof. 
       eapply ES.cont_sb_dom_Einit; [apply SRCC|].
       edestruct cstate_q_cont; [apply SRCC|].
@@ -220,7 +220,7 @@ Section SimRelCert.
     Qed.
 
     Lemma GEinit_in_e2a_cont_sb_dom : 
-      GEinit ⊆₁ e2a S □₁ ES.cont_sb_dom S q. 
+      GEinit ⊆₁ e2a S □₁ ES.cont_sb_dom S k. 
     Proof. 
       erewrite <- e2a_same_Einit.
       2-4 : eapply SRCC.
@@ -229,19 +229,19 @@ Section SimRelCert.
     Qed.
 
     Lemma cont_sb_dom_in_hhdom :
-      ES.cont_sb_dom S q ⊆₁ h □₁ hdom.
+      ES.cont_sb_dom S k ⊆₁ h □₁ hdom.
     Proof.
       unfold cert_dom.
-      arewrite (ES.cont_sb_dom S q ≡₁ h □₁ (e2a S □₁ ES.cont_sb_dom S q)) at 1.
+      arewrite (ES.cont_sb_dom S k ≡₁ h □₁ (e2a S □₁ ES.cont_sb_dom S k)) at 1.
       { rewrite set_collect_compose.
         apply fixset_set_fixpoint.
         apply SRCC. }
-      erewrite set_union_minus with (s := ES.cont_sb_dom S q) (s' := SEinit).
+      erewrite set_union_minus with (s := ES.cont_sb_dom S k) (s' := SEinit).
       2 : by apply SEinit_in_cont_sb_dom.
       rewrite !set_collect_union.
       apply set_subset_union_l. split.
-      { arewrite (acts_set (ProgToExecution.G state) ≡₁ 
-                           e2a S □₁ (ES.cont_sb_dom S q \₁ SEinit)).
+      { arewrite (acts_set (ProgToExecution.G st) ≡₁ 
+                           e2a S □₁ (ES.cont_sb_dom S k \₁ SEinit)).
         2: by eauto with hahn.
         eapply contstateE; eauto.
         1-2: by apply SRCC.
@@ -254,10 +254,10 @@ Section SimRelCert.
     Qed.
 
     Lemma cfk_hdom : 
-      h □₁ hdom ∩₁ ES.cont_cf_dom S q ≡₁ ∅.
+      h □₁ hdom ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
     Proof. 
       assert (ES.Wf S) as WFS by apply SRCC.
-      edestruct cstate_q_cont as [st [stEQ KK]]; 
+      edestruct cstate_q_cont as [st_ [stEQ KK]]; 
         [apply SRCC|].
       red; split; [|basic_solver].
       rewrite cert_dom_alt; [|apply SRCC].
@@ -278,8 +278,8 @@ Section SimRelCert.
       erewrite contstateE;
         [|apply SRCC | apply SRCC | rewrite stEQ; eapply KK].
       arewrite 
-        (h □₁ (e2a S □₁ (ES.cont_sb_dom S q \₁ SEinit)) ≡₁ 
-           ES.cont_sb_dom S q \₁ SEinit).
+        (h □₁ (e2a S □₁ (ES.cont_sb_dom S k \₁ SEinit)) ≡₁ 
+           ES.cont_sb_dom S k \₁ SEinit).
       { rewrite set_collect_compose.
         symmetry. eapply fixset_set_fixpoint.
         eapply fixset_mori; eauto; 
@@ -310,7 +310,7 @@ Section SimRelCert.
         split; auto. }
       right.
       edestruct cstate_q_cont as [lstate]; [apply SRCC|]. desf.
-      assert (wf_thread_state (ES.cont_thread S q) lstate) as WFT.
+      assert (wf_thread_state (ES.cont_thread S k) lstate) as WFT.
       { eapply contwf; [by apply SRCC|]. apply KK. }
       eapply acts_rep in YY; eauto. 
       destruct YY as [yin [REP LE]]. 
@@ -440,7 +440,7 @@ Section SimRelCert.
     Qed.
 
     Lemma h_jfD : 
-      dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S q ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
+      dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S k ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
     Proof.
       assert (ES.Wf S) as WFS by apply SRCC.
       rewrite cont_sb_dom_in_hhdom.
@@ -465,7 +465,7 @@ Section SimRelCert.
     Qed.
 
     Lemma hvis : 
-      h □₁ (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) ⊆₁ vis S. 
+      h □₁ (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) ⊆₁ vis S. 
     Proof. 
       etransitivity. 
       { eapply set_collect_eq_dom. apply SRCC. }
