@@ -458,6 +458,66 @@ Section SimRelCertStepProps.
     erewrite basic_step_e2a_e with (e := ES.next_act S); 
         eauto; try apply SRCC.
   Qed.
+
+  Lemma simrel_cert_update_step k lbl lbl' lbls S
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
+        (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
+        (RR : exists is_ex ord loc val, ⟪ LBL_LD : lbl = Aload is_ex ord loc val ⟫) 
+        (WW : exists ord loc val, ⟪ LBL_ST : lbl' = Some (Astore Xpln ord loc val) ⟫) :
+    exists k' e e' S', 
+      ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
+      ⟪ CertLSTEP  : cert_update_step k st e e' S S' ⟫. 
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    desc. 
+    edestruct simrel_cert_basic_step_cert_rf
+      as [w HA]; eauto 10.
+    edestruct simrel_cert_basic_step as [k' [e [e' [S' HB]]]]; eauto.
+    desf. cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    destruct e' as [e'|].
+    2 : { unfold opt_same_ctor in *. desf. }
+    assert (SE S' e) as SEe.
+    { eapply ESBasicStep.basic_step_acts_set; eauto. 
+      basic_solver. }
+    assert (SR S' e) as SRe.
+    { unfold is_r. by rewrite <- LBL. }
+    assert (SE S' e') as SEe'.
+    { eapply ESBasicStep.basic_step_acts_set; eauto. 
+      basic_solver. }
+    unfold option_map in LBL'. 
+    inversion LBL' as [[LBL'']].
+    assert (SW S' e') as SWe'.
+    { unfold is_w. by rewrite <- LBL''. }
+    unfold opt_ext in *. desc.
+    desf; do 5 eexists; splits; eauto. 
+    exists (h w). eexists.
+    splits; eauto.
+    { econstructor; splits; eauto.
+      { basic_solver. }
+      erewrite basic_step_e2a_eq_dom; eauto. 
+      2 : { eapply a2e_img; [apply SRCC.(sr_a2e_h)|]. basic_solver. } 
+      erewrite basic_step_e2a_e
+        with (S' := S'); eauto; try apply SRCC.
+      arewrite (e2a S (h w) = w); auto.
+      eapply a2e_fix; [apply SRCC.(sr_a2e_h)|]. basic_solver. }
+    all : econstructor; splits; eauto.   
+    { unfold ESstep.ew_delta, sim_ews. 
+      erewrite basic_step_e2a_e' with (e' := 1 + ES.next_act S); 
+        eauto; try apply SRCC. }
+    unfold ESstep.co_delta.
+    erewrite ESstep.basic_step_co_ws_alt; eauto.
+    2 : basic_solver.
+    rewrite <- LBL''.
+    unfold sim_ws.
+    erewrite basic_step_e2a_e' with (e' := 1+ ES.next_act S); 
+      eauto; try apply SRCC.
+  Qed.
   
   Lemma simrel_cert_sim_add_jf k lbl lbl' lbls S ew co
         (st st' st'' : thread_st (ES.cont_thread S k))
