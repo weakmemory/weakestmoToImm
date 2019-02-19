@@ -260,7 +260,7 @@ Section SimRelAddCO.
       cdes BSTEP_; cdes SACO.
       constructor; splits; eauto using sim_ws_basic_step_co_ws.
     Qed.
-
+    
     Lemma basic_step_e2a_co_ws_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC f TC' h k st st'') 

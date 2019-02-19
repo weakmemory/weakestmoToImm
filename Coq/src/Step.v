@@ -1339,6 +1339,84 @@ Proof.
 Qed.
 
 (******************************************************************************)
+(** ** Step (add_co) properties *)
+(******************************************************************************)
+
+(* we'll need this hack because of the way 
+     `loc` is defined in IMM *)
+Definition labloc lbl :=
+  match lbl with
+  | Aload _ _ l _
+  | Astore _ _ l _ => Some l
+  | _ => None
+  end.
+
+Lemma basic_step_co_ws_alt lang k k' st st' w' lbl e e' S S'
+      (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
+      (wfE: ES.Wf S) 
+      (LBL : lab S' w' = lbl) 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  co_ws w' S S' ≡₁ E S ∩₁ W S ∩₁ (fun w => loc S w = labloc lbl) \₁ ES.cont_cf_dom S k.
+Proof. 
+  cdes BSTEP_.
+  assert (ESBasicStep.t e e' S S') as BSTEP.
+  { subst. econstructor. eauto. }
+
+  assert (
+    E S ∩₁ (same_loc S') w' ≡₁ E S ∩₁ (fun w : nat => (loc S) w = labloc lbl)
+  ) as LOCEQV.
+  { unfold Events.same_loc. 
+    unfolder; splits; intros x [Ex LOCx]; splits; auto.
+    { erewrite <- ESBasicStep.basic_step_loc_eq_dom; eauto.
+      rewrite <- LOCx. unfold Events.loc, labloc.
+      by rewrite LBL. }
+    erewrite ESBasicStep.basic_step_loc_eq_dom
+      with (x := x); eauto.
+    rewrite LOCx. unfold Events.loc, labloc.
+    by rewrite LBL. }
+
+  assert (
+    E S ∩₁ set_compl ((cf S') w') ≡₁ E S ∩₁ set_compl (ES.cont_cf_dom S k) 
+  ) as CFEQV.
+  { unfolder; splits; intros x [Ex nCFx]; splits; auto.
+    { intros nKCFx. apply nCFx.
+      eapply ESBasicStep.basic_step_cf; eauto.
+      autounfold with ESStepDb.
+      generalize wEE' nKCFx. 
+      basic_solver 10. }
+    assert (~ E S w') as nEw'.
+    { red. ins. destruct wEE' as [HA | HB]; desf.
+      { eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
+      unfold eq_opt in HB. 
+      destruct e' as [e'|]; desf.
+      eapply ESBasicStep.basic_step_acts_set_ne'; eauto. }
+    intros CF. apply nCFx.    
+    eapply ESBasicStep.basic_step_cf in CF; eauto.
+    autounfold with ESStepDb in CF.
+    unfolder in CF. desf; exfalso.
+    { apply nEw'. apply ES.cfE, seq_eqv_lr in CF. desf. }
+    all : apply nEw'; eapply ES.cont_cf_domE in CF; eauto. }
+
+  unfold co_ws.
+
+  arewrite (
+    E S ∩₁ W S ∩₁ (same_loc S') w' \₁ (cf S') w' ≡₁
+      E S ∩₁ W S ∩₁ 
+        (E S ∩₁ (same_loc S') w') ∩₁ (E S \₁ (cf S') w')
+  ) by basic_solver.
+
+
+  arewrite (
+    E S ∩₁ W S ∩₁ (fun w : nat => (loc S) w = labloc lbl) \₁ ES.cont_cf_dom S k ≡₁
+    E S ∩₁ W S ∩₁ 
+      (E S ∩₁ (fun w : nat => (loc S) w = labloc lbl)) ∩₁ (E S \₁ ES.cont_cf_dom S k)
+  ) by basic_solver.
+
+  apply set_inter_Propere; auto.
+  apply set_inter_Propere; auto.
+Qed.
+
+(******************************************************************************)
 (** ** Step properties *)
 (******************************************************************************)
 
