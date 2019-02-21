@@ -2005,11 +2005,22 @@ Proof.
       basic_solver. }
     unfold ESBasicStep.rmw_delta.
     intros x y [AA BB]. red in BB. desf.
-    red.
-
-    (* destruct e' as [e'|]; simpls. *)
-
+    red. rewrite LAB'. unfold is_r, is_w.
+    simpls. subst. destruct lbl' as [lbl'|]; [|by desf].
+    rewrite upds. rewrite updo.
+    2: omega.
+    rewrite upds.
+    red in STEP0. simpls.
+    
+    (* TODO: We need something about language transitions. *)
     admit. }
+  { admit. }
+  { cdes BSTEP. cdes BSTEP_.
+    rewrite RMW'. unionL.
+    { rewrite SB'.
+      intros x y RMW. red. split.
+      { left. by apply WF.(ES.rmwi). }
+      ins.
 Admitted.
 
 
