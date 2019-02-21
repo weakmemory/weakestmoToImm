@@ -1241,9 +1241,9 @@ Proof.
 
   (* The following proof is similar to proof of `seqn_immsb` lemma.
      We don't reuse this lemma here, because it assumes `Wf S'`
-     (althoug it really uses only sb-related properties). 
+     (although it really uses only sb-related properties). 
      However, since here we are working with basic step, 
-     we can only assume well-formdness of `sb`. 
+     we can only assume well-formedness of `sb`. 
    *)
   unfold ES.seqn.
   assert (immediate (sb S' ∩ ES.same_tid S') x e) as IMMSB_STID. 
