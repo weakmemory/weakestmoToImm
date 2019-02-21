@@ -408,6 +408,99 @@ Proof.
   done.
 Qed.
 
+(*******************************************************)
+(* Lemmas about equality of types and modes of events
+   after a basic step.                                 *)
+(*******************************************************)
+
+Hint Unfold eq_dom Events.loc Events.mod Events.xmod is_r is_w is_f is_acq is_rel is_rlx is_acqrel R_ex
+     is_only_pln is_sc is_ra is_xacq
+     same_lab_u2v_dom same_label_u2v :
+  same_lab_unfoldDb.
+
+Ltac basic_step_same_lab S S' :=
+  repeat autounfold with same_lab_unfoldDb;
+  intros x [EX REL];
+  assert (lab S' x = lab S x) as HH;
+  [eapply ESBasicStep.basic_step_lab_eq_dom; eauto |
+    try (by rewrite HH in REL);
+    try (by rewrite <- HH in REL)].
+
+Lemma basic_step_rel_in_rel e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ Rel S' ⊆₁ Rel S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_acq_in_acq e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ Acq S' ⊆₁ Acq S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_sc_in_sc e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ Sc S' ⊆₁ Sc S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_r_in_r e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ R S' ⊆₁ R S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_w_in_w e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ W S' ⊆₁ W S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_f_in_f e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ F S' ⊆₁ F S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_rel_eq_rel e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ Rel S' ≡₁ E S ∩₁ Rel S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_acq_eq_acq e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ Acq S' ≡₁ E S ∩₁ Acq S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_sc_eq_sc e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ Sc S' ≡₁ E S ∩₁ Sc S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_r_eq_r e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ R S' ≡₁ E S ∩₁ R S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_w_eq_w e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ W S' ≡₁ E S ∩₁ W S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_f_eq_f e e' S S'
+      (BSTEP : ESBasicStep.t e e' S S') :
+  E S ∩₁ F S' ≡₁ E S ∩₁ F S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Hint Rewrite
+     basic_step_rel_in_rel
+     basic_step_acq_in_acq
+     basic_step_sc_in_sc
+     basic_step_r_in_r
+     basic_step_w_in_w
+     basic_step_f_in_f
+     basic_step_rel_eq_rel
+     basic_step_acq_eq_acq
+     basic_step_sc_eq_sc
+     basic_step_r_eq_r
+     basic_step_w_eq_w
+     basic_step_f_eq_f
+  : same_lab_solveDb.
+
 Lemma basic_step_rel_f_sbE e e' S S'
       (BSTEP : ESBasicStep.t e e' S S') 
       (wfE: ES.Wf S) :
@@ -429,14 +522,16 @@ Proof.
   arewrite (⦗Rel S'⦘ ⨾ ⦗E S⦘ ≡ ⦗Rel S⦘ ⨾ ⦗E S⦘).
   { rewrite !seq_eqv.
     apply eqv_rel_more.
-    admit. }
+    rewrite set_interC.
+    autorewrite with same_lab_solveDb; eauto.
+    basic_solver. }
   rewrite ES.sbE; auto.
   basic_solver 10.
-Admitted.
+Qed.
 
 Lemma basic_step_jf_sb_f_acq e e' S S'
       (BSTEP : ESBasicStep.t e e' S S') 
-      (wfE: ES.Wf S) :
+      (WF: ES.Wf S) :
   jf S ⨾ (sb S ⨾ ⦗F S'⦘)^? ⨾ ⦗Acq S'⦘ ≡ jf S ⨾ (sb S ⨾ ⦗F S⦘)^? ⨾ ⦗Acq S⦘.
 Proof. 
   arewrite (sb S ⨾ ⦗F S'⦘ ≡ sb S ⨾ ⦗F S⦘).
@@ -445,9 +540,17 @@ Proof.
     rewrite !seq_eqv.
     apply eqv_rel_more.
     eapply ESBasicStep.type_step_eq_dom; eauto. }
-  rewrite crE. relsf.
-  admit. 
-Admitted.
+  assert (jf S ⨾ (sb S ⨾ ⦗F S⦘)^? ≡
+          jf S ⨾ (sb S ⨾ ⦗F S⦘)^? ⨾ ⦗E S⦘) as HH.
+  { split; [|basic_solver 10].
+    rewrite (dom_r WF.(ES.jfE)).
+    rewrite (dom_r WF.(ES.sbE)).
+    basic_solver 20. }
+  seq_rewrite HH. symmetry.
+  seq_rewrite HH. rewrite !seqA.
+  rewrite <- !id_inter.
+  rewrite basic_step_acq_eq_acq with (S':=S'); eauto.
+Qed.
 
 (******************************************************************************)
 (** ** Step (add_jf) properties *)
