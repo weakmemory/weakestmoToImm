@@ -1920,7 +1920,81 @@ Proof.
     3: by inv IWa; inv IWb.
     all: unfold ESBasicStep.sb_delta.
     all: generalize IWa IWb; basic_solver 10. }
-  { admit. }
+  { rewrite ESBasicStep.basic_step_acts_set; eauto.
+    assert
+      (E S ⊆₁ codom_rel
+         (⦗fun x0 : eventid => ES.seqn S' x0 = 0⦘ ⨾
+          (sb S')^? ∩ ES.same_tid S')) as AA.
+    { intros x EX.
+      set (XX := EX).
+      apply WF.(ES.seqn_after_null) in XX.
+      red in XX. destruct XX as [y XX].
+      destruct_seq_l XX as YY. destruct XX as [SB ST].
+      assert (E S y) as EY.
+      { destruct SB as [|SB]; desf.
+        apply (dom_l WF.(ES.sbE)) in SB.
+          by destruct_seq_l SB as OO. }
+      exists y. apply seq_eqv_l; split.
+      { rewrite <- YY.
+        eapply ESBasicStep.basic_step_seqn_eq_dom; eauto. }
+      split.
+      { cdes BSTEP. cdes BSTEP_.
+        destruct SB as [|SB]; desf; [by left|right].
+        apply SB'. by left. }
+      red.
+      repeat
+        (erewrite ESBasicStep.basic_step_tid_eq_dom with (S':=S'); eauto). }
+
+    assert
+      (exists x,
+          (⦗fun x : eventid => ES.seqn S' x = 0⦘ ⨾
+           (sb S')^? ∩ ES.same_tid S') x e) as [x EE].
+    { cdes BSTEP. destruct k.
+      { exists e. apply seq_eqv_l. split.
+        2: { split; [left|red]; done. }
+        eapply ESBasicStep.basic_step_seqn_kinit; eauto. }
+      assert (E S eid) as EEID.
+      { cdes BSTEP_. eapply WF.(ES.K_inEninit); eauto. }
+      set (EE:=EEID).
+      apply AA in EE. red in EE. desf.
+      exists x. destruct_seq_l EE as XX.
+      apply seq_eqv_l. split; auto.
+      split.
+      { right. eapply rewrite_trans_seq_cr_l.
+        { eapply ESBasicStep.basic_step_sb_trans; eauto. }
+        eexists. split.
+        { apply EE. }
+        cdes BSTEP_.
+        apply SB'. right.
+        red. left. red. split; auto.
+        red. red. 
+        eexists. apply seq_eqv_r. split; eauto. }
+      red. destruct EE as [_ EE]. rewrite EE.
+      erewrite ESBasicStep.basic_step_tid_e with (e:=e); eauto.
+      arewrite (tid S' eid = tid S eid).
+      { eapply ESBasicStep.basic_step_tid_eq_dom; eauto. }
+      cdes BSTEP_. desf. }
+
+    unionL; auto.
+    { red. intros y HH; desf. rename y into e.
+      eexists. eauto. }
+    destruct_seq_l EE as CC.
+    destruct EE as [EE DD].
+    red. intros y HH.
+    cdes BSTEP. cdes BSTEP_.
+    red in HH. desf. rename y into e'.
+    exists x. apply seq_eqv_l. split; auto.
+    split; [right|].
+    { eapply rewrite_trans_seq_cr_l.
+      { eapply ESBasicStep.basic_step_sb_trans; eauto. }
+      eexists. split.
+      { apply EE. }
+      apply SB'. unfold ESBasicStep.sb_delta. basic_solver 10. }
+    red. rewrite DD.
+    rewrite TID'. simpls. rewrite upds.
+    rewrite updo.
+    { by rewrite upds. }
+    omega. }
   { apply dom_helper_3.
     cdes BSTEP. cdes BSTEP_.
     rewrite RMW'. unionL.
