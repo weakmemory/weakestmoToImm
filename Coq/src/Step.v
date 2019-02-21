@@ -1998,7 +1998,18 @@ Proof.
   { apply dom_helper_3.
     cdes BSTEP. cdes BSTEP_.
     rewrite RMW'. unionL.
-    all: admit. }
+    { rewrite WF.(ES.rmwD), WF.(ES.rmwE), !seqA.
+      rewrite <- id_inter, <- !seqA, <- id_inter.
+      rewrite set_interC, <- basic_step_r_eq_r; eauto.
+      rewrite <- basic_step_w_eq_w; eauto.
+      basic_solver. }
+    unfold ESBasicStep.rmw_delta.
+    intros x y [AA BB]. red in BB. desf.
+    red.
+
+    (* destruct e' as [e'|]; simpls. *)
+
+    admit. }
 Admitted.
 
 
