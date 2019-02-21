@@ -1649,8 +1649,68 @@ Proof.
       eauto.
     2: by apply SY.
     eapply WF; auto. }
-  {
-
+  { apply dom_helper_3.
+    cdes BSTEP. cdes BSTEP_.
+    rewrite SB'.
+    unfold ESBasicStep.sb_delta.
+    rewrite ES.cont_sb_domE; eauto.
+    arewrite (sb S ⊆ E S × E S).
+    { rewrite WF.(ES.sbE) at 1. basic_solver. }
+    arewrite (E S ⊆₁ E S').
+    { rewrite ESBasicStep.basic_step_acts_set with (S':=S'); eauto.
+      basic_solver. }
+    arewrite (eq e ⊆₁ E S').
+    { rewrite ESBasicStep.basic_step_acts_set; eauto.
+      basic_solver. }
+    arewrite (eq_opt e' ⊆₁ E S').
+    { rewrite ESBasicStep.basic_step_acts_set; eauto.
+      basic_solver. }
+    basic_solver. }
+  { rewrite ESBasicStep.basic_step_acts_init_set; eauto.
+    rewrite ESBasicStep.basic_step_acts_ninit_set; eauto.
+    rewrite set_unionA. rewrite cross_union_l.
+    cdes BSTEP. cdes BSTEP_.
+    rewrite SB'. apply union_mori.
+    unionL.
+    { by rewrite WF.(ES.sb_init). }
+    unfold ESBasicStep.sb_delta.
+    rewrite ES.cont_sb_dom_Einit; eauto.
+    basic_solver. }
+  { rewrite ESBasicStep.basic_step_acts_init_set; eauto.
+    cdes BSTEP. cdes BSTEP_.
+    rewrite SB'. rewrite seq_union_l.
+    rewrite WF.(ES.sb_ninit).
+    split; [|basic_solver].
+    arewrite (Einit S ⊆₁ E S).
+    { unfold ES.acts_init_set. basic_solver. }
+    rewrite ESBasicStep.basic_step_sb_deltaE; eauto.
+    basic_solver. }
+  { cdes BSTEP. cdes BSTEP_.
+    rewrite SB'. rewrite seq_union_r.
+    unionL.
+    { rewrite (dom_l WF.(ES.sbE)), <- seqA.
+      rewrite <- id_inter.
+      arewrite (Eninit S' ∩₁ E S ⊆₁ Eninit S).
+      { unfold ES.acts_ninit_set.
+        erewrite ESBasicStep.basic_step_acts_init_set with (S:=S); eauto.
+        basic_solver. }
+      rewrite <- inclusion_restr with (r:=ES.same_tid S')
+                                      (dom:=S.(ES.acts_set)).
+      arewrite (⦗Eninit S⦘ ⨾ sb S ⊆ restr_rel (E S) (⦗Eninit S⦘ ⨾ sb S)).
+      { rewrite WF.(ES.sbE) at 1. basic_solver. }
+      rewrite ESBasicStep.basic_step_same_tid_restr; eauto.
+      apply restr_rel_mori; auto.
+      apply WF. }
+    admit. }
+  { eapply ESBasicStep.basic_step_sb_irr; eauto. }
+  { eapply ESBasicStep.basic_step_sb_trans; eauto. }
+  { eapply ESBasicStep.basic_step_sb_prcl; eauto. }
+  { admit. }
+  { admit. }
+  { apply dom_helper_3.
+    cdes BSTEP. cdes BSTEP_.
+    rewrite RMW'. unionL.
+    all: admit. }
 Admitted.
 
 
