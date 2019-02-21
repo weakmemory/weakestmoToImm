@@ -984,7 +984,7 @@ Section SimRelCertStepProps.
     { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
     { admit. }
     (* sr_a2e_h *)
-    { admit. }
+    { eapply basic_step_simrel_a2e_h; eauto. }
     (* sr_exec_h *)
     { admit. }
     (* hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab; *)
