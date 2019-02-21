@@ -1701,11 +1701,117 @@ Proof.
       rewrite ESBasicStep.basic_step_same_tid_restr; eauto.
       apply restr_rel_mori; auto.
       apply WF. }
-    admit. }
+    unfold ESBasicStep.sb_delta.
+    arewrite (eq e ⊆₁ fun x => tid S' x = ES.cont_thread S k).
+    { unfolder. ins. desf. eapply ESBasicStep.basic_step_tid_e; eauto. }
+    arewrite (eq_opt e' ⊆₁ fun x => tid S' x = ES.cont_thread S k).
+    { unfolder. ins. desf. eapply ESBasicStep.basic_step_tid_e'; eauto. }
+    rewrite cross_union_r.
+    rewrite !seq_union_r, !seq_eqv_cross_l.
+    arewrite (Eninit S' ∩₁ ES.cont_sb_dom S k ⊆₁
+                     fun x => tid S' x = ES.cont_thread S k).
+    2: { unfold ES.same_tid. unfolder. ins. desf.
+         all: by match goal with
+         | H : ?X = ES.cont_thread ?S ?k |- _ => rewrite H
+         end. }
+    arewrite (ES.cont_sb_dom S k ⊆₁ E S ∩₁ ES.cont_sb_dom S k).
+    { apply set_subset_inter_r; split; auto.
+      eapply ES.cont_sb_domE; eauto. }
+    rewrite <- set_interA.
+    arewrite (Eninit S' ∩₁ E S ⊆₁ Eninit S).
+    { rewrite ESBasicStep.basic_step_acts_ninit_set; eauto.
+      rewrite !set_inter_union_l.
+      unionL.
+      { basic_solver. }
+      all: unfolder; ins; desf; simpls; desf.
+      all: match goal with
+      | H : (E ?S) ?X |- _ => red in H
+      end.
+      all: omega. }
+    arewrite (Eninit S ∩₁ ES.cont_sb_dom S k ⊆₁
+              ES.cont_sb_dom S k \₁ Einit S ∪₁ ES.cont_cf_dom S k).
+    { unfold ES.acts_ninit_set. basic_solver. }
+    rewrite <- ES.cont_thread_sb_cf; eauto.
+    unfolder. ins. desf.
+    match goal with
+    | H : ?X = ES.cont_thread ?S ?k |- _ => rewrite <- H
+    end.
+    eapply ESBasicStep.basic_step_tid_eq_dom; eauto. }
   { eapply ESBasicStep.basic_step_sb_irr; eauto. }
   { eapply ESBasicStep.basic_step_sb_trans; eauto. }
   { eapply ESBasicStep.basic_step_sb_prcl; eauto. }
-  { admit. }
+  { ins. erewrite ESBasicStep.basic_step_acts_init_set; eauto.
+    eapply ESBasicStep.basic_step_acts_set in EE; eauto.
+    cdes BSTEP. cdes BSTEP_.
+    assert (is_total (ES.cont_sb_dom S k \₁ Einit S) (sb S)) as CC.
+    { unfold ES.cont_sb_dom. desf.
+      { basic_solver. }
+      red. ins.
+      red in IWa. red in IWb. desf.
+      destruct IWa as [eida IWa]. destruct_seq_r IWa as AA.
+      destruct IWb as [eidb IWb]. destruct_seq_r IWb as BB.
+      destruct IWa as [|SBA];
+        destruct IWb as [|SBB]; desf.
+      { by right. }
+      { by left. }
+      eapply WF.(ES.sb_tot); auto.
+      2,3: split; auto; eexists; apply seq_eqv_r; split; eauto.
+      apply (dom_r WF.(ES.sbE)) in SBB. by destruct_seq_r SBB as BB. }
+
+    destruct EE as [[EE|EE]|EE]; desf.
+    { arewrite (⦗eq e0⦘ ⊆ ⦗E S⦘ ;; ⦗eq e0⦘).
+      { generalize EE. basic_solver. }
+      arewrite (sb S' ⨾ ⦗E S⦘ ⊆ sb S).
+      { eapply ESBasicStep.basic_step_sbE; eauto. }
+      eapply is_total_mori.
+      3: by apply WF; eauto.
+      { done. }
+      rewrite SB'. basic_solver. }
+    { rewrite SB' at 1. rewrite seq_union_l.
+      arewrite (sb S ⨾ ⦗eq (ES.next_act S)⦘ ⊆ ∅₂).
+      { rewrite (dom_r WF.(ES.sbE)), !seqA.
+        unfolder. ins. desf.
+        match goal with
+        | H : (E ?S) ?X |- _ => red in H
+        end. omega. }
+      unfold ESBasicStep.sb_delta.
+      rewrite seq_union_l.
+      rewrite !seq_eqv_cross_r.
+      arewrite (eq (ES.next_act S) ∩₁ eq_opt e' ⊆₁ ∅).
+      { unfolder. ins. desf. simpls. omega. }
+      relsf.
+      2: { intros HH. eapply HH. eauto. }
+      eapply is_total_mori.
+      { reflexivity. }
+      { rewrite SB'. unionR left. reflexivity. }
+      apply CC. }
+    rewrite SB' at 1. rewrite seq_union_l.
+    arewrite (sb S ⨾ ⦗eq e0⦘ ⊆ ∅₂).
+    { rewrite (dom_r WF.(ES.sbE)), !seqA.
+      unfolder. ins. desf.
+      match goal with
+      | H : (E ?S) ?X |- _ => red in H
+      end.
+      red in EE.
+      simpls; desf. simpls. omega. }
+    unfold ESBasicStep.sb_delta.
+    rewrite seq_union_l.
+    rewrite !seq_eqv_cross_r.
+    assert (eq e0 ∩₁ eq (ES.next_act S) ⊆₁ ∅) as DD.
+    { red in EE. desf. unfolder. ins. desf. simpls. omega. }
+    rewrite !DD.
+    relsf.
+    2: { intros HH. eapply HH. split; eauto. }
+    rewrite SB'.
+    red. ins.
+    destruct IWa as [IWa|IWa];
+      destruct IWb as [IWb|IWb].
+    { assert (sb S a b \/ sb S b a) as RR.
+      { apply CC; auto. }
+      generalize RR. basic_solver. }
+    3: by inv IWa; inv IWb.
+    all: unfold ESBasicStep.sb_delta.
+    all: generalize IWa IWb; basic_solver 10. }
   { admit. }
   { apply dom_helper_3.
     cdes BSTEP. cdes BSTEP_.
