@@ -151,10 +151,12 @@ Section SimRelCert.
 
       sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
 
-      sr_exec_h : simrel_subexec S TC h (cert_dom G TC ktid st); 
+      sr_exec_h : simrel_subexec S (*TC*) h (cert_dom G TC ktid st); 
 
       hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
       hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h; 
+
+      hrel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
@@ -201,6 +203,15 @@ Section SimRelCert.
     Lemma htid : 
       eq_dom hdom (Stid ∘ h) Gtid.
     Proof. eapply a2e_tid. eapply SRCC. Qed.
+
+    Lemma hfC : 
+      f □₁ C ≡₁ h □₁ C. 
+    Proof. 
+      eapply set_collect_eq_dom.
+      eapply eq_dom_mori; 
+        try eapply hfeq; auto.
+      red. basic_solver.
+    Qed.
 
     Lemma himgInit :
       SEinit ≡₁ h □₁ GEinit.
@@ -411,11 +422,32 @@ Section SimRelCert.
       admit. 
     Admitted.
 
-    Lemma h_rel_ewD : 
+    Lemma hrel_ewD : 
       dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
-      eapply exec_rel_ewD; try apply SRCC. 
-      unfold cert_dom. basic_solver. 
+      rewrite crE. 
+      rewrite !seq_union_l, !seq_union_r, dom_union, seq_id_l.
+      unionL.
+      { rewrite frel_in_Crel_sb; [|apply SRCC].
+        relsf. rewrite !seqA. splits.
+        { rewrite dom_seq. rewrite hfC.
+          unfold cert_dom. basic_solver 10. }
+        rewrite crE. relsf. splits; auto.
+        erewrite exec_sb_prcl; eauto. apply SRCC. }
+      arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁
+                dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘)).
+      { rewrite <- seqA.
+        intros x [y HH].
+        destruct_seq_r HH as HD.
+        destruct HH as [z [REL EW]].
+        edestruct fewI as [a AA].
+        { eapply SRCC. }
+        { red. eauto. }
+        exists a.
+        generalize REL AA. basic_solver 10. }
+      etransitivity. 
+      { eapply frel_iss_cov. apply SRCC. } 
+      rewrite hfC. unfold cert_dom. basic_solver 10.
     Qed.
 
     Lemma h_hb_in_Chb_sb :

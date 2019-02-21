@@ -121,11 +121,16 @@ Section SimRel.
       sr_e2a : simrel_e2a S G sc;
       sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
       
-      sr_exec_f : simrel_subexec S TC f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)); 
+      sr_exec_f : simrel_subexec S (*TC*) f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)); 
 
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       fvis : f □₁ fdom ⊆₁ vis S;
-      finitIncl : SEinit ⊆₁ f □₁ GEinit;      
+      finitIncl : SEinit ⊆₁ f □₁ GEinit;
+
+      fjfeI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
+      fewI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
+
+      frel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
     }.
   
   Record simrel :=
@@ -144,7 +149,8 @@ Section SimRel.
       SEinit ≡₁ f □₁ GEinit. 
     Proof. admit. Admitted.
 
-    Lemma fdomE : fdom ⊆₁ GE.
+    Lemma fdomE : 
+      fdom ⊆₁ GE.
     Proof.
       assert (tc_coherent G sc TC) as TCCOH. 
       { apply SRC. }
@@ -154,32 +160,35 @@ Section SimRel.
       basic_solver.
     Qed.
 
-    Lemma e2af_fixI : fixset I ((e2a S) ∘ f). 
+    Lemma e2af_fixI : 
+      fixset I ((e2a S) ∘ f). 
     Proof. 
       eapply fixset_mori; 
         [| eauto | eapply SRC]. 
       red. basic_solver 10.
     Qed.
 
-    Lemma e2a_inj_fdom : inj_dom (f □₁ fdom) (e2a S).
+    Lemma e2a_inj_fdom : 
+      inj_dom (f □₁ fdom) (e2a S).
     Proof. eapply e2a_inj; apply SRC. Qed.
 
-    Lemma e2a_injfC : inj_dom (f □₁ C) (e2a S).
+    Lemma e2a_injfC : 
+      inj_dom (f □₁ C) (e2a S).
     Proof.
       eapply inj_dom_mori; eauto.
       2: by apply e2a_inj_fdom.
       red. basic_solver.
     Qed.
     
-    Lemma e2a_ewI : (e2a S) □ Sew  ⊆ ⦗ I ⦘. 
+    Lemma e2a_ewI : 
+      (e2a S) □ Sew  ⊆ ⦗ I ⦘. 
     Proof.
       intros x y HH.
       assert (x = y) as EQxy; subst.
       { eapply e2a_ew; eauto. apply SRC. }
       split; auto.
       destruct HH as [a [b [EW [EQx EQy]]]]; subst.
-      edestruct exec_ewI as [x HH]; eauto.
-      { apply SRC. }
+      edestruct fewI as [x HH]; eauto.
       { eexists; eauto. }
       destruct_seq_r HH as FI.
       red in FI. destruct FI as [y [IY]]; subst.
@@ -190,6 +199,119 @@ Section SimRel.
       2: { rewrite XX. by rewrite e2af_fixI. }
       eapply e2a_ew; [apply SRC|].
       eexists; eauto.
+    Qed.
+
+    Lemma frfeI :
+      dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘).
+    Proof.
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      unfold ES.rfe, ES.rf, ES.jfe.
+      rewrite crE at 1.
+      rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
+      unionL.
+      { etransitivity; [|by apply SRC]. 
+        unfold ES.jfe. basic_solver. }
+      intros x [y [[[z [EW JF]] CC] NSB]].
+      assert (~ Ssb z y) as AA.
+      { intros SB. apply CC.
+        apply ES.cf_sb_in_cf; auto.
+        eexists. split; eauto.
+        apply ES.ewc; auto. }
+      edestruct SRC.(fjfeI) as [v HH].
+      { eexists. split; eauto. }
+      destruct_seq_r HH as BB.
+      eexists.  apply seq_eqv_r. split; [|by eauto].
+      generalize WFS.(ES.ew_trans) EW HH. basic_solver.
+    Qed.
+
+    Lemma frel_nCsb : 
+      ⦗ set_compl (f □₁ C) ⦘ ⨾ Srelease ⊆ Ssb^?.
+    Proof.
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      unfold release at 1, rs. 
+      rewrite <- !seqA.
+      intros x y [z [HH JFRMW]].
+      apply clos_rt_rtn1 in JFRMW.
+      induction JFRMW as [|y w [u [JF RMW]]].
+      { generalize WFS.(ES.sb_trans) HH. basic_solver 10. }
+      apply ES.jfi_union_jfe in JF. destruct JF as [JF|JF].
+      { apply WFS.(ES.rmwi) in RMW. red in JF. 
+        generalize WFS.(ES.sb_trans) IHJFRMW JF RMW. basic_solver 10. }
+      exfalso.
+      assert (~ (f □₁ C) x) as CC.
+      { generalize HH. basic_solver 10. }
+      apply CC. eapply frel_iss_cov; eauto.
+      assert (dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) y) as [yy DD].
+      { eapply fjfeI; auto. eexists. eauto. }
+      eexists. eexists. split; eauto.
+      unfold release, rs. apply clos_rtn1_rt in JFRMW.
+      generalize HH JFRMW. basic_solver 40.
+    Qed.
+
+    Lemma frel_in_Crel_sb : 
+      Srelease ⊆ ⦗ f □₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
+    Proof.
+      arewrite (Srelease ⊆ ⦗f □₁ C ∪₁ set_compl (f □₁ C)⦘ ⨾ Srelease).
+      { rewrite set_compl_union_id. by rewrite seq_id_l. }
+      rewrite id_union, seq_union_l. apply union_mori; [done|].
+      apply frel_nCsb; auto.
+    Qed.
+
+    Lemma fsw_nCsb : 
+      ⦗ set_compl (f □₁ C) ⦘ ⨾ Ssw ⊆ Ssb.
+    Proof.
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      unfold sw.
+      arewrite (⦗set_compl (f □₁ C)⦘ ⨾ Srelease ⨾ Sjf ⊆ Ssb).
+      2: { generalize WFS.(ES.sb_trans). basic_solver. }
+      rewrite ES.jfi_union_jfe. rewrite !seq_union_r. unionL.
+      { sin_rewrite frel_nCsb; auto. unfold ES.jfi.
+        generalize WFS.(ES.sb_trans). basic_solver. }
+      intros x y HH.
+      destruct_seq_l HH as DX. exfalso. apply DX.
+      destruct HH as [z [REL RFE]].
+      eapply frel_iss_cov; eauto.
+      assert (dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) z) as [zz DD].
+      { apply fjfeI; auto. eexists. eauto. }
+      eexists. eexists. eauto.
+    Qed.
+
+    Lemma fsw_in_Csw_sb : 
+      Ssw ⊆ ⦗ f □₁ C ⦘ ⨾ Ssw ∪ Ssb. 
+    Proof.
+      arewrite (Ssw ⊆ ⦗f □₁ C ∪₁ set_compl (f □₁ C)⦘ ⨾ Ssw).
+      { rewrite set_compl_union_id. by rewrite seq_id_l. }
+      rewrite id_union, seq_union_l. apply union_mori; [done|].
+      apply fsw_nCsb; auto.
+    Qed.
+
+    Lemma fhb_nCsb :
+      ⦗ set_compl (f □₁ C) ⦘ ⨾ Shb ⊆ Ssb.
+    Proof.
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      intros x y HH. destruct_seq_l HH as DX.
+      red in HH. apply clos_trans_tn1 in HH.
+      induction HH as [y [|HH]|y z [HH|HH]]; auto.
+      { apply fsw_nCsb; auto. by apply seq_eqv_l. }
+      all: eapply ES.sb_trans; eauto.
+      apply fsw_nCsb; auto. apply seq_eqv_l. 
+      split; auto.
+      eapply sb_nC_nC; try apply SRC.
+      { basic_solver. }
+      eexists. apply seq_eqv_l. eauto.
+    Qed.
+
+    Lemma fhb_in_Chb_sb :
+      Shb ⊆ ⦗ f □₁ C ⦘ ⨾ Shb ∪ Ssb.
+    Proof.
+      arewrite (Shb ⊆ ⦗f □₁ C ∪₁ set_compl (f □₁ C)⦘ ⨾ Shb).
+      { rewrite set_compl_union_id. by rewrite seq_id_l. }
+      rewrite id_union, seq_union_l. apply union_mori; [done|].
+      apply fhb_nCsb; auto.
     Qed.
 
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):

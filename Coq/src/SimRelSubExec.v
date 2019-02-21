@@ -101,11 +101,6 @@ Section SimRelSubExec.
     { exec_sb_prcl : dom_rel (Ssb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD;
       exec_ncf : ES.cf_free S (a2e □₁ a2eD);
       exec_rfc : (a2e □₁ a2eD) ∩₁ SR ⊆₁ codom_rel (⦗ a2e □₁ a2eD ⦘ ⨾ Srf);
-
-      exec_jfeI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘);
-      exec_ewI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘);
-      
-      exec_rel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ a2e □₁ I ⦘) ⊆₁ a2e □₁ C;
     }.
 
   Section SimRelSubExecProps. 
@@ -116,121 +111,33 @@ Section SimRelSubExec.
     Variable TCCOH : tc_coherent G sc TC.
     Variable SRSE : simrel_subexec.
 
-    Lemma exec_rfeI :
-      dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘).
-    Proof.
-      unfold ES.rfe, ES.rf, ES.jfe.
-      rewrite crE at 1.
-      rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
-      unionL.
-      { etransitivity; [|by apply SRSE.(exec_jfeI)].
-        unfold ES.jfe. basic_solver. }
-      intros x [y [[[z [EW JF]] CC] NSB]].
-      assert (~ Ssb z y) as AA.
-      { intros SB. apply CC.
-        apply ES.cf_sb_in_cf; auto.
-        eexists. split; eauto.
-        apply ES.ewc; auto. }
-      edestruct SRSE.(exec_jfeI) as [v HH].
-      { eexists. split; eauto. }
-      destruct_seq_r HH as BB.
-      eexists.  apply seq_eqv_r. split; [|by eauto].
-      generalize WF.(ES.ew_trans) EW HH. basic_solver.
-    Qed.
-
-    Lemma exec_rel_nCsb : ⦗ set_compl (a2e □₁ C) ⦘ ⨾ Srelease ⊆ Ssb^?.
-    Proof.
-      unfold release at 1, rs. rewrite <- !seqA.
-      intros x y [z [HH JFRMW]].
-      apply clos_rt_rtn1 in JFRMW.
-      induction JFRMW as [|y w [u [JF RMW]]].
-      { generalize WF.(ES.sb_trans) HH. basic_solver 10. }
-      apply ES.jfi_union_jfe in JF. destruct JF as [JF|JF].
-      { apply WF.(ES.rmwi) in RMW. red in JF. 
-        generalize WF.(ES.sb_trans) IHJFRMW JF RMW. basic_solver 10. }
-      exfalso.
-      assert (~ (a2e □₁ C) x) as CC.
-      { generalize HH. basic_solver 10. }
-      apply CC. eapply exec_rel_iss_cov; eauto.
-      assert (dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘) y) as [yy DD].
-      { apply exec_jfeI; auto. eexists. eauto. }
-      eexists. eexists. split; eauto.
-      unfold release, rs. apply clos_rtn1_rt in JFRMW.
-      generalize HH JFRMW. basic_solver 40.
-    Qed.
-
-    Lemma exec_rel_in_Crel_sb : Srelease ⊆ ⦗ a2e □₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
-    Proof.
-      arewrite (Srelease ⊆ ⦗a2e □₁ C ∪₁ set_compl (a2e □₁ C)⦘ ⨾ Srelease).
-      { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. apply union_mori; [done|].
-      apply exec_rel_nCsb; auto.
-    Qed.
-
-    Lemma exec_rel_ewD (CinD : C ⊆₁ a2eD) : 
-      dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.  
-    Proof.
-      rewrite crE. rewrite !seq_union_l, !seq_union_r, dom_union, seq_id_l.
-      unionL.
-      { rewrite exec_rel_in_Crel_sb, CinD.
-        generalize exec_sb_prcl. basic_solver 10. }
-      arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁
-                dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ a2e □₁ I ⦘)).
-      2: { rewrite exec_rel_iss_cov; eauto. by rewrite CinD. }
-      rewrite <- seqA.
-      intros x [y HH].
-      destruct_seq_r HH as HD.
-      destruct HH as [z [REL EW]].
-      edestruct exec_ewI as [a AA]; eauto.
-      { red. eauto. }
-      exists a.
-      generalize REL AA. basic_solver 10.
-    Qed.
-
-    Lemma exec_sw_nCsb : ⦗ set_compl (a2e □₁ C) ⦘ ⨾ Ssw ⊆ Ssb. 
-    Proof.
-      unfold sw.
-      arewrite (⦗set_compl (a2e □₁ C)⦘ ⨾ Srelease ⨾ Sjf ⊆ Ssb).
-      2: { generalize WF.(ES.sb_trans). basic_solver. }
-      rewrite ES.jfi_union_jfe. rewrite !seq_union_r. unionL.
-      { sin_rewrite exec_rel_nCsb; auto. unfold ES.jfi.
-        generalize WF.(ES.sb_trans). basic_solver. }
-      intros x y HH.
-      destruct_seq_l HH as DX. exfalso. apply DX.
-      destruct HH as [z [REL RFE]].
-      eapply exec_rel_iss_cov; eauto.
-      assert (dom_rel (Sew^? ⨾ ⦗ a2e □₁ I ⦘) z) as [zz DD].
-      { apply exec_jfeI; auto. eexists. eauto. }
-      eexists. eexists. eauto.
-    Qed.
-
-    Lemma SsbD_in_GsbD 
+    Lemma SsbD_in_GsbD
           (SRE2A : simrel_e2a S G sc)
           (SRA2E : simrel_a2e S a2e a2eD) :
       Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ (Gsb ⨾ ⦗ a2eD ⦘).
     Proof.
       erewrite dom_rel_helper with (r := Ssb ⨾ ⦗a2e □₁ a2eD⦘).
-      2 : by apply exec_sb_prcl. 
+      2 : by apply exec_sb_prcl.
       rewrite <- restr_relE.
-      rewrite <- collect_rel_fixset. 
+      rewrite <- collect_rel_fixset.
       2 : eapply fixset_swap; apply SRA2E.
       rewrite <- collect_rel_compose.
       apply collect_rel_mori; auto.
       rewrite restr_relE.
       rewrite <- seq_eqvK at 2.
       rewrite <- !seqA.
-      rewrite seqA with (r1 := ⦗a2e □₁ a2eD⦘). 
+      rewrite seqA with (r1 := ⦗a2e □₁ a2eD⦘).
       rewrite collect_rel_seqi.
       rewrite <- restr_relE.
       rewrite inclusion_restr.
-      rewrite set_collect_eqv, set_collect_compose. 
+      rewrite set_collect_eqv, set_collect_compose.
       rewrite <- fixset_set_fixpoint.
       2 : eapply a2e_fix; apply SRA2E.
       apply seq_mori; [|done].
-      eapply e2a_sb; eauto. apply SRE2A. 
+      eapply e2a_sb; eauto. apply SRE2A.
     Qed.
 
-    Lemma SsbD_in_Gsb 
+    Lemma SsbD_in_Gsb
           (SRE2A : simrel_e2a S G sc)
           (SRA2E : simrel_a2e S a2e a2eD) :
       Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ Gsb.
@@ -240,8 +147,8 @@ Section SimRelSubExec.
       basic_solver 10.
     Qed.
 
-    Lemma sbC_dom 
-          (CinD : C ⊆₁ a2eD) 
+    Lemma sbC_dom
+          (CinD : C ⊆₁ a2eD)
           (SRE2A : simrel_e2a S G sc)
           (SRA2E : simrel_a2e S a2e a2eD) :
       dom_rel (Ssb ⨾ ⦗ a2e □₁ C ⦘) ⊆₁ a2e □₁ C.
@@ -251,7 +158,7 @@ Section SimRelSubExec.
       sin_rewrite SsbD_in_GsbD; auto.
       rewrite <- set_collect_eqv.
       rewrite <- collect_rel_seq.
-      { rewrite seqA. 
+      { rewrite seqA.
         arewrite (⦗a2eD⦘ ⨾ ⦗C⦘ ⊆ ⦗C⦘).
         rewrite sb_covered; eauto. basic_solver. }
       rewrite codom_seq, codom_eqv, dom_eqv.
@@ -260,8 +167,8 @@ Section SimRelSubExec.
       apply SRA2E.
     Qed.
 
-    Lemma sb_nC_nC 
-          (CinD : C ⊆₁ a2eD) 
+    Lemma sb_nC_nC
+          (CinD : C ⊆₁ a2eD)
           (SRE2A : simrel_e2a S G sc)
           (SRA2E : simrel_a2e S a2e a2eD) :
       codom_rel (⦗ set_compl (a2e □₁ C) ⦘ ⨾ Ssb) ⊆₁ set_compl (a2e □₁ C).
@@ -271,78 +178,54 @@ Section SimRelSubExec.
       apply sbC_dom; auto. eexists. apply seq_eqv_r. eauto.
     Qed.
 
-    Lemma exec_hb_nCsb 
-          (CinD : C ⊆₁ a2eD) 
-          (SRE2A : simrel_e2a S G sc)
-          (SRA2E : simrel_a2e S a2e a2eD) :
-      ⦗ set_compl (a2e □₁ C) ⦘ ⨾ Shb ⊆ Ssb. 
-    Proof.
-      intros x y HH. destruct_seq_l HH as DX.
-      red in HH. apply clos_trans_tn1 in HH.
-      induction HH as [y [|HH]|y z [HH|HH]]; auto.
-      { apply exec_sw_nCsb; auto. by apply seq_eqv_l. }
-      all: eapply ES.sb_trans; eauto.
-      apply exec_sw_nCsb; auto. apply seq_eqv_l. split; auto.
-      apply sb_nC_nC; auto.
-      eexists. apply seq_eqv_l. eauto.
-    Qed.
+    
 
-    Lemma exec_hb_in_Chb_sb 
-          (CinD : C ⊆₁ a2eD) 
-          (SRE2A : simrel_e2a S G sc)
-          (SRA2E : simrel_a2e S a2e a2eD) :           
-      Shb ⊆ ⦗ a2e □₁ C ⦘ ⨾ Shb ∪ Ssb. 
-    Proof.
-      arewrite (Shb ⊆ ⦗a2e □₁ C ∪₁ set_compl (a2e □₁ C)⦘ ⨾ Shb).
-      { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. apply union_mori; [done|].
-      apply exec_hb_nCsb; auto.
-    Qed.
+    
 
-    Lemma exec_hbD
-          (CinD : C ⊆₁ a2eD) 
-          (SRE2A : simrel_e2a S G sc)
-          (SRA2E : simrel_a2e S a2e a2eD) :           
-      dom_rel (Shb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.  
-    Proof.
-      rewrite exec_hb_in_Chb_sb; auto.
-      rewrite seq_union_l, dom_union. unionL.
-      2: by eapply exec_sb_prcl; eauto.
-      rewrite CinD. basic_solver.
-    Qed.
+    (* Lemma exec_hbD *)
+    (*       (CinD : C ⊆₁ a2eD)  *)
+    (*       (SRE2A : simrel_e2a S G sc) *)
+    (*       (SRA2E : simrel_a2e S a2e a2eD) :            *)
+    (*   dom_rel (Shb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.   *)
+    (* Proof. *)
+    (*   rewrite exec_hb_in_Chb_sb; auto. *)
+    (*   rewrite seq_union_l, dom_union. unionL. *)
+    (*   2: by eapply exec_sb_prcl; eauto. *)
+    (*   rewrite CinD. basic_solver. *)
+    (* Qed. *)
 
-    Lemma exec_hb_release_ewD 
-          (CinD : C ⊆₁ a2eD) 
-          (SRE2A : simrel_e2a S G sc)
-          (SRA2E : simrel_a2e S a2e a2eD) :
-      dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.  
-    Proof. 
-      rewrite crE with (r := Shb). 
-      relsf. split. 
-      { by apply exec_rel_ewD. }
-      intros x [y [z [HB REL]]].
-      eapply exec_hbD; auto. 
-      eexists. apply seq_eqv_r. split; eauto.
-      apply exec_rel_ewD; auto. basic_solver.
-    Qed.
+    (* Lemma exec_hb_release_ewD  *)
+    (*       (CinD : C ⊆₁ a2eD)  *)
+    (*       (SRE2A : simrel_e2a S G sc) *)
+    (*       (SRA2E : simrel_a2e S a2e a2eD) : *)
+    (*   dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.   *)
+    (* Proof.  *)
+    (*   rewrite crE with (r := Shb).  *)
+    (*   relsf. split.  *)
+    (*   { by apply exec_rel_ewD. } *)
+    (*   intros x [y [z [HB REL]]]. *)
+    (*   eapply exec_hbD; auto.  *)
+    (*   eexists. apply seq_eqv_r. split; eauto. *)
+    (*   apply exec_rel_ewD; auto. basic_solver. *)
+    (* Qed. *)
 
-    Lemma exec_necfD 
-          (CinD : C ⊆₁ a2eD) 
-          (SRE2A : simrel_e2a S G sc)
-          (SRA2E : simrel_a2e S a2e a2eD) : 
-      restr_rel (a2e □₁ a2eD) Secf ⊆ ∅₂.
-    Proof. 
-      unfold restr_rel, ecf. 
-      intros a b [ECF [Hx Hy]].
-      destruct ECF as [c [tHB [d [CF HB]]]].
-      eapply exec_ncf; eauto. 
-      apply restr_relE. unfold restr_rel.
-      splits; eauto. 
-      { unfolder in tHB; desf. 
-        eapply exec_hbD; auto. basic_solver 10. }
-      unfolder in HB; desf. 
-      eapply exec_hbD; auto. basic_solver 10.
-    Qed.
+    (* Lemma exec_necfD  *)
+    (*       (CinD : C ⊆₁ a2eD)  *)
+    (*       (SRE2A : simrel_e2a S G sc) *)
+    (*       (SRA2E : simrel_a2e S a2e a2eD) :  *)
+    (*   restr_rel (a2e □₁ a2eD) Secf ⊆ ∅₂. *)
+    (* Proof.  *)
+    (*   unfold restr_rel, ecf.  *)
+    (*   intros a b [ECF [Hx Hy]]. *)
+    (*   destruct ECF as [c [tHB [d [CF HB]]]]. *)
+    (*   eapply exec_ncf; eauto.  *)
+    (*   apply restr_relE. unfold restr_rel. *)
+    (*   splits; eauto.  *)
+    (*   { unfolder in tHB; desf.  *)
+    (*     eapply exec_hbD; auto. basic_solver 10. } *)
+    (*   unfolder in HB; desf.  *)
+    (*   eapply exec_hbD; auto. basic_solver 10. *)
+    (* Qed. *)
 
   End SimRelSubExecProps.
 
