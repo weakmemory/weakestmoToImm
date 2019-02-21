@@ -975,7 +975,13 @@ Section SimRelCertStepProps.
         { eapply fvis. apply SRCC. }
         eapply ESstep.step_vis_mon; eauto. }
       (* finitIncl : SEinit ⊆₁ f □₁ GEinit *)
-      erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
+      { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
+      (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      { admit. }
+      (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      { admit. }
+      (* dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
+      admit. }
     (* cert : cert_graph G sc TC TC' (ES.cont_thread S k') state'' *)
     { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
     (* cstate : simrel_cstate *)

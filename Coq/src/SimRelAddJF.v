@@ -314,7 +314,7 @@ Section SimRelAddJF.
       do 3 rewrite <- seqA. rewrite dom_seq, !seqA.
       unfold ESstep.jf_delta.
       intros x [y HH]. 
-      eapply h_hb_release_ewD; eauto.
+      eapply hb_rel_ew_hD; eauto.
       generalize HH; basic_solver 20.
     Qed.
 
@@ -411,7 +411,7 @@ Section SimRelAddJF.
       { unfolder. ins. desf. 
         eapply cfk_hdom; eauto. 
         split; [|eauto]. 
-        eapply h_hbD; eauto. 
+        eapply hb_hD; eauto. 
         basic_solver 10. }
 
       all : by ESBasicStep.step_solver. 
@@ -510,7 +510,7 @@ Section SimRelAddJF.
       { apply SRCC.(sr_exec_h). }
       apply seq_eqv_lr. 
       splits; [|apply CF|].
-      { eapply h_hbD; eauto.
+      { eapply hb_hD; eauto.
         unfolder in JFd. desc. subst a b.
         basic_solver 10. }
       unfold transp in HBd.

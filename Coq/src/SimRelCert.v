@@ -422,7 +422,7 @@ Section SimRelCert.
       admit. 
     Admitted.
 
-    Lemma hrel_ewD : 
+    Lemma rel_ew_hD : 
       dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
       rewrite crE. 
@@ -440,38 +440,38 @@ Section SimRelCert.
         intros x [y HH].
         destruct_seq_r HH as HD.
         destruct HH as [z [REL EW]].
-        edestruct fewI as [a AA].
+        edestruct ew_fI as [a AA].
         { eapply SRCC. }
         { red. eauto. }
         exists a.
         generalize REL AA. basic_solver 10. }
       etransitivity. 
-      { eapply frel_iss_cov. apply SRCC. } 
+      { eapply rel_fI_fC. apply SRCC. } 
       rewrite hfC. unfold cert_dom. basic_solver 10.
     Qed.
 
-    Lemma h_hb_in_Chb_sb :
-      Shb ⊆ ⦗ h □₁ C ⦘ ⨾ Shb ∪ Ssb. 
-    Proof.
-      eapply exec_hb_in_Chb_sb; try apply SRCC. 
-      unfold cert_dom. basic_solver. 
-    Qed.
-
-    Lemma h_hbD :
+    Lemma hb_hD :
       dom_rel (Shb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
-      eapply exec_hbD; try apply SRCC. 
-      unfold cert_dom. basic_solver. 
+      rewrite hb_in_fChb_sb; [|apply SRCC].
+      rewrite seq_union_l, dom_union. unionL.
+      2: eapply exec_sb_prcl; eauto; apply SRCC.
+      rewrite hfC. unfold cert_dom. basic_solver 10.
     Qed.
 
-    Lemma h_hb_release_ewD :
+    Lemma hb_rel_ew_hD :
       dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof. 
-      eapply exec_hb_release_ewD; try apply SRCC. 
-      unfold cert_dom. basic_solver. 
+      rewrite crE with (r := Shb).
+      relsf. split.
+      { by apply rel_ew_hD. }
+      intros x [y [z [HB REL]]].
+      eapply hb_hD; auto.
+      eexists. apply seq_eqv_r. split; eauto.
+      apply rel_ew_hD; auto. basic_solver.
     Qed.
 
-    Lemma h_jfD : 
+    Lemma jf_hD : 
       dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S k ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
     Proof.
       assert (ES.Wf S) as WFS by apply SRCC.
@@ -489,11 +489,19 @@ Section SimRelCert.
       basic_solver.
     Qed.
 
-    Lemma h_necfD :
+    Lemma necf_hD :
       restr_rel (h □₁ hdom) Secf ⊆ ∅₂.
     Proof. 
-      eapply exec_necfD; try apply SRCC. 
-      unfold cert_dom. basic_solver. 
+      unfold restr_rel, ecf.
+      intros a b [ECF [Hx Hy]].
+      destruct ECF as [c [tHB [d [CF HB]]]].
+      eapply exec_ncf; [apply SRCC.(sr_exec_h)|].
+      apply restr_relE. unfold restr_rel.
+      splits; eauto.
+      { unfolder in tHB; desf.
+        eapply hb_hD; auto. basic_solver 10. }
+      unfolder in HB; desf.
+      eapply hb_hD; auto. basic_solver 10.
     Qed.
 
     Lemma hvis : 

@@ -323,7 +323,7 @@ Section SimRelCertBasicStep.
     { rewrite cont_sb_dom_in_hhdom; eauto.
       intros x [y [z [[EQxy | HB] [certD _]]]].
       { basic_solver. }
-      left. eapply h_hbD; eauto. basic_solver 10. }
+      left. eapply hb_hD; eauto. basic_solver 10. }
     rewrite crE, seq_union_l, seq_id_l, dom_union. 
     unionL. splits.
     { basic_solver. }
@@ -352,8 +352,8 @@ Section SimRelCertBasicStep.
     relsf. splits.
     { rewrite <- seqA.
       intros x [y [z [HA HB]]].
-      eapply h_hb_release_ewD; eauto.
-      edestruct h_jfD as [a Ha]; eauto.
+      eapply hb_rel_ew_hD; eauto.
+      edestruct jf_hD as [a Ha]; eauto.
       { generalize HB. basic_solver 10. }
       eexists. apply seqA. 
       eexists; splits; eauto. }

@@ -178,55 +178,6 @@ Section SimRelSubExec.
       apply sbC_dom; auto. eexists. apply seq_eqv_r. eauto.
     Qed.
 
-    
-
-    
-
-    (* Lemma exec_hbD *)
-    (*       (CinD : C ⊆₁ a2eD)  *)
-    (*       (SRE2A : simrel_e2a S G sc) *)
-    (*       (SRA2E : simrel_a2e S a2e a2eD) :            *)
-    (*   dom_rel (Shb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.   *)
-    (* Proof. *)
-    (*   rewrite exec_hb_in_Chb_sb; auto. *)
-    (*   rewrite seq_union_l, dom_union. unionL. *)
-    (*   2: by eapply exec_sb_prcl; eauto. *)
-    (*   rewrite CinD. basic_solver. *)
-    (* Qed. *)
-
-    (* Lemma exec_hb_release_ewD  *)
-    (*       (CinD : C ⊆₁ a2eD)  *)
-    (*       (SRE2A : simrel_e2a S G sc) *)
-    (*       (SRA2E : simrel_a2e S a2e a2eD) : *)
-    (*   dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD.   *)
-    (* Proof.  *)
-    (*   rewrite crE with (r := Shb).  *)
-    (*   relsf. split.  *)
-    (*   { by apply exec_rel_ewD. } *)
-    (*   intros x [y [z [HB REL]]]. *)
-    (*   eapply exec_hbD; auto.  *)
-    (*   eexists. apply seq_eqv_r. split; eauto. *)
-    (*   apply exec_rel_ewD; auto. basic_solver. *)
-    (* Qed. *)
-
-    (* Lemma exec_necfD  *)
-    (*       (CinD : C ⊆₁ a2eD)  *)
-    (*       (SRE2A : simrel_e2a S G sc) *)
-    (*       (SRA2E : simrel_a2e S a2e a2eD) :  *)
-    (*   restr_rel (a2e □₁ a2eD) Secf ⊆ ∅₂. *)
-    (* Proof.  *)
-    (*   unfold restr_rel, ecf.  *)
-    (*   intros a b [ECF [Hx Hy]]. *)
-    (*   destruct ECF as [c [tHB [d [CF HB]]]]. *)
-    (*   eapply exec_ncf; eauto.  *)
-    (*   apply restr_relE. unfold restr_rel. *)
-    (*   splits; eauto.  *)
-    (*   { unfolder in tHB; desf.  *)
-    (*     eapply exec_hbD; auto. basic_solver 10. } *)
-    (*   unfolder in HB; desf.  *)
-    (*   eapply exec_hbD; auto. basic_solver 10. *)
-    (* Qed. *)
-
   End SimRelSubExecProps.
 
 End SimRelSubExec.
