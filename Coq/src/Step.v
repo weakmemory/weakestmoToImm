@@ -1009,14 +1009,19 @@ Proof.
   rewrite crE. relsf.
   rewrite !seqA.
   arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ ⦗F S'⦘).
-  { admit. }
+  { unfold ESBasicStep.sb_delta.
+    clear -nF' rR'.
+    rewrite seq_union_l, !seq_eqv_cross_r.
+    arewrite (F S' ∩₁ eq e ⊆₁ ∅) by type_solver.
+    arewrite (F S' ∩₁ eq_opt e' ⊆₁ ∅) by (by rewrite set_interC).
+    basic_solver. }
   arewrite_false (jf_delta w e ⨾ sb S).
   { ESBasicStep.step_solver. }
   arewrite_false (jf S ⨾ ⦗eq e⦘).
   { ESBasicStep.step_solver. }
   unfold jf_delta.
   basic_solver 10.
-Admitted.  
+Qed.  
 
 Lemma step_add_jf_sw_dom lang k k' st st' w e e' S S'
       (BSTEP_ : ESBasicStep.t_ lang k k' st st' e e' S S') 
