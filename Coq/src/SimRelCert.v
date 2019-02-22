@@ -151,7 +151,7 @@ Section SimRelCert.
 
       sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
 
-      sr_exec_h : simrel_subexec S (*TC*) h (cert_dom G TC ktid st); 
+      (* sr_exec_h : simrel_subexec S (*TC*) h (cert_dom G TC ktid st);  *)
 
       hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
       hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h; 
@@ -374,8 +374,8 @@ Section SimRelCert.
            split; auto. }
       assert (~ Scf (h x') (h y')) as NCF.
       { intros JJ.
-        eapply exec_ncf. 
-        { apply SRCC.(sr_exec_h). }
+        eapply a2e_ncf. 
+        { apply SRCC.(sr_a2e_h). }
         apply seq_eqv_l. split; [|apply seq_eqv_r; split; eauto].
         all: by eexists; split; [|by eauto]. }
       edestruct ES.same_thread as [PP _]; [by apply SRCC|].
@@ -433,7 +433,7 @@ Section SimRelCert.
         { rewrite dom_seq. rewrite hfC.
           unfold cert_dom. basic_solver 10. }
         rewrite crE. relsf. splits; auto.
-        erewrite exec_sb_prcl; eauto. apply SRCC. }
+        erewrite a2e_sb_prcl; eauto. apply SRCC. }
       arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁
                 dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘)).
       { rewrite <- seqA.
@@ -455,7 +455,7 @@ Section SimRelCert.
     Proof.
       rewrite hb_in_fChb_sb; [|apply SRCC].
       rewrite seq_union_l, dom_union. unionL.
-      2: eapply exec_sb_prcl; eauto; apply SRCC.
+      2: eapply a2e_sb_prcl; eauto; apply SRCC.
       rewrite hfC. unfold cert_dom. basic_solver 10.
     Qed.
 
@@ -475,18 +475,54 @@ Section SimRelCert.
       dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S k ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
     Proof.
       assert (ES.Wf S) as WFS by apply SRCC.
-      rewrite cont_sb_dom_in_hhdom.
-      intros x [y [z [JF [EQz certDy]]]]. subst z.
-      edestruct exec_rfc as [z [a [[EQa certDz] RF]]].
-      { apply SRCC.(sr_exec_h). }
-      { split; eauto. apply ES.jfD, seq_eqv_lr in JF; desf. }
-      subst a.
-      destruct RF as [[a [EW JF']] _].
-      eapply ES.jff in JF'; auto.
-      specialize (JF' JF). subst a.
-      do 2 eexists. split.
-      { eapply cr_sym; eauto. by apply ES.ew_sym. }
-      basic_solver.
+      rewrite ES.jfi_union_jfe. relsf. splits.
+      { rewrite cont_sb_dom_in_hhdom.
+        arewrite (Sjfi ⊆ Ssb).
+        erewrite a2e_sb_prcl; [|apply SRCC].
+        basic_solver 10. }
+      rewrite seq_eqv_r with (r := Sjfe).
+      intros x [y [JFE KSB]].
+      edestruct jfe_fI as [z HH]. 
+      { apply SRCC. }
+      { red. eauto. }
+      apply seq_eqv_r in HH. 
+      destruct HH as [EW fI].
+      eexists. apply seq_eqv_r.
+      splits; eauto.
+      unfold cert_dom.
+      apply set_collect_union. left.
+      apply set_collect_union. right.
+      eapply set_collect_eq_dom.
+      { eapply eq_dom_mori; [| eauto | |].
+        3 : { intros a HH. symmetry. eapply hfeq; eauto. }
+        all : eauto.
+        red. basic_solver 10. }
+      destruct fI as [a [fI EQa]].
+      red; eexists; splits; eauto.
+      red. splits.
+      { basic_solver 10. }
+      intros GTID.
+      set (HH := JFE).
+      eapply jfe_alt in HH. 
+      2-3 : apply SRCC.
+      apply seq_eqv_l in HH.
+      destruct HH as [Enix [JF nSTID]].
+      apply nSTID. red. 
+      arewrite (Stid x = Stid z).
+      { destruct EW as [EQ | EW]; auto.
+        eapply ES.cf_same_tid, ES.ewc; auto. }
+      arewrite (Stid z = Gtid a).
+      { etransitivity; [eapply e2a_tid|].
+        subst z. fold (compose (e2a S) f a).
+        erewrite a2e_fix; auto.
+        { apply SRCC. }
+        basic_solver 10. }
+      arewrite (Stid y = ES.cont_thread S k); auto.
+      eapply ES.cont_sb_tid in KSB; auto.
+      2 : { edestruct cstate_q_cont; [apply SRCC|]. desf. apply KK. }
+      destruct KSB as [Eiy | TIDy]; auto.
+      exfalso. eapply ES.jf_nEinit; eauto.
+      apply seq_eqv_r; eauto.
     Qed.
 
     Lemma necf_hD :
@@ -495,7 +531,7 @@ Section SimRelCert.
       unfold restr_rel, ecf.
       intros a b [ECF [Hx Hy]].
       destruct ECF as [c [tHB [d [CF HB]]]].
-      eapply exec_ncf; [apply SRCC.(sr_exec_h)|].
+      eapply a2e_ncf; [apply SRCC.(sr_a2e_h)|].
       apply restr_relE. unfold restr_rel.
       splits; eauto.
       { unfolder in tHB; desf.

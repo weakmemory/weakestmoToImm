@@ -700,6 +700,17 @@ Proof.
   eapply K_inEninit; eauto. 
 Qed.  
 
+Lemma cont_sb_tid k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_sb_dom S k ⊆₁ Einit ∪₁ Tid (cont_thread S k).
+Proof. 
+  unfold cont_thread, cont_sb_dom.
+  destruct k.
+  { basic_solver. }
+  rewrite sb_Einit_Eninit; auto.
+  sin_rewrite sb_tid; auto.
+  basic_solver.
+Qed.
+
 Lemma cont_sb_prcl k lang st WF (KK : K (k, existT _ lang st)) : 
   dom_rel (sb ⨾ ⦗ cont_sb_dom S k ⦘) ⊆₁ cont_sb_dom S k.
 Proof. 

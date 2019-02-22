@@ -457,8 +457,8 @@ Section SimRelAddJF.
       rewrite transp_singl_rel.
       intros x y [HH CF].
       destruct HH as [a [[b [certD HBd]] JFd]].
-      eapply exec_ncf.
-      { apply SRCC.(sr_exec_h). }
+      eapply a2e_ncf.
+      { apply SRCC.(sr_a2e_h). }
       apply seq_eqv_lr. 
       splits; [apply certD| apply CF |]. 
       unfold singl_rel in JFd. desf.
@@ -506,8 +506,8 @@ Section SimRelAddJF.
       unfold ESstep.jf_delta.
       intros x y [HH CF].
       destruct HH as [a [HB [b [JFd HBd]]]].
-      eapply exec_ncf.
-      { apply SRCC.(sr_exec_h). }
+      eapply a2e_ncf.
+      { apply SRCC.(sr_a2e_h). }
       apply seq_eqv_lr. 
       splits; [|apply CF|].
       { eapply hb_hD; eauto.

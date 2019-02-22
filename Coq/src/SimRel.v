@@ -6,7 +6,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef ImmProperties 
         EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf SimRelCont SimRelEventToAction SimRelSubExec. 
+        CertGraph CertRf SimRelCont SimRelEventToAction (* SimRelSubExec *). 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -121,11 +121,11 @@ Section SimRel.
       sr_e2a : simrel_e2a S G sc;
       sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
       
-      sr_exec_f : simrel_subexec S (*TC*) f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)); 
-
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;
       fvis : f □₁ fdom ⊆₁ vis S;
       finitIncl : SEinit ⊆₁ f □₁ GEinit;
+
+      fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
       jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
       ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
@@ -225,6 +225,33 @@ Section SimRel.
       generalize WFS.(ES.ew_trans) EW HH. basic_solver.
     Qed.
 
+    Lemma sb_fC :
+      dom_rel (Ssb ⨾ ⦗ f □₁ C ⦘) ⊆₁ f □₁ C.
+    Proof.
+      rewrite <- seq_eqvK.
+      arewrite (C ⊆₁ fdom).
+      arewrite (Ssb ⨾ ⦗f □₁ fdom⦘ ⊆ f □ (Gsb ⨾ ⦗ fdom ⦘)).
+      { eapply SsbD_in_GsbD; apply SRC. }
+      rewrite <- set_collect_eqv.
+      rewrite <- collect_rel_seq.
+      { rewrite seqA.
+        arewrite (⦗fdom⦘ ⨾ ⦗C⦘ ⊆ ⦗C⦘).
+        rewrite sb_covered; eauto.
+        { basic_solver. }
+        apply SRC. }
+      rewrite codom_seq, codom_eqv, dom_eqv.
+      eapply inj_dom_mori; [| done | apply SRC].
+      red. basic_solver 6.
+    Qed.
+
+    Lemma sb_nfC_nfC :
+      codom_rel (⦗ set_compl (f □₁ C) ⦘ ⨾ Ssb) ⊆₁ set_compl (f □₁ C).
+    Proof.
+      intros x [y HH]. destruct_seq_l HH as DX.
+      intros DY. apply DX.
+      apply sb_fC; auto. eexists. apply seq_eqv_r. eauto.
+    Qed.
+
     Lemma rel_nfCsb : 
       ⦗ set_compl (f □₁ C) ⦘ ⨾ Srelease ⊆ Ssb^?.
     Proof.
@@ -300,8 +327,7 @@ Section SimRel.
       all: eapply ES.sb_trans; eauto.
       apply sw_nfCsb; auto. apply seq_eqv_l. 
       split; auto.
-      eapply sb_nC_nC; try apply SRC.
-      { basic_solver. }
+      eapply sb_nfC_nfC; try apply SRC.
       eexists. apply seq_eqv_l. eauto.
     Qed.
 

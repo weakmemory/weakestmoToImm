@@ -168,7 +168,7 @@ Section SimRelCertBasicStep.
         try apply SRCC; eauto. }
 
     simpl. 
-    eapply simrel_a2e_set_equiv. 
+    eapply simrel_a2e_set_equiv; try apply SRCC.
     { eapply basic_step_cert_dom; eauto; apply SRCC. }
     subst h'. constructor.
     
@@ -240,7 +240,9 @@ Section SimRelCertBasicStep.
     unfold eq_opt, option_map, upd_opt. 
     red. ins. destruct e'; [|by exfalso].
     unfold compose. subst x. by rewrite upds. 
-  Qed.
+
+    all : admit. 
+  Admitted.
 
   Lemma basic_step_nupd_simrel_a2e_h k k' e S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
