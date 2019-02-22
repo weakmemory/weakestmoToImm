@@ -2016,11 +2016,49 @@ Proof.
     admit. }
   { admit. }
   { cdes BSTEP. cdes BSTEP_.
-    rewrite RMW'. unionL.
-    { rewrite SB'.
-      intros x y RMW. red. split.
-      { left. by apply WF.(ES.rmwi). }
+    rewrite SB'. rewrite RMW'.
+    rewrite WF.(ES.rmwE). unfold ESBasicStep.rmw_delta.
+    rewrite WF.(ES.sbE).
+    arewrite (ESBasicStep.sb_delta S k e e' ≡
+              <| E S ∪₁ eq e |> ;; ESBasicStep.sb_delta S k e e' ;; <| set_compl (E S) |>).
+    { split; [|basic_solver].
+      arewrite (ESBasicStep.sb_delta S k e e' ⊆
+                ESBasicStep.sb_delta S k e e' ;; <| E S ∪₁ set_compl (E S) |>).
+      { rewrite set_compl_union_id. basic_solver. }
+      rewrite id_union, seq_union_r.
+      rewrite ESBasicStep.basic_step_sb_deltaE; eauto.
+      rewrite union_false_l.
+      hahn_frame.
+      apply dom_rel_helper_in.
+      eapply ESBasicStep.basic_step_sb_delta_dom; eauto. }
+    unionL.
+    { intros x y RMW. destruct_seq RMW as [XX YY].
+      red. split.
+      { left. apply seq_eqv_l. split; auto.
+        apply seq_eqv_r. split; auto.
+          by apply WF.(ES.rmwi). }
       ins.
+      destruct R1 as [R1|R1]; destruct_seq R1 as [A1 B1];
+        destruct R2 as [R2|R2]; destruct_seq R2 as [A2 B2]; desf.
+      eapply WF.(ES.rmwi); eauto. }
+    intros x y [CC DD]; subst. red in DD. desf.
+    red. split.
+    { right. apply seq_eqv_l. split.
+      { by right. }
+      apply seq_eqv_r. split.
+      2: { red. intros AA. red in AA. simpls. omega. }
+      red. right. red. split.
+      { by right. }
+        by red. }
+    ins.
+    destruct R1 as [R1|R1]; destruct_seq R1 as [A1 B1];
+      destruct R2 as [R2|R2]; destruct_seq R2 as [A2 B2]; desf.
+    { red in B2. omega. }
+    { red in A1. omega. }
+    destruct A2 as [A2|A2]; desf.
+    red in R1. destruct R1 as [R1|R1]; red in R1; simpls; desf.
+    2: omega.
+    eapply ES.cont_sb_domE in R1; eauto. }
 Admitted.
 
 
