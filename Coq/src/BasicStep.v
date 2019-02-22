@@ -17,6 +17,7 @@ Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
 Notation "'tid' S" := S.(ES.tid) (at level 10).
 Notation "'lab' S" := S.(ES.lab) (at level 10).
 Notation "'loc' S" := (Events.loc S.(ES.lab)) (at level 10).
+Notation "'val' S" := (Events.val S.(ES.lab)) (at level 10).
 Notation "'mod' S" := (Events.mod S.(ES.lab)) (at level 10).
 
 Notation "'sb' S" := S.(ES.sb) (at level 10).
@@ -361,6 +362,16 @@ Proof.
   eapply basic_step_lab_eq_dom; eauto.
 Qed.
 
+Lemma basic_step_val_eq_dom  e e' S S'
+      (BSTEP : t e e' S S') :
+  eq_dom (E S) (val S') (val S).
+Proof.
+  unfold Events.val. red. ins.
+  assert ((lab S') x = (lab S) x) as AA.
+  2: by rewrite AA.
+  eapply basic_step_lab_eq_dom; eauto.
+Qed.
+
 Lemma basic_step_same_loc_restr e e' S S' 
       (BSTEP : t e e' S S') :
   restr_rel S.(ES.acts_set) (same_loc S') ≡ restr_rel S.(ES.acts_set) (same_loc S).
@@ -371,6 +382,18 @@ Proof.
   erewrite <- basic_step_loc_eq_dom; eauto.
   2: erewrite basic_step_loc_eq_dom; eauto; symmetry.
   all: rewrite H; eapply basic_step_loc_eq_dom; eauto. 
+Qed.
+
+Lemma basic_step_same_val_restr e e' S S' 
+      (BSTEP : t e e' S S') :
+  restr_rel S.(ES.acts_set) (same_val S') ≡ restr_rel S.(ES.acts_set) (same_val S).
+Proof. 
+  unfolder. 
+  unfold ES.same_tid.
+  splits; ins; desf; splits; auto; red.
+  erewrite <- basic_step_val_eq_dom; eauto.
+  2: erewrite basic_step_val_eq_dom; eauto; symmetry.
+  all: rewrite H; eapply basic_step_val_eq_dom; eauto. 
 Qed.
 
 Lemma basic_step_mod_eq_dom e e' S S' 
