@@ -757,17 +757,32 @@ Section SimRelEventToActionLemmas.
         (BSTEP : ESBasicStep.t e e' S S') : 
     simrel_a2e S' a2e a2eD.
   Proof. 
+    cdes BSTEP; cdes BSTEP_.
     constructor.
     { apply SRA2E. }
     { etransitivity.
       { apply SRA2E. }
       eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
-    eapply fixset_eq_dom.
-    2 : apply SRA2E.
-    unfolder. unfold compose. 
-    ins. eapply basic_step_e2a_eq_dom; eauto.
-    apply SRA2E. basic_solver.
-    all : admit. 
-  Admitted.
+    { eapply fixset_eq_dom.
+      2 : apply SRA2E.
+      unfolder. unfold compose. 
+      ins. eapply basic_step_e2a_eq_dom; eauto.
+      apply SRA2E. basic_solver. }
+    { rewrite SB'. relsf. splits.
+      { apply SRA2E. }
+      erewrite a2e_img at 1; [|apply SRA2E].
+      erewrite ESBasicStep.basic_step_sb_deltaE; eauto. 
+      basic_solver. }
+    red. 
+    rewrite <- set_interK
+      with (s := a2e □₁ a2eD).
+    rewrite id_inter.
+    rewrite a2e_img at 2 3; [|apply SRA2E].
+    rewrite !seqA.
+    arewrite (⦗SE S⦘ ⨾ Scf S' ⨾ ⦗SE S⦘ ≡ Scf S).
+    { rewrite <- restr_relE.
+      erewrite ESBasicStep.basic_step_cf_restr; eauto. }
+    apply SRA2E.
+  Qed.
 
 End SimRelEventToActionLemmas.
