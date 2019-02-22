@@ -1730,6 +1730,16 @@ Lemma step_wf S S'
   ES.Wf S'.
 Proof.
   cdes STEP.
+  assert (E S ⊆₁ E S') as EES.
+  { rewrite ESBasicStep.basic_step_acts_set with (S':=S'); eauto.
+    basic_solver. }
+  assert (eq e ⊆₁ E S') as EIES.
+  { rewrite ESBasicStep.basic_step_acts_set; eauto.
+    basic_solver. }
+  assert (eq_opt e' ⊆₁ E S') as EIES'.
+  { rewrite ESBasicStep.basic_step_acts_set; eauto.
+    basic_solver. }
+
   constructor.
   { ins; desf.
     (* TODO :
@@ -1764,15 +1774,9 @@ Proof.
     rewrite ES.cont_sb_domE; eauto.
     arewrite (sb S ⊆ E S × E S).
     { rewrite WF.(ES.sbE) at 1. basic_solver. }
-    arewrite (E S ⊆₁ E S').
-    { rewrite ESBasicStep.basic_step_acts_set with (S':=S'); eauto.
-      basic_solver. }
-    arewrite (eq e ⊆₁ E S').
-    { rewrite ESBasicStep.basic_step_acts_set; eauto.
-      basic_solver. }
-    arewrite (eq_opt e' ⊆₁ E S').
-    { rewrite ESBasicStep.basic_step_acts_set; eauto.
-      basic_solver. }
+    sin_rewrite EES.
+    sin_rewrite EIES.
+    sin_rewrite EIES'.
     basic_solver. }
   { rewrite ESBasicStep.basic_step_acts_init_set; eauto.
     rewrite ESBasicStep.basic_step_acts_ninit_set; eauto.
@@ -2059,6 +2063,26 @@ Proof.
     red in R1. destruct R1 as [R1|R1]; red in R1; simpls; desf.
     2: omega.
     eapply ES.cont_sb_domE in R1; eauto. }
+  { split; [|basic_solver].
+    red in TT. desf; cdes TT; desf.
+    2,4: cdes AJF.
+    all: rewrite JF'; unionL.
+    1,2,4,6: rewrite WF.(ES.jfE) at 1; sin_rewrite !EES; basic_solver.
+    all: unfold jf_delta; apply EES in wE; generalize wE rE'; basic_solver. }
+  { split; [|basic_solver].
+    red in TT. desf; cdes TT; desf.
+    2,4: cdes AJF.
+    all: rewrite JF'; unionL.
+    { rewrite WF.(ES.jfD) at 1.
+      (* TODO: continue from here *)
+    (*   erewrite basic_step_w_in_w. *)
+
+    (* 1,2,4,6: rewrite WF.(ES.jfD) at 1. sin_rewrite !EES; basic_solver. *)
+    (* all: unfold jf_delta; apply EES in wE; generalize wE rE'; basic_solver. } *)
+
+
+
+    (* cdes BSTEP. cdes BSTEP_. *)
 Admitted.
 
 
