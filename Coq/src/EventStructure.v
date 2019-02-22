@@ -513,6 +513,35 @@ Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 (** ** jf properties *)
 (******************************************************************************)
 
+Lemma jf_eq WF : jf ∩ eq ⊆ ∅₂.
+Proof. rewrite jfD; auto. type_solver. Qed.
+
+Lemma jf_nEinit WF : jf ⨾ ⦗Einit⦘ ⊆ ∅₂.
+Proof. rewrite jfD, acts_init_set_inW; auto. type_solver. Qed.
+
+Lemma jf_nEinit_alt WF : jf ⊆ Einit × Eninit ∪ Eninit × Eninit. 
+Proof. 
+  rewrite jfE; auto.
+  rewrite acts_set_split.
+  rewrite id_union. relsf.
+  rewrite jf_nEinit; auto.
+  basic_solver.
+Qed.
+
+Lemma jf_same_tid WF : jf ∩ same_tid ≡ jf ∩ (⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘). 
+Proof.
+  erewrite <- inter_absorb_r
+    with (r := jf) at 1.
+  2 : eapply jf_nEinit_alt; auto.
+  rewrite !inter_union_r, !inter_union_l.
+  arewrite_false (jf ∩ Einit × Eninit ∩ same_tid).
+  { unfold acts_ninit_set, acts_init_set, ES.same_tid.
+    unfolder. ins. desf. exfalso. 
+    eapply H3. split; auto.
+    congruence. }
+  basic_solver 6.
+Qed.
+
 Lemma jfiE WF : jfi ≡ ⦗E⦘ ⨾ jfi ⨾ ⦗E⦘.
 Proof. unfold ES.jfi. rewrite WF.(jfE). basic_solver. Qed.
 
