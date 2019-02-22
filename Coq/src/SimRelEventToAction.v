@@ -95,12 +95,18 @@ Section SimRelEventToAction.
       e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
     }.
 
-  Record simrel_a2e (a2e : actid -> eventid) (a2eD : actid -> Prop) := 
+  Variable a2e : actid -> eventid.
+  Variable a2eD : actid -> Prop. 
+
+  Record simrel_a2e := 
     { a2e_inj : inj_dom a2eD a2e;
       a2e_img : a2e □₁ a2eD ⊆₁ SE;
       a2e_fix : fixset a2eD (e2a ∘ a2e);
       (* Do we really need this ? *)
       (* a2e_oth : (a2e □₁ set_compl aD) ∩₁ SE ≡₁ ∅; *)
+
+      a2e_sb_prcl : dom_rel (Ssb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD;
+      a2e_ncf : ES.cf_free S (a2e □₁ a2eD);
     }. 
 
   Section SimRelEventToActionProps. 
@@ -109,6 +115,7 @@ Section SimRelEventToAction.
     Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
     Variable WF : ES.Wf S.
     Variable SRE2A : simrel_e2a.
+    Variable SRA2E : simrel_a2e.
 
     Lemma e2a_same_Einit : 
       e2a □₁ SEinit ≡₁ GEinit.
@@ -207,6 +214,38 @@ Section SimRelEventToAction.
       rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
       { unfold imm_s_hb.release. basic_solver 10. }
       all: eauto; apply SRE2A.
+    Qed.
+
+    Lemma SsbD_in_GsbD :
+      Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ (Gsb ⨾ ⦗ a2eD ⦘).
+    Proof.
+      erewrite dom_rel_helper with (r := Ssb ⨾ ⦗a2e □₁ a2eD⦘).
+      2 : by apply a2e_sb_prcl.
+      rewrite <- restr_relE.
+      rewrite <- collect_rel_fixset.
+      2 : eapply fixset_swap; apply SRA2E.
+      rewrite <- collect_rel_compose.
+      apply collect_rel_mori; auto.
+      rewrite restr_relE.
+      rewrite <- seq_eqvK at 2.
+      rewrite <- !seqA.
+      rewrite seqA with (r1 := ⦗a2e □₁ a2eD⦘).
+      rewrite collect_rel_seqi.
+      rewrite <- restr_relE.
+      rewrite inclusion_restr.
+      rewrite set_collect_eqv, set_collect_compose.
+      rewrite <- fixset_set_fixpoint.
+      2 : eapply a2e_fix; apply SRA2E.
+      apply seq_mori; [|done].
+      eapply e2a_sb; eauto. apply SRE2A.
+    Qed.
+
+    Lemma SsbD_in_Gsb :
+      Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ Gsb.
+    Proof.
+      etransitivity.
+      { by apply SsbD_in_GsbD. }
+      basic_solver 10.
     Qed.
 
   End SimRelEventToActionProps. 
@@ -708,7 +747,9 @@ Section SimRelEventToActionLemmas.
     all: intros HH; inv HH; constructor;
       [ eapply inj_dom_more; eauto 
       | erewrite set_collect_more; eauto
-      | eapply fixset_more; eauto ].
+      | eapply fixset_more; eauto 
+      | by rewrite EQ 
+      | red; by rewrite EQ ].
   Qed.
 
   Lemma basic_step_simrel_a2e_preserved e e' S' a2e a2eD
@@ -716,16 +757,32 @@ Section SimRelEventToActionLemmas.
         (BSTEP : ESBasicStep.t e e' S S') : 
     simrel_a2e S' a2e a2eD.
   Proof. 
+    cdes BSTEP; cdes BSTEP_.
     constructor.
     { apply SRA2E. }
     { etransitivity.
       { apply SRA2E. }
       eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
-    eapply fixset_eq_dom.
-    2 : apply SRA2E.
-    unfolder. unfold compose. 
-    ins. eapply basic_step_e2a_eq_dom; eauto.
-    apply SRA2E. basic_solver.
+    { eapply fixset_eq_dom.
+      2 : apply SRA2E.
+      unfolder. unfold compose. 
+      ins. eapply basic_step_e2a_eq_dom; eauto.
+      apply SRA2E. basic_solver. }
+    { rewrite SB'. relsf. splits.
+      { apply SRA2E. }
+      erewrite a2e_img at 1; [|apply SRA2E].
+      erewrite ESBasicStep.basic_step_sb_deltaE; eauto. 
+      basic_solver. }
+    red. 
+    rewrite <- set_interK
+      with (s := a2e □₁ a2eD).
+    rewrite id_inter.
+    rewrite a2e_img at 2 3; [|apply SRA2E].
+    rewrite !seqA.
+    arewrite (⦗SE S⦘ ⨾ Scf S' ⨾ ⦗SE S⦘ ≡ Scf S).
+    { rewrite <- restr_relE.
+      erewrite ESBasicStep.basic_step_cf_restr; eauto. }
+    apply SRA2E.
   Qed.
 
 End SimRelEventToActionLemmas.

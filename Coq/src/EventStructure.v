@@ -516,6 +516,35 @@ Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
 (** ** jf properties *)
 (******************************************************************************)
 
+Lemma jf_eq WF : jf ∩ eq ⊆ ∅₂.
+Proof. rewrite jfD; auto. type_solver. Qed.
+
+Lemma jf_nEinit WF : jf ⨾ ⦗Einit⦘ ⊆ ∅₂.
+Proof. rewrite jfD, acts_init_set_inW; auto. type_solver. Qed.
+
+Lemma jf_nEinit_alt WF : jf ⊆ Einit × Eninit ∪ Eninit × Eninit. 
+Proof. 
+  rewrite jfE; auto.
+  rewrite acts_set_split.
+  rewrite id_union. relsf.
+  rewrite jf_nEinit; auto.
+  basic_solver.
+Qed.
+
+Lemma jf_same_tid WF : jf ∩ same_tid ≡ jf ∩ (⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘). 
+Proof.
+  erewrite <- inter_absorb_r
+    with (r := jf) at 1.
+  2 : eapply jf_nEinit_alt; auto.
+  rewrite !inter_union_r, !inter_union_l.
+  arewrite_false (jf ∩ Einit × Eninit ∩ same_tid).
+  { unfold acts_ninit_set, acts_init_set, ES.same_tid.
+    unfolder. ins. desf. exfalso. 
+    eapply H3. split; auto.
+    congruence. }
+  basic_solver 6.
+Qed.
+
 Lemma jfiE WF : jfi ≡ ⦗E⦘ ⨾ jfi ⨾ ⦗E⦘.
 Proof. unfold ES.jfi. rewrite WF.(jfE). basic_solver. Qed.
 
@@ -673,6 +702,17 @@ Proof.
   left; split; auto.   
   eapply K_inEninit; eauto. 
 Qed.  
+
+Lemma cont_sb_tid k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_sb_dom S k ⊆₁ Einit ∪₁ Tid (cont_thread S k).
+Proof. 
+  unfold cont_thread, cont_sb_dom.
+  destruct k.
+  { basic_solver. }
+  rewrite sb_Einit_Eninit; auto.
+  sin_rewrite sb_tid; auto.
+  basic_solver.
+Qed.
 
 Lemma cont_sb_prcl k lang st WF (KK : K (k, existT _ lang st)) : 
   dom_rel (sb ⨾ ⦗ cont_sb_dom S k ⦘) ⊆₁ cont_sb_dom S k.

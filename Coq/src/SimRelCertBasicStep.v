@@ -11,7 +11,7 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure BasicStep Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelCont SimRelEventToAction SimRelSubExec SimRel SimRelCert. 
+        SimRelCont SimRelEventToAction SimRel SimRelCert. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -168,7 +168,7 @@ Section SimRelCertBasicStep.
         try apply SRCC; eauto. }
 
     simpl. 
-    eapply simrel_a2e_set_equiv. 
+    eapply simrel_a2e_set_equiv; try apply SRCC.
     { eapply basic_step_cert_dom; eauto; apply SRCC. }
     subst h'. constructor.
     
@@ -240,7 +240,9 @@ Section SimRelCertBasicStep.
     unfold eq_opt, option_map, upd_opt. 
     red. ins. destruct e'; [|by exfalso].
     unfold compose. subst x. by rewrite upds. 
-  Qed.
+
+    all : admit. 
+  Admitted.
 
   Lemma basic_step_nupd_simrel_a2e_h k k' e S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
@@ -323,7 +325,7 @@ Section SimRelCertBasicStep.
     { rewrite cont_sb_dom_in_hhdom; eauto.
       intros x [y [z [[EQxy | HB] [certD _]]]].
       { basic_solver. }
-      left. eapply h_hbD; eauto. basic_solver 10. }
+      left. eapply hb_hD; eauto. basic_solver 10. }
     rewrite crE, seq_union_l, seq_id_l, dom_union. 
     unionL. splits.
     { basic_solver. }
@@ -352,8 +354,8 @@ Section SimRelCertBasicStep.
     relsf. splits.
     { rewrite <- seqA.
       intros x [y [z [HA HB]]].
-      eapply h_hb_release_ewD; eauto.
-      edestruct h_jfD as [a Ha]; eauto.
+      eapply hb_rel_ew_hD; eauto.
+      edestruct jf_hD as [a Ha]; eauto.
       { generalize HB. basic_solver 10. }
       eexists. apply seqA. 
       eexists; splits; eauto. }

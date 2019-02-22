@@ -11,7 +11,7 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelCont SimRelEventToAction SimRelSubExec
+        SimRelCont SimRelEventToAction 
         SimRel SimRelCert SimRelCertBasicStep. 
 
 Set Implicit Arguments.
@@ -265,6 +265,21 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
+    Lemma sim_add_jfe_delta_dom w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+      dom_rel (ESstep.jfe_delta S k w e) ⊆₁ h □₁ (I ∩₁ (GNtid_ (ES.cont_thread S k))).
+    Proof. 
+      autounfold with ESStepDb.
+      edestruct sim_add_jf_iss_sb as [Iss | SB]; eauto. 
+      { generalize Iss. basic_solver 10. }
+      unfolder. ins. desc. subst.
+      exfalso. auto. 
+    Qed.
+
     Lemma sim_add_jf_e2a_jf_vf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
@@ -314,7 +329,7 @@ Section SimRelAddJF.
       do 3 rewrite <- seqA. rewrite dom_seq, !seqA.
       unfold ESstep.jf_delta.
       intros x [y HH]. 
-      eapply h_hb_release_ewD; eauto.
+      eapply hb_rel_ew_hD; eauto.
       generalize HH; basic_solver 20.
     Qed.
 
@@ -411,7 +426,7 @@ Section SimRelAddJF.
       { unfolder. ins. desf. 
         eapply cfk_hdom; eauto. 
         split; [|eauto]. 
-        eapply h_hbD; eauto. 
+        eapply hb_hD; eauto. 
         basic_solver 10. }
 
       all : by ESBasicStep.step_solver. 
@@ -457,8 +472,8 @@ Section SimRelAddJF.
       rewrite transp_singl_rel.
       intros x y [HH CF].
       destruct HH as [a [[b [certD HBd]] JFd]].
-      eapply exec_ncf.
-      { apply SRCC.(sr_exec_h). }
+      eapply a2e_ncf.
+      { apply SRCC.(sr_a2e_h). }
       apply seq_eqv_lr. 
       splits; [apply certD| apply CF |]. 
       unfold singl_rel in JFd. desf.
@@ -506,11 +521,11 @@ Section SimRelAddJF.
       unfold ESstep.jf_delta.
       intros x y [HH CF].
       destruct HH as [a [HB [b [JFd HBd]]]].
-      eapply exec_ncf.
-      { apply SRCC.(sr_exec_h). }
+      eapply a2e_ncf.
+      { apply SRCC.(sr_a2e_h). }
       apply seq_eqv_lr. 
       splits; [|apply CF|].
-      { eapply h_hbD; eauto.
+      { eapply hb_hD; eauto.
         unfolder in JFd. desc. subst a b.
         basic_solver 10. }
       unfold transp in HBd.
@@ -556,12 +571,34 @@ Section SimRelAddJF.
       rewrite dom_union. 
       apply set_subset_union_l. split. 
       { apply SRCC. }
-      autounfold with ESStepDb.
-      unfolder. ins. desc. subst.
-      eapply hvis; [apply SRCC|].
-      edestruct sim_add_jf_iss_sb as [Iss | SB]; eauto. 
-      { generalize Iss. basic_solver 10. }
-      exfalso. auto. 
+      rewrite sim_add_jfe_delta_dom; eauto.
+      etransitivity; [|eapply hvis]; eauto.
+      basic_solver 10.
+    Qed.
+
+    Lemma sim_add_jf_jfe_fI w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+      dom_rel (Sjfe S') ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘). 
+    Proof. 
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      cdes BSTEP_; cdes SAJF.
+      erewrite ESstep.step_add_jf_jfe; eauto.
+      rewrite dom_union. unionL. 
+      { eapply jfe_fI. apply SRCC. }
+      erewrite sim_add_jfe_delta_dom; eauto.
+      erewrite <- set_collect_eq_dom 
+        with (g := h).
+      2 : eapply eq_dom_mori; try eapply hfeq; eauto; red; basic_solver 10.
+      basic_solver 10.
     Qed.
 
   End SimRelAddJFProps. 

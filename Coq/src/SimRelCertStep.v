@@ -11,7 +11,7 @@ From imm Require Import Events Execution
      SubExecution CombRelations AuxRel.
 Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
         LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelCont SimRelEventToAction SimRelSubExec
+        SimRelCont SimRelEventToAction 
         SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO.  
 
 Set Implicit Arguments.
@@ -821,8 +821,8 @@ Section SimRelCertStepProps.
       { ESBasicStep.step_solver. }
       relsf. 
       unfolder. ins. desc. subst.
-      eapply exec_ncf.
-      { apply SRCC.(sr_exec_h). }
+      eapply a2e_ncf.
+      { apply SRCC.(sr_a2e_h). }
       unfolder. eauto 20. }
 
     { erewrite a2e_img with (a2e := h) at 1 2.
@@ -961,7 +961,6 @@ Section SimRelCertStepProps.
       { eapply basic_step_simrel_cont; eauto; apply SRCC. }
       { eapply simrel_cert_step_e2a; eauto. }
       { eapply basic_step_simrel_a2e_preserved; eauto; apply SRCC. }
-      { admit. }
       (* flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab *)
       { unfold eq_dom, compose. ins. 
         erewrite ESBasicStep.basic_step_lab_eq_dom; eauto.
@@ -975,7 +974,20 @@ Section SimRelCertStepProps.
         { eapply fvis. apply SRCC. }
         eapply ESstep.step_vis_mon; eauto. }
       (* finitIncl : SEinit ⊆₁ f □₁ GEinit *)
-      erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
+      { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
+      (* fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf) *)
+      { admit. }
+      (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      { etransitivity. 
+        { unfold_cert_step_ CertSTEP_.
+          2,4 : eapply sim_add_jf_jfe_fI; eauto.
+          all : erewrite ESstep.step_same_jf_jfe; 
+                eauto; apply SRCC. }
+        erewrite ESstep.step_ew_mon; eauto. }
+      (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      { admit. }
+      (* dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
+      admit. }
     (* cert : cert_graph G sc TC TC' (ES.cont_thread S k') state'' *)
     { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
     (* cstate : simrel_cstate *)
@@ -985,28 +997,28 @@ Section SimRelCertStepProps.
     { admit. }
     (* sr_a2e_h *)
     { eapply basic_step_simrel_a2e_h; eauto. }
-    (* sr_exec_h *)
-    { admit. }
     (* hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab; *)
     { admit. }
     (* hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid qtid)) f h; *)
-    subst h'. 
-    red. ins.
-    erewrite ESBasicStep.basic_step_cont_thread_k in SX; eauto.
-    rewrite updo_opt.
-    { rewrite updo.
-      { eapply hfeq; eauto. }
-      red. ins. subst x.
-      eapply basic_step_cert_dom_ne; 
-        eauto; try apply SRCC.
-      unfold cert_dom. by left. }
-    { destruct e' as [e'|]; auto.
-      unfold eq_opt, option_map.
-      red. ins. subst x.
-      eapply basic_step_cert_dom_ne'; 
-        eauto; try apply SRCC.
-      unfold cert_dom. by left. }
-    by destruct e'. 
+    { subst h'. 
+      red. ins.
+      erewrite ESBasicStep.basic_step_cont_thread_k in SX; eauto.
+      rewrite updo_opt.
+      { rewrite updo.
+        { eapply hfeq; eauto. }
+        red. ins. subst x.
+        eapply basic_step_cert_dom_ne; 
+          eauto; try apply SRCC.
+        unfold cert_dom. by left. }
+      { destruct e' as [e'|]; auto.
+        unfold eq_opt, option_map.
+        red. ins. subst x.
+        eapply basic_step_cert_dom_ne'; 
+          eauto; try apply SRCC.
+        unfold cert_dom. by left. }
+        by destruct e'. }
+    (* hrel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C *)
+    admit. 
   Admitted.
         
       (* assert (g' □ Ssb S' ⊆ Gsb) as SSB. *)
