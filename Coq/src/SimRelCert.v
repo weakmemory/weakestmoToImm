@@ -7,7 +7,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency EventToAction LblStep 
         ImmProperties CertGraph CertRf 
-        SimRelCont SimRelEventToAction SimRelSubExec SimRel. 
+        SimRelCont SimRelEventToAction SimRel. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -150,8 +150,6 @@ Section SimRelCert.
       hgfix : fixset (ES.cont_sb_dom S k) (h ∘ (e2a S));
 
       sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
-
-      (* sr_exec_h : simrel_subexec S (*TC*) h (cert_dom G TC ktid st);  *)
 
       hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
       hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h; 

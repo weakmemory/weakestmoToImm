@@ -6,7 +6,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef ImmProperties 
         EventStructure Consistency EventToAction LblStep 
-        CertGraph CertRf SimRelCont SimRelEventToAction (* SimRelSubExec *). 
+        CertGraph CertRf SimRelCont SimRelEventToAction.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
