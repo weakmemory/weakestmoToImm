@@ -387,6 +387,33 @@ Section SimRelAddEW.
       eapply sim_ewsE; eauto. 
     Qed.
 
+    Lemma sim_add_ew_ew_fI w' k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAEW : sim_add_ew w' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      dom_rel (Sew S') ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘). 
+    Proof.
+      cdes BSTEP_; cdes SAEW.
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      rewrite EW'. 
+      rewrite dom_union.
+      unionL; [apply SRCC|].
+      autounfold with ESStepDb.
+      rewrite csE, transp_cross.
+      rewrite dom_union.
+      unionL.
+      { rewrite dom_cross; [|red; basic_solver].
+        unfold sim_ews. basic_solver 10. }
+      (* we are stuck here, property is incorrect *)
+      admit. 
+    Admitted.
+
   End SimRelAddEWProps. 
 
 End SimRelAddEW.
