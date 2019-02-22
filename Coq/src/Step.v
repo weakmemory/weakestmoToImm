@@ -2070,17 +2070,24 @@ Proof.
     1,2,4,6: rewrite WF.(ES.jfE) at 1; sin_rewrite !EES; basic_solver.
     all: unfold jf_delta; apply EES in wE; generalize wE rE'; basic_solver. }
   { split; [|basic_solver].
+    assert (jf S ⊆ ⦗W S'⦘ ⨾ jf S ⨾ ⦗R S'⦘) as AA.
+    { rewrite WF.(ES.jfD) at 1.
+      rewrite WF.(ES.jfE) at 2.
+      rewrite !seqA.
+      rewrite <- id_inter, <- !seqA, <- id_inter.
+      rewrite set_interC with (s:=W S').
+      rewrite basic_step_w_eq_w; eauto.
+      rewrite basic_step_r_eq_r; eauto.
+      rewrite WF.(ES.jfE) at 1.
+      basic_solver 10. }
     red in TT. desf; cdes TT; desf.
     2,4: cdes AJF.
-    all: rewrite JF'; unionL.
-    { rewrite WF.(ES.jfD) at 1.
-      (* TODO: continue from here *)
-    (*   erewrite basic_step_w_in_w. *)
-
-    (* 1,2,4,6: rewrite WF.(ES.jfD) at 1. sin_rewrite !EES; basic_solver. *)
-    (* all: unfold jf_delta; apply EES in wE; generalize wE rE'; basic_solver. } *)
-
-
+    all: rewrite JF'; unionL; auto.
+    1,3: rewrite AA at 1; basic_solver.
+    all: assert (W S' w) as WW
+        by (eapply basic_step_w_eq_w; eauto; by split);
+      generalize WW rR'; unfold jf_delta;
+        basic_solver. }
 
     (* cdes BSTEP. cdes BSTEP_. *)
 Admitted.
