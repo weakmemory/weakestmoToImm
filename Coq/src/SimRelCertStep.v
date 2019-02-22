@@ -931,6 +931,37 @@ Section SimRelCertStepProps.
     admit. 
   Admitted.
 
+  Lemma simrel_cert_step_jfe_fI k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    dom_rel (Sjfe S') ⊆₁ dom_rel ((Sew S')^? ⨾ ⦗ f □₁ I ⦘). 
+  Proof. 
+    cdes CertSTEP; cdes BSTEP_.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ESstep.t_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    etransitivity.
+    { unfold_cert_step_ CertSTEP_.
+      1,3 : 
+        erewrite ESstep.step_same_jf_jfe;
+        try eapply jfe_fI; eauto; apply SRCC.  
+      all : erewrite ESstep.step_add_jf_jfe; eauto.
+      all : try (eapply weaken_sim_add_jf; eauto).
+      all : rewrite dom_union; unionL. 
+      all : try (eapply jfe_fI; apply SRCC).
+      all : erewrite sim_add_jfe_delta_dom; eauto.
+      all : erewrite <- set_collect_eq_dom 
+        with (g := h).
+      2,4 : eapply eq_dom_mori; try eapply hfeq; eauto; red; basic_solver 10.
+      all : basic_solver 10. }
+    erewrite ESstep.step_ew_mon; eauto.
+  Qed.
+
   Lemma simrel_cert_lbl_step k S
         (st st' st'': (thread_lts (ES.cont_thread S k)).(Language.state))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
@@ -978,7 +1009,7 @@ Section SimRelCertStepProps.
       (* fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf) *)
       { admit. }
       (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
-      { admit. }
+      { eapply simrel_cert_step_jfe_fI; eauto. }
       (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
       { admit. }
       (* dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)

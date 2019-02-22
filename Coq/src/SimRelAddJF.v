@@ -265,6 +265,21 @@ Section SimRelAddJF.
       basic_solver.
     Qed.
 
+    Lemma sim_add_jfe_delta_dom w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+      dom_rel (ESstep.jfe_delta S k w e) ⊆₁ h □₁ (I ∩₁ (GNtid_ (ES.cont_thread S k))).
+    Proof. 
+      autounfold with ESStepDb.
+      edestruct sim_add_jf_iss_sb as [Iss | SB]; eauto. 
+      { generalize Iss. basic_solver 10. }
+      unfolder. ins. desc. subst.
+      exfalso. auto. 
+    Qed.
+
     Lemma sim_add_jf_e2a_jf_vf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
@@ -556,12 +571,9 @@ Section SimRelAddJF.
       rewrite dom_union. 
       apply set_subset_union_l. split. 
       { apply SRCC. }
-      autounfold with ESStepDb.
-      unfolder. ins. desc. subst.
-      eapply hvis; [apply SRCC|].
-      edestruct sim_add_jf_iss_sb as [Iss | SB]; eauto. 
-      { generalize Iss. basic_solver 10. }
-      exfalso. auto. 
+      rewrite sim_add_jfe_delta_dom; eauto.
+      etransitivity; [|eapply hvis]; eauto.
+      basic_solver 10.
     Qed.
 
   End SimRelAddJFProps. 
