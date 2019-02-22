@@ -576,6 +576,31 @@ Section SimRelAddJF.
       basic_solver 10.
     Qed.
 
+    Lemma sim_add_jf_jfe_fI w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
+          (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf (ES.cont_thread S k) st w e S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+      dom_rel (Sjfe S') ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘). 
+    Proof. 
+      assert (ES.Wf S) as WF.
+      { apply SRCC. }
+      assert (ESBasicStep.t e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ESstep.add_jf w e S S') as AJF. 
+      { eapply weaken_sim_add_jf; eauto. } 
+      cdes BSTEP_; cdes SAJF.
+      erewrite ESstep.step_add_jf_jfe; eauto.
+      rewrite dom_union. unionL. 
+      { eapply jfe_fI. apply SRCC. }
+      erewrite sim_add_jfe_delta_dom; eauto.
+      erewrite <- set_collect_eq_dom 
+        with (g := h).
+      2 : eapply eq_dom_mori; try eapply hfeq; eauto; red; basic_solver 10.
+      basic_solver 10.
+    Qed.
+
   End SimRelAddJFProps. 
   
 End SimRelAddJF.
