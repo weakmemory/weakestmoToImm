@@ -11,6 +11,7 @@ Variable S : ES.t.
 
 Notation "'E'" := S.(ES.acts_set).
 Notation "'Einit'" := S.(ES.acts_init_set).
+Notation "'Eninit'" := S.(ES.acts_ninit_set).
 
 Notation "'lab'" := S.(ES.lab).
 
@@ -34,6 +35,7 @@ Notation "'loc'" := (loc lab).
 Notation "'val'" := (val lab).
 Notation "'mod'" := (mod lab).
 
+Notation "'same_tid'" := S.(ES.same_tid).
 Notation "'same_lab'" := S.(ES.same_lab).
 Notation "'same_loc'" := (same_loc lab).
 
@@ -602,6 +604,83 @@ Qed.
 (******************************************************************************)
 
 Variable ESC : @es_consistent m.
+
+Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
+Proof. 
+  intros x y [JF tSB].
+  eapply coh; [apply ESC|].
+  eexists. split.
+  { apply sb_in_hb. basic_solver. }
+  apply r_step. unfold eco. 
+  apply t_step. unfold ES.rf. 
+  do 2 left. split.
+  { basic_solver. }
+  intros CF. 
+  apply ES.cf_sym in CF.
+  eapply ES.n_sb_cf; eauto.
+Qed.
+
+Lemma jfi_alt : jfi ≡ ⦗Einit⦘ ⨾ jf ∪ (jf ∩ same_tid).
+Proof. 
+  unfold ES.jfi.
+  rewrite ES.sb_Einit_Eninit; auto.
+  rewrite inter_union_r. 
+  apply union_more.
+  { red. split. 
+    { basic_solver. }
+    rewrite ES.jfE at 1; auto.
+    rewrite ES.acts_set_split at 2. 
+    rewrite id_union. relsf.
+    arewrite_false (jf ⨾ ⦗Einit⦘).
+    { rewrite ES.jfD, ES.acts_init_set_inW; auto. type_solver. }
+    basic_solver. }
+  rewrite ES.jf_same_tid; auto.
+  rewrite ES.same_thread; auto.
+  rewrite crsE. relsf.
+  rewrite !inter_union_r.
+  arewrite_false (jf ∩ ⦗Eninit⦘).
+  { rewrite ES.jfD; auto. type_solver. }
+  arewrite_false (jf ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Eninit⦘)).
+  { generalize jf_tsb. basic_solver. }
+  arewrite_false (jf ∩ cf).
+  { eapply jf_necf_jf_ncf. apply ESC. }
+  basic_solver 10.
+Qed.
+
+Lemma jfe_alt : jfe ≡ ⦗Eninit⦘ ⨾ jf ∩ compl_rel same_tid.
+Proof. 
+  unfold ES.jfe.
+  erewrite <- inter_absorb_r
+    with (r := jf) at 1.
+  2 : eapply ES.jf_nEinit_alt; auto.
+  rewrite inter_union_r, minus_union_l.
+  arewrite_false (jf ∩ Einit × Eninit \ sb).
+  { rewrite ES.sb_init; auto. basic_solver. }
+  relsf. split.
+  { intros x y [[JF [Enix Eniy]] nSB].
+    apply seq_eqv_l. unfold inter_rel.
+    splits; auto.
+    intros STID. unfold ES.same_tid in STID.
+    edestruct ES.same_thread_alt as [crsSB | CF]; 
+      try apply STID; eauto.
+    { apply crsE in crsSB. 
+      destruct crsSB as [[ID | SB] | tSB]; auto.
+      { unfolder in ID. desc.
+        eapply ES.jf_eq; eauto.
+        split; eauto. }
+      eapply jf_tsb. basic_solver. }
+    eapply jf_necf_jf_ncf; [apply ESC|].
+    basic_solver. }
+  rewrite seq_eqv_l. 
+  unfold compl_rel, ES.same_tid.
+  intros x y [Enix [JF nSTID]].
+  unfolder; splits; auto.
+  { eapply ES.jf_nEinit_alt in JF; auto.
+    generalize JF. basic_solver. }
+  intros SB. apply nSTID.
+  apply ES.sb_tid; auto.
+  basic_solver.
+Qed.  
 
 Lemma jf_in_rf : jf ⊆ rf.
 Proof.
