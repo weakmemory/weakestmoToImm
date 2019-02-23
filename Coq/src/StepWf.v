@@ -341,16 +341,18 @@ Proof.
       basic_solver. }
     unfold ESBasicStep.rmw_delta.
     intros x y [AA BB]. red in BB. desf.
-    red. rewrite LAB'. unfold is_r, is_w.
-    simpls. subst. destruct lbl' as [lbl'|]; [|by desf].
-    rewrite upds. rewrite updo.
-    2: omega.
-    rewrite upds.
-    red in STEP0. simpls.
-    
-    (* TODO: We need something about language transitions. *)
+    red in TT. desf; cdes TT; desf; auto.
+    cdes ACO. cdes AJF.
+    red. eauto. }
+  { cdes BSTEP. cdes BSTEP_.
+    rewrite RMW'. unionL.
+    { rewrite WF.(ES.rmwE). unfolder. ins. desf.
+      eapply ESBasicStep.basic_step_same_loc_restr; eauto.
+      red. splits; auto. by apply WF.(ES.rmwl). }
+    unfold ESBasicStep.rmw_delta.
+    intros x y [AA BB]. red in BB. desf.
+    red in TT. desf; cdes TT; desf; auto.
     admit. }
-  { admit. }
   { cdes BSTEP. cdes BSTEP_.
     rewrite SB'. rewrite RMW'.
     rewrite WF.(ES.rmwE). unfold ESBasicStep.rmw_delta.
@@ -448,13 +450,37 @@ Proof.
     all: intros x [y JF] HH; desf.
     all: apply (dom_r WF.(ES.jfE)) in JF; destruct_seq_r JF as EE.
     all: eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
-  { rewrite ESBasicStep.basic_step_acts_set; eauto.
+  { assert (jf S ⊆ jf S') as BB.
+    { cdes BSTEP. cdes BSTEP_.
+      red in TT. desf; cdes TT; desf.
+      2,4: cdes AJF.
+      all: rewrite JF'; basic_solver. }
+    assert (E S ∩₁ R S' ⊆₁ codom_rel (jf S')) as AA.
+    { rewrite <- BB.
+      rewrite ESstep.basic_step_r_eq_r; eauto.
+      apply WF. }
+    rewrite ESBasicStep.basic_step_acts_set; eauto.
     rewrite !set_inter_union_l.
-    rewrite ESstep.basic_step_r_eq_r; eauto.
+    rewrite set_unionA.
+    apply set_subset_union_l. split; auto.
     cdes BSTEP. cdes BSTEP_.
     red in TT. desf; cdes TT; desf.
-    2,4: cdes AJF.
-    all: rewrite JF'; try rewrite codom_union; auto.
+    3: cdes AEW.
+    1,3: type_solver.
+    all: cdes AJF; rewrite JF'.
+    all: rewrite codom_union; unionR right.
+    all: unfold eq_opt, ESstep.jf_delta.
+    { basic_solver. }
+    unfolder. ins. desf; eauto.
+    cdes ACO. type_solver. }
+  { split; [|basic_solver].
+    assert (co S ⊆ ⦗E S'⦘ ⨾ co S ⨾ ⦗E S'⦘) as AA.
+    { rewrite <- EES. apply WF. }
+    red in TT. desf; cdes TT; desf.
+    3,4: cdes ACO.
+    all: rewrite CO'; auto.
+    all: rewrite !seq_union_l, !seq_union_r; apply union_mori; auto.
+    all: admit. }
 
 Admitted.
  
