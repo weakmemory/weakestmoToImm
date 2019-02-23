@@ -448,6 +448,13 @@ Proof.
     all: intros x [y JF] HH; desf.
     all: apply (dom_r WF.(ES.jfE)) in JF; destruct_seq_r JF as EE.
     all: eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
+  { rewrite ESBasicStep.basic_step_acts_set; eauto.
+    rewrite !set_inter_union_l.
+    rewrite ESstep.basic_step_r_eq_r; eauto.
+    cdes BSTEP. cdes BSTEP_.
+    red in TT. desf; cdes TT; desf.
+    2,4: cdes AJF.
+    all: rewrite JF'; try rewrite codom_union; auto.
 
 Admitted.
  
