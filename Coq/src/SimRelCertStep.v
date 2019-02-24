@@ -985,7 +985,10 @@ Section SimRelCertStepProps.
                 eauto; apply SRCC. }
         erewrite ESstep.step_ew_mon; eauto. }
       (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
-      { admit. }
+      { unfold_cert_step_ CertSTEP_.
+        1,2 : rewrite EW'; apply SRCC.
+        all : eapply sim_add_ew_ew_fI; eauto.
+        all : basic_solver. }
       (* dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
       admit. }
     (* cert : cert_graph G sc TC TC' (ES.cont_thread S k') state'' *)

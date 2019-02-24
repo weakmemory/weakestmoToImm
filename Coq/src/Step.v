@@ -78,11 +78,17 @@ Hint Unfold ew_delta : ESStepDb.
 Definition add_ew ews w' S S' : Prop :=   
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\
-  ⟪ wsE : ews ⊆₁ E S ⟫ /\
-  ⟪ wsW : ews ⊆₁ W S ⟫ /\
-  ⟪ LOCWS : ews ⊆₁ same_loc S' w' ⟫ /\
-  ⟪ VALWS : ews ⊆₁ same_val S' w' ⟫ /\
-  ⟪ CFWS : ews ⊆₁ cf S' w' ⟫ /\
+  ⟪ ewsE : ews ⊆₁ E S ⟫ /\
+  ⟪ ewsW : ews ⊆₁ W S ⟫ /\
+  ⟪ ewsRLX : ews ⊆₁ Rlx S ⟫ /\
+  (* TODO: replace it with `ews ⊆₁ same_lab S' w'` ??? *)
+  ⟪ ewsLOC : ews ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
+  (* \End TODO *)
+  ⟪ ewsCFw : ews ⊆₁ cf S' w' ⟫ /\
+  ⟪ ewsCF : ews × ews \ eq ⊆ cf S ⟫ /\
+  ⟪ ewsEW : ews × ews \ eq ⊆ ew S ⟫ /\
+  ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\
   ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ews w' ⟫. 
 
 Definition co_ws w' S S' := 

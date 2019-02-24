@@ -333,11 +333,13 @@ Section SimRelAddEW.
       { apply SRCC. }
       
       constructor; splits; auto.
-      (* wsE : ws ⊆₁ E S *)
+      (* ewsE : ews ⊆₁ E S *)
       { eapply sim_ewsE; eauto. }
-      (* wsW : ws ⊆₁ W S *)
+      (* ewsW : ews ⊆₁ W S *)
       { eapply sim_ewsW; eauto. }
-      (* LOCWS : ws ⊆₁ same_loc S' w' *)
+      (* ewsRLX : ews ⊆₁ Rlx S *)
+      { admit. }
+      (* ewsLOC : ews ⊆₁ same_loc S' w' *)
       { intros x WSx.
         unfold same_loc, loc.
         arewrite (Slab S' x = Slab S x).
@@ -345,7 +347,7 @@ Section SimRelAddEW.
           eapply sim_ewsE; eauto. }
         erewrite sim_ews_lab; eauto.
         basic_solver. }
-      (* VALWS : ws ⊆₁ same_val S' w' *)
+      (* ewsVAL : ews ⊆₁ same_val S' w' *)
       { intros x WSx.
         unfold same_val, val.
         arewrite (Slab S' x = Slab S x).
@@ -353,9 +355,15 @@ Section SimRelAddEW.
           eapply sim_ewsE; eauto. }
         erewrite sim_ews_lab; eauto.
         basic_solver. }
-      (* CFWS : ws ⊆₁ cf S' w' *)
-      eapply sim_ews_cf; eauto.
-    Qed.
+      (* ewsCFw : ews ⊆₁ cf S' w' *)
+      { eapply sim_ews_cf; eauto. }
+      (* ewsCF : ews × ews \ eq ⊆ cf S *)
+      { admit. }
+      (* ewsEW : ews × ews \ eq ⊆ ew S *)
+      { admit. }
+      (* ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews *)
+      admit. 
+    Admitted.
 
     Lemma sim_add_ew_e2a_ew_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
@@ -394,7 +402,7 @@ Section SimRelAddEW.
           (SAEW : sim_add_ew w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      dom_rel (Sew S') ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘). 
+      dom_rel (Sew S') ⊆₁ dom_rel ((Sew S')^? ⨾ ⦗ f □₁ I ⦘). 
     Proof.
       cdes BSTEP_; cdes SAEW.
       assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -402,17 +410,34 @@ Section SimRelAddEW.
       assert (ES.Wf S) as WFS.
       { apply SRCC. }
       rewrite EW'. 
-      rewrite dom_union.
-      unionL; [apply SRCC|].
+      rewrite !dom_union.
+      unionL.
+      { etransitivity; [apply SRCC|]. basic_solver 10. }
       autounfold with ESStepDb.
       rewrite csE, transp_cross.
       rewrite dom_union.
       unionL.
       { rewrite dom_cross; [|red; basic_solver].
-        unfold sim_ews. basic_solver 10. }
-      (* we are stuck here, property is incorrect *)
-      admit. 
-    Admitted.
+        arewrite (sim_ews w' S S' ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗f □₁ I⦘)).
+        { unfold sim_ews. basic_solver 10. }
+        basic_solver 10. }
+      arewrite (
+        dom_rel (eq w' × sim_ews w' S S') ⊆₁ 
+        dom_rel (eq w' × sim_ews w' S S' ⨾ ⦗f □₁ I⦘)
+      ).
+      { unfold sim_ews. 
+        intros x [y [EQx HH]]. subst x. desc.
+        destruct wEWI as [z HH].
+        apply seq_eqv_r in HH.
+        destruct HH as [[EQ | EW] fI].
+        { subst z. exists y. basic_solver 10. }
+        exists z. unfolder. splits; auto.
+        { rewrite <- wsE2Aeq. symmetry.
+          eapply e2a_ew; [apply SRCC|].
+          basic_solver 10. }
+        basic_solver 10. }
+      basic_solver 10.
+    Qed.
 
   End SimRelAddEWProps. 
 
