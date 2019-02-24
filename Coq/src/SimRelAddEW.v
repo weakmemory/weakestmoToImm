@@ -355,10 +355,8 @@ Section SimRelAddEW.
           eapply sim_ewsE; eauto. }
         erewrite sim_ews_lab; eauto.
         basic_solver. }
-      (* ewsCFw : ews ⊆₁ cf S' w' *)
+      (* ewsCF : ews ⊆₁ cf S' w' *)
       { eapply sim_ews_cf; eauto. }
-      (* ewsCF : ews × ews \ eq ⊆ cf S *)
-      { admit. }
       (* ewsEW : ews × ews \ eq ⊆ ew S *)
       { admit. }
       (* ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews *)

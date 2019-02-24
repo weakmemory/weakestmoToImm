@@ -85,12 +85,12 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ ewsLOC : ews ⊆₁ same_loc S' w' ⟫ /\
   ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
   (* \End TODO *)
-  ⟪ ewsCFw : ews ⊆₁ cf S' w' ⟫ /\
-  ⟪ ewsCF : ews × ews \ eq ⊆ cf S ⟫ /\
+  ⟪ ewsCF : ews ⊆₁ cf S' w' ⟫ /\
   ⟪ ewsEW : ews × ews \ eq ⊆ ew S ⟫ /\
   ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\
   ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ews w' ⟫. 
 
+(* Do we really need `\₁ cf S' w'` part ??? *)
 Definition co_ws w' S S' := 
   E S ∩₁ W S ∩₁ same_loc S' w' \₁ cf S' w'.
 
