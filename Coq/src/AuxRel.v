@@ -503,8 +503,8 @@ Proof. rewrite collect_seq_eqv_l. by rewrite collect_seq_eqv_r. Qed.
 Lemma collect_rel_interi : f □ (r ∩ r') ⊆ (f □ r) ∩ (f □ r').
 Proof. basic_solver 10. Qed.
 
-Lemma collect_eq e : f □₁ eq e ≡₁ eq (f e).
-Proof. basic_solver. Qed.
+Lemma set_collect_eq_opt e : f □₁ eq_opt e ≡₁ eq_opt (option_map f e).
+Proof. unfold eq_opt, option_map. basic_solver. Qed.
 
 Lemma collect_rel_singl x y : f □ singl_rel x y ≡ singl_rel (f x) (f y).
 Proof. basic_solver 42. Qed.

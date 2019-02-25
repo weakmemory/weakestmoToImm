@@ -58,6 +58,10 @@ Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
 
 Hint Unfold upd_opt : unfolderDb.
 
+Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B): 
+  opt_same_ctor (option_map f a) a.
+Proof. unfold option_map. red. destruct a; auto. Qed.
+
 Lemma opt_to_list_none (A : Type) : 
   opt_to_list (None : option A) = [].
 Proof. by unfold opt_to_list. Qed.
