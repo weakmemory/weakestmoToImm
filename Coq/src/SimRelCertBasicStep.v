@@ -190,8 +190,13 @@ Section SimRelCertBasicStep.
     simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof. 
     cdes BSTEP_. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
     assert (ESBasicStep.t e e' S S') as BSTEP.
     { econstructor. eauto. }
+    assert (h □₁ cert_dom G TC (ES.cont_thread S k) st ⊆₁ SE S) 
+      as hCertE.
+    { eapply a2e_img. apply SRCC. }
 
     constructor.
     
@@ -243,7 +248,6 @@ Section SimRelCertBasicStep.
           erewrite basic_step_simrel_updh_cert_dom_eq_dom; eauto.
           erewrite basic_step_e2a_eq_dom; eauto.
           { by fold (compose (e2a S) h x). }
-          { apply SRCC. }
           apply SRCC.(sr_a2e_h).
           basic_solver. }
         apply SRCC. }
@@ -254,7 +258,36 @@ Section SimRelCertBasicStep.
       red. ins. destruct e'; [|by exfalso].
       unfold compose. subst x. by rewrite upds. }
 
-    all : admit. 
+    (* a2e_sb_prcl : dom_rel (Ssb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD *)
+    { erewrite basic_step_simrel_updh_cert_dom; eauto.
+      rewrite !id_union, !seq_union_r, !dom_union.
+      unionL. splits.
+      { rewrite <- seq_eqvK.
+        rewrite hCertE at 1.
+        seq_rewrite ESBasicStep.basic_step_sbE; 
+          eauto; try apply SRCC.
+        etransitivity; [apply SRCC|].
+        basic_solver 5. }
+      { admit. }
+      admit. }
+    
+    (* a2e_ncf : ES.cf_free S (a2e □₁ a2eD) *)
+    red. 
+    erewrite basic_step_simrel_updh_cert_dom; eauto.
+    erewrite ESBasicStep.basic_step_cf; 
+      eauto; try apply SRCC.
+    unfold ESBasicStep.cf_delta.
+    rewrite !csE, !transp_cross, !id_union. 
+    relsf. unionL.
+    { apply SRCC. }
+    all : try by (
+      try rewrite hCertE;
+      ESBasicStep.step_solver
+    ).
+    all : rewrite !seq_eqv_cross_r, !seq_eqv_cross_l.
+    all : erewrite cfk_hdom; eauto. 
+    all : basic_solver.
+
   Admitted.
 
   Lemma basic_step_nupd_simrel_a2e_h k k' e S S' 
