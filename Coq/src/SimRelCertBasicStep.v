@@ -183,7 +183,7 @@ Section SimRelCertBasicStep.
     erewrite basic_step_simrel_updh_e'; eauto.
   Qed.
     
-  Lemma basic_step_simrel_a2e_h k k' e e' S S' 
+  Lemma basic_step_simrel_a2e k k' e e' S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
@@ -268,8 +268,15 @@ Section SimRelCertBasicStep.
           eauto; try apply SRCC.
         etransitivity; [apply SRCC|].
         basic_solver 5. }
-      { admit. }
-      admit. }
+      { rewrite ESBasicStep.basic_step_sbe; eauto.
+        rewrite dom_cross; [|red; basic_solver].
+        rewrite cont_sb_dom_in_hhdom; eauto.
+        basic_solver 5. }
+      rewrite ESBasicStep.basic_step_sbe'; eauto.
+      destruct e' as [e'|]; [|basic_solver].
+      rewrite dom_cross; [|red; basic_solver]. 
+      rewrite cont_sb_dom_in_hhdom; eauto.
+      basic_solver 5. }
     
     (* a2e_ncf : ES.cf_free S (a2e □₁ a2eD) *)
     red. 
@@ -288,16 +295,16 @@ Section SimRelCertBasicStep.
     all : erewrite cfk_hdom; eauto. 
     all : basic_solver.
 
-  Admitted.
+  Qed.
 
-  Lemma basic_step_nupd_simrel_a2e_h k k' e S S' 
+  Lemma basic_step_nupd_simrel_a2e k k' e S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') : 
     let h' := upd h (e2a S' e) e in
     simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st'). 
   Proof.
-    edestruct basic_step_simrel_a2e_h; eauto.
+    edestruct basic_step_simrel_a2e; eauto.
     unfold upd_opt, option_map in *. 
     constructor; auto.
   Qed.

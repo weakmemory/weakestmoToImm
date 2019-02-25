@@ -447,6 +447,42 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma basic_step_sbe lang k k' st st' e e' S S'
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  sb S' ⨾ ⦗eq e⦘ ≡ ES.cont_sb_dom S k × eq e. 
+Proof. 
+  cdes BSTEP_.
+  rewrite SB'.
+  unfold sb_delta.
+  rewrite !seq_union_l.
+  rewrite !seq_eqv_cross_r.
+  rewrite set_interK.
+  arewrite_false (sb S ⨾ ⦗eq e⦘).
+  { step_solver. }
+  arewrite (eq e ∩₁ eq_opt e' ≡₁ ∅).
+  { split; [|done]. step_solver. }
+  relsf.
+Qed.
+
+Lemma basic_step_sbe' lang k k' st st' e e' S S'
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  sb S' ⨾ ⦗eq_opt e'⦘ ≡ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'. 
+Proof. 
+  cdes BSTEP_.
+  rewrite SB'.
+  unfold sb_delta.
+  rewrite !seq_union_l.
+  rewrite !seq_eqv_cross_r.
+  rewrite set_interK.
+  arewrite_false (sb S ⨾ ⦗eq_opt e'⦘).
+  { step_solver. }
+  arewrite (eq_opt e' ∩₁ eq e ≡₁ ∅).
+  { split; [|done]. step_solver. }
+  relsf.
+Qed.
+
 Lemma basic_step_sb_mon e e' S S' 
       (BSTEP : t e e' S S') :
   sb S ⊆ sb S'.
