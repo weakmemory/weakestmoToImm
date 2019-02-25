@@ -207,14 +207,9 @@ Record Wf :=
     co_irr : irreflexive co ;
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
+    (* TODO : fix R -> W *)
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
-    (* not sure about that, but if we don't need 
-       an x_mode field of labels then it's fine
-       (since `mode = rlx` and `loc`/`val` should be equal)
-     *)
     ewlab : ew ⊆ same_lab;
-    (* ewl : ew ⊆ same_loc ; *)
-    (* ewv : funeq val ew ; *)
     ewc : ew ⊆ cf;
     ew_trans : transitive ew;
     ew_sym : symmetric ew;
