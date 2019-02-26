@@ -542,6 +542,10 @@ Proof.
   ins. cdes BSTEP. cdes BSTEP_. desf.
   red in inK. rewrite CONT' in inK.
   inv inK.
+  2: { eapply ESBasicStep.basic_step_acts_ninit_set; eauto.
+       repeat left. eapply WF.(ES.K_inEninit); eauto. }
+  eapply ESBasicStep.basic_step_acts_ninit_set; eauto.
+  unfold opt_ext. basic_solver.
 Admitted.
  
 End ESstepWf.
