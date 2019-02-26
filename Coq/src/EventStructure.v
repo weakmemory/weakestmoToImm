@@ -1184,6 +1184,7 @@ Proof.
 Qed.
 
 Lemma seqn_lt_cont_cf_dom WF eid x 
+      (EE : E eid)
       (EQtid : tid eid = tid x)
       (LTseqn : seqn eid < seqn x) : 
   cont_cf_dom S (CEvent eid) x.
@@ -1195,8 +1196,12 @@ Proof.
   red.
   assert (seqn x > 0) as SS by omega.
   assert (Eninit x) as EX by (by apply seqn_Eninit).
-  assert (Eninit eid) as EE.
-  { admit. }
+  assert (Eninit eid) as ENE.
+  { split; auto.
+    intros AA.
+    apply EX. red. split.
+    { apply EX. }
+    rewrite <- EQtid. apply AA. }
   assert (same_tid x eid) as AA by (by red).
   apply seq_eqv_l. split; auto.
   apply seq_eqv_r. split; auto.
@@ -1205,7 +1210,7 @@ Proof.
   { omega. }
   apply seqn_sb_alt in SB; auto.
   omega.
-Admitted.
+Qed.
 
 End EventStructure.
 End ES.

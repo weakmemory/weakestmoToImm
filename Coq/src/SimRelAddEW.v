@@ -299,6 +299,7 @@ Section SimRelAddEW.
         destruct k. 
         { unfold ES.cont_cf_dom; split; auto. }
         eapply ES.seqn_lt_cont_cf_dom; eauto.
+        { eapply ES.K_inEninit; eauto. }
         rewrite SSEQ. 
         destruct wEE' as [EQ | EQopt].
         { subst w'. 
