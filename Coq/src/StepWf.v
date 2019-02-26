@@ -71,7 +71,7 @@ Proof.
   assert (eq_opt e' ⊆₁ E S') as EIES'.
   { rewrite ESBasicStep.basic_step_acts_set; eauto.
     basic_solver. }
-
+  
   constructor.
   { ins; desf.
     (* TODO :
@@ -482,6 +482,66 @@ Proof.
     all: rewrite !seq_union_l, !seq_union_r; apply union_mori; auto.
     all: admit. }
 
+  (* co and ew properties *)
+  1-12: admit.
+
+  { red. ins. desf.
+    red in KK. unfold ES.cont_thread in CTK.
+    cdes BSTEP. cdes BSTEP_.
+    rewrite CONT' in KK.
+    inv KK.
+    2: { apply WF.(ES.init_tid_K).
+         do 2 eexists. splits; eauto.
+         unfold ES.cont_thread; desf.
+         rewrite <- CTK. symmetry.
+         eapply ESBasicStep.basic_step_tid_eq_dom; eauto.
+         eapply ES.K_inEninit; eauto. }
+    simpls.
+    unfold opt_ext in CTK. rewrite TID' in CTK.
+    unfold upd_opt in CTK. desf.
+    all: rewrite upds in *.
+    all: eapply WF.(ES.init_tid_K); eauto. }
+  { ins. red in CK. red in CK'.
+    cdes BSTEP. cdes BSTEP_.
+    rewrite CONT' in *.
+    inv CK; inv CK'.
+    3: { eapply WF.(ES.unique_K); eauto. }
+    destruct c' as [k' langst'].
+    2: destruct c as [k' langst'].
+    all: simpls; subst.
+    all: unfold opt_ext in *.
+    all: destruct e'.
+    all: exfalso.
+    1,3: eapply ESBasicStep.basic_step_acts_set_ne'; eauto;
+      eapply ES.K_inEninit; eauto.
+    all: eapply ESBasicStep.basic_step_acts_set_ne; eauto;
+      eapply ES.K_inEninit; eauto. }
+  { ins. destruct EE as [AA BB].
+    eapply ESBasicStep.basic_step_acts_set in AA; eauto.
+    assert (~ (Einit S) e0) as CC.
+    { intros HH. apply BB.
+      eapply ESBasicStep.basic_step_acts_init_set; eauto. }
+    cdes BSTEP. cdes BSTEP_.
+    assert (~ dom_rel (rmw S) e0) as DD.
+    { intros HH. apply NRMW.
+      destruct HH.
+      eexists. apply RMW'. basic_solver. }
+    unfold ES.cont_set. rewrite CONT'.
+    subst.
+    destruct AA as [[AA|AA]|AA].
+    { edestruct ES.event_K as [y HH]; eauto.
+      { by split. }
+      basic_solver. }
+    { subst. unfold opt_ext.
+      destruct e'.
+      2: { eexists. unnw. subst. constructor. eauto. }
+      exfalso. apply NRMW. eexists. apply RMW'.
+      right. red. red. simpls. }
+    red in AA. desf. unfold opt_ext.
+    eexists. unnw. constructor. eauto. }
+  ins. cdes BSTEP. cdes BSTEP_. desf.
+  red in inK. rewrite CONT' in inK.
+  inv inK.
 Admitted.
  
 End ESstepWf.
