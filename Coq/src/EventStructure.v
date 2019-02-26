@@ -1162,12 +1162,50 @@ Proof.
   apply seq_eqv_l. split; auto.
 Qed.
 
-Lemma seqn_lt_cont_cf_dom WF k eid x 
-      (kEvent : k = CEvent eid) 
+Lemma seqn_E WF x (NN : seqn x > 0) : E x.
+Proof.
+  unfold seqn in *.
+  destruct (classic (exists y, (sb ∩ same_tid) y x)) as [[y [SB _]]|HH].
+  { apply WF.(sbE) in SB. by destruct_seq SB as [AA BB]. }
+  assert (dom_rel (sb ∩ same_tid ⨾ ⦗eq x⦘) ≡₁ ∅) as AA.
+  { split; [|basic_solver].
+    generalize HH. basic_solver. }
+  rewrite AA in NN.
+  rewrite countNatP_empty in NN.
+  omega.
+Qed.
+
+Lemma seqn_Eninit WF x (NN : seqn x > 0) : Eninit x.
+Proof.
+  split.
+  { by apply seqn_E. }
+  intros AA. apply seqn_init in AA; auto.
+  omega.
+Qed.
+
+Lemma seqn_lt_cont_cf_dom WF eid x 
       (EQtid : tid eid = tid x)
       (LTseqn : seqn eid < seqn x) : 
-  cont_cf_dom S k x.
-Proof. admit. Admitted.
+  cont_cf_dom S (CEvent eid) x.
+Proof.
+  red.
+  destruct (classic (sb eid x)) as [SB|NSB].
+  { right. eexists. apply seq_eqv_l. split; eauto. }
+  left. eexists. apply seq_eqv_r. split; eauto.
+  red.
+  assert (seqn x > 0) as SS by omega.
+  assert (Eninit x) as EX by (by apply seqn_Eninit).
+  assert (Eninit eid) as EE.
+  { admit. }
+  assert (same_tid x eid) as AA by (by red).
+  apply seq_eqv_l. split; auto.
+  apply seq_eqv_r. split; auto.
+  split; auto.
+  intros SB. red in SB. desf.
+  { omega. }
+  apply seqn_sb_alt in SB; auto.
+  omega.
+Admitted.
 
 End EventStructure.
 End ES.
