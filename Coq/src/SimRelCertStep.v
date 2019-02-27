@@ -478,7 +478,7 @@ Section SimRelCertStepProps.
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
         (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
         (RR : exists is_ex ord loc val, ⟪ LBL_LD : lbl = Aload is_ex ord loc val ⟫) 
-        (WW : exists ord loc val, ⟪ LBL_ST : lbl' = Some (Astore Xacq ord loc val) ⟫) :
+        (WW : exists xmod ord loc val, ⟪ LBL_ST : lbl' = Some (Astore xmod ord loc val) ⟫) :
     exists k' e e' S', 
       ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
       ⟪ CertUpdSTEP  : cert_update_step k st e e' S S' ⟫. 
@@ -1050,6 +1050,6 @@ Section SimRelCertStepProps.
       (*     apply imm_s_hb.sb_in_hb. } *)
       (*   admit. } *)
       
-End SimRelCertLemmas.
+End SimRelCertStepProps.
 
 End SimRelCertStep.
