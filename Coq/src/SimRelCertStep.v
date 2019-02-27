@@ -934,71 +934,39 @@ Section SimRelCertStepProps.
     assert (coherence G) as GCOH.
     { eapply gcons. apply SRCC. }
 
-    eapply collect_rel_irr with (f := e2a S').
     rewrite eco_alt; auto.
+    eapply collect_rel_irr with (f := e2a S').
+    rewrite !collect_rel_seqi, 
+            !collect_rel_cr, 
+            !collect_rel_union.
+    rewrite !collect_rel_seqi, !collect_rel_cr.
+    
+    erewrite e2a_hb; eauto; try apply SRCC.
+    erewrite e2a_co; eauto.
+    erewrite e2a_rf, e2a_jf; eauto.
+    2 : { (* Here we need consistency of S', 
+             but it seems that we can, actually, 
+             get rid of this by refactoring of `jf_in_rf` lemma.
+             Probable, we will have to move `jf ∩ cf ⊆ ∅₂` constraint 
+             to WellFormdness. *)
+          admit. }
     rewrite !crE. relsf.
     rewrite !irreflexive_union. splits.
-    { intros x [a [b [HB [EQa EQb]]]].
-      eapply GCOH.
-      eexists. splits; [|by left].
-      eapply e2a_hb; eauto; try apply SRCC.
-      basic_solver 10. }
-    { intros x [a [b [[c [HB RF]] [EQa EQb]]]].
-      assert (Gvf sc (e2a S' c) (e2a S' b)) as VF.
-      { eapply e2a_jf; eauto.
-        eapply e2a_rf; eauto. 
-        { (* Here we need consistency of S', 
-             but it seems that we can, actually, 
-             get rid of this by refactoring of `jf_in_rf` lemma.
-             Probable, we will have to move `jf ∩ cf ⊆ ∅₂` constraint 
-             to WellFormdness. *)
-          admit. }
-        basic_solver 10. }    
+    { red. ins. eapply GCOH. basic_solver. }
+    { intros x [y [HB VF]].
       unfold furr in VF. desc.  
       eapply urr_hb_irr; try apply SRCC.
-      eexists; splits; eauto.
-      arewrite (e2a S' b = e2a S' a).
-      { congruence. }
-      eapply e2a_hb; eauto; try apply SRCC.
-      basic_solver 10. }
-    { intros x [a [b [[c [HB CO]] [EQa EQb]]]].
-      eapply GCOH.
-      eexists. splits. 
-      { eapply e2a_hb; eauto; try apply SRCC.
-        basic_solver 10. }
-      arewrite (e2a S' a = e2a S' b).
-      { congruence. }
-      red. right.
-      apply Execution_eco.eco_alt.
-      unfold Execution_eco.eco; auto.
-      do 2 left. 
-      eapply e2a_co; eauto.
-      basic_solver 10. }
-    { intros x [a [b [[c [HB [d [CO RF]]]] [EQa EQb]]]].
-      assert (Gvf sc (e2a S' d) (e2a S' b)) as VF.
-      { eapply e2a_jf; eauto.
-        eapply e2a_rf; eauto. 
-        { (* Here we need consistency of S', 
-             but it seems that we can, actually, 
-             get rid of this by refactoring of `jf_in_rf` lemma.
-             Probable, we will have to move `jf ∩ cf ⊆ ∅₂` constraint 
-             to WellFormdness. *)
-          admit. }
-        basic_solver 10. }
+      basic_solver. }
+    { red. ins. 
+      eapply GCOH. 
+      unfold Execution_eco.eco; auto. 
+      generalize H. basic_solver 10. }
+    { intros x [y [HB [z [CO VF]]]].
       unfold furr in VF. desc.  
       eapply eco_urr_irr; try apply SRCC.
       eexists. splits.
-      { apply Execution_eco.eco_alt.
-        unfold Execution_eco.eco; auto.
-        do 2 left. 
-        eapply e2a_co; eauto.
-        basic_solver 10. }
-      eapply urr_hb. eexists. splits; eauto.
-      arewrite (e2a S' b = e2a S' a).
-      { congruence. }
-      red. right.
-      eapply e2a_hb; eauto; try apply SRCC.
-      basic_solver 10. }
+      { unfold Execution_eco.eco. basic_solver 10. }
+      eapply urr_hb. basic_solver. }
     all : admit. 
   Admitted.
 
@@ -1144,6 +1112,6 @@ Section SimRelCertStepProps.
       (*     apply imm_s_hb.sb_in_hb. } *)
       (*   admit. } *)
       
-End SimRelCertLemmas.
+End SimRelCertStepProps.
 
 End SimRelCertStep.
