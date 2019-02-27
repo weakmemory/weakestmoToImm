@@ -269,16 +269,14 @@ Section SimRelContLemmas.
         erewrite contseqn; eauto.
         erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
       destruct HH as [_ [HH | HH]]. 
-      { destruct HH as [IDX _]. 
-        erewrite IDX. simpl. 
-        edestruct k. 
-        { erewrite continit; eauto.
-          erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
-        erewrite contseqn; eauto.
-        erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
-      destruct HH as [_ [_ [_ [HH _]]]].
-      destruct HH as [ordr [ordw [loc [valr [vaw [_ LBL]]]]]].
-      subst l'. rewrite LBL in LABEL'. exfalso. auto. }
+      2: by desf.
+      destruct HH as [IDX _]. 
+      erewrite IDX. simpl. 
+      edestruct k. 
+      { erewrite continit; eauto.
+        erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
+      erewrite contseqn; eauto.
+      erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
 
     split.
 
@@ -401,13 +399,13 @@ Section SimRelContLemmas.
     rewrite xEQ, TIDee in CTIDx.
     apply STCOV in CTIDx.
     eapply acts_rep in CTIDx.
-    2 : { eapply contwf; eauto. }
+    2: { eapply contwf; eauto. }
     assert (st.(eindex) < st'.(eindex)) as IDX_LE. 
-    { edestruct lbl_step_cases as [l [l' HH]]; eauto.
-      { eapply contwf; eauto. }
-      { apply STEP. }
-      desf; omega. }
-    desf. omega. 
+    2: { desf. omega. }
+    edestruct lbl_step_cases as [l [l' HH]]; eauto.
+    { eapply contwf; eauto. }
+    { apply STEP. }
+    desf; omega.
   Qed.
 
 End SimRelContLemmas.

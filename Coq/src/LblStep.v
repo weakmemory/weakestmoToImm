@@ -276,9 +276,9 @@ Lemma lbl_step_cases thread lbls state state'
         ⟪ GLAB : lab state'.(G) = 
                  upd_opt (upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl) 
                               (Some (ThreadEvent thread (1 + state.(eindex)))) lbl' ⟫ /\
-        (exists ordr ordw loc valr valw, 
+        (exists xmod ordr ordw loc valr valw, 
           ⟪ LBL_LD_EX : lbl = Aload true ordr loc valr ⟫ /\
-          ⟪ LBL_ST_EX : lbl' = Some (Astore Xacq ordw loc valw) ⟫ ) /\
+          ⟪ LBL_ST_EX : lbl' = Some (Astore xmod ordw loc valw) ⟫ ) /\
         ⟪ GRMW : rmw state'.(G) ≡ rmw state.(G) ∪ 
                  eq (ThreadEvent thread state.(eindex)) × eq (ThreadEvent thread (1 + state.(eindex))) ⟫ )).
 Proof. 
