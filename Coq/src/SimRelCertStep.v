@@ -53,6 +53,7 @@ Section SimRelCertStep.
   Notation "'Ssw' S" := S.(sw) (at level 10).
   Notation "'Shb' S" := S.(hb) (at level 10).
   Notation "'Secf' S" := (S.(Consistency.ecf)) (at level 10).
+  Notation "'Seco' S" := (Consistency.eco S Weakestmo) (at level 10).
 
   Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
   Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
@@ -907,6 +908,67 @@ Section SimRelCertStepProps.
     all : try (by eapply sim_add_jf_jfe_vis; eauto).
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
+
+  Lemma simrel_cert_step_coh k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    irreflexive (Shb S' ⨾ (Seco S')^?).
+  Proof. 
+    cdes CertSTEP; cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ESstep.t_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S') as WFS.
+    { admit. }
+    assert (simrel_e2a S' G sc) as SRE2A.
+    { admit. }
+    assert 
+      (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st')) 
+      as SRA2E.
+    { admit. }
+    assert (Wf G) as WFG. 
+    { apply SRCC. }
+    assert (coherence G) as GCOH.
+    { eapply gcons. apply SRCC. }
+
+    rewrite eco_alt; auto.
+    eapply collect_rel_irr with (f := e2a S').
+    rewrite !collect_rel_seqi, 
+            !collect_rel_cr, 
+            !collect_rel_union.
+    rewrite !collect_rel_seqi, !collect_rel_cr.
+    
+    erewrite e2a_hb; eauto; try apply SRCC.
+    erewrite e2a_co; eauto.
+    erewrite e2a_rf, e2a_jf; eauto.
+    2 : { (* Here we need consistency of S', 
+             but it seems that we can, actually, 
+             get rid of this by refactoring of `jf_in_rf` lemma.
+             Probable, we will have to move `jf ∩ cf ⊆ ∅₂` constraint 
+             to WellFormdness. *)
+          admit. }
+    rewrite !crE. relsf.
+    rewrite !irreflexive_union. splits.
+    { red. ins. eapply GCOH. basic_solver. }
+    { intros x [y [HB VF]].
+      unfold furr in VF. desc.  
+      eapply urr_hb_irr; try apply SRCC.
+      basic_solver. }
+    { red. ins. 
+      eapply GCOH. 
+      unfold Execution_eco.eco; auto. 
+      generalize H. basic_solver 10. }
+    { intros x [y [HB [z [CO VF]]]].
+      unfold furr in VF. desc.  
+      eapply eco_urr_irr; try apply SRCC.
+      eexists. splits.
+      { unfold Execution_eco.eco. basic_solver 10. }
+      eapply urr_hb. basic_solver. }
+    all : admit. 
+  Admitted.
 
   Lemma simrel_cert_step_consistent k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))

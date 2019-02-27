@@ -216,6 +216,19 @@ Section SimRelEventToAction.
       all: eauto; apply SRE2A.
     Qed.
 
+    Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
+    Proof. 
+      unfold hb, imm_s_hb.hb.
+      rewrite collect_rel_ct.
+      apply clos_trans_mori.
+      rewrite collect_rel_union.
+      unionL.
+      { rewrite e2a_sb; eauto.
+        { basic_solver. }
+        apply SRE2A. }
+      admit. 
+    Admitted.
+
     Lemma SsbD_in_GsbD :
       Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ (Gsb ⨾ ⦗ a2eD ⦘).
     Proof.
@@ -238,14 +251,6 @@ Section SimRelEventToAction.
       2 : eapply a2e_fix; apply SRA2E.
       apply seq_mori; [|done].
       eapply e2a_sb; eauto. apply SRE2A.
-    Qed.
-
-    Lemma SsbD_in_Gsb :
-      Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ Gsb.
-    Proof.
-      etransitivity.
-      { by apply SsbD_in_GsbD. }
-      basic_solver 10.
     Qed.
 
   End SimRelEventToActionProps. 
