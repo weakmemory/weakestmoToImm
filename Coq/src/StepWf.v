@@ -56,12 +56,12 @@ Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
 
-Lemma step_wf S S'
-      (STEP : ESstep.t Weakestmo S S')
-      (WF : ES.Wf S) :
+Lemma step_wf S S' e e'
+      (WF : ES.Wf S)
+      (TT    : ESstep.t_ e e' S S')
+      (BSTEP : ESBasicStep.t e e' S S') :
   ES.Wf S'.
 Proof.
-  cdes STEP.
   assert (E S ⊆₁ E S') as EES.
   { rewrite ESBasicStep.basic_step_acts_set with (S':=S'); eauto.
     basic_solver. }

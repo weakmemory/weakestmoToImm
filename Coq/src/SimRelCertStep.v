@@ -13,6 +13,7 @@ Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction 
         SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO.  
+Require Import StepWf.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -921,8 +922,9 @@ Section SimRelCertStepProps.
     { econstructor; eauto. }
     assert (ESstep.t_ e e' S S') as WMO_STEP_.
     { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
-    { admit. }
+    { eapply step_wf; eauto. }
     assert (simrel_e2a S' G sc) as SRE2A.
     { admit. }
     assert 
