@@ -8,8 +8,6 @@ Set Implicit Arguments.
 Export ListNotations.
 
 Definition eventid := nat.
-(* TODO: move to IMM Events.v *)
-Definition tid_init := xH.
 
 Module Language.
 Record t :=
@@ -207,8 +205,7 @@ Record Wf :=
     co_irr : irreflexive co ;
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
-    (* TODO : fix R -> W *)
-    ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗R⦘ ;
+    ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
     ewlab : ew ⊆ same_lab;
     ewc : ew ⊆ cf;
     ew_trans : transitive ew;
