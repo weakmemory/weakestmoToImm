@@ -94,17 +94,20 @@ Definition add_ew ews w' S S' : Prop :=
 Definition co_ws w' S S' := 
   E S ∩₁ W S ∩₁ same_loc S' w' \₁ cf S' w'.
 
-Definition co_delta ws w' S S' : relation eventid := 
-  dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗ws⦘) × eq w' ∪ 
-          eq w' × (co_ws w' S S' \₁ dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗ws⦘)).
+Definition co_delta ws w' S : relation eventid := 
+  ws × eq w' ∪ eq w' × (codom_rel ( ⦗ws⦘ ⨾ co S) \₁ ws).
 
 Hint Unfold co_ws co_delta : ESStepDb.
 
 Definition add_co ws w' S S' : Prop := 
   ⟪ wE' : E S' w' ⟫ /\
-  ⟪ wW' : W S' w' ⟫ /\  
-  ⟪ wsCO : ws ⊆₁ co_ws w' S S' ⟫ /\
-  ⟪ CO' : co S' ≡ co S ∪ co_delta ws w' S S' ⟫.
+  ⟪ wW' : W S' w' ⟫ /\
+  ⟪ wsE : ws ⊆₁ E S ⟫ /\
+  ⟪ wsW : ws ⊆₁ W S ⟫ /\
+  ⟪ wsLOC : ws ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ wsCOEWprcl : dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗ws⦘) ⊆₁ ws ⟫ /\
+  ⟪ wsNCF : ws ⊆₁ dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗set_compl (cf S' w')⦘) ⟫ /\
+  ⟪ CO' : co S' ≡ co S ∪ co_delta ws w' S ⟫.
 
 Definition t_fence
            (e  : eventid)

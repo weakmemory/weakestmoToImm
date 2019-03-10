@@ -212,6 +212,7 @@ Record Wf :=
     ew_sym : symmetric ew;
 
     ew_co_in_co : ew ⨾ co ⊆ co;
+    co_ew_in_co : co ⨾ ew ⊆ co;
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
@@ -849,6 +850,10 @@ Proof.
     all: exfalso; apply NSBDOM; do 2 exists eid; auto. }
   exfalso; auto. 
 Qed.
+
+Lemma cont_sb_cont_cf_inter_false k lang st WF (KK : K (k, existT _ lang st)) : 
+  cont_sb_dom S k ∩₁ cont_cf_dom S k ⊆₁ ∅.
+Proof. erewrite cont_cf_cont_sb; eauto. basic_solver. Qed.
 
 Lemma cont_thread_sb_cf k lang st WF (KK : K (k, existT _ lang st)) : 
   (E ∩₁ Tid (cont_thread S k)) ≡₁ (cont_sb_dom S k \₁ Einit) ∪₁ cont_cf_dom S k. 
