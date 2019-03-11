@@ -468,7 +468,9 @@ Section SimRelAddCO.
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      e2a S □₁ (codom_rel (⦗sim_ws k w' S S'⦘ ⨾ Sco S) \₁ sim_ws k w' S S') 
+      e2a S □₁ (codom_rel (
+                    ⦗sim_ews TC f w' S S' ∪₁ sim_ws k w' S S'⦘ ⨾ Sco S) \₁ 
+                          (sim_ews TC f w' S S' ∪₁ sim_ws k w' S S'))
           ⊆₁ fun w => Gco (e2a S' w') w.
     Proof. 
       cdes BSTEP_; cdes SACO.
@@ -514,10 +516,9 @@ Section SimRelAddCO.
         { admit. }
         arewrite (e2a S y = e2a S' y).
         { symmetry. eapply basic_step_e2a_eq_dom; eauto. admit. }
-        symmetry. eapply sim_ws_basic_step_loc_e2a; eauto. }
+        symmetry. admit. (* eapply sim_ws_basic_step_loc_e2a; eauto. *) }
       exfalso. eapply nSWS.
-      econstructor; splits; auto.
-      admit. 
+      right; econstructor; splits; auto.
     Admitted.
     
     (* Lemma basic_step_e2a_co_ew_sim_ws_eq w' k k' e e' S S'  *)
@@ -646,7 +647,8 @@ Section SimRelAddCO.
               !set_collect_eq.
       erewrite basic_step_e2a_sim_ws_eq; eauto.
       erewrite set_collect_eq_dom
-        with (s := codom_rel (⦗sim_ws k w' S S'⦘ ⨾ Sco S) \₁ sim_ws k w' S S'); eauto.      
+        with (s := codom_rel (⦗sim_ews TC f w' S S' ∪₁ sim_ws k w' S S'⦘ ⨾ Sco S) \₁
+           (sim_ews TC f w' S S' ∪₁ sim_ws k w' S S')); eauto.      
       2 : { erewrite ES.coE; auto. intros x HH. 
             eapply basic_step_e2a_eq_dom; eauto.
             generalize HH. basic_solver. }
