@@ -55,6 +55,7 @@ Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
+Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
 
 Definition jf_delta w r : relation eventid := 
   singl_rel w r.
@@ -94,20 +95,22 @@ Definition add_ew ews w' S S' : Prop :=
 Definition co_ws w' S S' := 
   E S ∩₁ W S ∩₁ same_loc S' w' \₁ cf S' w'.
 
-Definition co_delta ws w' S : relation eventid := 
-  ws × eq w' ∪ eq w' × (codom_rel (⦗ws⦘ ⨾ co S) \₁ ws).
+Definition co_delta ews ws w' S : relation eventid := 
+  ws × eq w' ∪ eq w' × (codom_rel (⦗ews ∪₁ ws⦘ ⨾ co S) \₁ (ews ∪₁ ws)).
 
 Hint Unfold co_ws co_delta : ESStepDb.
 
-Definition add_co ws w' S S' : Prop := 
+Definition add_co ews ws w' S S' : Prop := 
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\
   ⟪ wsE : ws ⊆₁ E S ⟫ /\
   ⟪ wsW : ws ⊆₁ W S ⟫ /\
   ⟪ wsLOC : ws ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ wsEinit : (Einit S ∩₁ Loc_ S (loc S' w')) ⊆₁ ws ⟫ /\
   ⟪ wsCOEWprcl : dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗ws⦘) ⊆₁ ws ⟫ /\
-  ⟪ wsNCF : ws ⊆₁ dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗set_compl (cf S' w')⦘) ⟫ /\
-  ⟪ CO' : co S' ≡ co S ∪ co_delta ws w' S ⟫.
+  ⟪ ewsCOprcl : dom_rel (co S ⨾ ⦗ews⦘) ⊆₁ ws ⟫ /\
+  (* ⟪ wsNCF : ws ⊆₁ dom_rel ((co S)^? ⨾ (ew S)^? ⨾ ⦗set_compl (cf S' w')⦘) ⟫ /\ *)
+  ⟪ CO' : co S' ≡ co S ∪ co_delta ews ws w' S ⟫.
 
 Definition t_fence
            (e  : eventid)
@@ -137,7 +140,7 @@ Definition t_store
     ⟪ ENONE : e' = None ⟫ /\
     ⟪ JF' : jf S' ≡ jf S ⟫ /\
     ⟪ AEW : add_ew ews e S S' ⟫ /\
-    ⟪ ACO : add_co ws e S S' ⟫.
+    ⟪ ACO : add_co ews ws e S S' ⟫.
 
 Definition t_update
            (e  : eventid)
@@ -147,7 +150,7 @@ Definition t_update
     ⟪ ESOME : e' = Some w' ⟫ /\
     ⟪ AJF : add_jf w e S S' ⟫ /\
     ⟪ AEW : add_ew ews w' S S' ⟫ /\
-    ⟪ ACO : add_co ws w' S S' ⟫.
+    ⟪ ACO : add_co ews ws w' S S' ⟫.
 
 Definition t_ e e' S S' :=
   t_fence e e' S S' \/ t_load e e' S S' \/ t_store e e' S S' \/ t_update e e' S S'.
