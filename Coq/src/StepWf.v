@@ -483,7 +483,7 @@ Proof.
     all: admit. }
 
   (* co and ew properties *)
-  1-12: admit.
+  1-14: admit.
 
   { red. ins. desf.
     red in KK. unfold ES.cont_thread in CTK.

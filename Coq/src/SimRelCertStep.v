@@ -149,7 +149,7 @@ Section SimRelCertStep.
     ⟪ ENONE : e' = None ⟫ /\
     ⟪ JF' : Sjf S' ≡ Sjf S ⟫ /\ 
     ⟪ AEW : sim_add_ew TC f e S S' ⟫ /\
-    ⟪ ACO : sim_add_co G k e S S' ⟫.
+    ⟪ ACO : sim_add_co G TC f k e S S' ⟫.
 
   Definition cert_update_step
              (thread : thread_id)
@@ -162,7 +162,7 @@ Section SimRelCertStep.
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC TC' h thread st w e S S' ⟫ /\ 
       ⟪ AEW : sim_add_ew TC f w' S S' ⟫ /\
-      ⟪ ACO : sim_add_co G k w' S S' ⟫.
+      ⟪ ACO : sim_add_co G TC f k w' S S' ⟫.
 
   Definition cert_step_ 
              (thread : thread_id)
@@ -465,10 +465,10 @@ Section SimRelCertStepProps.
       erewrite basic_step_e2a_e with (e := ES.next_act S); 
         eauto; try apply SRCC. }
     unfold ESstep.co_delta.
-    erewrite ESstep.basic_step_co_ws_alt; eauto.
-    2 : basic_solver.
-    rewrite <- LBL.
-    unfold sim_ws.
+    (* erewrite ESstep.basic_step_co_ws_alt; eauto. *)
+    (* 2 : basic_solver. *)
+    (* rewrite <- LBL. *)
+    unfold sim_ews, sim_ws.
     erewrite basic_step_e2a_e with (e := ES.next_act S); 
         eauto; try apply SRCC.
   Qed.
@@ -525,10 +525,10 @@ Section SimRelCertStepProps.
       erewrite basic_step_e2a_e' with (e' := 1 + ES.next_act S); 
         eauto; try apply SRCC. }
     unfold ESstep.co_delta.
-    erewrite ESstep.basic_step_co_ws_alt; eauto.
-    2 : basic_solver.
-    rewrite <- LBL''.
-    unfold sim_ws.
+    (* erewrite ESstep.basic_step_co_ws_alt; eauto. *)
+    (* 2 : basic_solver. *)
+    (* rewrite <- LBL''. *)
+    unfold sim_ews, sim_ws.
     erewrite basic_step_e2a_e' with (e' := 1+ ES.next_act S); 
       eauto; try apply SRCC.
   Qed.
