@@ -128,6 +128,7 @@ Notation "'val'" := (val lab).
 Notation "'same_lab'" := (same_lab S).
 Notation "'same_tid'" := (same_tid S).
 Notation "'same_loc'" := (same_loc lab).
+Notation "'same_val'" := (same_val lab).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 
@@ -206,13 +207,15 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
-    ewlab : ew ⊆ same_lab;
-    ewc : ew ⊆ cf;
-    ew_trans : transitive ew;
-    ew_sym : symmetric ew;
+    ewl : ew ⊆ same_loc ;
+    ewv : ew ⊆ same_val ;
+    (* ewlab : ew ⊆ same_lab; *)
+    ewc : ew ⊆ cf ;
+    ew_trans : transitive ew ;
+    ew_sym : symmetric ew ;
 
-    ew_co_in_co : ew ⨾ co ⊆ co;
-    co_ew_in_co : co ⨾ ew ⊆ co;
+    ew_co_in_co : ew ⨾ co ⊆ co ;
+    co_ew_in_co : co ⨾ ew ⊆ co ;
 
     (* term_def_K : forall state (TERM : lang.(Language.is_terminal) state), *)
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
@@ -487,20 +490,6 @@ Qed.
 (******************************************************************************)
 (** ** ew properties *)
 (******************************************************************************)
-
-Lemma ewl WF : ew ⊆ same_loc.
-Proof. 
-  rewrite ewlab; auto.
-  unfold ES.same_lab, Events.same_loc, Events.loc. 
-  basic_solver.
-Qed.
-
-Lemma ewv WF : funeq val ew.
-Proof. 
-  rewrite ewlab; auto.
-  unfold funeq, ES.same_lab, Events.val.
-  basic_solver.
-Qed.
 
 Lemma ew_irr WF : irreflexive ew.
 Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
