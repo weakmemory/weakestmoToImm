@@ -131,6 +131,7 @@ Notation "'same_loc'" := (same_loc lab).
 Notation "'same_val'" := (same_val lab).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+Notation "'Loc_' l" := (fun x => loc x = l) (at level 1).
 
 Notation "'sb'"    := S.(ES.sb).
 Notation "'rmw'"   := S.(ES.rmw).
@@ -198,12 +199,14 @@ Record Wf :=
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
-    co_trans : transitive co ;
-    co_total :
-      forall ol ws (WS : ws ⊆₁ E ∩₁ W ∩₁ (fun x => loc x = ol))
-             (NCF : ⦗ ws ⦘ ⨾ cf ⨾ ⦗ ws ⦘ ≡ ∅₂),
-        is_total ws co;
     co_irr : irreflexive co ;
+    co_trans : transitive co ;
+    co_connex : 
+      forall ol a b 
+             (aW : (E ∩₁ W ∩₁ Loc_ ol) a) 
+             (bW : (E ∩₁ W ∩₁ Loc_ ol) b) 
+             (nEQ : a <> b) (nCF : ~ cf a b),
+        co a b \/ co b a ;
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
@@ -646,6 +649,21 @@ Proof.
   intros x y [z [[p [AA BB]] HH]].
   red. eexists. splits; eauto.
   eapply WF.(co_trans); eauto.
+Qed.
+
+(******************************************************************************)
+(** ** co properites *)
+(******************************************************************************)
+
+Lemma co_total WF ol ww 
+      (WS : ww ⊆₁ E ∩₁ W ∩₁ Loc_ ol) 
+      (nCF : cf_free S ww) :
+  is_total ww co.
+Proof. 
+  red. ins. 
+  eapply co_connex; auto.
+  generalize nCF. unfold cf_free.
+  basic_solver 10.
 Qed.
 
 (******************************************************************************)

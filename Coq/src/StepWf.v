@@ -55,6 +55,170 @@ Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
 Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
+Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
+
+Lemma step_same_co_connex_helper e e' S S'
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S')
+      (CO' : co S' ≡ co S) 
+      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S) : 
+  forall ol a b 
+             (aW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) a) 
+             (bW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) b) 
+             (nEQ : a <> b) (nCF : ~ cf S' a b),
+        co S' a b \/ co S' b a.
+Proof. 
+  ins. 
+  assert ((E S ∩₁ W S) a) as Ha.
+  { apply WW'. generalize aW. basic_solver. }
+  assert ((E S ∩₁ W S) b) as Hb.
+  { apply WW'. generalize bW. basic_solver. }
+  destruct Ha as [aE aWW]. destruct Hb as [bE bWW].
+  assert (loc S a = ol) as aLOC.
+  { arewrite (loc S a = loc S' a).
+    { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    generalize aW. basic_solver. }
+  assert (loc S b = ol) as bLOC.
+  { arewrite (loc S b = loc S' b).
+    { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    generalize bW. basic_solver. }
+  assert ((co S) a b \/ (co S) b a) as HCO.
+  { eapply ES.co_connex; eauto.
+    { unfolder; splits; try apply aLOC; auto. } 
+    { unfolder; splits; auto. } 
+    intros CF. eapply ESBasicStep.basic_step_cf_restr in CF; eauto.
+    apply nCF. generalize CF. basic_solver. }
+  generalize CO' HCO. basic_solver.
+Qed.
+
+Lemma add_co_split_writes ews ws w' S S'
+      (wfE : ES.Wf S) 
+      (ACO : ESstep.add_co ews ws w' S S') : 
+  E S ∩₁ W S ∩₁ Loc_ S (loc S' w') \₁ ews ⊆₁ 
+    (ws ∪₁ codom_rel (⦗ews ∪₁ ws⦘ ⨾ co S) \₁ (ews ∪₁ ws)).
+Proof. 
+  cdes ACO.
+  intros w [[[wE wW] eqLOC] nEWS].
+  destruct 
+    (excluded_middle_informative (ws w))
+    as [wWS | nwWS].
+  { by left. }
+  right. unfolder. splits.
+  2 : red; ins; desf.
+  edestruct is_w_loc as [l wLOC]; eauto.
+  edestruct ES.initL as [wi [wiInit wiLOC]]; eauto.
+  exists wi, wi. splits; auto.
+  { right. eapply wsEinit.
+    split; auto. congruence. }
+  admit. 
+Admitted.
+
+Lemma step_add_co_connex_helper ews ws w' e e' S S'
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S')
+      (AEW : ESstep.add_ew ews w' S S')
+      (ACO : ESstep.add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w')
+      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
+  forall a (aW : (E S ∩₁ W S ∩₁ Loc_ S' (loc S' w')) a) 
+         (nCF : ~ (cf S') a w')
+         (nEQ : a <> w'),
+      co S' a w' \/ co S' w' a.
+Proof. 
+  ins. 
+  destruct aW as [[aE aW] aLOC].
+  edestruct 
+    add_co_split_writes
+    as [aWS | anWS]; eauto.
+  { unfolder; splits; eauto.
+    { arewrite (loc S a = loc S' a); auto.
+      symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    cdes AEW. intros aEWS. 
+    eapply nCF. apply ES.cf_sym. 
+    generalize aEWS ewsCF. basic_solver 10. }
+  { left. cdes ACO. apply CO'. 
+    autounfold with ESStepDb.
+    basic_solver. }
+  right. cdes ACO. apply CO'. 
+  autounfold with ESStepDb.
+  generalize anWS. basic_solver.   
+Qed.
+
+Lemma step_add_co_connex ews ws w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (ACO : ESstep.add_co ews ws w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') 
+      (wWW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
+  forall ol a b 
+             (aW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) a) 
+             (bW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) b) 
+             (nEQ : a <> b) (nCF : ~ cf S' a b),
+        co S' a b \/ co S' b a.
+Proof. 
+  ins. 
+  destruct 
+    (classic (loc S' w' = ol))
+    as [lEQ | lnEQ].
+  { subst ol.
+    assert ((E S ∩₁ W S ∪₁ eq w') a) as Ha.
+    { apply wWW'. generalize aW. basic_solver. }
+    assert ((E S ∩₁ W S ∪₁ eq w') b) as Hb.
+    { apply wWW'. generalize bW. basic_solver. }
+    destruct (Ha, Hb) as [[[Ea Wa] | EQa] [[Eb Wb] | EQb]];
+      clear Ha Hb.
+    { assert (loc S a = loc S' w') as aLOC.
+      { arewrite (loc S a = loc S' a).
+        { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+        generalize aW. basic_solver. }
+      assert (loc S b = loc S' w') as bLOC.
+      { arewrite (loc S b = loc S' b).
+        { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+        generalize bW. basic_solver. }
+      assert ((co S) a b \/ (co S) b a) as HCO.
+      { eapply ES.co_connex; eauto.
+        { unfolder; splits; try apply aLOC; auto. } 
+        { unfolder; splits; auto. } 
+        intros CF. eapply ESBasicStep.basic_step_cf_restr in CF; eauto.
+        apply nCF. generalize CF. basic_solver. }
+      destruct HCO as [COab | COba].
+      { cdes ACO. left. apply CO'. basic_solver. }
+      cdes ACO. right. apply CO'. basic_solver. }
+    { subst b. eapply step_add_co_connex_helper; eauto. 
+      unfolder; splits; auto. generalize aW. basic_solver. }
+    { subst a. apply or_comm. eapply step_add_co_connex_helper; eauto. 
+      unfolder; splits; auto. generalize bW. basic_solver. 
+      red. ins. apply nCF. by apply ES.cf_sym. }
+    exfalso. congruence. }
+  assert ((E S ∩₁ W S) a) as Ha.
+  { destruct aW as [HH LOCa].
+    apply wWW' in HH.
+    unfolder in HH. desf. }
+  assert ((E S ∩₁ W S) b) as Hb.
+  { destruct bW as [HH LOCb].
+    apply wWW' in HH.
+    unfolder in HH. desf. }
+  destruct Ha as [aE aWW].
+  destruct Hb as [bE bWW].
+  assert (loc S a = ol) as aLOC.
+  { arewrite (loc S a = loc S' a).
+    { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    generalize aW. basic_solver. }
+  assert (loc S b = ol) as bLOC.
+  { arewrite (loc S b = loc S' b).
+    { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    generalize bW. basic_solver. }
+  assert ((co S) a b \/ (co S) b a) as HCO.
+  { eapply ES.co_connex; eauto.
+    { unfolder; splits; try apply aLOC; auto. } 
+    { unfolder; splits; auto. } 
+    intros CF. eapply ESBasicStep.basic_step_cf_restr in CF; eauto.
+    apply nCF. generalize CF. basic_solver. }
+  destruct HCO as [COab | COba].
+  { cdes ACO. left. apply CO'. basic_solver. }
+  cdes ACO. right. apply CO'. basic_solver.
+Qed.  
 
 Lemma step_wf S S' e e'
       (WF : ES.Wf S)
@@ -483,7 +647,22 @@ Proof.
     all: admit. }
 
   (* co and ew properties *)
-  1-14: admit.
+
+  1-4 : admit.
+
+  { red in TT. desf; cdes TT; desf.
+    { eapply step_same_co_connex_helper; eauto.
+      admit. }
+    { eapply step_same_co_connex_helper; eauto.
+      eapply ESstep.load_step_w; eauto. }
+    { eapply step_add_co_connex; eauto.
+      { basic_solver. }
+      admit. }
+    eapply step_add_co_connex; eauto.
+    { basic_solver. }
+    admit. }
+
+  1-9: admit.
 
   { red. ins. desf.
     red in KK. unfold ES.cont_thread in CTK.
