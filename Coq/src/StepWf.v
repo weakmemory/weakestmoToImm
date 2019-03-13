@@ -205,6 +205,68 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma step_add_co_irr ews ws w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (ACO : ESstep.add_co ews ws w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  irreflexive (co S').
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes ACO. 
+  rewrite CO'.
+  unfold ESstep.co_delta.
+  unfolder. 
+  intros x [CO | [[wWS EQx] | [EQx wWS]]]. 
+  { eapply ES.co_irr; eauto. }
+  { subst x. apply wsE in wWS.
+    unfolder in wEE'. 
+    desf; ESBasicStep.step_solver. }
+  subst x. apply ESstep.ws_complE in wWS; eauto.
+  unfolder in wEE'. 
+  desf; ESBasicStep.step_solver.
+Qed.
+
+Lemma step_add_co_trans ews ws w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S')
+      (ACO : ESstep.add_co ews ws w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  transitive (co S').
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes ACO. 
+  apply transitiveI.
+  rewrite CO'.
+  unfold ESstep.co_delta.
+  relsf.
+  arewrite_false (ws × eq w' ⨾ co S).
+  { unfolder in wEE'; desf; ESBasicStep.step_solver. } 
+  arewrite_false (ws × eq w' ⨾ ws × eq w').
+  { rewrite wsE. unfolder in wEE'; desf; ESBasicStep.step_solver. } 
+  arewrite_false (co S ⨾ eq w' × ESstep.ws_compl ews ws S).
+  { erewrite ESstep.ws_complE; auto. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  arewrite_false (eq w' × ESstep.ws_compl ews ws S ⨾ eq w' × ESstep.ws_compl ews ws S).
+  { erewrite ESstep.ws_complE; auto. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  arewrite_false (eq w' × ESstep.ws_compl ews ws S ⨾ ws × eq w').
+  { unfolder. ins. desf.
+    eapply ESstep.ws_inter_ws_compl_false; eauto.
+    basic_solver. }
+  relsf.
+  arewrite (co S ⨾ co S ⊆ co S).
+  { apply transitiveI. by apply ES.co_trans. }
+  arewrite (eq w' × ESstep.ws_compl ews ws S ⨾ co S ⊆ eq w' × ESstep.ws_compl ews ws S).
+  { unfolder. ins. desc. splits; auto.
+    eapply ESstep.ws_compl_co_fwcl; eauto. basic_solver 10. }
+  arewrite (co S ⨾ ws × eq w' ⊆ ws × eq w').
+  { unfolder. ins. desc. splits; auto.
+    eapply ESstep.ws_co_prcl; eauto. basic_solver 10. }
+  arewrite (ws × eq w' ⨾ eq w' × ESstep.ws_compl ews ws S ⊆ co S).
+  { unfolder. ins. desf.
+    eapply ESstep.ws_cross_ws_compl_in_co; eauto.
+    basic_solver. }
+  basic_solver.
+Qed.    
+
 Lemma step_same_co_connex_helper e e' S S'
       (wfE: ES.Wf S)
       (BSTEP : ESBasicStep.t e e' S S')
@@ -800,8 +862,12 @@ Proof.
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_co_col; eauto. 
     all : eapply step_add_co_col; eauto; basic_solver. }
-  1-2 : admit.
-
+  { red in TT. desf; cdes TT; desf.
+    1,2 : rewrite CO'; apply ES.co_irr; auto. 
+    all : eapply step_add_co_irr; eauto; basic_solver. }
+  { red in TT. desf; cdes TT; desf.
+    1,2 : rewrite CO'; apply ES.co_trans; auto. 
+    all : eapply step_add_co_trans; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
     { eapply step_same_co_connex_helper; eauto.
       admit. }

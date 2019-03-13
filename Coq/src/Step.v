@@ -178,8 +178,26 @@ Definition hb_delta S S' k e e' : relation eventid :=
 Hint Unfold jfi_delta jfe_delta sw_delta hb_delta : ESStepDb.
 
 (******************************************************************************)
-(** ** ws_compl lemmas *)
+(** ** ews, ws, ws_compl lemmas *)
 (******************************************************************************)
+
+Lemma ws_co_prcl ews ws w' S S'
+      (wf : ES.Wf S) 
+      (ACO : add_co ews ws w' S S') : 
+  dom_rel (co S ⨾ ⦗ws⦘) ⊆₁ ws.
+Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed.
+
+Lemma ws_ew_prcl ews ws w' S S'
+      (wf : ES.Wf S) 
+      (ACO : add_co ews ws w' S S') : 
+  dom_rel (ew S ⨾ ⦗ws⦘) ⊆₁ ws.
+Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed.
+
+Lemma ws_co_ew_prcl ews ws w' S S'
+      (wf : ES.Wf S) 
+      (ACO : add_co ews ws w' S S') : 
+  dom_rel (co S ⨾ ew S ⨾ ⦗ws⦘) ⊆₁ ws.
+Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed.
 
 Lemma ws_complE ews ws S 
       (wf : ES.Wf S) : 
@@ -222,6 +240,83 @@ Proof.
   { erewrite ESBasicStep.basic_step_loc_eq_dom; eauto. }
   done. 
 Qed.
+
+Lemma ws_compl_co_fwcl ews ws w' S S'
+      (wf : ES.Wf S) 
+      (ACO : add_co ews ws w' S S') : 
+  codom_rel (⦗ws_compl ews ws S⦘ ⨾ co S) ⊆₁ ws_compl ews ws S.
+Proof. 
+  cdes ACO. 
+  unfold ws_compl. 
+  intros y [x [z [[EQz HH] CO]]]. subst z.
+  destruct HH as [[z [z' [[EQz' EWWS] COzx]]] nEWWS]. subst z'.
+  red. splits.
+  { do 2 eexists. splits. 
+    { red. eauto using EWWS. }
+    eapply ES.co_trans; eauto. }
+  intros EWWSy. apply nEWWS.
+  generalize wsCOEWprcl ewsCOprcl EWWSy CO.
+  basic_solver 10.
+Qed.
+
+Lemma ws_inter_ws_compl_false ews ws w' S S'
+      (wf : ES.Wf S) 
+      (ACO : add_co ews ws w' S S') : 
+  ws ∩₁ ws_compl ews ws S ⊆₁ ∅.
+Proof. unfold ws_compl. basic_solver. Qed.
+
+Lemma ws_cross_ws_compl_in_co ews ws w' e e' S S'
+      (wf : ES.Wf S) 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+  ws × ws_compl ews ws S ⊆ co S.
+Proof. 
+  cdes AEW; cdes ACO.
+  unfold ws_compl. 
+  intros x y [xWS [[z [z' [[EQz' EWWS] HB]]] nEWWS]]. subst z'.
+  destruct 
+    (classic (x = z)) 
+    as [EQxy | nEQxy].
+  { congruence. }
+  destruct 
+    (excluded_middle_informative (cf S x z)) 
+    as [CFxy | nCFxy].
+  { (* here we need more properties *)
+    admit. }
+  edestruct ES.co_connex as [COxz | COzx]; eauto.
+  { unfolder. splits.
+    1-2 : auto.
+    arewrite (loc S x = loc S' x).
+    { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    eapply wsLOC in xWS. symmetry. apply xWS. }
+  { unfolder. splits.
+    { generalize wsE ewsE EWWS. basic_solver. }
+    { generalize wsW ewsW EWWS. basic_solver. }
+    arewrite (loc S z = loc S' z).
+    { symmetry. eapply ESBasicStep.basic_step_loc_eq_dom; eauto. 
+      generalize wsE ewsE EWWS. basic_solver. }
+    symmetry. unfolder in EWWS. desf. 
+    { by eapply ewsLOC. }
+    by eapply wsLOC. }
+  { eapply ES.co_trans; eauto. }
+  (* here we need more properties *)
+  admit.
+Admitted.
+
+(* Lemma ws_ew_prcl ews ws w' S S' *)
+(*       (wf : ES.Wf S)  *)
+(*       (ACO : add_co ews ws w' S S') :  *)
+(*   dom_rel (ew S ⨾ ⦗ws⦘) ⊆₁ ws. *)
+(* Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed. *)
+
+(* Lemma ws_co_ew_prcl ews ws w' S S' *)
+(*       (wf : ES.Wf S)  *)
+(*       (ACO : add_co ews ws w' S S') :  *)
+(*   dom_rel (co S ⨾ ew S ⨾ ⦗ws⦘) ⊆₁ ws. *)
+(* Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed. *)
+
 
 (******************************************************************************)
 (** ** Deltas lemmas *)
