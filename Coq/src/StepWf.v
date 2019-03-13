@@ -58,6 +58,186 @@ Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
 Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
 
 (******************************************************************************)
+(** ** StepWf ew properties *)
+(******************************************************************************)
+
+Lemma step_same_ew_ewE e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (EW' : ew S' ≡ ew S) :
+  ew S' ≡ ⦗E S'⦘ ⨾ ew S' ⨾ ⦗E S'⦘. 
+Proof. 
+  rewrite EW'. rewrite ES.ewE; auto. 
+  assert (E S ⊆₁ E S') as Emon.
+  { eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
+  basic_solver 10.
+Qed.
+
+Lemma step_add_ew_ewE ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ew S' ≡ ⦗E S'⦘ ⨾ ew S' ⨾ ⦗E S'⦘. 
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes AEW.
+  rewrite EW'. relsf.
+  apply union_more.
+  { rewrite ES.ewE; auto.
+    erewrite ESBasicStep.basic_step_acts_set
+      with (S' := S'); eauto.
+    basic_solver 10. }
+  unfold ESstep.ew_delta.
+  rewrite csE, transp_cross.
+  relsf. 
+  erewrite ESBasicStep.basic_step_acts_set
+      with (S' := S'); eauto.
+  rewrite set_unionA, id_union. relsf.
+  rewrite !seq_eqv_cross. 
+  arewrite (E S ∩₁ eq w' ≡₁ ∅).
+  { split; try done. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  arewrite ((eq e ∪₁ eq_opt e') ∩₁ ews ≡₁ ∅).
+  { split; try done. rewrite ewsE. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  relsf. generalize wEE'. basic_solver 10.
+Qed.
+
+Lemma step_same_ew_ewD e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (EW' : ew S' ≡ ew S) :
+  ew S' ≡ ⦗W S'⦘ ⨾ ew S' ⨾ ⦗W S'⦘. 
+Proof. 
+  rewrite EW'.
+  arewrite (⦗W S'⦘ ⨾ ew S ⨾ ⦗W S'⦘ ≡ ⦗E S ∩₁ W S'⦘ ⨾ ew S ⨾ ⦗E S ∩₁ W S'⦘).
+  { rewrite ES.ewE; auto. basic_solver. }
+  erewrite ESstep.basic_step_w_eq_w; eauto. 
+  rewrite ES.ewE, ES.ewD; auto. 
+  basic_solver. 
+Qed.
+
+Lemma step_add_ew_ewD ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ew S' ≡ ⦗W S'⦘ ⨾ ew S' ⨾ ⦗W S'⦘. 
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes AEW.
+  rewrite EW'. relsf.
+  apply union_more.
+  { arewrite (⦗W S'⦘ ⨾ ew S ⨾ ⦗W S'⦘ ≡ ⦗E S ∩₁ W S'⦘ ⨾ ew S ⨾ ⦗E S ∩₁ W S'⦘).
+    { rewrite ES.ewE; auto. basic_solver. }
+    erewrite ESstep.basic_step_w_eq_w; eauto. 
+    rewrite ES.ewE, ES.ewD; auto. 
+    basic_solver. }
+  unfold ESstep.ew_delta.
+  assert (ews ⊆₁ W S') as wsW'.
+  { red. ins. unfold is_w.
+    arewrite (lab S' x = lab S x).
+    { erewrite ESBasicStep.basic_step_lab_eq_dom; eauto. }
+    fold (is_w (lab S) x). basic_solver. }
+  basic_solver 10. 
+Qed.
+
+Lemma step_same_ew_ewl e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (EW' : ew S' ≡ ew S) :
+  ew S' ⊆ same_loc S'. 
+Proof. 
+  rewrite EW'. 
+  intros x y EW.
+  assert 
+    ((restr_rel (E S) (same_loc S')) x y) 
+    as HH.
+  { eapply ESBasicStep.basic_step_same_loc_restr; eauto.
+    unfolder; splits.
+    { apply ES.ewl; auto. }
+    { apply ES.ewE in EW; auto. 
+      generalize EW. basic_solver. }
+    apply ES.ewE in EW; auto. 
+    generalize EW. basic_solver. }
+  generalize HH. basic_solver.
+Qed.
+
+Lemma step_add_ew_ewl ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ew S' ⊆ same_loc S'. 
+Proof. 
+  cdes AEW.
+  rewrite EW'.
+  unfold ESstep.ew_delta. 
+  rewrite csE, transp_cross.
+  rewrite ewsLOC.
+  unionL.
+  2-3 : basic_solver.
+  intros x y EW.
+  assert 
+    ((restr_rel (E S) (same_loc S')) x y) 
+    as HH.
+  { eapply ESBasicStep.basic_step_same_loc_restr; eauto.
+    unfolder; splits.
+    { apply ES.ewl; auto. }
+    { apply ES.ewE in EW; auto. 
+      generalize EW. basic_solver. }
+    apply ES.ewE in EW; auto. 
+    generalize EW. basic_solver. }
+  generalize HH. basic_solver. 
+Qed.
+
+Lemma step_same_ew_ewv e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (EW' : ew S' ≡ ew S) :
+  ew S' ⊆ same_val S'. 
+Proof. 
+  rewrite EW'. 
+  intros x y EW.
+  assert 
+    ((restr_rel (E S) (same_val S')) x y) 
+    as HH.
+  { eapply ESBasicStep.basic_step_same_val_restr; eauto.
+    unfolder; splits.
+    { apply ES.ewv; auto. }
+    { apply ES.ewE in EW; auto. 
+      generalize EW. basic_solver. }
+    apply ES.ewE in EW; auto. 
+    generalize EW. basic_solver. }
+  generalize HH. basic_solver.
+Qed.
+
+Lemma step_add_ew_ewv ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ew S' ⊆ same_val S'. 
+Proof. 
+  cdes AEW.
+  rewrite EW'.
+  unfold ESstep.ew_delta. 
+  rewrite csE, transp_cross.
+  rewrite ewsVAL.
+  unionL.
+  2-3 : basic_solver.
+  intros x y EW.
+  assert 
+    ((restr_rel (E S) (same_val S')) x y) 
+    as HH.
+  { eapply ESBasicStep.basic_step_same_val_restr; eauto.
+    unfolder; splits.
+    { apply ES.ewv; auto. }
+    { apply ES.ewE in EW; auto. 
+      generalize EW. basic_solver. }
+    apply ES.ewE in EW; auto. 
+    generalize EW. basic_solver. }
+  generalize HH. basic_solver. 
+Qed.
+
+(******************************************************************************)
 (** ** StepWf co properties *)
 (******************************************************************************)
 
@@ -880,7 +1060,20 @@ Proof.
     { basic_solver. }
     admit. }
 
-  1-9: admit.
+  { red in TT. desf; cdes TT; desf.
+    1,2 : eapply step_same_ew_ewE; eauto. 
+    all : eapply step_add_ew_ewE; eauto; basic_solver. }
+  { red in TT. desf; cdes TT; desf.
+    1,2 : eapply step_same_ew_ewD; eauto. 
+    all : eapply step_add_ew_ewD; eauto; basic_solver. }
+  { red in TT. desf; cdes TT; desf.
+    1,2 : eapply step_same_ew_ewl; eauto. 
+    all : eapply step_add_ew_ewl; eauto; basic_solver. }
+  { red in TT. desf; cdes TT; desf.
+    1,2 : eapply step_same_ew_ewv; eauto. 
+    all : eapply step_add_ew_ewv; eauto; basic_solver. }
+ 
+  1-5 : admit.
 
   { red. ins. desf.
     red in KK. unfold ES.cont_thread in CTK.
