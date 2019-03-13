@@ -121,6 +121,9 @@ Proof. basic_solver. Qed.
 Lemma eqv_sym : forall (s : A -> Prop), symmetric ⦗s⦘.
 Proof. basic_solver. Qed.
 
+Lemma union_sym : symmetric r -> symmetric r' -> symmetric (r ∪ r').
+Proof. basic_solver. Qed.
+
 Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
 Proof. basic_solver. Qed.
 
@@ -868,6 +871,10 @@ Qed.
 End Props.
 
 Require Import Setoid.
+
+Add Parametric Morphism A : (@symmetric A) with signature
+  same_relation ==> iff as symmetric_more.
+Proof. unfolder. ins. desf. split; ins; auto. Qed.
 
 Add Parametric Morphism A : (@clos_sym A) with signature 
   inclusion ==> inclusion as clos_sym_mori.
