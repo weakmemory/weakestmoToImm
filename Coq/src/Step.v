@@ -87,7 +87,7 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
   (* \End TODO *)
   ⟪ ewsCF : ews ⊆₁ cf S' w' ⟫ /\
-  ⟪ ewsEW : ews × ews \ eq ⊆ ew S ⟫ /\
+  ⟪ ewsEW : ews × ews ⊆ ew S ⟫ /\
   ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\
   ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ews w' ⟫. 
 
@@ -180,6 +180,18 @@ Hint Unfold jfi_delta jfe_delta sw_delta hb_delta : ESStepDb.
 (******************************************************************************)
 (** ** ews, ws, ws_compl lemmas *)
 (******************************************************************************)
+
+Lemma ews_ew_fwcl ews w' S S'
+      (wf : ES.Wf S) 
+      (AEW : add_ew ews w' S S') : 
+  codom_rel (⦗ews⦘ ⨾ ew S) ⊆₁ ews.
+Proof.
+  cdes AEW. 
+  intros x [y [z [[EQz EWS] EW]]]. subst z.
+  apply ES.ew_sym in EW; auto.
+  apply ewsEWprcl.
+  basic_solver 10.
+Qed.
 
 Lemma ws_co_prcl ews ws w' S S'
       (wf : ES.Wf S) 

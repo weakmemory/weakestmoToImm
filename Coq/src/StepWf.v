@@ -237,6 +237,78 @@ Proof.
   generalize HH. basic_solver. 
 Qed.
 
+Lemma step_add_ew_ewc ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ew S' ⊆ cf S'.
+Proof. 
+  cdes AEW.
+  rewrite EW'.
+  unfold ESstep.ew_delta.
+  rewrite ewsCF.
+  rewrite csE, transp_cross.
+  unionL.
+  { rewrite ES.ewc; auto.
+    eapply ESBasicStep.basic_step_cf_mon; eauto. }
+  { unfolder. ins. desf. by eapply ES.cf_sym. }
+  basic_solver.
+Qed.
+
+Lemma step_add_ew_ew_trans ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  transitive (ew S').
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes AEW.
+  rewrite EW'.
+  unfold ESstep.ew_delta.
+  rewrite csE, transp_cross.
+  apply transitiveI. relsf.
+  arewrite_false (ews × eq w' ⨾ ew S).
+  { unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  arewrite_false (ews × eq w' ⨾ ews × eq w').
+  { rewrite ewsE. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  arewrite_false (ew S ⨾ eq w' × ews).
+  { rewrite ewsE. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  arewrite_false (eq w' × ews ⨾ eq w' × ews).
+  { rewrite ewsE. unfolder in wEE'; desf; ESBasicStep.step_solver. }
+  relsf.
+  arewrite (ew S ⨾ ew S ⊆ ew S).
+  { apply transitiveI. apply ES.ew_trans; auto. }
+  arewrite (eq w' × ews ⨾ ew S ⊆ eq w' × ews).
+  { unfolder. ins. desc. 
+    splits; auto.
+    eapply ESstep.ews_ew_fwcl; eauto. 
+    basic_solver 10. }
+  arewrite (ew S ⨾ ews × eq w' ⊆ ews × eq w').
+  { unfolder. ins. desc. 
+    splits; auto.
+    eapply ewsEWprcl. basic_solver 10. }
+  arewrite (eq w' × ews ⨾ ews × eq w' ⊆ eq).
+  { basic_solver. }
+  arewrite (ews × eq w' ⨾ eq w' × ews ⊆ ew S).
+  { by rewrite seq_cross_eq. }
+  (* almost there, but we need reflexivity of ew *)
+  admit. 
+Admitted.
+
+Lemma step_add_ew_ew_sym ews w' e e' S S' 
+      (wfE: ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : ESstep.add_ew ews w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  symmetric (ew S').
+Proof. 
+  cdes AEW.
+  rewrite EW'.
+  unfold ESstep.ew_delta. 
+  auto using union_sym, ES.ew_sym, cs_sym.
+Qed.
+
 (******************************************************************************)
 (** ** StepWf co properties *)
 (******************************************************************************)
@@ -1072,7 +1144,7 @@ Proof.
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_ew_ewv; eauto. 
     all : eapply step_add_ew_ewv; eauto; basic_solver. }
- 
+
   1-5 : admit.
 
   { red. ins. desf.
