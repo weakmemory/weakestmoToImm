@@ -217,7 +217,10 @@ Section SimRel.
       { intros SB. apply CC.
         apply ES.cf_sb_in_cf; auto.
         eexists. split; eauto.
-        apply ES.ewc; auto. }
+        edestruct ES.ewc; eauto.
+        apply ES.ewD in EW; auto.
+        apply ES.jfD in JF; auto.
+        red. ins. type_solver. }
       edestruct SRC.(jfe_fI) as [v HH].
       { eexists. split; eauto. }
       destruct_seq_r HH as BB.

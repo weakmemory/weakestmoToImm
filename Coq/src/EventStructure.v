@@ -201,22 +201,23 @@ Record Wf :=
     col : co ⊆ same_loc ;
     co_irr : irreflexive co ;
     co_trans : transitive co ;
-    co_connex : 
+    co_total : 
       forall ol a b 
              (aW : (E ∩₁ W ∩₁ Loc_ ol) a) 
              (bW : (E ∩₁ W ∩₁ Loc_ ol) b) 
-             (nEQ : a <> b) (nCF : ~ cf a b),
+             (nEW : ~ ew a b),
         co a b \/ co b a ;
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
-    (* ewlab : ew ⊆ same_lab; *)
-    ewc : ew ⊆ cf ;
-    ew_trans : transitive ew ;
+    ewc : ew ⊆ cf^? ; 
+    ew_refl : ⦗E ∩₁ W⦘ ⨾ eq ⨾ ⦗E ∩₁ W⦘ ⊆ ew ;
     ew_sym : symmetric ew ;
+    ew_trans : transitive ew ;
 
+    ew_co : ew ∩ co ≡ ∅₂ ;
     ew_co_in_co : ew ⨾ co ⊆ co ;
     co_ew_in_co : co ⨾ ew ⊆ co ;
 
@@ -494,8 +495,8 @@ Qed.
 (** ** ew properties *)
 (******************************************************************************)
 
-Lemma ew_irr WF : irreflexive ew.
-Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
+(* Lemma ew_irr WF : irreflexive ew. *)
+(* Proof. generalize cf_irr (ewc WF). basic_solver. Qed. *)
 
 (******************************************************************************)
 (** ** jf properties *)
@@ -655,16 +656,16 @@ Qed.
 (** ** co properites *)
 (******************************************************************************)
 
-Lemma co_total WF ol ww 
-      (WS : ww ⊆₁ E ∩₁ W ∩₁ Loc_ ol) 
-      (nCF : cf_free S ww) :
-  is_total ww co.
-Proof. 
-  red. ins. 
-  eapply co_connex; auto.
-  generalize nCF. unfold cf_free.
-  basic_solver 10.
-Qed.
+(* Lemma co_total WF ol ww  *)
+(*       (WS : ww ⊆₁ E ∩₁ W ∩₁ Loc_ ol)  *)
+(*       (nCF : cf_free S ww) : *)
+(*   is_total ww co. *)
+(* Proof.  *)
+(*   red. ins.  *)
+(*   eapply co_connex; auto. *)
+(*   generalize nCF. unfold cf_free. *)
+(*   basic_solver 10. *)
+(* Qed. *)
 
 (******************************************************************************)
 (** ** continuation properites *)

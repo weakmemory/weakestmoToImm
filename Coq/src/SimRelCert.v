@@ -508,7 +508,8 @@ Section SimRelCert.
       apply nSTID. red. 
       arewrite (Stid x = Stid z).
       { destruct EW as [EQ | EW]; auto.
-        eapply ES.cf_same_tid, ES.ewc; auto. }
+        edestruct ES.ewc; eauto.
+        by eapply ES.cf_same_tid. }
       arewrite (Stid z = Gtid a).
       { etransitivity; [eapply e2a_tid|].
         subst z. fold (compose (e2a S) f a).
