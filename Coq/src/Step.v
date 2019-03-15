@@ -334,6 +334,26 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma ws_compl_ew_fwcl ews ws w' S S'
+      (wf : ES.Wf S) 
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S') : 
+  codom_rel (⦗ws_compl ews ws S⦘ ⨾ ew S) ⊆₁ ws_compl ews ws S.
+Proof. 
+  cdes AEW; cdes ACO. 
+  unfold ws_compl. 
+  intros y [x [z [[EQz HH] EW]]]. subst z.
+  destruct HH as [[z [z' [[EQz' EWWS] COzx]]] nEWWS]. subst z'.
+  red. splits.
+  { do 2 eexists. splits. 
+    { red. eauto using EWWS. }
+    eapply ES.co_ew_in_co; eauto. 
+    basic_solver. }
+  intros EWWSy. apply nEWWS.
+  generalize wsCOEWprcl ewsCOprcl EWWSy ewsEWprcl EW.
+  basic_solver 10.
+Qed.
+
 Lemma ws_inter_ws_compl_false ews ws w' S S'
       (wf : ES.Wf S) 
       (ACO : add_co ews ws w' S S') : 
@@ -374,6 +394,24 @@ Proof.
   basic_solver 10. 
 Qed.
 
+Lemma ws_cross_ews_in_ew_compl ews ws w' e e' S S'
+      (wf : ES.Wf S)
+      (BSTEP : ESBasicStep.t e e' S S')
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ws × ews ⊆ compl_rel (ew S).
+Proof.
+  cdes AEW; cdes ACO.
+  intros x y [xWS yEWS].
+  assert (~ ews x) as xnEWS.
+  { red. ins. eapply ws_ews; eauto. basic_solver. }
+  intros EW. eapply ws_ews; eauto.
+  split; [|eauto].
+  eapply ws_ew_fwcl; eauto.
+  basic_solver 10.
+Qed.
+
 Lemma ews_cross_ws_compl_in_ew_compl ews ws w' e e' S S'
       (wf : ES.Wf S) 
       (BSTEP : ESBasicStep.t e e' S S') 
@@ -389,6 +427,27 @@ Proof.
   intros EW. eapply ews_inter_ws_compl_false; eauto.
   split; [|eauto].
   eapply ews_ew_fwcl; eauto.
+  basic_solver 10.
+Qed.
+
+Lemma ws_cross_ews_in_co ews ws w' e e' S S'
+      (wf : ES.Wf S) 
+      (BSTEP : ESBasicStep.t e e' S S') 
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S') 
+      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+  ws × ews ⊆ co S.
+Proof. 
+  cdes AEW; cdes ACO.
+  intros x y [xWS yEWS].
+  assert (~ ew S x y) as nEW.
+  { eapply ws_cross_ews_in_ew_compl; eauto. basic_solver. }
+  edestruct ES.co_total as [COxy | COyx]; eauto.
+  { eapply wsEWLoc; eauto. }
+  { eapply ewsEWLoc; eauto. }
+  exfalso. eapply ws_ews.
+  split; [|eauto].
+  eapply ws_co_prcl; eauto.
   basic_solver 10.
 Qed.
 
