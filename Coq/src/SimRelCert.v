@@ -154,7 +154,7 @@ Section SimRelCert.
       hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
       hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h; 
 
-      hrel_iss_cov : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
+      hrel_iss_cov : dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
@@ -421,28 +421,21 @@ Section SimRelCert.
     Admitted.
 
     Lemma rel_ew_hD : 
-      dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
+      dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof.
-      rewrite crE. 
-      rewrite !seq_union_l, !seq_union_r, dom_union, seq_id_l.
+      rewrite ew_in_eq_ew_fI_ew; [|apply SRCC].
+      rewrite !seq_union_l, !seq_union_r, !dom_union, !seqA.
       unionL.
-      { rewrite frel_in_Crel_sb; [|apply SRCC].
+      { arewrite (Srelease ⨾ eq ≡ Srelease).
+        { basic_solver. }
+        rewrite frel_in_Crel_sb; [|apply SRCC].
         relsf. rewrite !seqA. splits.
         { rewrite dom_seq. rewrite hfC.
           unfold cert_dom. basic_solver 10. }
         rewrite crE. relsf. splits; auto.
         erewrite a2e_sb_prcl; eauto. apply SRCC. }
-      arewrite (dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁
-                dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘)).
-      { rewrite <- seqA.
-        intros x [y HH].
-        destruct_seq_r HH as HD.
-        destruct HH as [z [REL EW]].
-        edestruct ew_fI as [a AA].
-        { eapply SRCC. }
-        { red. eauto. }
-        exists a.
-        generalize REL AA. basic_solver 10. }
+      do 2 rewrite <- seqA. 
+      rewrite dom_seq, !seqA.
       etransitivity. 
       { eapply rel_fI_fC. apply SRCC. } 
       rewrite hfC. unfold cert_dom. basic_solver 10.
@@ -458,7 +451,7 @@ Section SimRelCert.
     Qed.
 
     Lemma hb_rel_ew_hD :
-      dom_rel (Shb^? ⨾ Srelease ⨾ Sew^? ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
+      dom_rel (Shb^? ⨾ Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
     Proof. 
       rewrite crE with (r := Shb).
       relsf. split.
@@ -470,13 +463,17 @@ Section SimRelCert.
     Qed.
 
     Lemma jf_hD : 
-      dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S k ⦘) ⊆₁ dom_rel (Sew^? ⨾ ⦗ h □₁ hdom ⦘).  
+      dom_rel (Sjf ⨾ ⦗ ES.cont_sb_dom S k ⦘) ⊆₁ dom_rel (Sew ⨾ ⦗ h □₁ hdom ⦘).  
     Proof.
       assert (ES.Wf S) as WFS by apply SRCC.
       rewrite ES.jfi_union_jfe. relsf. splits.
-      { rewrite cont_sb_dom_in_hhdom.
+      { arewrite (Sjfi ≡ ⦗ SE ∩₁ SW ⦘ ⨾ Sjfi).
+        { rewrite ES.jfiE, ES.jfiD; auto. basic_solver. }
+        rewrite dom_eqv1. 
+        rewrite cont_sb_dom_in_hhdom.
         arewrite (Sjfi ⊆ Ssb).
-        erewrite a2e_sb_prcl; [|apply SRCC].
+        rewrite a2e_sb_prcl; [|apply SRCC].
+        rewrite <- ES.ew_refl; auto.
         basic_solver 10. }
       rewrite seq_eqv_r with (r := Sjfe).
       intros x [y [JFE KSB]].
@@ -507,8 +504,7 @@ Section SimRelCert.
       destruct HH as [Enix [JF nSTID]].
       apply nSTID. red. 
       arewrite (Stid x = Stid z).
-      { destruct EW as [EQ | EW]; auto.
-        edestruct ES.ewc; eauto.
+      { edestruct ES.ewc; eauto.
         by eapply ES.cf_same_tid. }
       arewrite (Stid z = Gtid a).
       { etransitivity; [eapply e2a_tid|].
