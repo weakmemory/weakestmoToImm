@@ -33,6 +33,7 @@ Section SimRelEventToAction.
   Notation "'SF'" := (fun a => is_true (is_f Slab a)).
 
   Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
+  Notation "'SAcq'" := (fun a => is_true (is_acq Slab a)).
 
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Scf'" := (S.(ES.cf)).
@@ -67,6 +68,7 @@ Section SimRelEventToAction.
   Notation "'GF'" := (fun a => is_true (is_f Glab a)).
 
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
+  Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
 
   Notation "'Gsb'" := (G.(sb)).
   Notation "'Grmw'" := G.(rmw).
@@ -148,6 +150,9 @@ Section SimRelEventToAction.
     Lemma e2a_Rel : e2a □₁ (SE ∩₁ SRel) ⊆₁ GE ∩₁ GRel.
     Proof. e2a_type same_lab_u2v_dom_is_rel. Qed.
 
+    Lemma e2a_Acq : e2a □₁ (SE ∩₁ SAcq) ⊆₁ GE ∩₁ GAcq.
+    Proof. e2a_type same_lab_u2v_dom_is_acq. Qed.
+
     Lemma e2a_same_loc : 
       e2a □ restr_rel SE (same_loc Slab) ⊆ restr_rel GE (same_loc Glab).
     Proof.
@@ -209,8 +214,7 @@ Section SimRelEventToAction.
       rewrite release_alt; auto.
       rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
       rewrite !set_collect_eqv.
-      arewrite (SF ∪₁ SW ⊆₁ fun _ => True).
-      arewrite (SE ∩₁ (fun _ : eventid => True) ⊆₁ SE) by basic_solver.
+      arewrite (SE ∩₁ (SF ∪₁ SW) ⊆₁ SE) by basic_solver.
       rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
       { unfold imm_s_hb.release. basic_solver 10. }
       all: eauto; apply SRE2A.
@@ -218,14 +222,27 @@ Section SimRelEventToAction.
 
     Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
     Proof. 
+      assert (WFsc : wf_sc G sc) by admit.
+      assert (e2a □₁ SE ⊆₁ GE) as EE by apply SRE2A.
       unfold hb, imm_s_hb.hb.
       rewrite collect_rel_ct.
       apply clos_trans_mori.
       rewrite collect_rel_union.
       unionL.
       { rewrite e2a_sb; eauto.
-        { basic_solver. }
-        apply SRE2A. }
+        basic_solver. }
+      rewrite (dom_r (swE S WF)).
+      unfold Consistency.sw. rewrite !seqA.
+      arewrite (⦗SAcq⦘ ⨾ ⦗SE⦘ ⊆ ⦗SE ∩₁ SAcq⦘) by basic_solver.
+      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
+      rewrite !set_collect_eqv.
+      rewrite e2a_release.
+      rewrite e2a_jf; auto.
+      rewrite e2a_sb; eauto.
+      rewrite furr_alt; auto.
+      rewrite e2a_Acq.
+      arewrite (Gsb ⨾ ⦗e2a □₁ SF⦘ ⊆ Gsb ⨾ ⦗GF⦘).
+      { admit. }
       admit. 
     Admitted.
 
