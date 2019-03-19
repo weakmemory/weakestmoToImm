@@ -946,12 +946,6 @@ Section SimRelCertStepProps.
     erewrite e2a_hb; eauto; try apply SRCC.
     erewrite e2a_co; eauto.
     erewrite e2a_rf, e2a_jf; eauto.
-    2 : { (* Here we need consistency of S', 
-             but it seems that we can, actually, 
-             get rid of this by refactoring of `jf_in_rf` lemma.
-             Probable, we will have to move `jf ∩ cf ⊆ ∅₂` constraint 
-             to WellFormdness. *)
-          admit. }
     rewrite !crE. relsf.
     rewrite !irreflexive_union. splits.
     { red. ins. eapply GCOH. basic_solver. }
@@ -969,7 +963,7 @@ Section SimRelCertStepProps.
       eexists. splits.
       { unfold Execution_eco.eco. basic_solver 10. }
       eapply urr_hb. basic_solver. }
-    all : admit. 
+    all: admit. 
   Admitted.
 
   Lemma simrel_cert_step_consistent k k' e e' S S'
