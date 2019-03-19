@@ -44,6 +44,7 @@ Section SimRelCert.
   Notation "'SW'" := (fun a => is_true (is_w Slab a)).
   Notation "'SF'" := (fun a => is_true (is_f Slab a)).
   Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
+  Notation "'SAcq'" := (fun a => is_true (is_acq Slab a)).
 
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Scf'" := (S.(ES.cf)).
@@ -62,6 +63,8 @@ Section SimRelCert.
   Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Shb'" := (S.(Consistency.hb)).
   Notation "'Secf'" := (S.(Consistency.ecf)).
+
+  Notation "'e2a'" := (e2a S).
 
   Notation "'thread_syntax' tid"  := 
     (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
@@ -147,7 +150,7 @@ Section SimRelCert.
 
       tr_step : isim_trav_step G sc ktid TC TC';
 
-      hgfix : fixset (ES.cont_sb_dom S k) (h ∘ (e2a S));
+      hgfix : fixset (ES.cont_sb_dom S k) (h ∘ e2a);
 
       sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
 
@@ -229,10 +232,10 @@ Section SimRelCert.
     Qed.
 
     Lemma GEinit_in_e2a_cont_sb_dom : 
-      GEinit ⊆₁ e2a S □₁ ES.cont_sb_dom S k. 
+      GEinit ⊆₁ e2a □₁ ES.cont_sb_dom S k. 
     Proof. 
       erewrite <- e2a_same_Einit.
-      2-4 : eapply SRCC.
+      2-4: by eapply SRCC.
       apply set_collect_mori; auto. 
         by apply SEinit_in_cont_sb_dom.
     Qed.
@@ -241,7 +244,7 @@ Section SimRelCert.
       ES.cont_sb_dom S k ⊆₁ h □₁ hdom.
     Proof.
       unfold cert_dom.
-      arewrite (ES.cont_sb_dom S k ≡₁ h □₁ (e2a S □₁ ES.cont_sb_dom S k)) at 1.
+      arewrite (ES.cont_sb_dom S k ≡₁ h □₁ (e2a □₁ ES.cont_sb_dom S k)) at 1.
       { rewrite set_collect_compose.
         apply fixset_set_fixpoint.
         apply SRCC. }
@@ -250,7 +253,7 @@ Section SimRelCert.
       rewrite !set_collect_union.
       apply set_subset_union_l. split.
       { arewrite (acts_set (ProgToExecution.G st) ≡₁ 
-                           e2a S □₁ (ES.cont_sb_dom S k \₁ SEinit)).
+                  e2a □₁ (ES.cont_sb_dom S k \₁ SEinit)).
         2: by eauto with hahn.
         eapply contstateE; eauto.
         1-2: by apply SRCC.
@@ -287,7 +290,7 @@ Section SimRelCert.
       erewrite contstateE;
         [|apply SRCC | apply SRCC | rewrite stEQ; eapply KK].
       arewrite 
-        (h □₁ (e2a S □₁ (ES.cont_sb_dom S k \₁ SEinit)) ≡₁ 
+        (h □₁ (e2a □₁ (ES.cont_sb_dom S k \₁ SEinit)) ≡₁ 
            ES.cont_sb_dom S k \₁ SEinit).
       { rewrite set_collect_compose.
         symmetry. eapply fixset_set_fixpoint.
@@ -404,8 +407,8 @@ Section SimRelCert.
       eapply sb_irr. eapply sb_trans; eauto.
       eapply e2a_sb; eauto; try apply SRCC. 
       do 2 eexists. splits; eauto.
-      1 : fold (compose (e2a S) h y').
-      2 : fold (compose (e2a S) h x').
+      1: fold (compose e2a h y').
+      2: fold (compose e2a h x').
       all: eapply a2e_fix; [by apply SRCC|]; auto. 
     Qed.
 
@@ -511,7 +514,7 @@ Section SimRelCert.
         eapply ES.cf_same_tid, ES.ewc; auto. }
       arewrite (Stid z = Gtid a).
       { etransitivity; [eapply e2a_tid|].
-        subst z. fold (compose (e2a S) f a).
+        subst z. fold (compose e2a f a).
         erewrite a2e_fix; auto.
         { apply SRCC. }
         basic_solver 10. }
