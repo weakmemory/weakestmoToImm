@@ -174,12 +174,7 @@ Section SimRelEventToAction.
       split.
       2: by rewrite ES.jf_in_rf; eauto.
       unfold ES.rf.
-      arewrite (Sew^? ⨾ Sjf \ Scf ⊆ Sew^? ⨾ Sjf).
-      rewrite crE.
-      rewrite seq_union_l.
-      rewrite collect_rel_union.
-      apply inclusion_union_l.
-      { by rewrite seq_id_l. }
+      rewrite inclusion_minus_rel.
       unfolder.
       ins. desf.
       eexists. eexists. splits; eauto.

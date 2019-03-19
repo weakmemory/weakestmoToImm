@@ -59,7 +59,7 @@ Definition cf (S : t) :=
 
 Definition cf_free (S : t) X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
 
-Definition rf (S : t) := S.(ew)^? ⨾ S.(jf) \ S.(cf).
+Definition rf (S : t) := S.(ew) ⨾ S.(jf) \ S.(cf).
 
 Definition rfe (S : t) := S.(rf) \ S.(sb).
 Definition rfi (S : t) := S.(rf) ∩ S.(sb).
@@ -131,6 +131,7 @@ Notation "'same_loc'" := (same_loc lab).
 Notation "'same_val'" := (same_val lab).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+Notation "'Loc_' l" := (fun x => loc x = l) (at level 1).
 
 Notation "'sb'"    := S.(ES.sb).
 Notation "'rmw'"   := S.(ES.rmw).
@@ -194,27 +195,31 @@ Record Wf :=
     jfv : funeq val jf ;
     jff : functional jf⁻¹ ;
     jf_complete : E ∩₁ R ⊆₁ codom_rel jf;
-    jf_not_cf : jf ∩ cf ≡ ∅₂;
+    jf_ncf : jf ∩ cf ≡ ∅₂; 
 
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
-    co_trans : transitive co ;
-    co_total :
-      forall ol ws (WS : ws ⊆₁ E ∩₁ W ∩₁ (fun x => loc x = ol))
-             (NCF : ⦗ ws ⦘ ⨾ cf ⨾ ⦗ ws ⦘ ≡ ∅₂),
-        is_total ws co;
     co_irr : irreflexive co ;
+    co_trans : transitive co ;
+    co_total : 
+      forall ol a b 
+             (aW : (E ∩₁ W ∩₁ Loc_ ol) a) 
+             (bW : (E ∩₁ W ∩₁ Loc_ ol) b) 
+             (nEW : ~ ew a b),
+        co a b \/ co b a ;
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
+    ewm : ew ⊆ Rlx × Rlx ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
-    (* ewlab : ew ⊆ same_lab; *)
-    ewc : ew ⊆ cf ;
-    ew_trans : transitive ew ;
+    ewc : ew ⊆ cf^? ; 
+    ew_refl : ⦗E ∩₁ W⦘ ⊆ ew ;
     ew_sym : symmetric ew ;
+    ew_trans : transitive ew ;
 
+    ew_co : ew ∩ co ≡ ∅₂ ;
     ew_co_in_co : ew ⨾ co ⊆ co ;
     co_ew_in_co : co ⨾ ew ⊆ co ;
 
@@ -492,12 +497,44 @@ Qed.
 (** ** ew properties *)
 (******************************************************************************)
 
-Lemma ew_irr WF : irreflexive ew.
-Proof. generalize cf_irr (ewc WF). basic_solver. Qed.
+Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
+Proof. 
+  intros x WW. 
+  exists x, x. 
+  unfolder; splits; eauto.
+  eapply ew_refl; auto.
+  apply inEW in WW.
+  generalize WW. 
+  basic_solver 10.
+Qed.
+
+Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
+Proof. 
+  intros x y RR. 
+  eexists x. 
+  splits; auto.
+  eapply ew_refl; auto.
+  specialize (domEW x).
+  assert ((E ∩₁ W) x) as EWx.
+  { apply domEW. basic_solver. }
+  generalize EWx. basic_solver 10.
+Qed.
 
 (******************************************************************************)
 (** ** jf properties *)
 (******************************************************************************)
+
+Lemma jfiE WF : jfi ≡ ⦗E⦘ ⨾ jfi ⨾ ⦗E⦘.
+Proof. unfold ES.jfi. rewrite WF.(jfE). basic_solver. Qed.
+
+Lemma jfeE WF : jfe ≡ ⦗E⦘ ⨾ jfe ⨾ ⦗E⦘.
+Proof. unfold ES.jfe. rewrite WF.(jfE). basic_solver. Qed.
+
+Lemma jfiD WF : jfi ≡ ⦗W⦘ ⨾ jfi ⨾ ⦗R⦘.
+Proof. unfold ES.jfi. rewrite WF.(jfD). basic_solver. Qed.
+
+Lemma jfeD WF : jfe ≡ ⦗W⦘ ⨾ jfe ⨾ ⦗R⦘.
+Proof. unfold ES.jfe. rewrite WF.(jfD). basic_solver. Qed.
 
 Lemma jf_eq WF : jf ∩ eq ⊆ ∅₂.
 Proof. rewrite jfD; auto. type_solver. Qed.
@@ -528,17 +565,28 @@ Proof.
   basic_solver 6.
 Qed.
 
-Lemma jfiE WF : jfi ≡ ⦗E⦘ ⨾ jfi ⨾ ⦗E⦘.
-Proof. unfold ES.jfi. rewrite WF.(jfE). basic_solver. Qed.
+Lemma jf_in_ew_jf WF : jf ⊆ ew ⨾ jf.
+Proof.
+  intros x y JF.
+  unfolder; eexists; splits; eauto. 
+  eapply ew_refl; auto.
+  unfolder; splits; auto.
+  { apply jfE in JF; auto. 
+    generalize JF. basic_solver. }
+  apply jfD in JF; auto. 
+  generalize JF. basic_solver. 
+Qed.
 
-Lemma jfeE WF : jfe ≡ ⦗E⦘ ⨾ jfe ⨾ ⦗E⦘.
-Proof. unfold ES.jfe. rewrite WF.(jfE). basic_solver. Qed.
-
-Lemma jfiD WF : jfi ≡ ⦗W⦘ ⨾ jfi ⨾ ⦗R⦘.
-Proof. unfold ES.jfi. rewrite WF.(jfD). basic_solver. Qed.
-
-Lemma jfeD WF : jfe ≡ ⦗W⦘ ⨾ jfe ⨾ ⦗R⦘.
-Proof. unfold ES.jfe. rewrite WF.(jfD). basic_solver. Qed.
+Lemma jf_in_rf WF : jf ⊆ rf.
+Proof.
+  unfold ES.rf.
+  intros x y JF.
+  split.
+  { apply jf_in_ew_jf; auto. }
+  red. ins. 
+  eapply jf_ncf; auto.
+  split; eauto.
+Qed.
 
 (******************************************************************************)
 (** ** rf properties *)
@@ -547,16 +595,11 @@ Proof. unfold ES.jfe. rewrite WF.(jfD). basic_solver. Qed.
 Lemma rfE WF : rf ≡ ⦗E⦘ ⨾ rf ⨾ ⦗E⦘.
 Proof.
   unfold ES.rf.
-  arewrite (ew^? ⨾ jf ≡ ⦗E⦘ ⨾ ew^? ⨾ jf ⨾ ⦗E⦘) at 1.
-  2: { assert (⦗E⦘ ⨾ ew^? ⨾ jf ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (ew^? ⨾ jf) ⨾ ⦗E⦘) as HH
+  arewrite (ew ⨾ jf ≡ ⦗E⦘ ⨾ ew ⨾ jf ⨾ ⦗E⦘) at 1.
+  2: { assert (⦗E⦘ ⨾ ew ⨾ jf ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (ew ⨾ jf) ⨾ ⦗E⦘) as HH
          by basic_solver. rewrite HH.
          by rewrite <- minus_eqv_rel_helper. }
-  rewrite crE.
-  rewrite !seq_union_l.
-  rewrite !seq_union_r.
   relsf.
-  apply union_more.
-  { apply WF.(jfE). }
   rewrite WF.(ewE).
   rewrite WF.(jfE).
   rewrite !seqA.
@@ -566,16 +609,10 @@ Qed.
 Lemma rfD WF : rf ≡ ⦗W⦘ ⨾ rf ⨾ ⦗R⦘.
 Proof.
   unfold ES.rf.
-  arewrite (ew^? ⨾ jf ≡ ⦗W⦘ ⨾ ew^? ⨾ jf ⨾ ⦗R⦘) at 1.
-  2: { assert (⦗W⦘ ⨾ ew^? ⨾ jf ⨾ ⦗R⦘ ≡ ⦗W⦘ ⨾ (ew^? ⨾ jf) ⨾ ⦗R⦘) as HH
+  arewrite (ew ⨾ jf ≡ ⦗W⦘ ⨾ ew ⨾ jf ⨾ ⦗R⦘) at 1.
+  2: { assert (⦗W⦘ ⨾ ew ⨾ jf ⨾ ⦗R⦘ ≡ ⦗W⦘ ⨾ (ew ⨾ jf) ⨾ ⦗R⦘) as HH
          by basic_solver. rewrite HH.
          by rewrite <- minus_eqv_rel_helper. }
-  rewrite crE.
-  rewrite !seq_union_l.
-  rewrite !seq_union_r.
-  relsf.
-  apply union_more.
-  { apply WF.(jfD). }
   rewrite WF.(ewD).
   rewrite WF.(jfD).
   rewrite !seqA.
@@ -588,7 +625,6 @@ Proof.
   rewrite inclusion_minus_rel.
   rewrite WF.(jfl).
   rewrite WF.(ewl).
-  
   generalize same_loc_trans.
   basic_solver.
 Qed.
@@ -600,6 +636,9 @@ Proof.
   generalize WF.(jfv) WF.(ewv) funeq_seq.
   basic_solver.
 Qed.
+
+Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
+Proof. rewrite <- jf_in_rf; apply WF. Qed.
 
 (******************************************************************************)
 (** ** fr properties *)
@@ -648,6 +687,21 @@ Proof.
   red. eexists. splits; eauto.
   eapply WF.(co_trans); eauto.
 Qed.
+
+(******************************************************************************)
+(** ** co properites *)
+(******************************************************************************)
+
+(* Lemma co_total WF ol ww  *)
+(*       (WS : ww ⊆₁ E ∩₁ W ∩₁ Loc_ ol)  *)
+(*       (nCF : cf_free S ww) : *)
+(*   is_total ww co. *)
+(* Proof.  *)
+(*   red. ins.  *)
+(*   eapply co_connex; auto. *)
+(*   generalize nCF. unfold cf_free. *)
+(*   basic_solver 10. *)
+(* Qed. *)
 
 (******************************************************************************)
 (** ** continuation properites *)
@@ -1203,16 +1257,6 @@ Proof.
   apply seqn_sb_alt in SB; auto.
   omega.
 Qed.
-
-Lemma jf_in_rf WF : jf ⊆ rf.
-Proof.
-  unfold ES.rf.
-  generalize WF.(jf_not_cf).
-  basic_solver.
-Qed.
-
-Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
-Proof. rewrite <- jf_in_rf; auto. apply WF. Qed.
 
 End EventStructure.
 End ES.

@@ -406,7 +406,8 @@ Section SimRelAddCO.
           sim_ws_basic_step_ws_Einit,
           sim_ws_basic_step_co_ew_prcl,
           sim_ws_basic_step_ews_co_prcl.
-    Qed.
+      admit. 
+    Admitted.
     
     (* Lemma basic_step_e2a_co_ws_eq w' k k' e e' S S'  *)
     (*       (st st' st'' : thread_st (ES.cont_thread S k)) *)

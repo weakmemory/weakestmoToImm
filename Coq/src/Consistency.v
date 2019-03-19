@@ -614,7 +614,7 @@ Proof.
   apply r_step. unfold eco. 
   apply t_step. unfold ES.rf. 
   do 2 left. split.
-  { basic_solver. }
+  { apply ES.jf_in_ew_jf; auto. }
   intros CF. 
   apply ES.cf_sym in CF.
   eapply ES.n_sb_cf; eauto.
@@ -643,7 +643,7 @@ Proof.
   arewrite_false (jf ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Eninit⦘)).
   { generalize jf_tsb. basic_solver. }
   arewrite_false (jf ∩ cf).
-  { eapply jf_necf_jf_ncf. apply ESC. }
+  { eapply ES.jf_ncf; auto. }
   basic_solver 10.
 Qed.
 
@@ -669,7 +669,7 @@ Proof.
         eapply ES.jf_eq; eauto.
         split; eauto. }
       eapply jf_tsb. basic_solver. }
-    eapply jf_necf_jf_ncf; [apply ESC|].
+    eapply ES.jf_ncf; eauto. 
     basic_solver. }
   rewrite seq_eqv_l. 
   unfold compl_rel, ES.same_tid.

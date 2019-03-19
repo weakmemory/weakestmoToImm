@@ -127,10 +127,10 @@ Section SimRel.
 
       fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
-      ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘);
+      jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
+      ew_fI  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
 
-      rel_fI_fC : dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
+      rel_fI_fC : dom_rel (Srelease ⨾ Sew ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C;
     }.
   
   Record simrel :=
@@ -160,6 +160,28 @@ Section SimRel.
       basic_solver.
     Qed.
 
+    Lemma fI_EW : 
+      f □₁ I ⊆₁ SE ∩₁ SW.
+    Proof.
+      intros x HH. 
+      assert ((f □₁ fdom) x) as fDx.
+      { generalize HH. basic_solver 10. }
+      assert (SE x) as SEx.
+      { eapply a2e_img; [apply SRC|]. done. }
+      split; auto. 
+      eapply same_lab_u2v_dom_is_w.
+      { eapply e2a_lab. apply SRC. }
+      split; auto.
+      unfold is_w, compose.
+      destruct HH as [a [Ia EQx]]. subst x.
+      fold (compose (e2a S) f a).
+      erewrite a2e_fix; [|apply SRC|].
+      { fold (is_w Glab a).
+        eapply issuedW; eauto.
+        apply SRC. }
+      generalize Ia. basic_solver 10.
+    Qed.
+
     Lemma e2af_fixI : 
       fixset I ((e2a S) ∘ f). 
     Proof. 
@@ -181,47 +203,59 @@ Section SimRel.
     Qed.
     
     Lemma e2a_ewI : 
-      (e2a S) □ Sew  ⊆ ⦗ I ⦘. 
+      (e2a S) □ (Sew \ eq)  ⊆ ⦗ I ⦘. 
     Proof.
       intros x y HH.
       assert (x = y) as EQxy; subst.
-      { eapply e2a_ew; eauto. apply SRC. }
+      { eapply e2a_ew; [apply SRC|]. generalize HH. basic_solver 10. }
       split; auto.
       destruct HH as [a [b [EW [EQx EQy]]]]; subst.
       edestruct ew_fI as [x HH]; eauto.
       { eexists; eauto. }
       destruct_seq_r HH as FI.
       red in FI. destruct FI as [y [IY]]; subst.
-      destruct HH as [HH|HH]; subst.
-      { fold (compose (e2a S) f y).
-        by rewrite e2af_fixI. }
       assert (e2a S a = compose (e2a S) f y) as XX.
       2: { rewrite XX. by rewrite e2af_fixI. }
       eapply e2a_ew; [apply SRC|].
       eexists; eauto.
     Qed.
 
+    Lemma ew_in_eq_ew_fI_ew : 
+      Sew ⊆ eq ∪ Sew ⨾ ⦗f □₁ I⦘ ⨾ Sew.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      rewrite <- seqA.
+      intros x y EWxy.
+      destruct (classic (x = y)) as [EQ | nEQ].
+      { basic_solver. }
+      right. edestruct ew_fI as [z HH]; auto.
+      { basic_solver. }
+      eexists; splits; eauto.
+      eapply ES.ew_trans; eauto.
+      apply ES.ew_sym; auto.
+      generalize HH. basic_solver.
+    Qed.
+
     Lemma rfe_fI :
-      dom_rel Srfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘).
+      dom_rel Srfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘).
     Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC. }
       unfold ES.rfe, ES.rf, ES.jfe.
-      rewrite crE at 1.
-      rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
-      unionL.
-      { etransitivity; [|by apply SRC]. 
-        unfold ES.jfe. basic_solver. }
       intros x [y [[[z [EW JF]] CC] NSB]].
       assert (~ Ssb z y) as AA.
       { intros SB. apply CC.
         apply ES.cf_sb_in_cf; auto.
         eexists. split; eauto.
-        apply ES.ewc; auto. }
+        edestruct ES.ewc; eauto.
+        apply ES.ewD in EW; auto.
+        apply ES.jfD in JF; auto.
+        red. ins. type_solver. }
       edestruct SRC.(jfe_fI) as [v HH].
       { eexists. split; eauto. }
       destruct_seq_r HH as BB.
-      eexists.  apply seq_eqv_r. split; [|by eauto].
+      eexists. apply seq_eqv_r. split; [|by eauto].
       generalize WFS.(ES.ew_trans) EW HH. basic_solver.
     Qed.
 
@@ -270,7 +304,7 @@ Section SimRel.
       assert (~ (f □₁ C) x) as CC.
       { generalize HH. basic_solver 10. }
       apply CC. eapply rel_fI_fC; eauto.
-      assert (dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) y) as [yy DD].
+      assert (dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) y) as [yy DD].
       { eapply jfe_fI; auto. eexists. eauto. }
       eexists. eexists. split; eauto.
       unfold release, rs. apply clos_rtn1_rt in JFRMW.
@@ -301,7 +335,7 @@ Section SimRel.
       destruct_seq_l HH as DX. exfalso. apply DX.
       destruct HH as [z [REL RFE]].
       eapply rel_fI_fC; eauto.
-      assert (dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) z) as [zz DD].
+      assert (dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) z) as [zz DD].
       { apply jfe_fI; auto. eexists. eauto. }
       eexists. eexists. eauto.
     Qed.
