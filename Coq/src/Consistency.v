@@ -682,16 +682,6 @@ Proof.
   basic_solver.
 Qed.  
 
-Lemma jf_in_rf : jf ⊆ rf.
-Proof.
-  unfold ES.rf.
-  generalize (jf_necf_jf_ncf ESC.(jf_necf)).
-  basic_solver.
-Qed.
-
-Lemma rf_complete : E ∩₁ R ⊆₁ codom_rel rf.
-Proof. rewrite <- jf_in_rf. apply WF. Qed.
-
 End Properties.
 
 End Consistency.

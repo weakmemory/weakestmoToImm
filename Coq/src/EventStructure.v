@@ -194,6 +194,7 @@ Record Wf :=
     jfv : funeq val jf ;
     jff : functional jf⁻¹ ;
     jf_complete : E ∩₁ R ⊆₁ codom_rel jf;
+    jf_not_cf : jf ∩ cf ≡ ∅₂;
 
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
@@ -1202,6 +1203,16 @@ Proof.
   apply seqn_sb_alt in SB; auto.
   omega.
 Qed.
+
+Lemma jf_in_rf WF : jf ⊆ rf.
+Proof.
+  unfold ES.rf.
+  generalize WF.(jf_not_cf).
+  basic_solver.
+Qed.
+
+Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
+Proof. rewrite <- jf_in_rf; auto. apply WF. Qed.
 
 End EventStructure.
 End ES.

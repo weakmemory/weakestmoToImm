@@ -132,6 +132,7 @@ Section SimRelAddJF.
       ESstep.add_jf w e S S'.
     Proof. 
       cdes BSTEP_; cdes SAJF.
+      assert (ES.Wf S) as WFS by apply SRCC.
       assert (ESBasicStep.t e e' S S') as BSTEP.
       { econstructor. eauto. }
       assert (SE S w) as SEw.
@@ -147,8 +148,7 @@ Section SimRelAddJF.
         { eapply cert_rfD, seq_eqv_lr in CertRF.
           destruct CertRF as [HH _].
           unfold is_w, compose in *. 
-          erewrite <- basic_step_e2a_eq_dom; eauto.
-          apply SRCC. }
+          erewrite <- basic_step_e2a_eq_dom; eauto. }
         eapply same_lab_u2v_dom_is_w; eauto.
         { eapply e2a_lab. apply SRCC. }
         red; split; auto. }
@@ -168,10 +168,48 @@ Section SimRelAddJF.
       arewrite (Slab S' w = Slab S w).
       { erewrite ESBasicStep.basic_step_lab_eq_dom; eauto. }
       assert (e2a S w = e2a S' w) as E2Aw. 
-      { symmetry. eapply basic_step_e2a_eq_dom; eauto. apply SRCC. }
+      { symmetry. eapply basic_step_e2a_eq_dom; eauto. }
       rewrite <- E2Aw in *.
       eapply cert_rf_ntid_iss_sb in CertRF. 
-      2-10: apply SRCC.
+      2-8: by apply SRCC.
+      2: { intros CF.
+           eapply cfk_hdom; eauto.
+           split; eauto.
+           red in CF.
+           destruct_seq CF as [ENW' ENE'].
+           destruct CF as [ST NSB].
+           red in ST.
+           assert ((Stid S) w = ES.cont_thread S k) as TT.
+           { rewrite TID' in ST.
+             unfold upd_opt in ST.
+             assert (w <> Datatypes.S (ES.next_act S)) as NEQS.
+             { intros HH. subst.
+               clear -SEw. red in SEw. omega. }
+             assert (w <> ES.next_act S) as NEQ.
+             { intros HH. subst.
+               clear -SEw. red in SEw. omega. }
+             desf; simpls; desf.
+             do 2 (rewrite updo in ST; auto).
+             all: rewrite updo in ST; auto.
+             all: rewrite upds in ST; auto. }
+           red. desf.
+           assert ((SEninit S) w) as ENW.
+           { split; auto. intros HH. apply ENW'.
+             eapply ESBasicStep.basic_step_acts_init_set; eauto. }
+           assert (SEninit S eid) as ENEID.
+           { eapply ES.K_inEninit; eauto. }
+           edestruct (ES.same_thread_alt) with (x:=w) (y:=eid)
+             as [SB|CF]; eauto.
+           2: { left. eexists. apply seq_eqv_r. eauto. }
+           right.
+           eexists. apply seq_eqv_l. split; eauto.
+           assert ((Ssb S) eid w \/ (Ssb S)^? w eid) as [|XX]; auto.
+           { red in SB. generalize SB. basic_solver. }
+           exfalso.
+           apply NSB; red; right; left.
+           apply SB'. right.
+           red. repeat left. split; auto. red.
+           generalize XX. basic_solver 10. }
       unfolder in hCertDOM. destruct hCertDOM as [wa [CERTwa Hwa]].
       assert (e2a S w = wa) as Gwwa.
       { rewrite <- Hwa.

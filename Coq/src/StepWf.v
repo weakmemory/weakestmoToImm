@@ -71,6 +71,11 @@ Proof.
   assert (eq_opt e' ⊆₁ E S') as EIES'.
   { rewrite ESBasicStep.basic_step_acts_set; eauto.
     basic_solver. }
+
+  assert (~ E S (ES.next_act S)) as NES.
+  { intros HH. red in HH. omega. }
+  assert (~ E S (Datatypes.S (ES.next_act S))) as NESN.
+  { intros HH. red in HH. omega. }
   
   constructor.
   { ins; desf.
@@ -214,10 +219,7 @@ Proof.
     { rewrite SB' at 1. rewrite seq_union_l.
       arewrite (sb S ⨾ ⦗eq (ES.next_act S)⦘ ⊆ ∅₂).
       { rewrite (dom_r WF.(ES.sbE)), !seqA.
-        unfolder. ins. desf.
-        match goal with
-        | H : (E ?S) ?X |- _ => red in H
-        end. omega. }
+        unfolder. ins. desf. }
       unfold ESBasicStep.sb_delta.
       rewrite seq_union_l.
       rewrite !seq_eqv_cross_r.
@@ -391,8 +393,6 @@ Proof.
     ins.
     destruct R1 as [R1|R1]; destruct_seq R1 as [A1 B1];
       destruct R2 as [R2|R2]; destruct_seq R2 as [A2 B2]; desf.
-    { red in B2. omega. }
-    { red in A1. omega. }
     destruct A2 as [A2|A2]; desf.
     red in R1. destruct R1 as [R1|R1]; red in R1; simpls; desf.
     2: omega.
@@ -473,6 +473,24 @@ Proof.
     { basic_solver. }
     unfolder. ins. desf; eauto.
     cdes ACO. type_solver. }
+  { split; [|basic_solver].
+    cdes BSTEP. cdes BSTEP_.
+    assert (jf S ∩ ((ES.cont_cf_dom S k × eq (ES.next_act S)) ^⋈) ⊆ ∅₂)
+      as BB.
+    { rewrite WF.(ES.jfE). generalize NES. basic_solver. }
+    assert (jf S ∩ ESBasicStep.cf_delta S k (ES.next_act S) None ⊆ ∅₂) as AA.
+    { ins. unfold ESBasicStep.cf_delta; simpls.
+      arewrite ((ES.cont_cf_dom S k × eq_opt None)^⋈ ⊆ ∅₂).
+        by rewrite union_false_r. }
+    red in TT. desf; cdes TT; desf; try cdes AJF; rewrite JF'.
+    2,4: unfold ESstep.jf_delta; rewrite inter_union_l; unionL;
+      [|generalize NCF; basic_solver].
+    all: rewrite ESBasicStep.basic_step_cf; eauto;
+      rewrite inter_union_r; unionL; [by apply WF|]; auto.
+    unfold ESBasicStep.cf_delta; simpls. subst.
+    unfold eq_opt; auto.
+    rewrite inter_union_r. unionL; auto.
+    rewrite WF.(ES.jfE). generalize NESN. basic_solver 10. }
   { split; [|basic_solver].
     assert (co S ⊆ ⦗E S'⦘ ⨾ co S ⨾ ⦗E S'⦘) as AA.
     { rewrite <- EES. apply WF. }

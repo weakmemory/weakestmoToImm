@@ -168,12 +168,11 @@ Section SimRelEventToAction.
       all: by eapply e2a_GE; eauto; eexists; eauto.
     Qed.
     
-    Lemma e2a_rf (CONS : @es_consistent S Weakestmo) : 
-      e2a □ Srf ≡ e2a □ Sjf.
+    Lemma e2a_rf : e2a □ Srf ≡ e2a □ Sjf.
     Proof.
       destruct SRE2A.
       split.
-      2: by rewrite jf_in_rf; eauto.
+      2: by rewrite ES.jf_in_rf; eauto.
       unfold ES.rf.
       arewrite (Sew^? ⨾ Sjf \ Scf ⊆ Sew^? ⨾ Sjf).
       rewrite crE.
