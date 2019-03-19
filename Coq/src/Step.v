@@ -72,6 +72,7 @@ Definition add_jf w r' S S' : Prop :=
   ⟪ wW : W S w ⟫ /\
   ⟪ LOC : same_loc S' w r' ⟫ /\
   ⟪ VAL : same_val S' w r' ⟫ /\
+  ⟪ nCF : ~ cf S' w r' ⟫ /\
   ⟪ JF' : jf S' ≡ jf S ∪ jf_delta w r' ⟫.
 
 Definition ew_delta ws w : relation eventid := 
@@ -85,10 +86,8 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ ewsE : ews ⊆₁ E S ⟫ /\
   ⟪ ewsW : ews ⊆₁ W S ⟫ /\
   ⟪ ewsRLX : ews ⊆₁ Rlx S ⟫ /\
-  (* TODO: replace it with `ews ⊆₁ same_lab S' w'` ??? *)
   ⟪ ewsLOC : ews ⊆₁ same_loc S' w' ⟫ /\
   ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
-  (* \End TODO *)
   ⟪ ewsCF : ews ⊆₁ cf S' w' ⟫ /\
   ⟪ ewsEW : ews × ews ⊆ ew S ⟫ /\
   ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\

@@ -243,11 +243,6 @@ Section SimRel.
       assert (ES.Wf S) as WFS.
       { apply SRC. }
       unfold ES.rfe, ES.rf, ES.jfe.
-      rewrite crE at 1.
-      rewrite seq_union_l, !minus_union_l, dom_union, seq_id_l.
-      unionL.
-      { etransitivity; [|by apply SRC]. 
-        unfold ES.jfe. basic_solver. }
       intros x [y [[[z [EW JF]] CC] NSB]].
       assert (~ Ssb z y) as AA.
       { intros SB. apply CC.

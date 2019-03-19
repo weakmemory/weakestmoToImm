@@ -264,16 +264,12 @@ Lemma step_add_ew_ew_refl ews w' e e' S S'
       (AEW : ESstep.add_ew ews w' S S') 
       (wEE' : (eq e ∪₁ eq_opt e') w') 
       (wWW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
-  ⦗E S' ∩₁ W S'⦘ ⨾ eq ⨾ ⦗E S' ∩₁ W S'⦘ ⊆ ew S'.
+  ⦗E S' ∩₁ W S'⦘ ⊆ ew S'.
 Proof. 
   cdes BSTEP; cdes BSTEP_; cdes AEW.
   rewrite EW', wWW'.
-  rewrite id_union. relsf.
-  arewrite_false (⦗eq w'⦘ ⨾ eq ⨾ ⦗E S ∩₁ W S⦘).
-  { unfolder in wEE'; desf; ESBasicStep.step_solver. }
-  arewrite_false (⦗E S ∩₁ W S⦘ ⨾ eq ⨾ ⦗eq w'⦘).
-  { unfolder in wEE'; desf; ESBasicStep.step_solver. }
-  relsf. apply union_mori.
+  rewrite id_union.
+  apply union_mori.
   { by apply ES.ew_refl. }
   unfold ESstep.ew_delta.
   basic_solver.
@@ -1266,6 +1262,8 @@ Proof.
     unfolder. ins. desf; eauto.
     cdes ACO. type_solver. }
 
+  { admit. }
+
   (* co and ew properties *)
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_co_coE; eauto. 
@@ -1300,6 +1298,7 @@ Proof.
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_ew_ewD; eauto. 
     all : eapply step_add_ew_ewD; eauto; basic_solver. }
+  { admit. }
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_ew_ewl; eauto. 
     all : eapply step_add_ew_ewl; eauto; basic_solver. }
