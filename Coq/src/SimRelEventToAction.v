@@ -15,6 +15,7 @@ Section SimRelEventToAction.
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.
+  Hypothesis WFsc : wf_sc G sc.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -95,6 +96,8 @@ Section SimRelEventToAction.
       e2a_co  : e2a □ Sco  ⊆ Gco;
       
       e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
+      e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
+                      Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘;
     }.
 
   Variable a2e : actid -> eventid.
@@ -222,29 +225,17 @@ Section SimRelEventToAction.
 
     Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
     Proof. 
-      assert (WFsc : wf_sc G sc) by admit.
       assert (e2a □₁ SE ⊆₁ GE) as EE by apply SRE2A.
       unfold hb, imm_s_hb.hb.
       rewrite collect_rel_ct.
       apply clos_trans_mori.
       rewrite collect_rel_union.
-      unionL.
-      { rewrite e2a_sb; eauto.
-        basic_solver. }
-      rewrite (dom_r (swE S WF)).
-      unfold Consistency.sw. rewrite !seqA.
-      arewrite (⦗SAcq⦘ ⨾ ⦗SE⦘ ⊆ ⦗SE ∩₁ SAcq⦘) by basic_solver.
-      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      rewrite e2a_release.
-      rewrite e2a_jf; auto.
-      rewrite e2a_sb; eauto.
-      rewrite furr_alt; auto.
-      rewrite e2a_Acq.
-      arewrite (Gsb ⨾ ⦗e2a □₁ SF⦘ ⊆ Gsb ⨾ ⦗GF⦘).
-      { admit. }
-      admit. 
-    Admitted.
+      apply union_mori.
+      { eapply e2a_sb; eauto. }
+      unfold Consistency.sw.
+      rewrite collect_rel_seqi.
+      rewrite e2a_release. by rewrite e2a_jfacq.
+    Qed.
 
     Lemma SsbD_in_GsbD :
       Ssb ⨾ ⦗ a2e □₁ a2eD ⦘ ⊆ a2e □ (Gsb ⨾ ⦗ a2eD ⦘).
