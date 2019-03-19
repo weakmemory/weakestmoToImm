@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig TraversalConfigAlt
      imm_common imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
      CombRelations Execution_eco.
-Require Import EventStructure Vf AuxRel AuxDef ImmProperties.
+Require Import Vf AuxRel AuxDef ImmProperties.
 
 Section CertRf.
 Variable G  : execution.
