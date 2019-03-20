@@ -98,6 +98,7 @@ Section SimRelCertStep.
   Notation "'Gco'" := (G.(co)).
   Notation "'Gvf'" := (G.(furr)).
   Notation "'Gppo'" := (G.(ppo)).
+  Notation "'Geco'" := (G.(Execution_eco.eco)).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
@@ -910,6 +911,44 @@ Section SimRelCertStepProps.
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
+  Lemma simrel_cert_step_fr_coh k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    irreflexive (Shb S' ⨾ ES.fr S' ⨾ (Srf S')^?).
+  Proof. 
+    unfold ES.fr.
+    rewrite crE, !seq_union_r, seq_id_r.
+    eapply collect_rel_irr with (f := e2a S').
+    rewrite collect_rel_union, !collect_rel_seqi.
+    erewrite e2a_hb; eauto; try apply SRCC.
+    erewrite e2a_co; eauto.
+    (* TODO: introduce a corresponding lemma. *)
+    arewrite (e2a S' □ (Srf S')⁻¹ ⊆ (e2a S' □ Srf S')⁻¹).
+    { unfolder. basic_solver 10. }
+
+    (* red in CertSTEP_. desf. cdes CertSTEP_. *)
+
+    (* { unfold ES.fr. rewrite !collect_rel_seqi. *)
+    (*   rewrite e2a_co; eauto. *)
+    (*   red in CertSTEP_. desf; cdes CertSTEP_. *)
+    (*   { arewrite (Srf S' ⊆ Srf S). *)
+    (*     { unfold ES.rf. by rewrite JF', EW', SCFB. } *)
+    (*     arewrite (e2a S' □ Srf S ⊆ e2a S □ Srf S). *)
+    (*     { admit. } *)
+
+
+
+    (*   admit. } *)
+    (* unfold ES.fr. rewrite !collect_rel_seqi. *)
+    (* rewrite e2a_co; eauto. *)
+    (* (* TODO: introduce a corresponding lemma. *) *)
+    (* arewrite (e2a S' □ (Srf S')⁻¹ ⊆ (e2a S' □ Srf S')⁻¹). *)
+    (* { unfolder. basic_solver 10. } *)
+    (* admit. *)
+  Admitted.
+
   Lemma simrel_cert_step_coh k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
@@ -935,35 +974,37 @@ Section SimRelCertStepProps.
     { apply SRCC. }
     assert (coherence G) as GCOH.
     { eapply gcons. apply SRCC. }
-
-    rewrite eco_alt; auto.
-    eapply collect_rel_irr with (f := e2a S').
-    rewrite !collect_rel_seqi, 
-            !collect_rel_cr, 
-            !collect_rel_union.
-    rewrite !collect_rel_seqi, !collect_rel_cr.
+    assert (Scf S ⊆ Scf S') as SCFB.
+    { admit. }
     
+    rewrite crE. rewrite eco_alt; auto.
+    rewrite crE at 1.
+    rewrite !seq_union_r, !seq_id_r.
+    rewrite <- !unionA.
+    apply irreflexive_union. splits.
+    2: by eapply simrel_cert_step_fr_coh; eauto.
+    eapply collect_rel_irr with (f := e2a S').
+    rewrite !collect_rel_union.
+    rewrite !collect_rel_seqi.
     erewrite e2a_hb; eauto; try apply SRCC.
     erewrite e2a_co; eauto.
-    erewrite e2a_rf, e2a_jf; eauto.
-    rewrite !crE. relsf.
     rewrite !irreflexive_union. splits.
-    { red. ins. eapply GCOH. basic_solver. }
-    { intros x [y [HB VF]].
+    { apply hb_irr; auto. }
+    { erewrite e2a_rf, e2a_jf; eauto.
+      intros x [y [HB VF]].
       unfold furr in VF. desc.  
       eapply urr_hb_irr; try apply SRCC.
       basic_solver. }
-    { red. ins. 
-      eapply GCOH. 
-      unfold Execution_eco.eco; auto. 
-      generalize H. basic_solver 10. }
-    { intros x [y [HB [z [CO VF]]]].
-      unfold furr in VF. desc.  
-      eapply eco_urr_irr; try apply SRCC.
-      eexists. splits.
-      { unfold Execution_eco.eco. basic_solver 10. }
-      eapply urr_hb. basic_solver. }
-    all: admit. 
+    { arewrite (Gco ⊆ Geco^?).
+      2: by apply GCOH.
+      rewrite Execution_eco.co_in_eco. basic_solver. }
+    erewrite e2a_rf, e2a_jf; eauto.
+    intros x [y [HB [z [CO VF]]]].
+    unfold furr in VF. desc.  
+    eapply eco_urr_irr; try apply SRCC.
+    eexists. splits.
+    { unfold Execution_eco.eco. basic_solver 10. }
+    eapply urr_hb. basic_solver.
   Admitted.
 
   Lemma simrel_cert_step_consistent k k' e e' S S'
