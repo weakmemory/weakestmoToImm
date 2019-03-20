@@ -43,8 +43,11 @@ Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) :=
   | _, _ => f
   end.
 
+Definition same_mod {A} (lab : A -> label) : relation A :=
+  (fun x y => Events.mod lab x = Events.mod lab y).
+
 Definition same_val {A} (lab : A -> label) : relation A :=
-  (fun x y => val lab x = val lab y).
+  (fun x y => Events.val lab x = Events.val lab y).
 
 Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
   match n with
