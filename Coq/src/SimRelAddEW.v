@@ -118,7 +118,7 @@ Section SimRelAddEW.
   
   Definition sim_ews (w' : eventid) (S S' : ES.t) := fun w => 
     ⟪ wsE2Aeq : e2a S w = e2a S' w' ⟫ /\
-    ⟪ wEWI : dom_rel ((Sew S)^? ⨾ ⦗ f □₁ I ⦘) w ⟫.
+    ⟪ wEWI : dom_rel (Sew S ⨾ ⦗ f □₁ I ⦘) w ⟫.
 
   Definition sim_add_ew (w' : eventid) (S S' : ES.t) : Prop :=
     ⟪ wE' : SE S' w' ⟫ /\
@@ -138,7 +138,7 @@ Section SimRelAddEW.
       red. ins. desc.
       generalize wEWI. 
       generalize x.
-      fold (set_subset (dom_rel ((Sew S)^? ⨾ ⦗f □₁ I⦘)) (SE S)).
+      fold (set_subset (dom_rel (Sew S ⨾ ⦗f □₁ I⦘)) (SE S)).
       rewrite ES.ewE; auto.
       arewrite (f □₁ I ⊆₁ SE S).
       { etransitivity. 
@@ -158,7 +158,7 @@ Section SimRelAddEW.
       unfold sim_ews in Wx. desc.
       generalize wEWI.
       generalize x.
-      fold (set_subset (dom_rel ((Sew S)^? ⨾ ⦗f □₁ I⦘)) (SW S)).
+      fold (set_subset (dom_rel (Sew S ⨾ ⦗f □₁ I⦘)) (SW S)).
       rewrite ES.ewD; auto.
       arewrite (f □₁ I ⊆₁ SW S).
       { intros y [a [Ia EQa]]. subst y.
@@ -241,7 +241,7 @@ Section SimRelAddEW.
       assert (SE S x) as SEx.
       { eapply sim_ewsE; eauto. }
       unfold sim_ews in WSx. desc.
-      destruct wEWI as [y [z [rEW fI]]].
+      destruct wEWI as [y [z [EW fI]]].
       destruct fI as [EQz [a [Ia EQa]]].
       subst y z.
       assert (e2a S' (f a) = a) as EQfaE2A.
@@ -254,8 +254,8 @@ Section SimRelAddEW.
       { erewrite <- wsE2Aeq; eauto.
         arewrite (e2a S x = e2a S' x).
         { symmetry. erewrite basic_step_e2a_eq_dom; eauto. }
-        destruct rEW as [EQ | EW].
-        { congruence. }
+        (* destruct rEW as [EQ | EW]. *)
+        (* { congruence. } *)
         rewrite <- EQfaE2A. 
         eapply e2a_ew; [apply SRCC|].
         erewrite basic_step_e2a_eq_dom 
@@ -269,8 +269,8 @@ Section SimRelAddEW.
       { unfold val.
         erewrite <- flab; [| apply SRCC| basic_solver].
         unfold compose.
-        destruct rEW as [EQ | EW].
-        { basic_solver. }
+        (* destruct EW as [EQ | EW]. *)
+        (* { basic_solver. } *)
         eapply ES.ewv; auto. }
       rewrite EQaVAL.
       destruct wEE' as [E | E'].
@@ -424,7 +424,7 @@ Section SimRelAddEW.
       { eapply simrel_cert_basic_step_e2a_eqr; eauto; apply SRCC. }
       autounfold with ESStepDb.
       rewrite csE, transp_cross.
-      rewrite collect_rel_union, 
+      rewrite !collect_rel_union, 
               !collect_rel_cross,
               !set_collect_eq.
       erewrite set_collect_eq_dom.
@@ -441,7 +441,7 @@ Section SimRelAddEW.
           (SAEW : sim_add_ew w' S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      dom_rel (Sew S') ⊆₁ dom_rel ((Sew S')^? ⨾ ⦗ f □₁ I ⦘). 
+      dom_rel (Sew S' \ eq) ⊆₁ dom_rel (Sew S' ⨾ ⦗ f □₁ I ⦘). 
     Proof.
       cdes BSTEP_; cdes SAEW.
       assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -449,17 +449,19 @@ Section SimRelAddEW.
       assert (ES.Wf S) as WFS.
       { apply SRCC. }
       rewrite EW'. 
-      rewrite !dom_union.
+      rewrite minus_union_l, !dom_union.
       unionL.
       { etransitivity; [apply SRCC|]. basic_solver 10. }
       autounfold with ESStepDb.
       rewrite csE, transp_cross.
-      rewrite dom_union.
+      rewrite !minus_union_l, !dom_union.
       unionL.
-      { rewrite dom_cross; [|red; basic_solver].
-        arewrite (sim_ews w' S S' ⊆₁ dom_rel ((Sew S)^? ⨾ ⦗f □₁ I⦘)).
+      { basic_solver. }
+      { rewrite dom_minus, dom_cross; [|red; basic_solver].
+        arewrite (sim_ews w' S S' ⊆₁ dom_rel (Sew S ⨾ ⦗f □₁ I⦘)).
         { unfold sim_ews. basic_solver 10. }
         basic_solver 10. }
+      rewrite dom_minus.
       arewrite (
         dom_rel (eq w' × sim_ews w' S S') ⊆₁ 
         dom_rel (eq w' × sim_ews w' S S' ⨾ ⦗f □₁ I⦘)
@@ -468,13 +470,23 @@ Section SimRelAddEW.
         intros x [y [EQx HH]]. subst x. desc.
         destruct wEWI as [z HH].
         apply seq_eqv_r in HH.
-        destruct HH as [[EQ | EW] fI].
-        { subst z. exists y. basic_solver 10. }
-        exists z. unfolder. splits; auto.
-        { rewrite <- wsE2Aeq. symmetry.
-          eapply e2a_ew; [apply SRCC|].
-          basic_solver 10. }
-        basic_solver 10. }
+        destruct HH as [EW fI].
+        exists z, z. splits.
+        { red; splits; auto. 
+          { rewrite <- wsE2Aeq. symmetry.
+            eapply e2a_ew; [apply SRCC|].
+            basic_solver 10. }
+          do 2 eexists. split.
+          2 : { red. split; [|apply fI]. done. }
+          apply ES.ew_refl; auto.
+          assert ((SE S ∩₁ SW S) z) as EWz.
+          { unfolder. split.
+            { apply ES.ewE in EW; auto. 
+              generalize EW. basic_solver. }
+            apply ES.ewD in EW; auto. 
+            generalize EW. basic_solver. }
+          generalize EWz. basic_solver 10. }
+        red. split; [|apply fI]. done. }
       basic_solver 10.
     Qed.
 

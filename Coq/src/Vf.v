@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution Execution_eco imm_hb imm AuxRel.
-Require Import EventStructure Consistency.
+(* Require Import EventStructure Consistency. *)
 
 Set Implicit Arguments.
 
@@ -38,8 +38,8 @@ End Vf.
 Definition Gvf (G : execution) :=
   Avf G.(acts_set) G.(lab) G.(rf) G.(imm_hb.hb) G.(imm.psc).
 
-Definition Svf (m : model) (S : ES.t) :=
-  Avf S.(ES.acts_set) S.(ES.lab) S.(ES.jf) S.(Consistency.hb) (Consistency.psc S m).
+(* Definition Svf (m : model) (S : ES.t) := *)
+(*   Avf S.(ES.acts_set) S.(ES.lab) S.(ES.jf) S.(Consistency.hb) (Consistency.psc S m). *)
 
 Section GvfProperties.
 Variable G : execution.
