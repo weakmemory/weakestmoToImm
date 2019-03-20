@@ -168,8 +168,8 @@ Record Wf :=
   { initL : forall l b (EB : E b) (LB : loc b = Some l),
       exists a, Einit a /\ loc a = Some l ;
     init_lab : forall e (INIT : Einit e),
-        exists l, lab e = Astore Xpln Opln l 0 ;
-    init_uniq : inj_dom Einit loc;
+      exists l, lab e = Astore Xpln Opln l 0 ;
+    init_uniq : inj_dom Einit loc ;
     
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
@@ -211,7 +211,7 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
-    ewm : ew ⊆ Rlx × Rlx ;
+    ewm : ew ⊆ (Rlx × Rlx)^? ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
     ewc : ew ⊆ cf^? ; 

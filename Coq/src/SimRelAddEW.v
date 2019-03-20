@@ -380,6 +380,8 @@ Section SimRelAddEW.
       { eapply sim_ewsW; eauto. }
       (* ewsRLX : ews ⊆₁ Rlx S *)
       { admit. }
+      (* ewsMOD : ews ⊆₁ same_mod S' w' *)
+      { admit. }
       (* ewsLOC : ews ⊆₁ same_loc S' w' *)
       { intros x WSx.
         unfold same_loc.
