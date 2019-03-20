@@ -918,15 +918,45 @@ Section SimRelCertStepProps.
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     irreflexive (Shb S' ⨾ ES.fr S' ⨾ (Srf S')^?).
   Proof. 
+    cdes CertSTEP; cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ESstep.t_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (ES.Wf S') as WFS.
+    { eapply step_wf; eauto. }
+    assert (simrel_e2a S' G sc) as SRE2A.
+    { admit. }
+    assert 
+      (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st')) 
+      as SRA2E.
+    { admit. }
+    assert (Wf G) as WFG. 
+    { apply SRCC. }
+    assert (coherence G) as GCOH.
+    { eapply gcons. apply SRCC. }
+    assert (Scf S ⊆ Scf S') as SCFB.
+    { admit. }
+
     unfold ES.fr.
-    rewrite crE, !seq_union_r, seq_id_r.
+    do 2 (rewrite <- !seqA; apply irreflexive_seqC).
+
     eapply collect_rel_irr with (f := e2a S').
-    rewrite collect_rel_union, !collect_rel_seqi.
+    rewrite !collect_rel_seqi.
     erewrite e2a_hb; eauto; try apply SRCC.
     erewrite e2a_co; eauto.
+    rewrite collect_rel_cr.
     (* TODO: introduce a corresponding lemma. *)
     arewrite (e2a S' □ (Srf S')⁻¹ ⊆ (e2a S' □ Srf S')⁻¹).
     { unfolder. basic_solver 10. }
+    erewrite e2a_rf at 1; eauto.
+    erewrite e2a_jf; eauto.
+    rewrite (dom_r WFG.(wf_coD)). rewrite !seqA.
+    arewrite (⦗GW⦘ ⨾ (Gvf sc)^? ⨾ Ghb ⊆ Gvf sc).
+    { rewrite furr_alt.
+      2: by apply SRCC.
+      generalize (@imm_s_hb.hb_trans G). basic_solver 40. }
 
     (* red in CertSTEP_. desf. cdes CertSTEP_. *)
 
@@ -974,8 +1004,6 @@ Section SimRelCertStepProps.
     { apply SRCC. }
     assert (coherence G) as GCOH.
     { eapply gcons. apply SRCC. }
-    assert (Scf S ⊆ Scf S') as SCFB.
-    { admit. }
     
     rewrite crE. rewrite eco_alt; auto.
     rewrite crE at 1.
