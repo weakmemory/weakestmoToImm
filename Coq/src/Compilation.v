@@ -83,12 +83,12 @@ Section Compilation.
     Notation "'I'"  := (issued TC).
 
     Definition extracted A := 
-    ⟪ Restr : good_restriction S A ⟫ /\
-    ⟪ GACTS : GE   ≡₁ e2a S □₁ A ⟫ /\
-    ⟪ GSB   : Gsb  ≡  e2a S □ (Ssb ∩ A × A) ⟫ /\
-    ⟪ GRMW  : Grmw ≡  e2a S □ (Srmw ∩ A × A) ⟫ /\
-    ⟪ GRF   : Grf  ≡  e2a S □ (Srf ∩ A × A) ⟫ /\
-    ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ A × A) ⟫.
+      ⟪ Restr : good_restriction S A ⟫ /\
+      ⟪ GACTS : GE   ≡₁ e2a S □₁ A ⟫ /\
+      ⟪ GSB   : Gsb  ≡  e2a S □ (Ssb ∩ A × A) ⟫ /\
+      ⟪ GRMW  : Grmw ≡  e2a S □ (Srmw ∩ A × A) ⟫ /\
+      ⟪ GRF   : Grf  ≡  e2a S □ (Srf ∩ A × A) ⟫ /\
+      ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ A × A) ⟫.
 
     Lemma simrel_extracted  
           (SRC : simrel_common prog S G sc TC f)
@@ -106,5 +106,6 @@ Section Compilation.
     exists S A,
       ⟪STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S⟫ /\
       ⟪EXEC  : extracted S A⟫.
+   Proof. admit. Admitted.
 
 End Compilation.

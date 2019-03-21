@@ -374,6 +374,25 @@ Section SimRel.
       apply hb_nfCsb; auto.
     Qed.
 
+    Lemma hb_fdom_in_fdom : 
+      dom_rel (Shb ⨾ ⦗ f □₁ fdom ⦘) ⊆₁ f □₁ fdom.
+    Proof. 
+      rewrite hb_in_fChb_sb.
+      rewrite seq_union_l.
+      rewrite dom_union.
+      unionL. 
+      { rewrite !dom_seq. basic_solver. }
+      erewrite a2e_sb_prcl; auto.
+      apply SRC.
+    Qed.
+
+    Lemma fdom_good_restr : 
+      good_restriction S (f □₁ fdom).
+    Proof. 
+      constructor; try apply SRC.
+      apply hb_fdom_in_fdom.
+    Qed.
+
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
       exists (state : (thread_lts thread).(Language.state)) c,
         ⟪ QQ : K (c, existT _ _ state) ⟫ /\
