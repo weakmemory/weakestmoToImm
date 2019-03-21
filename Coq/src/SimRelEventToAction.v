@@ -114,6 +114,10 @@ Section SimRelEventToAction.
       a2e_ncf : ES.cf_free S (a2e □₁ a2eD);
     }. 
 
+  (* TODO : map initial acts to initial events *)
+  Definition a2e_init : actid -> eventid :=
+    fun _ => 0.
+
   Section SimRelEventToActionProps. 
     Variable prog : Prog.t.
     Variable GPROG : program_execution prog G.
@@ -350,6 +354,14 @@ Section SimRelEventToActionLemmas.
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
+
+  Lemma simrel_e2a_init :
+    simrel_e2a (ES.init prog) G sc. 
+  Proof. admit. Admitted.
+
+  Lemma simrel_a2e_init :
+    simrel_a2e (ES.init prog) a2e_init GEinit. 
+  Proof. admit. Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
         (st st' : thread_st (ES.cont_thread S k))

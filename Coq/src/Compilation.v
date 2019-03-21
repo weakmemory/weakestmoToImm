@@ -3,9 +3,11 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel.
+     CombRelations SimTraversal SimulationRel AuxRel
+     PromiseToimm_s.
 Require Import AuxRel AuxDef ImmProperties 
-        EventStructure Consistency Step EventToAction SimRelCont SimRel.
+        EventStructure Consistency Step EventToAction 
+        SimRelCont SimRel SimRelStep.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -98,14 +100,28 @@ Section Compilation.
 
   End Extraction.
 
+  Lemma sim_traversal
+        (nInitProg : ~ IdentMap.In tid_init prog)
+        (GProg : program_execution prog G)
+        (GWF : Execution.Wf G)
+        (IMMCONS : imm_consistent G sc) : 
+    forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
+      exists S f, 
+        ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
+        ⟪ SRC  : simrel_common prog S G sc TC f ⟫.
+  Proof. 
+    eapply clos_refl_trans_ind_left.
+    all : admit.
+  Admitted.
+
   Lemma compilation_correctness 
         (nInitProg : ~ IdentMap.In tid_init prog)
-        (PExec : program_execution prog G)
-        (WF : Execution.Wf G)
-        (CONS : imm_consistent G sc) :
+        (GProg : program_execution prog G)
+        (GWF : Execution.Wf G)
+        (IMMCONS : imm_consistent G sc) :
     exists S A,
-      ⟪STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S⟫ /\
-      ⟪EXEC  : extracted S A⟫.
-   Proof. admit. Admitted.
+      ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
+      ⟪ EXEC  : extracted S A ⟫.
+  Proof. admit. Admitted.
 
 End Compilation.
