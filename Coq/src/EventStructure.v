@@ -1,7 +1,7 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events.
+From imm Require Import Events Prog.
 Require Import AuxDef AuxRel.
 
 Set Implicit Arguments.
@@ -110,7 +110,19 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
-(* Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb. *)
+(* Initial event structure for a progam. *)
+Definition init (prog : Prog.t) :=
+  (* TODO : something meaningful *)
+  {| next_act := 0 ;
+     lab  := fun _ => Afence Orlx ; 
+     tid  := fun _ => tid_init ;
+     sb   := ∅₂ ;
+     rmw  := ∅₂ ;
+     jf   := ∅₂ ;
+     co   := ∅₂ ;
+     ew   := ∅₂ ;
+     cont := []  ;
+  |}.
 
 Section EventStructure.
 

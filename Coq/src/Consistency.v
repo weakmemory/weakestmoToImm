@@ -124,6 +124,12 @@ Record es_consistent {m} :=
     icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew^?);
   }.
 
+Record good_restriction (A : eventid -> Prop) := 
+  { visA : A ⊆₁ vis ;
+    ncfA : ES.cf_free S A ; 
+    hbA  : dom_rel (hb ⨾ ⦗A⦘) ⊆₁ A ;
+  }.
+
 (******************************************************************************)
 (** ** Properties *)
 (******************************************************************************)
