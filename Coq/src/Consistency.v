@@ -691,3 +691,14 @@ Qed.
 End Properties.
 
 End Consistency.
+
+Require Import Setoid.
+
+Add Parametric Morphism : good_restriction with signature
+  eq ==> set_equiv ==> iff as good_restriction_more.
+Proof. 
+  intros S s s' EQV. 
+  split; intros GRestr; constructor.
+  1-3 : rewrite <- EQV; apply GRestr. 
+  all : rewrite EQV; apply GRestr. 
+Qed.
