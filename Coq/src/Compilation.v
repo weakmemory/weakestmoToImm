@@ -96,7 +96,43 @@ Section Compilation.
           (SRC : simrel_common prog S G sc TC f)
           (COVG : GE ⊆₁ C) :
       extracted (f □₁ GE).
-    Proof. admit. Admitted.
+    Proof. 
+      assert (tc_coherent G sc TC) as TCCOH.
+      { apply SRC. }
+      assert (C ≡₁ GE) as COVG'.
+      { split; auto. eapply coveredE; eauto. }
+      assert (C ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) as DCOV.
+      { split; [basic_solver|].
+        unionL; auto.
+        rewrite issuedE; [|apply SRC].
+        rewrite <- COVG'.
+        rewrite crE. relsf. 
+        split; auto.
+        eapply dom_sb_covered; eauto. }
+      constructor; splits.
+      { rewrite <- COVG', DCOV.
+        eapply fdom_good_restr; eauto. }
+      { rewrite <- COVG', DCOV.
+        rewrite set_collect_compose.
+        erewrite <- fixset_set_fixpoint; auto.
+        eapply a2e_fix. apply SRC. }
+      { split.
+        { admit. }
+        rewrite collect_rel_interi.
+        erewrite e2a_sb; try apply SRC. 
+        basic_solver. }
+      { split. 
+        { admit. }
+        rewrite collect_rel_interi.
+        erewrite e2a_rmw; try apply SRC. 
+        basic_solver. }
+      { admit. }
+      split. 
+      { admit. }
+      rewrite collect_rel_interi.
+      erewrite e2a_co; try apply SRC. 
+      basic_solver.
+    Admitted.
 
   End Extraction.
 
