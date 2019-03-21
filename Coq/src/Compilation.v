@@ -7,7 +7,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      PromiseToimm_s.
 Require Import AuxRel AuxDef ImmProperties 
         EventStructure Consistency Step EventToAction 
-        SimRelCont SimRel SimRelStep.
+        SimRelCont SimRelEventToAction SimRel SimRelStep.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -92,7 +92,7 @@ Section Compilation.
       ⟪ GRF   : Grf  ≡  e2a S □ (Srf ∩ A × A) ⟫ /\
       ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ A × A) ⟫.
 
-    Lemma simrel_extracted  
+    Lemma simrel_extract_exec  
           (SRC : simrel_common prog S G sc TC f)
           (COVG : GE ⊆₁ C) :
       extracted (f □₁ GE).
@@ -100,7 +100,7 @@ Section Compilation.
 
   End Extraction.
 
-  Lemma sim_traversal
+  Lemma simrel_traversal
         (nInitProg : ~ IdentMap.In tid_init prog)
         (GProg : program_execution prog G)
         (GWF : Execution.Wf G)
@@ -111,10 +111,17 @@ Section Compilation.
         ⟪ SRC  : simrel_common prog S G sc TC f ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
-    all : admit.
-  Admitted.
+    { exists (ES.init prog), a2e_init. 
+      splits; auto using rt_refl, simrel_init. }
+    intros TC TC' TC_STEPS IH TC_STEP. desc.
+    edestruct simrel_step as [S' [f' HH]]; eauto. 
+    destruct HH as [STEPS' SRC']. 
+    red in STEPS', SRC'.
+    exists S', f'. splits; auto.
+    eapply rt_trans; eauto.
+  Qed.
 
-  Lemma compilation_correctness 
+  Theorem compilation_correctness 
         (nInitProg : ~ IdentMap.In tid_init prog)
         (GProg : program_execution prog G)
         (GWF : Execution.Wf G)
@@ -122,6 +129,17 @@ Section Compilation.
     exists S A,
       ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
       ⟪ EXEC  : extracted S A ⟫.
-  Proof. admit. Admitted.
+  Proof. 
+    edestruct sim_traversal 
+      as [TC [TC_STEPS GCOV]]; 
+      eauto.
+    edestruct simrel_traversal
+      as [S [f [STEPS SRC]]];
+      eauto.
+    red in STEPS, SRC.
+    exists S, (f □₁ GE).
+    splits; auto.
+    eapply simrel_extract_exec; eauto.
+  Qed.
 
 End Compilation.

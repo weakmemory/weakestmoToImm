@@ -24,8 +24,6 @@ Section SimRelStep.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable TC' : trav_config.
-  Variable f : actid -> eventid.
-  Variable h : actid -> eventid.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -118,7 +116,7 @@ Section SimRelStep.
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
   
-  Lemma simrel_cert_start S thread
+  Lemma simrel_cert_start S f thread
         (SRC : simrel_common prog S G sc TC f) 
         (ITRAV_STEP : isim_trav_step G sc thread TC TC') :
     exists k st st', 
@@ -126,20 +124,18 @@ Section SimRelStep.
       ⟪ SRCC : simrel_cert prog S G sc TC TC' f f k st st' ⟫.
   Proof. admit. Admitted.
 
-  Lemma simrel_cert_end S k 
+  Lemma simrel_cert_end S f h k 
         (st : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st) :
     simrel_common prog S G sc TC' h.
   Proof. admit. Admitted.
   
-  Lemma simrel_step S 
+  Lemma simrel_step S f
         (SRC : simrel_common prog S G sc TC f) 
         (TRAV_STEP : sim_trav_step G sc TC TC') :
     exists S' f', 
       ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\      
       ⟪ SRC' : simrel_common prog S' G sc TC' f' ⟫.
-  Proof. 
-    
-    admit. Admitted.
+  Proof. admit. Admitted.
   
 End SimRelStep.
