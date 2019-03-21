@@ -124,6 +124,12 @@ Record es_consistent {m} :=
     icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew^?);
   }.
 
+Record good_restriction (A : eventid -> Prop) := 
+  { visA : A ⊆₁ vis ;
+    ncfA : ES.cf_free S A ; 
+    hbA  : dom_rel (hb ⨾ ⦗A⦘) ⊆₁ A ;
+  }.
+
 (******************************************************************************)
 (** ** Properties *)
 (******************************************************************************)
@@ -685,3 +691,14 @@ Qed.
 End Properties.
 
 End Consistency.
+
+Require Import Setoid.
+
+Add Parametric Morphism : good_restriction with signature
+  eq ==> set_equiv ==> iff as good_restriction_more.
+Proof. 
+  intros S s s' EQV. 
+  split; intros GRestr; constructor.
+  1-3 : rewrite <- EQV; apply GRestr. 
+  all : rewrite EQV; apply GRestr. 
+Qed.

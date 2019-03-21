@@ -1,7 +1,7 @@
-Require Import Omega.
+Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events.
+From imm Require Import Events Prog.
 Require Import AuxDef AuxRel.
 
 Set Implicit Arguments.
@@ -110,7 +110,39 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
-(* Hint Unfold ES.acts_set ES.acts_init_set ES.cf : unfolderDb. *)
+(* Initial event structure for a progam. *)
+Definition init (prog : Prog.t) :=
+  (* TODO : something meaningful *)
+  {| next_act := 0 ;
+     lab  := fun _ => Afence Orlx ; 
+     tid  := fun _ => tid_init ;
+     sb   := ∅₂ ;
+     rmw  := ∅₂ ;
+     jf   := ∅₂ ;
+     co   := ∅₂ ;
+     ew   := ∅₂ ;
+     cont := []  ;
+  |}.
+
+(******************************************************************************)
+(** ** cf_free morphisms *)
+(******************************************************************************)
+
+Add Parametric Morphism : cf_free with signature
+  eq ==> set_subset --> impl as cf_free_mori.
+Proof. 
+  intros S s s' SUBS.
+  unfold cf_free.
+  red. by rewrite SUBS.
+Qed.
+
+Add Parametric Morphism : cf_free with signature
+  eq ==> set_equiv ==> iff as cf_free_more.
+Proof. 
+  intros S s s' EQV.
+  unfold cf_free.
+  by rewrite EQV.
+Qed.
 
 Section EventStructure.
 
@@ -466,18 +498,6 @@ Proof.
   assert (sb z x) as UU by (eapply sb_trans; eauto).
   generalize UU. basic_solver.
 Qed.
-
-(******************************************************************************)
-(** ** cf_free properties *)
-(******************************************************************************)
-
-Lemma cf_free_subset X X' (SUBS : X' ⊆₁ X) : 
-  cf_free S X -> cf_free S X'.
-Proof. unfold cf_free; basic_solver 42. Qed.
-
-Lemma cf_free_eq X X' (EQ : X' ≡₁ X) : 
-  cf_free S X <-> cf_free S X'.
-Proof. destruct EQ; unfold cf_free; split; basic_solver 42. Qed.
 
 (******************************************************************************)
 (** ** rmw properties *)
