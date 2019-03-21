@@ -205,8 +205,8 @@ Section EventToAction.
         eapply set_minus_mori; [eapply XinSE|].
         unfold flip. eauto. }
       eapply set_subset_refl. }
-    { eapply ES.cf_free_subset; [|by apply CFF]. 
-      basic_solver. }
+    { eapply ES.cf_free_mori; try apply CFF; auto.
+      red. basic_solver. }
     assert (~ SEinit x) as nEINITx. 
     { unfold ES.acts_init_set, set_inter.
       red. intros [_ HH]. auto. }
