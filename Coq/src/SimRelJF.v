@@ -103,14 +103,14 @@ Section AuxJF.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ;; Sew ;; <|f □₁ I|>).
-  Definition dr_irfi := dom_rel (<|f □₁ I|> ;; Sew ;; ((e2a ⋄ Grfi) ∩ Ssb)).
+  Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ⨾ Sew ⨾ ⦗f □₁ I⦘).
+  Definition dr_irfi := dom_rel (⦗f □₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
   Definition DR := SR ∩₁ (f □₁ C ∪₁ SE ∩₁ SAcq ∪₁
                           dom_rel (Srmw) ∪₁
                           dr_ppo ∪₁ dr_irfi).
   
   Definition sim_vf :=
-    <|SE∩₁SW|> ;; (Sjf ;; <|DR|>)^? ;; Shb^? ;; (e2a ⋄ sc)^? ;; Shb^?.
+    ⦗SE∩₁SW⦘ ⨾ (Sjf ⨾ ⦗DR⦘)^? ⨾ Shb^? ⨾ (e2a ⋄ sc)^? ⨾ Shb^?.
   
-  Definition sim_jf := sim_vf \ Sco ;; sim_vf.
+  Definition sim_jf := sim_vf \ Sco ⨾ sim_vf.
 End AuxJF.

@@ -99,7 +99,7 @@ Notation "'W_ex'" := G.(W_ex).
 Notation "'W_ex_acq'" := (W_ex ∩₁ (fun a => is_true (is_xacq lab a))).
 
 Lemma rfi_D_in_D thread (NINIT : thread <> tid_init):
-  dom_rel (rfi ;; <| D G TC thread |>) ⊆₁ D G TC thread.
+  dom_rel (rfi ⨾ ⦗ D G TC thread ⦘) ⊆₁ D G TC thread.
 Proof.
   intros w [r RFI]. destruct_seq_r RFI as DR.
   apply wf_rfiD in RFI; auto. destruct_seq RFI as [WW RR].
@@ -135,8 +135,8 @@ Proof.
 Qed.
 
 Lemma rfe_E0D_in_D thread (NINIT : thread <> tid_init):
-  dom_rel (rfe ;; <| Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘))
-               ∩₁ D G TC thread |>) ⊆₁
+  dom_rel (rfe ⨾ ⦗ Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘))
+               ∩₁ D G TC thread ⦘) ⊆₁
           D G TC thread.
 Proof.
   intros w [r RFE]. destruct_seq_r RFE as DR.
@@ -181,8 +181,8 @@ Proof.
 Qed.
 
 Lemma rf_E0D_in_D thread (NINIT : thread <> tid_init):
-  dom_rel (rf ;; <| Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘))
-               ∩₁ D G TC thread |>) ⊆₁
+  dom_rel (rf ⨾ ⦗ Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘))
+               ∩₁ D G TC thread ⦘) ⊆₁
           D G TC thread.
 Proof.
   intros w [r RF]. destruct_seq_r RF as DR.

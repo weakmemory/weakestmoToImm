@@ -996,7 +996,7 @@ Proof.
       apply (dom_r WF.(ES.sbE)) in SBB. by destruct_seq_r SBB as BB. }
 
     destruct EE as [[EE|EE]|EE]; desf.
-    { arewrite (⦗eq e0⦘ ⊆ ⦗E S⦘ ;; ⦗eq e0⦘).
+    { arewrite (⦗eq e0⦘ ⊆ ⦗E S⦘ ⨾ ⦗eq e0⦘).
       { generalize EE. basic_solver. }
       arewrite (sb S' ⨾ ⦗E S⦘ ⊆ sb S).
       { eapply ESBasicStep.basic_step_sbE; eauto. }
@@ -1148,10 +1148,10 @@ Proof.
     rewrite WF.(ES.rmwE). unfold ESBasicStep.rmw_delta.
     rewrite WF.(ES.sbE).
     arewrite (ESBasicStep.sb_delta S k e e' ≡
-              <| E S ∪₁ eq e |> ;; ESBasicStep.sb_delta S k e e' ;; <| set_compl (E S) |>).
+              ⦗ E S ∪₁ eq e ⦘ ⨾ ESBasicStep.sb_delta S k e e' ⨾ ⦗ set_compl (E S) ⦘).
     { split; [|basic_solver].
       arewrite (ESBasicStep.sb_delta S k e e' ⊆
-                ESBasicStep.sb_delta S k e e' ;; <| E S ∪₁ set_compl (E S) |>).
+                ESBasicStep.sb_delta S k e e' ⨾ ⦗ E S ∪₁ set_compl (E S) ⦘).
       { rewrite set_compl_union_id. basic_solver. }
       rewrite id_union, seq_union_r.
       rewrite ESBasicStep.basic_step_sb_deltaE; eauto.

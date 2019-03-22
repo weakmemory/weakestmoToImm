@@ -181,9 +181,9 @@ Record Wf :=
     sb_prcl    : prefix_clos (sb ∩ same_tid);
 
     sb_tot : forall e (EE : E e),
-        is_total (dom_rel (sb ;; <| eq e |>) \₁ Einit) sb; 
+        is_total (dom_rel (sb ⨾ ⦗ eq e ⦘) \₁ Einit) sb; 
 
-    seqn_after_null : E ⊆₁ codom_rel (<| fun x => seqn x = 0 |> ;; (sb^? ∩ same_tid));
+    seqn_after_null : E ⊆₁ codom_rel (⦗ fun x => seqn x = 0 ⦘ ⨾ (sb^? ∩ same_tid));
 
     rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
@@ -227,12 +227,12 @@ Record Wf :=
     (*     ~ (exists lbl state', lang.(Language.step) lbl state state'); *)
     init_tid_K :
       ~ (exists c k,
-            << KK  : K (k, c) >> /\
-            << CTK : cont_thread S k = tid_init >>);
+            ⟪ KK  : K (k, c) ⟫ /\
+            ⟪ CTK : cont_thread S k = tid_init ⟫);
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
     event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
-        exists c, << KC : K (CEvent e, c) >>;
+        exists c, ⟪ KC : K (CEvent e, c) ⟫;
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
   }.
 
@@ -1041,7 +1041,7 @@ Proof.
   done.
 Qed.
 
-Lemma sb_imm_split_r WF : sb ≡ sb^? ;; immediate sb.
+Lemma sb_imm_split_r WF : sb ≡ sb^? ⨾ immediate sb.
 Proof.
   split.
   2: { generalize WF.(sb_trans). basic_solver. }

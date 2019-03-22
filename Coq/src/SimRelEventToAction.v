@@ -104,7 +104,7 @@ Section SimRelEventToAction.
       e2a_ew  : e2a □ Sew  ⊆ eq;
       e2a_co  : e2a □ Sco  ⊆ Gco;
       
-      e2a_jfDR : e2a □ (Sjf ;; <|DR|>) ⊆ Grf;
+      e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf;
 
       jf_in_sim_jf : Sjf ⊆ Ssim_jf;
     }.
@@ -193,7 +193,7 @@ Section SimRelEventToAction.
 
     Lemma e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw.
     Proof.
-      arewrite (Sjf ⨾ Srmw ⊆ Sjf ⨾ <|dom_rel (Srmw)|> ⨾ Srmw)
+      arewrite (Sjf ⨾ Srmw ⊆ Sjf ⨾ ⦗dom_rel (Srmw)⦘ ⨾ Srmw)
         by basic_solver 10.
       rewrite (dom_r WF.(ES.jfD)) at 1.
       rewrite !seqA.
@@ -247,7 +247,7 @@ Section SimRelEventToAction.
                 Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE∩₁SAcq⦘).
       { rewrite (dom_r WF.(ES.jfE)) at 1. basic_solver 10. }
       arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘ ⊆
-                Sjf ⨾ <|DR|> ;; (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘).
+                Sjf ⨾ ⦗DR⦘ ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘).
       2: { rewrite <- !seqA.
            do 2 rewrite collect_rel_seqi.
            rewrite e2a_jfDR; auto.

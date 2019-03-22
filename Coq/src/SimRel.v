@@ -118,7 +118,7 @@ Section SimRel.
       sr_cont : simrel_cont prog S G TC;
       sr_graph : simrel_graph;
 
-      sr_e2a : simrel_e2a S G sc;
+      sr_e2a : simrel_e2a S G sc TC f;
       sr_a2e_f : simrel_a2e S f (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘));
       
       flab : eq_dom (C ∪₁ I) (Slab ∘ f) Glab;

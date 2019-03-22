@@ -1043,7 +1043,7 @@ Lemma basic_step_sb_delta_transitive e e' S S' k k' lang st st'
 Proof.
   apply transitiveI.
   arewrite (sb_delta S k e e' ⊆
-            <| E S ∪₁ eq e |> ;; sb_delta S k e e')
+            ⦗ E S ∪₁ eq e ⦘ ⨾ sb_delta S k e e')
   at 2.
   { generalize (basic_step_sb_delta_dom BSTEP_ WF). basic_solver. }
   rewrite id_union, !seq_union_l, !seq_union_r.
