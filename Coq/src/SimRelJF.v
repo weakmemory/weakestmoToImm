@@ -110,7 +110,7 @@ Section AuxJF.
                           dr_ppo ∪₁ dr_irfi).
   
   Definition sim_vf :=
-    ⦗SE∩₁SW⦘ ⨾ (Sjf ⨾ ⦗DR⦘)^? ⨾ Shb^? ⨾ (e2a ⋄ sc)^? ⨾ Shb^?.
+    Sew ⨾ (Sjf ⨾ ⦗DR⦘)^? ⨾ Shb^? ⨾ (e2a ⋄ sc)^? ⨾ Shb^?.
   
   Definition sim_jf := sim_vf \ Sco ⨾ sim_vf.
 End AuxJF.

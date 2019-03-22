@@ -293,12 +293,17 @@ Section SimRelEventToAction.
       rewrite jf_in_sim_jf; auto.
       arewrite (Ssim_jf ⊆ Ssim_vf).
       unfold sim_vf.
+      rewrite (dom_l WF.(ES.ewE)).
+      rewrite (dom_l WF.(ES.ewD)). rewrite !seqA.
+      arewrite (⦗SE⦘ ⨾ ⦗SW⦘ ⊆ ⦗SE∩₁SW⦘) by basic_solver.
       rewrite furr_alt; auto.
       rewrite !collect_rel_seqi, !collect_rel_cr, !set_collect_eqv.
       rewrite e2a_jfDR; auto.
       rewrite e2a_hb. rewrite e2a_W.
       arewrite (e2a □ (e2a ⋄ sc) ⊆ sc) by basic_solver.
       arewrite (GE ∩₁ GW ⊆₁ GW) by basic_solver.
+      rewrite e2a_ew; auto.
+      arewrite (⦗GW⦘ ⨾ eq ⊆ ⦗GW⦘) by basic_solver.
     Qed.
 
     Lemma SsbD_in_GsbD :

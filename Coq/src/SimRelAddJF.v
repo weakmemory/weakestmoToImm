@@ -394,7 +394,8 @@ Section SimRelAddJF.
       rewrite JF'.
       rewrite collect_rel_union.
       unionL.
-      { eapply simrel_cert_basic_step_e2a_eqr; eauto; apply SRCC. }
+      { eapply simrel_cert_basic_step_e2a_eqr; eauto; try apply SRCC.
+        eapply e2a_jf; apply SRCC. }
       autounfold with ESStepDb.
       unfolder. ins. desf.
       eapply vf_in_furr; [by apply SRCC|].
