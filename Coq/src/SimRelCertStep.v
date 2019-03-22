@@ -303,12 +303,13 @@ Section SimRelCertStepProps.
   Qed.
 
   Lemma simrel_cert_basic_step_cert_rf k lbl lbl' lbls S
+        is_ex ord loc val
         (st st' st'' : thread_st (ES.cont_thread S k))
+        (LBL_LD : lbl = Aload is_ex ord loc val)
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
         (ILBL_STEP : ilbl_step (ES.cont_thread S k) lbls st st') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
-        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl])
-        (RR : exists is_ex ord loc val, ⟪ LBL_LD : lbl = Aload is_ex ord loc val ⟫) :
+        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl]) :
     exists w,
       ⟪CertDOMw : (cert_dom G TC (ES.cont_thread S k) st) w⟫ /\
       ⟪CertRF : cert_rf G sc TC' (ES.cont_thread S k) 
@@ -367,12 +368,12 @@ Section SimRelCertStepProps.
     eexists; econstructor; splits; eauto.
   Qed.
 
-  Lemma simrel_cert_fence_step k lbl S
+  Lemma simrel_cert_fence_step k lbl S ord
         (st st' st'' : thread_st (ES.cont_thread S k))
+        (LBL_LD : lbl = Afence ord)
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
         (ILBL_STEP : ilbl_step (ES.cont_thread S k) [lbl] st st') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
-        (FF : exists ord, ⟪ LBL_LD : lbl = Afence ord ⟫) :
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
     exists k' e e' S', 
       ⟪ BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S' ⟫ /\
       ⟪ CertFSTEP  : cert_fence_step e e' S S' ⟫.
