@@ -9,11 +9,10 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
+Require Import AuxRel AuxDef EventStructure Consistency BasicStep Step StepWf
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction 
         SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO.  
-Require Import StepWf.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -985,7 +984,8 @@ Section SimRelCertStepProps.
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (LBL_STEP : lbl_step (ES.cont_thread S k) st st')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-    exists h' k' S',
+    exists k' h' S',
+      ⟪ kTID : ES.cont_thread S' k' = ES.cont_thread S k ⟫ /\
       ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
       ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' k' st' st''⟫.
   Proof.
@@ -999,13 +999,14 @@ Section SimRelCertStepProps.
     assert (ESstep.t_ e e' S S') as WMO_STEP_.
     { eapply simrel_cert_step_step_; eauto. }
     set (h' := upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e'). 
-    exists h', k', S'. splits.
+    exists k', h', S'. splits.
+    { eapply ESBasicStep.basic_step_cont_thread_k; eauto. }
     { apply r_step. red.
       do 2 eexists; splits; eauto.
       eapply simrel_cert_step_consistent; eauto. }
     constructor.
     { constructor; try apply SRCC.
-      { admit. }
+      { eapply step_wf; eauto. }
       { eapply simrel_cert_step_consistent; eauto. }
       { eapply basic_step_simrel_cont; eauto; apply SRCC. }
       { eapply simrel_cert_step_e2a; eauto. }
@@ -1079,32 +1080,6 @@ Section SimRelCertStepProps.
     admit. 
   Admitted.
         
-      (* assert (g' □ Ssb S' ⊆ Gsb) as SSB. *)
-      (* { admit. } *)
-      (* assert (g □ Shb S ⊆ Ghb) as SHB. *)
-      (* { (* We need a lemma stating that. *) *)
-      (*   admit. } *)
-      (* assert (g' □ Shb S ⊆ Ghb) as SHB'. *)
-      (* { admit. } *)
-      (* assert (ES.cont_sb_dom S k × eq e ⊆ S'.(ES.sb)) as SBDSB. *)
-      (* { admit. } *)
-      (* assert (g' □ S'.(hb) ⊆ Ghb) as BHB. *)
-      (* { erewrite ESstep.load_step_hb; eauto. *)
-      (*   rewrite collect_rel_union. *)
-      (*   unionL; auto. *)
-      (*   rewrite collect_rel_seqi. *)
-      (*   etransitivity. *)
-      (*   2: { apply rewrite_trans_seq_cr_l. *)
-      (*        apply imm_s_hb.hb_trans. } *)
-      (*   apply seq_mori. *)
-      (*   { by rewrite collect_rel_cr, SHB'. } *)
-      (*   rewrite collect_rel_union. *)
-      (*   unionL. *)
-      (*   { rewrite SBDSB. *)
-      (*     etransitivity; eauto. *)
-      (*     apply imm_s_hb.sb_in_hb. } *)
-      (*   admit. } *)
-      
 End SimRelCertStepProps.
 
 End SimRelCertStep.
