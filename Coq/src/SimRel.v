@@ -127,7 +127,9 @@ Section SimRel.
 
       fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
-      fGrfC : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf ;
+      fGrmwC : f □ (Grmw ⨾ ⦗ C ⦘) ⊆ Srmw ;
+      fGrfC  : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf ;
+      fGcoI  : f □ (⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘) ⊆ Sco ;
 
       jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
       ew_fI  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
@@ -261,6 +263,26 @@ Section SimRel.
       generalize WFS.(ES.ew_trans) EW HH. basic_solver.
     Qed.
 
+    Lemma GrmwC_Srmw_fC : 
+      ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘ ⊆ e2a S □ (⦗f □₁ C⦘ ⨾ Srmw ⨾ ⦗f □₁ C⦘).
+    Proof. 
+      rewrite <- restr_relE.
+      erewrite <- collect_rel_fixset
+        with (h := e2a S ∘ f).
+      { rewrite <- collect_rel_compose.
+        apply collect_rel_mori; auto.
+        rewrite restr_relE.
+        rewrite <- seq_eqvK at 2.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [done|].
+        rewrite <- seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [|done].
+        by apply fGrmwC. }
+      eapply fixset_mori; [| auto | apply SRC].
+      red. basic_solver.
+    Qed.
+
     Lemma GrfC_Srf_fC : 
       ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a S □ (⦗f □₁ C⦘ ⨾ Srf ⨾ ⦗f □₁ C⦘).
     Proof. 
@@ -279,6 +301,28 @@ Section SimRel.
         by apply fGrfC. }
       eapply fixset_mori; [| auto | apply SRC].
       red. basic_solver.
+    Qed.
+
+    Lemma GcoI_Sco_fI : 
+      ⦗I⦘ ⨾ Gco ⨾ ⦗I⦘ ⊆ e2a S □ (⦗f □₁ I⦘ ⨾ Sco ⨾ ⦗f □₁ I⦘).
+    Proof. 
+      rewrite <- restr_relE.
+      erewrite <- collect_rel_fixset
+        with (h := e2a S ∘ f).
+      { rewrite <- collect_rel_compose.
+        apply collect_rel_mori; auto.
+        rewrite restr_relE.
+        rewrite <- seq_eqvK at 1 2.
+        rewrite !seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [done|].
+        do 2 rewrite <- seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [|done].
+        rewrite !seqA.
+        by apply fGcoI. }
+      eapply fixset_mori; [| auto | apply SRC].
+      red. basic_solver 10.
     Qed.
 
     Lemma sb_fC :

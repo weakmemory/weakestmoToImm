@@ -97,6 +97,8 @@ Section Compilation.
           (COVG : GE ⊆₁ C) :
       extracted (f □₁ GE).
     Proof. 
+      assert (ES.Wf S) as SWF.
+      { apply SRC. }
       assert (Wf G) as GWF.
       { apply SRC. }
       assert (tc_coherent G sc TC) as TCCOH.
@@ -112,7 +114,16 @@ Section Compilation.
         rewrite crE. relsf. 
         split; auto.
         eapply dom_sb_covered; eauto. }
+      assert (GE ∩₁ GW ≡₁ I) as ISSG.
+      { split. 
+        { rewrite COVG. rewrite set_interC.
+          eapply w_covered_issued; eauto. }
+        apply set_subset_inter_r. split.
+        { eapply issuedE; eauto. }
+        eapply issuedW; eauto. }
       assert (f □₁ GE ≡₁ f □₁ C) as fGEC.
+      { rewrite set_collect_more; eauto. }
+      assert (f □₁ (GE ∩₁ GW) ≡₁ f □₁ I) as fGEWI.
       { rewrite set_collect_more; eauto. }
       constructor; splits.
       { rewrite DCOV. eapply fdom_good_restr; eauto. }
@@ -126,7 +137,10 @@ Section Compilation.
         erewrite e2a_sb; try apply SRC. 
         basic_solver. }
       { split. 
-        { admit. }
+        { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
+          { rewrite wf_rmwE at 1; auto. by rewrite COVG'. }
+          rewrite <- restr_cross, restr_relE.
+          rewrite fGEC. eapply GrmwC_Srmw_fC; eauto. }
         rewrite collect_rel_interi.
         erewrite e2a_rmw; try apply SRC. 
         basic_solver. }
@@ -137,7 +151,18 @@ Section Compilation.
           rewrite fGEC. eapply GrfC_Srf_fC; eauto. }
         admit. }
       split. 
-      { admit. }
+      { arewrite (Gco ≡ ⦗GE ∩₁ GW⦘ ⨾ Gco ⨾ ⦗GE ∩₁ GW⦘).
+        { rewrite wf_coE, wf_coD at 1; auto. basic_solver. }
+        rewrite <- restr_cross, restr_relE.
+        arewrite (⦗f □₁ GE⦘ ⨾ Sco ⨾ ⦗f □₁ GE⦘ ≡ ⦗f □₁ GE ∩₁ SW⦘ ⨾ Sco ⨾ ⦗f □₁ GE ∩₁ SW⦘).
+        { rewrite ES.coD at 1; auto. basic_solver 10. }
+        arewrite (f □₁ GE ∩₁ SW ≡₁ f □₁ (GE ∩₁ GW)).
+        { unfolder; splits; ins; desf; eexists; splits; eauto.
+          { unfold is_w. erewrite <- flab; eauto.
+            left. by eapply COVG'. }
+          unfold is_w. fold (compose Slab f y). erewrite flab; eauto.
+          left. by eapply COVG'. }
+        rewrite ISSG. eapply GcoI_Sco_fI; eauto. }
       rewrite collect_rel_interi.
       erewrite e2a_co; try apply SRC. 
       basic_solver.

@@ -1076,7 +1076,11 @@ Section SimRelCertStepProps.
       { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
       (* fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf) *)
       { admit. }
+      (* fGrmwC : f □ (Grmw ⨾ ⦗ C ⦘) ⊆ Srmw *)
+      { admit. }
       (* fGrfC : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf *)
+      { admit. }
+      (* fGcoI  : f □ (⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘) ⊆ Sco *)
       { admit. }
       (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) *)
       { etransitivity. 
