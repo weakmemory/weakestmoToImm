@@ -86,7 +86,8 @@ Section Compilation.
 
     Definition extracted A := 
       ⟪ Restr : good_restriction S A ⟫ /\
-      ⟪ GACTS : GE   ≡₁ e2a S □₁ A ⟫ /\
+      ⟪ GACTS : GE ≡₁ e2a S □₁ A ⟫ /\
+      ⟪ GLAB  : eq_dom A Slab (Glab ∘ e2a S) ⟫ /\
       ⟪ GSB   : Gsb  ≡  e2a S □ (Ssb ∩ A × A) ⟫ /\
       ⟪ GRMW  : Grmw ≡  e2a S □ (Srmw ∩ A × A) ⟫ /\
       ⟪ GRF   : Grf  ≡  e2a S □ (Srf ∩ A × A) ⟫ /\
@@ -131,6 +132,13 @@ Section Compilation.
         rewrite set_collect_compose.
         erewrite <- fixset_set_fixpoint; auto.
         eapply a2e_fix. apply SRC. }
+      { unfolder. ins. desf. 
+        unfold compose. fold (compose (e2a S) f y).
+        erewrite a2e_fix; [| apply SRC|].
+        { fold (compose Slab f y). 
+          eapply flab; eauto.
+          left. by apply COVG'. }
+        by apply DCOV. }
       { split.
         { admit. }
         rewrite collect_rel_interi.
