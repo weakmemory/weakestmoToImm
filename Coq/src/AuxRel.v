@@ -163,7 +163,7 @@ Proof. basic_solver. Qed.
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
 Proof. basic_solver. Qed.
 
-Lemma restr_cross : restr_rel s r ≡ s × s ∩ r.
+Lemma restr_cross : restr_rel s r ≡ r ∩ s × s.
 Proof. basic_solver. Qed.
 
 Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
