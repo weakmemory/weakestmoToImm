@@ -609,6 +609,7 @@ Proof.
     rewrite !compl_union.
     rewrite !restr_inter.
     rewrite !restr_cross.
+    rewrite !interC with (r2 := Eninit S × Eninit S).
     rewrite <- !minus_inter_compl.
     arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
     { unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set.
