@@ -868,6 +868,25 @@ Proof.
   by apply immediate_in.
 Qed. 
 
+Lemma clos_refl_trans_ind_step_left 
+        (R : relation A) (P : A -> Prop) x y (Px : P x)
+        (rtR : R＊ x y)
+        (STEP : forall z z', P z -> R z z' -> R＊ z' y -> P z') :
+    P y.
+Proof. 
+  generalize dependent Px.
+  induction rtR; auto.
+  { intros Px.
+    specialize (STEP x y).
+    apply STEP; auto.
+    apply rt_refl. }
+  intros Px.
+  apply IHrtR2; auto.
+  apply IHrtR1; auto.
+  ins. eapply STEP; eauto.
+  eapply rt_trans; eauto.
+Qed.
+
 End Props.
 
 Require Import Setoid.

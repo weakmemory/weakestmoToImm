@@ -115,13 +115,41 @@ Section SimRelStep.
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
-  
-  Lemma simrel_cert_start S f thread
+
+  Lemma simrel_cert_graph_start S f thread 
         (SRC : simrel_common prog S G sc TC f) 
-        (ITRAV_STEP : isim_trav_step G sc thread TC TC') :
-    exists k st st', 
-      ⟪ kTID : thread = ES.cont_thread S k ⟫ /\      
-      ⟪ SRCC : simrel_cert prog S G sc TC TC' f f k st st' ⟫.
+        (TC_STEP : isim_trav_step G sc thread TC TC') : 
+    exists k st st',
+      ⟪ kTID : thread = ES.cont_thread S k ⟫ /\
+      ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
+      ⟪ CERT_ST : simrel_cstate S TC k st st' ⟫.
+  Proof. 
+    edestruct cont_tid_state as [st [k HH]]; eauto. 
+    { eapply trstep_thread_prog; eauto; apply SRC. }
+    desf. 
+    edestruct cert_graph_start as [st' HH]; eauto; try by apply SRC.
+    { eapply isim_trav_step_thread_ninit; eauto.
+      all: apply SRC. }
+    { (* TODO: it should be added to simrel_common *)
+      admit. }
+    { (* TODO: it shoud be added to simrel_common *)
+      admit. }
+    { (* should follow from CsbqDOM *)
+      admit. }
+    desf. exists k, st, st'. 
+    splits; auto; ins. 
+    (* eapply ES.unique_K in KK; *)
+    (*   [| by apply SRC | by apply QQ | auto]. *)
+    (* simpls. inv KK. *)
+  Admitted. 
+  
+  Lemma simrel_cert_start S f k
+        (st st' : thread_st (ES.cont_thread S k))
+        (SRC : simrel_common prog S G sc TC f) 
+        (TC_ISTEP : isim_trav_step G sc (ES.cont_thread S k) TC TC') 
+        (CERTG : cert_graph G sc TC TC' (ES.cont_thread S k) st')
+        (CERT_ST : simrel_cstate S TC k st st') :
+    simrel_cert prog S G sc TC TC' f f k st st'.
   Proof. admit. Admitted.
 
   Lemma simrel_cert_end S f h k 
@@ -129,6 +157,39 @@ Section SimRelStep.
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st) :
     simrel_common prog S G sc TC' h.
   Proof. admit. Admitted.
+
+  Lemma simrel_step_helper S f k
+        (st st''' : thread_st (ES.cont_thread S k))
+        (SRC : simrel_common prog S G sc TC f)
+        (TC_ISTEP : isim_trav_step G sc (ES.cont_thread S k) TC TC')
+        (CERTG : cert_graph G sc TC TC' (ES.cont_thread S k) st''')
+        (CERT_ST : simrel_cstate S TC k st st''') 
+        (LBL_STEPS : (lbl_step (ES.cont_thread S k))＊ st st''') :
+    (fun st' => exists S' h' k',
+      ⟪ kTID : ES.cont_thread S' k' = ES.cont_thread S k ⟫ /\
+      ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\
+      ⟪ SRCC  : simrel_cert prog S' G sc TC TC' f h' k' st' st''' ⟫) st'''.
+  Proof.
+    eapply clos_refl_trans_ind_step_left
+      with (R := lbl_step (ES.cont_thread S k)); 
+      eauto.
+    { exists S, f, k. splits; auto.
+      { apply rt_refl. }
+      eapply simrel_cert_start; auto. }
+    intros st' st'' HH. desc.
+    intros LBL_STEP LBL_STEPS'.
+    edestruct simrel_cert_lbl_step
+      as [h'' [k'' [S'' HH]]]; 
+      eauto; desc.
+    { rewrite kTID. apply LBL_STEP. }
+    { rewrite kTID. apply LBL_STEPS'. }
+    exists S'', h'', k''. splits; auto.
+    { admit. }
+    eapply rt_trans; eauto.
+    destruct ESSTEP as [EQ | ESSTEP].
+    { subst. by apply rt_refl. }
+    by apply rt_step.
+  Admitted.
   
   Lemma simrel_step S f
         (SRC : simrel_common prog S G sc TC f) 
@@ -136,6 +197,21 @@ Section SimRelStep.
     exists S' f', 
       ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\      
       ⟪ SRC' : simrel_common prog S' G sc TC' f' ⟫.
-  Proof. admit. Admitted.
+  Proof. 
+    unfold sim_trav_step in TRAV_STEP. desc.
+    edestruct simrel_cert_graph_start
+      as [k [st [st' HH]]]; 
+      eauto; desc. 
+    assert 
+      ((lbl_step (ES.cont_thread S k))＊ st st')
+      as LBL_STEPS.
+    { admit. }
+    edestruct simrel_step_helper
+      as [S' [h' [k' HH]]]; 
+      subst; eauto; desc.
+    exists S', h'.
+    splits; auto.
+    eapply simrel_cert_end; eauto.
+  Admitted.
   
 End SimRelStep.

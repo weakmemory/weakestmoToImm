@@ -547,36 +547,6 @@ Section SimRel.
       (* generalize CE. basic_solver. *)
     Admitted.
 
-    Lemma simrel_cert_graph_start TC' thread 
-        (TR_STEP : isim_trav_step G sc thread TC TC') : 
-    exists k st',
-      ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
-      ⟪ kTID : ES.cont_thread S k = thread ⟫ /\
-      ⟪ CST_STABLE : stable_state thread st' ⟫ /\
-      ⟪ CST_REACHABLE : 
-          forall (st : (thread_lts thread).(Language.state))
-                 (KK : K (k, existT _ _ st)),
-            (step thread)＊ st st' ⟫. 
-    Proof. 
-      edestruct cont_tid_state as [st [k HH]]; eauto. 
-      { eapply trstep_thread_prog; eauto; apply SRC. }
-      desf. 
-      edestruct cert_graph_start as [st' HH]; eauto; try by apply SRC.
-      { eapply isim_trav_step_thread_ninit; eauto.
-        all: apply SRC. }
-      { (* TODO: it should be added to simrel_common *)
-        admit. }
-      { (* TODO: it shoud be added to simrel_common *)
-        admit. }
-      { (* should follow from CsbqDOM *)
-        admit. }
-      desf. exists k, st'. 
-      splits; auto; ins. 
-      eapply ES.unique_K in KK;
-        [| by apply SRC | by apply QQ | auto].
-      simpls. inv KK.
-    Admitted. 
-
   End SimRelCommonProps.
 
 End SimRel.

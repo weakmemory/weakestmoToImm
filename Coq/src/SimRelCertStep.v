@@ -204,56 +204,6 @@ Section SimRelCertStep.
 
 Section SimRelCertStepProps. 
 
-  Lemma simrel_cert_start S thread
-        (SRC : simrel_common prog S G sc TC f)
-        (TR_STEP : isim_trav_step G sc thread TC TC') :
-    exists k st st',
-      ⟪ SRCC : simrel_cert prog S G sc TC TC' f f k st st' ⟫.
-  Proof.
-    edestruct simrel_cert_graph_start as [k [st' HH]]; eauto.
-    desf.
-    exists k.
-
-    (* TODO: return the corresponding state in 'simrel_cert_graph_start'. *)
-    eexists. 
-
-    exists st'.
-    constructor; auto.
-    
-    (* Ltac narrow_hdom q CsbqDOM := *)
-    (*   arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True); *)
-    (*   rewrite set_inter_full_r; *)
-    (*   rewrite CsbqDOM; *)
-    (*   rewrite set_unionC; *)
-    (*   rewrite <- set_unionA; *)
-    (*   rewrite set_unionK; *)
-    (*   apply SRC. *)
-
-    all: admit. 
-
-    (* { by narrow_hdom q CsbqDOM. } *)
-    (* { admit. } *)
-    (* { by narrow_hdom q CsbqDOM. } *)
-    (* { by narrow_hdom q CsbqDOM. } *)
-    (* { admit. } *)
-    (* { apply SRC.(ftid). }  *)
-    (* { apply SRC.(flab). } *)
-    (* { admit. } *)
-    (* { by narrow_hdom q CsbqDOM. }  *)
-    (* { admit. } *)
-    (* { admit. } *)
-    (* { admit. } *)
-    (* rewrite CsbqDOM. *)
-    (* unfold ES.cc. *)
-    (* rewrite <- restr_relE. *)
-    (* rewrite restr_inter. *)
-    (* rewrite restr_rel_mori. *)
-    (* { rewrite (restr_relE _ (Scf S)).  *)
-    (*   rewrite SRC.(fimgNcf).  *)
-    (*     by rewrite inter_false_l. }  *)
-    (* all: basic_solver. *)
-  Admitted.
-
   Lemma simrel_cert_basic_step k lbl lbl' lbls S jf ew co
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
