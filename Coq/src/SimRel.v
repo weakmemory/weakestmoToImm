@@ -127,6 +127,8 @@ Section SimRel.
 
       fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
+      fGrfC : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf ;
+
       jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
       ew_fI  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
 
@@ -257,6 +259,26 @@ Section SimRel.
       destruct_seq_r HH as BB.
       eexists. apply seq_eqv_r. split; [|by eauto].
       generalize WFS.(ES.ew_trans) EW HH. basic_solver.
+    Qed.
+
+    Lemma GrfC_Srf_fC : 
+      ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a S □ (⦗f □₁ C⦘ ⨾ Srf ⨾ ⦗f □₁ C⦘).
+    Proof. 
+      rewrite <- restr_relE.
+      erewrite <- collect_rel_fixset
+        with (h := e2a S ∘ f).
+      { rewrite <- collect_rel_compose.
+        apply collect_rel_mori; auto.
+        rewrite restr_relE.
+        rewrite <- seq_eqvK at 2.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [done|].
+        rewrite <- seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [|done].
+        by apply fGrfC. }
+      eapply fixset_mori; [| auto | apply SRC].
+      red. basic_solver.
     Qed.
 
     Lemma sb_fC :
@@ -391,7 +413,7 @@ Section SimRel.
     Proof. 
       constructor; try apply SRC.
       apply hb_fdom_in_fdom.
-    Qed.
+    Qed.      
 
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
       exists (state : (thread_lts thread).(Language.state)) c,

@@ -97,22 +97,26 @@ Section Compilation.
           (COVG : GE ⊆₁ C) :
       extracted (f □₁ GE).
     Proof. 
+      assert (Wf G) as GWF.
+      { apply SRC. }
       assert (tc_coherent G sc TC) as TCCOH.
       { apply SRC. }
-      assert (C ≡₁ GE) as COVG'.
+      assert (GE ≡₁ C) as COVG'.
       { split; auto. eapply coveredE; eauto. }
-      assert (C ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) as DCOV.
-      { split; [basic_solver|].
+      assert (GE ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) as DCOV.
+      { rewrite COVG'.
+        split; [basic_solver|].
         unionL; auto.
         rewrite issuedE; [|apply SRC].
-        rewrite <- COVG'.
+        rewrite COVG'.
         rewrite crE. relsf. 
         split; auto.
         eapply dom_sb_covered; eauto. }
+      assert (f □₁ GE ≡₁ f □₁ C) as fGEC.
+      { rewrite set_collect_more; eauto. }
       constructor; splits.
-      { rewrite <- COVG', DCOV.
-        eapply fdom_good_restr; eauto. }
-      { rewrite <- COVG', DCOV.
+      { rewrite DCOV. eapply fdom_good_restr; eauto. }
+      { rewrite DCOV.
         rewrite set_collect_compose.
         erewrite <- fixset_set_fixpoint; auto.
         eapply a2e_fix. apply SRC. }
@@ -126,7 +130,12 @@ Section Compilation.
         rewrite collect_rel_interi.
         erewrite e2a_rmw; try apply SRC. 
         basic_solver. }
-      { admit. }
+      { split. 
+        { arewrite (Grf ≡ ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘).
+          { rewrite wf_rfE at 1; auto. by rewrite COVG'. }
+          rewrite <- restr_cross, restr_relE.
+          rewrite fGEC. eapply GrfC_Srf_fC; eauto. }
+        admit. }
       split. 
       { admit. }
       rewrite collect_rel_interi.

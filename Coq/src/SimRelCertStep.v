@@ -1076,19 +1076,21 @@ Section SimRelCertStepProps.
       { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
       (* fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf) *)
       { admit. }
-      (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      (* fGrfC : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf *)
+      { admit. }
+      (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) *)
       { etransitivity. 
         { unfold_cert_step_ CertSTEP_.
           2,4 : eapply sim_add_jf_jfe_fI; eauto.
           all : erewrite ESstep.step_same_jf_jfe; 
                 eauto; apply SRCC. }
         erewrite ESstep.step_ew_mon; eauto. }
-      (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) *)
       { unfold_cert_step_ CertSTEP_.
         1,2 : rewrite EW'; apply SRCC.
         all : eapply sim_add_ew_ew_fI; eauto.
         all : basic_solver. }
-      (* dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
+      (* dom_rel (Srelease ⨾ Sew ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
       admit. }
     (* cert : cert_graph G sc TC TC' (ES.cont_thread S k') state'' *)
     { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
