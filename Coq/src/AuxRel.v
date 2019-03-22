@@ -56,6 +56,7 @@ Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
+Notation "f ⋄ r"  := (map_rel f r) (at level 45).
 
 Hint Unfold 
      clos_sym clos_refl_sym 
