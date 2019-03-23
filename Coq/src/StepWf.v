@@ -725,8 +725,10 @@ Proof.
   exists wi, wi. splits; auto.
   { right. eapply wsEinit.
     split; auto. congruence. }
-  admit. 
-Admitted.
+  apply ES.co_init; auto.
+  apply seq_eqv_lr; unfolder; splits; auto.
+  red. congruence. 
+Qed.
 
 Lemma step_add_co_total_helper ews ws w' e e' S S'
       (wfE: ES.Wf S)
@@ -1290,6 +1292,7 @@ Proof.
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_co_col; eauto. 
     all : eapply step_add_co_col; eauto; basic_solver. }
+  { admit. }
   { red in TT. desf; cdes TT; desf.
     1,2 : rewrite CO'; apply ES.co_irr; auto. 
     all : eapply step_add_co_irr; eauto; basic_solver. }
@@ -1298,15 +1301,15 @@ Proof.
     all : eapply step_add_co_trans; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
     { eapply step_same_co_total; eauto.
-      admit. }
+      eapply ESstep.fence_step_W; eauto. }
     { eapply step_same_co_total; eauto.
-      eapply ESstep.load_step_w; eauto. }
+      eapply ESstep.load_step_W; eauto. }
     { eapply step_add_co_total; eauto.
       { basic_solver. }
-      admit. }
+      eapply ESstep.store_step_W; eauto. }
     eapply step_add_co_total; eauto.
     { basic_solver. }
-    admit. }
+    eapply ESstep.update_step_W; eauto. }
 
   { red in TT. desf; cdes TT; desf.
     1,2 : eapply step_same_ew_ewE; eauto. 
@@ -1326,9 +1329,12 @@ Proof.
           apply clos_refl_mori; eapply ESBasicStep.basic_step_cf_mon; eauto.
     all : eapply step_add_ew_ewc; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW'; admit.
+    { rewrite EW'. erewrite ESstep.fence_step_W; eauto. by apply ES.ew_refl. }
+    { rewrite EW'. erewrite ESstep.load_step_W; eauto. by apply ES.ew_refl. }
     all : eapply step_add_ew_ew_refl; eauto. 
-    all : admit. }
+    1,3 : basic_solver.
+    { erewrite ESstep.store_step_W; eauto. }
+    erewrite ESstep.update_step_W; eauto. }
   { red in TT. desf; cdes TT; desf.
     1,2 : rewrite EW'; apply ES.ew_sym; auto. 
     all : eapply step_add_ew_ew_sym; eauto; basic_solver. }
