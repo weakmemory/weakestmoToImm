@@ -232,6 +232,7 @@ Record Wf :=
     coE : co ≡ ⦗E⦘ ⨾ co ⨾ ⦗E⦘ ;
     coD : co ≡ ⦗W⦘ ⨾ co ⨾ ⦗W⦘ ;
     col : co ⊆ same_loc ;
+    co_init : ⦗Einit⦘ ⨾ same_loc ⨾ ⦗E ∩₁ W⦘ ⊆ co ;
     co_irr : irreflexive co ;
     co_trans : transitive co ;
     co_total : 
