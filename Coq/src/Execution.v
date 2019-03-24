@@ -145,15 +145,19 @@ Lemma step_preserves X e e' S S'
 Proof.       
   cdes BSTEP; cdes BSTEP_.
   constructor.
+  (* Ex_inE : X ⊆₁ E S; *)
   { etransitivity; [apply EXEC |].
     eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
+  (* init_inEx : Einit S ⊆₁ X *)
   { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply EXEC. } 
+  (* Ex_sb_prcl : dom_rel (sb S ⨾ ⦗X⦘) ⊆₁ X *)
   { rewrite SB'. 
     relsf. splits.
     { apply EXEC. }
     arewrite (X ⊆₁ E S) by apply Ex_inE; auto.
     erewrite ESBasicStep.basic_step_sb_deltaE; eauto. 
     basic_solver. }
+  (* Ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
   { (* TODO: add a corresponding lemma  *)
     arewrite (sw S' ≡ sw S ∪ ESstep.sw_delta S S' k e e').
     { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
@@ -170,8 +174,15 @@ Proof.
     arewrite (X ⊆₁ E S) by apply Ex_inE; auto.
     erewrite ESstep.basic_step_sw_deltaE; eauto. 
     basic_solver. }
+  (* Ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
+  { rewrite RMW'. unfold ESBasicStep.rmw_delta.
+    relsf. splits.
+    { apply EXEC. }
+    arewrite (X ⊆₁ E S) by apply Ex_inE; auto. 
+    ESBasicStep.step_solver. }
+  (* Ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
   { admit. }
-  { admit. }
+  (* Ex_ncf : ES.cf_free S X *)
   { red. 
     rewrite <- set_interK with (s := X).
     rewrite id_inter.
@@ -180,6 +191,7 @@ Proof.
     arewrite (⦗E S⦘ ⨾ cf S' ⨾ ⦗E S⦘ ≡ cf S).
     { rewrite <- restr_relE. erewrite ESBasicStep.basic_step_cf_restr; eauto. }
     apply EXEC. }
+  (* Ex_vis : X ⊆₁ vis S *)
   etransitivity.
   { eapply Ex_vis; eauto. }
   eapply ESstep.step_vis_mon; eauto. 
