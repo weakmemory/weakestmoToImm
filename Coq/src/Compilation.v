@@ -195,7 +195,7 @@ Section Compilation.
     edestruct simrel_step as [S' [f' HH]]; eauto. 
     destruct HH as [STEPS' SRC']. 
     red in STEPS', SRC'.
-    exists S', f'. splits; auto.
+    exists f', S'. splits; auto.
     eapply rt_trans; eauto.
   Qed.
 
