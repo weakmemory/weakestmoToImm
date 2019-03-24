@@ -150,6 +150,7 @@ Section SimRelCert.
 
       tr_step : isim_trav_step G sc ktid TC TC';
 
+      (* TODO : we need to simplify this property somehow *)
       hgfix : fixset (ES.cont_sb_dom S k) (h ∘ e2a);
 
       sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
