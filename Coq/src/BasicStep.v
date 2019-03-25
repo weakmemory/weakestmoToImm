@@ -1118,7 +1118,7 @@ Qed.
 Lemma basic_step_sb_prcl e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) : 
-  prefix_clos (sb S' ∩ ES.same_tid S').
+  downward_total (sb S' ∩ ES.same_tid S').
 Proof.
   cdes BSTEP. cdes BSTEP_. 
   rewrite SB'. rewrite inter_union_l.

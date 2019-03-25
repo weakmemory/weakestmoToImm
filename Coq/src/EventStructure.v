@@ -210,7 +210,7 @@ Record Wf :=
 
     sb_irr     : irreflexive sb;
     sb_trans   : transitive sb;
-    sb_prcl    : prefix_clos (sb ∩ same_tid);
+    sb_prcl    : downward_total (sb ∩ same_tid);
 
     sb_tot : forall e (EE : E e),
         is_total (dom_rel (sb ;; <| eq e |>) \₁ Einit) sb; 

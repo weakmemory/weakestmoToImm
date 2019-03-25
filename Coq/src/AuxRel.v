@@ -43,7 +43,7 @@ Section AuxRel.
   Definition fixset := 
     forall (x : A) (SX : s x), h x = x.
 
-  Definition prefix_clos := 
+  Definition downward_total := 
     forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
 End AuxRel.
 
@@ -842,7 +842,7 @@ Lemma immediate_inter :
 Proof. basic_solver. Qed.
 
 Lemma trans_prcl_immediate_seqr_split x y
-      (TRANS : transitive r) (PRCL : prefix_clos r) (IMM : (immediate r) x y) :
+      (TRANS : transitive r) (PRCL : downward_total r) (IMM : (immediate r) x y) :
   r ⨾ ⦗ eq y ⦘ ≡ (eq x ∪₁ dom_rel (r ⨾ ⦗ eq x ⦘)) × eq y.
 Proof. 
   red; split. 
@@ -927,10 +927,10 @@ Proof.
   splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
 Qed.
 
-Add Parametric Morphism A : (@prefix_clos A) with signature 
-    same_relation ==> iff as prefix_clos_more.
+Add Parametric Morphism A : (@downward_total A) with signature 
+    same_relation ==> iff as downward_total_more.
 Proof. 
-  intros x y EQ. unfold prefix_clos. split; ins.
+  intros x y EQ. unfold downward_total. split; ins.
   eapply clos_refl_sym_more; [symmetry|]; eauto.
   2: eapply clos_refl_sym_more; eauto.
   all: apply EQ in Rxz.
