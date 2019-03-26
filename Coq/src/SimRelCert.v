@@ -107,6 +107,8 @@ Section SimRelCert.
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
+  Notation "'C''"  := (covered TC').
+  Notation "'I''"  := (issued TC').
 
   Notation "'Gvf'" := (furr G sc).
 
@@ -127,9 +129,9 @@ Section SimRelCert.
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
   Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
 
-  Notation "'Ssim_jf'" := (sim_jf G sc TC S f).
-  Notation "'Ssim_vf'" := (sim_vf G sc TC S f).
-  Notation "'DR'" := (DR G TC S f).
+  Notation "'Ssim_jf'" := (sim_jf G sc TC' S h).
+  Notation "'Ssim_vf'" := (sim_vf G sc TC' S h).
+  Notation "'DR'" := (DR G TC' S h).
 
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>
@@ -172,20 +174,6 @@ Section SimRelCert.
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
     }.
-
-  (* Definition sim_add_jf (r : eventid) (S' : ES.t) : Prop := *)
-  (*   ⟪ RR : is_r (ES.lab S') r ⟫ /\ *)
-  (*   exists w, *)
-  (*     ⟪ wHDOM : (h □₁ hdom) w  ⟫ /\ *)
-  (*     ⟪ NEW_RF : new_rf (e2a S' w) (e2a S' r) ⟫ /\ *)
-  (*     ⟪ SSJF' : S'.(ES.jf) ≡ S.(ES.jf) ∪ singl_rel w r ⟫. *)
-
-  (* Definition sim_add_ew (w : eventid) (S S' : ES.t) : Prop := *)
-  (*   ⟪ WW : is_w (ES.lab S') w ⟫ /\ *)
-  (*   exists (ws : eventid -> Prop), *)
-  (*     ⟪ gws : e2a S' □₁ ws ⊆₁ eq (e2a S' w) ⟫ /\ *)
-  (*     ⟪ wsIN : ws ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) ⟫ /\ *)
-  (*     ⟪ SSEW' : S'.(ES.ew) ≡ S.(ES.ew) ∪ (ws × eq w)^⋈ ⟫. *)
 
   Section SimRelCertProps. 
     
@@ -641,8 +629,8 @@ Section SimRelCert.
         basic_solver 10. }
       rewrite (dom_r WF.(ES.jfD)) at 1.
       rewrite !seqA.
-      arewrite (Ssb ⨾ ⦗SE ∩₁ SF⦘ ⊆ ⦗f □₁ C⦘ ⨾ Ssb ⨾ ⦗SE ∩₁ SF⦘).
-      2: { arewrite (⦗SR⦘ ⨾ ⦗f □₁ C⦘ ⊆ ⦗DR⦘).
+      arewrite (Ssb ⨾ ⦗SE ∩₁ SF⦘ ⊆ ⦗h □₁ C'⦘ ⨾ Ssb ⨾ ⦗SE ∩₁ SF⦘).
+      2: { arewrite (⦗SR⦘ ⨾ ⦗h □₁ C'⦘ ⊆ ⦗DR⦘).
            2: done.
            unfold SimRelJF.DR. basic_solver 10. }
     Admitted.

@@ -12,7 +12,8 @@ From imm Require Import Events Execution
 Require Import AuxRel AuxDef EventStructure Consistency BasicStep Step StepWf
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction 
-        SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO.  
+        SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO
+        SimRelJF.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -833,6 +834,25 @@ Section SimRelCertStepProps.
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
+  (* TODO: continue from here *)
+  Lemma simrel_cert_step_e2a_DR k k' e e' S S' h'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    DR G TC S h ⊆₁ DR G TC' S' h'.
+  Proof.
+  Admitted.
+
+  Lemma simrel_cert_step_e2a_jfDR k k' e e' S S'
+        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    e2a S' □ (Sjf S' ⨾ ⦗DR G TC' S' f⦘) ⊆ Grf.
+  Proof.
+  Admitted.
+  
   Lemma simrel_cert_step_fr_coh k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
@@ -850,10 +870,6 @@ Section SimRelCertStepProps.
     { eapply step_wf; eauto. }
     assert (simrel_e2a S' G) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
-    assert 
-      (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st')) 
-      as SRA2E.
-    { admit. }
     assert (Wf G) as WFG. 
     { apply SRCC. }
     assert (coherence G) as GCOH.
@@ -912,10 +928,10 @@ Section SimRelCertStepProps.
     { eapply step_wf; eauto. }
     assert (simrel_e2a S' G) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
-    assert 
-      (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st')) 
-      as SRA2E.
-    { admit. }
+    (* assert  *)
+    (*   (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st'))  *)
+    (*   as SRA2E. *)
+    (* { admit. } *)
     assert (Wf G) as WFG. 
     { apply SRCC. }
     assert (coherence G) as GCOH.
