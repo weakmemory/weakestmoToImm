@@ -52,6 +52,7 @@ Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 (* Definition same_tid (S : t) := fun x y => S.(tid) x = S.(tid) y. *)
 Notation "'same_lab' S" := (S.(ES.same_lab)) (at level 10).
+Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10).
 Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 
@@ -379,6 +380,18 @@ Proof.
   ins; erewrite basic_step_lab_eq_dom; eauto. 
 Qed.
 
+Lemma basic_step_same_mod_restr e e' S S' 
+      (BSTEP : t e e' S S') :
+  restr_rel S.(ES.acts_set) (same_mod S') ≡ restr_rel S.(ES.acts_set) (same_mod S).
+Proof. 
+  unfolder. 
+  unfold ES.same_tid.
+  splits; ins; desf; splits; auto; red.
+  erewrite <- basic_step_mod_eq_dom; eauto.
+  2: erewrite basic_step_mod_eq_dom; eauto; symmetry.
+  all: rewrite H; eapply basic_step_mod_eq_dom; eauto. 
+Qed.
+
 Lemma basic_step_same_loc_restr e e' S S' 
       (BSTEP : t e e' S S') :
   restr_rel S.(ES.acts_set) (same_loc S') ≡ restr_rel S.(ES.acts_set) (same_loc S).
@@ -609,6 +622,7 @@ Proof.
     rewrite !compl_union.
     rewrite !restr_inter.
     rewrite !restr_cross.
+    rewrite !interC with (r2 := Eninit S × Eninit S).
     rewrite <- !minus_inter_compl.
     arewrite (Eninit S × Eninit S \ (ES.cont_sb_dom S k × eq e)⁼ ≡ Eninit S × Eninit S \ ⦗⊤₁⦘).
     { unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set.
@@ -1104,7 +1118,7 @@ Qed.
 Lemma basic_step_sb_prcl e e' S S'
       (BSTEP : t e e' S S')
       (WF : ES.Wf S) : 
-  prefix_clos (sb S' ∩ ES.same_tid S').
+  downward_total (sb S' ∩ ES.same_tid S').
 Proof.
   cdes BSTEP. cdes BSTEP_. 
   rewrite SB'. rewrite inter_union_l.

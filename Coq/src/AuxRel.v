@@ -43,7 +43,7 @@ Section AuxRel.
   Definition fixset := 
     forall (x : A) (SX : s x), h x = x.
 
-  Definition prefix_clos := 
+  Definition downward_total := 
     forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
 End AuxRel.
 
@@ -164,7 +164,7 @@ Proof. basic_solver. Qed.
 Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
 Proof. basic_solver. Qed.
 
-Lemma restr_cross : restr_rel s r ≡ s × s ∩ r.
+Lemma restr_cross : restr_rel s r ≡ r ∩ s × s.
 Proof. basic_solver. Qed.
 
 Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
@@ -843,7 +843,7 @@ Lemma immediate_inter :
 Proof. basic_solver. Qed.
 
 Lemma trans_prcl_immediate_seqr_split x y
-      (TRANS : transitive r) (PRCL : prefix_clos r) (IMM : (immediate r) x y) :
+      (TRANS : transitive r) (PRCL : downward_total r) (IMM : (immediate r) x y) :
   r ⨾ ⦗ eq y ⦘ ≡ (eq x ∪₁ dom_rel (r ⨾ ⦗ eq x ⦘)) × eq y.
 Proof. 
   red; split. 
@@ -868,6 +868,25 @@ Proof.
   eapply TRANS; eauto. 
   by apply immediate_in.
 Qed. 
+
+Lemma clos_refl_trans_ind_step_left 
+        (R : relation A) (P : A -> Prop) x y (Px : P x)
+        (rtR : R＊ x y)
+        (STEP : forall z z', P z -> R z z' -> R＊ z' y -> P z') :
+    P y.
+Proof. 
+  generalize dependent Px.
+  induction rtR; auto.
+  { intros Px.
+    specialize (STEP x y).
+    apply STEP; auto.
+    apply rt_refl. }
+  intros Px.
+  apply IHrtR2; auto.
+  apply IHrtR1; auto.
+  ins. eapply STEP; eauto.
+  eapply rt_trans; eauto.
+Qed.
 
 End Props.
 
@@ -909,10 +928,10 @@ Proof.
   splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
 Qed.
 
-Add Parametric Morphism A : (@prefix_clos A) with signature 
-    same_relation ==> iff as prefix_clos_more.
+Add Parametric Morphism A : (@downward_total A) with signature 
+    same_relation ==> iff as downward_total_more.
 Proof. 
-  intros x y EQ. unfold prefix_clos. split; ins.
+  intros x y EQ. unfold downward_total. split; ins.
   eapply clos_refl_sym_more; [symmetry|]; eauto.
   2: eapply clos_refl_sym_more; eauto.
   all: apply EQ in Rxz.

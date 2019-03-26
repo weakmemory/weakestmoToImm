@@ -127,6 +127,10 @@ Section SimRel.
 
       fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf);
 
+      fGrmwC : f □ (Grmw ⨾ ⦗ C ⦘) ⊆ Srmw ;
+      fGrfC  : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf ;
+      fGcoI  : f □ (⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘) ⊆ Sco ;
+
       jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
       ew_fI  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘);
 
@@ -259,6 +263,68 @@ Section SimRel.
       generalize WFS.(ES.ew_trans) EW HH. basic_solver.
     Qed.
 
+    Lemma GrmwC_Srmw_fC : 
+      ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘ ⊆ e2a S □ (⦗f □₁ C⦘ ⨾ Srmw ⨾ ⦗f □₁ C⦘).
+    Proof. 
+      rewrite <- restr_relE.
+      erewrite <- collect_rel_fixset
+        with (h := e2a S ∘ f).
+      { rewrite <- collect_rel_compose.
+        apply collect_rel_mori; auto.
+        rewrite restr_relE.
+        rewrite <- seq_eqvK at 2.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [done|].
+        rewrite <- seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [|done].
+        by apply fGrmwC. }
+      eapply fixset_mori; [| auto | apply SRC].
+      red. basic_solver.
+    Qed.
+
+    Lemma GrfC_Srf_fC : 
+      ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a S □ (⦗f □₁ C⦘ ⨾ Srf ⨾ ⦗f □₁ C⦘).
+    Proof. 
+      rewrite <- restr_relE.
+      erewrite <- collect_rel_fixset
+        with (h := e2a S ∘ f).
+      { rewrite <- collect_rel_compose.
+        apply collect_rel_mori; auto.
+        rewrite restr_relE.
+        rewrite <- seq_eqvK at 2.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [done|].
+        rewrite <- seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [|done].
+        by apply fGrfC. }
+      eapply fixset_mori; [| auto | apply SRC].
+      red. basic_solver.
+    Qed.
+
+    Lemma GcoI_Sco_fI : 
+      ⦗I⦘ ⨾ Gco ⨾ ⦗I⦘ ⊆ e2a S □ (⦗f □₁ I⦘ ⨾ Sco ⨾ ⦗f □₁ I⦘).
+    Proof. 
+      rewrite <- restr_relE.
+      erewrite <- collect_rel_fixset
+        with (h := e2a S ∘ f).
+      { rewrite <- collect_rel_compose.
+        apply collect_rel_mori; auto.
+        rewrite restr_relE.
+        rewrite <- seq_eqvK at 1 2.
+        rewrite !seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [done|].
+        do 2 rewrite <- seqA.
+        rewrite collect_rel_seqi, set_collect_eqv.
+        apply seq_mori; [|done].
+        rewrite !seqA.
+        by apply fGcoI. }
+      eapply fixset_mori; [| auto | apply SRC].
+      red. basic_solver 10.
+    Qed.
+
     Lemma sb_fC :
       dom_rel (Ssb ⨾ ⦗ f □₁ C ⦘) ⊆₁ f □₁ C.
     Proof.
@@ -374,6 +440,25 @@ Section SimRel.
       apply hb_nfCsb; auto.
     Qed.
 
+    Lemma hb_fdom_in_fdom : 
+      dom_rel (Shb ⨾ ⦗ f □₁ fdom ⦘) ⊆₁ f □₁ fdom.
+    Proof. 
+      rewrite hb_in_fChb_sb.
+      rewrite seq_union_l.
+      rewrite dom_union.
+      unionL. 
+      { rewrite !dom_seq. basic_solver. }
+      erewrite a2e_sb_prcl; auto.
+      apply SRC.
+    Qed.
+
+    Lemma fdom_good_restr : 
+      good_restriction S (f □₁ fdom).
+    Proof. 
+      constructor; try apply SRC.
+      apply hb_fdom_in_fdom.
+    Qed.      
+
     Lemma cont_tid_state thread (INP : IdentMap.In thread prog):
       exists (state : (thread_lts thread).(Language.state)) c,
         ⟪ QQ : K (c, existT _ _ state) ⟫ /\
@@ -462,36 +547,100 @@ Section SimRel.
       (* generalize CE. basic_solver. *)
     Admitted.
 
-    Lemma simrel_cert_graph_start TC' thread 
-        (TR_STEP : isim_trav_step G sc thread TC TC') : 
-    exists k st',
-      ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
-      ⟪ kTID : ES.cont_thread S k = thread ⟫ /\
-      ⟪ CST_STABLE : stable_state thread st' ⟫ /\
-      ⟪ CST_REACHABLE : 
-          forall (st : (thread_lts thread).(Language.state))
-                 (KK : K (k, existT _ _ st)),
-            (step thread)＊ st st' ⟫. 
-    Proof. 
-      edestruct cont_tid_state as [st [k HH]]; eauto. 
-      { eapply trstep_thread_prog; eauto; apply SRC. }
-      desf. 
-      edestruct cert_graph_start as [st' HH]; eauto; try by apply SRC.
-      { eapply isim_trav_step_thread_ninit; eauto.
-        all: apply SRC. }
-      { (* TODO: it should be added to simrel_common *)
-        admit. }
-      { (* TODO: it shoud be added to simrel_common *)
-        admit. }
-      { (* should follow from CsbqDOM *)
-        admit. }
-      desf. exists k, st'. 
-      splits; auto; ins. 
-      eapply ES.unique_K in KK;
-        [| by apply SRC | by apply QQ | auto].
-      simpls. inv KK.
-    Admitted. 
-
   End SimRelCommonProps.
 
 End SimRel.
+
+Section SimRelLemmas.
+
+  Variable prog : Prog.t.
+  Variable S : ES.t.
+  Variable G : execution.
+  Variable sc : relation actid.
+  Variable TC : trav_config.
+  Variable f : actid -> eventid.
+
+  Notation "'SE'" := S.(ES.acts_set).
+  Notation "'SEinit'" := S.(ES.acts_init_set).
+  Notation "'SEninit'" := S.(ES.acts_ninit_set).
+  Notation "'Stid'" := (S.(ES.tid)).
+  Notation "'Slab'" := (S.(ES.lab)).
+  Notation "'Sloc'" := (loc S.(ES.lab)).
+  Notation "'K'" := S.(ES.cont_set).
+
+  Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
+
+  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
+  Notation "'SW'" := (fun a => is_true (is_w Slab a)).
+  Notation "'SF'" := (fun a => is_true (is_f Slab a)).
+  Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
+
+  Notation "'Ssb'" := (S.(ES.sb)).
+  Notation "'Scf'" := (S.(ES.cf)).
+  Notation "'Srmw'" := (S.(ES.rmw)).
+  Notation "'Sjf'" := (S.(ES.jf)).
+  Notation "'Sjfi'" := (S.(ES.jfi)).
+  Notation "'Sjfe'" := (S.(ES.jfe)).
+  Notation "'Srf'" := (S.(ES.rf)).
+  Notation "'Srfi'" := (S.(ES.rfi)).
+  Notation "'Srfe'" := (S.(ES.rfe)).
+  Notation "'Sco'" := (S.(ES.co)).
+  Notation "'Sew'" := (S.(ES.ew)).
+
+  Notation "'Srs'" := (S.(Consistency.rs)).
+  Notation "'Srelease'" := (S.(Consistency.release)).
+  Notation "'Ssw'" := (S.(Consistency.sw)).
+  Notation "'Shb'" := (S.(Consistency.hb)).
+
+  Notation "'thread_syntax' tid"  := 
+    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+
+  Notation "'thread_st' tid" := 
+    (Language.state (thread_lts tid)) (at level 10, only parsing).
+
+  Notation "'thread_init_st' tid" := 
+    (Language.init (thread_lts tid)) (at level 10, only parsing).
+  
+  Notation "'thread_cont_st' tid" :=
+    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+
+  Notation "'GE'" := G.(acts_set).
+  Notation "'GEinit'" := (is_init ∩₁ GE).
+  Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
+
+  Notation "'Gtid'" := (tid).
+  Notation "'Glab'" := (G.(lab)).
+  Notation "'Gloc'" := (loc G.(lab)).
+  
+  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+
+  Notation "'GR'" := (fun a => is_true (is_r Glab a)).
+  Notation "'GW'" := (fun a => is_true (is_w Glab a)).
+  Notation "'GF'" := (fun a => is_true (is_f Glab a)).
+
+  Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
+  
+  Notation "'Gsb'" := (G.(sb)).
+  Notation "'Grmw'" := G.(rmw).
+  Notation "'Grf'" := (G.(rf)).
+  Notation "'Gco'" := (G.(co)).
+
+  Notation "'Grs'" := (G.(imm_s_hb.rs)).
+  Notation "'Grelease'" := (G.(imm_s_hb.release)).
+  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+
+  Notation "'C'"  := (covered TC).
+  Notation "'I'"  := (issued TC).
+
+  Notation "'Gvf'" := (furr G sc).
+
+  Lemma simrel_init 
+        (nInitProg : ~ IdentMap.In tid_init prog)
+        (PExec : program_execution prog G)
+        (WF : Execution.Wf G)
+        (CONS : imm_consistent G sc) : 
+    simrel_common prog (ES.init prog) G sc (init_trav G) a2e_init.
+  Proof. clear S TC f. admit. Admitted.
+
+End SimRelLemmas.

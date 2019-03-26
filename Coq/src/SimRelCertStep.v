@@ -9,11 +9,10 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
+Require Import AuxRel AuxDef EventStructure Consistency BasicStep Step StepWf
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction 
         SimRel SimRelCert SimRelCertBasicStep SimRelAddJF SimRelAddEW SimRelAddCO.  
-Require Import StepWf.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -203,56 +202,6 @@ Section SimRelCertStep.
     unfold_cert_step_ H.
 
 Section SimRelCertStepProps. 
-
-  Lemma simrel_cert_start S thread
-        (SRC : simrel_common prog S G sc TC f)
-        (TR_STEP : isim_trav_step G sc thread TC TC') :
-    exists k st st',
-      ⟪ SRCC : simrel_cert prog S G sc TC TC' f f k st st' ⟫.
-  Proof.
-    edestruct simrel_cert_graph_start as [k [st' HH]]; eauto.
-    desf.
-    exists k.
-
-    (* TODO: return the corresponding state in 'simrel_cert_graph_start'. *)
-    eexists. 
-
-    exists st'.
-    constructor; auto.
-    
-    (* Ltac narrow_hdom q CsbqDOM := *)
-    (*   arewrite (NTid_ (ES.cont_thread S q) ⊆₁ fun _ => True); *)
-    (*   rewrite set_inter_full_r; *)
-    (*   rewrite CsbqDOM; *)
-    (*   rewrite set_unionC; *)
-    (*   rewrite <- set_unionA; *)
-    (*   rewrite set_unionK; *)
-    (*   apply SRC. *)
-
-    all: admit. 
-
-    (* { by narrow_hdom q CsbqDOM. } *)
-    (* { admit. } *)
-    (* { by narrow_hdom q CsbqDOM. } *)
-    (* { by narrow_hdom q CsbqDOM. } *)
-    (* { admit. } *)
-    (* { apply SRC.(ftid). }  *)
-    (* { apply SRC.(flab). } *)
-    (* { admit. } *)
-    (* { by narrow_hdom q CsbqDOM. }  *)
-    (* { admit. } *)
-    (* { admit. } *)
-    (* { admit. } *)
-    (* rewrite CsbqDOM. *)
-    (* unfold ES.cc. *)
-    (* rewrite <- restr_relE. *)
-    (* rewrite restr_inter. *)
-    (* rewrite restr_rel_mori. *)
-    (* { rewrite (restr_relE _ (Scf S)).  *)
-    (*   rewrite SRC.(fimgNcf).  *)
-    (*     by rewrite inter_false_l. }  *)
-    (* all: basic_solver. *)
-  Admitted.
 
   Lemma simrel_cert_basic_step k lbl lbl' lbls S jf ew co
         (st st' st'' : thread_st (ES.cont_thread S k))
@@ -1063,7 +1012,8 @@ Section SimRelCertStepProps.
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (LBL_STEP : lbl_step (ES.cont_thread S k) st st')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-    exists h' k' S',
+    exists k' h' S',
+      ⟪ kTID : ES.cont_thread S' k' = ES.cont_thread S k ⟫ /\
       ⟪ ESSTEP : (ESstep.t Weakestmo)^? S S' ⟫ /\
       ⟪ SRCC' : simrel_cert prog S' G sc TC TC' f h' k' st' st''⟫.
   Proof.
@@ -1077,13 +1027,14 @@ Section SimRelCertStepProps.
     assert (ESstep.t_ e e' S S') as WMO_STEP_.
     { eapply simrel_cert_step_step_; eauto. }
     set (h' := upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e'). 
-    exists h', k', S'. splits.
+    exists k', h', S'. splits.
+    { eapply ESBasicStep.basic_step_cont_thread_k; eauto. }
     { apply r_step. red.
       do 2 eexists; splits; eauto.
       eapply simrel_cert_step_consistent; eauto. }
     constructor.
     { constructor; try apply SRCC.
-      { admit. }
+      { eapply step_wf; eauto. }
       { eapply simrel_cert_step_consistent; eauto. }
       { eapply basic_step_simrel_cont; eauto; apply SRCC. }
       { eapply simrel_cert_step_e2a; eauto. }
@@ -1104,19 +1055,25 @@ Section SimRelCertStepProps.
       { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply SRCC. } 
       (* fD_rfc : (f □₁ fdom) ∩₁ SR ⊆₁ codom_rel (⦗ f □₁ fdom ⦘ ⨾ Srf) *)
       { admit. }
-      (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      (* fGrmwC : f □ (Grmw ⨾ ⦗ C ⦘) ⊆ Srmw *)
+      { admit. }
+      (* fGrfC : f □ (Grf ⨾ ⦗ C ⦘) ⊆ Srf *)
+      { admit. }
+      (* fGcoI  : f □ (⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘) ⊆ Sco *)
+      { admit. }
+      (* jfe_fI : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) *)
       { etransitivity. 
         { unfold_cert_step_ CertSTEP_.
           2,4 : eapply sim_add_jf_jfe_fI; eauto.
           all : erewrite ESstep.step_same_jf_jfe; 
                 eauto; apply SRCC. }
         erewrite ESstep.step_ew_mon; eauto. }
-      (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew^? ⨾ ⦗ f □₁ I ⦘) *)
+      (* ew_fI  : dom_rel Sew  ⊆₁ dom_rel (Sew ⨾ ⦗ f □₁ I ⦘) *)
       { unfold_cert_step_ CertSTEP_.
         1,2 : rewrite EW'; apply SRCC.
         all : eapply sim_add_ew_ew_fI; eauto.
         all : basic_solver. }
-      (* dom_rel (Srelease ⨾ Sew^? ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
+      (* dom_rel (Srelease ⨾ Sew ⨾ ⦗ f □₁ I ⦘) ⊆₁ f □₁ C *)
       admit. }
     (* cert : cert_graph G sc TC TC' (ES.cont_thread S k') state'' *)
     { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
@@ -1151,32 +1108,6 @@ Section SimRelCertStepProps.
     admit. 
   Admitted.
         
-      (* assert (g' □ Ssb S' ⊆ Gsb) as SSB. *)
-      (* { admit. } *)
-      (* assert (g □ Shb S ⊆ Ghb) as SHB. *)
-      (* { (* We need a lemma stating that. *) *)
-      (*   admit. } *)
-      (* assert (g' □ Shb S ⊆ Ghb) as SHB'. *)
-      (* { admit. } *)
-      (* assert (ES.cont_sb_dom S k × eq e ⊆ S'.(ES.sb)) as SBDSB. *)
-      (* { admit. } *)
-      (* assert (g' □ S'.(hb) ⊆ Ghb) as BHB. *)
-      (* { erewrite ESstep.load_step_hb; eauto. *)
-      (*   rewrite collect_rel_union. *)
-      (*   unionL; auto. *)
-      (*   rewrite collect_rel_seqi. *)
-      (*   etransitivity. *)
-      (*   2: { apply rewrite_trans_seq_cr_l. *)
-      (*        apply imm_s_hb.hb_trans. } *)
-      (*   apply seq_mori. *)
-      (*   { by rewrite collect_rel_cr, SHB'. } *)
-      (*   rewrite collect_rel_union. *)
-      (*   unionL. *)
-      (*   { rewrite SBDSB. *)
-      (*     etransitivity; eauto. *)
-      (*     apply imm_s_hb.sb_in_hb. } *)
-      (*   admit. } *)
-      
 End SimRelCertStepProps.
 
 End SimRelCertStep.
