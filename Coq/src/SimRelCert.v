@@ -116,8 +116,6 @@ Section SimRelCert.
 
   Notation "'E0'" := (E0 G TC' ktid).
 
-  Notation "'new_rf'" := (cert_rf G sc TC' ktid).
-  
   Notation "'contG'" := st.(ProgToExecution.G).
   Notation "'certG'" := st'.(ProgToExecution.G).
 

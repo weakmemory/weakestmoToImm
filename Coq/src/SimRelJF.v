@@ -23,7 +23,9 @@ Section AuxJF.
   
   Variable S : ES.t.
 
-  Variable f : actid -> eventid.
+  Variable a2e : actid -> eventid.
+
+  Variable WF : ES.Wf S.
 
   Notation "'SE'" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit'" := S.(ES.acts_init_set) (at level 10).
@@ -103,9 +105,9 @@ Section AuxJF.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ⨾ Sew ⨾ ⦗f □₁ I⦘).
-  Definition dr_irfi := dom_rel (⦗f □₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
-  Definition DR := SR ∩₁ (f □₁ C ∪₁ SE ∩₁ SAcq ∪₁
+  Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ⨾ Sew ⨾ ⦗a2e □₁ I⦘).
+  Definition dr_irfi := dom_rel (⦗a2e □₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
+  Definition DR := SR ∩₁ (a2e □₁ C ∪₁ SE ∩₁ SAcq ∪₁
                           dom_rel (Srmw) ∪₁
                           dr_ppo ∪₁ dr_irfi).
   
@@ -113,4 +115,32 @@ Section AuxJF.
     Sew ⨾ (Sjf ⨾ ⦗DR⦘)^? ⨾ Shb^? ⨾ (e2a ⋄ sc)^? ⨾ Shb^?.
   
   Definition sim_jf := sim_vf \ Sco ⨾ sim_vf.
+
+  Lemma dr_ppoE : dr_ppo ⊆₁ SE.
+  Proof.
+    unfold dr_ppo.
+    rewrite ES.sbE; auto.
+    basic_solver.
+  Qed.
+
+  Lemma dr_irfiE : dr_irfi ⊆₁ SE.
+  Proof.
+    unfold dr_irfi.
+    rewrite ES.ewE; auto.
+    basic_solver 10.
+  Qed.
+
+  Lemma drE (A2ED : a2e □₁ C ⊆₁ SE) : DR ⊆₁ SE.
+  Proof.
+    unfold DR.
+    apply set_subset_inter_l.
+    right.
+    rewrite A2ED.
+    rewrite (dom_l WF.(ES.rmwE)); auto.
+    unionL.
+    1-3: basic_solver.
+    { eapply dr_ppoE; eauto. }
+    eapply dr_irfiE; eauto.
+  Qed.
+
 End AuxJF.

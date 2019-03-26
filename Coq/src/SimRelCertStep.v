@@ -834,14 +834,143 @@ Section SimRelCertStepProps.
     all : rewrite ESstep.step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
+  Lemma cert_step_ew_in_ew k k' e e' S S'
+        (st st': (thread_st (ES.cont_thread S k)))
+        (CertSTEP : cert_step k k' st st' e e' S S') :
+    Sew S ⊆ Sew S'.
+  Proof.
+    cdes CertSTEP. cdes CertSTEP_.
+    desf; cdes CertSTEP_0; try cdes AEW.
+    all: rewrite EW'.
+    all: eauto with hahn.
+  Qed.
+
   (* TODO: continue from here *)
+  (* It's not true due to reads in the certification branch! *)
   Lemma simrel_cert_step_e2a_DR k k' e e' S S' h'
         (st st' st'': (thread_st (ES.cont_thread S k)))
+        (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (CertSTEP : cert_step k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    DR G TC S h ⊆₁ DR G TC' S' h'.
+     DR G TC' S' h' ⊆₁ DR G TC' S h ∪₁ eq e ∪₁ eq_opt e'.
   Proof.
+    assert (ESBasicStep.t e e' S S') as BSTEPH.
+    { red. do 5 eexists. apply CertSTEP. }
+    assert (ESstep.t_ e e' S S') as STEPH.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (ES.Wf S') as WFS.
+    { eapply step_wf; eauto. }
+
+    assert (~ SE S e) as NEE_.
+    { eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
+    assert (SE S ∩₁ eq e ⊆₁ ∅) as NEE.
+    { generalize NEE_. basic_solver. }
+
+    assert (SE S ∩₁ eq_opt e' ⊆₁ ∅) as NEE'.
+    { destruct e'; unfold eq_opt; simpls.
+      2: basic_solver.
+      intros x [HH BB]; subst.
+      eapply ESBasicStep.basic_step_acts_set_ne'; eauto. }
+    
+    assert (h' □₁ C' ⊆₁ SE S') as HCE.
+    { admit. }
+    arewrite (DR G TC' S' h' ⊆₁ SE S' ∩₁ DR G TC' S' h').
+    { apply set_subset_inter_r. split; auto.
+      apply drE; auto. }
+    rewrite ESBasicStep.basic_step_acts_set; eauto.
+    rewrite !set_unionA. rewrite set_inter_union_l.
+    unionL.
+    2: basic_solver.
+    unionR left.
+    unfold DR.
+    rewrite <- !set_interA.
+    arewrite (SE S ∩₁ SR S' ≡₁ SE S ∩₁ SR S).
+    { eapply ESstep.basic_step_r_eq_r; eauto. }
+    rewrite set_interC with (s:=SE S).
+    rewrite !set_inter_union_r.
+    repeat apply set_union_Proper.
+    { rewrite set_interA.
+      arewrite (h' □₁ C' ⊆₁ h □₁ C' ∪₁ eq e ∪₁ eq_opt e').
+      { subst. unfold option_map, upd_opt, upd in *.
+        unfolder. ins. desf; intuition.
+        all: repeat left; eexists; eauto. }
+      rewrite !set_inter_union_r.
+      rewrite NEE, NEE'.
+      basic_solver. }
+    { apply set_subset_inter_r. split.
+      { basic_solver. }
+      erewrite <- ESstep.basic_step_acq_in_acq with (S:=S) (S':=S'); eauto.
+      basic_solver. }
+    { cdes BSTEPH. cdes BSTEP_. rewrite RMW'.
+      rewrite dom_union.
+      rewrite !set_inter_union_r.
+      unionL.
+      { basic_solver. }
+      unfold ESBasicStep.rmw_delta.
+      generalize NEE NEE'. basic_solver. }
+    { unfold dr_ppo.
+
+
+    arewrite (Srmw S ⊆ Srmw S').
+    { cdes CertSTEP. cdes BSTEP_. rewrite RMW'. eauto with hahn. }
+    arewrite (SE S ∩₁ SAcq S ⊆₁ SE S ∩₁ SAcq S').
+    { eapply ESstep.basic_step_acq_eq_acq; eauto. }
+    assert (h □₁ I ⊆₁ h' □₁ I') as BB.
+    { admit. }
+    arewrite (dr_ppo G TC S h ⊆₁ dr_ppo G TC' S' h').
+    { unfold dr_ppo.
+      rewrite cert_step_ew_in_ew; eauto.
+      admit. }
+
+    arewrite (h □₁ C ⊆₁ h' □₁ C').
+    { arewrite (h □₁ C ⊆₁ h' □₁ C).
+      2: { arewrite (C ⊆₁ C').
+           2: done.
+           (* TODO: add a corresponding lemma to IMM. *)
+           admit. }
+      subst. rewrite set_collect_updo_opt.
+      3: { red. desf. }
+      2: { intros x CX HH. unfold option_map in *. red in HH. desf.
+           admit. }
+      rewrite set_collect_updo; auto.
+      admit. }
+
+
+    arewrite (DR G TC S h ⊆₁ SE S ∩₁ DR G TC' S' h').
+    2: basic_solver.
+    arewrite (DR G TC S h ⊆₁ SE S ∩₁ DR G TC S h).
+    { apply set_subset_inter_r. split; auto.
+      eapply simrel_DRE; eauto. }
+    unfold DR.
+    rewrite <- !set_interA.
+    arewrite (SE S ∩₁ SR S' ≡₁ SE S ∩₁ SR S).
+    { eapply ESstep.basic_step_r_eq_r; eauto. }
+    arewrite (Srmw S ⊆ Srmw S').
+    { cdes CertSTEP. cdes BSTEP_. rewrite RMW'. eauto with hahn. }
+    arewrite (SE S ∩₁ SAcq S ⊆₁ SE S ∩₁ SAcq S').
+    { eapply ESstep.basic_step_acq_eq_acq; eauto. }
+    assert (h □₁ I ⊆₁ h' □₁ I') as BB.
+    { admit. }
+    arewrite (dr_ppo G TC S h ⊆₁ dr_ppo G TC' S' h').
+    { unfold dr_ppo.
+      rewrite cert_step_ew_in_ew; eauto.
+      admit. }
+
+    arewrite (h □₁ C ⊆₁ h' □₁ C').
+    { arewrite (h □₁ C ⊆₁ h' □₁ C).
+      2: { arewrite (C ⊆₁ C').
+           2: done.
+           (* TODO: add a corresponding lemma to IMM. *)
+           admit. }
+      subst. rewrite set_collect_updo_opt.
+      3: { red. desf. }
+      2: { intros x CX HH. unfold option_map in *. red in HH. desf.
+           admit. }
+      rewrite set_collect_updo; auto.
+      admit. }
+
   Admitted.
 
   Lemma simrel_cert_step_e2a_jfDR k k' e e' S S'
