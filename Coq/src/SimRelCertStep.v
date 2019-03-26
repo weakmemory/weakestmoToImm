@@ -542,7 +542,7 @@ Section SimRelCertStepProps.
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') 
         (CertSTEP : cert_step k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    simrel_e2a S' G sc TC' f.
+    simrel_e2a S' G.
   Proof. 
     cdes CertSTEP; cdes BSTEP_.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -623,46 +623,13 @@ Section SimRelCertStepProps.
       all : eapply sim_add_ew_e2a_ew_eq; eauto.
       all : try rewrite ESOME; basic_solver. }
     (* e2a_co  : e2a □ Sco  ⊆ Gco *)
-    { unfold_cert_step_ CertSTEP_.
-      1,2 : 
-        eapply simrel_cert_basic_step_e2a_eqr; eauto;
-        try apply ES.coE; apply SRCC.
-      all : eapply sim_add_co_e2a_co; eauto.
-      all : basic_solver. }
-    (* e2a_jfDR : e2a S' □ Sjf S' ⨾ ⦗SimRelJF.DR G TC' S' f⦘ ⊆ Grf *)
-    { (* TODO: continue from here *)
-      admit. }
-
-    (* (* e2a_jf : e2a □ Sjf  ⊆ Gvf *) *)
-    (* { unfold_cert_step_ CertSTEP_. *)
-    (*   1,3 :  *)
-    (*     eapply simrel_cert_basic_step_e2a_eqr; eauto; *)
-    (*     try apply ES.jfE; apply SRCC. *)
-    (*   all : eapply sim_add_jf_e2a_jf_vf; eauto. } *)
-    (* (* e2a_rf_rmw : e2a □ (Srf ⨾ Srmw) ⊆ Grf ⨾ Grmw *) *)
-    (* assert (Sjf S ⨾ Srmw S ≡ ⦗ SE S ⦘ ⨾ (Sjf S ⨾ Srmw S) ⨾ ⦗ SE S ⦘)  *)
-    (*   as jf_rmwE. *)
-    (* { rewrite ES.jfE, ES.rmwE; auto. basic_solver 10. } *)
-    (* unfold_cert_step_ CertSTEP_. *)
-    (* { rewrite JF'.  *)
-    (*   rewrite ESBasicStep.basic_step_nupd_rmw. *)
-    (*   2 : { subst e'; eauto. } *)
-    (*   eapply simrel_cert_basic_step_e2a_eqr; eauto; apply SRCC. } *)
-    (* { cdes AJF. *)
-    (*   rewrite JF'.  *)
-    (*   rewrite ESBasicStep.basic_step_nupd_rmw. *)
-    (*   2 : { subst e'; eauto. } *)
-    (*   rewrite seq_union_l. *)
-    (*   arewrite_false (ESstep.jf_delta w e ⨾ Srmw S). *)
-    (*   { ESBasicStep.step_solver. } *)
-    (*   relsf. *)
-    (*   eapply simrel_cert_basic_step_e2a_eqr; eauto; apply SRCC. } *)
-    (* { rewrite JF'.  *)
-    (*   rewrite ESBasicStep.basic_step_nupd_rmw. *)
-    (*   2 : { subst e'; eauto. } *)
-    (*   eapply simrel_cert_basic_step_e2a_eqr; eauto; apply SRCC. } *)
-    admit. 
-  Admitted.
+    unfold_cert_step_ CertSTEP_.
+    1,2 : 
+      eapply simrel_cert_basic_step_e2a_eqr; eauto;
+      try apply ES.coE; apply SRCC.
+    all : eapply sim_add_co_e2a_co; eauto.
+    all : basic_solver.
+  Qed.
 
   Lemma simrel_cert_step_hb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
@@ -881,8 +848,8 @@ Section SimRelCertStepProps.
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
     { eapply step_wf; eauto. }
-    assert (simrel_e2a S' G sc TC' f) as SRE2A.
-    { admit. }
+    assert (simrel_e2a S' G) as SRE2A.
+    { eapply simrel_cert_step_e2a; eauto. }
     assert 
       (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st')) 
       as SRA2E.
@@ -898,9 +865,9 @@ Section SimRelCertStepProps.
     
     (* TODO: introduce a corresponding lemma. *)
     arewrite (Srf S' ⊆ SimRelJF.sim_jf G sc TC' S' f).
-    { unfold ES.rf. rewrite jf_in_sim_jf; eauto.
-      apply inclusion_minus_l.
-      unionR right.
+    { (* unfold ES.rf. rewrite jf_in_sim_jf; eauto. *)
+      (* apply inclusion_minus_l. *)
+      (* unionR right. *)
       (* Sew ;; sim_jf ⊆ sim_jf *)
       admit. }
 
@@ -943,8 +910,8 @@ Section SimRelCertStepProps.
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
     { eapply step_wf; eauto. }
-    assert (simrel_e2a S' G sc) as SRE2A.
-    { admit. }
+    assert (simrel_e2a S' G) as SRE2A.
+    { eapply simrel_cert_step_e2a; eauto. }
     assert 
       (simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st')) 
       as SRA2E.
@@ -966,12 +933,13 @@ Section SimRelCertStepProps.
     erewrite e2a_hb; eauto; try apply SRCC.
     erewrite e2a_co; eauto.
     rewrite !irreflexive_union. splits.
-    { apply hb_irr; auto. }
-    { erewrite e2a_rf, e2a_jf; eauto.
-      intros x [y [HB VF]].
-      unfold furr in VF. desc.  
-      eapply urr_hb_irr; try apply SRCC.
-      basic_solver. }
+    { apply hb_irr; eauto. }
+    { admit. }
+    (* { erewrite e2a_rf, e2a_jf; eauto. *)
+    (*   intros x [y [HB VF]]. *)
+    (*   unfold furr in VF. desc.   *)
+    (*   eapply urr_hb_irr; try apply SRCC. *)
+    (*   basic_solver. } *)
     { arewrite (Gco ⊆ Geco^?).
       2: by apply GCOH.
       rewrite Execution_eco.co_in_eco. basic_solver. }
@@ -1002,7 +970,7 @@ Section SimRelCertStepProps.
       eapply simrel_cert_step_thb_cf_hb_irr; eauto. }
     { eapply simrel_cert_step_jf_necf; eauto. }
     { eapply simrel_cert_step_jfe_vis; eauto. }
-    { admit. }
+    { eapply simrel_cert_step_coh; eauto. }
     { admit. }
     admit. 
   Admitted.

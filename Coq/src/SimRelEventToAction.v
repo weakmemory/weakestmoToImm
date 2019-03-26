@@ -6,7 +6,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
 Require Import AuxRel AuxDef EventStructure Consistency BasicStep 
-        CertRf CertGraph EventToAction LblStep SimRelCont SimRelJF.
+        CertRf CertGraph EventToAction LblStep SimRelCont.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -90,10 +90,6 @@ Section SimRelEventToAction.
   Variable a2e : actid -> eventid.
   Variable a2eD : actid -> Prop. 
 
-  Notation "'Ssim_jf'" := (sim_jf G sc TC S a2e).
-  Notation "'Ssim_vf'" := (sim_vf G sc TC S a2e).
-  Notation "'DR'" := (DR G TC S a2e).
-
   Record simrel_e2a := 
     { e2a_GE : e2a □₁ SE ⊆₁ GE;
       e2a_GEinit : GEinit ⊆₁ e2a □₁ SEinit;
@@ -103,10 +99,6 @@ Section SimRelEventToAction.
       e2a_rmw : e2a □ Srmw ⊆ Grmw;
       e2a_ew  : e2a □ Sew  ⊆ eq;
       e2a_co  : e2a □ Sco  ⊆ Gco;
-      
-      e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf;
-
-      jf_in_sim_jf : Sjf ⊆ Ssim_jf;
     }.
 
   Record simrel_a2e := 
@@ -193,121 +185,6 @@ Section SimRelEventToAction.
       splits.
       { eapply ES.ew_sym; eauto. }
       all: by eauto.
-    Qed.
-
-    Lemma e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw.
-    Proof.
-      arewrite (Sjf ⨾ Srmw ⊆ Sjf ⨾ ⦗dom_rel (Srmw)⦘ ⨾ Srmw)
-        by basic_solver 10.
-      rewrite (dom_r WF.(ES.jfD)) at 1.
-      rewrite !seqA.
-      arewrite (⦗SR⦘ ⨾ ⦗dom_rel (Srmw)⦘ ⊆ ⦗DR⦘).
-      { unfold SimRelJF.DR. basic_solver 10. }
-      rewrite <- seqA.
-      rewrite collect_rel_seqi.
-        by rewrite e2a_rmw, e2a_jfDR.
-    Qed.
-
-    Lemma e2a_rs : e2a □ Srs ⊆ Grs. 
-    Proof. 
-      rewrite rs_alt; auto.
-      rewrite !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      rewrite !e2a_W.
-      repeat apply seq_mori; eauto with hahn.
-      2: { rewrite collect_rel_crt.
-           eauto using clos_refl_trans_mori, e2a_jfrmw. }
-      rewrite ES.sbE; auto.
-      rewrite wf_sbE.
-      rewrite <- !restr_relE.
-      rewrite <- restr_inter_absorb_r.
-      rewrite <- restr_inter_absorb_r with (r':=same_loc Slab).
-      rewrite collect_rel_cr.
-      rewrite collect_rel_interi. 
-      apply clos_refl_mori, inter_rel_mori. 
-      { rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto. 
-        eapply e2a_sb; eauto; apply SRE2A. }
-      apply e2a_same_loc.
-    Qed.
-
-    Lemma e2a_release : e2a □ Srelease ⊆ Grelease.
-    Proof. 
-      rewrite release_alt; auto.
-      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      arewrite (SE ∩₁ (SF ∪₁ SW) ⊆₁ SE) by basic_solver.
-      rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
-      { unfold imm_s_hb.release. basic_solver 10. }
-      all: eauto; apply SRE2A.
-    Qed.
-
-    Lemma e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
-                      Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘.
-    Proof.
-      inv SRE2A.
-      arewrite (Ssb ⨾ ⦗SF⦘ ⊆ Ssb ⨾ ⦗SE∩₁SF⦘).
-      { rewrite (dom_r WF.(ES.sbE)) at 1. basic_solver 10. }
-      arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
-                Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE∩₁SAcq⦘).
-      { rewrite (dom_r WF.(ES.jfE)) at 1. basic_solver 10. }
-      arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘ ⊆
-                Sjf ⨾ ⦗DR⦘ ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘).
-      2: { rewrite <- !seqA.
-           do 2 rewrite collect_rel_seqi.
-           rewrite e2a_jfDR; auto.
-           rewrite !collect_rel_cr, !collect_rel_seqi, !set_collect_eqv.
-           rewrite e2a_sb; eauto.
-           rewrite e2a_F, e2a_Acq.
-           arewrite (GE ∩₁ GF ⊆₁ GF) by basic_solver.
-           arewrite (GE ∩₁ GAcq ⊆₁ GAcq) by basic_solver. }
-      rewrite crE. rewrite !seq_union_l, !seq_union_r, !seq_id_l.
-      apply union_mori.
-      { rewrite (dom_r WF.(ES.jfD)) at 1.
-        rewrite !seqA.
-        arewrite (⦗SR⦘ ⨾ ⦗SE ∩₁ SAcq⦘ ⊆ ⦗SR ∩₁ SE ∩₁ SAcq⦘ ⨾ ⦗SE ∩₁ SAcq⦘)
-          by basic_solver.
-        arewrite (SR ∩₁ SE ∩₁ SAcq ⊆₁ DR).
-        2: done.
-        unfold SimRelJF.DR.
-        basic_solver 10. }
-      rewrite (dom_r WF.(ES.jfD)) at 1.
-      rewrite !seqA.
-      arewrite (Ssb ⨾ ⦗SE ∩₁ SF⦘ ⊆ ⦗a2e □₁ C⦘ ⨾ Ssb ⨾ ⦗SE ∩₁ SF⦘).
-      2: { arewrite (⦗SR⦘ ⨾ ⦗a2e □₁ C⦘ ⊆ ⦗DR⦘).
-           2: done.
-           unfold SimRelJF.DR. basic_solver 10. }
-    Admitted.
-
-    Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
-    Proof. 
-      assert (e2a □₁ SE ⊆₁ GE) as EE by apply SRE2A.
-      unfold hb, imm_s_hb.hb.
-      rewrite collect_rel_ct.
-      apply clos_trans_mori.
-      rewrite collect_rel_union.
-      apply union_mori.
-      { eapply e2a_sb; eauto. }
-      unfold Consistency.sw.
-      rewrite collect_rel_seqi.
-      rewrite e2a_release. by rewrite e2a_jfacq.
-    Qed.
-
-    Lemma e2a_jf : e2a □ Sjf ⊆ Gvf.
-    Proof.
-      rewrite jf_in_sim_jf; auto.
-      arewrite (Ssim_jf ⊆ Ssim_vf).
-      unfold sim_vf.
-      rewrite (dom_l WF.(ES.ewE)).
-      rewrite (dom_l WF.(ES.ewD)). rewrite !seqA.
-      arewrite (⦗SE⦘ ⨾ ⦗SW⦘ ⊆ ⦗SE∩₁SW⦘) by basic_solver.
-      rewrite furr_alt; auto.
-      rewrite !collect_rel_seqi, !collect_rel_cr, !set_collect_eqv.
-      rewrite e2a_jfDR; auto.
-      rewrite e2a_hb. rewrite e2a_W.
-      arewrite (e2a □ (e2a ⋄ sc) ⊆ sc) by basic_solver.
-      arewrite (GE ∩₁ GW ⊆₁ GW) by basic_solver.
-      rewrite e2a_ew; auto.
-      arewrite (⦗GW⦘ ⨾ eq ⊆ ⦗GW⦘) by basic_solver.
     Qed.
 
     Lemma SsbD_in_GsbD :
@@ -431,7 +308,7 @@ Section SimRelEventToActionLemmas.
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
 
   Lemma simrel_e2a_init :
-    simrel_e2a (ES.init prog) G sc. 
+    simrel_e2a (ES.init prog) G.
   Proof. admit. Admitted.
 
   Lemma simrel_a2e_init :
@@ -643,10 +520,10 @@ Section SimRelEventToActionLemmas.
     eapply basic_step_e2a_E0_e'; eauto.
   Qed.
 
-  Lemma basic_step_e2a_GE TC' k k' e e' S' a2e
+  Lemma basic_step_e2a_GE TC' k k' e e' S'
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRK : simrel_cont prog S G TC)
-        (SRE2A : simrel_e2a S G sc TC a2e)
+        (SRE2A : simrel_e2a S G)
         (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
@@ -801,10 +678,10 @@ Section SimRelEventToActionLemmas.
     eapply basic_step_e2a_E0_e'; eauto. 
   Qed.
 
-  Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' a2e
+  Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S'
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRK : simrel_cont prog S G TC)
-        (SRE2A : simrel_e2a S G sc TC a2e)
+        (SRE2A : simrel_e2a S G)
         (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
