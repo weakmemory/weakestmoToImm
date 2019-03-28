@@ -13,6 +13,7 @@ Section AuxRel.
   Variable f g : A -> B.
   Variable h h' : A -> A.
   Variables r r' : relation A.
+  Variable p : B -> Prop.
 
   Definition clos_sym : relation A := fun x y => r x y \/ r y x. 
 
@@ -45,6 +46,8 @@ Section AuxRel.
 
   Definition downward_total := 
     forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
+
+  Definition set_map := fun x => p (f x).
 End AuxRel.
 
 Notation "⊤₁" := set_full.
@@ -53,13 +56,15 @@ Notation "⊤₂" := (fun _ _ => True).
 Notation "a ^⋈" := (clos_sym a) (at level 1).
 Notation "a ⁼" := (clos_refl_sym a) (at level 1, format "a ⁼").
 Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
+Notation "f ⋄₁ s"  := (set_map f s) (at level 39).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
+Notation "f ⋄ r"  := (map_rel f r) (at level 45).
 
 Hint Unfold 
      clos_sym clos_refl_sym 
-     inj_dom_s inj_dom restr_fun
+     inj_dom_s inj_dom restr_fun set_map
      img_rel eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
@@ -72,6 +77,7 @@ Variable b : B.
 Variables s s' s'' : A -> Prop.
 Variables q q' : A -> Prop.
 Variables r r' r'': relation A.
+Variable p : B -> Prop.
 
 Lemma seq_eqv : ⦗s⦘ ⨾ ⦗s'⦘ ≡ ⦗s ∩₁ s'⦘.
 Proof. basic_solver. Qed.
@@ -321,7 +327,7 @@ Proof. clear; unfolder; split; ins; intuition. Qed.
 Lemma fixset_eq_dom (EQD : eq_dom s h h') : 
   fixset s h <-> fixset s h'.
 Proof. 
-  clear a b s' s'' q q' r r' r'' f g B C. 
+  clear a b s' s'' q q' r r' r'' f g p B C. 
   unfolder in *. 
   split; ins; 
     specialize (EQD x SX);
@@ -703,7 +709,7 @@ Qed.
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
 Proof. 
-  clear r'' s s' s'' q q' a b f g h h' B C.
+  clear r'' s s' s'' q q' a b p f g h h' B C.
   rewrite crE, seq_union_r, seq_id_r.
   rewrite rt_unionE.
   rewrite <- cr_of_ct with (r := (r ⨾ r'＊)).
@@ -886,6 +892,12 @@ Proof.
   ins. eapply STEP; eauto.
   eapply rt_trans; eauto.
 Qed.
+
+Lemma collect_map_in_set : f □₁ (f ⋄₁ p) ⊆₁ p.
+Proof. basic_solver. Qed.
+
+Lemma set_in_map_collect : s ⊆₁ f ⋄₁ (f □₁ s).
+Proof. basic_solver. Qed.
 
 End Props.
 
