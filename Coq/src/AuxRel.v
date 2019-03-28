@@ -767,6 +767,14 @@ Proof.
     by right.
 Qed.
 
+Lemma eqv_l_set_compl_eqv_l : r ⊆ ⦗s⦘ ⨾ r ∪ r' -> ⦗set_compl s⦘ ⨾ r ⊆ r'.
+Proof. 
+  rewrite !seq_eqv_l.
+  intros Hr x y [nSx Rxy].
+  apply Hr in Rxy.
+  unfolder in Rxy. desf.
+Qed.
+
 Lemma dom_r2l_rt (HH : r ⨾ ⦗s⦘ ⊆ ⦗s⦘ ⨾ r') : r＊ ⨾ ⦗s⦘ ⊆ ⦗s⦘ ⨾ r'＊.
 Proof.
   unfolder in *. ins. desf.

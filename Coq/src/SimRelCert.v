@@ -19,8 +19,7 @@ Section SimRelCert.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable TC': trav_config.
-  Variable f : actid -> eventid.
-  Variable h : actid -> eventid.
+  Variable X : eventid -> Prop.
   Variable k : cont_label.
 
   (* A state in a continuation related to k in S. *)
@@ -109,11 +108,8 @@ Section SimRelCert.
 
   Notation "'Gvf'" := (furr G sc).
 
+  Notation "'kE'" := (ES.cont_sb_dom S k) (only parsing).
   Notation "'ktid'" := (ES.cont_thread S k) (only parsing).
-
-  Notation "'E0'" := (E0 G TC' ktid).
-
-  Notation "'new_rf'" := (cert_rf G sc TC' ktid).
   
   Notation "'contG'" := st.(ProgToExecution.G).
   Notation "'certG'" := st'.(ProgToExecution.G).
@@ -122,6 +118,8 @@ Section SimRelCert.
   Notation "'certE'" := certG.(acts_set).
 
   Notation "'certLab'" := (certLab G st').
+
+  Notation "'certX'" := ((X ∩₁ SNTid ktid) ∪₁ kE) (only parsing).
 
   Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
   Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
@@ -137,13 +135,13 @@ Section SimRelCert.
 
   Record simrel_cstate := 
     { cstate_stable : stable_state ktid st';
-      cstate_q_cont : Kstate (k, st);
+      cstate_cont : Kstate (k, st);
       cstate_reachable : (step ktid)＊ st st';
       cstate_covered : C ∩₁ GTid ktid ⊆₁ contE; 
     }.
 
   Record simrel_cert :=
-    { sim_com : simrel_common prog S G sc TC f;
+    { sim_com : simrel_common prog S G sc TC X;
 
       cert : cert_graph G sc TC TC' ktid st';
       cstate : simrel_cstate; 
@@ -151,14 +149,17 @@ Section SimRelCert.
       tr_step : isim_trav_step G sc ktid TC TC';
 
       (* TODO : we need to simplify this property somehow *)
-      hgfix : fixset (ES.cont_sb_dom S k) (h ∘ e2a);
+      (* hgfix : fixset (ES.cont_sb_dom S k) (h ∘ e2a); *)
 
-      sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st);
+      (* sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st); *)
 
-      hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab;
-      hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h; 
+      labCert : eq_dom kE Slab (certG.(lab) ∘ e2a);
+      (* hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab; *)
+      (* hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h;  *)
 
-      hrel_iss_cov : dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ I ⦘) ⊆₁ h □₁ C;
+      ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
+
+      rel_ew_cont_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ kE ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX ;
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
@@ -196,110 +197,87 @@ Section SimRelCert.
     Lemma wf_cont_state : 
       wf_thread_state (ES.cont_thread S k) st. 
     Proof. 
-      edestruct cstate_q_cont. 
+      edestruct cstate_cont. 
       { apply SRCC. }
       eapply contwf; eauto. 
       apply SRCC. desf.
     Qed.
 
-    Lemma htid : 
-      eq_dom hdom (Stid ∘ h) Gtid.
-    Proof. eapply a2e_tid. eapply SRCC. Qed.
+    (* Lemma htid :  *)
+    (*   eq_dom hdom (Stid ∘ h) Gtid. *)
+    (* Proof. eapply a2e_tid. eapply SRCC. Qed. *)
 
-    Lemma hfC : 
-      f □₁ C ≡₁ h □₁ C. 
-    Proof. 
-      eapply set_collect_eq_dom.
-      eapply eq_dom_mori; 
-        try eapply hfeq; auto.
-      red. basic_solver.
-    Qed.
+    (* Lemma hfC :  *)
+    (*   f □₁ C ≡₁ h □₁ C.  *)
+    (* Proof.  *)
+    (*   eapply set_collect_eq_dom. *)
+    (*   eapply eq_dom_mori;  *)
+    (*     try eapply hfeq; auto. *)
+    (*   red. basic_solver. *)
+    (* Qed. *)
 
-    Lemma himgInit :
-      SEinit ≡₁ h □₁ GEinit.
-    Proof.
-      (* etransitivity. *)
-      (* { apply fimgInit. apply SRCC. } *)
-      (* eapply set_collect_eq_dom. *)
-      admit.
-    Admitted.
+    (* Lemma himgInit : *)
+    (*   SEinit ≡₁ h □₁ GEinit. *)
+    (* Proof. *)
+    (*   (* etransitivity. *) *)
+    (*   (* { apply fimgInit. apply SRCC. } *) *)
+    (*   (* eapply set_collect_eq_dom. *) *)
+    (*   admit. *)
+    (* Admitted. *)
     
-    Lemma SEinit_in_cont_sb_dom : 
-      SEinit ⊆₁ ES.cont_sb_dom S k.
+    Lemma SEinit_in_kE : 
+      SEinit ⊆₁ kE.
     Proof. 
       eapply ES.cont_sb_dom_Einit; [apply SRCC|].
-      edestruct cstate_q_cont; [apply SRCC|].
+      edestruct cstate_cont; [apply SRCC|].
       desf. apply KK.
     Qed.
 
-    Lemma GEinit_in_e2a_cont_sb_dom : 
-      GEinit ⊆₁ e2a □₁ ES.cont_sb_dom S k. 
+    Lemma GEinit_in_e2a_kE : 
+      GEinit ⊆₁ e2a □₁ kE. 
     Proof. 
       erewrite <- e2a_same_Einit.
       2-4: by eapply SRCC.
       apply set_collect_mori; auto. 
-        by apply SEinit_in_cont_sb_dom.
+      by apply SEinit_in_kE.
     Qed.
 
-    Lemma cont_sb_dom_in_hhdom :
-      ES.cont_sb_dom S k ⊆₁ h □₁ hdom.
-    Proof.
-      unfold cert_dom.
-      arewrite (ES.cont_sb_dom S k ≡₁ h □₁ (e2a □₁ ES.cont_sb_dom S k)) at 1.
-      { rewrite set_collect_compose.
-        apply fixset_set_fixpoint.
-        apply SRCC. }
-      erewrite set_union_minus with (s := ES.cont_sb_dom S k) (s' := SEinit).
-      2 : by apply SEinit_in_cont_sb_dom.
-      rewrite !set_collect_union.
-      apply set_subset_union_l. split.
-      { arewrite (acts_set (ProgToExecution.G st) ≡₁ 
-                  e2a □₁ (ES.cont_sb_dom S k \₁ SEinit)).
-        2: by eauto with hahn.
-        eapply contstateE; eauto.
-        1-2: by apply SRCC.
-        edestruct cstate_q_cont; [apply SRCC|]. desf. }
-      rewrite <- !set_collect_union.
-      apply set_collect_mori; auto. 
-      rewrite e2a_same_Einit.
-      2-4 : eapply SRCC. 
-      eapply GEinit_in_hdom; apply SRCC.
-    Qed.
+    (* Lemma cont_sb_dom_in_hhdom : *)
+    (*   ES.cont_sb_dom S k ⊆₁ h □₁ hdom. *)
+    (* Proof. *)
+    (*   unfold cert_dom. *)
+    (*   arewrite (ES.cont_sb_dom S k ≡₁ h □₁ (e2a □₁ ES.cont_sb_dom S k)) at 1. *)
+    (*   { rewrite set_collect_compose. *)
+    (*     apply fixset_set_fixpoint. *)
+    (*     apply SRCC. } *)
+    (*   erewrite set_union_minus with (s := ES.cont_sb_dom S k) (s' := SEinit). *)
+    (*   2 : by apply SEinit_in_cont_sb_dom. *)
+    (*   rewrite !set_collect_union. *)
+    (*   apply set_subset_union_l. split. *)
+    (*   { arewrite (acts_set (ProgToExecution.G st) ≡₁  *)
+    (*               e2a □₁ (ES.cont_sb_dom S k \₁ SEinit)). *)
+    (*     2: by eauto with hahn. *)
+    (*     eapply contstateE; eauto. *)
+    (*     1-2: by apply SRCC. *)
+    (*     edestruct cstate_q_cont; [apply SRCC|]. desf. } *)
+    (*   rewrite <- !set_collect_union. *)
+    (*   apply set_collect_mori; auto.  *)
+    (*   rewrite e2a_same_Einit. *)
+    (*   2-4 : eapply SRCC.  *)
+    (*   eapply GEinit_in_hdom; apply SRCC. *)
+    (* Qed. *)
 
-    Lemma cfk_hdom : 
-      h □₁ hdom ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
+    Lemma certX_ncf_cont : 
+      certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
     Proof. 
       assert (ES.Wf S) as WFS by apply SRCC.
-      edestruct cstate_q_cont as [st_ [stEQ KK]]; 
+      edestruct cstate_cont as [st_ [stEQ KK]]; 
         [apply SRCC|].
-      red; split; [|basic_solver].
-      rewrite cert_dom_alt; [|apply SRCC].
-      rewrite !set_collect_union. 
+      red; split; [|done].
       rewrite set_inter_union_l.
       apply set_subset_union_l; split. 
-      { rewrite ES.cont_cf_Tid_; eauto.  
-        intros x [HH TIDx]. red.
-        destruct HH as [a [DOMa Ha]].
-        edestruct DOMa as [CIa NTIDa].
-        subst x. apply NTIDa.
-        erewrite <- a2e_tid; 
-          [eauto | | eapply DOMa]. 
-        eapply fixset_mori; 
-          [| eauto| eapply SRCC].
-        rewrite cert_dom_alt; [|apply SRCC]. 
-        red. basic_solver 10. }
-      erewrite contstateE;
-        [|apply SRCC | apply SRCC | rewrite stEQ; eapply KK].
-      arewrite 
-        (h □₁ (e2a □₁ (ES.cont_sb_dom S k \₁ SEinit)) ≡₁ 
-           ES.cont_sb_dom S k \₁ SEinit).
-      { rewrite set_collect_compose.
-        symmetry. eapply fixset_set_fixpoint.
-        eapply fixset_mori; eauto; 
-          [| eapply hgfix; eapply SRCC].  
-        red. basic_solver. }
-      rewrite ES.cont_cf_cont_sb; eauto. 
-      unfolder. ins. desf. 
+      { rewrite ES.cont_cf_Tid_; eauto. basic_solver. }
+      eapply ES.cont_sb_cont_cf_inter_false; eauto. 
     Qed.
 
     Lemma hdom_sb_dom :
@@ -322,7 +300,7 @@ Section SimRelCert.
       { apply C_in_hdom. eapply init_covered; eauto.
         split; auto. }
       right.
-      edestruct cstate_q_cont as [lstate]; [apply SRCC|]. desf.
+      edestruct cstate_cont as [lstate]; [apply SRCC|]. desf.
       assert (wf_thread_state (ES.cont_thread S k) lstate) as WFT.
       { eapply contwf; [by apply SRCC|]. apply KK. }
       eapply acts_rep in YY; eauto. 
@@ -345,117 +323,149 @@ Section SimRelCert.
       apply hdom_sb_dom; auto. red. eauto.
     Qed.
 
-    Lemma hsb : 
-      h □ (Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb. 
+    (* Lemma hsb :  *)
+    (*   h □ (Gsb ⨾ ⦗ hdom ⦘) ⊆ Ssb.  *)
+    (* Proof. *)
+    (*   rewrite hdom_sb_prefix; auto. *)
+    (*   intros x y SB. red in SB. desf. *)
+    (*   destruct_seq SB as [AA BB]. *)
+    (*   assert (~ is_init y') as YNINIT. *)
+    (*   { apply no_sb_to_init in SB. by destruct_seq_r SB as YY. } *)
+
+    (*   apply wf_sbE in SB. destruct_seq SB as [EX EY].  *)
+
+    (*   assert (SE (h x')) as HEX. *)
+    (*   { eapply SRCC.(sr_a2e_h). eexists. split; [|by eauto]; eauto. } *)
+    (*   assert (SE (h y')) as HEY. *)
+    (*   { eapply SRCC.(sr_a2e_h). eexists. split; [|by eauto]; eauto. } *)
+
+    (*   assert (~ SEinit (h y')) as HYNINIT. *)
+    (*   { intros JJ. apply himgInit in JJ; auto. *)
+    (*     unfolder in JJ. desc. apply YNINIT. *)
+    (*     erewrite a2e_inj; eauto; try apply SRCC. *)
+    (*     unfold cert_dom. do 2 left.  *)
+    (*     eapply init_covered; try apply SRCC. *)
+    (*     basic_solver. } *)
+
+    (*   set (CC := SB). apply sb_tid_init in CC. desf. *)
+    (*   2: { apply ES.sb_init; [by apply SRCC|]. *)
+    (*        split. 2: by split. *)
+    (*        apply himgInit; auto. eexists. split; eauto. *)
+    (*        split; auto. } *)
+    (*   assert (~ Scf (h x') (h y')) as NCF. *)
+    (*   { intros JJ. *)
+    (*     eapply a2e_ncf.  *)
+    (*     { apply SRCC.(sr_a2e_h). } *)
+    (*     apply seq_eqv_l. split; [|apply seq_eqv_r; split; eauto]. *)
+    (*     all: by eexists; split; [|by eauto]. } *)
+    (*   edestruct ES.same_thread as [PP _]; [by apply SRCC|]. *)
+    (*   specialize (PP (h x') (h y')). *)
+
+    (*   assert (~ is_init x') as XNINIT. *)
+    (*   { intros XX. apply YNINIT. *)
+    (*     eapply tid_initi; eauto; try by apply SRCC. *)
+    (*     split; auto. *)
+    (*     rewrite <- CC. destruct x'; desf. } *)
+    (*   assert (~ SEinit (h x')) as HXNINIT. *)
+    (*   { intros JJ. apply himgInit in JJ; auto. *)
+    (*     unfolder in JJ. desc. apply XNINIT. *)
+    (*     erewrite a2e_inj; try apply SRCC.(sr_a2e_h); eauto.  *)
+    (*     unfold cert_dom. do 2 left. *)
+    (*     eapply init_covered; try apply SRCC. *)
+    (*     basic_solver. } *)
+
+    (*   destruct PP as [PP|]; [| |done]. *)
+    (*   { apply seq_eqv_l. split. *)
+    (*     2: apply seq_eqv_r; split. *)
+    (*     1,3: by split. *)
+    (*     do 2 (rewrite <- htid in CC; auto). } *)
+    (*   destruct_seq PP as [XX YY]. *)
+    (*   red in PP. desf. *)
+    (*   { eapply SRCC.(sr_a2e_h) in PP; eauto. subst. by apply sb_irr in SB. } *)
+    (*   exfalso. *)
+    (*   eapply sb_irr. eapply sb_trans; eauto. *)
+    (*   eapply e2a_sb; eauto; try apply SRCC.  *)
+    (*   do 2 eexists. splits; eauto. *)
+    (*   1: fold (compose e2a h y'). *)
+    (*   2: fold (compose e2a h x'). *)
+    (*   all: eapply a2e_fix; [by apply SRCC|]; auto.  *)
+    (* Qed. *)
+
+    (* Lemma hlabCI :  *)
+    (*   eq_dom (C ∪₁ I) (Slab ∘ h) Glab. *)
+    (* Proof.  *)
+    (*   red. ins. etransitivity. *)
+    (*   { eapply hlab; eauto. basic_solver. } *)
+    (*   eapply cslab; [apply SRCC|].  *)
+    (*   do 4 left. *)
+    (*   (* it should be easy, but it seems there are no suitable lemmas *) *)
+    (*   admit.  *)
+    (* Admitted. *)
+
+    (* Lemma rel_ew_cert_ex_iss :  *)
+    (*   dom_rel (Srelease ⨾ Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX. *)
+    (* Proof. *)
+    (*   rewrite set_inter_union_l, id_union. *)
+    (*   rewrite !seq_union_r, dom_union.  *)
+    (*   unionL; [|by apply rel_ew_cont_iss]. *)
+    (*   arewrite (X ∩₁ SNTid (ES.cont_thread S k) ⊆₁ X). *)
+    (*   { basic_solver. } *)
+    (*   etransitivity. *)
+    (*   { eapply rel_ew_ex_iss_cov. apply SRCC. } *)
+    (*   arewrite  *)
+    (*     (X ≡₁ X ∩₁ SNTid (ES.cont_thread S k) ∪₁ X ∩₁ STid (ES.cont_thread S k) ) *)
+    (*     at 1. *)
+    (*   { unfolder; splits; ins; desf.  *)
+    (*     destruct  *)
+    (*       (classic (Stid x = ES.cont_thread S k));  *)
+    (*     basic_solver. } *)
+    (*   rewrite set_inter_union_l. *)
+    (*   apply set_union_Proper.  *)
+    (*   { basic_solver. } *)
+    (*   by apply ex_ktid_cov. *)
+    (* Qed. *)
+
+    Lemma rel_ew_cert_ex : 
+      dom_rel (Srelease ⨾ Sew ⨾ ⦗ certX ⦘) ⊆₁ certX.
     Proof.
-      rewrite hdom_sb_prefix; auto.
-      intros x y SB. red in SB. desf.
-      destruct_seq SB as [AA BB].
-      assert (~ is_init y') as YNINIT.
-      { apply no_sb_to_init in SB. by destruct_seq_r SB as YY. }
-
-      apply wf_sbE in SB. destruct_seq SB as [EX EY]. 
-
-      assert (SE (h x')) as HEX.
-      { eapply SRCC.(sr_a2e_h). eexists. split; [|by eauto]; eauto. }
-      assert (SE (h y')) as HEY.
-      { eapply SRCC.(sr_a2e_h). eexists. split; [|by eauto]; eauto. }
-
-      assert (~ SEinit (h y')) as HYNINIT.
-      { intros JJ. apply himgInit in JJ; auto.
-        unfolder in JJ. desc. apply YNINIT.
-        erewrite a2e_inj; eauto; try apply SRCC.
-        unfold cert_dom. do 2 left. 
-        eapply init_covered; try apply SRCC.
-        basic_solver. }
-
-      set (CC := SB). apply sb_tid_init in CC. desf.
-      2: { apply ES.sb_init; [by apply SRCC|].
-           split. 2: by split.
-           apply himgInit; auto. eexists. split; eauto.
-           split; auto. }
-      assert (~ Scf (h x') (h y')) as NCF.
-      { intros JJ.
-        eapply a2e_ncf. 
-        { apply SRCC.(sr_a2e_h). }
-        apply seq_eqv_l. split; [|apply seq_eqv_r; split; eauto].
-        all: by eexists; split; [|by eauto]. }
-      edestruct ES.same_thread as [PP _]; [by apply SRCC|].
-      specialize (PP (h x') (h y')).
-
-      assert (~ is_init x') as XNINIT.
-      { intros XX. apply YNINIT.
-        eapply tid_initi; eauto; try by apply SRCC.
-        split; auto.
-        rewrite <- CC. destruct x'; desf. }
-      assert (~ SEinit (h x')) as HXNINIT.
-      { intros JJ. apply himgInit in JJ; auto.
-        unfolder in JJ. desc. apply XNINIT.
-        erewrite a2e_inj; try apply SRCC.(sr_a2e_h); eauto. 
-        unfold cert_dom. do 2 left.
-        eapply init_covered; try apply SRCC.
-        basic_solver. }
-
-      destruct PP as [PP|]; [| |done].
-      { apply seq_eqv_l. split.
-        2: apply seq_eqv_r; split.
-        1,3: by split.
-        do 2 (rewrite <- htid in CC; auto). }
-      destruct_seq PP as [XX YY].
-      red in PP. desf.
-      { eapply SRCC.(sr_a2e_h) in PP; eauto. subst. by apply sb_irr in SB. }
-      exfalso.
-      eapply sb_irr. eapply sb_trans; eauto.
-      eapply e2a_sb; eauto; try apply SRCC. 
-      do 2 eexists. splits; eauto.
-      1: fold (compose e2a h y').
-      2: fold (compose e2a h x').
-      all: eapply a2e_fix; [by apply SRCC|]; auto. 
-    Qed.
-
-    Lemma hlabCI : 
-      eq_dom (C ∪₁ I) (Slab ∘ h) Glab.
-    Proof. 
-      red. ins. etransitivity.
-      { eapply hlab; eauto. basic_solver. }
-      eapply cslab; [apply SRCC|]. 
-      do 4 left.
-      (* it should be easy, but it seems there are no suitable lemmas *)
-      admit. 
-    Admitted.
-
-    Lemma rel_ew_hD : 
-      dom_rel (Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
-    Proof.
-      rewrite ew_in_eq_ew_fI_ew; [|apply SRCC].
+      rewrite ew_in_eq_ew_ex_iss_ew; [|apply SRCC].
       rewrite !seq_union_l, !seq_union_r, !dom_union, !seqA.
       unionL.
       { arewrite (Srelease ⨾ eq ≡ Srelease).
         { basic_solver. }
-        rewrite frel_in_Crel_sb; [|apply SRCC].
+        rewrite rel_in_ex_cov_rel_sb; [|apply SRCC].
         relsf. rewrite !seqA. splits.
-        { rewrite dom_seq. rewrite hfC.
-          unfold cert_dom. basic_solver 10. }
-        rewrite crE. relsf. splits; auto.
-        erewrite a2e_sb_prcl; eauto. apply SRCC. }
-      do 2 rewrite <- seqA. 
-      rewrite dom_seq, !seqA.
-      etransitivity. 
-      { eapply rel_fI_fC. apply SRCC. } 
-      rewrite hfC. unfold cert_dom. basic_solver 10.
-    Qed.
+        { rewrite dom_seq, dom_eqv. 
+          arewrite 
+            (X ≡₁ X ∩₁ SNTid (ES.cont_thread S k) ∪₁ X ∩₁ STid (ES.cont_thread S k) )
+            at 1.
+          { unfolder; splits; ins; desf. 
+            destruct 
+              (classic (Stid x = ES.cont_thread S k)); 
+              basic_solver. }
+          rewrite set_inter_union_l.
+          apply set_union_Proper. 
+          { basic_solver. }
+          by apply ex_ktid_cov. }
+        rewrite id_union, !seq_union_r, dom_union.
+        rewrite crE, !seq_union_l, !dom_union.
+        unionL.
+        1,3 : basic_solver.
+        { admit. } 
+        admit. 
+    Admitted.
 
-    Lemma hb_hD :
-      dom_rel (Shb ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
-    Proof.
-      rewrite hb_in_fChb_sb; [|apply SRCC].
-      rewrite seq_union_l, dom_union. unionL.
-      2: eapply a2e_sb_prcl; eauto; apply SRCC.
-      rewrite hfC. unfold cert_dom. basic_solver 10.
-    Qed.
+    Lemma cert_ex_hb_prcl :
+      dom_rel (Shb ⨾ ⦗ certX ⦘) ⊆₁ certX.  
+    Proof. admit. Admitted.
+    (*   rewrite hb_in_ex_cov_hb_sb; [|apply SRCC]. *)
+    (*   rewrite seq_union_l, dom_union. unionL. *)
+    (*   2: eapply a2e_sb_prcl; eauto; apply SRCC. *)
+    (*   rewrite hfC. unfold cert_dom. basic_solver 10. *)
+    (* Qed. *)
 
-    Lemma hb_rel_ew_hD :
-      dom_rel (Shb^? ⨾ Srelease ⨾ Sew ⨾ ⦗ h □₁ hdom ⦘) ⊆₁ h □₁ hdom.  
+    Lemma hb_rel_ew_cert_ex :
+      dom_rel (Shb^? ⨾ Srelease ⨾ Sew ⨾ ⦗ certX ⦘) ⊆₁ certX.  
     Proof. 
       rewrite crE with (r := Shb).
       relsf. split.
