@@ -69,7 +69,7 @@ Section SimRelCertStep.
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'Stid_' S t" := (fun x => Stid S x = t) (at level 1).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -845,15 +845,13 @@ Section SimRelCertStepProps.
     all: eauto with hahn.
   Qed.
 
-  (* TODO: continue from here *)
-  (* It's not true due to reads in the certification branch! *)
   Lemma simrel_cert_step_e2a_DR k k' e e' S S' h'
-        (st st' st'': (thread_st (ES.cont_thread S k)))
+        (st st' st'': thread_st (ES.cont_thread S k))
         (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')
         (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
         (CertSTEP : cert_step k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-     DR G TC' S' h' ⊆₁ DR G TC' S h ∪₁ eq e ∪₁ eq_opt e'.
+     DR G TC' S' h' \₁ (ES.cont_sb_dom S' k') ⊆₁ DR G TC' S h.
   Proof.
     assert (ESBasicStep.t e e' S S') as BSTEPH.
     { red. do 5 eexists. apply CertSTEP. }
@@ -879,8 +877,36 @@ Section SimRelCertStepProps.
     arewrite (DR G TC' S' h' ⊆₁ SE S' ∩₁ DR G TC' S' h').
     { apply set_subset_inter_r. split; auto.
       apply drE; auto. }
+    rewrite set_interC.
+    rewrite <- set_inter_minus_r.
+    arewrite (SE S' \₁ ES.cont_sb_dom S' k' ⊆₁ SE S \₁ ES.cont_sb_dom S k).
+    { cdes CertSTEP. cdes BSTEP_. subst k'.
+      rewrite ESBasicStep.basic_step_acts_set; eauto.
+      rewrite set_unionA.
+      rewrite set_minus_union_l.
+      unionL.
+      2: { etransitivity.
+           2: by apply set_subset_empty_l.
+           unfold ES.cont_sb_dom.
+           assert (eq e × eq_opt e' ⊆ Ssb S') as AA.
+           { rewrite SB'. unionR right. unfold ESBasicStep.sb_delta.
+             basic_solver. }
+           rewrite <- AA.
+           basic_solver 10. }
+      assert (ES.cont_sb_dom S k
+                ⊆₁ ES.cont_sb_dom S' (CEvent (opt_ext e e'))) as BB.
+      { (* TODO: introduce a lemma *) admit. }
+      apply set_minus_mori.
+      { done. }
+      apply BB. }
+  (* TODO: continue from here *)
+  (* It's not true due to reads in the certification branch! *)
+
+      unfold ES.cont_sb_dom at 1.
+      rewrite SB'.
+
     rewrite ESBasicStep.basic_step_acts_set; eauto.
-    rewrite !set_unionA. rewrite set_inter_union_l.
+    rewrite !set_unionA. rewrite !set_inter_union_l.
     unionL.
     2: basic_solver.
     unionR left.
