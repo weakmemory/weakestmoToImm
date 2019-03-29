@@ -850,6 +850,109 @@ Section SimRelCertStepProps.
     s \₁ s'' ⊆₁ s'.
   Proof. generalize IN. basic_solver. Qed.
 
+
+  Lemma simrel_cert_step_dr_ppo_cont k k' e e' S S' h'
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    dr_ppo G TC' S' h' \₁ (ES.cont_sb_dom S' k') ⊆₁ dr_ppo G TC' S h.
+  Proof.
+    assert (ESBasicStep.t e e' S S') as BSTEPH.
+    { red. do 5 eexists. apply CertSTEP. }
+    assert (ESstep.t_ e e' S S') as STEPH.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (ES.Wf S') as WFS.
+    { eapply step_wf; eauto. }
+
+    assert (~ SE S e) as NEE_.
+    { eapply ESBasicStep.basic_step_acts_set_ne; eauto. }
+    assert (SE S ∩₁ eq e ⊆₁ ∅) as NEE.
+    { generalize NEE_. basic_solver. }
+
+    assert (SE S ∩₁ eq_opt e' ⊆₁ ∅) as NEE'.
+    { destruct e'; unfold eq_opt; simpls.
+      2: basic_solver.
+      intros x [HH BB]; subst.
+      eapply ESBasicStep.basic_step_acts_set_ne'; eauto. }
+
+    assert (h' □₁ C' ⊆₁ h □₁ C' ∪₁ eq e ∪₁ eq_opt e') as HCEE.
+    { subst. unfold option_map, upd_opt, upd in *.
+      unfolder. ins. desf; intuition.
+      all: repeat left; eexists; eauto. }
+
+    assert (h' □₁ I' ⊆₁ h □₁ I' ∪₁ eq e ∪₁ eq_opt e') as HIEE.
+    { subst. unfold option_map, upd_opt, upd in *.
+      unfolder. ins. desf; intuition.
+      all: repeat left; eexists; eauto. }
+
+    assert (h' □₁ C' ⊆₁ SE S') as HCE.
+    { admit. }
+
+    assert (ES.cont_sb_dom S k ⊆₁
+            ES.cont_sb_dom S' (CEvent (opt_ext e e'))) as SBDOMIN.
+    { (* TODO: introduce a lemma *) admit. }
+
+    rewrite set_minusE.
+    unfold dr_ppo.
+    rewrite set_interC with (s':=set_compl (ES.cont_sb_dom S' k')).
+    rewrite <- dom_eqv1.
+    cdes CertSTEP. cdes BSTEP_.
+    rewrite SB'.
+    rewrite <- !seqA.
+    rewrite interC.
+    rewrite <- seq_eqv_inter_ll.
+    arewrite (⦗set_compl (ES.cont_sb_dom S' k')⦘ ⨾
+              (Ssb S ∪ ESBasicStep.sb_delta S k e e') ⊆
+              ⦗set_compl (ES.cont_sb_dom S' k')⦘ ⨾ Ssb S).
+    { rewrite seq_union_r.
+      arewrite
+        (⦗set_compl (ES.cont_sb_dom S' k')⦘ ⨾
+         ESBasicStep.sb_delta S k e e' ⊆ ∅₂).
+      2: basic_solver.
+      subst k'.
+      unfold ESBasicStep.sb_delta.
+      rewrite cross_union_r.
+      rewrite !seq_union_r.
+      unionL.
+      1,2: rewrite SBDOMIN; basic_solver 10.
+      unfold ES.cont_sb_dom. rewrite SB'.
+      assert (eq e × eq_opt e' ⊆
+                 (Ssb S ∪ ESBasicStep.sb_delta S k e e')^?) as DD.
+      { unionR right. unfold ESBasicStep.sb_delta.
+        basic_solver 10. }
+      rewrite <- DD.
+      unfolder. intros x y [AA [BB CC]]. desf. simpls.
+      apply AA. eauto. }
+    rewrite seq_eqv_inter_ll.
+    arewrite (Ssb S ∩ (e2a S' ⋄ Gppo) ⊆ Ssb S ∩ (e2a S ⋄ Gppo)).
+    { rewrite WF.(ES.sbE) at 1.
+      rewrite seq_eqv_inter_ll, lib.AuxRel.seq_eqv_inter_lr.
+      rewrite interC.
+      rewrite <- lib.AuxRel.seq_eqv_inter_lr, <- seq_eqv_inter_ll.
+      arewrite (⦗SE S⦘ ⨾ (e2a S' ⋄ Gppo) ⨾ ⦗SE S⦘ ⊆ e2a S ⋄ Gppo).
+      2: basic_solver.
+      unfolder. intros x y; ins. desf.
+      arewrite (e2a S x = e2a S' x).
+      { symmetry. eapply basic_step_e2a_eq_dom; eauto. }
+      arewrite (e2a S y = e2a S' y); [|done].
+      symmetry. eapply basic_step_e2a_eq_dom; eauto. }
+    rewrite (dom_r WF.(ES.sbE)) at 1.
+    rewrite lib.AuxRel.seq_eqv_inter_lr. rewrite !seqA.
+    arewrite (⦗SE S⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘ ⊆
+                     Sew S ⨾ ⦗h □₁ I'⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘).
+    2: basic_solver 20.
+    arewrite (⦗h' □₁ I'⦘ ⊆ ⦗h' □₁ I'⦘ ⨾ ⦗h' □₁ I'⦘) at 1 by apply seq_eqvK.
+    arewrite (⦗SE S⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘ ⊆ Sew S ⨾ ⦗h □₁ I'⦘ ⨾ Sew S').
+    2: done.
+    (* TODO: it should be easy *)
+    (* rewrite HIEE. *)
+    (* rewrite set_unionA, id_union, !seq_union_r. *)
+    (* unionL. *)
+  Admitted.
+
   Lemma simrel_cert_step_e2a_DR k k' e e' S S' h'
         (st st' st'': thread_st (ES.cont_thread S k))
         (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')
@@ -895,9 +998,9 @@ Section SimRelCertStepProps.
     rewrite set_interC.
     rewrite <- set_inter_minus_r.
 
-      assert (ES.cont_sb_dom S k
-                ⊆₁ ES.cont_sb_dom S' (CEvent (opt_ext e e'))) as SBDOMIN.
-      { (* TODO: introduce a lemma *) admit. }
+    assert (ES.cont_sb_dom S k ⊆₁
+            ES.cont_sb_dom S' (CEvent (opt_ext e e'))) as SBDOMIN.
+    { (* TODO: introduce a lemma *) admit. }
 
     (* TODO: separate lemma *)
     arewrite (SE S' \₁ ES.cont_sb_dom S' k' ⊆₁ SE S \₁ ES.cont_sb_dom S' k').
@@ -941,64 +1044,13 @@ Section SimRelCertStepProps.
       { basic_solver. }
       unfold ESBasicStep.rmw_delta.
       generalize NEE NEE'. basic_solver. }
-    { unfold dr_ppo.
-      rewrite set_minusE.
-      rewrite !set_interA.
-      apply set_inter_Proper; [done|].
-      apply set_subset_inter_l. right.
-      rewrite set_interC with (s':=set_compl (ES.cont_sb_dom S' k')).
-      rewrite <- dom_eqv1.
-      cdes CertSTEP. cdes BSTEP_.
-      rewrite SB'.
-      rewrite <- !seqA.
-      rewrite interC.
-      rewrite <- seq_eqv_inter_ll.
-      arewrite (⦗set_compl (ES.cont_sb_dom S' k')⦘ ⨾
-                (Ssb S ∪ ESBasicStep.sb_delta S k e e') ⊆
-                ⦗set_compl (ES.cont_sb_dom S' k')⦘ ⨾ Ssb S).
-      { rewrite seq_union_r.
-        arewrite
-          (⦗set_compl (ES.cont_sb_dom S' k')⦘ ⨾
-           ESBasicStep.sb_delta S k e e' ⊆ ∅₂).
-        2: basic_solver.
-        subst k'.
-        unfold ESBasicStep.sb_delta.
-        rewrite cross_union_r.
-        rewrite !seq_union_r.
-        unionL.
-        1,2: rewrite SBDOMIN; basic_solver 10.
-        unfold ES.cont_sb_dom. rewrite SB'.
-        assert (eq e × eq_opt e' ⊆
-                     (Ssb S ∪ ESBasicStep.sb_delta S k e e')^?) as DD.
-        { unionR right. unfold ESBasicStep.sb_delta.
-          basic_solver 10. }
-        rewrite <- DD.
-        unfolder. intros x y [AA [BB CC]]. desf. simpls.
-        apply AA. eauto. }
-      rewrite seq_eqv_inter_ll.
-      arewrite (Ssb S ∩ (e2a S' ⋄ Gppo) ⊆ Ssb S ∩ (e2a S ⋄ Gppo)).
-      { rewrite WF.(ES.sbE) at 1.
-        rewrite seq_eqv_inter_ll, lib.AuxRel.seq_eqv_inter_lr.
-        rewrite interC.
-        rewrite <- lib.AuxRel.seq_eqv_inter_lr, <- seq_eqv_inter_ll.
-        arewrite (⦗SE S⦘ ⨾ (e2a S' ⋄ Gppo) ⨾ ⦗SE S⦘ ⊆ e2a S ⋄ Gppo).
-        2: basic_solver.
-        unfolder. intros x y; ins. desf.
-        arewrite (e2a S x = e2a S' x).
-        { symmetry. eapply basic_step_e2a_eq_dom; eauto. }
-        arewrite (e2a S y = e2a S' y); [|done].
-        symmetry. eapply basic_step_e2a_eq_dom; eauto. }
-      rewrite (dom_r WF.(ES.sbE)) at 1.
-      rewrite lib.AuxRel.seq_eqv_inter_lr. rewrite !seqA.
-      arewrite (⦗SE S⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘ ⊆
-                Sew S ⨾ ⦗h □₁ I'⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘).
-      2: basic_solver 20.
-      (* TODO: it should be easy *)
-      arewrite (⦗SE S⦘ ⨾ Sew S' ⊆ ⦗SE S⦘ ⨾ ⦗SRlx S'⦘ ⨾ Sew S').
-      { generalize WFS.(ES.ewm).
-
-      admit. }
-      (* TODO: continue from here *)
+    all: rewrite set_minusE.
+    all: rewrite !set_interA.
+    all: apply set_inter_Proper; [done|].
+    all: apply set_subset_inter_l; right.
+    { eapply simrel_cert_step_dr_ppo_cont; eauto. }
+    unfold dr_irfi.
+    rewrite <- codom_eqv1.
   Admitted.
 
   Lemma simrel_cert_step_e2a_jfDR k k' e e' S S'

@@ -106,7 +106,7 @@ Section AuxJF.
   Notation "'I'"  := (issued TC).
 
   Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ⨾ Sew ⨾ ⦗a2e □₁ I⦘).
-  Definition dr_irfi := dom_rel (⦗a2e □₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
+  Definition dr_irfi := codom_rel (⦗a2e □₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
   Definition DR := SR ∩₁ (a2e □₁ C ∪₁ SE ∩₁ SAcq ∪₁
                           dom_rel (Srmw) ∪₁
                           dr_ppo ∪₁ dr_irfi).
@@ -126,7 +126,7 @@ Section AuxJF.
   Lemma dr_irfiE : dr_irfi ⊆₁ SE.
   Proof.
     unfold dr_irfi.
-    rewrite ES.ewE; auto.
+    rewrite ES.sbE; auto.
     basic_solver 10.
   Qed.
 
