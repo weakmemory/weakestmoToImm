@@ -986,6 +986,30 @@ Proof.
   by unfold opt_ext.
 Qed.  
 
+Lemma basic_step_cont_sb_dom lang k k' st st' e e' S S' 
+      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  ES.cont_sb_dom S' k' ≡₁ ES.cont_sb_dom S k ∪₁ eq e ∪₁ eq_opt e'.
+Proof.
+  cdes BSTEP_.
+  unfold ES.cont_sb_dom at 1. 
+  subst k'. rewrite SB'. 
+  unfold opt_ext, eq_opt in *.
+  destruct e' as [e'|].
+  { unfold sb_delta. 
+    rewrite crE. relsf.
+    arewrite_false (sb S ⨾ ⦗eq e'⦘). 
+    { step_solver. }
+    arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗eq e'⦘). 
+    { step_solver. }    
+    basic_solver 10. }
+  unfold sb_delta. 
+  rewrite crE. relsf.
+  arewrite_false (sb S ⨾ ⦗eq e⦘). 
+  { step_solver. }
+  basic_solver 10. 
+Qed.
+
 (******************************************************************************)
 (** ** `type_step_eq_dom` lemma *)
 (******************************************************************************)
