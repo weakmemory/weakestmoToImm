@@ -9,7 +9,7 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure BasicStep Consistency 
+Require Import AuxRel AuxDef EventStructure BasicStep Consistency Execution
         LblStep CertRf CertGraph EventToAction ImmProperties
         SimRelCont SimRelEventToAction SimRel SimRelCert. 
 
@@ -23,8 +23,7 @@ Section SimRelCertBasicStep.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable TC' : trav_config.
-  Variable f : actid -> eventid.
-  Variable h : actid -> eventid.
+  Variable X : eventid -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -66,7 +65,8 @@ Section SimRelCertBasicStep.
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'STid_' S" := (fun t x => Stid S x = t) (at level 1).
+  Notation "'SNTid_' S" := (fun t x => Stid S x <> t) (at level 1).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -81,9 +81,6 @@ Section SimRelCertBasicStep.
 
   Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
   Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
-
-  Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
-  Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
@@ -111,207 +108,225 @@ Section SimRelCertBasicStep.
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
 
-  Definition upd_a2e a2e e e' S' := 
-    upd_opt (upd a2e (e2a S' e) e) (option_map (e2a S') e') e'.
+  Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
+  Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
-  Lemma basic_step_simrel_updh_cert_dom_eq_dom k k' e e' S S' 
-        (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
-    eq_dom (cert_dom G TC (ES.cont_thread S k) st) (upd_a2e h e e' S') h.
-  Proof. 
-    red. ins. unfold upd_a2e.
-    rewrite updo_opt; auto.
-    { rewrite updo; auto. 
-      red. ins. subst. 
-      eapply basic_step_cert_dom_ne;
-        try apply SRCC; eauto. }
-    { unfold eq_opt, option_map. 
-      destruct e'; try done.
-      red; ins; subst.
-      eapply basic_step_cert_dom_ne';
-        try apply SRCC; eauto. }
-    apply option_map_same_ctor.
-  Qed.
+  Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
-  Lemma basic_step_simrel_updh_e k k' e e' S S' 
-        (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
-    (upd_a2e h e e' S') (e2a S' e) = e.
-  Proof. 
-    unfold upd_a2e. 
-    rewrite updo_opt.
-    { by rewrite upds. }
-    { unfold eq_opt.
-      destruct e' as [e'|]; simpl; red; ins.
-      erewrite basic_step_e2a_e with (e := e) in H; eauto.
-      2-5 : apply SRCC.
-      erewrite basic_step_e2a_e' in H; eauto.
-      2-5 : apply SRCC.
-      inv H. omega. }
-    apply option_map_same_ctor.
-  Qed.
+  (* Definition upd_a2e a2e e e' S' :=  *)
+  (*   upd_opt (upd a2e (e2a S' e) e) (option_map (e2a S') e') e'. *)
 
-  Lemma basic_step_simrel_updh_e' k k' e e' S S' 
-        (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
-    option_map (upd_a2e h e e' S') (option_map (e2a S') e') = e'.
-  Proof.
-    destruct e' as [e'|]; auto.
-    unfold upd_a2e, option_map, upd_opt.
-    by rewrite upds.
-  Qed.
+  (* Lemma basic_step_simrel_updh_cert_dom_eq_dom k k' e e' S S'  *)
+  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') :  *)
+  (*   eq_dom (cert_dom G TC (ES.cont_thread S k) st) (upd_a2e h e e' S') h. *)
+  (* Proof.  *)
+  (*   red. ins. unfold upd_a2e. *)
+  (*   rewrite updo_opt; auto. *)
+  (*   { rewrite updo; auto.  *)
+  (*     red. ins. subst.  *)
+  (*     eapply basic_step_cert_dom_ne; *)
+  (*       try apply SRCC; eauto. } *)
+  (*   { unfold eq_opt, option_map.  *)
+  (*     destruct e'; try done. *)
+  (*     red; ins; subst. *)
+  (*     eapply basic_step_cert_dom_ne'; *)
+  (*       try apply SRCC; eauto. } *)
+  (*   apply option_map_same_ctor. *)
+  (* Qed. *)
 
-  Lemma basic_step_simrel_updh_cert_dom k k' e e' S S' 
+  (* Lemma basic_step_simrel_updh_e k k' e e' S S'  *)
+  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') :  *)
+  (*   (upd_a2e h e e' S') (e2a S' e) = e. *)
+  (* Proof.  *)
+  (*   unfold upd_a2e.  *)
+  (*   rewrite updo_opt. *)
+  (*   { by rewrite upds. } *)
+  (*   { unfold eq_opt. *)
+  (*     destruct e' as [e'|]; simpl; red; ins. *)
+  (*     erewrite basic_step_e2a_e with (e := e) in H; eauto. *)
+  (*     2-5 : apply SRCC. *)
+  (*     erewrite basic_step_e2a_e' in H; eauto. *)
+  (*     2-5 : apply SRCC. *)
+  (*     inv H. omega. } *)
+  (*   apply option_map_same_ctor. *)
+  (* Qed. *)
+
+  (* Lemma basic_step_simrel_updh_e' k k' e e' S S'  *)
+  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') :  *)
+  (*   option_map (upd_a2e h e e' S') (option_map (e2a S') e') = e'. *)
+  (* Proof. *)
+  (*   destruct e' as [e'|]; auto. *)
+  (*   unfold upd_a2e, option_map, upd_opt. *)
+  (*   by rewrite upds. *)
+  (* Qed. *)
+
+  Lemma simrel_cert_basic_step_cert_ex k k' e e' S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
-    upd_a2e h e e' S' □₁ (cert_dom G TC (ES.cont_thread S' k') st') ≡₁
-            h □₁ (cert_dom G TC (ES.cont_thread S k) st) ∪₁ eq e ∪₁ eq_opt e'. 
+    certX S' k' ≡₁ certX S k ∪₁ eq e ∪₁ eq_opt e'.  
   Proof. 
-    erewrite basic_step_cert_dom; 
-      eauto; try apply SRCC.
-    rewrite !set_collect_union.
-    repeat apply set_union_Propere.
-    { apply set_collect_eq_dom.
-      eapply basic_step_simrel_updh_cert_dom_eq_dom; eauto. }
-    { rewrite set_collect_eq.
-      erewrite basic_step_simrel_updh_e; eauto. }
-    rewrite set_collect_eq_opt.
-    erewrite basic_step_simrel_updh_e'; eauto.
-  Qed.
-    
-  Lemma basic_step_simrel_a2e k k' e e' S S' 
-        (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
-    simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st'). 
-  Proof. 
-    cdes BSTEP_. 
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
     assert (ESBasicStep.t e e' S S') as BSTEP.
     { econstructor. eauto. }
-    assert (h □₁ cert_dom G TC (ES.cont_thread S k) st ⊆₁ SE S) 
-      as hCertE.
-    { eapply a2e_img. apply SRCC. }
-
-    constructor.
+    simpl. do 2 rewrite set_unionA.
+    apply set_union_Propere.
+    { (* TODO : separate lemma *)
+      split. 
+      { intros x [Xx NTIDx]. 
+        split; auto.
+        intros TIDx. apply NTIDx.
+        erewrite ESBasicStep.basic_step_tid_eq_dom; eauto.
+        2 : { eapply Execution.ex_inE; eauto. apply SRCC. }
+        rewrite TIDx. symmetry.
+        eapply ESBasicStep.basic_step_cont_thread_k; eauto. }
+      intros x [Xx NTIDx]. 
+      split; auto.
+      intros TIDx. apply NTIDx.
+      erewrite <- ESBasicStep.basic_step_tid_eq_dom; eauto.
+      2 : { eapply Execution.ex_inE; eauto. apply SRCC. }
+      rewrite TIDx. 
+      eapply ESBasicStep.basic_step_cont_thread_k; eauto. }
+    rewrite <- set_unionA.
+    eapply ESBasicStep.basic_step_cont_sb_dom; eauto.
+  Qed.
     
-    (* a2e_inj *)
-    { eapply inj_dom_more.
-      { eapply basic_step_cert_dom; eauto; apply SRCC. }
-      all : eauto.
-      rewrite set_unionA.
-      eapply inj_dom_union. 
-      { red. ins. 
-        erewrite !basic_step_simrel_updh_cert_dom_eq_dom 
-          in EQ; eauto.
-        eapply a2e_inj; eauto. apply SRCC. }
-      { apply inj_dom_union. 
-        { apply inj_dom_eq. }
-        { apply inj_dom_eq_opt. }
-        rewrite set_collect_eq, set_collect_eq_opt.
-        erewrite basic_step_simrel_updh_e; eauto.
-        erewrite basic_step_simrel_updh_e'; eauto.
-        ESBasicStep.step_solver. }
-      erewrite set_collect_eq_dom.
-      2 : eapply basic_step_simrel_updh_cert_dom_eq_dom; eauto.
-      rewrite set_collect_union.
-      rewrite set_collect_eq, set_collect_eq_opt.
-      erewrite basic_step_simrel_updh_e; eauto.
-      erewrite basic_step_simrel_updh_e'; eauto.
-      red. ins. destruct IN' as [IN' | IN'].
-      { eapply ESBasicStep.basic_step_acts_set_ne; eauto.
-        subst. eapply a2e_img; eauto. apply SRCC. }
-      unfold eq_opt, option_map, upd_opt in IN'.
-      destruct e' as [e'|]; auto. 
-      eapply ESBasicStep.basic_step_acts_set_ne'; eauto.
-      subst. eapply a2e_img; eauto. apply SRCC. }
+  (* Lemma basic_step_simrel_a2e k k' e e' S S'  *)
+  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') :  *)
+  (*   simrel_a2e S' (upd_a2e h e e' S') (cert_dom G TC (ES.cont_thread S' k') st').  *)
+  (* Proof.  *)
+  (*   cdes BSTEP_.  *)
+  (*   assert (ES.Wf S) as WFS. *)
+  (*   { apply SRCC. } *)
+  (*   assert (ESBasicStep.t e e' S S') as BSTEP. *)
+  (*   { econstructor. eauto. } *)
+  (*   assert (h □₁ cert_dom G TC (ES.cont_thread S k) st ⊆₁ SE S)  *)
+  (*     as hCertE. *)
+  (*   { eapply a2e_img. apply SRCC. } *)
+
+  (*   constructor. *)
+    
+  (*   (* a2e_inj *) *)
+  (*   { eapply inj_dom_more. *)
+  (*     { eapply basic_step_cert_dom; eauto; apply SRCC. } *)
+  (*     all : eauto. *)
+  (*     rewrite set_unionA. *)
+  (*     eapply inj_dom_union.  *)
+  (*     { red. ins.  *)
+  (*       erewrite !basic_step_simrel_updh_cert_dom_eq_dom  *)
+  (*         in EQ; eauto. *)
+  (*       eapply a2e_inj; eauto. apply SRCC. } *)
+  (*     { apply inj_dom_union.  *)
+  (*       { apply inj_dom_eq. } *)
+  (*       { apply inj_dom_eq_opt. } *)
+  (*       rewrite set_collect_eq, set_collect_eq_opt. *)
+  (*       erewrite basic_step_simrel_updh_e; eauto. *)
+  (*       erewrite basic_step_simrel_updh_e'; eauto. *)
+  (*       ESBasicStep.step_solver. } *)
+  (*     erewrite set_collect_eq_dom. *)
+  (*     2 : eapply basic_step_simrel_updh_cert_dom_eq_dom; eauto. *)
+  (*     rewrite set_collect_union. *)
+  (*     rewrite set_collect_eq, set_collect_eq_opt. *)
+  (*     erewrite basic_step_simrel_updh_e; eauto. *)
+  (*     erewrite basic_step_simrel_updh_e'; eauto. *)
+  (*     red. ins. destruct IN' as [IN' | IN']. *)
+  (*     { eapply ESBasicStep.basic_step_acts_set_ne; eauto. *)
+  (*       subst. eapply a2e_img; eauto. apply SRCC. } *)
+  (*     unfold eq_opt, option_map, upd_opt in IN'. *)
+  (*     destruct e' as [e'|]; auto.  *)
+  (*     eapply ESBasicStep.basic_step_acts_set_ne'; eauto. *)
+  (*     subst. eapply a2e_img; eauto. apply SRCC. } *)
         
-    (* a2e_img *)
-    { erewrite basic_step_simrel_updh_cert_dom; eauto.
-      rewrite a2e_img; try apply SRCC.
-      erewrite ESBasicStep.basic_step_acts_set
-        with (S' := S'); eauto. }
+  (*   (* a2e_img *) *)
+  (*   { erewrite basic_step_simrel_updh_cert_dom; eauto. *)
+  (*     rewrite a2e_img; try apply SRCC. *)
+  (*     erewrite ESBasicStep.basic_step_acts_set *)
+  (*       with (S' := S'); eauto. } *)
 
-    (* a2e_fix *)
-    { eapply fixset_more.
-      { eapply basic_step_cert_dom; eauto; apply SRCC. }
-      all : eauto.
-      rewrite !fixset_union. splits. 
-      { eapply fixset_eq_dom.
-        { unfold eq_dom, compose. 
-          intros x DOM.
-          erewrite basic_step_simrel_updh_cert_dom_eq_dom; eauto.
-          erewrite basic_step_e2a_eq_dom; eauto.
-          { by fold (compose (e2a S) h x). }
-          apply SRCC.(sr_a2e_h).
-          basic_solver. }
-        apply SRCC. }
-      { unfold eq_dom, compose. 
-        intros x DOM. subst x. 
-        erewrite basic_step_simrel_updh_e; eauto. }
-      unfold upd_a2e, eq_opt, option_map, upd_opt. 
-      red. ins. destruct e'; [|by exfalso].
-      unfold compose. subst x. by rewrite upds. }
+  (*   (* a2e_fix *) *)
+  (*   { eapply fixset_more. *)
+  (*     { eapply basic_step_cert_dom; eauto; apply SRCC. } *)
+  (*     all : eauto. *)
+  (*     rewrite !fixset_union. splits.  *)
+  (*     { eapply fixset_eq_dom. *)
+  (*       { unfold eq_dom, compose.  *)
+  (*         intros x DOM. *)
+  (*         erewrite basic_step_simrel_updh_cert_dom_eq_dom; eauto. *)
+  (*         erewrite basic_step_e2a_eq_dom; eauto. *)
+  (*         { by fold (compose (e2a S) h x). } *)
+  (*         apply SRCC.(sr_a2e_h). *)
+  (*         basic_solver. } *)
+  (*       apply SRCC. } *)
+  (*     { unfold eq_dom, compose.  *)
+  (*       intros x DOM. subst x.  *)
+  (*       erewrite basic_step_simrel_updh_e; eauto. } *)
+  (*     unfold upd_a2e, eq_opt, option_map, upd_opt.  *)
+  (*     red. ins. destruct e'; [|by exfalso]. *)
+  (*     unfold compose. subst x. by rewrite upds. } *)
 
-    (* a2e_sb_prcl : dom_rel (Ssb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD *)
-    { erewrite basic_step_simrel_updh_cert_dom; eauto.
-      rewrite !id_union, !seq_union_r, !dom_union.
-      unionL. splits.
-      { rewrite <- seq_eqvK.
-        rewrite hCertE at 1.
-        seq_rewrite ESBasicStep.basic_step_sbE; 
-          eauto; try apply SRCC.
-        etransitivity; [apply SRCC|].
-        basic_solver 5. }
-      { rewrite ESBasicStep.basic_step_sbe; eauto.
-        rewrite dom_cross; [|red; basic_solver].
-        rewrite cont_sb_dom_in_hhdom; eauto.
-        basic_solver 5. }
-      rewrite ESBasicStep.basic_step_sbe'; eauto.
-      destruct e' as [e'|]; [|basic_solver].
-      rewrite dom_cross; [|red; basic_solver]. 
-      rewrite cont_sb_dom_in_hhdom; eauto.
-      basic_solver 5. }
+  (*   (* a2e_sb_prcl : dom_rel (Ssb ⨾ ⦗ a2e □₁ a2eD ⦘) ⊆₁ a2e □₁ a2eD *) *)
+  (*   { erewrite basic_step_simrel_updh_cert_dom; eauto. *)
+  (*     rewrite !id_union, !seq_union_r, !dom_union. *)
+  (*     unionL. splits. *)
+  (*     { rewrite <- seq_eqvK. *)
+  (*       rewrite hCertE at 1. *)
+  (*       seq_rewrite ESBasicStep.basic_step_sbE;  *)
+  (*         eauto; try apply SRCC. *)
+  (*       etransitivity; [apply SRCC|]. *)
+  (*       basic_solver 5. } *)
+  (*     { rewrite ESBasicStep.basic_step_sbe; eauto. *)
+  (*       rewrite dom_cross; [|red; basic_solver]. *)
+  (*       rewrite cont_sb_dom_in_hhdom; eauto. *)
+  (*       basic_solver 5. } *)
+  (*     rewrite ESBasicStep.basic_step_sbe'; eauto. *)
+  (*     destruct e' as [e'|]; [|basic_solver]. *)
+  (*     rewrite dom_cross; [|red; basic_solver].  *)
+  (*     rewrite cont_sb_dom_in_hhdom; eauto. *)
+  (*     basic_solver 5. } *)
     
-    (* a2e_ncf : ES.cf_free S (a2e □₁ a2eD) *)
-    red. 
-    erewrite basic_step_simrel_updh_cert_dom; eauto.
-    erewrite ESBasicStep.basic_step_cf; 
-      eauto; try apply SRCC.
-    unfold ESBasicStep.cf_delta.
-    rewrite !csE, !transp_cross, !id_union. 
-    relsf. unionL.
-    { apply SRCC. }
-    all : try by (
-      try rewrite hCertE;
-      ESBasicStep.step_solver
-    ).
-    all : rewrite !seq_eqv_cross_r, !seq_eqv_cross_l.
-    all : erewrite cfk_hdom; eauto. 
-    all : basic_solver.
+  (*   (* a2e_ncf : ES.cf_free S (a2e □₁ a2eD) *) *)
+  (*   red.  *)
+  (*   erewrite basic_step_simrel_updh_cert_dom; eauto. *)
+  (*   erewrite ESBasicStep.basic_step_cf;  *)
+  (*     eauto; try apply SRCC. *)
+  (*   unfold ESBasicStep.cf_delta. *)
+  (*   rewrite !csE, !transp_cross, !id_union.  *)
+  (*   relsf. unionL. *)
+  (*   { apply SRCC. } *)
+  (*   all : try by ( *)
+  (*     try rewrite hCertE; *)
+  (*     ESBasicStep.step_solver *)
+  (*   ). *)
+  (*   all : rewrite !seq_eqv_cross_r, !seq_eqv_cross_l. *)
+  (*   all : erewrite cfk_hdom; eauto.  *)
+  (*   all : basic_solver. *)
 
-  Qed.
+  (* Qed. *)
 
-  Lemma basic_step_nupd_simrel_a2e k k' e S S' 
+  (* Lemma basic_step_nupd_simrel_a2e k k' e S S'  *)
+  (*       (st st' st'': thread_st (ES.cont_thread S k)) *)
+  (*       (SRCC : simrel_cert prog S G sc TC TC' f h k st st'') *)
+  (*       (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') :  *)
+  (*   let h' := upd h (e2a S' e) e in *)
+  (*   simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st').  *)
+  (* Proof. *)
+  (*   edestruct basic_step_simrel_a2e; eauto. *)
+  (*   unfold upd_opt, option_map in *.  *)
+  (*   constructor; auto. *)
+  (* Qed. *)
+
+  Lemma simrel_cert_basic_step_cstate k k' e e' S S'
         (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') : 
-    let h' := upd h (e2a S' e) e in
-    simrel_a2e S' h' (cert_dom G TC (ES.cont_thread S' k') st'). 
-  Proof.
-    edestruct basic_step_simrel_a2e; eauto.
-    unfold upd_opt, option_map in *. 
-    constructor; auto.
-  Qed.
-
-  Lemma basic_step_simrel_cstate k k' e e' S S'
-        (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     simrel_cstate S' TC k' st' st''. 
@@ -340,7 +355,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_e2a_eqr k k' e e' S S' r r' r''
         (st st' st'' : thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
         (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
         (rEQ : r' ≡ r) 
@@ -358,11 +373,10 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_hb_sb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    dom_rel ((Shb S)^? ⨾ (ESBasicStep.sb_delta S k e e')) ⊆₁ 
-            h □₁ cert_dom G TC (ES.cont_thread S k) st ∪₁ eq e. 
+    dom_rel ((Shb S)^? ⨾ (ESBasicStep.sb_delta S k e e')) ⊆₁ certX S k ∪₁ eq e. 
   Proof. 
     cdes BSTEP_.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -375,10 +389,9 @@ Section SimRelCertBasicStep.
                        ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e') ∪ eq e × eq_opt e'
       ) by basic_solver.
     relsf. splits.
-    { rewrite cont_sb_dom_in_hhdom; eauto.
-      intros x [y [z [[EQxy | HB] [certD _]]]].
+    { intros x [y [z [[EQxy | HB] [certD _]]]].
       { basic_solver. }
-      left. eapply hb_hD; eauto. basic_solver 10. }
+      left. eapply cert_ex_hb_prcl; eauto. basic_solver 10. }
     rewrite crE, seq_union_l, seq_id_l, dom_union. 
     unionL. splits.
     { basic_solver. }
@@ -388,11 +401,10 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_hb_rel_jf_sb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    dom_rel ((Shb S)^? ⨾ release S ⨾ Sjf S ⨾ ESBasicStep.sb_delta S k e e') ⊆₁ 
-            h □₁ cert_dom G TC (ES.cont_thread S k) st. 
+    dom_rel ((Shb S)^? ⨾ release S ⨾ Sjf S ⨾ ESBasicStep.sb_delta S k e e') ⊆₁ certX S k. 
   Proof. 
     cdes BSTEP_.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -407,8 +419,8 @@ Section SimRelCertBasicStep.
     relsf. splits.
     { rewrite <- seqA.
       intros x [y [z [HA HB]]].
-      eapply hb_rel_ew_hD; eauto.
-      edestruct jf_hD as [a Ha]; eauto.
+      eapply hb_rel_ew_cert_ex; eauto.
+      edestruct jf_kE_in_ew_cert_ex as [a Ha]; eauto.
       { generalize HB. basic_solver 10. }
       eexists. apply seqA. 
       eexists; splits; eauto. }
