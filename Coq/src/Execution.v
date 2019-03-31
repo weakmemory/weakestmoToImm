@@ -58,19 +58,19 @@ Notation "'Acqrel'" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10)
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 Record t (X : eventid -> Prop) :=
-  mk { Ex_inE : X ⊆₁ E ;
-       init_inEx : Einit ⊆₁ X ;
+  mk { ex_inE : X ⊆₁ E ;
+       init_in_ex : Einit ⊆₁ X ;
 
-       Ex_sb_prcl : dom_rel (sb ⨾ ⦗X⦘) ⊆₁ X ;
-       Ex_sw_prcl : dom_rel (sw ⨾ ⦗X⦘) ⊆₁ X ;
+       ex_sb_prcl : dom_rel (sb ⨾ ⦗X⦘) ⊆₁ X ;
+       ex_sw_prcl : dom_rel (sw ⨾ ⦗X⦘) ⊆₁ X ;
        
-       Ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw) ⊆₁ X ;
+       ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw) ⊆₁ X ;
 
-       Ex_rf_compl : X ∩₁ R ⊆₁ codom_rel (⦗X⦘ ⨾ rf) ;
+       ex_rf_compl : X ∩₁ R ⊆₁ codom_rel (⦗X⦘ ⨾ rf) ;
        
-       Ex_ncf : ES.cf_free S X ; 
+       ex_ncf : ES.cf_free S X ; 
 
-       Ex_vis : X ⊆₁ vis S ;
+       ex_vis : X ⊆₁ vis S ;
      }.
 
 Lemma hb_prcl X (exec : t X) : 
@@ -79,8 +79,8 @@ Proof.
   rewrite seq_eqv_r.
   intros x [y [HB yX]].
   induction HB as [x y [SB | SW] | ]; auto.
-  { apply Ex_sb_prcl; auto. basic_solver 10. }
-  apply Ex_sw_prcl; auto. basic_solver 10. 
+  { apply ex_sb_prcl; auto. basic_solver 10. }
+  apply ex_sw_prcl; auto. basic_solver 10. 
 Qed.
 
 End Execution.
@@ -145,19 +145,19 @@ Lemma step_preserves X e e' S S'
 Proof.       
   cdes BSTEP; cdes BSTEP_.
   constructor.
-  (* Ex_inE : X ⊆₁ E S; *)
+  (* ex_inE : X ⊆₁ E S; *)
   { etransitivity; [apply EXEC |].
     eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
-  (* init_inEx : Einit S ⊆₁ X *)
+  (* init_in_ex : Einit S ⊆₁ X *)
   { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply EXEC. } 
-  (* Ex_sb_prcl : dom_rel (sb S ⨾ ⦗X⦘) ⊆₁ X *)
+  (* ex_sb_prcl : dom_rel (sb S ⨾ ⦗X⦘) ⊆₁ X *)
   { rewrite SB'. 
     relsf. splits.
     { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply Ex_inE; auto.
+    arewrite (X ⊆₁ E S) by apply ex_inE; auto.
     erewrite ESBasicStep.basic_step_sb_deltaE; eauto. 
     basic_solver. }
-  (* Ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
+  (* ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
   { (* TODO: add a corresponding lemma  *)
     arewrite (sw S' ≡ sw S ∪ ESstep.sw_delta S S' k e e').
     { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
@@ -171,29 +171,29 @@ Proof.
       cdes AEW. type_solver. }
     relsf. splits.
     { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply Ex_inE; auto.
+    arewrite (X ⊆₁ E S) by apply ex_inE; auto.
     erewrite ESstep.basic_step_sw_deltaE; eauto. 
     basic_solver. }
-  (* Ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
+  (* ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
   { rewrite RMW'. unfold ESBasicStep.rmw_delta.
     relsf. splits.
     { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply Ex_inE; auto. 
+    arewrite (X ⊆₁ E S) by apply ex_inE; auto. 
     ESBasicStep.step_solver. }
-  (* Ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
+  (* ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
   { admit. }
-  (* Ex_ncf : ES.cf_free S X *)
+  (* ex_ncf : ES.cf_free S X *)
   { red. 
     rewrite <- set_interK with (s := X).
     rewrite id_inter.
-    arewrite (X ⊆₁ E S) at 2 by apply Ex_inE; auto. 
-    arewrite (X ⊆₁ E S) at 2 by apply Ex_inE; auto. 
+    arewrite (X ⊆₁ E S) at 2 by apply ex_inE; auto. 
+    arewrite (X ⊆₁ E S) at 2 by apply ex_inE; auto. 
     arewrite (⦗E S⦘ ⨾ cf S' ⨾ ⦗E S⦘ ≡ cf S).
     { rewrite <- restr_relE. erewrite ESBasicStep.basic_step_cf_restr; eauto. }
     apply EXEC. }
-  (* Ex_vis : X ⊆₁ vis S *)
+  (* ex_vis : X ⊆₁ vis S *)
   etransitivity.
-  { eapply Ex_vis; eauto. }
+  { eapply ex_vis; eauto. }
   eapply ESstep.step_vis_mon; eauto. 
 Admitted.
 

@@ -331,7 +331,7 @@ Section SimRel.
       rewrite seq_eqv_r.
       intros x [y [SB [Xy Cy]]].
       split.
-      { eapply Execution.Ex_sb_prcl; [apply SRC|]. basic_solver 10. }
+      { eapply Execution.ex_sb_prcl; [apply SRC|]. basic_solver 10. }
       eapply sb_e2a_cov. basic_solver 10.
     Qed.
 
