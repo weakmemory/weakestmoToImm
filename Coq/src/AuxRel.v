@@ -758,13 +758,34 @@ Proof.
   apply inclusion_union_r1.
 Qed.   
 
-Lemma set_compl_union_id : s ∪₁ set_compl s ≡₁ fun _ => True.
+Lemma set_compl_union_id : s ∪₁ set_compl s ≡₁ ⊤₁.
 Proof.
   split; [basic_solver|].
   intros x _.
   destruct (classic (s x)).
   { by left. }
     by right.
+Qed.
+
+Lemma set_split : s' ∪₁ s'' ≡₁ ⊤₁ -> s ≡₁ s ∩₁ s' ∪₁ s ∩₁ s''.
+Proof. 
+  unfolder. intros [_ HS]. 
+  split; [|basic_solver].
+  intros x Sx. 
+  specialize (HS x I).
+  basic_solver. 
+Qed.
+
+Lemma set_split_comlete : s' ≡₁ s' ∩₁ s ∪₁ s' ∩₁ (set_compl s).
+Proof. 
+  (* copy paste of previous lemma because of section variables :( *)
+  unfolder. 
+  split; [|basic_solver].
+  intros x Sx. 
+  pose proof set_compl_union_id as [_ HH].
+  specialize (HH x I).
+  unfolder in HH.
+  basic_solver. 
 Qed.
 
 Lemma eqv_l_set_compl_eqv_l : r ⊆ ⦗s⦘ ⨾ r ∪ r' -> ⦗set_compl s⦘ ⨾ r ⊆ r'.

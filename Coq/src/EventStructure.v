@@ -163,6 +163,7 @@ Notation "'same_loc'" := (same_loc lab).
 Notation "'same_val'" := (same_val lab).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+Notation "'NTid' t" := (fun x => tid x <> t) (at level 1).
 Notation "'Loc_' l" := (fun x => loc x = l) (at level 1).
 
 Notation "'sb'"    := S.(ES.sb).
@@ -206,7 +207,7 @@ Record Wf :=
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
     sb_ninit : sb ⨾ ⦗Einit⦘ ≡ ∅₂;
-    sb_tid : ⦗Eninit⦘ ⨾ sb  ⊆ same_tid;
+    sb_tid : ⦗Eninit⦘ ⨾ sb ⊆ same_tid;
 
     sb_irr     : irreflexive sb;
     sb_trans   : transitive sb;
@@ -293,6 +294,14 @@ Qed.
 Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
 Proof. unfold ES.acts_ninit_set. basic_solver. Qed.
 
+Lemma Tid_compl_NTid t : Tid t ∪₁ NTid t ≡₁ ⊤₁. 
+Proof. 
+  unfolder. split; [done|]. ins.
+  destruct (classic (tid x = t)); auto.
+Qed.
+
+Lemma set_split_Tid X t : X ≡₁ X ∩₁ Tid t ∪₁ X ∩₁ NTid t.
+Proof. apply set_split, Tid_compl_NTid. Qed.
 
 (******************************************************************************)
 (** ** same_tid properites *)
@@ -335,6 +344,64 @@ Proof.
   { basic_solver. }
   rewrite sb_Einit_Eninit; auto.
   apply inclusion_union_l; basic_solver. 
+Qed.
+
+Lemma Tid_sb_prcl WF t : 
+  dom_rel (sb ⨾ ⦗Tid t⦘) ⊆₁ Einit ∪₁ Tid t.
+Proof. 
+  rewrite seq_eqv_r.
+  intros x [y [SB TID]].
+  assert (E x) as Ex.
+  { apply sbE in SB; auto. 
+    generalize SB. basic_solver. }
+  apply acts_set_split in Ex.
+  destruct Ex as [Init | nInit]; [by left|].
+  right. erewrite sb_tid; eauto. basic_solver. 
+Qed.
+
+Lemma Tid_sb_fwcl WF t (nInit : t <> tid_init) : 
+  codom_rel (⦗Tid t⦘ ⨾ sb) ⊆₁ Tid t.
+Proof. 
+  rewrite seq_eqv_l.
+  intros y [x [TID SB]].
+  subst t. symmetry. 
+  erewrite sb_tid; eauto.
+  apply seq_eqv_l. 
+  split; auto.
+  unfold acts_ninit_set, acts_init_set.
+  unfolder; split; auto. 
+  { apply sbE in SB; auto. 
+    generalize SB. basic_solver. }
+  by intros [_ TID]. 
+Qed.
+
+Lemma NTid_sb_prcl WF t : 
+  dom_rel (sb ⨾ ⦗NTid t⦘) ⊆₁ Einit ∪₁ NTid t.
+Proof. 
+  rewrite seq_eqv_r.
+  intros x [y [SB nTID]].
+  assert (E x) as Ex.
+  { apply sbE in SB; auto. 
+    generalize SB. basic_solver. }
+  apply acts_set_split in Ex.
+  destruct Ex as [Init | nInit]; [by left|].
+  right. erewrite sb_tid; eauto. basic_solver. 
+Qed.
+
+Lemma NTid_sb_fwcl WF t : 
+  codom_rel (⦗NTid t \₁ Einit⦘ ⨾ sb) ⊆₁ NTid t.
+Proof. 
+  rewrite seq_eqv_l.
+  intros y [x [[nTID nInit] SB]].
+  intros TID. apply nTID.  
+  subst t. 
+  erewrite sb_tid; eauto.
+  apply seq_eqv_l. 
+  split; auto.
+  unfold acts_ninit_set, acts_init_set.
+  unfolder; split; auto. 
+  apply sbE in SB; auto. 
+  generalize SB. basic_solver.
 Qed.
 
 (******************************************************************************)
