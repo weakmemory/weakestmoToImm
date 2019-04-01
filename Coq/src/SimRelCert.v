@@ -107,6 +107,9 @@ Section SimRelCert.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
+  Notation "'C''"  := (covered TC').
+  Notation "'I''"  := (issued TC').
+
   Notation "'Gvf'" := (furr G sc).
 
   Notation "'kE'" := (ES.cont_sb_dom S k) (only parsing).
@@ -154,7 +157,7 @@ Section SimRelCert.
 
       (* sr_a2e_h : simrel_a2e S h (cert_dom G TC ktid st); *)
 
-      labCert : eq_dom kE Slab (certG.(lab) ∘ e2a);
+      kE_lab : eq_dom kE Slab (certG.(lab) ∘ e2a);
       (* hlab : eq_dom (C ∪₁ I ∪₁ contE) (Slab ∘ h) certLab; *)
       (* hfeq : eq_dom (C ∪₁ (dom_rel (Gsb^? ⨾ ⦗ I ⦘) ∩₁ GNTid ktid)) f h;  *)
 
@@ -195,8 +198,17 @@ Section SimRelCert.
       eapply init_covered; eauto. 
     Qed.
 
+    Lemma ktid_ninit : 
+      ktid <> tid_init. 
+    Proof. 
+      edestruct cstate_cont; [apply SRCC|]. desc.
+      intros kTID.
+      edestruct ES.init_tid_K; [apply SRCC|].
+      do 2 eexists. splits; eauto.
+    Qed.
+
     Lemma wf_cont_state : 
-      wf_thread_state (ES.cont_thread S k) st. 
+      wf_thread_state ktid st. 
     Proof. 
       edestruct cstate_cont. 
       { apply SRCC. }
@@ -267,19 +279,6 @@ Section SimRelCert.
     (*   2-4 : eapply SRCC.  *)
     (*   eapply GEinit_in_hdom; apply SRCC. *)
     (* Qed. *)
-
-    Lemma certX_ncf_cont : 
-      certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
-    Proof. 
-      assert (ES.Wf S) as WFS by apply SRCC.
-      edestruct cstate_cont as [st_ [stEQ KK]]; 
-        [apply SRCC|].
-      red; split; [|done].
-      rewrite set_inter_union_l.
-      apply set_subset_union_l; split. 
-      { rewrite ES.cont_cf_Tid_; eauto. basic_solver. }
-      eapply ES.cont_sb_cont_cf_inter_false; eauto. 
-    Qed.
 
     Lemma hdom_sb_dom :
       dom_rel (Gsb ⨾ ⦗ hdom ⦘) ⊆₁ hdom.
@@ -438,6 +437,59 @@ Section SimRelCert.
       basic_solver.      
     Qed.
 
+    Lemma cert_ex_inE : 
+      certX ⊆₁ SE.
+    Proof. 
+      unionL.
+      { rewrite Execution.ex_inE 
+          with (X := X); [|apply SRCC].
+        basic_solver. }
+      edestruct cstate_cont; [apply SRCC|]. desc.
+      eapply ES.cont_sb_domE; eauto.
+      apply SRCC.
+    Qed.
+
+    Lemma kE_cert_lab : 
+      eq_dom kE Slab (certLab ∘ e2a).
+    Proof.
+      intros x KSBx.
+      unfold compose, CertGraph.certLab.
+        destruct 
+          (excluded_middle_informative (certE (e2a x)))
+        as [CertEx | nCertEx].
+        { apply kE_lab; auto. }
+      admit. 
+    Admitted.
+    
+    Lemma cert_ex_cov_iss_lab : 
+      eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a).
+    Proof. 
+      rewrite set_inter_union_l.
+      apply eq_dom_union. split. 
+      { arewrite (X ∩₁ SNTid ktid ∩₁ e2a ⋄₁ (C' ∪₁ I') ⊆₁ 
+                  X ∩₁ e2a ⋄₁ (C ∪₁ I)).
+        { admit. }
+        eapply ex_cov_iss_lab. apply SRCC. }
+      intros x [KSBx e2aCIx].
+      erewrite kE_cert_lab; auto.
+      unfold compose.
+      erewrite <- cslab 
+        with (G := G); [auto | apply SRCC|].
+      unfold D. do 4 left. basic_solver.
+    Admitted.
+
+    Lemma cert_ex_cov_iss_cert_lab : 
+      eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (certLab ∘ e2a).
+    Proof. 
+      intros x [KSBx e2aCIx].
+      erewrite cert_ex_cov_iss_lab.
+      2 : basic_solver.
+      unfold compose.
+      erewrite <- cslab; 
+        [eauto | apply SRCC |].
+      unfold D. do 4 left. basic_solver.
+    Qed.
+
     Lemma ex_ntid_sb_prcl : 
       dom_rel (Ssb ⨾ ⦗ X ∩₁ SNTid ktid ⦘) ⊆₁ SEinit ∪₁ X ∩₁ SNTid ktid.
     Proof. 
@@ -460,6 +512,19 @@ Section SimRelCert.
       edestruct cstate_cont; [apply SRCC|]. 
       eapply ES.cont_sb_prcl; [apply SRCC|].
       desc. apply KK.
+    Qed.
+
+    Lemma certX_ncf_cont : 
+      certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
+    Proof. 
+      assert (ES.Wf S) as WFS by apply SRCC.
+      edestruct cstate_cont as [st_ [stEQ KK]]; 
+        [apply SRCC|].
+      red; split; [|done].
+      rewrite set_inter_union_l.
+      apply set_subset_union_l; split. 
+      { rewrite ES.cont_cf_Tid_; eauto. basic_solver. }
+      eapply ES.cont_sb_cont_cf_inter_false; eauto. 
     Qed.
 
     Lemma cert_ex_ncf : 

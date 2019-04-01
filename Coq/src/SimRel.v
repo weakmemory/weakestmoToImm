@@ -126,7 +126,7 @@ Section SimRel.
       
       (* initIn : SEinit ⊆₁ e2a ⋄₁ GEinit ; *)
 
-      labCI : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a);
+      ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a);
 
       rmwC : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ (Srmw ⨾ ⦗ X ⦘) ;
       rfC  : Grf ⨾ ⦗ C ⦘ ⊆ e2a □ (Srf ⨾ ⦗ X ⦘) ;
@@ -161,13 +161,13 @@ Section SimRel.
       basic_solver.
     Qed.
 
-    Lemma fI_EW : 
+    Lemma ex_iss_inW : 
       X ∩₁ e2a ⋄₁ I ⊆₁ SW.
     Proof.
       unfolder.
       intros x [xX xI].
       unfold is_w.
-      erewrite labCI; auto.
+      erewrite ex_cov_iss_lab; auto.
       { unfold compose.
         eapply issuedW; eauto.
         apply SRC. }
