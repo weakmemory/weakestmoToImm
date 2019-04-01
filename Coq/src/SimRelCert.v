@@ -449,6 +449,19 @@ Section SimRelCert.
       apply SRCC.
     Qed.
 
+    Lemma ex_cov_iss_cert_lab : 
+      eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (certLab ∘ e2a).
+    Proof. 
+      intros x [Xx e2aCIx].
+      erewrite ex_cov_iss_lab; 
+        [ | apply SRCC | done].
+      unfold compose.
+      symmetry. eapply cslab.
+      { apply SRCC. }
+      unfold D. do 4 left. 
+      admit. 
+    Admitted.
+
     Lemma kE_cert_lab : 
       eq_dom kE Slab (certLab ∘ e2a).
     Proof.
