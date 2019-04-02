@@ -397,29 +397,29 @@ Section SimRelAddEW.
           (SAEW : sim_add_ew w' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
-      dom_rel (Sew S' \ eq) ⊆₁ dom_rel (Sew S' ⨾ ⦗ X ∩₁ e2a S' ⋄₁ I ⦘). 
+      dom_rel (Sew S' \ eq) ⊆₁ dom_rel (Sew S' ⨾ ⦗ X ∩₁ e2a S ⋄₁ I ⦘). 
     Proof.
       cdes BSTEP_; cdes SAEW.
       assert (ESBasicStep.t e e' S S') as BSTEP.
       { econstructor. eauto. }
       assert (ES.Wf S) as WFS.
       { apply SRCC. }
-      assert 
-        (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I)
-        as ex_iss_eqv.
-      { unfolder; split;
-          intros x [Xx e2aIx];
-          split; auto; 
-          [ erewrite <- basic_step_e2a_eq_dom; eauto
-          | erewrite    basic_step_e2a_eq_dom; eauto ];
-          eauto; 
-          eapply Execution.ex_inE; 
-          eauto; apply SRCC. }
+      (* assert  *)
+      (*   (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I) *)
+      (*   as ex_iss_eqv. *)
+      (* { unfolder; split; *)
+      (*     intros x [Xx e2aIx]; *)
+      (*     split; auto;  *)
+      (*     [ erewrite <- basic_step_e2a_eq_dom; eauto *)
+      (*     | erewrite    basic_step_e2a_eq_dom; eauto ]; *)
+      (*     eauto;  *)
+      (*     eapply Execution.ex_inE;  *)
+      (*     eauto; apply SRCC. } *)
       rewrite EW'. 
       rewrite minus_union_l, !dom_union.
       unionL.
       { etransitivity; [apply SRCC|]. 
-        rewrite ex_iss_eqv. basic_solver 10. }
+        basic_solver 10. }
       autounfold with ESStepDb.
       rewrite csE, transp_cross.
       rewrite !minus_union_l, !dom_union.
@@ -428,7 +428,7 @@ Section SimRelAddEW.
       { rewrite dom_minus, dom_cross; [|red; basic_solver].
         arewrite (sim_ews w' S S' ⊆₁ dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘)).
         { unfold sim_ews. basic_solver 10. }
-        rewrite ex_iss_eqv. basic_solver 10. }
+        basic_solver 10. }
       rewrite dom_minus.
       arewrite (
         dom_rel (eq w' × sim_ews w' S S') ⊆₁ 
@@ -455,7 +455,7 @@ Section SimRelAddEW.
             generalize EW. basic_solver. }
           generalize EWz. basic_solver 10. }
         red. split; [|apply Xe2aI]. done. }
-      rewrite ex_iss_eqv. basic_solver 10.
+      basic_solver 10.
     Qed.
 
   End SimRelAddEWProps. 

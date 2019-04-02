@@ -982,25 +982,24 @@ Section SimRelCertStepProps.
     { constructor; try apply SRCC.
       { eapply step_wf; eauto. }
       { eapply simrel_cert_step_consistent; eauto. }
+      { eapply Execution.step_preserves; eauto. apply SRCC. }
       { eapply basic_step_simrel_cont; eauto; apply SRCC. }
       { eapply simrel_cert_step_e2a; eauto. }
-      { eapply Execution.step_preserves; eauto. apply SRCC. }
       1-5 : admit.
       (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
-      { arewrite (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I ).
+      { arewrite (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I).
         { admit. }
         etransitivity. 
         { unfold_cert_step_ CertSTEP_.
-          2,4 : eapply sim_add_jf_jfe_fI; eauto.
+          2,4 : eapply sim_add_jf_jfe_ex_iss; eauto.
           all : erewrite ESstep.step_same_jf_jfe; 
                 eauto; apply SRCC. }
         erewrite ESstep.step_ew_mon; eauto. }
       (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
-      { unfold_cert_step_ CertSTEP_.
-        1,2 : rewrite EW'.
-        1,2 : arewrite (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I ).
-        1,3 : admit.
-        1,2 : apply SRCC.
+      { arewrite (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I).
+        { admit. }
+        unfold_cert_step_ CertSTEP_.
+        1,2 : rewrite EW'; apply SRCC.
         all : eapply sim_add_ew_ew_ex_iss; eauto.
         all : basic_solver. }
       (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ⊆₁ X *)

@@ -566,7 +566,7 @@ Section SimRelAddJF.
       apply SRCC.
     Qed.
 
-    Lemma sim_add_jf_jfe_fI w k k' e e' S S' 
+    Lemma sim_add_jf_jfe_ex_iss w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
