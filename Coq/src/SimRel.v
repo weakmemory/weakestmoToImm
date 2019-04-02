@@ -124,8 +124,8 @@ Section SimRel.
 
       sr_exec : Execution.t S X ;
       
-      (* initIn : SEinit ⊆₁ e2a ⋄₁ GEinit ; *)
-
+      ex_cov_iss : e2a □₁ X ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘) ;
+        
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a);
 
       rmwC : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ (Srmw ⨾ ⦗ X ⦘) ;

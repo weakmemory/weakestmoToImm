@@ -6,7 +6,7 @@ From imm Require Import Events Execution TraversalConfig Traversal
      CombRelations SimTraversal SimulationRel AuxRel
      PromiseToimm_s.
 Require Import AuxRel AuxDef ImmProperties 
-        EventStructure Consistency Step EventToAction 
+        EventStructure Consistency Step Execution EventToAction 
         SimRelCont SimRelEventToAction SimRel SimRelStep.
 
 Set Implicit Arguments.
@@ -47,7 +47,7 @@ Section Compilation.
 
     Variable S : ES.t.
     Variable TC : trav_config.
-    Variable f : actid -> eventid.
+    Variable X : eventid -> Prop.
   
     Notation "'SE'" := S.(ES.acts_set).
     Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -84,19 +84,18 @@ Section Compilation.
     Notation "'C'"  := (covered TC).
     Notation "'I'"  := (issued TC).
 
-    Definition extracted A := 
-      ⟪ Restr : good_restriction S A ⟫ /\
-      ⟪ GACTS : GE ≡₁ e2a S □₁ A ⟫ /\
-      ⟪ GLAB  : eq_dom A Slab (Glab ∘ e2a S) ⟫ /\
-      ⟪ GSB   : Gsb  ≡  e2a S □ (Ssb ∩ A × A) ⟫ /\
-      ⟪ GRMW  : Grmw ≡  e2a S □ (Srmw ∩ A × A) ⟫ /\
-      ⟪ GRF   : Grf  ≡  e2a S □ (Srf ∩ A × A) ⟫ /\
-      ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ A × A) ⟫.
+    Definition simrel_extracted := 
+      ⟪ GACTS : GE ≡₁ e2a S □₁ X ⟫ /\
+      ⟪ GLAB  : eq_dom X Slab (Glab ∘ e2a S) ⟫ /\
+      ⟪ GSB   : Gsb  ≡  e2a S □ (Ssb ∩ X × X) ⟫ /\
+      ⟪ GRMW  : Grmw ≡  e2a S □ (Srmw ∩ X × X) ⟫ /\
+      ⟪ GRF   : Grf  ≡  e2a S □ (Srf ∩ X × X) ⟫ /\
+      ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ X × X) ⟫.
 
-    Lemma simrel_extract_exec  
-          (SRC : simrel_common prog S G sc TC f)
-          (COVG : GE ⊆₁ C) :
-      extracted (f □₁ GE).
+    Lemma simrel_extract
+          (SRC : simrel_common prog S G sc TC X)
+          (COVinG : GE ⊆₁ C) :
+      simrel_extracted.
     Proof. 
       assert (ES.Wf S) as SWF.
       { apply SRC. }
@@ -104,14 +103,20 @@ Section Compilation.
       { apply SRC. }
       assert (tc_coherent G sc TC) as TCCOH.
       { apply SRC. }
-      assert (GE ≡₁ C) as COVG'.
+      assert (GE ≡₁ C) as COVG.
       { split; auto. eapply coveredE; eauto. }
+      assert (GE ≡₁ C ∪₁ I) as COVISSG.
+      { split; auto. 
+        { rewrite COVG. basic_solver. }
+        apply set_subset_union_l. split.
+        { eapply coveredE; eauto. }
+        eapply issuedE; eauto. }
       assert (GE ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) as DCOV.
-      { rewrite COVG'.
+      { rewrite COVG.
         split; [basic_solver|].
         unionL; auto.
         rewrite issuedE; [|apply SRC].
-        rewrite COVG'.
+        rewrite COVG.
         rewrite crE. relsf. 
         split; auto.
         eapply dom_sb_covered; eauto. }
@@ -122,23 +127,17 @@ Section Compilation.
         apply set_subset_inter_r. split.
         { eapply issuedE; eauto. }
         eapply issuedW; eauto. }
-      assert (f □₁ GE ≡₁ f □₁ C) as fGEC.
-      { rewrite set_collect_more; eauto. }
-      assert (f □₁ (GE ∩₁ GW) ≡₁ f □₁ I) as fGEWI.
-      { rewrite set_collect_more; eauto. }
       constructor; splits.
-      { rewrite DCOV. eapply fdom_good_restr; eauto. }
-      { rewrite DCOV.
-        rewrite set_collect_compose.
-        erewrite <- fixset_set_fixpoint; auto.
-        eapply a2e_fix. apply SRC. }
-      { unfolder. ins. desf. 
-        unfold compose. fold (compose (e2a S) f y).
-        erewrite a2e_fix; [| apply SRC|].
-        { fold (compose Slab f y). 
-          eapply flab; eauto.
-          left. by apply COVG'. }
-        by apply DCOV. }
+      { rewrite DCOV. symmetry. eapply ex_cov_iss; eauto. }
+      { eapply eq_dom_more; 
+          [| | | eapply ex_cov_iss_lab; eauto].
+        all : auto.
+        arewrite (e2a S ⋄₁ (C ∪₁ I) ≡₁ e2a S ⋄₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘))).
+        { admit. }
+        arewrite (e2a S ⋄₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘)) ≡₁ e2a S ⋄₁ (e2a S □₁ X)).
+        { admit. }
+        split; [|basic_solver].
+        rewrite <- set_in_map_collect. done. }
       { split.
         { admit. }
         rewrite collect_rel_interi.
@@ -146,31 +145,24 @@ Section Compilation.
         basic_solver. }
       { split. 
         { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
-          { rewrite wf_rmwE at 1; auto. by rewrite COVG'. }
+          { rewrite wf_rmwE at 1; auto. by rewrite COVG. }
           rewrite <- restr_cross, restr_relE.
-          rewrite fGEC. eapply GrmwC_Srmw_fC; eauto. }
+          eapply GrmwC_Srmw_fC; eauto. }
         rewrite collect_rel_interi.
         erewrite e2a_rmw; try apply SRC. 
         basic_solver. }
       { split. 
         { arewrite (Grf ≡ ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘).
-          { rewrite wf_rfE at 1; auto. by rewrite COVG'. }
+          { rewrite wf_rfE at 1; auto. by rewrite COVG. }
           rewrite <- restr_cross, restr_relE.
-          rewrite fGEC. eapply GrfC_Srf_fC; eauto. }
+          eapply GrfC_Srf_fC; eauto. }
         admit. }
       split. 
       { arewrite (Gco ≡ ⦗GE ∩₁ GW⦘ ⨾ Gco ⨾ ⦗GE ∩₁ GW⦘).
         { rewrite wf_coE, wf_coD at 1; auto. basic_solver. }
+        rewrite ISSG.
         rewrite <- restr_cross, restr_relE.
-        arewrite (⦗f □₁ GE⦘ ⨾ Sco ⨾ ⦗f □₁ GE⦘ ≡ ⦗f □₁ GE ∩₁ SW⦘ ⨾ Sco ⨾ ⦗f □₁ GE ∩₁ SW⦘).
-        { rewrite ES.coD at 1; auto. basic_solver 10. }
-        arewrite (f □₁ GE ∩₁ SW ≡₁ f □₁ (GE ∩₁ GW)).
-        { unfolder; splits; ins; desf; eexists; splits; eauto.
-          { unfold is_w. erewrite <- flab; eauto.
-            left. by eapply COVG'. }
-          unfold is_w. fold (compose Slab f y). erewrite flab; eauto.
-          left. by eapply COVG'. }
-        rewrite ISSG. eapply GcoI_Sco_fI; eauto. }
+        eapply GcoI_Sco_fI; eauto. }
       rewrite collect_rel_interi.
       erewrite e2a_co; try apply SRC. 
       basic_solver.
@@ -184,18 +176,18 @@ Section Compilation.
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) : 
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
-      exists S f, 
+      exists S X, 
         ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
-        ⟪ SRC  : simrel_common prog S G sc TC f ⟫.
+        ⟪ SRC  : simrel_common prog S G sc TC X ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
-    { exists (ES.init prog), a2e_init. 
+    { exists (ES.init prog), (ES.acts_set (ES.init prog)).
       splits; auto using rt_refl, simrel_init. }
     intros TC TC' TC_STEPS IH TC_STEP. desc.
-    edestruct simrel_step as [S' [f' HH]]; eauto. 
+    edestruct simrel_step as [X' [S' HH]]; eauto. 
     destruct HH as [STEPS' SRC']. 
     red in STEPS', SRC'.
-    exists f', S'. splits; auto.
+    exists S', X'. splits; auto.
     eapply rt_trans; eauto.
   Qed.
 
@@ -204,20 +196,20 @@ Section Compilation.
         (GProg : program_execution prog G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) :
-    exists S A,
+    exists S X,
       ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
-      ⟪ EXEC  : extracted S A ⟫.
+      ⟪ EXEC  : simrel_extracted S X ⟫.
   Proof. 
     edestruct sim_traversal 
       as [TC [TC_STEPS GCOV]]; 
       eauto.
     edestruct simrel_traversal
-      as [S [f [STEPS SRC]]];
+      as [S [X [STEPS SRC]]];
       eauto.
     red in STEPS, SRC.
-    exists S, (f □₁ GE).
+    exists S, X.
     splits; auto.
-    eapply simrel_extract_exec; eauto.
+    eapply simrel_extract; eauto.
   Qed.
 
 End Compilation.

@@ -24,6 +24,7 @@ Section SimRelStep.
   Variable sc : relation actid.
   Variable TC : trav_config.
   Variable TC' : trav_config.
+  Variable X : eventid -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -66,7 +67,8 @@ Section SimRelStep.
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'Stid_' S" := (fun t x => Stid S x = t) (at level 1).
+  Notation "'SNTid_' S" := (fun t x => Stid S x <> t) (at level 1).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -116,74 +118,61 @@ Section SimRelStep.
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
 
-  Lemma simrel_cert_graph_start thread f S 
-        (SRC : simrel_common prog S G sc TC f) 
+  Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
+  Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
+
+  Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
+
+  Lemma simrel_cert_graph_start thread S 
+        (SRC : simrel_common prog S G sc TC X) 
         (TC_STEP : isim_trav_step G sc thread TC TC') : 
     exists k st st',
-      ⟪ kTID : thread = ES.cont_thread S k ⟫ /\
+      ⟪ kTID : thread = ktid S k ⟫ /\
       ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
       ⟪ CERT_ST : simrel_cstate S TC k st st' ⟫.
-  Proof. 
-    edestruct cont_tid_state as [st [k HH]]; eauto. 
-    { eapply trstep_thread_prog; eauto; apply SRC. }
-    desf. 
-    edestruct cert_graph_start as [st' HH]; eauto; try by apply SRC.
-    { eapply isim_trav_step_thread_ninit; eauto.
-      all: apply SRC. }
-    { (* TODO: it should be added to simrel_common *)
-      admit. }
-    { (* TODO: it shoud be added to simrel_common *)
-      admit. }
-    { (* should follow from CsbqDOM *)
-      admit. }
-    desf. exists k, st, st'. 
-    splits; auto; ins. 
-    (* eapply ES.unique_K in KK; *)
-    (*   [| by apply SRC | by apply QQ | auto]. *)
-    (* simpls. inv KK. *)
-  Admitted. 
+  Proof. admit. Admitted.
   
-  Lemma simrel_cert_start k f S 
-        (st st' : thread_st (ES.cont_thread S k))
-        (SRC : simrel_common prog S G sc TC f) 
-        (TC_ISTEP : isim_trav_step G sc (ES.cont_thread S k) TC TC') 
-        (CERTG : cert_graph G sc TC TC' (ES.cont_thread S k) st')
+  Lemma simrel_cert_start k S 
+        (st st' : thread_st (ktid S k))
+        (SRC : simrel_common prog S G sc TC X) 
+        (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC') 
+        (CERTG : cert_graph G sc TC TC' (ktid S k) st')
         (CERT_ST : simrel_cstate S TC k st st') :
-    simrel_cert prog S G sc TC TC' f f k st st'.
+    simrel_cert prog S G sc TC TC' X k st st'.
   Proof. admit. Admitted.
 
-  Lemma simrel_cert_end k f h S 
-        (st : thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' f h k st st) :
-    simrel_common prog S G sc TC' h.
+  Lemma simrel_cert_end k S 
+        (st : thread_st (ktid S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
+    simrel_common prog S G sc TC' (certX S k).
   Proof. admit. Admitted.
 
-  Lemma simrel_step_helper k f S
-        (st st''' : thread_st (ES.cont_thread S k))
-        (SRC : simrel_common prog S G sc TC f)
-        (TC_ISTEP : isim_trav_step G sc (ES.cont_thread S k) TC TC')
-        (CERTG : cert_graph G sc TC TC' (ES.cont_thread S k) st''')
+  Lemma simrel_step_helper k S
+        (st st''' : thread_st (ktid S k))
+        (SRC : simrel_common prog S G sc TC X)
+        (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC')
+        (CERTG : cert_graph G sc TC TC' (ktid S k) st''')
         (CERT_ST : simrel_cstate S TC k st st''') 
-        (LBL_STEPS : (lbl_step (ES.cont_thread S k))＊ st st''') :
-    (fun st' => exists k' h' S',
-      ⟪ kTID : ES.cont_thread S' k' = ES.cont_thread S k ⟫ /\
+        (LBL_STEPS : (lbl_step (ktid S k))＊ st st''') :
+    (fun st' => exists k' S',
+      ⟪ kTID : ktid S' k' = ktid S k ⟫ /\
       ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\
-      ⟪ SRCC  : simrel_cert prog S' G sc TC TC' f h' k' st' st''' ⟫) st'''.
+      ⟪ SRCC  : simrel_cert prog S' G sc TC TC' X k' st' st''' ⟫) st'''.
   Proof.
     eapply clos_refl_trans_ind_step_left
       with (R := lbl_step (ES.cont_thread S k)); 
       eauto.
-    { exists k, f, S. splits; auto.
+    { exists k, S. splits; auto.
       { apply rt_refl. }
       eapply simrel_cert_start; auto. }
     intros st' st'' HH. desc.
     intros LBL_STEP LBL_STEPS'.
     edestruct simrel_cert_lbl_step
-      as [k'' [h'' [S'' HH]]]; 
+      as [k'' [S'' HH]]; 
       eauto; desc.
     { rewrite kTID. apply LBL_STEP. }
     { rewrite kTID. apply LBL_STEPS'. }
-    exists k'', h'', S''. splits; auto.
+    exists k'', S''. splits; auto.
     { congruence. }
     eapply rt_trans; eauto.
     destruct ESSTEP as [EQ | ESSTEP].
@@ -191,19 +180,19 @@ Section SimRelStep.
     by apply rt_step.
   Qed.
   
-  Lemma simrel_step S f
-        (SRC : simrel_common prog S G sc TC f) 
+  Lemma simrel_step S 
+        (SRC : simrel_common prog S G sc TC X) 
         (TRAV_STEP : sim_trav_step G sc TC TC') :
-    exists f' S', 
+    exists X' S', 
       ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\      
-      ⟪ SRC' : simrel_common prog S' G sc TC' f' ⟫.
+      ⟪ SRC' : simrel_common prog S' G sc TC' X' ⟫.
   Proof. 
     unfold sim_trav_step in TRAV_STEP. desc.
     edestruct simrel_cert_graph_start
       as [k [st [st' HH]]]; 
       eauto; desc. 
     edestruct simrel_step_helper
-      as [k' [h' [S' HH]]]; 
+      as [k' [S' HH]]; 
       subst; eauto; desc.
     { destruct CERT_ST.
       eapply steps_stable_lbl_steps.
@@ -211,8 +200,8 @@ Section SimRelStep.
       splits; auto.
       eapply contstable.
       { apply SRC. }
-      destruct cstate_q_cont. desf. }
-    exists h', S'.
+      destruct cstate_cont. desf. }
+    exists (certX S' k'), S'.
     splits; auto.
     eapply simrel_cert_end; eauto.
   Qed.
