@@ -129,9 +129,9 @@ Section SimRel.
         
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 
-      rmwC : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
-      rfC  : Grf ⨾ ⦗ C ⦘ ⊆ e2a □ Srf ⨾ ⦗ X ⦘ ;
-      coI  : ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ e2a □ ⦗ X ⦘ ⨾ Sco ⨾ ⦗ X ⦘ ;
+      rmw_cov : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
+      rf_cov  : Grf ⨾ ⦗ C ⦘ ⊆ e2a □ ⦗ X ⦘ ⨾ Srf ⨾ ⦗ X ⦘ ;
+      iss_co_iss  : ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ e2a □ ⦗ X ⦘ ⨾ Sco ⨾ ⦗ X ⦘ ;
 
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
@@ -224,67 +224,43 @@ Section SimRel.
       generalize HH. basic_solver.
     Qed.
 
-    Lemma GrmwC_Srmw_fC : 
+    Lemma cov_rmw_cov : 
       ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srmw ⨾ ⦗X⦘.
-    Proof. admit. Admitted.
-    (*   rewrite <- restr_relE. *)
-    (*   erewrite <- collect_rel_fixset *)
-    (*     with (h := e2a S ∘ f). *)
-    (*   { rewrite <- collect_rel_compose. *)
-    (*     apply collect_rel_mori; auto. *)
-    (*     rewrite restr_relE. *)
-    (*     rewrite <- seq_eqvK at 2. *)
-    (*     rewrite collect_rel_seqi, set_collect_eqv. *)
-    (*     apply seq_mori; [done|]. *)
-    (*     rewrite <- seqA. *)
-    (*     rewrite collect_rel_seqi, set_collect_eqv. *)
-    (*     apply seq_mori; [|done]. *)
-    (*     by apply fGrmwC. } *)
-    (*   eapply fixset_mori; [| auto | apply SRC]. *)
-    (*   red. basic_solver. *)
-    (* Qed. *)
+    Proof. 
+      assert (Wf G) as WFG.
+      { apply SRC. }
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      assert (tc_coherent G sc TC) as TCCOH.
+      { apply SRC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC. }
+      erewrite <- dom_rel_helper with (r := Grmw ⨾ ⦗C⦘),
+               <- dom_rel_helper with (r := Srmw ⨾ ⦗X⦘).                                      
+      { by apply rmw_cov. }
+      { rewrite ES.rmwi; auto.
+        rewrite immediate_in.
+        by apply Execution.ex_sb_prcl. }
+      rewrite wf_rmwi; auto.
+      rewrite immediate_in.
+      eapply dom_sb_covered; eauto. 
+    Qed.
 
-    Lemma GrfC_Srf_fC : 
-      ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srf ⨾ ⦗X⦘.
-    Proof. admit. Admitted.
-    (*   rewrite <- restr_relE. *)
-    (*   erewrite <- collect_rel_fixset *)
-    (*     with (h := e2a S ∘ f). *)
-    (*   { rewrite <- collect_rel_compose. *)
-    (*     apply collect_rel_mori; auto. *)
-    (*     rewrite restr_relE. *)
-    (*     rewrite <- seq_eqvK at 2. *)
-    (*     rewrite collect_rel_seqi, set_collect_eqv. *)
-    (*     apply seq_mori; [done|]. *)
-    (*     rewrite <- seqA. *)
-    (*     rewrite collect_rel_seqi, set_collect_eqv. *)
-    (*     apply seq_mori; [|done]. *)
-    (*     by apply fGrfC. } *)
-    (*   eapply fixset_mori; [| auto | apply SRC]. *)
-    (*   red. basic_solver. *)
-    (* Qed. *)
-
-    Lemma GcoI_Sco_fI : 
-      ⦗I⦘ ⨾ Gco ⨾ ⦗I⦘ ⊆ e2a □ ⦗X⦘ ⨾ Sco ⨾ ⦗X⦘.
-    Proof. admit. Admitted.
-    (*   rewrite <- restr_relE. *)
-    (*   erewrite <- collect_rel_fixset *)
-    (*     with (h := e2a S ∘ f). *)
-    (*   { rewrite <- collect_rel_compose. *)
-    (*     apply collect_rel_mori; auto. *)
-    (*     rewrite restr_relE. *)
-    (*     rewrite <- seq_eqvK at 1 2. *)
-    (*     rewrite !seqA. *)
-    (*     rewrite collect_rel_seqi, set_collect_eqv. *)
-    (*     apply seq_mori; [done|]. *)
-    (*     do 2 rewrite <- seqA. *)
-    (*     rewrite collect_rel_seqi, set_collect_eqv. *)
-    (*     apply seq_mori; [|done]. *)
-    (*     rewrite !seqA. *)
-    (*     by apply fGcoI. } *)
-    (*   eapply fixset_mori; [| auto | apply SRC]. *)
-    (*   red. basic_solver 10. *)
-    (* Qed. *)
+    Lemma iss_rf_cov : 
+      ⦗I⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srf ⨾ ⦗X⦘.
+    Proof. 
+      assert (Wf G) as WFG.
+      { apply SRC. }
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      assert (tc_coherent G sc TC) as TCCOH.
+      { apply SRC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC. }
+      erewrite <- dom_rel_helper with (r := Grf ⨾ ⦗C⦘).
+      { by apply rf_cov. }
+      eapply dom_rf_covered; eauto.
+    Qed.
 
     Lemma sb_e2a_cov :
       dom_rel (Ssb ⨾ ⦗ e2a ⋄₁ C ⦘) ⊆₁ e2a ⋄₁ C.

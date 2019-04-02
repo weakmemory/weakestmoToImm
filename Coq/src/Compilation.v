@@ -147,22 +147,23 @@ Section Compilation.
         { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
           { rewrite wf_rmwE at 1; auto. by rewrite COVG. }
           rewrite <- restr_cross, restr_relE.
-          eapply GrmwC_Srmw_fC; eauto. }
+          eapply cov_rmw_cov; eauto. }
         rewrite collect_rel_interi.
         erewrite e2a_rmw; try apply SRC. 
         basic_solver. }
       { split. 
-        { arewrite (Grf ≡ ⦗C⦘ ⨾ Grf ⨾ ⦗C⦘).
-          { rewrite wf_rfE at 1; auto. by rewrite COVG. }
+        { arewrite (Grf ≡ ⦗GE ∩₁ GW⦘ ⨾ Grf ⨾ ⦗GE⦘).
+        { rewrite wf_rfE, wf_rfD; auto. basic_solver. }
+        rewrite ISSG, COVG.
           rewrite <- restr_cross, restr_relE.
-          eapply GrfC_Srf_fC; eauto. }
+          eapply iss_rf_cov; eauto. }
         admit. }
       split. 
       { arewrite (Gco ≡ ⦗GE ∩₁ GW⦘ ⨾ Gco ⨾ ⦗GE ∩₁ GW⦘).
         { rewrite wf_coE, wf_coD at 1; auto. basic_solver. }
         rewrite ISSG.
         rewrite <- restr_cross, restr_relE.
-        eapply GcoI_Sco_fI; eauto. }
+        eapply iss_co_iss; eauto. }
       rewrite collect_rel_interi.
       erewrite e2a_co; try apply SRC. 
       basic_solver.
