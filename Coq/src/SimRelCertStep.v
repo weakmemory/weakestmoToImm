@@ -845,12 +845,6 @@ Section SimRelCertStepProps.
     all: eauto with hahn.
   Qed.
 
-  (* TODO: Move to AuxRel.v *)
-  Lemma set_minus_remove_l {A} (s s' s'' : A -> Prop) (IN : s ⊆₁ s') :
-    s \₁ s'' ⊆₁ s'.
-  Proof. generalize IN. basic_solver. Qed.
-
-
   Lemma simrel_cert_step_dr_ppo_cont k k' e e' S S' h'
         (st st' st'': thread_st (ES.cont_thread S k))
         (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')

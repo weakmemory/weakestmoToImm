@@ -391,6 +391,10 @@ Proof.
   ins. desf; [ apply INJ | apply INJ']; auto.  
 Qed.
 
+Lemma set_minus_remove_l (IN : s ⊆₁ s') :
+  s \₁ s'' ⊆₁ s'.
+Proof. generalize IN. basic_solver. Qed.
+
 Lemma set_collect_compose (f' : A -> B) (g' : B -> C) :
   g' □₁ (f' □₁ s) ≡₁ (g' ∘ f') □₁ s.
 Proof. 
