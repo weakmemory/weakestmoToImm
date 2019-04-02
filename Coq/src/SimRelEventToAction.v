@@ -84,6 +84,21 @@ Section SimRelEventToAction.
 
   Notation "'e2a'" := (e2a S).
 
+  Notation "'thread_syntax' tid"  := 
+    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+
+  Notation "'thread_st' tid" := 
+    (Language.state (thread_lts tid)) (at level 10, only parsing).
+
+  Notation "'thread_init_st' tid" := 
+    (Language.init (thread_lts tid)) (at level 10, only parsing).
+  
+  Notation "'thread_cont_st' tid" :=
+    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+
+  Notation "'kE' k" := (ES.cont_sb_dom S k) (at level 1, only parsing).
+  Notation "'ktid' k" := (ES.cont_thread S k) (at level 1, only parsing).
+
   Record simrel_e2a := 
     { e2a_GE : e2a □₁ SE ⊆₁ GE;
       e2a_GEinit : GEinit ⊆₁ e2a □₁ SEinit;
@@ -104,7 +119,9 @@ Section SimRelEventToAction.
     Variable prog : Prog.t.
     Variable GPROG : program_execution prog G.
     Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
+    Variable TC : trav_config.
     Variable WF : ES.Wf S.
+    Variable SRK : simrel_cont prog S G TC.
     Variable SRE2A : simrel_e2a.
 
     Lemma e2a_same_Einit : 
@@ -216,6 +233,89 @@ Section SimRelEventToAction.
       rewrite e2a_release. by rewrite e2a_jfacq.
     Qed.
 
+    Lemma e2a_kE_ninit k (st : thread_st (ktid k))
+          (INK : K (k, thread_cont_st (ktid k) st)) :
+      e2a □₁ (kE k \₁ SEinit) ≡₁ acts_set st.(ProgToExecution.G).
+    Proof. 
+      assert (wf_thread_state (ktid k) st) as WFT.
+      { eapply contwf; eauto. }
+      ins. 
+      symmetry. split.
+      { unfold acts_set. intros a ACT.
+        eapply acts_rep in ACT; eauto. 
+        desf. unfolder. unfold ES.cont_sb_dom.
+        edestruct k eqn:kEQ.
+        { erewrite continit in LE; eauto; omega. }
+        assert (Stid eid <> tid_init) as NINITeid.
+        { red. ins. eapply ES.init_tid_K; eauto. }
+        erewrite contseqn in LE; eauto. 
+        apply lt_n_Sm_le, le_lt_or_eq in LE.
+        destruct LE as [LT | EQ]. 
+        { edestruct ES.seqn_pred; eauto. 
+          { eapply ES.K_inEninit; eauto. }
+          desf.
+          assert (Stid x <> tid_init) as NINITx.
+          { red. ins. congruence. }
+          exists x; splits. 
+          { unfold ES.cont_sb_dom. unfolder. eauto 10. }
+          { unfold ES.acts_init_set. unfolder. intuition. }
+          unfold ES.cont_thread, EventToAction.e2a. 
+          destruct 
+            (excluded_middle_informative (Stid x = tid_init))
+            as [TIDi | nTIDi];
+          [intuition | congruence]. }
+        exists eid; splits.
+        { unfold ES.cont_sb_dom. basic_solver 10. }
+        { unfold ES.acts_init_set. unfolder. intuition. }
+        unfold ES.cont_thread, EventToAction.e2a. 
+        destruct 
+          (excluded_middle_informative (Stid eid = tid_init))
+          as [TIDi | nTIDi];
+          [intuition | congruence]. }
+      unfolder. intros a [e [[SB NINIT] gEQ]]. 
+      edestruct k eqn:kEQ.
+      { unfold ES.cont_sb_dom, ES.acts_init_set in *. exfalso. auto. }
+      rewrite <- gEQ.
+      erewrite e2a_ninit; auto. 
+      2 : { unfold ES.acts_ninit_set. 
+            unfolder; split; auto. 
+            eapply ES.cont_sb_domE; eauto. }
+      assert (ES.same_tid S e eid) as STID.
+      { unfold ES.cont_sb_dom in SB.
+        unfolder in SB. desf.
+        apply ES.sb_Einit_Eninit in SB; auto.
+        destruct SB as [AA | BB].
+        { unfolder in AA. intuition. }
+        apply ES.sb_tid; auto. generalize BB. basic_solver. }
+      unfold acts_set. eapply acts_clos. 
+      { arewrite (Stid e = Stid eid).
+        arewrite (Stid eid = ktid (CEvent eid)).
+        eapply contwf; eauto. }
+      unfold ES.cont_sb_dom in SB.
+      unfolder in SB. 
+      destruct SB as [y [z [[EQe | SBez] [EQzy EQeid]]]].
+      { subst e y z. erewrite contseqn; eauto. }
+      subst z y. etransitivity. 
+      { eapply ES.seqn_sb_alt; eauto. }
+      erewrite contseqn; eauto.
+    Qed.
+
+    Lemma e2a_kE k (st : thread_st (ktid k))
+          (INK : K (k, thread_cont_st (ktid k) st)) :
+      e2a □₁ kE k ≡₁ GEinit ∪₁ acts_set st.(ProgToExecution.G).
+    Proof.
+      assert (wf_thread_state (ktid k) st) as WFT.
+      { eapply contwf; eauto. }
+      ins. 
+      erewrite set_union_minus
+        with (s := ES.cont_sb_dom S k) (s' := SEinit).
+      2 : eapply ES.cont_sb_dom_Einit; eauto.
+      rewrite set_unionC, set_collect_union.
+      apply set_union_Propere.
+      { apply e2a_same_Einit. }
+      by apply e2a_kE_ninit.
+    Qed.
+
   End SimRelEventToActionProps. 
 
 End SimRelEventToAction.
@@ -312,15 +412,18 @@ Section SimRelEventToActionLemmas.
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
 
+  Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
+  Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
+
   Lemma simrel_e2a_init :
     simrel_e2a (ES.init prog) G sc. 
   Proof. admit. Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') :
-    e2a S' e = ThreadEvent (ES.cont_thread S k) (st.(eindex)).
+    e2a S' e = ThreadEvent (ktid S k) (st.(eindex)).
   Proof. 
     cdes BSTEP_.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -342,10 +445,10 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_e' k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S') :
-    e2a S' e' = ThreadEvent (ES.cont_thread S k) (1 + st.(eindex)).
+    e2a S' e' = ThreadEvent (ktid S k) (1 + st.(eindex)).
   Proof. 
     cdes BSTEP_.
     assert (ESBasicStep.t e (Some e') S S') as BSTEP.
@@ -368,11 +471,11 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_cert_dom_ne k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
-        (STCOV : C ∩₁ GTid (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
-    ~ (cert_dom G TC (ES.cont_thread S k) st) (e2a S' e).
+        (STCOV : C ∩₁ GTid (ktid S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
+    ~ (cert_dom G TC (ktid S k) st) (e2a S' e).
   Proof.
     cdes BSTEP_.
     red. intros HH.
@@ -390,11 +493,11 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_cert_dom_ne' k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S') 
-        (STCOV : C ∩₁ GTid (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
-    ~ (cert_dom G TC (ES.cont_thread S k) st) (e2a S' e').
+        (STCOV : C ∩₁ GTid (ktid S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
+    ~ (cert_dom G TC (ktid S k) st) (e2a S' e').
   Proof.
     cdes BSTEP_.
     red. intros HH.
@@ -412,11 +515,11 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_cert_dom k k' e e' S' 
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') : 
-    cert_dom G TC (ES.cont_thread S' k') st' ≡₁ 
-             cert_dom G TC (ES.cont_thread S k) st ∪₁ 
+    cert_dom G TC (ktid S' k') st' ≡₁ 
+             cert_dom G TC (ktid S k) st ∪₁ 
                eq (e2a S' e) ∪₁ eq_opt (option_map (e2a S') e').
   Proof. 
     cdes BSTEP_.   
@@ -452,23 +555,23 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_nupd_cert_dom k k' e S'
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e None S S') :
-    cert_dom G TC (ES.cont_thread S' k') st' ≡₁
-             cert_dom G TC (ES.cont_thread S k) st ∪₁ eq (e2a S' e).
+    cert_dom G TC (ktid S' k') st' ≡₁
+             cert_dom G TC (ktid S k) st ∪₁ eq (e2a S' e).
   Proof.
     erewrite basic_step_cert_dom; eauto. 
     unfold eq_opt, option_map. basic_solver.
   Qed.
 
   Lemma basic_step_e2a_E0_e TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-     E0 G TC' (ES.cont_thread S k) (e2a S' e).
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+     E0 G TC' (ktid S k) (e2a S' e).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     erewrite basic_step_e2a_e; eauto using BSTEP_. 
@@ -478,12 +581,12 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_E0_e' TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-     E0 G TC' (ES.cont_thread S k) (e2a S' e').
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+     E0 G TC' (ktid S k) (e2a S' e').
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     erewrite basic_step_e2a_e'; eauto. 
@@ -494,12 +597,12 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_GE_e TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :     
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :     
     GE (e2a S' e).
   Proof. 
     cdes BSTEP_. 
@@ -508,12 +611,12 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_GE_e' TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      GE (e2a S' e').
   Proof. 
     cdes BSTEP_.
@@ -522,13 +625,13 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_GE TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (SRE2A : simrel_e2a S G sc)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      e2a S' □₁ SE S' ⊆₁ GE.
   Proof. 
     cdes BSTEP_.
@@ -551,17 +654,17 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_lab_e TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e = lab (ProgToExecution.G st'') (e2a S' e).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
-    assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
+    assert (Gtid (e2a S' e) = ktid S k) as GTIDe.
     { rewrite <- e2a_tid. erewrite ESBasicStep.basic_step_tid_e; eauto. }
-    assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
+    assert (wf_thread_state (ktid S k) st') as WFTS. 
     { eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
       eapply ilbl_steps_in_steps.
@@ -600,17 +703,17 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_lab_e' TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e' = lab (ProgToExecution.G st'') (e2a S' e').
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
-    assert (Gtid (e2a S' e') = ES.cont_thread S k) as GTIDe.
+    assert (Gtid (e2a S' e') = ktid S k) as GTIDe.
     { rewrite <- e2a_tid. erewrite ESBasicStep.basic_step_tid_e'; eauto. }
-    assert (wf_thread_state (ES.cont_thread S k) st') as WFTS. 
+    assert (wf_thread_state (ktid S k) st') as WFTS. 
     { eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
       eapply ilbl_steps_in_steps.
@@ -644,11 +747,11 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_certlab_e TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e = certLab G st'' (e2a S' e).
   Proof. 
     unfold certLab.
@@ -662,11 +765,11 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_certlab_e' TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e (Some e') S S')
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e' = certLab G st'' (e2a S' e').
   Proof. 
     unfold certLab.
@@ -680,12 +783,12 @@ Section SimRelEventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' 
-        (st st' st'' : thread_st (ES.cont_thread S k))
+        (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
         (SRE2A : simrel_e2a S G sc)
-        (CG : cert_graph G sc TC TC' (ES.cont_thread S k) st'')
+        (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     same_lab_u2v_dom (SE S') (Slab S') (Glab ∘ (e2a S')).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.

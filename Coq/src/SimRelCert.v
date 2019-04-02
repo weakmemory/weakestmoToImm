@@ -140,23 +140,21 @@ Section SimRelCert.
   Record simrel_cstate := 
     { cstate_stable : stable_state ktid st';
       cstate_cont : Kstate (k, st);
-      cstate_reachable : (step ktid)＊ st st';
+      cstate_reachable : (lbl_step ktid)＊ st st';
       cstate_covered : C ∩₁ GTid ktid ⊆₁ contE; 
     }.
 
   Record simrel_cert :=
     { sim_com : simrel_common prog S G sc TC X;
 
+      tr_step : isim_trav_step G sc ktid TC TC';
+
       cert : cert_graph G sc TC TC' ktid st';
       cstate : simrel_cstate; 
 
-      tr_step : isim_trav_step G sc ktid TC TC';
-
-      certD_in_cert_ex : cert_dom G TC ktid st ⊆₁ e2a □₁ certX ;
-
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
 
-      kE_lab : eq_dom kE Slab (certG.(lab) ∘ e2a);
+      kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a);
 
       rel_ew_cont_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ kE ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX ;
     }.
@@ -226,10 +224,21 @@ Section SimRelCert.
     Lemma ktid_ninit : 
       ktid <> tid_init. 
     Proof. 
-      edestruct cstate_cont; [apply SRCC|]. desc.
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x.
       intros kTID.
       edestruct ES.init_tid_K; [apply SRCC|].
       do 2 eexists. splits; eauto.
+    Qed.
+
+    Lemma kE_inE : 
+      kE ⊆₁ SE. 
+    Proof. 
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x. 
+      intros x kSBx.
+      eapply ES.cont_sb_domE; eauto.
+      apply SRCC.
     Qed.
 
     Lemma wf_cont_state : 
@@ -282,6 +291,35 @@ Section SimRelCert.
       basic_solver.      
     Qed.
 
+    Lemma cert_ex_certD : 
+      e2a □₁ certX ≡₁ cert_dom G TC ktid st.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x.
+      rewrite cert_dom_alt.
+      2 : apply cstate_covered; apply SRCC.
+      rewrite set_collect_union.
+      rewrite e2a_kE; eauto; try apply SRCC.
+      rewrite <- set_unionA.
+      erewrite set_union_absorb_r
+        with (s := GEinit).
+      { rewrite ex_NTid. 
+        apply set_union_Propere; auto.
+        apply set_inter_Propere; auto.
+        eapply ex_cov_iss. apply SRCC. }
+      rewrite <- e2a_same_Einit; try apply SRCC.
+      apply set_collect_mori; auto.
+      apply set_subset_inter_r. split.
+      { by apply Execution.init_in_ex. }
+      intros x [_ NTIDx] TIDx.
+      eapply ktid_ninit. 
+      congruence.
+    Qed.
+
     Lemma ex_cov_iss_cert_lab : 
       eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (certLab ∘ e2a).
     Proof. 
@@ -298,13 +336,59 @@ Section SimRelCert.
     Lemma kE_cert_lab : 
       eq_dom kE Slab (certLab ∘ e2a).
     Proof.
-      intros x KSBx.
-      unfold compose, CertGraph.certLab.
-        destruct 
-          (excluded_middle_informative (certE (e2a x)))
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x.
+      intros x kSBx.
+      unfold compose.
+      assert (SE x) as SEx.
+      { by apply kE_inE. }
+      assert ((e2a □₁ kE) (e2a x)) as e2akEx.
+      { basic_solver. }
+      eapply e2a_kE in e2akEx;
+        eauto; try apply SRCC.
+      destruct e2akEx as [INITx | CONTEx].
+      { assert (C (e2a x)) as Cx.
+        { eapply init_covered; eauto. apply SRCC. }
+        erewrite ex_cov_iss_lab; [| apply SRCC |].
+        { erewrite cslab; [auto | apply SRCC |].
+          unfold D. do 5 left. 
+          eapply SimTraversalProperties.sim_trav_step_covered_le;
+            eauto.
+          econstructor. apply SRCC. }
+        split; [|basic_solver].
+        eapply Execution.init_in_ex; eauto.
+        eapply e2a_same_Einit in INITx; try apply SRCC.
+        unfolder in INITx. 
+        destruct INITx as [y [INITy e2aEQ]].
+        (* TODO : proof x = y *)
+        admit. }
+      assert (certE (e2a x)) as CERTEx.
+      { eapply steps_preserve_E; eauto.
+        { apply wf_cont_state. }
+        apply ilbl_steps_in_steps.
+        apply SRCC. }
+      assert (~ SEinit x) as nINITx.
+      { intros INITx.
+        assert (GEinit (e2a x)) as GINITx.
+        { eapply e2a_same_Einit.
+          1-3 : apply SRCC.
+          basic_solver. }
+        edestruct acts_rep.
+        { apply wf_cont_state. }
+        { apply CONTEx. }
+        unfolder in GINITx.
+        unfold is_init in GINITx.
+        desf. }
+      unfold CertGraph.certLab.
+      destruct 
+        (excluded_middle_informative (certE (e2a x)))
         as [CertEx | nCertEx].
-        { apply kE_lab; auto. }
-      admit. 
+      { apply kE_lab; auto. basic_solver. }
+      exfalso. auto.
     Admitted.
     
     Lemma cert_ex_cov_iss_lab : 

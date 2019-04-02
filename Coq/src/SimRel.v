@@ -28,6 +28,7 @@ Section SimRel.
   Notation "'K'" := S.(ES.cont_set).
 
   Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'SNTid' t" := (fun x => Stid x <> t) (at level 1).
 
   Notation "'SR'" := (fun a => is_true (is_r Slab a)).
   Notation "'SW'" := (fun a => is_true (is_w Slab a)).
@@ -126,7 +127,7 @@ Section SimRel.
       sr_e2a : simrel_e2a S G sc ;
       
       ex_cov_iss : e2a □₁ X ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘) ;
-        
+      
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 
       rmw_cov : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
@@ -152,6 +153,32 @@ Section SimRel.
       erewrite issuedE; eauto.
       rewrite (dom_l G.(wf_sbE)).
       basic_solver.
+    Qed.
+
+    Lemma ex_Tid t : 
+      e2a □₁ (X ∩₁ STid t) ≡₁ (e2a □₁ X) ∩₁ GTid t.
+    Proof. 
+      unfolder. split. 
+      { ins; desf. 
+        split; eauto.
+        symmetry. apply e2a_tid. }
+      ins; desf.
+      eexists; splits; eauto.
+      apply e2a_tid.
+    Qed.
+
+    Lemma ex_NTid t : 
+      e2a □₁ (X ∩₁ SNTid t) ≡₁ (e2a □₁ X) ∩₁ GNTid t.
+    Proof. 
+      unfolder. split. 
+      { intros x [y [[Xy NTIDy] EQx]].
+        splits; eauto.
+        intros TIDx. apply NTIDy.
+        subst. apply e2a_tid. }
+      intros x [[y [Xy EQx]] NTIDx].
+      eexists; splits; eauto.
+      intros TIDy. apply NTIDx.
+      subst. symmetry. apply e2a_tid.
     Qed.
 
     Lemma ex_iss_inW : 

@@ -22,10 +22,12 @@ Section EventToAction.
   Notation "'SEinit'" := S.(ES.acts_init_set).
   Notation "'SEninit'" := S.(ES.acts_ninit_set).
   Notation "'Stid'" := (S.(ES.tid)).
-  Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
   Notation "'K'"  := S.(ES.cont_set).
+
+  Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
+  Notation "'SNTid' t" := (fun x => Stid x <> t) (at level 1).
 
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Scf'" := (S.(ES.cf)).
@@ -36,7 +38,9 @@ Section EventToAction.
   Notation "'Glab'" := (G.(lab)).
   Notation "'Gloc'" := (loc G.(lab)).
   Notation "'Gtid'" := (tid).
+
   Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
 
   Notation "'Gsb'" := (G.(sb)).
 
@@ -102,6 +106,15 @@ Section EventToAction.
   Lemma e2a_Tid thread : 
     e2a □₁ STid thread ⊆₁ GTid thread.
   Proof. unfolder. ins. desf. symmetry. apply e2a_tid. Qed.
+
+  Lemma e2a_NTid thread : 
+    e2a □₁ SNTid thread ⊆₁ GNTid thread.
+  Proof. 
+    unfolder. 
+    intros x [y [NTIDy EQx]].
+    intros TIDx. apply NTIDy.
+    subst. apply e2a_tid.
+  Qed.
 
   Lemma e2a_Einit 
         (EE : e2a □₁ SE ⊆₁ GE) :
@@ -218,36 +231,12 @@ Section EventToAction.
     red. intros [_ HH]. auto. 
   Qed.
 
-  (******************************************************************************)
-  (** ** a2e properties (for an arbitary a2e mapping) *)
-  (******************************************************************************)
-
-  Variable a2e : actid -> eventid.
-  Variable aD : actid -> Prop.
-  
-  Lemma a2e_tid 
-        (FIX : fixset aD (e2a ∘ a2e)) : 
-    eq_dom aD (Stid ∘ a2e) Gtid.
+  Lemma e2a_inj_init (WF : ES.Wf S) : 
+    inj_dom SEinit e2a. 
   Proof. 
-    unfolder in *. unfold compose in *. 
-    ins. specialize (FIX x SX).
-    rewrite <- FIX, <- e2a_tid.
-    congruence.
-  Qed.
-
-  Lemma a2e_same_lab_u2v
-        (SLAB : same_lab_u2v_dom SE Slab (Glab ∘ e2a))
-        (aDE : a2e □₁ aD ⊆₁ SE)
-        (FIX : fixset aD (e2a ∘ a2e)) :
-    same_lab_u2v_dom aD (Slab ∘ a2e) Glab.
-  Proof. 
-    unfolder in *. unfold compose in *. 
-    unfold same_lab_u2v_dom in *. (*, same_label_u2v.*)
-    ins. specialize (FIX e EE).
-    rewrite <- FIX at 2.
-    eapply SLAB.
-    eapply aDE.
-    eauto. 
+    eapply e2a_inj; auto.
+    { unfold ES.acts_init_set. basic_solver. }
+    apply ES.ncfEinit.
   Qed.
 
 End EventToAction.
