@@ -15,6 +15,7 @@ Section SimRelEventToAction.
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.
+  Variable TC : trav_config.
   Hypothesis WFsc : wf_sc G sc.
 
   Notation "'SE'" := S.(ES.acts_set).
@@ -82,6 +83,9 @@ Section SimRelEventToAction.
   
   Notation "'Gvf'" := (furr G sc).
 
+  Notation "'C'" := (covered TC).
+  Notation "'I'" := (issued TC).
+
   Notation "'e2a'" := (e2a S).
 
   Notation "'thread_syntax' tid"  := 
@@ -106,20 +110,14 @@ Section SimRelEventToAction.
       e2a_lab : same_lab_u2v_dom SE Slab (Glab ∘ e2a);
 
       e2a_rmw : e2a □ Srmw ⊆ Grmw;
-      e2a_jf  : e2a □ Sjf  ⊆ Gvf;
       e2a_ew  : e2a □ Sew  ⊆ eq;
       e2a_co  : e2a □ Sco  ⊆ Gco;
-      
-      e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
-      e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
-                      Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘;
     }.
 
   Section SimRelEventToActionProps. 
     Variable prog : Prog.t.
     Variable GPROG : program_execution prog G.
     Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
-    Variable TC : trav_config.
     Variable WF : ES.Wf S.
     Variable SRK : simrel_cont prog S G TC.
     Variable SRE2A : simrel_e2a.
@@ -185,52 +183,6 @@ Section SimRelEventToAction.
       splits.
       { eapply ES.ew_sym; eauto. }
       all: by eauto.
-    Qed.
-
-    Lemma e2a_rs : e2a □ Srs ⊆ Grs. 
-    Proof. 
-      rewrite rs_alt; auto.
-      rewrite !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      rewrite !e2a_W.
-      repeat apply seq_mori; eauto with hahn.
-      2: { rewrite collect_rel_crt. eauto using clos_refl_trans_mori, e2a_jfrmw. }
-      rewrite ES.sbE; auto.
-      rewrite wf_sbE.
-      rewrite <- !restr_relE.
-      rewrite <- restr_inter_absorb_r.
-      rewrite <- restr_inter_absorb_r with (r':=same_loc Slab).
-      rewrite collect_rel_cr.
-      rewrite collect_rel_interi. 
-      apply clos_refl_mori, inter_rel_mori. 
-      { rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto. 
-        eapply e2a_sb; eauto; apply SRE2A. }
-      apply e2a_same_loc.
-    Qed.
-
-    Lemma e2a_release : e2a □ Srelease ⊆ Grelease.
-    Proof. 
-      rewrite release_alt; auto.
-      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
-      rewrite !set_collect_eqv.
-      arewrite (SE ∩₁ (SF ∪₁ SW) ⊆₁ SE) by basic_solver.
-      rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
-      { unfold imm_s_hb.release. basic_solver 10. }
-      all: eauto; apply SRE2A.
-    Qed.
-
-    Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
-    Proof. 
-      assert (e2a □₁ SE ⊆₁ GE) as EE by apply SRE2A.
-      unfold hb, imm_s_hb.hb.
-      rewrite collect_rel_ct.
-      apply clos_trans_mori.
-      rewrite collect_rel_union.
-      apply union_mori.
-      { eapply e2a_sb; eauto. }
-      unfold Consistency.sw.
-      rewrite collect_rel_seqi.
-      rewrite e2a_release. by rewrite e2a_jfacq.
     Qed.
 
     Lemma e2a_kE_ninit k (st : thread_st (ktid k))
@@ -416,7 +368,7 @@ Section SimRelEventToActionLemmas.
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
   Lemma simrel_e2a_init :
-    simrel_e2a (ES.init prog) G sc. 
+    simrel_e2a (ES.init prog) G.
   Proof. admit. Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
@@ -627,7 +579,7 @@ Section SimRelEventToActionLemmas.
   Lemma basic_step_e2a_GE TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (SRE2A : simrel_e2a S G sc)
+        (SRE2A : simrel_e2a S G)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
@@ -785,7 +737,7 @@ Section SimRelEventToActionLemmas.
   Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (SRE2A : simrel_e2a S G sc)
+        (SRE2A : simrel_e2a S G)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :

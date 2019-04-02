@@ -124,7 +124,7 @@ Section SimRel.
       
       sr_cont : simrel_cont prog S G TC ;
 
-      sr_e2a : simrel_e2a S G sc ;
+      sr_e2a : simrel_e2a S G ;
       
       ex_cov_iss : e2a □₁ X ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘) ;
       
