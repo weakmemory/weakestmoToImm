@@ -305,7 +305,7 @@ Section SimRelCertStepProps.
       { red. ins. eapply ES.init_tid_K; eauto. }
       unfold dom_rel. eexists.
       apply seq_eqv_r; splits; eauto. }
-    eapply certD_in_cert_ex in CertDw'; eauto.
+    eapply cert_ex_certD in CertDw'; eauto.
     destruct CertDw' as [w [CertXw EQw']].
     exists w; splits; subst; auto.
   Qed.
@@ -1004,12 +1004,12 @@ Section SimRelCertStepProps.
         all : basic_solver. }
       (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ⊆₁ X *)
       admit. }
+    (* tr_step : isim_trav_step G sc (ktid S k') TC TC' *)
+    { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
     (* cert : cert_graph G sc TC TC' (ktid S k') state'' *)
     { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
     (* cstate : simrel_cstate *)
     { eapply simrel_cert_basic_step_cstate; eauto. } 
-    (* tr_step : isim_trav_step G sc (ktid S k') TC TC' *)
-    { erewrite ESBasicStep.basic_step_cont_thread_k; eauto. apply SRCC. }
     all : admit.
   Admitted.
         

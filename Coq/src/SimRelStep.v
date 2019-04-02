@@ -194,13 +194,7 @@ Section SimRelStep.
     edestruct simrel_step_helper
       as [k' [S' HH]]; 
       subst; eauto; desc.
-    { destruct CERT_ST.
-      eapply steps_stable_lbl_steps.
-      apply seq_eqv_lr. 
-      splits; auto.
-      eapply contstable.
-      { apply SRC. }
-      destruct cstate_cont. desf. }
+    { by destruct CERT_ST. }
     exists (certX S' k'), S'.
     splits; auto.
     eapply simrel_cert_end; eauto.
