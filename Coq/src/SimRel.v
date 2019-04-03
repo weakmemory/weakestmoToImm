@@ -110,8 +110,6 @@ Section SimRel.
       irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
     }.
 
-  Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
-  
   Record simrel_common :=
     { noinitprog : ~ IdentMap.In tid_init prog ;
       gprog : program_execution prog G ;
@@ -153,17 +151,6 @@ Section SimRel.
   Section SimRelCommonProps. 
     
     Variable SRC : simrel_common.
-
-    Lemma fdomE : 
-      fdom ⊆₁ GE.
-    Proof.
-      assert (tc_coherent G sc TC) as TCCOH. 
-      { apply SRC. }
-      erewrite coveredE; eauto.
-      erewrite issuedE; eauto.
-      rewrite (dom_l G.(wf_sbE)).
-      basic_solver.
-    Qed.
 
     Lemma ex_Tid t : 
       e2a □₁ (X ∩₁ STid t) ≡₁ (e2a □₁ X) ∩₁ GTid t.

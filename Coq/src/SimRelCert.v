@@ -130,7 +130,6 @@ Section SimRelCert.
 
   Notation "'certX'" := ((X ∩₁ SNTid ktid) ∪₁ kE) (only parsing).
 
-  Notation "'fdom'" := (C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (only parsing).
   Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
 
   Notation "'Ssim_jf'" := (sim_jf G sc TC' S certX).
