@@ -913,6 +913,8 @@ Section SimRelCertStepProps.
     assert (ES.cont_sb_dom S k ⊆₁
             ES.cont_sb_dom S' (CEvent (opt_ext e e'))) as SBDOMIN.
     { (* TODO: introduce a lemma *) admit. }
+    assert (eq_opt e' ⊆₁ ES.cont_sb_dom S' (CEvent (opt_ext e e'))) as AA.
+    { unfold eq_opt. desf. simpls. basic_solver. }
 
     cdes CertSTEP. cdes BSTEP_. rewrite SB'.
     rewrite seq_union_l.
@@ -924,23 +926,24 @@ Section SimRelCertStepProps.
     unfold ESBasicStep.sb_delta.
     rewrite cross_union_r.
     rewrite !seq_union_l.
+
     unionL.
-    { rewrite SBDOMIN.
-      unfold ES.cont_sb_dom. rewrite SB'.
-      rewrite seq_eqv_cross_r.
-      assert ((ESBasicStep.sb_delta S k e e')^? ⊆ 
-              (Ssb S ∪ ESBasicStep.sb_delta S k e e')^?) as DD.
-      { basic_solver. }
-      rewrite <- DD at 2.
-      assert (eq e ⊆₁ 
-              dom_rel
-                ((ESBasicStep.sb_delta S k e e')^? ⨾ ⦗eq (opt_ext e e')⦘))
-        as AA.
-      2: { rewrite <- AA. basic_solver 10. }
-      destruct e'; simpls.
-      2: basic_solver.
-      unfold ESBasicStep.sb_delta. basic_solver 10. }
-    (* TODO: continue from here *)
+    2,3: rewrite seq_eqv_cross_r; rewrite <- AA; basic_solver.
+    rewrite SBDOMIN.
+    unfold ES.cont_sb_dom. rewrite SB'.
+    rewrite seq_eqv_cross_r.
+    assert ((ESBasicStep.sb_delta S k e e')^? ⊆ 
+            (Ssb S ∪ ESBasicStep.sb_delta S k e e')^?) as DD.
+    { basic_solver. }
+    rewrite <- DD at 2.
+    assert (eq e ⊆₁ 
+               dom_rel
+               ((ESBasicStep.sb_delta S k e e')^? ⨾ ⦗eq (opt_ext e e')⦘))
+      as BB.
+    2: { rewrite <- BB. basic_solver 10. }
+    destruct e'; simpls.
+    2: basic_solver.
+    unfold ESBasicStep.sb_delta. basic_solver 10.
   Admitted.
 
   Lemma simrel_cert_step_dr_ppo_cont k k' e e' S S' h'
@@ -1110,7 +1113,11 @@ Section SimRelCertStepProps.
     rewrite interC.
     rewrite <- lib.AuxRel.seq_eqv_inter_lr.
     arewrite (Ssb S' ⨾ ⦗set_compl (ES.cont_sb_dom S' k')⦘ ⊆ Ssb S).
-    {
+    { erewrite simrel_cert_step_sb_no_dom_old; eauto. basic_solver. }
+    arewrite (Ssb S ∩ (e2a S' ⋄ rfi G) ⊆ Ssb S ∩ (e2a S ⋄ rfi G)).
+    { rewrite WF.(ES.sbE) at 1.
+      eapply simrel_cert_step_e2a_map_rel_inter_old; eauto. }
+    (* TODO: continue from here *)
 
 
     arewrite (⦗SE S⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘ ⊆
