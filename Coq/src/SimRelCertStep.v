@@ -1012,6 +1012,37 @@ Section SimRelCertStepProps.
     (* unionL. *)
   Admitted.
 
+  Lemma simrel_cert_step_dr_irfi_cont k k' e e' S S' h'
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')
+        (SRCC : simrel_cert prog S G sc TC TC' f h k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+    dr_irfi G TC' S' h' \₁ (ES.cont_sb_dom S' k') ⊆₁ dr_irfi G TC' S h.
+  Proof.
+    assert (ES.Wf S) as WF by apply SRCC.
+
+    unfold dr_irfi. rewrite set_minusE.
+    rewrite <- codom_eqv1. rewrite !seqA.
+    rewrite interC.
+    rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+    arewrite (Ssb S' ⨾ ⦗set_compl (ES.cont_sb_dom S' k')⦘ ⊆ Ssb S).
+    { erewrite simrel_cert_step_sb_no_dom_old; eauto. basic_solver. }
+    arewrite (Ssb S ∩ (e2a S' ⋄ rfi G) ⊆ Ssb S ∩ (e2a S ⋄ rfi G)).
+    { rewrite WF.(ES.sbE) at 1.
+      eapply simrel_cert_step_e2a_map_rel_inter_old; eauto. }
+    rewrite (dom_l WF.(ES.sbE)) at 1.
+    rewrite seq_eqv_inter_ll.
+    rewrite interC.
+    arewrite (⦗h' □₁ I'⦘ ⨾ Sew S' ⨾ ⦗SE S⦘ ⊆
+              ⦗h' □₁ I'⦘ ⨾ Sew S' ⨾ ⦗h □₁ I'⦘ ⨾ Sew S).
+    2: basic_solver 20.
+    arewrite (⦗h' □₁ I'⦘ ⊆ ⦗h' □₁ I'⦘ ⨾ ⦗h' □₁ I'⦘) at 1 by apply seq_eqvK.
+    arewrite (⦗h' □₁ I'⦘ ⨾ Sew S' ⨾ ⦗SE S⦘ ⊆ Sew S' ⨾ ⦗h □₁ I'⦘ ⨾ Sew S).
+    2: done.
+    (* TODO: it should be easy *)
+  Admitted.
+
   Lemma simrel_cert_step_e2a_DR k k' e e' S S' h'
         (st st' st'': thread_st (ES.cont_thread S k))
         (HEQ : h' = upd_opt (upd h (e2a S' e) e) (option_map (e2a S') e') e')
@@ -1108,28 +1139,7 @@ Section SimRelCertStepProps.
     all: apply set_inter_Proper; [done|].
     all: apply set_subset_inter_l; right.
     { eapply simrel_cert_step_dr_ppo_cont; eauto. }
-    unfold dr_irfi.
-    rewrite <- codom_eqv1. rewrite !seqA.
-    rewrite interC.
-    rewrite <- lib.AuxRel.seq_eqv_inter_lr.
-    arewrite (Ssb S' ⨾ ⦗set_compl (ES.cont_sb_dom S' k')⦘ ⊆ Ssb S).
-    { erewrite simrel_cert_step_sb_no_dom_old; eauto. basic_solver. }
-    arewrite (Ssb S ∩ (e2a S' ⋄ rfi G) ⊆ Ssb S ∩ (e2a S ⋄ rfi G)).
-    { rewrite WF.(ES.sbE) at 1.
-      eapply simrel_cert_step_e2a_map_rel_inter_old; eauto. }
-    (* TODO: continue from here *)
-
-
-    arewrite (⦗SE S⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘ ⊆
-                     Sew S ⨾ ⦗h □₁ I'⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘).
-    2: basic_solver 20.
-    arewrite (⦗h' □₁ I'⦘ ⊆ ⦗h' □₁ I'⦘ ⨾ ⦗h' □₁ I'⦘) at 1 by apply seq_eqvK.
-    arewrite (⦗SE S⦘ ⨾ Sew S' ⨾ ⦗h' □₁ I'⦘ ⊆ Sew S ⨾ ⦗h □₁ I'⦘ ⨾ Sew S').
-    2: done.
-    (* TODO: it should be easy *)
-    (* rewrite HIEE. *)
-    (* rewrite set_unionA, id_union, !seq_union_r. *)
-    (* unionL. *)
+    eapply simrel_cert_step_dr_irfi_cont; eauto.
   Admitted.
 
   Lemma simrel_cert_step_e2a_jfDR k k' e e' S S'
