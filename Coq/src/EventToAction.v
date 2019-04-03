@@ -304,4 +304,43 @@ Section EventToActionLemmas.
     congruence.
   Qed.
 
+  Lemma basic_step_e2a_set_map_inter_old e e' S' s s'
+        (BSTEP : ESBasicStep.t e e' S S') 
+        (inE : s ⊆₁ SE S) :
+    s ∩₁ (e2a S' ⋄₁ s') ≡₁ s ∩₁ (e2a S ⋄₁ s').
+  Proof.
+    unfolder. split. 
+    { intros x [Sx S'x].
+      splits; auto.
+      erewrite <- basic_step_e2a_eq_dom; eauto. }
+    intros x [Sx S'x].
+    splits; auto.
+    erewrite basic_step_e2a_eq_dom; eauto.
+  Qed.
+
+  Lemma basic_step_e2a_map_rel_inter_restr e e' S' r r'
+        (BSTEP : ESBasicStep.t e e' S S') :
+    restr_rel (SE S) r ∩ (e2a S' ⋄ r') ≡ restr_rel (SE S) r ∩ (e2a S ⋄ r').
+  Proof.
+    unfolder. split. 
+    { intros x y [[Rxy [Ex Ey]] R'xy].
+      splits; auto.
+      erewrite <- basic_step_e2a_eq_dom; eauto.
+      erewrite <- basic_step_e2a_eq_dom; eauto. }
+    intros x y [[Rxy [Ex Ey]] R'xy].
+    splits; auto.
+    erewrite basic_step_e2a_eq_dom; eauto.
+    erewrite basic_step_e2a_eq_dom with (S' := S'); eauto.
+  Qed.
+
+  Lemma basic_step_e2a_map_rel_inter_old e e' S' r r'
+        (BSTEP : ESBasicStep.t e e' S S') 
+        (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘) :
+    r ∩ (e2a S' ⋄ r') ≡ r ∩ (e2a S ⋄ r').
+  Proof. 
+    rewrite restrE. 
+    rewrite <- restr_relE.
+    eapply basic_step_e2a_map_rel_inter_restr; eauto.
+  Qed.
+
 End EventToActionLemmas. 
