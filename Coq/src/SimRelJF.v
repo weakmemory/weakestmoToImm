@@ -22,8 +22,7 @@ Section AuxJF.
   Variable TC : trav_config.
   
   Variable S : ES.t.
-
-  Variable a2e : actid -> eventid.
+  Variable X : eventid -> Prop.
 
   Variable WF : ES.Wf S.
 
@@ -105,9 +104,9 @@ Section AuxJF.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ⨾ Sew ⨾ ⦗a2e □₁ I⦘).
-  Definition dr_irfi := codom_rel (⦗a2e □₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
-  Definition DR := SR ∩₁ (a2e □₁ C ∪₁ SE ∩₁ SAcq ∪₁
+  Definition dr_ppo := dom_rel (((e2a ⋄ Gppo) ∩ Ssb) ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘).
+  Definition dr_irfi := codom_rel (⦗X ∩₁ e2a ⋄₁ I⦘ ⨾ Sew ⨾ ((e2a ⋄ Grfi) ∩ Ssb)).
+  Definition DR := SR ∩₁ (X ∩₁ e2a ⋄₁ C ∪₁ SE ∩₁ SAcq ∪₁
                           dom_rel (Srmw) ∪₁
                           dr_ppo ∪₁ dr_irfi).
   
@@ -130,12 +129,12 @@ Section AuxJF.
     basic_solver 10.
   Qed.
 
-  Lemma drE (A2ED : a2e □₁ C ⊆₁ SE) : DR ⊆₁ SE.
+  Lemma drE (XinE : X ⊆₁ SE) : DR ⊆₁ SE.
   Proof.
     unfold DR.
     apply set_subset_inter_l.
     right.
-    rewrite A2ED.
+    rewrite XinE.
     rewrite (dom_l WF.(ES.rmwE)); auto.
     unionL.
     1-3: basic_solver.
