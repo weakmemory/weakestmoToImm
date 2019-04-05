@@ -366,9 +366,10 @@ Section SimRelCertBasicStep.
     { econstructor. eauto. }
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
-    rewrite rEQ, restrE, collect_rel_eq_dom.
-    { rewrite <- restrE; eauto. }
-    all: eapply basic_step_e2a_eq_dom; eauto. 
+    rewrite rEQ, restrE, <- restr_relE. 
+    rewrite collect_rel_restr_eq_dom. 
+    2 : eapply basic_step_e2a_eq_dom; eauto. 
+    rewrite restr_relE, <- restrE; eauto. 
   Qed.
 
   Lemma simrel_cert_basic_step_hb_sb_delta_dom k k' e e' S S'

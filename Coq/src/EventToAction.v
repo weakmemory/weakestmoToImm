@@ -184,7 +184,7 @@ Section EventToAction.
   Proof.
     rewrite ES.sbE; [|by apply WF].
     unfold Execution.sb.
-      by rewrite !collect_rel_seqi, set_collect_eqv, e2a_ext_sb, EE.
+      by rewrite !collect_rel_seqi, collect_rel_eqv, e2a_ext_sb, EE.
   Qed.
 
   (******************************************************************************)

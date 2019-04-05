@@ -839,17 +839,16 @@ Proof.
     rewrite ES.sbE; auto.
     basic_solver 20. }
   arewrite (⦗E S' ∩₁ W S'⦘ ⨾ ⦗E S⦘ ≡ ⦗E S ∩₁ W S⦘).
-  { rewrite seq_eqv.
-    rewrite ESBasicStep.basic_step_acts_set; eauto.
-    relsf.
-    arewrite (eq e ∩₁ W S' ∩₁ E S ≡₁ ∅).
-    { split; [|done]. ESBasicStep.step_solver. }
-    arewrite (eq_opt e' ∩₁ W S' ∩₁ E S ≡₁ ∅).
-    { split; [|done]. ESBasicStep.step_solver. }
-    relsf. apply eqv_rel_more.
-    arewrite (E S ∩₁ W S' ∩₁ E S ≡₁ E S ∩₁ W S').
-    { basic_solver. }
-    eapply ESBasicStep.type_step_eq_dom; eauto. }
+  { rewrite ESBasicStep.basic_step_acts_set; eauto.
+    rewrite !set_inter_union_l, !id_union. relsf.
+    arewrite_false (⦗eq e ∩₁ W S'⦘ ⨾ ⦗E S⦘).
+    { ESBasicStep.step_solver. }
+    arewrite_false (⦗eq_opt e' ∩₁ W S'⦘ ⨾ ⦗E S⦘).
+    { ESBasicStep.step_solver. }
+    relsf. 
+    arewrite (E S ∩₁ W S' ≡₁ E S ∩₁ W S).
+    { eapply ESBasicStep.type_step_eq_dom; eauto. }
+    basic_solver. }
   done.
 Qed.
 
@@ -1516,9 +1515,10 @@ Proof.
   arewrite_false (ESBasicStep.sb_delta S k e e' ⨾ ⦗F S'⦘).
   { unfold ESBasicStep.sb_delta.
     clear -nF' rR'.
-    rewrite seq_union_l, !seq_eqv_cross_r.
-    arewrite (F S' ∩₁ eq e ⊆₁ ∅) by type_solver.
-    arewrite (F S' ∩₁ eq_opt e' ⊆₁ ∅) by (by rewrite set_interC).
+    rewrite seq_union_l, <- !cross_inter_r.
+    arewrite (eq e ∩₁ F S' ⊆₁ ∅).
+    { type_solver. }
+    rewrite nF'.
     basic_solver. }
   arewrite_false (jf_delta w e ⨾ sb S).
   { ESBasicStep.step_solver. }

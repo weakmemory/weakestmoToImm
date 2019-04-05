@@ -253,7 +253,7 @@ Section SimRel.
       assert (simrel_e2a S G) as SRE2A by apply SRC.
       rewrite rs_alt; auto.
       rewrite !collect_rel_seqi.
-      rewrite !set_collect_eqv.
+      rewrite !collect_rel_eqv.
       rewrite !e2a_W; eauto.
       repeat apply seq_mori; eauto with hahn.
       2: { rewrite collect_rel_crt.
@@ -275,7 +275,7 @@ Section SimRel.
     Proof. 
       rewrite release_alt; auto.
       rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
-      rewrite !set_collect_eqv.
+      rewrite !collect_rel_eqv.
       arewrite (SE ∩₁ (SF ∪₁ SW) ⊆₁ SE) by basic_solver.
       rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
       { unfold imm_s_hb.release. basic_solver 10. }
@@ -298,7 +298,7 @@ Section SimRel.
       2: { rewrite <- !seqA.
            do 2 rewrite collect_rel_seqi.
            rewrite e2a_jfDR; auto.
-           rewrite !collect_rel_cr, !collect_rel_seqi, !set_collect_eqv.
+           rewrite !collect_rel_cr, !collect_rel_seqi, !collect_rel_eqv.
            rewrite e2a_sb; eauto; try apply SRC.
            rewrite e2a_F, e2a_Acq; eauto; try apply SRC.
            arewrite (GE ∩₁ GF ⊆₁ GF) by basic_solver.
@@ -346,7 +346,7 @@ Section SimRel.
       rewrite (dom_l WF.(ES.ewD)). rewrite !seqA.
       arewrite (⦗SE⦘ ⨾ ⦗SW⦘ ⊆ ⦗SE∩₁SW⦘) by basic_solver.
       rewrite furr_alt; auto; try apply SRC.
-      rewrite !collect_rel_seqi, !collect_rel_cr, !set_collect_eqv.
+      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_eqv.
       rewrite e2a_jfDR; auto.
       rewrite e2a_hb. rewrite e2a_W; eauto.
       arewrite (e2a □ (e2a ⋄ sc) ⊆ sc) by basic_solver.

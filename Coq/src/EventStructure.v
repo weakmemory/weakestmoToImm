@@ -464,7 +464,7 @@ Proof.
   rewrite <- (unionK (restr_rel Eninit same_tid)).
   assert (symmetric (restr_rel Eninit same_tid)) as SYM. 
   { apply restr_sym. apply same_tid_sym. }
-  rewrite <- (transp_sym SYM) at 2. 
+  rewrite <- (transp_sym_equiv SYM) at 2. 
   rewrite <- csE.
   apply clos_sym_mori.
   rewrite <- (set_interK Eninit) at 1.

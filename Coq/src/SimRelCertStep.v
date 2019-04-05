@@ -880,10 +880,10 @@ Section SimRelCertStepProps.
     rewrite !seq_union_l.
 
     unionL.
-    2,3: rewrite seq_eqv_cross_r; rewrite <- AA; basic_solver.
+    2,3: rewrite <- cross_inter_r; rewrite <- AA; basic_solver.
     rewrite SBDOMIN.
     unfold ES.cont_sb_dom. rewrite SB'.
-    rewrite seq_eqv_cross_r.
+    rewrite <- cross_inter_r.
     assert ((ESBasicStep.sb_delta S k e e')^? ⊆ 
             (Ssb S ∪ ESBasicStep.sb_delta S k e e')^?) as DD.
     { basic_solver. }
