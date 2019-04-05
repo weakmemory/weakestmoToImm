@@ -61,6 +61,7 @@ Section Props.
 
 Variables A B C : Type.
 Variables s s' s'' : A -> Prop.
+Variables p p' p'' : B -> Prop.
 Variables r r' r'' : relation A.
 
 (******************************************************************************)
@@ -453,17 +454,28 @@ Proof.
 Qed.
 
 (******************************************************************************)
+(** ** set_map properties *)
+(******************************************************************************)
+
+Lemma set_map_union (f : A -> B) : 
+  f ⋄₁ (p ∪₁ p') ⊆₁ f ⋄₁ p ∪₁ f ⋄₁ p'.
+Proof. basic_solver. Qed.
+
+Lemma set_map_inter (f : A -> B) : 
+  f ⋄₁ (p ∩₁ p') ⊆₁ f ⋄₁ p ∩₁ f ⋄₁ p'.
+Proof. basic_solver. Qed.
+
+(******************************************************************************)
 (** ** set_map/set_collect properties *)
 (******************************************************************************)
 
-Lemma collect_map_in_set (f : A -> B) (p : B -> Prop) : 
+Lemma collect_map_in_set (f : A -> B) : 
   f □₁ (f ⋄₁ p) ⊆₁ p.
 Proof. basic_solver. Qed.
 
 Lemma set_in_map_collect (f : A -> B) : 
   s ⊆₁ f ⋄₁ (f □₁ s).
 Proof. basic_solver. Qed.
-
 
 (******************************************************************************)
 (** ** inj_dom properties *)
@@ -717,7 +729,7 @@ Qed.
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
 Proof. 
-  clear r'' s s' s'' B C.
+  clear r'' s s' s'' p p' p'' B C.
   rewrite crE, seq_union_r, seq_id_r.
   rewrite rt_unionE.
   rewrite <- cr_of_ct with (r := (r ⨾ r'＊)).
@@ -976,6 +988,14 @@ Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@set_collect A B) with signature 
   eq ==> set_subset ==> set_subset as set_collect_mori.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A B : (@set_map A B) with signature 
+  eq ==> set_equiv ==> set_equiv as set_map_more.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A B : (@set_map A B) with signature 
+  eq ==> set_subset ==> set_subset as set_map_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@dom_rel A) with signature
