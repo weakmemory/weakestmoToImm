@@ -1,5 +1,4 @@
 Require Import Program.Basics Omega.
-Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties

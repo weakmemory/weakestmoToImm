@@ -1,4 +1,3 @@
-Require Import Classical Peano_dec Setoid PArith.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import AuxRel

@@ -1,8 +1,4 @@
-Require Import Omega.
-Require Import Program.Basics.
-Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness

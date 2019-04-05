@@ -1,12 +1,12 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
 From imm Require Import Events AuxRel. 
-Require Import AuxRel AuxDef EventStructure Consistency.
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import EventStructure.
+Require Import Consistency.
 
 Set Implicit Arguments.
-
-Export ListNotations.
 
 Module ESBasicStep.
 

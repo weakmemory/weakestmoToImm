@@ -1,6 +1,4 @@
-Require Import Omega.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      imm_common imm_s imm_s_hb SimulationRel
