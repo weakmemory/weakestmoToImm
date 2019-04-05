@@ -9,10 +9,23 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure BasicStep Step Consistency 
-        LblStep CertRf CertGraph EventToAction ImmProperties
-        SimRelCont SimRelEventToAction 
-        SimRel SimRelCert SimRelCertBasicStep SimRelAddEW. 
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import EventStructure.
+Require Import BasicStep.
+Require Import Step.
+Require Import Consistency.
+Require Import LblStep.
+Require Import CertRf.
+Require Import CertGraph.
+Require Import EventToAction.
+Require Import ImmProperties.
+Require Import SimRelCont.
+Require Import SimRelEventToAction.
+Require Import SimRel.
+Require Import SimRelCert.
+Require Import SimRelCertBasicStep.
+Require Import SimRelAddEW. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.

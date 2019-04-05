@@ -2,7 +2,8 @@ Require Import Omega.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution
      Prog ProgToExecution ProgToExecutionProperties.
-Require Import AuxDef AuxRel.
+Require Import AuxDef.
+Require Import AuxRel.
 
 Lemma unique_eps_step thread state state' state''
       (EPS_STEP1 : istep thread [] state state')

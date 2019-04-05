@@ -4,7 +4,12 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
      CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure Consistency BasicStep ImmProperties.
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import EventStructure.
+Require Import Consistency.
+Require Import BasicStep.
+Require Import ImmProperties.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.

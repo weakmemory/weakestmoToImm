@@ -7,7 +7,8 @@ From imm Require Import AuxRel
      CombRelations CombRelationsMore
      TraversalConfig Traversal TraversalConfigAlt SimTraversal
      CertExecution2.
-Require Import AuxRel AuxDef.
+Require Import AuxRel.
+Require Import AuxDef.
 
 Set Implicit Arguments.
 

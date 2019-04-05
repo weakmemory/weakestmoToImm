@@ -4,7 +4,13 @@ From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel.
-Require Import AuxRel AuxDef EventStructure Consistency BasicStep EventToAction LblStep.
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import EventStructure.
+Require Import Consistency.
+Require Import BasicStep.
+Require Import EventToAction.
+Require Import LblStep.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.

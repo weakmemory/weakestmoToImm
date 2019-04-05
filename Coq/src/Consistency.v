@@ -1,7 +1,9 @@
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events.
-Require Import AuxRel EventStructure AuxDef.
+Require Import AuxRel.
+Require Import EventStructure.
+Require Import AuxDef.
 
 Inductive model := Weakest | Weakestmo.
 

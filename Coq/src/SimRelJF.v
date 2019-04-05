@@ -6,7 +6,11 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef EventStructure Consistency EventToAction.
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import EventStructure.
+Require Import Consistency.
+Require Import EventToAction.
 (* BasicStep Step Consistency *)
 (*         LblStep CertRf CertGraph EventToAction ImmProperties *)
 (*         SimRelCont SimRelEventToAction *)

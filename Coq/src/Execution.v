@@ -1,7 +1,12 @@
 From hahn Require Import Hahn.
 From imm Require Import Events AuxRel.
 (* TODO : get rid of dependency on Step, move corresponding lemmas to Step.v *)
-Require Import AuxDef AuxRel EventStructure Consistency BasicStep Step.
+Require Import AuxDef.
+Require Import AuxRel.
+Require Import EventStructure.
+Require Import Consistency.
+Require Import BasicStep.
+Require Import Step.
 
 Module Execution.
 

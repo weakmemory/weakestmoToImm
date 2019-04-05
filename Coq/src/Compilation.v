@@ -5,9 +5,18 @@ From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal SimulationRel AuxRel
      PromiseToimm_s.
-Require Import AuxRel AuxDef ImmProperties 
-        EventStructure Consistency Step Execution EventToAction 
-        SimRelCont SimRelEventToAction SimRel SimRelStep.
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import ImmProperties.
+Require Import EventStructure.
+Require Import Consistency.
+Require Import Step.
+Require Import Execution.
+Require Import EventToAction.
+Require Import SimRelCont.
+Require Import SimRelEventToAction.
+Require Import SimRel.
+Require Import SimRelStep.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.

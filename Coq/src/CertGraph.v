@@ -8,8 +8,13 @@ From imm Require Import Events Execution
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
      SubExecution CombRelations AuxRel.
-Require Import AuxRel AuxDef LblStep CertRf ImmProperties.
-Require Import Coq.Logic.FunctionalExtensionality Classical_Prop.
+Require Import AuxRel.
+Require Import AuxDef.
+Require Import LblStep.
+Require Import CertRf.
+Require Import ImmProperties.
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Classical_Prop.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
