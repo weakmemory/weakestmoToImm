@@ -146,6 +146,16 @@ Section EventToAction.
     by exfalso. 
   Qed.
 
+  Lemma e2a_map_Einit : 
+    SE ∩₁ e2a ⋄₁ GEinit ⊆₁ SEinit.
+  Proof. 
+    intros x [SEx [INITx GEx]].
+    split; auto.
+    unfold is_init, EventToAction.e2a in INITx.
+    destruct 
+      (excluded_middle_informative (Stid x = tid_init)); 
+      done.
+  Qed.
 
   (******************************************************************************)
   (** ** e2a sb properties *)
@@ -190,6 +200,10 @@ Section EventToAction.
   (******************************************************************************)
   (** ** e2a is injective on non-conflicting events *)
   (******************************************************************************)
+
+  (* Lemma e2a_ncf_eq (WF : ES.Wf S) x y (nCF : ~ Scf x y) (EQ : e2a x = e2a y) :  *)
+  (*   x = y. *)
+  (* Proof.  *)
 
   Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
     inj_dom X e2a. 
