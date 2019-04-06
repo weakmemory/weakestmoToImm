@@ -50,6 +50,8 @@ Notation "'FR'" := (F ∪₁ R).
 Notation "'FW'" := (F ∪₁ W).
 Notation "'R_ex'" := (fun a => is_true (R_ex lab a)).
 
+Notation "'Loc_' l" := (fun x => loc x = l) (at level 1).
+
 Notation "'Pln'" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
 Notation "'Rlx'" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
 Notation "'Rel'" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
@@ -72,6 +74,25 @@ Record t (X : eventid -> Prop) :=
 
        ex_vis : X ⊆₁ vis S ;
      }.
+
+Lemma co_total (WF : ES.Wf S) X (exec : t X) : 
+  forall ol, is_total (X ∩₁ W ∩₁ Loc_ ol) co. 
+Proof. 
+  red. ins. 
+  unfolder in IWa.
+  unfolder in IWb.
+  desc.
+  edestruct ES.co_total; eauto.
+  { unfolder; splits; eauto. 
+    eapply ex_inE; eauto. }
+  { unfolder; splits; eauto. 
+    eapply ex_inE; eauto. }
+  intros EW.
+  apply ES.ewc in EW; auto.
+  destruct EW as [EQ | CF]; auto.
+  eapply ex_ncf; eauto.
+  basic_solver.
+Qed.
 
 Lemma hb_prcl X (exec : t X) : 
   dom_rel (hb ⨾ ⦗X⦘) ⊆₁ X.
