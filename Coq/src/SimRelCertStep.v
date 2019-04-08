@@ -1181,29 +1181,42 @@ Section SimRelCertStepProps.
       arewrite (Srf S ⊆ Seco S).
       generalize (eco_trans S Weakestmo).
       basic_solver. }
-    
-    red in CertSTEP_. desf; cdes CertSTEP_.
-    { (* Fence step *)
-      rewrite JF', CO'.
-      rewrite (dom_r WF.(ES.jfE)) at 2.
+
+    assert (Shb S' ⨾ (Sjf S)⁻¹ ⊆ Shb S ⨾ (Sjf S)⁻¹) as HBJF.
+    { rewrite (dom_r WF.(ES.jfE)) at 1.
       rewrite transp_seq, transp_eqv_rel.
       arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S).
       2: done.
       eapply ESstep.step_hbE; eauto. }
+    
+    red in CertSTEP_. desf; cdes CertSTEP_.
+    { (* Fence step *)
+      rewrite JF', CO'. by rewrite HBJF. }
     { (* Read step *)
       rewrite CO'.
+      cdes AJF. rewrite JF'.
+      rewrite transp_union.
+      rewrite !seq_union_r.
+      apply irreflexive_union. split.
+      { rewrite HBJF.
+        rewrite cr_union_l.
+        rewrite !seq_union_l, !seq_union_r.
+        apply irreflexive_union. split; auto.
+        rewrite Consistency.hbE; auto. rewrite !seqA.
+        arewrite (ESstep.jf_delta w (ES.next_act S) ⨾ ⦗SE S⦘ ⊆ ∅₂).
+        2: by relsf.
+        eapply ESstep.step_add_jf_jf_deltaE; eauto.
+        eapply weaken_sim_add_jf; eauto. }
       admit. }
     { (* Write step *)
       rewrite JF'.
-      rewrite (WF.(ES.jfE)) at 2.
-      rewrite !transp_seq, transp_eqv_rel.
-      rewrite seqA.
-      arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S).
-      { eapply ESstep.step_hbE; eauto. }
+      rewrite HBJF.
       arewrite ((Sjf S)^? ⨾ Shb S ⊆ ⦗SE S⦘ ⨾ (Sjf S)^? ⨾ Shb S).
       { rewrite (dom_l WF.(ES.jfE)) at 1.
         rewrite Consistency.hbE at 1; auto.
         basic_solver 10. }
+      rewrite (dom_l WF.(ES.jfE)) at 2.
+      rewrite transp_seq, transp_eqv_rel.
       rewrite <- !seqA. apply irreflexive_seqC.
       rewrite !seqA.
       arewrite (⦗SE S⦘ ⨾ Sco S' ⨾ ⦗SE S⦘ ⊆ Sco S).
