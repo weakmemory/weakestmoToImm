@@ -1146,13 +1146,13 @@ Section SimRelCertStepProps.
     e2a S' □ (Sjf S' ⨾ ⦗DR G TC' S' (certX S' k')⦘) ⊆ Grf.
   Proof.
   Admitted.
-  
-  Lemma simrel_cert_step_fr_coh k k' e e' S S'
+
+  Lemma simrel_cert_step_fr_simpl_coh k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (CertSTEP : cert_step k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-    irreflexive (Shb S' ⨾ ES.fr S' ⨾ (Srf S')^?).
+    irreflexive (Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ (Sjf S')⁻¹).
   Proof. 
     cdes CertSTEP; cdes BSTEP_.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -1169,13 +1169,9 @@ Section SimRelCertStepProps.
     assert (coherence G) as GCOH.
     { eapply gcons. apply SRCC. }
     
-    unfold ES.fr.
-    rewrite <- !seqA. apply irreflexive_seqC.
-    rewrite <- !seqA. apply irreflexive_seqC.
-    
     (* TODO: introduce a corresponding lemma. *)
-    arewrite (Srf S' ⊆ SimRelJF.sim_jf G sc TC' S' (certX S' k')).
-    { (* unfold ES.rf. rewrite jf_in_sim_jf; eauto. *)
+    arewrite (Sjf S' ⊆ SimRelJF.sim_jf G sc TC' S' (certX S' k')).
+    { (* eapply jf_in_sim_jf. *)
       (* apply inclusion_minus_l. *)
       (* unionR right. *)
       (* Sew ;; sim_jf ⊆ sim_jf *)
@@ -1204,6 +1200,41 @@ Section SimRelCertStepProps.
     rewrite (dom_r WFS.(ES.coE)) at 1.
     basic_solver.
   Admitted.
+
+  Lemma simrel_cert_step_fr_coh k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    irreflexive (Shb S' ⨾ ES.fr S' ⨾ (Srf S')^?).
+  Proof. 
+    cdes CertSTEP; cdes BSTEP_.
+    assert (ESBasicStep.t e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ESstep.t_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (ES.Wf S') as WFS.
+    { eapply step_wf; eauto. }
+
+    unfold ES.fr.
+    rewrite <- !seqA. apply irreflexive_seqC.
+    rewrite <- !seqA. apply irreflexive_seqC.
+    
+    arewrite (Srf S' ⊆ Sew S' ;; Sjf S').
+    arewrite ((Sew S' ⨾ Sjf S')^? ⊆ (Sew S')^? ⨾ (Sjf S')^?)
+             by basic_solver 10.
+    rewrite transp_seq.
+    arewrite (Sco S' ⨾ (Sew S')^? ⊆ Sco S').
+    { generalize WFS.(ES.co_ew_in_co). basic_solver. }
+    rewrite <- !seqA.
+    rewrite irreflexive_seqC.
+    rewrite !seqA.
+    arewrite ((Sew S')⁻¹ ⊆ Sew S').
+    { rewrite transp_sym_equiv; [done|]. apply WFS. }
+    sin_rewrite WFS.(ES.ew_co_in_co).
+    eapply simrel_cert_step_fr_simpl_coh; eauto.
+  Qed.
 
   Lemma simrel_cert_step_coh k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
