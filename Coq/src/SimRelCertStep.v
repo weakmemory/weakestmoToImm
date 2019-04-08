@@ -1193,6 +1193,9 @@ Section SimRelCertStepProps.
     { (* Fence step *)
       rewrite JF', CO'. by rewrite HBJF. }
     { (* Read step *)
+      assert (ESstep.add_jf w (ES.next_act S) S S') as AA.
+      { eapply weaken_sim_add_jf; eauto. }
+
       rewrite CO'.
       cdes AJF. rewrite JF'.
       rewrite transp_union.
@@ -1205,8 +1208,19 @@ Section SimRelCertStepProps.
         rewrite Consistency.hbE; auto. rewrite !seqA.
         arewrite (ESstep.jf_delta w (ES.next_act S) ⨾ ⦗SE S⦘ ⊆ ∅₂).
         2: by relsf.
-        eapply ESstep.step_add_jf_jf_deltaE; eauto.
-        eapply weaken_sim_add_jf; eauto. }
+        eapply ESstep.step_add_jf_jf_deltaE; eauto. }
+      rewrite cr_union_l.
+      rewrite !seq_union_l, !seq_union_r.
+      apply irreflexive_union. split.
+      2: { arewrite (ESstep.jf_delta w (ES.next_act S) ⨾ Shb S' ⊆
+                     ESstep.jf_delta w (ES.next_act S) ⨾ Shb S).
+           { admit. }
+           rewrite Consistency.hbE; auto. rewrite !seqA.
+           arewrite (⦗SE S⦘ ⨾ (ESstep.jf_delta w (ES.next_act S))⁻¹ ⊆ ∅₂).
+           2: by relsf.
+           rewrite <- transp_eqv_rel. rewrite <- transp_seq.
+           erewrite ESstep.step_add_jf_jf_deltaE; eauto.
+           basic_solver. }
       admit. }
     { (* Write step *)
       rewrite JF'.
