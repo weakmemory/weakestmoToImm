@@ -136,7 +136,6 @@ Section SimRel.
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
       rf_cov_in_ex  : Grf ⨾ ⦗ C ⦘ ⊆ e2a □ Srf ⨾ ⦗ X ⦘ ;
-      co_iss_in_ex  : ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ e2a □ ⦗ X ⦘ ⨾ Sco ⨾ ⦗ X ⦘ ;
 
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
@@ -545,6 +544,67 @@ Section SimRel.
       unfolder; do 2 eexists; splits; eauto.
       apply ES.rf_trf_in_ew; auto.
       basic_solver. 
+    Qed.
+
+    Lemma co_restr_iss_in_ex : 
+      ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ e2a □ ⦗ X ⦘ ⨾ Sco ⨾ ⦗ X ⦘.
+    Proof. 
+      assert (Wf G) as WFG.
+      { apply SRC. }
+      assert (ES.Wf S) as WFS.
+      { apply SRC. }
+      assert (tc_coherent G sc TC) as TCCOH.
+      { apply SRC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC. }
+      rewrite <- !restr_relE.
+      intros x y [GCO [Ix Iy]].
+      assert ((e2a □₁ X) x) as e2aXx.
+      { apply ex_cov_iss; auto. basic_solver 10. }
+      assert ((e2a □₁ X) y) as e2aXy.
+      { apply ex_cov_iss; auto. basic_solver 10. }
+      destruct e2aXx as [x' [Xx' EQx]].
+      destruct e2aXy as [y' [Xy' EQy]].
+      assert ((restr_rel SE (same_loc Slab)) x' y') as HH.
+      { eapply same_lab_u2v_dom_same_loc.
+        { apply e2a_lab. apply SRC. }
+        red. unfold compose. splits; auto.
+        { red. unfold loc. 
+          apply wf_col; auto. 
+          congruence. }
+        { eapply Execution.ex_inE; eauto. }
+        eapply Execution.ex_inE; eauto. }
+      destruct HH as [SLOC [SEx' SEy']].
+      do 2 eexists; splits; eauto.
+      red; splits; auto.
+      edestruct Execution.co_total
+        as [SCO | SCO].
+      1-2 : eauto.      
+      { unfolder; splits.
+        { apply Xx'. }
+        { eapply same_lab_u2v_dom_is_w.
+          { apply e2a_lab. apply SRC. }
+          split; auto.
+          unfold compose, is_w.
+          apply wf_coD in GCO; auto.
+          generalize GCO. basic_solver. }
+        done. }
+      { unfolder; splits.
+        { apply Xy'. }
+        { eapply same_lab_u2v_dom_is_w.
+          { apply e2a_lab. apply SRC. }
+          split; auto.
+          unfold compose, is_w.
+          apply wf_coD in GCO; auto.
+          generalize GCO. basic_solver. }
+        done. }
+      { intros NEQ. subst.
+        eapply co_irr; eauto. } 
+      { done. }
+      exfalso. eapply co_irr; eauto.
+      eapply co_trans; eauto.
+      eapply e2a_co; [apply SRC|].
+      basic_solver 10. 
     Qed.
 
     (******************************************************************************)
