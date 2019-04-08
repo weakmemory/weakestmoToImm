@@ -1187,13 +1187,27 @@ Section SimRelCertStepProps.
       rewrite JF', CO'.
       rewrite (dom_r WF.(ES.jfE)) at 2.
       rewrite transp_seq, transp_eqv_rel.
-      arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S ⨾ ⦗SE S⦘).
-      { (* It is obvious for a fence step. *)
-        admit. }
-      arewrite_id ⦗SE S⦘. by rewrite seq_id_l. }
+      arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S).
+      2: done.
+      eapply ESstep.step_hbE; eauto. }
     { (* Read step *)
+      rewrite CO'.
       admit. }
     { (* Write step *)
+      rewrite JF'.
+      rewrite (WF.(ES.jfE)) at 2.
+      rewrite !transp_seq, transp_eqv_rel.
+      rewrite seqA.
+      arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S).
+      { eapply ESstep.step_hbE; eauto. }
+      arewrite ((Sjf S)^? ⨾ Shb S ⊆ ⦗SE S⦘ ⨾ (Sjf S)^? ⨾ Shb S).
+      { rewrite (dom_l WF.(ES.jfE)) at 1.
+        rewrite Consistency.hbE at 1; auto.
+        basic_solver 10. }
+      rewrite <- !seqA. apply irreflexive_seqC.
+      rewrite !seqA.
+      arewrite (⦗SE S⦘ ⨾ Sco S' ⨾ ⦗SE S⦘ ⊆ Sco S).
+      2: done.
       admit. }
     (* Update step *)
     admit.
