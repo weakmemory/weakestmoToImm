@@ -95,7 +95,8 @@ Proof.
   erewrite ESBasicStep.basic_step_acts_set
       with (S' := S'); eauto.
   rewrite set_unionA, id_union. relsf.
-  rewrite !seq_eqv_cross. 
+  rewrite <- !cross_inter_r. 
+  rewrite <- !cross_inter_l. 
   arewrite (E S ∩₁ eq w' ≡₁ ∅).
   { split; try done. unfolder in wEE'; desf; ESBasicStep.step_solver. }
   arewrite ((eq e ∪₁ eq_opt e') ∩₁ ews ≡₁ ∅).
@@ -1093,7 +1094,7 @@ Proof.
     arewrite (eq_opt e' ⊆₁ fun x => tid S' x = ES.cont_thread S k).
     { unfolder. ins. desf. eapply ESBasicStep.basic_step_tid_e'; eauto. }
     rewrite cross_union_r.
-    rewrite !seq_union_r, !seq_eqv_cross_l.
+    rewrite !seq_union_r, <- !cross_inter_l.
     arewrite (Eninit S' ∩₁ ES.cont_sb_dom S k ⊆₁
                      fun x => tid S' x = ES.cont_thread S k).
     2: { unfold ES.same_tid. unfolder. ins. desf.
@@ -1159,8 +1160,8 @@ Proof.
         unfolder. ins. desf. }
       unfold ESBasicStep.sb_delta.
       rewrite seq_union_l.
-      rewrite !seq_eqv_cross_r.
-      arewrite (eq (ES.next_act S) ∩₁ eq_opt e' ⊆₁ ∅).
+      rewrite <- !cross_inter_r.
+      arewrite (eq_opt e' ∩₁ eq (ES.next_act S) ⊆₁ ∅).
       { unfolder. ins. desf. simpls. omega. }
       relsf.
       2: { intros HH. eapply HH. eauto. }
@@ -1179,9 +1180,10 @@ Proof.
       simpls; desf. simpls. omega. }
     unfold ESBasicStep.sb_delta.
     rewrite seq_union_l.
-    rewrite !seq_eqv_cross_r.
+    rewrite <- !cross_inter_r.
     assert (eq e0 ∩₁ eq (ES.next_act S) ⊆₁ ∅) as DD.
     { red in EE. desf. unfolder. ins. desf. simpls. omega. }
+    rewrite set_interC. 
     rewrite !DD.
     relsf.
     2: { intros HH. eapply HH. split; eauto. }

@@ -488,12 +488,11 @@ Section SimRelCert.
     Lemma rel_ew_cert_ex : 
       dom_rel (Srelease ⨾ Sew ⨾ ⦗ certX ⦘) ⊆₁ certX.
     Proof.
-      rewrite ew_in_eq_ew_ex_iss_ew; [|apply SRCC].
-      rewrite !seq_union_l, !seq_union_r, !dom_union, !seqA.
-      unionL.
-      { arewrite (Srelease ⨾ eq ≡ Srelease).
-        { basic_solver. }
-        rewrite rel_in_ex_cov_rel_sb; [|apply SRCC].
+      rewrite ew_in_ew_ex_iss_ew; [|apply SRCC].
+      rewrite crE, !seq_union_l, !seq_union_r, 
+              !dom_union, !seqA.
+      relsf. split.
+      { rewrite rel_in_ex_cov_rel_sb; [|apply SRCC].
         relsf. rewrite !seqA. splits.
         { rewrite dom_seq, dom_eqv.
           apply ex_cov_in_certX. }

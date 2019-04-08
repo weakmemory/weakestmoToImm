@@ -7,47 +7,38 @@ Local Open Scope program_scope.
 
 Section AuxRel.
 
-  Variables A B : Type.
-  Variable cond : A -> Prop.
-  Variables s s' : A -> Prop.
-  Variable f g : A -> B.
-  Variable h h' : A -> A.
-  Variables r r' : relation A.
-  Variable p : B -> Prop.
+  Definition clos_sym {A : Type} (r : relation A) : relation A := 
+    fun x y => r x y \/ r y x. 
 
-  Definition clos_sym : relation A := fun x y => r x y \/ r y x. 
+  Definition clos_refl_sym {A : Type} (r : relation A) : relation A := 
+    fun x y => x = y \/ r x y \/ r y x. 
 
-  Definition clos_refl_sym : relation A := fun x y => x = y \/ r x y \/ r y x. 
-
-  Definition img_rel : A -> B -> Prop :=
-    fun x y => y = f x.
-
-  Definition eq_opt (a: option A) : A -> Prop := fun b => 
-  match a with
-  | None => False
-  | Some a => eq a b
-  end.
+  Definition eq_opt {A : Type} (a: option A) : A -> Prop := 
+    fun b => 
+      match a with
+      | None => False
+      | Some a => eq a b
+      end.
   
-  Definition compl_rel := fun a b => ~ r a b.
+  Definition compl_rel {A : Type} (r : relation A) : relation A := 
+    fun a b => ~ r a b.
 
-  Definition inj_dom_s :=
-    forall (x y : A) (SY: s y) (EQ : f x = f y),
+  Definition inj_dom {A B : Type} (s : A -> Prop) (f : A -> B) := 
+    forall (x y : A) (SX : s x) (SY: s y) (EQ : f x = f y), 
       x = y.
 
-  Definition inj_dom :=
-    forall (x y : A) (SX : s x) (SY: s y) (EQ : f x = f y),
-      x = y.
+  Definition restr_fun {A B : Type} (s : A -> Prop) (f g : A -> B) := 
+    fun x => if excluded_middle_informative (s x) then f x else g x.
 
-  Definition restr_fun := fun x => 
-    if excluded_middle_informative (s x) then f x else g x.
+  Definition fixset {A : Type} (s : A -> Prop) (f : A -> A) := 
+    forall (x : A) (SX : s x), f x = x.
 
-  Definition fixset := 
-    forall (x : A) (SX : s x), h x = x.
+  Definition downward_total {A : Type} (r : relation A) := 
+    forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym r x y.
 
-  Definition downward_total := 
-    forall x y z (Rxz : r x z) (Ryz : r y z), clos_refl_sym x y.
+  Definition set_map {A B : Type} (f : A -> B) (s : B -> Prop) := 
+    fun x => s (f x).
 
-  Definition set_map := fun x => p (f x).
 End AuxRel.
 
 Notation "⊤₁" := set_full.
@@ -59,31 +50,23 @@ Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
 Notation "f ⋄₁ s"  := (set_map f s) (at level 39).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
 Notation "f □ r"  := (collect_rel f r) (at level 45).
-Notation "↑ f" := (img_rel f) (at level 1, format "↑ f").
 Notation "f ⋄ r"  := (map_rel f r) (at level 45).
 
 Hint Unfold 
      clos_sym clos_refl_sym 
-     inj_dom_s inj_dom restr_fun set_map
-     img_rel eq_opt compl_rel fixset : unfolderDb. 
+     inj_dom restr_fun set_map
+     eq_opt compl_rel fixset : unfolderDb. 
 
 Section Props.
 
 Variables A B C : Type.
-Variable f g : A -> B.
-Variable h h' : A -> A.
-Variable a : A.
-Variable b : B.
 Variables s s' s'' : A -> Prop.
-Variables q q' : A -> Prop.
-Variables r r' r'': relation A.
-Variable p : B -> Prop.
+Variables p p' p'' : B -> Prop.
+Variables r r' r'' : relation A.
 
-Lemma seq_eqv : ⦗s⦘ ⨾ ⦗s'⦘ ≡ ⦗s ∩₁ s'⦘.
-Proof. basic_solver. Qed.
-
-Lemma seqA_rev : r ⨾ r' ⨾ r'' ⊆ (r ⨾ r') ⨾ r''.
-Proof. apply seqA. Qed.
+(******************************************************************************)
+(** ** clos_sym/clos_refl_sym properties *)
+(******************************************************************************)
 
 Lemma csE : r^⋈  ≡ r ∪ r⁻¹.
 Proof. basic_solver. Qed.
@@ -115,6 +98,10 @@ Proof. basic_solver 10. Qed.
 Lemma crs_restr2 : restr_rel s r⁼ ≡ restr_rel s ⦗⊤₁⦘ ∪ restr_rel s r^⋈.
 Proof. basic_solver 10. Qed.
 
+(******************************************************************************)
+(** ** symmetry of relations *)
+(******************************************************************************)
+
 Lemma cr_sym : symmetric r -> symmetric r^?.
 Proof. basic_solver. Qed.
 
@@ -133,55 +120,20 @@ Proof. basic_solver. Qed.
 Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
 Proof. basic_solver. Qed.
 
-Lemma transp_sym : forall (r : relation A), symmetric r -> r⁻¹ ≡ r. 
+Lemma transp_sym : symmetric r -> symmetric r⁻¹.
 Proof. basic_solver. Qed.
 
-Lemma restr_sym : forall (r : relation A), symmetric r -> symmetric (restr_rel s r). 
+Lemma restr_sym : symmetric r -> symmetric (restr_rel s r). 
 Proof. basic_solver. Qed.
 
-Lemma seq_incl_cross : dom_rel r ⊆₁ s -> codom_rel r' ⊆₁ s' -> r ⨾ r' ⊆ s × s'.
-Proof. basic_solver. Qed.
+(******************************************************************************)
+(** ** dom/codom properties *)
+(******************************************************************************)
 
 Lemma dom_singl_rel (x y : A) : dom_rel (singl_rel x y) ≡₁ eq x. 
 Proof. basic_solver. Qed.
 
 Lemma codom_singl_rel (x y : A) : codom_rel (singl_rel x y) ≡₁ eq y. 
-Proof. basic_solver. Qed.
-
-Lemma codom_cross_incl : codom_rel (s × s') ⊆₁ s'.
-Proof. basic_solver. Qed.
-
-Lemma cross_union_l : s × (s' ∪₁ s'') ≡ s × s' ∪ s × s''.
-Proof. basic_solver. Qed.
-
-Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
-Proof. basic_solver. Qed.
-
-Lemma seq_cross_eq x : s × eq x ⨾ eq x × s' ≡ s × s'.
-Proof. basic_solver 10. Qed.
-
-Lemma seq_eqv_cross_l : ⦗q⦘ ⨾ s × s' ≡ (q ∩₁ s) × s'.
-Proof. basic_solver. Qed.
-
-Lemma seq_eqv_cross_r : s × s' ⨾ ⦗q'⦘ ≡ s × (q' ∩₁ s').
-Proof. basic_solver. Qed.
-
-Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s').
-Proof. basic_solver. Qed.
-
-Lemma restr_cross : restr_rel s r ≡ r ∩ s × s.
-Proof. basic_solver. Qed.
-
-Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
-Proof. basic_solver. Qed.
-
-Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
-Proof. basic_solver. Qed.
-
-Lemma max_elt_eqv_rel : set_compl s ⊆₁ max_elt ⦗s⦘.
-Proof. basic_solver. Qed.
-
-Lemma max_elt_cross : set_compl s ⊆₁ max_elt (s × s'). 
 Proof. basic_solver. Qed.
 
 Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
@@ -190,7 +142,420 @@ Proof. basic_solver. Qed.
 Lemma dom_minus : dom_rel (r \ r') ⊆₁ dom_rel r. 
 Proof. basic_solver. Qed.
 
-Lemma eq_opt_someE : eq_opt (Some a) ≡₁ eq a.
+(* TODO : rename *)
+Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
+Proof.
+  unfold set_equiv, set_subset; ins; desf. 
+  unfold same_relation; splits; [|basic_solver].
+  unfold seq, inclusion. 
+  intros x y [z HH]. 
+  specialize (H z).
+  apply H. 
+  basic_solver.
+Qed.
+
+(******************************************************************************)
+(** ** cross_rel properties *)
+(******************************************************************************)
+
+Lemma cross_union_l : s × (s' ∪₁ s'') ≡ s × s' ∪ s × s''.
+Proof. basic_solver. Qed.
+
+Lemma cross_union_r : (s ∪₁ s') × s'' ≡ s × s'' ∪ s' × s''.
+Proof. basic_solver. Qed.
+
+Lemma cross_inter_l : (s ∩₁ s') × s'' ≡ ⦗s⦘ ⨾ s' × s''.
+Proof. basic_solver. Qed.
+
+Lemma cross_inter_r : s × (s' ∩₁ s'') ≡ s × s' ⨾ ⦗s''⦘.
+Proof. basic_solver. Qed.
+
+Lemma seq_cross_eq x : s × eq x ⨾ eq x × s' ≡ s × s'.
+Proof. basic_solver 10. Qed.
+
+(* Lemma seq_eqv_cross : ⦗q⦘ ⨾ s × s' ⨾ ⦗q'⦘ ≡ (q ∩₁ s) × (q' ∩₁ s'). *)
+(* Proof. basic_solver. Qed. *)
+
+Lemma restr_cross : restr_rel s r ≡ r ∩ s × s.
+Proof. basic_solver. Qed.
+
+Lemma seq_cross_singl_l x y : s' x -> s × s' ⨾ singl_rel x y ≡ s × eq y.
+Proof. 
+  ins. 
+  autounfold with unfolderDb.
+  splits; ins; splits; desf; eauto. 
+Qed.
+
+Lemma seq_cross_singl_r x y : s y -> singl_rel x y ⨾ s × s' ≡ eq x × s'.
+Proof. 
+  ins. 
+  autounfold with unfolderDb.
+  splits; ins; splits; desf; eauto. 
+Qed.
+
+(******************************************************************************)
+(** ** transp properties *)
+(******************************************************************************)
+
+Lemma transp_singl_rel (x y : A) : (singl_rel x y)⁻¹ ≡ singl_rel y x.
+Proof. basic_solver. Qed.
+
+Lemma transp_sym_equiv : symmetric r -> r⁻¹ ≡ r. 
+Proof. basic_solver. Qed.
+
+(* TODO : rename *)
+Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
+Proof. 
+  ins. 
+  rewrite !transp_seq. 
+  rewrite !seqA.
+  rewrite !transp_sym_equiv; auto. 
+  rewrite !transp_eqv_rel. 
+  done.
+Qed.
+
+(******************************************************************************)
+(** ** set_collect properties *)
+(******************************************************************************)
+
+Lemma set_collect_eq_dom (f g : A -> B) (EQ : eq_dom s f g) :
+  f □₁ s ≡₁ g □₁ s.
+Proof. 
+  unfolder in *. 
+  split. 
+  { ins. desf. 
+    specialize (EQ y H).
+    eauto. }
+  ins. desf. eauto. 
+Qed.
+
+(* Note that inclusion in other direction doesn't hold.
+   For example, if `f` is constant and `a <> b`, then
+   `f □₁ (eq a ∩₁ eq b) ≡₁ ∅` and `f □₁ eq a ∩₁ f □₁ eq b ≡₁ f □₁ eq a`.
+ *)
+Lemma set_collect_inter (f g : A -> B) : 
+  f □₁ (s ∩₁ s') ⊆₁ f □₁ s ∩₁ f □₁ s'.
+Proof. basic_solver. Qed.
+
+Lemma set_collect_dom (f : A -> B) : 
+  f □₁ dom_rel r ≡₁ dom_rel (f □ r).
+Proof.
+  unfolder.
+  split; intros x HH; desf; eauto.
+  repeat eexists. eauto.
+Qed.
+
+Lemma set_collect_eq_opt (f : A -> B) (a : option A) : 
+  f □₁ eq_opt a ≡₁ eq_opt (option_map f a).
+Proof. unfold eq_opt, option_map. basic_solver. Qed.
+
+Lemma set_collect_compose (f : A -> B) (g : B -> C) :
+  g □₁ (f □₁ s) ≡₁ (g ∘ f) □₁ s.
+Proof. 
+  autounfold with unfolderDb. unfold set_subset. 
+  ins; splits; ins; splits; desf; eauto.
+Qed.
+
+Lemma set_collect_updo (f : A -> B) (a : A) (b : B) (NC : ~ s a) : 
+  (upd f a b) □₁ s ≡₁ f □₁ s.
+Proof.
+  assert (forall x: A, s x -> x <> a). 
+  { ins. intros HH. by subst. }
+  unfolder.
+  splits; unfold set_subset; ins.
+  all: desf; eexists; splits; eauto.
+  all: rewrite updo; auto.
+Qed.
+
+Lemma set_collect_restr_fun (f g : A -> B) : 
+  s' ⊆₁ s -> (restr_fun s f g) □₁ s' ≡₁ f □₁ s'.
+Proof. 
+  clear.
+  unfolder. ins. split. 
+  all : 
+    ins; desc; 
+    eexists; split; eauto; 
+    destruct (excluded_middle_informative (s y)); 
+    eauto; exfalso; intuition. 
+Qed.
+
+Lemma set_collect_if_then (ft fe: A -> B) (HH : s ⊆₁ s') :
+  (fun e : A =>
+     if excluded_middle_informative (s' e)
+     then ft e
+     else fe e) □₁ s ≡₁ ft □₁ s.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  2: eexists; splits; eauto; desf.
+  all: by exfalso; match goal with H : ~ _ |- _ => apply H end; apply HH.
+Qed.
+
+Lemma set_collect_if_else (ft fe: A -> B) (HH : s ∩₁ s' ⊆₁ ∅) :
+  (fun e : A =>
+     if excluded_middle_informative (s' e)
+     then ft e
+     else fe e) □₁ s ≡₁ fe □₁ s.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  2: eexists; splits; eauto; desf.
+  all: exfalso; eapply HH; split; eauto.
+Qed.
+
+(******************************************************************************)
+(** ** collect_rel properties *)
+(******************************************************************************)
+
+(* Lemma collect_rel_eq_dom : *)
+(*   forall (s s': A -> Prop) (EQs: eq_dom s f g) (EQs': eq_dom s' f g), *)
+(*   f □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘). *)
+(* Proof. *)
+(*   ins. *)
+(*   unfolder. *)
+(*   splits; ins; desf; repeat eexists; eauto; symmetry. *)
+(*   { by apply EQs. } *)
+(*   by apply EQs'. *)
+(* Qed. *)
+
+Lemma collect_rel_restr_eq_dom (f g : A -> B) (EQ : eq_dom s f g) :
+  f □ (restr_rel s r) ≡ g □ (restr_rel s r).
+Proof. 
+  unfolder. split.
+  { ins; desf; repeat eexists; eauto; 
+      symmetry; eapply EQ; auto. }
+  ins; desf; repeat eexists; eauto; 
+    symmetry; eapply EQ; auto.
+Qed.
+
+Lemma collect_rel_singl (f : A -> B) x y : 
+  f □ singl_rel x y ≡ singl_rel (f x) (f y).
+Proof. basic_solver 42. Qed.
+
+Lemma collect_rel_eqv (f : A -> B) : 
+  f □ ⦗ s ⦘ ≡ ⦗ f □₁ s ⦘.
+Proof.
+  unfolder.
+  splits; ins; desf; eauto.
+  eexists. eexists.
+  splits; eauto.
+Qed.
+
+Lemma collect_rel_interi (f : A -> B) : 
+  f □ (r ∩ r') ⊆ (f □ r) ∩ (f □ r').
+Proof. basic_solver 10. Qed.
+
+Lemma collect_rel_seqi (f : A -> B) : 
+  f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
+Proof. basic_solver 30. Qed.
+
+Lemma collect_rel_seq (f : A -> B)
+      (INJ : inj_dom (codom_rel r ∪₁ dom_rel r') f) : 
+  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
+Proof.
+  split; 
+    [by apply collect_rel_seqi|].
+  unfolder.
+  ins; desf; eauto.
+  repeat eexists; eauto.
+  erewrite INJ; eauto;
+    unfolder; eauto.
+Qed.
+
+Lemma collect_rel_cr (f : A -> B) (rr : relation A) : 
+  f □ rr^? ⊆  (f □ rr)^?.
+Proof.
+  unfolder. ins; desf; auto.
+  right. eexists. eexists. eauto.
+Qed.
+
+Lemma collect_rel_ct (f : A -> B) (rr : relation A) : 
+  f □ rr⁺ ⊆ (f □ rr)⁺.
+Proof.
+  unfolder. ins. desf.
+  induction H.
+  { apply ct_step. eexists. eexists. splits; eauto. }
+  eapply t_trans; eauto.
+Qed.
+
+Lemma collect_rel_crt (f : A -> B) (rr : relation A) : 
+  f □ rr＊ ⊆  (f □ rr)＊.
+Proof.
+  by rewrite <- !cr_of_ct, 
+             <- collect_rel_ct, 
+             <- collect_rel_cr.
+Qed.
+
+Lemma collect_rel_irr (f : A -> B) (Irr : irreflexive (f □ r)): 
+  irreflexive r.
+Proof. generalize Irr. basic_solver 10. Qed.
+
+Lemma collect_rel_acyclic (f : A -> B) (ACYC : acyclic (f □ r)): 
+  acyclic r.
+Proof.
+  red. red.
+  assert (forall x y, r⁺ x y -> x <> y) as AA.
+  2: { ins. eapply AA; eauto. }
+  ins. induction H; intros BB; subst.
+  { eapply ACYC. apply ct_step. red.
+    eexists. eexists. splits; eauto. }
+  eapply ACYC.
+  apply collect_rel_ct.
+  red. eexists. eexists. splits.
+  { eapply t_trans; eauto. }
+  all: done.
+Qed.
+
+Lemma collect_rel_compose (f : A -> B) (g : B -> C) :
+  g □ (f □ r) ≡ (g ∘ f) □ r.
+Proof. 
+  unfolder. unfold compose.
+  ins; splits; ins; splits; desf; eauto.
+  do 2 eexists. splits; eauto.
+Qed.
+
+Lemma collect_rel_fixset (f : A -> A) (FIX : fixset s f) :
+  f □ restr_rel s r ≡ restr_rel s r.
+Proof.
+  unfolder in *.
+  split; ins; desf.
+  2: { do 2 eexists. splits; eauto. }
+  assert (f x' = x') as HX. 
+  { specialize (FIX x'). auto. }
+  assert (f y' = y') as HY. 
+  { specialize (FIX y'). auto. }
+  splits; congruence.
+Qed.
+
+Lemma collect_rel_if_then
+      (ft fe: A -> B) (DOM : dom_rel r ⊆₁ s) (CODOM : codom_rel r ⊆₁ s) :
+  (fun e : A =>
+     if excluded_middle_informative (s e)
+     then ft e
+     else fe e) □ r ≡ ft □ r.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  4: do 2 eexists; splits; eauto; desf.
+  1,3,5: by exfalso; match goal with H : ~ _ |- _ => apply H end;
+    eapply CODOM; eexists; eauto.
+  all: by exfalso; match goal with H : ~ _ |- _ => apply H end;
+    eapply DOM; eexists; eauto.
+Qed.
+
+Lemma collect_rel_if_else
+      (ft fe: A -> B) (DOM : dom_rel r ∩₁ s ⊆₁ ∅) (CODOM : codom_rel r ∩₁ s ⊆₁ ∅) :
+  (fun e : A =>
+     if excluded_middle_informative (s e)
+     then ft e
+     else fe e) □ r ≡ fe □ r.
+Proof.
+  unfolder. split; ins; desf; eauto.
+  4: do 2 eexists; splits; eauto; desf.
+  1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
+  all: exfalso; eapply CODOM; split; [eexists|]; eauto.
+Qed.
+
+(******************************************************************************)
+(** ** set_map properties *)
+(******************************************************************************)
+
+Lemma set_map_union (f : A -> B) : 
+  f ⋄₁ (p ∪₁ p') ⊆₁ f ⋄₁ p ∪₁ f ⋄₁ p'.
+Proof. basic_solver. Qed.
+
+Lemma set_map_inter (f : A -> B) : 
+  f ⋄₁ (p ∩₁ p') ⊆₁ f ⋄₁ p ∩₁ f ⋄₁ p'.
+Proof. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** set_map/set_collect properties *)
+(******************************************************************************)
+
+Lemma collect_map_in_set (f : A -> B) : 
+  f □₁ (f ⋄₁ p) ⊆₁ p.
+Proof. basic_solver. Qed.
+
+Lemma set_in_map_collect (f : A -> B) : 
+  s ⊆₁ f ⋄₁ (f □₁ s).
+Proof. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** inj_dom properties *)
+(******************************************************************************)
+
+Lemma inj_dom_union 
+      (f : A -> B)
+      (INJ : inj_dom s f) 
+      (INJ' : inj_dom s' f) 
+      (DISJ : set_disjoint (f □₁ s) (f □₁ s')) :
+  inj_dom (s ∪₁ s') f. 
+Proof. 
+  unfolder in *. 
+  ins; desf; 
+    try (by exfalso; eapply DISJ; eauto).
+  { by apply INJ. }
+    by apply INJ'. 
+Qed.
+
+Lemma inj_dom_eq (f : A -> B) (a : A) :
+  inj_dom (eq a) f. 
+Proof. basic_solver. Qed.
+
+Lemma inj_dom_eq_opt (f : A -> B) (a : option A) :
+  inj_dom (eq_opt a) f. 
+Proof. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** fixset properties *)
+(******************************************************************************)
+
+Lemma fixset_union (f : A -> A) : 
+  fixset (s ∪₁ s') f <-> fixset s f /\ fixset s' f.
+Proof. clear; unfolder; split; ins; intuition. Qed.
+
+Lemma fixset_eq_dom (f g : A -> A) (EQD : eq_dom s f g) : 
+  fixset s f <-> fixset s g.
+Proof. 
+  unfolder in *. 
+  split; ins; 
+    specialize (EQD x SX);
+    specialize (H x SX);
+    congruence.
+Qed.
+
+Lemma fixset_set_fixpoint (f : A -> A) : 
+  fixset s f -> s ≡₁ f □₁ s.
+Proof. 
+  autounfold with unfolderDb; unfold set_subset.
+  intros FIX.
+  splits. 
+  { ins. eexists. 
+    specialize (FIX x). 
+    splits; eauto. } 
+  ins; desf. 
+  erewrite (FIX y); auto. 
+Qed.
+
+Lemma fixset_swap (f' : A -> B) (g' : B -> A) : 
+  fixset s (g' ∘ f') -> fixset (f' □₁ s) (f' ∘ g').
+Proof.
+  unfolder.
+  intros FIX x [y [DOM Fy]].
+  unfold compose. 
+  rewrite <- Fy.
+  fold (compose g' f' y).
+  rewrite FIX; auto. 
+Qed.
+
+(******************************************************************************)
+(** ** TODO : structure other properties *)
+(******************************************************************************)
+
+Lemma seq_eqv : ⦗ s ⦘ ⨾ ⦗ s' ⦘ ≡ ⦗ s ∩₁ s' ⦘.
+Proof. basic_solver. Qed.
+
+Lemma set_compl_inter_id : set_compl s ∩₁ s ≡₁ ∅.
+Proof. basic_solver. Qed.
+
+Lemma eq_opt_someE (a : A) : eq_opt (Some a) ≡₁ eq a.
 Proof. basic_solver. Qed. 
 
 Lemma eq_opt_noneE : eq_opt (None : option A) ≡₁ ∅.
@@ -199,10 +564,12 @@ Proof. basic_solver. Qed.
 Lemma empty_irr : r ≡ ∅₂ -> irreflexive r. 
 Proof. basic_solver. Qed.
 
-Lemma restr_fun_fst x : s x -> restr_fun s f g x = f x. 
+Lemma restr_fun_fst (f g : A -> B) x : 
+  s x -> restr_fun s f g x = f x. 
 Proof. clear. unfolder. basic_solver. Qed.
 
-Lemma restr_fun_snd x : ~ s x -> restr_fun s f g x = g x. 
+Lemma restr_fun_snd (f g : A -> B) x : 
+  ~ s x -> restr_fun s f g x = g x. 
 Proof. clear. unfolder. basic_solver. Qed.
 
 Lemma set_subset_union_minus : s ⊆₁ s \₁ s' ∪₁ s'. 
@@ -272,45 +639,12 @@ Proof.
   rewrite !compl_top_minus; by apply minus_union_r.
 Qed.
 
-Lemma seq_cross_singl_l x y : s' x -> s × s' ⨾ singl_rel x y ≡ s × eq y.
-Proof. 
-  ins. 
-  autounfold with unfolderDb.
-  splits; ins; splits; desf; eauto. 
-Qed.
-
-Lemma seq_cross_singl_r x y : s y -> singl_rel x y ⨾ s × s' ≡ eq x × s'.
-Proof. 
-  ins. 
-  autounfold with unfolderDb.
-  splits; ins; splits; desf; eauto. 
-Qed.
-
 Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
 Proof. 
   rewrite !seq_eqv_lr. 
   unfold inter_rel.
   unfold same_relation, inclusion.
   splits; ins; splits; desf. 
-Qed.
-
-Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
-Proof. 
-  ins. 
-  rewrite !transp_seq. 
-  rewrite !seqA.
-  rewrite !transp_sym; auto; apply eqv_sym.
-Qed.
-
-Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
-Proof.
-  unfold set_equiv, set_subset; ins; desf. 
-  unfold same_relation; splits; [|basic_solver].
-  unfold seq, inclusion. 
-  intros x y [z HH]. 
-  specialize (H z).
-  apply H. 
-  basic_solver.
 Qed.
 
 Lemma set_subset_inter_l (LL : s ⊆₁ s'' \/ s' ⊆₁ s'') :
@@ -321,327 +655,9 @@ Proof.
   all: basic_solver.
 Qed.
 
-Lemma fixset_union : fixset (s ∪₁ s') h <-> fixset s h /\ fixset s' h.
-Proof. clear; unfolder; split; ins; intuition. Qed.
-
-Lemma fixset_eq_dom (EQD : eq_dom s h h') : 
-  fixset s h <-> fixset s h'.
-Proof. 
-  clear a b s' s'' q q' r r' r'' f g p B C. 
-  unfolder in *. 
-  split; ins; 
-    specialize (EQD x SX);
-    specialize (H x SX);
-    congruence.
-Qed.
-
-Lemma fixset_set_fixpoint : fixset s h -> s ≡₁ h □₁ s.
-Proof. 
-  autounfold with unfolderDb; unfold set_subset.
-  intros FIX.
-  splits. 
-  { ins. eexists. 
-    specialize (FIX x). 
-    splits; eauto. } 
-  ins; desf. 
-  erewrite (FIX y); auto. 
-Qed.
-
-Lemma fixset_swap (f' : A -> B) (g' : B -> A) : 
-  fixset s (g' ∘ f') -> fixset (f' □₁ s) (f' ∘ g').
-Proof.
-  unfolder.
-  intros FIX x [y [DOM Fy]].
-  unfold compose. 
-  rewrite <- Fy.
-  fold (compose g' f' y).
-  rewrite FIX; auto. 
-Qed.
-
-Lemma inj_dom_s_inj_dom (INJ : inj_dom_s s f) : inj_dom s f.
-Proof. unfolder in *. ins. by apply INJ. Qed.
-
-Lemma inj_dom_union 
-      (INJ : inj_dom s f) 
-      (INJ' : inj_dom s' f) 
-      (DISJ : set_disjoint (f □₁ s) (f □₁ s')) :
-  inj_dom (s ∪₁ s') f. 
-Proof. 
-  clear g h h' a b s'' q q' r r' r'' C.
-  unfolder in *. 
-  ins; desf; 
-    try (by exfalso; eapply DISJ; eauto).
-  { by apply INJ. }
-    by apply INJ'. 
-Qed.
-
-Lemma inj_dom_eq :
-  inj_dom (eq a) f. 
-Proof. 
-  clear g h h' b s'' q q' r r' r'' C.
-  basic_solver.
-Qed.
-
-Lemma inj_dom_eq_opt x :
-  inj_dom (eq_opt x) f. 
-Proof. 
-  clear g h h' b s'' q q' r r' r'' C.
-  basic_solver.
-Qed.
-
-Lemma inj_dom_s_union (INJ : inj_dom_s s f) (INJ' : inj_dom_s s' f) :
-  inj_dom_s (s ∪₁ s') f. 
-Proof. 
-  unfolder in *. 
-  ins. desf; [ apply INJ | apply INJ']; auto.  
-Qed.
-
 Lemma set_minus_remove_l (IN : s ⊆₁ s') :
   s \₁ s'' ⊆₁ s'.
 Proof. generalize IN. basic_solver. Qed.
-
-Lemma set_collect_compose (f' : A -> B) (g' : B -> C) :
-  g' □₁ (f' □₁ s) ≡₁ (g' ∘ f') □₁ s.
-Proof. 
-  autounfold with unfolderDb. unfold set_subset. 
-  ins; splits; ins; splits; desf; eauto.
-Qed.
-
-Lemma collect_rel_compose (f' : A -> B) (g' : B -> C) :
-  g' □ (f' □ r) ≡ (g' ∘ f') □ r.
-Proof. 
-  unfolder. unfold compose.
-  ins; splits; ins; splits; desf; eauto.
-  do 2 eexists. splits; eauto.
-Qed.
-
-Lemma set_collect_restr_fun : 
-  s' ⊆₁ s -> (restr_fun s f g) □₁ s' ≡₁ f □₁ s'.
-Proof. 
-  clear.
-  unfolder. ins. split. 
-  all : 
-    ins; desc; 
-    eexists; split; eauto; 
-    destruct (excluded_middle_informative (s y)); 
-    eauto; exfalso; intuition. 
-Qed.
-
-Lemma set_collect_updo (NC : ~ s a) : (upd f a b) □₁ s ≡₁ f □₁ s.
-Proof.
-  assert (forall x: A, s x -> x <> a). 
-  { ins. intros HH. by subst. }
-  unfolder.
-  splits; unfold set_subset; ins.
-  all: desf; eexists; splits; eauto.
-  all: rewrite updo; auto.
-Qed.
-
-Lemma set_collect_eqv : f □ ⦗ s ⦘ ≡ ⦗ f □₁ s ⦘.
-Proof.
-  unfolder.
-  splits; ins; desf; eauto.
-  eexists. eexists.
-  splits; eauto.
-Qed.
-
-Lemma set_collect_dom : f □₁ dom_rel r ≡₁ dom_rel (f □ r).
-Proof.
-  unfolder.
-  split; intros x HH; desf; eauto.
-  repeat eexists. eauto.
-Qed.
-
-Lemma set_collect_subset (INJ : inj_dom_s s' f) : 
-  f □₁ s ⊆₁ f □₁ s' -> s ⊆₁ s'.
-Proof.   
-  unfolder in *. 
-  intros FSUBS x SX. 
-  assert (exists y : A, s y /\ f y = f x) as HH by eauto. 
-  destruct (FSUBS (f x) HH) as [y [S'y EQfxy]].
-  erewrite INJ; eauto.  
-Qed.
-
-Lemma collect_rel_subset (INJ : inj_dom_s s f) : 
-  f □ restr_rel s r ⊆ f □ restr_rel s r' -> restr_rel s r ⊆ restr_rel s r'.
-Proof.   
-  unfolder in *. 
-  intros FSUBS x y SX. desf. splits; auto.
-  edestruct FSUBS.
-  { do 2 eexists. splits; eauto. }
-  desf.
-  do 2 match goal with H : f _ = f _ |- _ => apply INJ in H; auto end.
-  desf.
-Qed.
-
-Lemma collect_rel_fixset (FIX : fixset s h) :
-  h □ restr_rel s r ≡ restr_rel s r.
-Proof.
-  unfolder in *.
-  split; ins; desf.
-  2: { do 2 eexists. splits; eauto. }
-  assert (h x' = x') as HX. 
-  { specialize (FIX x'). auto. }
-  assert (h y' = y') as HY. 
-  { specialize (FIX y'). auto. }
-  splits; congruence.
-Qed.
-
-(* Note that inclusion in other direction doesn't hold.
-   For example, if `f` is constant and `a <> b`, then
-   `f □₁ (eq a ∩₁ eq b) ≡₁ ∅` and `f □₁ eq a ∩₁ f □₁ eq b ≡₁ f □₁ eq a`.
- *)
-Lemma set_collect_inter : f □₁ (s ∩₁ s') ⊆₁ f □₁ s ∩₁ f □₁ s'.
-Proof. basic_solver. Qed.
-
-Lemma collect_seq_eqv_l rr : f □ ⦗ s ⦘ ⨾ rr ⊆ ⦗ f □₁ s ⦘ ⨾ (f □ rr).
-Proof.
-  unfolder.
-  intros x y HH; desf; eauto.
-  eexists; splits; eauto.
-Qed.
-
-Lemma collect_seq_eqv_r rr : f □ rr ⨾ ⦗ s' ⦘ ⊆ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
-Proof.
-  unfolder.
-  intros x y HH; desf; eauto.
-  eexists; splits; eauto.
-Qed.
-
-Lemma collect_seq_eqv_lr rr :
-  f □ ⦗ s ⦘ ⨾ rr ⨾ ⦗ s' ⦘ ⊆
-  ⦗ f □₁ s ⦘ ⨾ (f □ rr) ⨾ ⦗ f □₁ s' ⦘.
-Proof. rewrite collect_seq_eqv_l. by rewrite collect_seq_eqv_r. Qed.
-
-Lemma collect_rel_interi : f □ (r ∩ r') ⊆ (f □ r) ∩ (f □ r').
-Proof. basic_solver 10. Qed.
-
-Lemma set_collect_eq_opt e : f □₁ eq_opt e ≡₁ eq_opt (option_map f e).
-Proof. unfold eq_opt, option_map. basic_solver. Qed.
-
-Lemma collect_rel_singl x y : f □ singl_rel x y ≡ singl_rel (f x) (f y).
-Proof. basic_solver 42. Qed.
-
-Lemma collect_rel_seqi : f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
-Proof. basic_solver 30. Qed.
-
-Lemma collect_rel_seq
-      (INJ : inj_dom (codom_rel r ∪₁ dom_rel r') f) : 
-  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
-Proof.
-  split; 
-    [by apply collect_rel_seqi|].
-  unfolder.
-  ins; desf; eauto.
-  repeat eexists; eauto.
-  erewrite INJ; eauto;
-    unfolder; eauto.
-Qed.
-
-Lemma collect_rel_seq_l
-      (INJ : inj_dom_s (codom_rel r) f) : 
-  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
-Proof.
-  split; [by apply collect_rel_seqi|].
-  unfolder.
-  ins; desf; eauto.
-  repeat eexists; eauto.
-  apply INJ in H1; desf;
-  red; eauto.
-Qed.
-
-Lemma collect_rel_seq_r
-      (INJ : inj_dom_s (dom_rel r') f) : 
-  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
-Proof.
-  split; [by apply collect_rel_seqi|].
-  unfolder.
-  ins; desf; eauto.
-  repeat eexists; eauto.
-  symmetry in H1.
-  apply INJ in H1; desf.
-  red. eexists. eauto.
-Qed.     
-
-Lemma collect_rel_cr (rr : relation A) : f □ rr^? ⊆  (f □ rr)^?.
-Proof.
-  unfolder. ins; desf; auto.
-  right. eexists. eexists. eauto.
-Qed.
-
-Lemma collect_rel_ct (rr : relation A) : f □ rr⁺ ⊆ (f □ rr)⁺.
-Proof.
-  unfolder. ins. desf.
-  induction H.
-  { apply ct_step. eexists. eexists. splits; eauto. }
-  eapply t_trans; eauto.
-Qed.
-
-Lemma collect_rel_crt (rr : relation A) : f □ rr＊ ⊆  (f □ rr)＊.
-Proof.
-  rewrite <- !cr_of_ct. 
-  by rewrite <- collect_rel_ct, <- collect_rel_cr.
-Qed.
-
-Lemma collect_rel_irr (HH : irreflexive (f □ r)): irreflexive r.
-Proof. generalize HH. basic_solver 10. Qed.
-
-Lemma collect_rel_acyclic (HH : acyclic (f □ r)): acyclic r.
-Proof.
-  red. red.
-  assert (forall x y, r⁺ x y -> x <> y) as AA.
-  2: { ins. eapply AA; eauto. }
-  ins. induction H; intros BB; subst.
-  { eapply HH. apply ct_step. red.
-    eexists. eexists. splits; eauto. }
-  eapply HH.
-  apply collect_rel_ct.
-  red. eexists. eexists. splits.
-  { eapply t_trans; eauto. }
-  all: done.
-Qed.
-
-Lemma set_collect_restr : 
-  forall (s: A -> Prop) (f: A -> B), inj_dom_s s f ->
-  f □ (restr_rel s r) ≡ restr_rel (f □₁ s) (f □ r).
-Proof.
-  ins.
-  unfolder.
-  splits; ins; desf; splits; eauto.
-  assert (x' = y1) by (apply H; auto). subst.
-  assert (y' = y0) by (apply H; auto). subst.
-  eexists. eexists.
-  splits; eauto.
-Qed.
-
-Lemma set_collect_eq_dom (EQ : eq_dom s f g) :
-  f □₁ s ≡₁ g □₁ s.
-Proof. 
-  unfolder in *. 
-  split. 
-  { ins. desf. 
-    specialize (EQ y H).
-    eauto. }
-  ins. desf. eauto. 
-Qed.
-
-Lemma collect_rel_eq_dom :
-  forall (s s': A -> Prop) (EQs: eq_dom s f g) (EQs': eq_dom s' f g),
-  f □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘) ≡ g □ (⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘).
-Proof.
-  ins.
-  unfolder.
-  splits; ins; desf; repeat eexists; eauto; symmetry.
-  { by apply EQs. }
-  by apply EQs'.
-Qed.
-
-Lemma collect_rel_restr_eq_dom (HH : eq_dom s f g) :
-  f □ (restr_rel s r) ≡ g □ (restr_rel s r).
-Proof.
-  rewrite restr_relE.
-  apply collect_rel_eq_dom; auto.
-Qed.
 
 Lemma restr_set_subset 
       (SUBS : s' ⊆₁ s) 
@@ -713,7 +729,7 @@ Qed.
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
 Proof. 
-  clear r'' s s' s'' q q' a b p f g h h' B C.
+  clear r'' s s' s'' p p' p'' B C.
   rewrite crE, seq_union_r, seq_id_r.
   rewrite rt_unionE.
   rewrite <- cr_of_ct with (r := (r ⨾ r'＊)).
@@ -813,56 +829,6 @@ Proof.
   eapply transitive_rt; eauto.
 Qed.
 
-Lemma set_collect_if_then (ft fe: A -> B) (HH : s ⊆₁ s') :
-  (fun e : A =>
-     if excluded_middle_informative (s' e)
-     then ft e
-     else fe e) □₁ s ≡₁ ft □₁ s.
-Proof.
-  unfolder. split; ins; desf; eauto.
-  2: eexists; splits; eauto; desf.
-  all: by exfalso; match goal with H : ~ _ |- _ => apply H end; apply HH.
-Qed.
-
-Lemma set_collect_if_else (ft fe: A -> B) (HH : s ∩₁ s' ⊆₁ ∅) :
-  (fun e : A =>
-     if excluded_middle_informative (s' e)
-     then ft e
-     else fe e) □₁ s ≡₁ fe □₁ s.
-Proof.
-  unfolder. split; ins; desf; eauto.
-  2: eexists; splits; eauto; desf.
-  all: exfalso; eapply HH; split; eauto.
-Qed.
-
-Lemma collect_rel_if_then
-      (ft fe: A -> B) (DOM : dom_rel r ⊆₁ s) (CODOM : codom_rel r ⊆₁ s) :
-  (fun e : A =>
-     if excluded_middle_informative (s e)
-     then ft e
-     else fe e) □ r ≡ ft □ r.
-Proof.
-  unfolder. split; ins; desf; eauto.
-  4: do 2 eexists; splits; eauto; desf.
-  1,3,5: by exfalso; match goal with H : ~ _ |- _ => apply H end;
-    eapply CODOM; eexists; eauto.
-  all: by exfalso; match goal with H : ~ _ |- _ => apply H end;
-    eapply DOM; eexists; eauto.
-Qed.
-
-Lemma collect_rel_if_else
-      (ft fe: A -> B) (DOM : dom_rel r ∩₁ s ⊆₁ ∅) (CODOM : codom_rel r ∩₁ s ⊆₁ ∅) :
-  (fun e : A =>
-     if excluded_middle_informative (s e)
-     then ft e
-     else fe e) □ r ≡ fe □ r.
-Proof.
-  unfolder. split; ins; desf; eauto.
-  4: do 2 eexists; splits; eauto; desf.
-  1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
-  all: exfalso; eapply CODOM; split; [eexists|]; eauto.
-Qed.
-
 Lemma inter_trans : transitive r -> transitive r' -> transitive (r ∩ r').
 Proof. 
   clear.
@@ -926,12 +892,6 @@ Proof.
   eapply rt_trans; eauto.
 Qed.
 
-Lemma collect_map_in_set : f □₁ (f ⋄₁ p) ⊆₁ p.
-Proof. basic_solver. Qed.
-
-Lemma set_in_map_collect : s ⊆₁ f ⋄₁ (f □₁ s).
-Proof. basic_solver. Qed.
-
 End Props.
 
 Require Import Setoid.
@@ -964,14 +924,6 @@ Add Parametric Morphism A : (@compl_rel A) with signature
   inclusion --> inclusion as compl_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
-Add Parametric Morphism A B : (@inj_dom_s A B) with signature 
-    set_equiv ==> eq ==> iff as inj_dom_s_more.
-Proof. 
-  intros s s' Heq f. red. 
-  unfold inj_dom_s in *.
-  splits; ins; specialize (H x y); apply H; auto; apply Heq; auto.
-Qed.
-
 Add Parametric Morphism A : (@downward_total A) with signature 
     same_relation ==> iff as downward_total_more.
 Proof. 
@@ -982,10 +934,6 @@ Proof.
   all: apply EQ in Ryz.
   all: eapply H; eauto.
 Qed.
-
-Add Parametric Morphism A B : (@inj_dom_s A B) with signature 
-  set_subset --> eq ==> impl as inj_dom_s_mori.
-Proof. unfold impl, inj_dom_s. basic_solver. Qed.
 
 Add Parametric Morphism A B : (@eq_dom A B) with signature 
     set_equiv ==> eq ==> eq ==> iff as eq_dom_more.
@@ -1040,6 +988,14 @@ Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A B : (@set_collect A B) with signature 
   eq ==> set_subset ==> set_subset as set_collect_mori.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A B : (@set_map A B) with signature 
+  eq ==> set_equiv ==> set_equiv as set_map_more.
+Proof. red; unfolder; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A B : (@set_map A B) with signature 
+  eq ==> set_subset ==> set_subset as set_map_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@dom_rel A) with signature

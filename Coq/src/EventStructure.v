@@ -463,7 +463,7 @@ Proof.
   rewrite <- (unionK (restr_rel Eninit same_tid)).
   assert (symmetric (restr_rel Eninit same_tid)) as SYM. 
   { apply restr_sym. apply same_tid_sym. }
-  rewrite <- (transp_sym SYM) at 2. 
+  rewrite <- (transp_sym_equiv SYM) at 2. 
   rewrite <- csE.
   apply clos_sym_mori.
   rewrite <- (set_interK Eninit) at 1.
@@ -726,6 +726,24 @@ Qed.
 
 Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf; apply WF. Qed.
+
+Lemma rf_trf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew. 
+Proof. 
+  unfold ES.rf.
+  rewrite transp_minus, transp_seq.
+  rewrite !inclusion_minus_rel.
+  rewrite !seqA.
+  arewrite (jf ⨾ jf⁻¹ ⊆ ⦗⊤₁⦘).
+  { (* TODO : introduce corresponding lemma *)
+    arewrite (jf ≡ ((jf)⁻¹)⁻¹).
+    rewrite <- functional_alt.
+    apply WF. }
+  rewrite transp_sym_equiv.
+  { rewrite seq_id_l. 
+    rewrite transitiveI.
+    apply WF. }
+  apply WF.
+Qed.
 
 (******************************************************************************)
 (** ** fr properties *)

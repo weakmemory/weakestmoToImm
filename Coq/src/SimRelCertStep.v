@@ -893,10 +893,10 @@ Section SimRelCertStepProps.
     rewrite !seq_union_l.
 
     unionL.
-    2,3: rewrite seq_eqv_cross_r; rewrite <- AA; basic_solver.
+    2,3: rewrite <- cross_inter_r; rewrite <- AA; basic_solver.
     rewrite SBDOMIN.
     unfold ES.cont_sb_dom. rewrite SB'.
-    rewrite seq_eqv_cross_r.
+    rewrite <- cross_inter_r.
     assert ((ESBasicStep.sb_delta S k e e')^? ⊆ 
             (Ssb S ∪ ESBasicStep.sb_delta S k e e')^?) as DD.
     { basic_solver. }
@@ -1312,7 +1312,7 @@ Section SimRelCertStepProps.
       { eapply Execution.step_preserves; eauto. apply SRCC. }
       { eapply basic_step_simrel_cont; eauto; apply SRCC. }
       { eapply simrel_cert_step_e2a; eauto. }
-      1-5 : admit.
+      1-4 : admit.
       (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
       { arewrite (X ∩₁ e2a S' ⋄₁ I ≡₁ X ∩₁ e2a S ⋄₁ I).
         { admit. }

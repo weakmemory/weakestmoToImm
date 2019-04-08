@@ -468,11 +468,11 @@ Proof.
   rewrite SB'.
   unfold sb_delta.
   rewrite !seq_union_l.
-  rewrite !seq_eqv_cross_r.
+  rewrite <- !cross_inter_r.
   rewrite set_interK.
   arewrite_false (sb S ⨾ ⦗eq e⦘).
   { step_solver. }
-  arewrite (eq e ∩₁ eq_opt e' ≡₁ ∅).
+  arewrite (eq_opt e' ∩₁ eq e ≡₁ ∅).
   { split; [|done]. step_solver. }
   relsf.
 Qed.
@@ -486,11 +486,11 @@ Proof.
   rewrite SB'.
   unfold sb_delta.
   rewrite !seq_union_l.
-  rewrite !seq_eqv_cross_r.
+  rewrite <- !cross_inter_r.
   rewrite set_interK.
   arewrite_false (sb S ⨾ ⦗eq_opt e'⦘).
   { step_solver. }
-  arewrite (eq_opt e' ∩₁ eq e ≡₁ ∅).
+  arewrite (eq e ∩₁ eq_opt e' ≡₁ ∅).
   { split; [|done]. step_solver. }
   relsf.
 Qed.
@@ -1093,7 +1093,6 @@ Proof.
   { unfold sb_delta.
     rewrite ES.cont_sb_domE; eauto.
     2: { cdes BSTEP_. eauto. }
-    rewrite cross_union_r, !seq_union_r, !seq_eqv_cross_l.
     cdes BSTEP_. step_solver. }
   unfold sb_delta.
   rewrite cross_union_r, !seq_union_l.

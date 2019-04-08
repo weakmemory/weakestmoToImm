@@ -141,14 +141,15 @@ Section Compilation.
       { eapply eq_dom_more; 
           [| | | eapply ex_cov_iss_lab; eauto].
         all : auto.
-        arewrite (e2a S ⋄₁ (C ∪₁ I) ≡₁ e2a S ⋄₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘))).
-        { admit. }
-        arewrite (e2a S ⋄₁ (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘)) ≡₁ e2a S ⋄₁ (e2a S □₁ X)).
-        { admit. }
-        split; [|basic_solver].
-        rewrite <- set_in_map_collect. done. }
+        rewrite <- COVISSG, DCOV.
+        erewrite <- ex_cov_iss; eauto.
+        erewrite set_inter_absorb_r; auto.
+        apply set_in_map_collect. }
       { split.
-        { admit. }
+        { arewrite (Gsb ≡ ⦗C⦘ ⨾ Gsb ⨾ ⦗C⦘).
+          { rewrite wf_sbE at 1; auto. by rewrite COVG. }
+          rewrite <- restr_cross, restr_relE.
+          eapply sb_restr_cov_in_ex; eauto. }
         rewrite collect_rel_interi.
         erewrite e2a_sb; try apply SRC. 
         basic_solver. }
@@ -156,23 +157,23 @@ Section Compilation.
         { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
           { rewrite wf_rmwE at 1; auto. by rewrite COVG. }
           rewrite <- restr_cross, restr_relE.
-          eapply cov_rmw_cov; eauto. }
+          eapply rmw_restr_cov_in_ex; eauto. }
         rewrite collect_rel_interi.
         erewrite e2a_rmw; try apply SRC. 
         basic_solver. }
       { split. 
         { arewrite (Grf ≡ ⦗GE ∩₁ GW⦘ ⨾ Grf ⨾ ⦗GE⦘).
-        { rewrite wf_rfE, wf_rfD; auto. basic_solver. }
-        rewrite ISSG, COVG.
+          { rewrite wf_rfE, wf_rfD; auto. basic_solver. }
+          rewrite ISSG, COVG.
           rewrite <- restr_cross, restr_relE.
-          eapply iss_rf_cov; eauto. }
+          eapply iss_rf_cov_in_ex; eauto. }
         admit. }
       split. 
       { arewrite (Gco ≡ ⦗GE ∩₁ GW⦘ ⨾ Gco ⨾ ⦗GE ∩₁ GW⦘).
         { rewrite wf_coE, wf_coD at 1; auto. basic_solver. }
         rewrite ISSG.
         rewrite <- restr_cross, restr_relE.
-        eapply iss_co_iss; eauto. }
+        eapply co_restr_iss_in_ex; eauto. }
       rewrite collect_rel_interi.
       erewrite e2a_co; try apply SRC. 
       basic_solver.
