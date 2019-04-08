@@ -1168,37 +1168,68 @@ Section SimRelCertStepProps.
     { apply SRCC. }
     assert (coherence G) as GCOH.
     { eapply gcons. apply SRCC. }
-    
-    (* TODO: introduce a corresponding lemma. *)
-    arewrite (Sjf S' ⊆ SimRelJF.sim_jf G sc TC' S' (certX S' k')).
-    { (* eapply jf_in_sim_jf. *)
-      (* apply inclusion_minus_l. *)
-      (* unionR right. *)
-      (* Sew ;; sim_jf ⊆ sim_jf *)
-      admit. }
 
-    arewrite (SimRelJF.sim_jf G sc TC' S' (certX S' k') ⊆
-              SimRelJF.sim_vf G sc TC' S' (certX S' k')) at 1.
-    arewrite (Sco S' ⨾ (SimRelJF.sim_vf G sc TC' S' (certX S' k'))^? ⨾ Shb S' ⊆
-              Sco S' ⨾ SimRelJF.sim_vf G sc TC' S' (certX S' k')).
-    2: { unfold SimRelJF.sim_jf. basic_solver 10. }
-    rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l.
-    unionL.
-    2: { arewrite (SimRelJF.sim_vf G sc TC' S' (certX S' k') ⨾ Shb S' ⊆
-                   SimRelJF.sim_vf G sc TC' S' (certX S' k')).
-         2: done.
-         unfold SimRelJF.sim_vf.
-         rewrite !seqA.
-         arewrite ((Shb S')^? ⨾ Shb S' ⊆ (Shb S')^?).
-         2: done.
-         generalize (@hb_trans S'). basic_solver 20. }
-    unfold SimRelJF.sim_vf.
-    arewrite (Sco S' ⊆ Sco S' ⨾ Sew S').
-    2: basic_solver 20.
-    rewrite <- ES.ew_refl; auto.
-    rewrite (dom_r WFS.(ES.coD)) at 1.
-    rewrite (dom_r WFS.(ES.coE)) at 1.
-    basic_solver.
+    assert (irreflexive (Sco S ⨾ (Sjf S)^? ⨾ Shb S ⨾ (Sjf S)⁻¹))
+      as OLDCOH.
+    { apply irreflexive_seqC. rewrite !seqA. 
+      apply irreflexive_seqC. rewrite !seqA. 
+      rewrite WF.(ES.jf_in_rf).
+      arewrite ((Srf S)⁻¹ ⨾ Sco S ⊆ ES.fr S).
+      arewrite (ES.fr S ⨾ (Srf S)^? ⊆ (Seco S)^?).
+      2: by apply SRCC.
+      rewrite fr_in_eco.
+      arewrite (Srf S ⊆ Seco S).
+      generalize (eco_trans S Weakestmo).
+      basic_solver. }
+    
+    red in CertSTEP_. desf; cdes CertSTEP_.
+    { (* Fence step *)
+      rewrite JF', CO'.
+      rewrite (dom_r WF.(ES.jfE)) at 2.
+      rewrite transp_seq, transp_eqv_rel.
+      arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S ⨾ ⦗SE S⦘).
+      { (* It is obvious for a fence step. *)
+        admit. }
+      arewrite_id ⦗SE S⦘. by rewrite seq_id_l. }
+    { (* Read step *)
+      admit. }
+    { (* Write step *)
+      admit. }
+    (* Update step *)
+    admit.
+    
+    (* The old proof which requires DR restrictions *)
+    
+    (* (* TODO: introduce a corresponding lemma. *) *)
+    (* arewrite (Sjf S' ⊆ SimRelJF.sim_jf G sc TC' S' (certX S' k')). *)
+    (* { (* eapply jf_in_sim_jf. *) *)
+    (*   (* apply inclusion_minus_l. *) *)
+    (*   (* unionR right. *) *)
+    (*   (* Sew ;; sim_jf ⊆ sim_jf *) *)
+    (*   admit. } *)
+
+    (* arewrite (SimRelJF.sim_jf G sc TC' S' (certX S' k') ⊆ *)
+    (*           SimRelJF.sim_vf G sc TC' S' (certX S' k')) at 1. *)
+    (* arewrite (Sco S' ⨾ (SimRelJF.sim_vf G sc TC' S' (certX S' k'))^? ⨾ Shb S' ⊆ *)
+    (*           Sco S' ⨾ SimRelJF.sim_vf G sc TC' S' (certX S' k')). *)
+    (* 2: { unfold SimRelJF.sim_jf. basic_solver 10. } *)
+    (* rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l. *)
+    (* unionL. *)
+    (* 2: { arewrite (SimRelJF.sim_vf G sc TC' S' (certX S' k') ⨾ Shb S' ⊆ *)
+    (*                SimRelJF.sim_vf G sc TC' S' (certX S' k')). *)
+    (*      2: done. *)
+    (*      unfold SimRelJF.sim_vf. *)
+    (*      rewrite !seqA. *)
+    (*      arewrite ((Shb S')^? ⨾ Shb S' ⊆ (Shb S')^?). *)
+    (*      2: done. *)
+    (*      generalize (@hb_trans S'). basic_solver 20. } *)
+    (* unfold SimRelJF.sim_vf. *)
+    (* arewrite (Sco S' ⊆ Sco S' ⨾ Sew S'). *)
+    (* 2: basic_solver 20. *)
+    (* rewrite <- ES.ew_refl; auto. *)
+    (* rewrite (dom_r WFS.(ES.coD)) at 1. *)
+    (* rewrite (dom_r WFS.(ES.coE)) at 1. *)
+    (* basic_solver. *)
   Admitted.
 
   Lemma simrel_cert_step_fr_coh k k' e e' S S'
