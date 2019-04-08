@@ -1182,61 +1182,63 @@ Section SimRelCertStepProps.
       generalize (eco_trans S Weakestmo).
       basic_solver. }
 
-    assert (Shb S' ⨾ (Sjf S)⁻¹ ⊆ Shb S ⨾ (Sjf S)⁻¹) as HBJF.
-    { rewrite (dom_r WF.(ES.jfE)) at 1.
-      rewrite transp_seq, transp_eqv_rel.
-      arewrite (Shb S' ⨾ ⦗SE S⦘ ⊆ Shb S).
-      2: done.
-      eapply ESstep.step_hbE; eauto. }
-    
-    red in CertSTEP_. desf; cdes CertSTEP_.
-    { (* Fence step *)
-      rewrite JF', CO'. by rewrite HBJF. }
-    { (* Read step *)
-      assert (ESstep.add_jf w (ES.next_act S) S S') as AA.
-      { eapply weaken_sim_add_jf; eauto. }
+    assert 
+      (irreflexive (Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ (Sjf S)⁻¹)) 
+      as IrrH.
+    { arewrite (Shb S' ⨾ (Sjf S)⁻¹ ≡ Shb S ⨾ (Sjf S)⁻¹).
+      { rewrite ES.jfE; auto.
+        rewrite !transp_seq, !transp_eqv_rel.
+        rewrite <- seq_eqvK at 1. 
+        rewrite !seqA, <- seqA.
+        arewrite (Shb S' ⨾ ⦗SE S⦘ ≡ Shb S); auto.
+        unfold_cert_step_ CertSTEP_.
+        1,3: 
+          eapply ESstep.step_same_jf_hbE; eauto;
+          rewrite RMW'; subst; 
+            autounfold with ESStepDb;
+            basic_solver.
+        all: eapply ESstep.step_add_jf_hbE; eauto. 
+        1,3 : eapply weaken_sim_add_jf; eauto.
+        { subst; autounfold with ESStepDb; basic_solver. }
+        cdes ACO. type_solver. }
+      arewrite ((Sjf S')^? ⨾ Shb S ≡ (Sjf S)^? ⨾ Shb S).
+      { rewrite !crE. relsf.
+        apply union_more; auto.
+        rewrite hbE; auto.
+        rewrite <- seq_eqvK at 1.
+        rewrite !seqA. 
+        arewrite (Sjf S' ⨾ ⦗SE S⦘ ≡ Sjf S); auto.
+        unfold_cert_step_ CertSTEP_.
+        1,3: rewrite JF', ES.jfE; basic_solver.
+        all : 
+          eapply ESstep.step_add_jf_jfE; eauto;
+          eapply weaken_sim_add_jf; eauto. }
+      unfold_cert_step_ CertSTEP_.
+      all: try cdes ACO; rewrite CO'.
+      1,2: done.
+      all: unfold ESstep.co_delta.
+      all: rewrite ESstep.ws_complE; auto.
+      all: rewrite sim_wsE.
+      all: relsf.
+      all: rewrite !irreflexive_union; splits. 
+      2,3,5,6 : ESBasicStep.step_solver.
+      all: done. }
 
-      rewrite CO'.
-      cdes AJF. rewrite JF'.
-      rewrite transp_union.
-      rewrite !seq_union_r.
-      apply irreflexive_union. split.
-      { rewrite HBJF.
-        rewrite cr_union_l.
-        rewrite !seq_union_l, !seq_union_r.
-        apply irreflexive_union. split; auto.
-        rewrite Consistency.hbE; auto. rewrite !seqA.
-        arewrite (ESstep.jf_delta w (ES.next_act S) ⨾ ⦗SE S⦘ ⊆ ∅₂).
-        2: by relsf.
-        eapply ESstep.step_add_jf_jf_deltaE; eauto. }
-      rewrite cr_union_l.
-      rewrite !seq_union_l, !seq_union_r.
-      apply irreflexive_union. split.
-      2: { arewrite (ESstep.jf_delta w (ES.next_act S) ⨾ Shb S' ⊆
-                     ESstep.jf_delta w (ES.next_act S) ⨾ Shb S).
-           { admit. }
-           rewrite Consistency.hbE; auto. rewrite !seqA.
-           arewrite (⦗SE S⦘ ⨾ (ESstep.jf_delta w (ES.next_act S))⁻¹ ⊆ ∅₂).
-           2: by relsf.
-           rewrite <- transp_eqv_rel. rewrite <- transp_seq.
-           erewrite ESstep.step_add_jf_jf_deltaE; eauto.
-           basic_solver. }
-      admit. }
-    { (* Write step *)
-      rewrite JF'.
-      rewrite HBJF.
-      arewrite ((Sjf S)^? ⨾ Shb S ⊆ ⦗SE S⦘ ⨾ (Sjf S)^? ⨾ Shb S).
-      { rewrite (dom_l WF.(ES.jfE)) at 1.
-        rewrite Consistency.hbE at 1; auto.
-        basic_solver 10. }
-      rewrite (dom_l WF.(ES.jfE)) at 2.
-      rewrite transp_seq, transp_eqv_rel.
-      rewrite <- !seqA. apply irreflexive_seqC.
-      rewrite !seqA.
-      arewrite (⦗SE S⦘ ⨾ Sco S' ⨾ ⦗SE S⦘ ⊆ Sco S).
-      2: done.
-      admit. }
-    (* Update step *)
+    assert 
+      (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⊆ Gco ⨾ Gvf)
+      as COVF.
+    { admit. }
+
+    unfold_cert_step_ CertSTEP_.
+    1,3: by rewrite JF' at 2. 
+    all: cdes AJF; rewrite JF' at 2.
+    all: rewrite transp_union; relsf.
+    all: rewrite !irreflexive_union; splits. 
+    1,3: done.
+    (* we need to show that in this case:
+     *  (a) (Sjf S')^? ⨾ Shb S' ≡ (Sjf S')^? ⨾ <| X |> ⨾ Shb S'
+     *  (b) Sjf S' ⨾ <| X |> ⊆ vf (not Gvf ≡ furr)
+     *)
     admit.
     
     (* The old proof which requires DR restrictions *)
