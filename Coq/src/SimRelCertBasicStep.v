@@ -98,7 +98,8 @@ Section SimRelCertBasicStep.
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
-  Notation "'Gvf'" := (G.(furr)).
+
+  Notation "'Gfurr'" := (furr G sc).
   Notation "'Gppo'" := (G.(ppo)).
 
   Notation "'thread_syntax' tid"  := 

@@ -89,7 +89,7 @@ Section SimRelEventToAction.
   Notation "'Grelease'" := (G.(imm_s_hb.release)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   
-  Notation "'Gvf'" := (furr G sc).
+  Notation "'Gfurr'" := (furr G sc).
 
   Notation "'C'" := (covered TC).
   Notation "'I'" := (issued TC).
@@ -352,7 +352,7 @@ Section SimRelEventToActionLemmas.
   Notation "'Grelease'" := (G.(imm_s_hb.release)).
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   
-  Notation "'Gvf'" := (furr G sc).
+  Notation "'Gfurr'" := (furr G sc).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).

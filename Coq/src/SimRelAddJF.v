@@ -103,7 +103,8 @@ Section SimRelAddJF.
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
-  Notation "'Gvf'" := (furr G sc).
+
+  Notation "'Gfurr'" := (furr G sc).
   Notation "'Gppo'" := (G.(ppo)).
 
   Notation "'C'"  := (covered TC).
@@ -315,13 +316,13 @@ Section SimRelAddJF.
       exfalso. auto. 
     Qed.
 
-    Lemma sim_add_jf_e2a_jf_vf w k k' e e' S S' 
+    Lemma sim_add_jf_e2a_jf_furr w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
           (BSTEP_ : ESBasicStep.t_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-      e2a S' □ Sjf S' ⊆ Gvf.
+      e2a S' □ Sjf S' ⊆ Gfurr.
     Proof. 
       assert (ESstep.add_jf w e S S') as AJF. 
       { eapply weaken_sim_add_jf; eauto. } 

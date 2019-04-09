@@ -14,6 +14,7 @@ Require Import EventToAction.
 Require Import LblStep.
 Require Import SimRelCont.
 Require Import SimRelEventToAction.
+(* Require Import CertRf. *)
 Require Import SimRelJF.
 
 Set Implicit Arguments.
@@ -103,7 +104,7 @@ Section SimRel.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Notation "'Gvf'" := (furr G sc).
+  Notation "'Gfurr'" := (furr G sc).
 
   Notation "'Ssim_jf'" := (sim_jf G sc TC S X).
   Notation "'Ssim_vf'" := (sim_vf G sc TC S X).
@@ -393,7 +394,7 @@ Section SimRel.
       rewrite e2a_release. by rewrite e2a_jfacq.
     Qed.
 
-    Lemma e2a_jf : e2a □ Sjf ⊆ Gvf.
+    Lemma e2a_jf : e2a □ Sjf ⊆ Gfurr.
     Proof.
       assert (ES.Wf S) as WF by apply SRC.
       assert (simrel_e2a S G) as SRE2A by apply SRC.
@@ -813,7 +814,7 @@ Section SimRelLemmas.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Notation "'Gvf'" := (furr G sc).
+  Notation "'Gfurr'" := (furr G sc).
 
   Lemma simrel_init 
         (nInitProg : ~ IdentMap.In tid_init prog)

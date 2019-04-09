@@ -107,7 +107,10 @@ Section SimRelCertStep.
   Notation "'Ghb'" := (G.(imm_s_hb.hb)).
   Notation "'Grf'" := (G.(rf)).
   Notation "'Gco'" := (G.(co)).
-  Notation "'Gvf'" := (G.(furr) sc).
+
+  Notation "'Gfurr'" := (furr G sc).
+  Notation "'Gvf' t" := (vf G sc TC' t) (at level 10, only parsing).
+
   Notation "'Gppo'" := (G.(ppo)).
   Notation "'Geco'" := (G.(Execution_eco.eco)).
 
