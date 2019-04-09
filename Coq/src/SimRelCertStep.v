@@ -1228,9 +1228,17 @@ Section SimRelCertStepProps.
       all: done. }
 
     assert 
-      (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⊆ Gco ⨾ Gvf)
+      (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗ eq e ⦘ ⊆ 
+           Gco ⨾ Gvf (ktid S k))
       as COVF.
-    { admit. }
+    { rewrite crE; relsf. unionL.
+      { rewrite !collect_rel_seqi.
+        rewrite e2a_co; eauto.
+        arewrite (e2a S' □ Shb S' ⊆ Ghb).
+        { admit. }
+        (* trivial *)
+        admit. }
+      admit. }
 
     unfold_cert_step_ CertSTEP_.
     1,3: by rewrite JF' at 2. 
@@ -1238,11 +1246,22 @@ Section SimRelCertStepProps.
     all: rewrite transp_union; relsf.
     all: rewrite !irreflexive_union; splits. 
     1,3: done.
-    (* we need to show that in this case:
-     *  (a) (Sjf S')^? ⨾ Shb S' ≡ (Sjf S')^? ⨾ <| X |> ⨾ Shb S'
-     *  (b) Sjf S' ⨾ <| X |> ⊆ vf (not Gvf ≡ furr)
-     *)
-    admit.
+
+    all: arewrite ((ESstep.jf_delta w e)⁻¹ ≡ ⦗ eq e ⦘ ⨾ (ESstep.jf_delta w e)⁻¹).
+    1,3: unfold ESstep.jf_delta; basic_solver.
+    all: do 3 rewrite <- seqA.
+    all: rewrite seqA with (r1 := Sco S' ⨾ (Sjf S')^?).
+    all: rewrite seqA with (r1 := Sco S').
+    all: eapply collect_rel_irr with (f := e2a S').
+    all: rewrite collect_rel_seqi.
+    all: rewrite COVF.
+    all: arewrite (
+           e2a S' □ (ESstep.jf_delta w e)⁻¹ ⊆ 
+           (cert_rf G sc TC' (ktid S k))⁻¹
+    ).
+    1,3: unfold ESstep.jf_delta; basic_solver.
+    all: unfold cert_rf.
+    all: basic_solver.
     
     (* The old proof which requires DR restrictions *)
     
