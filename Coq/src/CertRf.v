@@ -47,8 +47,9 @@ Notation "'furr'" := (furr G sc).
 
 Definition E0 := (Tid_ thread ∩₁ (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘))).
 
-Definition vf := ⦗ W ⦘ ⨾ (rf ⨾ ⦗ D ⦘)^? ⨾ hb^? ⨾
-                    sc^? ⨾ hb^? ⨾ ⦗ E ⦘.
+Definition vf := ⦗ W ⦘ ⨾ (rf ⨾ ⦗ C ⦘)^? ⨾ hb^? ⨾
+                    sc^? ⨾ hb^? ⨾ ⦗ E ⦘ ∪
+                 rf ⨾ ⦗ D ⦘ ⨾ sb^?.
 
 Definition cert_rf :=
   vf ∩ same_loc lab ⨾ ⦗ E0 ∩₁ R ⦘ \ co ⨾ vf.
@@ -73,25 +74,34 @@ Lemma vfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
 Proof.
   apply dom_helper_3.
   unfold vf.
-  rewrite (dom_l WF.(wf_rfE)).
+  rewrite WF.(wf_rfE).
   rewrite (dom_l WF.(wf_hbE)).
   cdes COH.
   rewrite (dom_l (wf_scE Wf_sc)).
+  rewrite (dom_r (@wf_sbE G)).
   basic_solver.
 Qed.
 
 Lemma vf_dom : vf ≡ ⦗ W ⦘ ⨾ vf.
 Proof.
   split; [|basic_solver].
-    by unfold vf; seq_rewrite seq_eqvK.
+  unfold vf.
+  rewrite (dom_l WF.(wf_rfD)) at 2.
+  rewrite !seqA. rewrite seq_union_r.
+    by seq_rewrite seq_eqvK.
 Qed.
 
 Lemma vf_in_furr : vf ⊆ furr.
 Proof.
   cdes COH.
   unfold vf.
-  arewrite_id ⦗D⦘. arewrite_id ⦗E⦘. rewrite !seq_id_r.
-    by rewrite furr_alt; auto.
+  arewrite_id ⦗D⦘. arewrite_id ⦗E⦘. arewrite_id ⦗C⦘.
+  rewrite !seq_id_r, !seq_id_l.
+  rewrite furr_alt; auto.
+  unionL; [done|].
+  rewrite (dom_l WF.(wf_rfD)) at 1.
+  rewrite sb_in_hb.
+  basic_solver 20.
 Qed.
 
 Lemma cert_rf_in_vf : cert_rf ⊆ vf.
@@ -173,7 +183,7 @@ Proof.
   assert (sb (InitEvent l) b).
   { by apply init_ninit_sb; eauto; eapply read_or_fence_is_not_init; eauto. }
   assert (vf (InitEvent l) b).
-  { red.
+  { left. red.
     exists (InitEvent l); splits.
     { red. splits; desf; by apply WF.(init_w). }
     unfold eqv_rel; eauto.
@@ -320,11 +330,17 @@ Proof.
     eexists. split; eauto. right.
     eexists. split; eauto.
     apply fr_in_eco. eexists; eauto. }
-  eapply Csc. eexists. split; eauto.
-  eexists. split; eauto. right.
-  eexists. split; eauto.
-  red. right. 
-  eexists. split; [eexists|right]; eauto.
+  { eapply Csc. eexists. split; eauto.
+    eexists. split; eauto. right.
+    eexists. split; eauto.
+    red. right. 
+    eexists. split; [eexists|right]; eauto. }
+  { apply NEQ. eapply wf_rff; eauto. }
+  eapply Cint. eexists. split.
+  { apply sb_in_hb; eauto. }
+  right. eapply WF.(eco_trans).
+  2: by apply rf_in_eco; eauto.
+  apply fr_in_eco. eexists. split; eauto.
 Qed.
 
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
@@ -421,7 +437,22 @@ Proof.
     rewrite E0CI. rewrite sbCsbI_CsbI; eauto.
     sin_rewrite RFSB_I. generalize (@sb_trans G). basic_solver. }
 
+  rewrite !seq_union_l, !seq_union_r.
+  unionL.
+  2: { rewrite !seqA.
+       rewrite (dom_l WF.(wf_rfD)), !seqA.
+       arewrite_id ⦗R⦘. rewrite seq_id_l.
+       rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l.
+       rewrite sb_in_hb at 1.
+       unionL; auto. }
+  
+  rewrite !seqA.
+  arewrite (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ (rf ⨾ ⦗C⦘)^? ⊆ ⦗set_compl I⦘ ⨾ ⦗W⦘).
+  { rewrite crE. rewrite !seq_union_r, seq_id_r. unionL; [done|].
+    sin_rewrite IRFC. basic_solver. }
+
   arewrite_id ⦗E⦘. rewrite seq_id_l.
+
   rewrite !crE.
   repeat (rewrite seq_union_l, seq_id_l).
   rewrite !seq_union_r.
@@ -432,12 +463,9 @@ Proof.
   all: try (sin_rewrite rewrite_trans; [|by apply hb_trans]).
   1-3: rewrite E0CI; sin_rewrite hb_in_Chb_sb; eauto; relsf;
     unionL; [sin_rewrite TTU|]; basic_solver.
-  3: done.
   all: rewrite SCA.
-  1,3: sin_rewrite hb_covered; eauto; rewrite !seqA.
-  { sin_rewrite TTU. basic_solver. }
-  all: arewrite (⦗D⦘ ⨾ ⦗C⦘ ⊆ ⦗C⦘ ⨾ ⦗D⦘) by basic_solver.
-  all: sin_rewrite IRFC; basic_solver.
+  sin_rewrite hb_covered; eauto; rewrite !seqA.
+  sin_rewrite TTU. basic_solver.
 Qed.
 
 Lemma cert_rf_ntid_sb : cert_rf ⊆ ⦗ NTid_ thread ⦘ ⨾ cert_rf ∪ sb.

@@ -255,7 +255,7 @@ Section CertGraph.
 
     Lemma cert_rf_w (SCG : cert_graph) : 
       cert_rf ≡ ⦗ W ⦘ ⨾ cert_rf.
-    Proof. rewrite cert_rfD. basic_solver. Qed.
+    Proof. rewrite cert_rfD; auto. basic_solver. Qed.
 
     Lemma cert_rf_ntid_iss_sb 
           (SCG : cert_graph)
@@ -638,7 +638,7 @@ Proof.
       unfold new_rfi in AA.
       destruct_seq AA as [TX TY].
       unfold new_rf in AA. apply seq_eqv_r in AA. destruct AA as [AA _].
-      apply cert_rfD in AA. destruct_seq AA as [WX RY].
+      apply cert_rfD in AA; auto. destruct_seq AA as [WX RY].
       splits; auto; unfold is_w, is_r.
       all: erewrite <- steps_preserve_lab with (state0:=state'') (state':=state'); eauto;
         [ erewrite tr_lab; eauto; eapply E0_in_thread_execE with (TC:=TC); eauto
@@ -792,7 +792,7 @@ Proof.
 
       set (LL := RF).
       apply cert_rfE in LL; auto. destruct_seq LL as [RE RW].
-      apply cert_rfD in LL. destruct_seq LL as [RR WW].
+      apply cert_rfD in LL; auto. destruct_seq LL as [RR WW].
 
       assert (Tid_ thread w -> sb w r) as SBWR.
       { intros TTW.
@@ -875,7 +875,7 @@ Proof.
     all: assert (tid b = tid a) as TB
         by (apply cert_rf_codomt in RF; generalize RF; basic_solver).
 
-    all: apply cert_rfD in RF;       destruct_seq RF as [WX RY].
+    all: apply cert_rfD in RF; auto; destruct_seq RF as [WX RY].
     all: apply cert_rfE in RF; auto; destruct_seq RF as [EX EY].
     all: destruct (@same_thread G a b) as [[|SB]|SB]; desf; auto. 
     1,3,5: type_solver.
