@@ -1247,8 +1247,15 @@ Section SimRelCertStepProps.
         unfolder. ins. desf. do 2 eexists.
         splits; eauto.
         all: symmetry; eapply basic_step_e2a_eq_dom; eauto. }
-      (* TODO: It should follow from the simulation invariant. *)
-      admit. }
+      arewrite (e2a S □ Sjf S ⊆ vf G sc TC' (ES.cont_thread S k)).
+      { (* TODO: It should follow from the simulation invariant. *)
+        admit. }
+      unfold vf at 1. rewrite !seqA.
+      arewrite (Ghb^? ⨾ ⦗GE⦘ ⨾ Ghb ⊆ Ghb^? ⨾ ⦗GE⦘).
+      2: done.
+      rewrite (dom_r WFG.(wf_hbE)) at 2.
+      generalize (@imm_s_hb.hb_trans G).
+      basic_solver 10. }
 
     assert 
       (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗ eq e ⦘ ⊆ 
