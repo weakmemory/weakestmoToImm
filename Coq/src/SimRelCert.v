@@ -175,9 +175,9 @@ Section SimRelCert.
 
       (* rel_ew_cont_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ kE ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX ; *)
 
-      cert_e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf;
+      (* cert_e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf; *)
 
-      cert_jf_in_sim_jf : Sjf ⊆ Ssim_jf;
+      (* cert_jf_in_sim_jf : Sjf ⊆ Ssim_jf; *)
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)

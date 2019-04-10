@@ -120,6 +120,9 @@ Section SimRelEventToAction.
       e2a_rmw : e2a □ Srmw ⊆ Grmw;
       e2a_ew  : e2a □ Sew  ⊆ eq;
       e2a_co  : e2a □ Sco  ⊆ Gco;
+
+      e2a_jf  : e2a □ Sjf  ⊆ Gfurr;
+      e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
     }.
 
   Section SimRelEventToActionProps. 
@@ -376,7 +379,7 @@ Section SimRelEventToActionLemmas.
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
   Lemma simrel_e2a_init :
-    simrel_e2a (ES.init prog) G.
+    simrel_e2a (ES.init prog) G sc.
   Proof. admit. Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
@@ -587,7 +590,7 @@ Section SimRelEventToActionLemmas.
   Lemma basic_step_e2a_GE TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (SRE2A : simrel_e2a S G)
+        (SRE2A : simrel_e2a S G sc)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
@@ -745,7 +748,7 @@ Section SimRelEventToActionLemmas.
   Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
         (SRK : simrel_cont prog S G TC)
-        (SRE2A : simrel_e2a S G)
+        (SRE2A : simrel_e2a S G sc)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
