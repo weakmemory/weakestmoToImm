@@ -1227,20 +1227,39 @@ Section SimRelCertStepProps.
       2,3,5,6 : ESBasicStep.step_solver.
       all: done. }
     
+    assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
+    { admit. }
+
     assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆
                 Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H.
-    { admit. }
+    { arewrite (Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ Sjf S ⨾ Shb S' ⨾ ⦗eq e⦘).
+      { admit. }
+      rewrite !collect_rel_seqi.
+      rewrite e2a_co; eauto.
+      rewrite HBN.
+      arewrite_id (e2a S' □ ⦗eq e⦘).
+      { basic_solver. }
+      rewrite seq_id_r.
+      hahn_frame.
+      arewrite (e2a S' □ Sjf S ⊆ e2a S □ Sjf S).
+      { (* TODO: generalize to a lemma *)
+        rewrite WF.(ES.jfE) at 1.
+        unfolder. ins. desf. do 2 eexists.
+        splits; eauto.
+        all: symmetry; eapply basic_step_e2a_eq_dom; eauto. }
+      (* TODO: It should follow from the simulation invariant. *)
+      admit. }
 
     assert 
       (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗ eq e ⦘ ⊆ 
            Gco ⨾ Gvf (ktid S k))
       as COVF.
     { rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l.
+      rewrite collect_rel_union.
       unionL; auto.
       rewrite !collect_rel_seqi.
       rewrite e2a_co; eauto.
-      arewrite (e2a S' □ Shb S' ⊆ Ghb).
-      { admit. }
+      sin_rewrite HBN.
       arewrite_id (e2a S' □ ⦗eq e⦘).
       { basic_solver. }
       rewrite seq_id_r.
