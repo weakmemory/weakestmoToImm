@@ -1226,19 +1226,29 @@ Section SimRelCertStepProps.
       all: rewrite !irreflexive_union; splits. 
       2,3,5,6 : ESBasicStep.step_solver.
       all: done. }
+    
+    assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆
+                Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H.
+    { admit. }
 
     assert 
       (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗ eq e ⦘ ⊆ 
            Gco ⨾ Gvf (ktid S k))
       as COVF.
-    { rewrite crE; relsf. unionL.
-      { rewrite !collect_rel_seqi.
-        rewrite e2a_co; eauto.
-        arewrite (e2a S' □ Shb S' ⊆ Ghb).
-        { admit. }
-        (* trivial *)
-        admit. }
-      admit. }
+    { rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l.
+      unionL; auto.
+      rewrite !collect_rel_seqi.
+      rewrite e2a_co; eauto.
+      arewrite (e2a S' □ Shb S' ⊆ Ghb).
+      { admit. }
+      arewrite_id (e2a S' □ ⦗eq e⦘).
+      { basic_solver. }
+      rewrite seq_id_r.
+      rewrite (dom_r WFG.(wf_coD)) at 1.
+      rewrite (dom_r WFG.(wf_hbE)) at 1.
+      rewrite !seqA.
+      do 2 hahn_frame.
+      basic_solver 40. }
 
     unfold_cert_step_ CertSTEP_.
     1,3: by rewrite JF' at 2. 
