@@ -149,6 +149,8 @@ Section SimRel.
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
 
+      jfC_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf;
+
       (* e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf ; *)
 
       (* jf_in_sim_jf : Sjf ⊆ Ssim_jf ; *)

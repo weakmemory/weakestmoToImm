@@ -177,7 +177,7 @@ Section SimRelCert.
 
       (* cert_e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf; *)
 
-      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗STid ktid⦘) ⊆
+      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆
                           cert_rf G sc TC' ktid;
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)

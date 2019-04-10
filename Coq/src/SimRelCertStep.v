@@ -1296,7 +1296,7 @@ Section SimRelCertStepProps.
       arewrite ((Sjf S')^? ⨾ Ssb S' ⨾ ⦗eq e⦘ ⊆ (Sjf S)^? ⨾ Ssb S' ⨾ ⦗eq e⦘).
       { admit. }
       arewrite ((Sjf S)^? ⨾ Ssb S' ⨾ ⦗eq e⦘ ⊆
-                (Sjf S ⨾ ⦗Stid_ S (ES.cont_thread S k)⦘)^? ⨾ Ssb S' ⨾ ⦗eq e⦘).
+                (Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘)^? ⨾ Ssb S' ⨾ ⦗eq e⦘).
       { admit. }
       rewrite !collect_rel_union.
       rewrite !collect_rel_seqi.
@@ -1324,8 +1324,8 @@ Section SimRelCertStepProps.
           admit. }
         rewrite wf_hbE at 1; auto.
         basic_solver 40. }
-      arewrite (e2a S' □ Sjf S ⨾ ⦗Stid_ S (ES.cont_thread S k)⦘ ⊆
-                e2a S  □ Sjf S ⨾ ⦗Stid_ S (ES.cont_thread S k)⦘).
+      arewrite (e2a S' □ Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘ ⊆
+                e2a S  □ Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘).
       { admit. }
       rewrite jf_in_cert_rf; eauto.
       rewrite (dom_r WFG.(wf_coD)), !seqA.
