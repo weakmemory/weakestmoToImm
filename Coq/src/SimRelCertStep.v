@@ -1231,63 +1231,127 @@ Section SimRelCertStepProps.
     assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
     { admit. }
 
-    assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆
-                Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H.
-    { arewrite (Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ Sjf S ⨾ Shb S' ⨾ ⦗eq e⦘).
-      { admit. }
-      rewrite !collect_rel_seqi.
-      rewrite e2a_co; eauto.
-      rewrite HBN.
-      arewrite_id (e2a S' □ ⦗eq e⦘).
-      { basic_solver. }
-      rewrite seq_id_r.
-      hahn_frame.
-      arewrite (e2a S' □ Sjf S ⊆ e2a S □ Sjf S).
-      { (* TODO: generalize to a lemma *)
-        rewrite WF.(ES.jfE) at 1.
-        unfolder. ins. desf. do 2 eexists.
-        splits; eauto.
-        all: symmetry; eapply basic_step_e2a_eq_dom; eauto. }
-      arewrite (e2a S □ Sjf S ⊆ vf G sc TC' (ES.cont_thread S k)).
-      { (* TODO: It should follow from the simulation invariant. *)
-        admit. }
-      unfold vf at 1. rewrite !seqA.
-      arewrite (Ghb^? ⨾ ⦗GE⦘ ⨾ Ghb ⊆ Ghb^? ⨾ ⦗GE⦘).
-      2: done.
-      rewrite (dom_r WFG.(wf_hbE)) at 2.
-      generalize (@imm_s_hb.hb_trans G).
-      basic_solver 10. }
+    assert (e2a S' □ Ssb S' ⊆ Gsb) as SBN.
+    { eapply e2a_sb; eauto; try apply SRCC.
+      (* trivial *)
+      admit. }
 
-    assert 
-      (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗ eq e ⦘ ⊆ 
-           Gco ⨾ Gvf (ktid S k))
-      as COVF.
-    { rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l.
-      rewrite collect_rel_union.
-      unionL; auto.
-      rewrite !collect_rel_seqi.
-      rewrite e2a_co; eauto.
-      sin_rewrite HBN.
-      arewrite_id (e2a S' □ ⦗eq e⦘).
-      { basic_solver. }
-      rewrite seq_id_r.
-      rewrite (dom_r WFG.(wf_coD)) at 1.
-      rewrite (dom_r WFG.(wf_hbE)) at 1.
-      rewrite !seqA.
-      do 2 hahn_frame.
-      basic_solver 40. }
+    (* assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ *)
+    (*             Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H. *)
+    (* { admit. } *)
+    (* { arewrite (Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ Sjf S ⨾ Shb S' ⨾ ⦗eq e⦘). *)
+    (*   { admit. } *)
+    (*   rewrite !collect_rel_seqi. *)
+    (*   rewrite e2a_co; eauto. *)
+    (*   rewrite HBN. *)
+    (*   arewrite_id (e2a S' □ ⦗eq e⦘). *)
+    (*   { basic_solver. } *)
+    (*   rewrite seq_id_r. *)
+    (*   hahn_frame. *)
+    (*   arewrite (e2a S' □ Sjf S ⊆ e2a S □ Sjf S). *)
+    (*   { (* TODO: generalize to a lemma *) *)
+    (*     rewrite WF.(ES.jfE) at 1. *)
+    (*     unfolder. ins. desf. do 2 eexists. *)
+    (*     splits; eauto. *)
+    (*     all: symmetry; eapply basic_step_e2a_eq_dom; eauto. } *)
+    (*   arewrite (e2a S □ Sjf S ⊆ vf G sc TC' (ES.cont_thread S k)). *)
+    (*   { (* TODO: It should follow from the simulation invariant. *) *)
+    (*     admit. } *)
+    (*   unfold vf at 1. rewrite !seqA. *)
+    (*   arewrite (Ghb^? ⨾ ⦗GE⦘ ⨾ Ghb ⊆ Ghb^? ⨾ ⦗GE⦘). *)
+    (*   2: done. *)
+    (*   rewrite (dom_r WFG.(wf_hbE)) at 2. *)
+    (*   generalize (@imm_s_hb.hb_trans G). *)
+    (*   basic_solver 10. } *)
+
+    (* assert  *)
+    (*   (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗ eq e ⦘ ⊆  *)
+    (*        Gco ⨾ Gvf (ktid S k)) *)
+    (*   as COVF. *)
+    (* { rewrite crE. rewrite !seq_union_l, !seq_union_r, seq_id_l. *)
+    (*   rewrite collect_rel_union. *)
+    (*   unionL; auto. *)
+    (*   rewrite !collect_rel_seqi. *)
+    (*   rewrite e2a_co; eauto. *)
+    (*   sin_rewrite HBN. *)
+    (*   arewrite_id (e2a S' □ ⦗eq e⦘). *)
+    (*   { basic_solver. } *)
+    (*   rewrite seq_id_r. *)
+    (*   rewrite (dom_r WFG.(wf_coD)) at 1. *)
+    (*   rewrite (dom_r WFG.(wf_hbE)) at 1. *)
+    (*   rewrite !seqA. *)
+    (*   do 2 hahn_frame. *)
+    (*   basic_solver 40. } *)
 
     assert (irreflexive
               ((e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗eq e⦘)
                  ⨾ (cert_rf G sc TC' (ES.cont_thread S k))⁻¹)) as IRR.
-    { rewrite !collect_rel_seqi.
-      rewrite collect_rel_cr.
+    { arewrite (Shb S' ⊆ ⦗X ∩₁ e2a S ⋄₁ covered TC⦘ ⨾ Shb S' ∪ Ssb S').
+      { (* TODO: hb_in_ex_cov_hb_sb requires too much. *)
+        admit. }
+      rewrite !seq_union_l, !seq_union_r, !seqA.
+      arewrite ((Sjf S')^? ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆
+                (Sjf S' ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘)^? ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘)
+        by basic_solver 10.
+      arewrite ((Sjf S')^? ⨾ Ssb S' ⨾ ⦗eq e⦘ ⊆ (Sjf S)^? ⨾ Ssb S' ⨾ ⦗eq e⦘).
+      { admit. }
+      arewrite ((Sjf S)^? ⨾ Ssb S' ⨾ ⦗eq e⦘ ⊆
+                (Sjf S ⨾ ⦗Stid_ S (ES.cont_thread S k)⦘)^? ⨾ Ssb S' ⨾ ⦗eq e⦘).
+      { admit. }
+      rewrite !collect_rel_union.
+      rewrite !collect_rel_seqi.
+      rewrite !collect_rel_cr.
+      arewrite (e2a S' □ Sjf S' ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ Grf ⨾ ⦗C⦘).
+      { admit. }
       rewrite e2a_co; eauto.
-      rewrite HBN.
-      admit. }
-      (* rewrite COVF. *)
-      (* unfold cert_rf. *)
-      (* basic_solver. *)
+      rewrite HBN, SBN.
+      arewrite_id (e2a S' □ ⦗X ∩₁ e2a S ⋄₁ C⦘).
+      { basic_solver. }
+      rewrite seq_id_l.
+      rewrite !seq_union_l.
+      apply irreflexive_union; split.
+      { arewrite_id (e2a S' □ ⦗eq e⦘).
+        { basic_solver. }
+        rewrite seq_id_l.
+        rewrite (dom_r WFG.(wf_coD)), !seqA.
+        unfold cert_rf.
+        arewrite (⦗GW⦘ ⨾ (Grf ⨾ ⦗C⦘)^? ⨾ Ghb ⊆ vf G sc TC' (ES.cont_thread S k)).
+        2: basic_solver 20.
+        unfold vf.
+        unionR left.
+        arewrite (C ⊆₁ C').
+        { (* trivial *)
+          admit. }
+        rewrite wf_hbE at 1; auto.
+        basic_solver 40. }
+      arewrite (e2a S' □ Sjf S ⨾ ⦗Stid_ S (ES.cont_thread S k)⦘ ⊆
+                e2a S  □ Sjf S ⨾ ⦗Stid_ S (ES.cont_thread S k)⦘).
+      { admit. }
+      rewrite jf_in_cert_rf; eauto.
+      rewrite (dom_r WFG.(wf_coD)), !seqA.
+      arewrite (⦗GW⦘ ⨾ (cert_rf G sc TC' (ES.cont_thread S k))^? ⨾ Gsb ⊆
+                vf G sc TC' (ES.cont_thread S k)).
+      2: unfold cert_rf; basic_solver 10.
+      rewrite cert_rf_in_vf.
+      rewrite crE.
+      rewrite !seq_union_l, !seq_union_r, seq_id_l.
+      unionL.
+      { unfold vf.
+        unionR left.
+        rewrite imm_s_hb.sb_in_hb.
+        rewrite imm_s_hb.wf_hbE at 1; auto.
+        basic_solver 20. }
+      unfold vf at 1.
+      rewrite !seq_union_l, !seq_union_r, !seqA.
+      arewrite (Gsb^? ⨾ Gsb ⊆ Gsb^?).
+      { generalize (@Execution.sb_trans G). basic_solver. }
+      arewrite (Ghb^? ⨾ ⦗GE⦘ ⨾ Gsb ⊆ Ghb^? ⨾ ⦗GE⦘).
+      { rewrite Execution.wf_sbE. rewrite imm_s_hb.sb_in_hb.
+        generalize (@imm_s_hb.hb_trans G).
+        basic_solver. }
+      arewrite (⦗GW⦘ ⨾ Grf ⊆ Grf).
+      arewrite (⦗GW⦘ ⨾ ⦗GW⦘ ⊆ ⦗GW⦘).
+      done. }
 
     unfold_cert_step_ CertSTEP_.
     1,3: by rewrite JF' at 2. 

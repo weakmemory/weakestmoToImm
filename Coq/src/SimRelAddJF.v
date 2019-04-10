@@ -239,9 +239,10 @@ Section SimRelAddJF.
       { eapply ESBasicStep.basic_step_acts_set; eauto. basic_solver. }
       assert (Gtid (e2a S' e) = ES.cont_thread S k) as GTIDe.
       { rewrite <- e2a_tid. erewrite ESBasicStep.basic_step_tid_e; eauto. }
+      assert (Wf G) as WFG by apply SRCC.
       econstructor; splits; auto.  
       { assert (is_w (Glab ∘ (e2a S)) w) as WW.
-        { eapply cert_rfD, seq_eqv_lr in CertRF.
+        { eapply cert_rfD, seq_eqv_lr in CertRF; auto.
           destruct CertRF as [HH _].
           unfold is_w, compose in *. 
           erewrite <- basic_step_e2a_eq_dom; eauto. }
@@ -337,8 +338,8 @@ Section SimRelAddJF.
       { eapply simrel_cert_basic_step_e2a_eqr; eauto; try apply SRCC. }
       autounfold with ESStepDb.
       unfolder. ins. desf.
-      eapply vf_in_furr; [by apply SRCC|].
-      eapply cert_rf_in_vf; eauto. 
+      eapply cert_rf_in_furr; eauto.
+      all: apply SRCC.
     Qed.
 
     Lemma sim_add_jf_hb_sw_delta_dom w k k' e e' S S'
