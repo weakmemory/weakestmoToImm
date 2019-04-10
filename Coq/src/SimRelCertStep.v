@@ -1297,12 +1297,22 @@ Section SimRelCertStepProps.
       { admit. }
       arewrite ((Sjf S)^? ⨾ Ssb S' ⨾ ⦗eq e⦘ ⊆
                 (Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘)^? ⨾ Ssb S' ⨾ ⦗eq e⦘).
-      { admit. }
+      { unfolder. ins. desf.
+        { eexists. splits; eauto. }
+        eexists. splits.
+        2,3: by eauto.
+        right. split; eauto. 
+        red. admit. }
       rewrite !collect_rel_union.
       rewrite !collect_rel_seqi.
       rewrite !collect_rel_cr.
-      arewrite (e2a S' □ Sjf S' ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ Grf ⨾ ⦗C⦘).
+      arewrite (e2a S' □ Sjf S' ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆
+                e2a S  □ Sjf S  ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘).
       { admit. }
+      arewrite (e2a S □ Sjf S ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ Grf ⨾ ⦗C⦘).
+      { rewrite <- seq_eqvK, <- seqA. rewrite collect_rel_seqi.
+        arewrite (e2a S □ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ ⦗C⦘) by basic_solver. 
+          by rewrite jfC_in_rf; [|apply SRCC]. }
       rewrite e2a_co; eauto.
       rewrite HBN, SBN.
       arewrite_id (e2a S' □ ⦗X ∩₁ e2a S ⋄₁ C⦘).
@@ -1320,13 +1330,15 @@ Section SimRelCertStepProps.
         unfold vf.
         unionR left.
         arewrite (C ⊆₁ C').
-        { (* trivial *)
-          admit. }
+        { eapply sim_trav_step_covered_le.
+          eexists. apply SRCC. }
         rewrite wf_hbE at 1; auto.
         basic_solver 40. }
       arewrite (e2a S' □ Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘ ⊆
                 e2a S  □ Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘).
-      { admit. }
+      { rewrite ES.jfE at 1; auto.
+        unfolder. ins. desf. do 2 eexists. splits; eauto.
+        all: symmetry; eapply basic_step_e2a_eq_dom; eauto. }
       rewrite jf_in_cert_rf; eauto.
       rewrite (dom_r WFG.(wf_coD)), !seqA.
       arewrite (⦗GW⦘ ⨾ (cert_rf G sc TC' (ES.cont_thread S k))^? ⨾ Gsb ⊆
