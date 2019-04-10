@@ -378,27 +378,6 @@ Section SimRel.
       rewrite e2a_release. by rewrite e2a_jfacq.
     Qed.
 
-    Lemma e2a_jf : e2a □ Sjf ⊆ Gfurr.
-    Proof.
-      assert (ES.Wf S) as WF by apply SRC.
-      assert (simrel_e2a S G sc) as SRE2A by apply SRC.
-
-      rewrite jf_in_sim_jf; auto.
-      arewrite (Ssim_jf ⊆ Ssim_vf).
-      unfold sim_vf.
-      rewrite (dom_l WF.(ES.ewE)).
-      rewrite (dom_l WF.(ES.ewD)). rewrite !seqA.
-      arewrite (⦗SE⦘ ⨾ ⦗SW⦘ ⊆ ⦗SE∩₁SW⦘) by basic_solver.
-      rewrite furr_alt; auto; try apply SRC.
-      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_eqv.
-      rewrite e2a_jfDR; auto.
-      rewrite e2a_hb. rewrite e2a_W; eauto.
-      arewrite (e2a □ (e2a ⋄ sc) ⊆ sc) by basic_solver.
-      arewrite (GE ∩₁ GW ⊆₁ GW) by basic_solver.
-      rewrite e2a_ew; eauto.
-      arewrite (⦗GW⦘ ⨾ eq ⊆ ⦗GW⦘) by basic_solver.
-    Qed.
-
     (******************************************************************************)
     (** ** `G.rr ⊆ e2a □ S.rr` properties  *)
     (******************************************************************************)
@@ -561,7 +540,7 @@ Section SimRel.
       destruct e2aXy as [y' [Xy' EQy]].
       assert ((restr_rel SE (same_loc Slab)) x' y') as HH.
       { eapply same_lab_u2v_dom_same_loc.
-        { apply e2a_lab. apply SRC. }
+        { eapply e2a_lab; eauto. apply SRC. }
         red. unfold compose. splits; auto.
         { red. unfold loc. 
           apply wf_col; auto. 
@@ -577,7 +556,7 @@ Section SimRel.
       { unfolder; splits.
         { apply Xx'. }
         { eapply same_lab_u2v_dom_is_w.
-          { apply e2a_lab. apply SRC. }
+          { eapply e2a_lab; eauto. apply SRC. }
           split; auto.
           unfold compose, is_w.
           apply wf_coD in GCO; auto.
@@ -586,7 +565,7 @@ Section SimRel.
       { unfolder; splits.
         { apply Xy'. }
         { eapply same_lab_u2v_dom_is_w.
-          { apply e2a_lab. apply SRC. }
+          { eapply e2a_lab; eauto. apply SRC. }
           split; auto.
           unfold compose, is_w.
           apply wf_coD in GCO; auto.

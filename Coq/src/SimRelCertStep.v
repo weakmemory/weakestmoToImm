@@ -539,7 +539,7 @@ Section SimRelCertStepProps.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
         (CertSTEP : cert_step k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-    simrel_e2a S' G.  
+    simrel_e2a S' G sc. 
   Proof. 
     cdes CertSTEP; cdes BSTEP_.
     assert (ESBasicStep.t e e' S S') as BSTEP.
@@ -620,13 +620,14 @@ Section SimRelCertStepProps.
       all : eapply sim_add_ew_e2a_ew_eq; eauto.
       all : try rewrite ESOME; basic_solver. }
     (* e2a_co  : e2a □ Sco  ⊆ Gco *)
-    unfold_cert_step_ CertSTEP_.
-    1,2 : 
-      eapply simrel_cert_basic_step_e2a_eqr; eauto;
-      try apply ES.coE; apply SRCC.
-    all : eapply sim_add_co_e2a_co; eauto.
-    all : basic_solver.
-  Qed.
+    { unfold_cert_step_ CertSTEP_.
+      1,2 : 
+        eapply simrel_cert_basic_step_e2a_eqr; eauto;
+        try apply ES.coE; apply SRCC.
+      all : eapply sim_add_co_e2a_co; eauto.
+      all : basic_solver. }
+    1,2: admit.
+  Admitted.
 
   Lemma simrel_cert_step_hb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
@@ -1165,7 +1166,7 @@ Section SimRelCertStepProps.
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
     { eapply step_wf; eauto. }
-    assert (simrel_e2a S' G) as SRE2A.
+    assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (Wf G) as WFG. 
     { apply SRCC. }
@@ -1276,6 +1277,18 @@ Section SimRelCertStepProps.
       do 2 hahn_frame.
       basic_solver 40. }
 
+    assert (irreflexive
+              ((e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗eq e⦘)
+                 ⨾ (cert_rf G sc TC' (ES.cont_thread S k))⁻¹)) as IRR.
+    { rewrite !collect_rel_seqi.
+      rewrite collect_rel_cr.
+      rewrite e2a_co; eauto.
+      rewrite HBN.
+      admit. }
+      (* rewrite COVF. *)
+      (* unfold cert_rf. *)
+      (* basic_solver. *)
+
     unfold_cert_step_ CertSTEP_.
     1,3: by rewrite JF' at 2. 
     all: cdes AJF; rewrite JF' at 2.
@@ -1283,21 +1296,17 @@ Section SimRelCertStepProps.
     all: rewrite !irreflexive_union; splits. 
     1,3: done.
 
-    all: arewrite ((ESstep.jf_delta w e)⁻¹ ≡ ⦗ eq e ⦘ ⨾ (ESstep.jf_delta w e)⁻¹).
-    1,3: unfold ESstep.jf_delta; basic_solver.
+    all: arewrite ((ESstep.jf_delta w e)⁻¹ ≡
+                   ⦗ eq e ⦘ ⨾ (ESstep.jf_delta w e)⁻¹)
+      by (unfold ESstep.jf_delta; basic_solver).
     all: do 3 rewrite <- seqA.
     all: rewrite seqA with (r1 := Sco S' ⨾ (Sjf S')^?).
     all: rewrite seqA with (r1 := Sco S').
     all: eapply collect_rel_irr with (f := e2a S').
     all: rewrite collect_rel_seqi.
-    all: rewrite COVF.
-    all: arewrite (
-           e2a S' □ (ESstep.jf_delta w e)⁻¹ ⊆ 
-           (cert_rf G sc TC' (ktid S k))⁻¹
-    ).
-    1,3: unfold ESstep.jf_delta; basic_solver.
-    all: unfold cert_rf.
-    all: basic_solver.
+    all: arewrite (e2a S' □ (ESstep.jf_delta w e)⁻¹ ⊆ 
+                   (cert_rf G sc TC' (ktid S k))⁻¹)
+      by (unfold ESstep.jf_delta; basic_solver).
     
     (* The old proof which requires DR restrictions *)
     
@@ -1383,7 +1392,7 @@ Section SimRelCertStepProps.
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
     { eapply step_wf; eauto. }
-    assert (simrel_e2a S' G) as SRE2A.
+    assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (Wf G) as WFG. 
     { apply SRCC. }
