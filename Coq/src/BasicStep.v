@@ -8,8 +8,6 @@ Require Import Consistency.
 
 Set Implicit Arguments.
 
-Module ESBasicStep.
-
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
 Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
@@ -58,7 +56,10 @@ Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
+Notation "'Tid_' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
+Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 9).
+Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 9).
+Notation "'Val_' S" := (fun v e => val S e = v) (at level 9).
 
 Definition sb_delta S k e e' : relation eventid := 
   ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'.
@@ -71,7 +72,7 @@ Definition cf_delta S k e e' : relation eventid :=
 
 Hint Unfold sb_delta rmw_delta cf_delta : ESStepDb.
 
-Definition t_
+Definition basic_step_
            (lang : Language.t)
            (k k' : cont_label)
            (st st' : lang.(Language.state))
@@ -94,12 +95,12 @@ Definition t_
     ⟪ SB'    : S'.(ES.sb) ≡ S.(ES.sb) ∪ sb_delta S k e e' ⟫ /\
     ⟪ RMW'   : S'.(ES.rmw) ≡ S.(ES.rmw) ∪ rmw_delta e e' ⟫.
 
-Definition t
+Definition basic_step
            (e  : eventid)
            (e' : option eventid)
            (S S' : ES.t) : Prop :=
   exists lang k k' st st', 
-    ⟪ BSTEP_ : t_ lang k k' st st' e e' S S' ⟫.
+    ⟪ BSTEP_ : basic_step_ lang k k' st st' e e' S S' ⟫.
 
 (******************************************************************************)
 (** ** Some useful tactics *)
@@ -124,7 +125,7 @@ Ltac step_solver :=
 (******************************************************************************)
 
 Lemma basic_step_next_act_lt e e' S S'
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   ES.next_act S < ES.next_act S'.
 Proof.
   cdes BSTEP. cdes BSTEP_.
@@ -137,7 +138,7 @@ Lemma basic_step_acts_set
       (e  : eventid)
       (e' : option eventid)
       (S S' : ES.t) 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   E S' ≡₁ E S ∪₁ eq e ∪₁ eq_opt e'.
 Proof. 
   cdes BSTEP; cdes BSTEP_.
@@ -149,7 +150,7 @@ Qed.
 Lemma basic_step_nupd_acts_set 
       (e  : eventid)
       (S S' : ES.t) 
-      (BSTEP : t e None S S') :
+      (BSTEP : basic_step e None S S') :
   E S' ≡₁ E S ∪₁ eq e.
 Proof. 
   cdes BSTEP; cdes BSTEP_.
@@ -159,7 +160,7 @@ Proof.
 Qed.
 
 Lemma basic_step_nupd_acts_mon e e' S S'  
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   E S ⊆₁ E S'.
 Proof. 
   rewrite basic_step_acts_set with (S' := S'); eauto. 
@@ -167,7 +168,7 @@ Proof.
 Qed.
 
 Lemma basic_step_acts_set_ne e e' S S'  
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   ~ E S e.
 Proof. 
   cdes BSTEP; cdes BSTEP_.
@@ -175,7 +176,7 @@ Proof.
 Qed.
 
 Lemma basic_step_acts_set_ne' e e' S S'  
-      (BSTEP : t e (Some e') S S') :
+      (BSTEP : basic_step e (Some e') S S') :
   ~ E S e'.
 Proof. 
   cdes BSTEP; cdes BSTEP_.
@@ -183,7 +184,7 @@ Proof.
 Qed.
 
 Lemma basic_step_acts_set_mon e e' S S' 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   S.(ES.acts_set) ⊆₁ S'.(ES.acts_set).
 Proof. 
   unfold ES.acts_set. unfolder. intros x. 
@@ -195,7 +196,7 @@ Lemma basic_step_acts_ninit_set_e
       (e  : eventid)
       (e' : option eventid)
       (S S' : ES.t) 
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (wfE: ES.Wf S) :
   ~ Einit S' e.
 Proof.
@@ -214,7 +215,7 @@ Proof.
 Qed.
 
 Lemma basic_step_acts_ninit_set_e' e e' S S'
-      (BSTEP : t e (Some e') S S')
+      (BSTEP : basic_step e (Some e') S S')
       (wfE: ES.Wf S) :
   ~ Einit S' e'.
 Proof. 
@@ -234,7 +235,7 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_tidlab_eq_dom  e e' S S'
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   ⟪ TIDEQ : eq_dom (E S) (tid S') (tid S) ⟫ /\
   ⟪ LABEQ : eq_dom (E S) (lab S') (lab S) ⟫.
 Proof.
@@ -253,12 +254,12 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_tid_eq_dom  e e' S S'
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   eq_dom (E S) (tid S') (tid S).
 Proof. eapply basic_step_tidlab_eq_dom; eauto. Qed.
 
 Lemma basic_step_same_tid_restr e e' S S'  
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   restr_rel S.(ES.acts_set) S'.(ES.same_tid) ≡ restr_rel S.(ES.acts_set) S.(ES.same_tid).
 Proof. 
   unfolder. 
@@ -270,7 +271,7 @@ Proof.
 Qed.
 
 Lemma basic_step_tid_e lang k k' st st' e e' S S' 
-      (BSTEP_ : t_ lang k k' st st' e e' S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') :
   tid S' e = ES.cont_thread S k. 
 Proof. 
   cdes BSTEP_.
@@ -283,7 +284,7 @@ Proof.
 Qed.
 
 Lemma basic_step_tid_e' lang k k' st st' e e' S S'
-      (BSTEP_ : t_ lang k k' st st' e (Some e') S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e (Some e') S S') :
   tid S' e' = ES.cont_thread S k. 
 Proof. 
   cdes BSTEP_.
@@ -298,7 +299,7 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_acts_init_set e e' S S' 
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (wfE: ES.Wf S) :
   Einit S' ≡₁ Einit S.
 Proof. 
@@ -326,7 +327,7 @@ Proof.
 Qed.
 
 Lemma basic_step_acts_ninit_set e e' S S' 
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (wfE: ES.Wf S) :
   Eninit S' ≡₁ Eninit S ∪₁ eq e ∪₁ eq_opt e'.
 Proof. 
@@ -350,12 +351,12 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_lab_eq_dom  e e' S S'
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   eq_dom (E S) (lab S') (lab S).
 Proof. eapply basic_step_tidlab_eq_dom; eauto. Qed.
 
 Lemma basic_step_loc_eq_dom  e e' S S'
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   eq_dom (E S) (loc S') (loc S).
 Proof.
   unfold Events.loc. red. ins.
@@ -364,7 +365,7 @@ Proof.
 Qed.
 
 Lemma basic_step_val_eq_dom  e e' S S'
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   eq_dom (E S) (val S') (val S).
 Proof.
   unfold Events.val. red. ins.
@@ -373,7 +374,7 @@ Proof.
 Qed.
 
 Lemma basic_step_mod_eq_dom e e' S S' 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   eq_dom S.(ES.acts_set) (mod S') (mod S).
 Proof. 
   unfold eq_dom, Events.mod, ES.acts_set.
@@ -381,7 +382,7 @@ Proof.
 Qed.
 
 Lemma basic_step_same_mod_restr e e' S S' 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   restr_rel S.(ES.acts_set) (same_mod S') ≡ restr_rel S.(ES.acts_set) (same_mod S).
 Proof. 
   unfolder. 
@@ -393,7 +394,7 @@ Proof.
 Qed.
 
 Lemma basic_step_same_loc_restr e e' S S' 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   restr_rel S.(ES.acts_set) (same_loc S') ≡ restr_rel S.(ES.acts_set) (same_loc S).
 Proof. 
   unfolder. 
@@ -405,7 +406,7 @@ Proof.
 Qed.
 
 Lemma basic_step_same_val_restr e e' S S' 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   restr_rel S.(ES.acts_set) (same_val S') ≡ restr_rel S.(ES.acts_set) (same_val S).
 Proof. 
   unfolder. 
@@ -416,12 +417,176 @@ Proof.
   all: rewrite H; eapply basic_step_val_eq_dom; eauto. 
 Qed.
 
+(*******************************************************)
+(* Lemmas about equality of types and modes of events  *)
+(* after a basic step.                                 *)
+(*******************************************************)
+
+Hint Unfold eq_dom Events.loc Events.val Events.mod Events.xmod 
+     is_r is_w is_f is_acq is_rel is_rlx is_acqrel R_ex
+     is_only_pln is_sc is_ra is_xacq
+     same_lab_u2v_dom same_label_u2v :
+  same_lab_unfoldDb.
+
+Ltac basic_step_same_lab S S' :=
+  repeat autounfold with same_lab_unfoldDb;
+  intros x [EX REL];
+  assert (lab S' x = lab S x) as HH;
+  [eapply basic_step_lab_eq_dom; eauto |
+    try (by rewrite HH in REL);
+    try (by rewrite <- HH in REL)].
+
+Lemma basic_step_mod_in_mod e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  forall m, E S ∩₁ Mod_ S' m ⊆₁ Mod_ S m.
+Proof. ins. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_loc_in_loc e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  forall l, E S ∩₁ Loc_ S' l ⊆₁ Loc_ S l.
+Proof. ins. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_val_in_val e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  forall v, E S ∩₁ Val_ S' v ⊆₁ Val_ S v.
+Proof. ins. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_rel_in_rel e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ Rel S' ⊆₁ Rel S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_acq_in_acq e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ Acq S' ⊆₁ Acq S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_sc_in_sc e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ Sc S' ⊆₁ Sc S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_r_in_r e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ R S' ⊆₁ R S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_w_in_w e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ W S' ⊆₁ W S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_f_in_f e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ F S' ⊆₁ F S.
+Proof. basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_rel_eq_rel e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ Rel S' ≡₁ E S ∩₁ Rel S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_acq_eq_acq e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ Acq S' ≡₁ E S ∩₁ Acq S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_sc_eq_sc e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ Sc S' ≡₁ E S ∩₁ Sc S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_r_eq_r e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ R S' ≡₁ E S ∩₁ R S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_w_eq_w e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ W S' ≡₁ E S ∩₁ W S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_f_eq_f e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ F S' ≡₁ E S ∩₁ F S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_fr_eq_fr e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ FR S' ≡₁ E S ∩₁ FR S.
+Proof. 
+  rewrite !set_inter_union_r.
+  erewrite basic_step_f_eq_f; eauto. 
+  erewrite basic_step_r_eq_r; eauto. 
+Qed.
+
+Lemma basic_step_fw_eq_fw e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ FW S' ≡₁ E S ∩₁ FW S.
+Proof. 
+  rewrite !set_inter_union_r.
+  erewrite basic_step_f_eq_f; eauto. 
+  erewrite basic_step_w_eq_w; eauto. 
+Qed.
+
+Lemma basic_step_fracq_eq_fracq e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ FR S' ∩₁ Acq S' ≡₁ E S ∩₁ FR S ∩₁ Acq S.
+Proof. 
+  erewrite basic_step_fr_eq_fr; eauto. 
+  arewrite (E S ∩₁ FR S ∩₁ Acq S' ≡₁ E S ∩₁ Acq S' ∩₁ FR S).
+  { basic_solver. }
+  erewrite basic_step_acq_eq_acq; eauto. 
+  basic_solver.
+Qed.
+
+Lemma basic_step_fwrel_eq_fwrel e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ FW S' ∩₁ Rel S' ≡₁ E S ∩₁ FW S ∩₁ Rel S.
+Proof. 
+  erewrite basic_step_fw_eq_fw; eauto. 
+  arewrite (E S ∩₁ FW S ∩₁ Rel S' ≡₁ E S ∩₁ Rel S' ∩₁ FW S).
+  { basic_solver. }
+  erewrite basic_step_rel_eq_rel; eauto. 
+  basic_solver.
+Qed.
+
+Hint Rewrite
+     basic_step_rel_in_rel
+     basic_step_acq_in_acq
+     basic_step_sc_in_sc
+     basic_step_r_in_r
+     basic_step_w_in_w
+     basic_step_f_in_f
+     basic_step_rel_eq_rel
+     basic_step_acq_eq_acq
+     basic_step_sc_eq_sc
+     basic_step_r_eq_r
+     basic_step_w_eq_w
+     basic_step_f_eq_f
+     basic_step_fr_eq_fr
+     basic_step_fw_eq_fw
+     basic_step_fracq_eq_fracq
+     basic_step_fwrel_eq_fwrel
+  : same_lab_solveDb.
+
+(******************************************************************************)
+(** ** Tactic for R/W/F sets after step lemmas *)
+(******************************************************************************)
+
+Ltac step_type_solver :=
+  erewrite basic_step_acts_set; eauto;
+  unfold eq_opt;
+  rewrite !set_inter_union_l;
+  autorewrite with same_lab_solveDb; 
+  eauto; type_solver 10.
+
 (******************************************************************************)
 (** ** basic_step : `sb` propreties *)
 (******************************************************************************)
 
 Lemma basic_step_nupd_sb lang k k' st st' e S S' 
-      (BSTEP_ : t_ lang k k' st st' e None S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e None S S') :
   sb S' ≡ sb S ∪ ES.cont_sb_dom S k × eq e.  
 Proof.                                       
   cdes BSTEP_.
@@ -432,13 +597,13 @@ Proof.
 Qed.
 
 Lemma basic_step_sb_delta_dom lang k k' st st' e e' S S'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF: ES.Wf S) :
   dom_rel (sb_delta S k e e') ⊆₁ E S ∪₁ eq e.
 Proof. cdes BSTEP_. step_solver. Qed.
 
 Lemma basic_step_sb_deltaE lang k k' st st' e e' S S'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF: ES.Wf S) :
   sb_delta S k e e' ⨾ ⦗E S⦘ ≡ ∅₂.
 Proof. 
@@ -447,7 +612,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sbE e e' S S' 
-      (BSTEP : t e e' S S') 
+      (BSTEP : basic_step e e' S S') 
       (WF: ES.Wf S) :
   sb S' ⨾ ⦗E S⦘ ≡ sb S. 
 Proof. 
@@ -460,7 +625,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sbe lang k k' st st' e e' S S'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   sb S' ⨾ ⦗eq e⦘ ≡ ES.cont_sb_dom S k × eq e. 
 Proof. 
@@ -478,7 +643,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sbe' lang k k' st st' e e' S S'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   sb S' ⨾ ⦗eq_opt e'⦘ ≡ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'. 
 Proof. 
@@ -496,7 +661,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sb_mon e e' S S' 
-      (BSTEP : t e e' S S') :
+      (BSTEP : basic_step e e' S S') :
   sb S ⊆ sb S'.
 Proof.
   cdes BSTEP; cdes BSTEP_.
@@ -506,11 +671,11 @@ Qed.
 Lemma basic_step_imm_sb_e a lang k k' st st' e e' S S'
       (WF : ES.Wf S)
       (kEVENT : k = CEvent a)
-      (BSTEP_ : t_ lang k k' st st' e e' S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') :
   immediate (sb S') a e.
 Proof. 
   cdes BSTEP_.
-  assert (t e e' S S') as BSTEP. 
+  assert (basic_step e e' S S') as BSTEP. 
   { econstructor; eauto. }
   eapply immediate_more.
   { apply SB'. }
@@ -538,11 +703,11 @@ Qed.
 
 Lemma basic_step_imm_sb_e' lang k k' st st' e e' S S'
       (WF : ES.Wf S)
-      (BSTEP_ : t_ lang k k' st st' e (Some e') S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e (Some e') S S') :
   immediate (sb S') e e'.
 Proof. 
   cdes BSTEP_.
-  assert (t e (Some e') S S') as BSTEP. 
+  assert (basic_step e (Some e') S S') as BSTEP. 
   { econstructor; eauto. }
   eapply immediate_more.
   { apply SB'. }
@@ -574,12 +739,12 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_cf lang k k' st st' e e' S S' 
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (wfE: ES.Wf S) :
   cf S' ≡ cf S ∪ cf_delta S k e e'.
 Proof.
-  assert (t e e' S S') as BSTEP.
-  { unfold t. do 5 eexists. eauto. }
+  assert (basic_step e e' S S') as BSTEP.
+  { unfold basic_step. do 5 eexists. eauto. }
   cdes BSTEP_.
   autounfold with ESStepDb in *.  
   unfold "cf" at 1.
@@ -735,7 +900,7 @@ Proof.
       erewrite inter_absorb_r with (r' := ES.same_tid S' ⨾ ⦗eq e⦘); [|basic_solver]. 
       rewrite <- seq_eqv_minus_ll.
       arewrite 
-        (⦗Eninit S⦘ ⨾ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ (E S ∩₁ Tid S (ES.cont_thread S k)) × eq e).
+        (⦗Eninit S⦘ ⨾ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ (E S ∩₁ Tid_ S (ES.cont_thread S k)) × eq e).
       { unfolder; splits. 
         { intros x y [ENIx [STIDxy EQe]].
           assert (E S x) as Ex by apply ENIx.
@@ -832,7 +997,7 @@ Proof.
       erewrite inter_absorb_r with (r' := ES.same_tid S' ⨾ ⦗eq e'⦘); [|basic_solver]. 
       rewrite <- seq_eqv_minus_ll.
       arewrite 
-        (⦗Eninit S⦘ ⨾ ES.same_tid S' ⨾ ⦗eq e'⦘ ≡ (E S ∩₁ Tid S (ES.cont_thread S k)) × eq e').
+        (⦗Eninit S⦘ ⨾ ES.same_tid S' ⨾ ⦗eq e'⦘ ≡ (E S ∩₁ Tid_ S (ES.cont_thread S k)) × eq e').
       { unfolder; splits. 
         { intros x y [ENIx [STIDxy EQe]].
           assert (E S x) as Ex by apply ENIx.
@@ -863,7 +1028,7 @@ Proof.
 Qed.
 
 Lemma basic_step_nupd_cf lang k k' st st' e S S' 
-      (BSTEP_ : t_ lang k k' st st' e None S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e None S S') 
       (wfE: ES.Wf S) :
   cf S' ≡ cf S ∪ (ES.cont_cf_dom S k × eq e)^⋈.
 Proof.
@@ -873,7 +1038,7 @@ Proof.
 Qed.
 
 Lemma basic_step_cf_restr e e' S S'
-      (BSTEP : t e e' S S') 
+      (BSTEP : basic_step e e' S S') 
       (wfE: ES.Wf S) : 
   restr_rel (E S) (cf S') ≡ cf S.
 Proof. 
@@ -891,7 +1056,7 @@ Proof.
 Qed.
 
 Lemma basic_step_cf_mon e e' S S' 
-      (BSTEP : t e e' S S') 
+      (BSTEP : basic_step e e' S S') 
       (wfE: ES.Wf S) :
   cf S ⊆ cf S'.
 Proof.
@@ -901,7 +1066,7 @@ Proof.
 Qed.  
 
 Lemma basic_step_cf_free lang k k' st st' e e' S S' X 
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (wfE: ES.Wf S)
       (XinE : X ⊆₁ E S)
       (CFF : ES.cf_free S X) 
@@ -924,7 +1089,7 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_nupd_rmw e S S' 
-      (BSTEP : t e None S S') :
+      (BSTEP : basic_step e None S S') :
   rmw S' ≡ rmw S.  
 Proof.                                       
   cdes BSTEP; cdes BSTEP_.
@@ -940,7 +1105,7 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_cont_thread lang k st e e' S S' 
-      (BSTEP_ : t e e' S S') 
+      (BSTEP_ : basic_step e e' S S') 
       (WF : ES.Wf S)
       (KK : K S (k, existT _ lang st)) :
   ES.cont_thread S' k = ES.cont_thread S k. 
@@ -952,7 +1117,7 @@ Proof.
 Qed.
 
 Lemma basic_step_cont_thread_k lang k k' st st' e e' S S'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') :
   ES.cont_thread S' k' = ES.cont_thread S k. 
 Proof. 
   cdes BSTEP_. 
@@ -966,7 +1131,7 @@ Proof.
 Qed.
 
 Lemma basic_step_cont_set lang k k' st st' e e' S S' 
-      (BSTEP_ : t_ lang k k' st st' e e' S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') :
   K S' ≡₁ K S ∪₁ eq (CEvent (opt_ext e e'), existT _ lang st').
 Proof. 
   cdes BSTEP_.
@@ -978,7 +1143,7 @@ Proof.
 Qed.  
 
 Lemma basic_step_nupd_cont_set lang k k' st st' e S S' 
-      (BSTEP_ : t_ lang k k' st st' e None S S') :
+      (BSTEP_ : basic_step_ lang k k' st st' e None S S') :
   K S' ≡₁ K S ∪₁ eq (CEvent e, existT _ lang st').
 Proof. 
   cdes BSTEP_.
@@ -987,7 +1152,7 @@ Proof.
 Qed.  
 
 Lemma basic_step_cont_sb_dom lang k k' st st' e e' S S' 
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   ES.cont_sb_dom S' k' ≡₁ ES.cont_sb_dom S k ∪₁ eq e ∪₁ eq_opt e'.
 Proof.
@@ -1011,30 +1176,11 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** `type_step_eq_dom` lemma *)
-(******************************************************************************)
-
-Lemma type_step_eq_dom  e e' S S'
-      (BSTEP : t e e' S S') :
-  ⟪ REQ : E S ∩₁ R S' ≡₁ E S ∩₁ R S ⟫ /\
-  ⟪ WEQ : E S ∩₁ W S' ≡₁ E S ∩₁ W S ⟫ /\
-  ⟪ FEQ : E S ∩₁ F S' ≡₁ E S ∩₁ F S ⟫.
-Proof.
-  cdes BSTEP. cdes BSTEP_.
-  unfold is_r, is_w, is_f.
-  generalize (basic_step_lab_eq_dom BSTEP). unfold eq_dom.
-  intros HH.
-  splits; split; unfolder; ins; desf.
-  all: try by (rewrite HH in Heq0; [|by red]; destruct ((lab S) x); desf).
-  all: try by (rewrite <- HH in Heq0; [|by red]; destruct ((lab S') x); desf).
-Qed.
-
-(******************************************************************************)
 (** ** Well-formedness *)
 (******************************************************************************)
 
 Lemma basic_step_sb_irr e e' S S'
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (WF : ES.Wf S) :
   irreflexive (sb S'). 
 Proof.
@@ -1053,7 +1199,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sb_delta_prcl e e' S S' k k' lang st st'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   sb S ⨾ sb_delta S k e e' ⊆ sb_delta S k e e'.
 Proof.
@@ -1075,7 +1221,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sb_delta_transitive e e' S S' k k' lang st st'
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   transitive (sb_delta S k e e').
 Proof.
@@ -1103,7 +1249,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sb_trans e e' S S'
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (WF : ES.Wf S) :
   transitive (sb S'). 
 Proof.
@@ -1122,9 +1268,8 @@ Proof.
   eapply basic_step_sb_delta_transitive; eauto.
 Qed.
 
-
 Lemma basic_step_sb_same_thread' e e' S S'
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (WF : ES.Wf S) : 
   sb S ∩ ES.same_tid S' ≡ sb S ∩ ES.same_tid S.
 Proof.
@@ -1139,7 +1284,7 @@ Proof.
 Qed.
 
 Lemma basic_step_sb_prcl e e' S S'
-      (BSTEP : t e e' S S')
+      (BSTEP : basic_step e e' S S')
       (WF : ES.Wf S) : 
   downward_total (sb S' ∩ ES.same_tid S').
 Proof.
@@ -1251,7 +1396,7 @@ Qed.
 (******************************************************************************)
 
 Lemma basic_step_seqn_eq_dom e e' S S'
-      (BSTEP : t e e' S S') 
+      (BSTEP : basic_step e e' S S') 
       (WF : ES.Wf S) :
   eq_dom (E S) (ES.seqn S') (ES.seqn S). 
 Proof. 
@@ -1284,12 +1429,12 @@ Qed.
 
 Lemma basic_step_seqn_kinit thread lang k k' st st' e e' S S' 
       (kINIT : k = CInit thread)
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   ES.seqn S' e = 0. 
 Proof.   
   cdes BSTEP_.
-  assert (t e e' S S') as BSTEP. 
+  assert (basic_step e e' S S') as BSTEP. 
   { econstructor; eauto. }
   autounfold with ESStepDb in *.  
   unfold ES.seqn.
@@ -1319,12 +1464,12 @@ Qed.
 
 Lemma basic_step_seqn_kevent x lang k k' st st' e e' S S' 
       (kEVENT : k = CEvent x)
-      (BSTEP_ : t_ lang k k' st st' e e' S S') 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
   ES.seqn S' e = 1 + ES.seqn S x. 
 Proof.
   cdes BSTEP_.
-  assert (t e e' S S') as BSTEP. 
+  assert (basic_step e e' S S') as BSTEP. 
   { econstructor; eauto. }
   assert (E S x) as Ex. 
   { eapply ES.K_inE; eauto; desf; eapply CONT. }
@@ -1359,7 +1504,7 @@ Proof.
 Qed.
 
 Lemma basic_step_seqn_e' e e' S S' 
-      (BSTEP : t e (Some e') S S') 
+      (BSTEP : basic_step e (Some e') S S') 
       (WF : ES.Wf S) :
   ES.seqn S' e' = 1 + ES.seqn S' e. 
 Proof.   
@@ -1379,5 +1524,3 @@ Proof.
   unfolder; ins; desf. 
   eapply basic_step_sb_irr; eauto.
 Qed.
-
-End ESBasicStep.
