@@ -5,8 +5,6 @@ Require Import AuxDef.
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Consistency.
-Require Import BasicStep.
-Require Import Step.
 
 Module Execution.
 
@@ -110,117 +108,5 @@ Proof.
 Qed.
 
 End Execution.
-
-Notation "'E' S" := S.(ES.acts_set) (at level 10).
-Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
-Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
-
-Notation "'tid' S" := S.(ES.tid) (at level 10).
-Notation "'lab' S" := S.(ES.lab) (at level 10).
-Notation "'mod' S" := (Events.mod S.(ES.lab)) (at level 10).
-Notation "'loc' S" := (Events.loc S.(ES.lab)) (at level 10).
-Notation "'val' S" := (Events.val S.(ES.lab)) (at level 10).
-
-Notation "'sb' S" := S.(ES.sb) (at level 10).
-Notation "'rmw' S" := S.(ES.rmw) (at level 10).
-Notation "'ew' S" := S.(ES.ew) (at level 10).
-Notation "'jf' S" := S.(ES.jf) (at level 10).
-Notation "'rf' S" := S.(ES.rf) (at level 10).
-Notation "'co' S" := S.(ES.co) (at level 10).
-Notation "'cf' S" := S.(ES.cf) (at level 10).
-
-Notation "'jfe' S" := S.(ES.jfe) (at level 10).
-Notation "'rfe' S" := S.(ES.rfe) (at level 10).
-Notation "'coe' S" := S.(ES.coe) (at level 10).
-Notation "'jfi' S" := S.(ES.jfi) (at level 10).
-Notation "'rfi' S" := S.(ES.rfi) (at level 10).
-Notation "'coi' S" := S.(ES.coi) (at level 10).
-
-Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
-Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
-Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
-
-Notation "'RW' S" := (R S ∪₁ W S) (at level 10).
-Notation "'FR' S" := (F S ∪₁ R S) (at level 10).
-Notation "'FW' S" := (F S ∪₁ W S) (at level 10).
-
-Notation "'Pln' S" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
-Notation "'Rlx' S" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
-Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
-Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
-Notation "'Acqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
-Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
-
-Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10).
-Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
-Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
-
-Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
-
-Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
-Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 9).
-Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 9).
-Notation "'Val_' S" := (fun v e => val S e = v) (at level 9).
-
-Lemma step_preserves X e e' S S' 
-      (WF : ES.Wf S)
-      (EXEC : t S X) 
-      (BSTEP : ESBasicStep.t e e' S S')
-      (STEP : ESstep.t_ e e' S S') :
-  t S' X.
-Proof.       
-  cdes BSTEP; cdes BSTEP_.
-  constructor.
-  (* ex_inE : X ⊆₁ E S; *)
-  { etransitivity; [apply EXEC |].
-    eapply ESBasicStep.basic_step_acts_set_mon; eauto. }
-  (* init_in_ex : Einit S ⊆₁ X *)
-  { erewrite ESBasicStep.basic_step_acts_init_set; eauto. apply EXEC. } 
-  (* ex_sb_prcl : dom_rel (sb S ⨾ ⦗X⦘) ⊆₁ X *)
-  { rewrite SB'. 
-    relsf. splits.
-    { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply ex_inE; auto.
-    erewrite ESBasicStep.basic_step_sb_deltaE; eauto. 
-    basic_solver. }
-  (* ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
-  { (* TODO: add a corresponding lemma  *)
-    arewrite (sw S' ≡ sw S ∪ ESstep.sw_delta S S' k e e').
-    { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
-      { cdes FSTEP. erewrite ESstep.step_same_jf_sw; eauto.
-        eapply ESBasicStep.basic_step_nupd_rmw; subst; eauto. }
-      { cdes LSTEP. erewrite ESstep.step_add_jf_sw; eauto.
-        subst. basic_solver. }
-      { cdes SSTEP. erewrite ESstep.step_same_jf_sw; eauto.
-        eapply ESBasicStep.basic_step_nupd_rmw; subst; eauto. }
-      cdes USTEP. erewrite ESstep.step_add_jf_sw; eauto.
-      cdes AEW. type_solver. }
-    relsf. splits.
-    { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply ex_inE; auto.
-    erewrite ESstep.basic_step_sw_deltaE; eauto. 
-    basic_solver. }
-  (* ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
-  { rewrite RMW'. unfold ESBasicStep.rmw_delta.
-    relsf. splits.
-    { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply ex_inE; auto. 
-    ESBasicStep.step_solver. }
-  (* ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
-  { admit. }
-  (* ex_ncf : ES.cf_free S X *)
-  { red. 
-    rewrite <- set_interK with (s := X).
-    rewrite id_inter.
-    arewrite (X ⊆₁ E S) at 2 by apply ex_inE; auto. 
-    arewrite (X ⊆₁ E S) at 2 by apply ex_inE; auto. 
-    arewrite (⦗E S⦘ ⨾ cf S' ⨾ ⦗E S⦘ ≡ cf S).
-    { rewrite <- restr_relE. erewrite ESBasicStep.basic_step_cf_restr; eauto. }
-    apply EXEC. }
-  (* ex_vis : X ⊆₁ vis S *)
-  etransitivity.
-  { eapply ex_vis; eauto. }
-  eapply ESstep.step_vis_mon; eauto. 
-Admitted.
 
 End Execution.

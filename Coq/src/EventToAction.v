@@ -27,7 +27,7 @@ Section EventToAction.
   Notation "'SEninit'" := S.(ES.acts_ninit_set).
   Notation "'Stid'" := (S.(ES.tid)).
   Notation "'Slab'" := (S.(ES.lab)).
-  Notation "'Sloc'" := (loc S.(ES.lab)).
+  Notation "'Sloc'" := (Events.loc (ES.lab S)).
   Notation "'K'"  := S.(ES.cont_set).
 
   Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
@@ -39,14 +39,14 @@ Section EventToAction.
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
-  Notation "'Gtid'" := (tid).
+  Notation "'Glab'" := (lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
 
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
-  Notation "'Gsb'" := (G.(sb)).
+  Notation "'Gsb'" := (Execution.sb G).
 
   Definition e2a (e : eventid) : actid :=
     if excluded_middle_informative (Stid e = tid_init)
@@ -78,7 +78,7 @@ Section EventToAction.
     edestruct ES.init_lab as [l SLAB]; eauto. 
     exists l. 
     assert (Sloc e = Some l) as SLOC. 
-    { unfold loc. by rewrite SLAB. }
+    { unfold Events.loc. by rewrite SLAB. }
     splits; auto. 
     rewrite e2a_init; auto.
     unfold opt_ext. by rewrite SLOC. 
@@ -104,7 +104,7 @@ Section EventToAction.
     unfold e2a.
     destruct (excluded_middle_informative (Stid e = tid_init)). 
     1 : destruct (Sloc e).
-    all : by unfold tid.
+    all : by unfold Events.tid.
   Qed.
 
   Lemma e2a_Tid thread : 
@@ -276,7 +276,7 @@ Section EventToActionLemmas.
 
   Notation "'Stid' S" := (S.(ES.tid)) (at level 10).
   Notation "'Slab' S" := (S.(ES.lab)) (at level 10).
-  Notation "'Sloc' S" := (loc S.(ES.lab)) (at level 10).
+  Notation "'Sloc' S" := (Events.loc S.(ES.lab)) (at level 10).
 
   Notation "'K' S" := S.(ES.cont_set) (at level 10).
 
@@ -290,18 +290,18 @@ Section EventToActionLemmas.
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Gtid'" := (tid).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
-  
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'Glab'" := (lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
 
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := G.(rmw).
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
+
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
 
   Lemma basic_step_e2a_eq_dom e e' S'
-        (BSTEP : ESBasicStep.t e e' S S') :
+        (BSTEP : basic_step e e' S S') :
     eq_dom (SE S) (e2a S') (e2a S).
   Proof.
     cdes BSTEP; cdes BSTEP_.
@@ -309,21 +309,21 @@ Section EventToActionLemmas.
     unfold e2a.
     assert (Stid S' x = tid_init <-> Stid S x = tid_init) as AA.
     { red; split; ins;
-        [ erewrite <- ESBasicStep.basic_step_tid_eq_dom
-        | erewrite ESBasicStep.basic_step_tid_eq_dom
+        [ erewrite <- basic_step_tid_eq_dom
+        | erewrite basic_step_tid_eq_dom
         ]; eauto. }
     assert ((Sloc S') x = (Sloc S) x) as BB.
-    { eapply ESBasicStep.basic_step_loc_eq_dom; eauto. }
+    { eapply basic_step_loc_eq_dom; eauto. }
     unfold opt_ext; desf; try by (exfalso; intuition).
     assert ((Stid S') x = (Stid S) x) as CC.
-    { eapply ESBasicStep.basic_step_tid_eq_dom; eauto. }
+    { eapply basic_step_tid_eq_dom; eauto. }
     assert (ES.seqn S' x = ES.seqn S x) as DD.
-    { eapply ESBasicStep.basic_step_seqn_eq_dom; eauto. }
+    { eapply basic_step_seqn_eq_dom; eauto. }
     congruence.
   Qed.
 
   Lemma basic_step_e2a_set_map_inter_old e e' S' s s'
-        (BSTEP : ESBasicStep.t e e' S S') 
+        (BSTEP : basic_step e e' S S') 
         (inE : s ⊆₁ SE S) :
     s ∩₁ (e2a S' ⋄₁ s') ≡₁ s ∩₁ (e2a S ⋄₁ s').
   Proof.
@@ -337,7 +337,7 @@ Section EventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_map_rel_inter_restr e e' S' r r'
-        (BSTEP : ESBasicStep.t e e' S S') :
+        (BSTEP : basic_step e e' S S') :
     restr_rel (SE S) r ∩ (e2a S' ⋄ r') ≡ restr_rel (SE S) r ∩ (e2a S ⋄ r').
   Proof.
     unfolder. split. 
@@ -352,7 +352,7 @@ Section EventToActionLemmas.
   Qed.
 
   Lemma basic_step_e2a_map_rel_inter_old e e' S' r r'
-        (BSTEP : ESBasicStep.t e e' S S') 
+        (BSTEP : basic_step e e' S S') 
         (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘) :
     r ∩ (e2a S' ⋄ r') ≡ r ∩ (e2a S ⋄ r').
   Proof. 

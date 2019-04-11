@@ -30,7 +30,7 @@ Section SimRelCont.
   Notation "'Slab'" := (S.(ES.lab)).
   Notation "'Sloc'" := (loc S.(ES.lab)).
 
-  Notation "'K'" := S.(ES.cont_set).
+  Notation "'K'" := (ES.cont_set S) (at level 1).
 
   Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
 
@@ -42,34 +42,34 @@ Section SimRelCont.
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Gtid'" := (tid).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
+  Notation "'Glab'" := (lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
   
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := (G.(rmw)).
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
 
-  Definition thread_lts (tid : thread_id) : Language.t :=
+  Definition thread_lts (t : thread_id) : Language.t :=
     @Language.mk
       (list Instr.t) state
       init
       is_terminal
-      (ilbl_step tid).
+      (ilbl_step t).
 
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+  Notation "'thread_syntax' t"  := 
+    (Language.syntax (thread_lts t)) (at level 10, only parsing).  
 
-  Notation "'thread_st' tid" := 
-    (Language.state (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_st' t" := 
+    (Language.state (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' tid" := 
-    (Language.init (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_init_st' t" := 
+    (Language.init (thread_lts t)) (at level 10, only parsing).
   
-  Notation "'thread_cont_st' tid" :=
-    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+  Notation "'thread_cont_st' t" :=
+    (fun st => existT _ (thread_lts t) st) (at level 10, only parsing).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
@@ -79,34 +79,34 @@ Section SimRelCont.
 
   Record simrel_cont :=
     { contlang : forall k lang (state : lang.(Language.state))
-                        (INK : K (k, existT _ lang state)),
+                        (INK : K S (k, existT _ lang state)),
         lang = thread_lts (ES.cont_thread S k);
 
       contwf : forall k (state : thread_st (ES.cont_thread S k))
-                      (INK : K (k, thread_cont_st (ES.cont_thread S k) state)),
+                      (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)),
           wf_thread_state (ES.cont_thread S k) state;
 
       contstable : forall k (state : thread_st (ES.cont_thread S k))
-                          (INK : K (k, thread_cont_st (ES.cont_thread S k) state)), 
+                          (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)), 
           stable_state (ES.cont_thread S k) state;
 
       contrun : forall thread (lprog : thread_syntax thread) 
                        (INPROG : IdentMap.find thread prog = Some lprog),
           exists (state : thread_st thread),
-            ⟪ INK : K (CInit thread, thread_cont_st thread state) ⟫ /\
+            ⟪ INK : K S (CInit thread, thread_cont_st thread state) ⟫ /\
             ⟪ INITST : (istep thread [])＊ (thread_init_st thread lprog) state⟫;
 
       continit : forall thread (state : thread_st thread)
-                        (INKi : K (CInit thread, thread_cont_st thread state)),
+                        (INKi : K S (CInit thread, thread_cont_st thread state)),
           state.(eindex) = 0;
 
       contseqn : forall e (state : thread_st (Stid e))
-                        (INKe : K (CEvent e, thread_cont_st (Stid e) state)),
+                        (INKe : K S (CEvent e, thread_cont_st (Stid e) state)),
           state.(eindex) = 1 + ES.seqn S e;
 
       contpc : forall e (state : (thread_st (Stid e)))
                       (PC : pc (Stid e) (e2a S e))
-                      (INK : K (CEvent e, thread_cont_st (Stid e) state)),
+                      (INK : K S (CEvent e, thread_cont_st (Stid e) state)),
           @sim_state G sim_normal C (Stid e) state;
     }.
 
@@ -139,46 +139,47 @@ Section SimRelContLemmas.
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gtid'" := (tid).
+  Notation "'Glab'" := (lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
 
-  Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'GTid_' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid_' t" := (fun x => Gtid x <> t) (at level 1).
 
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := G.(rmw).
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+  Notation "'thread_syntax' t"  := 
+    (Language.syntax (thread_lts t)) (at level 10, only parsing).  
 
-  Notation "'thread_st' tid" := 
-    (Language.state (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_st' t" := 
+    (Language.state (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' tid" := 
-    (Language.init (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_init_st' t" := 
+    (Language.init (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_cont_st' tid" :=
-    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+  Notation "'thread_cont_st' t" :=
+    (fun st => existT _ (thread_lts t) st) (at level 10, only parsing).
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
 
   Lemma basic_step_simrel_cont k k' e e' S'
         (st st' : thread_st (ES.cont_thread S k))
-        (BSTEP_ : ESBasicStep.t_ (cont_lang S k) k k' st st' e e' S S')
-        (STCOV : C ∩₁ Gtid_ (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
+        (STCOV : C ∩₁ GTid_ (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
     simrel_cont prog S' G TC.
   Proof. 
     cdes BSTEP_.
-    assert (ESBasicStep.t e e' S S') as BSTEP.
+    assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
 
     assert (Stid S' (opt_ext e e') = ES.cont_thread S k) as TIDee.
     { edestruct e'; simpl;
-        [eapply ESBasicStep.basic_step_tid_e' | eapply ESBasicStep.basic_step_tid_e];
+        [eapply basic_step_tid_e' | eapply basic_step_tid_e];
         eauto. }
 
     assert (st'.(eindex) = 1 + ES.seqn S' (opt_ext e e')) as ST_IDX. 
@@ -194,44 +195,44 @@ Section SimRelContLemmas.
           subst l'. rewrite LBL in LABEL'. exfalso. auto. } 
         destruct HH as [IDX _]. 
         erewrite IDX. simpl. 
-        erewrite ESBasicStep.basic_step_seqn_e'; eauto.
+        erewrite basic_step_seqn_e'; eauto.
         arewrite (eindex st = ES.seqn S' e); [|omega].
         edestruct k. 
         { erewrite continit; eauto.
-          erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
+          erewrite basic_step_seqn_kinit; eauto. }
         erewrite contseqn; eauto.
-        erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
+        erewrite <- basic_step_seqn_kevent; eauto. }
       destruct HH as [_ [HH | HH]]. 
       2: by desf.
       destruct HH as [IDX _]. 
       erewrite IDX. simpl. 
       edestruct k. 
       { erewrite continit; eauto.
-        erewrite ESBasicStep.basic_step_seqn_kinit; eauto. }
+        erewrite basic_step_seqn_kinit; eauto. }
       erewrite contseqn; eauto.
-      erewrite <- ESBasicStep.basic_step_seqn_kevent; eauto. }
+      erewrite <- basic_step_seqn_kevent; eauto. }
 
     split.
 
     (* contlang *)
     { intros kk lang st'' INK.  
-      eapply ESBasicStep.basic_step_cont_set in INK; eauto.
+      eapply basic_step_cont_set in INK; eauto.
       unfold set_union in INK. destruct INK as [HA | HB]. 
-      { erewrite ESBasicStep.basic_step_cont_thread; eauto.
+      { erewrite basic_step_cont_thread; eauto.
           by eapply SRK in HA. }
       inversion HB.
       rewrite <- KCE.
-      erewrite ESBasicStep.basic_step_cont_thread_k with (k' := k').
+      erewrite basic_step_cont_thread_k with (k' := k').
       all : eauto. }
 
     (* contwf *)
     { intros kk st'' KK. 
-      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
+      eapply basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
-      { erewrite ESBasicStep.basic_step_cont_thread; eauto.
+      { erewrite basic_step_cont_thread; eauto.
         apply SRK.
-        erewrite <- ESBasicStep.basic_step_cont_thread; eauto. }
+        erewrite <- basic_step_cont_thread; eauto. }
       assert (kk = CEvent (opt_ext e e')) as kkEQ.
       { by inversion KK. }
       rewrite <- kkEQ in *.
@@ -249,12 +250,12 @@ Section SimRelContLemmas.
 
     (* contstable *)
     { intros kk st'' KK. 
-      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
+      eapply basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
-      { erewrite ESBasicStep.basic_step_cont_thread; eauto.
+      { erewrite basic_step_cont_thread; eauto.
         apply SRK.
-        erewrite <- ESBasicStep.basic_step_cont_thread; eauto. }
+        erewrite <- basic_step_cont_thread; eauto. }
       assert (kk = CEvent (opt_ext e e')) as kkEQ.
       { by inversion KK. }
       rewrite <- kkEQ in *.
@@ -274,24 +275,24 @@ Section SimRelContLemmas.
     { intros thread lprog INP.
       edestruct SRK.(contrun) as [st'' [Kinit ISTEP]]; eauto.    
       eexists; split; eauto.
-      eapply ESBasicStep.basic_step_cont_set; eauto.
+      eapply basic_step_cont_set; eauto.
       left. eauto. }
 
     (* contseqn *)
     { intros thread st'' KK. 
-      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
+      eapply basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
       { by eapply SRK. }
       exfalso. inversion KK. }
     { intros x st'' KK. 
-      eapply ESBasicStep.basic_step_cont_set in KK; eauto.
+      eapply basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
       { assert (SE S x) as SEx.
         { eapply ES.K_inEninit; eauto. }
-        erewrite ESBasicStep.basic_step_seqn_eq_dom; eauto.
-        eapply SRK. erewrite <- ESBasicStep.basic_step_tid_eq_dom; eauto. }
+        erewrite basic_step_seqn_eq_dom; eauto.
+        eapply SRK. erewrite <- basic_step_tid_eq_dom; eauto. }
       assert (x = opt_ext e e') as xEQ.
       { by inversion KK. }
       rewrite xEQ, TIDee in KK. 
@@ -301,11 +302,11 @@ Section SimRelContLemmas.
 
     (* contpc *)
     intros x st'' PC KK. 
-    eapply ESBasicStep.basic_step_cont_set in KK; eauto.
+    eapply basic_step_cont_set in KK; eauto.
     unfold set_union in KK. 
     destruct KK as [KK | KK].
     { assert (Stid S' x = Stid S x) as EQtid. 
-      { eapply ESBasicStep.basic_step_tid_eq_dom; eauto.  
+      { eapply basic_step_tid_eq_dom; eauto.  
         eapply ES.K_inEninit; eauto. } 
       assert (e2a S' x = e2a S x) as EQe2a. 
       { eapply basic_step_e2a_eq_dom; eauto.  

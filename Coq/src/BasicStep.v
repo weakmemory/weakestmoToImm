@@ -49,17 +49,17 @@ Notation "'Acqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 1
 Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 (* Definition same_tid (S : t) := fun x y => S.(tid) x = S.(tid) y. *)
-Notation "'same_lab' S" := (S.(ES.same_lab)) (at level 10).
+Notation "'same_lab' S" := (ES.same_lab S) (at level 10).
 Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10).
 Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
 Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-Notation "'Tid_' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
-Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 9).
-Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 9).
-Notation "'Val_' S" := (fun v e => val S e = v) (at level 9).
+Notation "'Tid_' S" := (fun t e => S.(ES.tid) e = t) (at level 1).
+Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 1).
+Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
+Notation "'Val_' S" := (fun v e => val S e = v) (at level 1).
 
 Definition sb_delta S k e e' : relation eventid := 
   ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'.
@@ -383,7 +383,7 @@ Qed.
 
 Lemma basic_step_same_mod_restr e e' S S' 
       (BSTEP : basic_step e e' S S') :
-  restr_rel S.(ES.acts_set) (same_mod S') ≡ restr_rel S.(ES.acts_set) (same_mod S).
+  restr_rel (E S) (same_mod S') ≡ restr_rel (E S) (same_mod S).
 Proof. 
   unfolder. 
   unfold ES.same_tid.
@@ -395,7 +395,7 @@ Qed.
 
 Lemma basic_step_same_loc_restr e e' S S' 
       (BSTEP : basic_step e e' S S') :
-  restr_rel S.(ES.acts_set) (same_loc S') ≡ restr_rel S.(ES.acts_set) (same_loc S).
+  restr_rel (E S) (same_loc S') ≡ restr_rel (E S) (same_loc S).
 Proof. 
   unfolder. 
   unfold ES.same_tid.
@@ -407,7 +407,7 @@ Qed.
 
 Lemma basic_step_same_val_restr e e' S S' 
       (BSTEP : basic_step e e' S S') :
-  restr_rel S.(ES.acts_set) (same_val S') ≡ restr_rel S.(ES.acts_set) (same_val S).
+  restr_rel (E S) (same_val S') ≡ restr_rel (E S) (same_val S).
 Proof. 
   unfolder. 
   unfold ES.same_tid.
@@ -431,7 +431,7 @@ Hint Unfold eq_dom Events.loc Events.val Events.mod Events.xmod
 Ltac basic_step_same_lab S S' :=
   repeat autounfold with same_lab_unfoldDb;
   intros x [EX REL];
-  assert (lab S' x = lab S x) as HH;
+  assert (ES.lab S' x = ES.lab S x) as HH;
   [eapply basic_step_lab_eq_dom; eauto |
     try (by rewrite HH in REL);
     try (by rewrite <- HH in REL)].
@@ -569,17 +569,6 @@ Hint Rewrite
      basic_step_fracq_eq_fracq
      basic_step_fwrel_eq_fwrel
   : same_lab_solveDb.
-
-(******************************************************************************)
-(** ** Tactic for R/W/F sets after step lemmas *)
-(******************************************************************************)
-
-Ltac step_type_solver :=
-  erewrite basic_step_acts_set; eauto;
-  unfold eq_opt;
-  rewrite !set_inter_union_l;
-  autorewrite with same_lab_solveDb; 
-  eauto; type_solver 10.
 
 (******************************************************************************)
 (** ** basic_step : `sb` propreties *)
@@ -1524,3 +1513,4 @@ Proof.
   unfolder; ins; desf. 
   eapply basic_step_sb_irr; eauto.
 Qed.
+

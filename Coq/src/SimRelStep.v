@@ -83,47 +83,52 @@ Section SimRelStep.
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gtid'" := (tid).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Gaddr'" := G.(addr).
-  Notation "'Gdata'" := G.(data).
-  Notation "'Gctrl'" := G.(ctrl).
-  Notation "'Grmw_dep'" := G.(rmw_dep).
 
-  Notation "'Gtid_' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNtid_' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'Glab'" := (Execution.lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
 
-  Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
-  Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
-  Notation "'GR_ex'" := (fun a => R_ex Glab a).
+  Notation "'GF'" := (fun a => is_true (is_f Glab a)).
 
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
-  Notation "'Grf'" := (G.(rf)).
-  Notation "'Gco'" := (G.(co)).
-  Notation "'Gvf'" := (G.(furr)).
-  Notation "'Gppo'" := (G.(ppo)).
+  Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
+  Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
+
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
+  Notation "'Grf'" := (Execution.rf G).
+  Notation "'Gco'" := (Execution.co G).
+
+  Notation "'Grs'" := (imm_s_hb.rs G).
+  Notation "'Grelease'" := (imm_s_hb.release G).
+  Notation "'Gsw'" := (imm_s_hb.sw G).
+  Notation "'Ghb'" := (imm_s_hb.hb G).
+
+  Notation "'Gfurr'" := (furr G sc).
+  Notation "'Gvf' t" := (vf G sc TC' t) (at level 10, only parsing).
+
+  Notation "'Geco'" := (Execution_eco.eco G).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
 
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+  Notation "'thread_syntax' t"  := 
+    (Language.syntax (thread_lts t)) (at level 10, only parsing).  
 
-  Notation "'thread_st' tid" := 
-    (Language.state (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_st' t" := 
+    (Language.state (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' tid" := 
-    (Language.init (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_init_st' t" := 
+    (Language.init (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_cont_st' tid" :=
-    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+  Notation "'thread_cont_st' t" :=
+    (fun st => existT _ (thread_lts t) st) (at level 10, only parsing).
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
@@ -166,15 +171,14 @@ Section SimRelStep.
         (LBL_STEPS : (lbl_step (ktid S k))＊ st st''') :
     (fun st' => exists k' S',
       ⟪ kTID : ktid S' k' = ktid S k ⟫ /\
-      ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\
+      ⟪ STEPS : (step Weakestmo)＊ S S' ⟫ /\
       ⟪ SRCC  : simrel_cert prog S' G sc TC TC' X k' st' st''' ⟫) st'''.
   Proof.
-    eapply clos_refl_trans_ind_step_left
-      with (R := lbl_step (ES.cont_thread S k)); 
-      eauto.
+    eapply clos_refl_trans_ind_step_left.
     { exists k, S. splits; auto.
       { apply rt_refl. }
-      eapply simrel_cert_start; auto. }
+      eapply simrel_cert_start; eauto. }
+    { eapply LBL_STEPS. }
     intros st' st'' HH. desc.
     intros LBL_STEP LBL_STEPS'.
     edestruct simrel_cert_lbl_step
@@ -194,7 +198,7 @@ Section SimRelStep.
         (SRC : simrel_common prog S G sc TC X) 
         (TRAV_STEP : sim_trav_step G sc TC TC') :
     exists X' S', 
-      ⟪ STEPS : (ESstep.t Weakestmo)＊ S S' ⟫ /\      
+      ⟪ STEPS : (step Weakestmo)＊ S S' ⟫ /\      
       ⟪ SRC' : simrel_common prog S' G sc TC' X' ⟫.
   Proof. 
     unfold sim_trav_step in TRAV_STEP. desc.

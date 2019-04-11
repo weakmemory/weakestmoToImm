@@ -161,8 +161,8 @@ Notation "'same_tid'" := (same_tid S).
 Notation "'same_loc'" := (same_loc lab).
 Notation "'same_val'" := (same_val lab).
 
-Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
-Notation "'NTid' t" := (fun x => tid x <> t) (at level 1).
+Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
+Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
 Notation "'Loc_' l" := (fun x => loc x = l) (at level 1).
 
 Notation "'sb'"    := S.(ES.sb).
@@ -293,13 +293,13 @@ Qed.
 Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
 Proof. unfold ES.acts_ninit_set. basic_solver. Qed.
 
-Lemma Tid_compl_NTid t : Tid t ∪₁ NTid t ≡₁ ⊤₁. 
+Lemma Tid_compl_NTid t : Tid_ t ∪₁ NTid_ t ≡₁ ⊤₁. 
 Proof. 
   unfolder. split; [done|]. ins.
   destruct (classic (tid x = t)); auto.
 Qed.
 
-Lemma set_split_Tid X t : X ≡₁ X ∩₁ Tid t ∪₁ X ∩₁ NTid t.
+Lemma set_split_Tid X t : X ≡₁ X ∩₁ Tid_ t ∪₁ X ∩₁ NTid_ t.
 Proof. apply set_split, Tid_compl_NTid. Qed.
 
 (******************************************************************************)
@@ -346,7 +346,7 @@ Proof.
 Qed.
 
 Lemma Tid_sb_prcl WF t : 
-  dom_rel (sb ⨾ ⦗Tid t⦘) ⊆₁ Einit ∪₁ Tid t.
+  dom_rel (sb ⨾ ⦗Tid_ t⦘) ⊆₁ Einit ∪₁ Tid_ t.
 Proof. 
   rewrite seq_eqv_r.
   intros x [y [SB TID]].
@@ -359,7 +359,7 @@ Proof.
 Qed.
 
 Lemma Tid_sb_fwcl WF t (nInit : t <> tid_init) : 
-  codom_rel (⦗Tid t⦘ ⨾ sb) ⊆₁ Tid t.
+  codom_rel (⦗Tid_ t⦘ ⨾ sb) ⊆₁ Tid_ t.
 Proof. 
   rewrite seq_eqv_l.
   intros y [x [TID SB]].
@@ -375,7 +375,7 @@ Proof.
 Qed.
 
 Lemma NTid_sb_prcl WF t : 
-  dom_rel (sb ⨾ ⦗NTid t⦘) ⊆₁ Einit ∪₁ NTid t.
+  dom_rel (sb ⨾ ⦗NTid_ t⦘) ⊆₁ Einit ∪₁ NTid_ t.
 Proof. 
   rewrite seq_eqv_r.
   intros x [y [SB nTID]].
@@ -388,7 +388,7 @@ Proof.
 Qed.
 
 Lemma NTid_sb_fwcl WF t : 
-  codom_rel (⦗NTid t \₁ Einit⦘ ⨾ sb) ⊆₁ NTid t.
+  codom_rel (⦗NTid_ t \₁ Einit⦘ ⨾ sb) ⊆₁ NTid_ t.
 Proof. 
   rewrite seq_eqv_l.
   intros y [x [[nTID nInit] SB]].
@@ -846,7 +846,7 @@ Proof.
 Qed.  
 
 Lemma cont_sb_tid k lang st WF (KK : K (k, existT _ lang st)) : 
-  cont_sb_dom S k ⊆₁ Einit ∪₁ Tid (cont_thread S k).
+  cont_sb_dom S k ⊆₁ Einit ∪₁ Tid_ (cont_thread S k).
 Proof. 
   unfold cont_thread, cont_sb_dom.
   destruct k.
@@ -931,11 +931,11 @@ Qed.
 
 Lemma cont_cf_Tid_ k lang st WF 
       (KK : K (k, existT _ lang st)) :
-  cont_cf_dom S k ⊆₁ Tid (cont_thread S k).
+  cont_cf_dom S k ⊆₁ Tid_ (cont_thread S k).
 Proof. red. ins. eapply cont_cf_tid; eauto. Qed.
 
 Lemma cont_cf_cont_sb k lang st WF (KK : K (k, existT _ lang st)) : 
-  cont_cf_dom S k ≡₁ (E ∩₁ Tid (cont_thread S k)) \₁ cont_sb_dom S k. 
+  cont_cf_dom S k ≡₁ (E ∩₁ Tid_ (cont_thread S k)) \₁ cont_sb_dom S k. 
 Proof. 
   unfold cont_thread, cont_sb_dom, cont_cf_dom. 
   unfold ES.acts_init_set.
@@ -1005,15 +1005,15 @@ Lemma cont_sb_cont_cf_inter_false k lang st WF (KK : K (k, existT _ lang st)) :
 Proof. erewrite cont_cf_cont_sb; eauto. basic_solver. Qed.
 
 Lemma cont_thread_sb_cf k lang st WF (KK : K (k, existT _ lang st)) : 
-  (E ∩₁ Tid (cont_thread S k)) ≡₁ (cont_sb_dom S k \₁ Einit) ∪₁ cont_cf_dom S k. 
+  (E ∩₁ Tid_ (cont_thread S k)) ≡₁ (cont_sb_dom S k \₁ Einit) ∪₁ cont_cf_dom S k. 
 Proof. 
   rewrite set_unionC.
   erewrite cont_cf_cont_sb; eauto.
   arewrite 
-    (E ∩₁ Tid (cont_thread S k) \₁ cont_sb_dom S k ≡₁ 
-     E ∩₁ Tid (cont_thread S k) \₁ (cont_sb_dom S k \₁ Einit)).
+    (E ∩₁ Tid_ (cont_thread S k) \₁ cont_sb_dom S k ≡₁ 
+     E ∩₁ Tid_ (cont_thread S k) \₁ (cont_sb_dom S k \₁ Einit)).
   { rewrite set_minus_minus_r.
-    arewrite (E ∩₁ Tid (cont_thread S k) ∩₁ Einit ≡₁ ∅).
+    arewrite (E ∩₁ Tid_ (cont_thread S k) ∩₁ Einit ≡₁ ∅).
     { split; [|done].
       unfold ES.acts_init_set.
       unfolder. ins. desc.
@@ -1092,7 +1092,7 @@ Proof.
   eapply sb_irr; eauto.  
 Qed.
 
-Lemma seqn_inj WF X thread (XinTID : X ⊆₁ Eninit ∩₁ Tid thread) (CFF : cf_free S X) : 
+Lemma seqn_inj WF X thread (XinTID : X ⊆₁ Eninit ∩₁ Tid_ thread) (CFF : cf_free S X) : 
   inj_dom X seqn. 
 Proof. 
   intros x y Xx Xy EQ.

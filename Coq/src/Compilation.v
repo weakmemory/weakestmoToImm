@@ -30,27 +30,33 @@ Section Compilation.
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Gtid'" := (tid).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
-  
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'Glab'" := (Execution.lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
+
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
   Notation "'GF'" := (fun a => is_true (is_f Glab a)).
 
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
-  
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Grf'" := (G.(rf)).
-  Notation "'Gco'" := (G.(co)).
+  Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
 
-  Notation "'Grs'" := (G.(imm_s_hb.rs)).
-  Notation "'Grelease'" := (G.(imm_s_hb.release)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
+  Notation "'Grf'" := (Execution.rf G).
+  Notation "'Gco'" := (Execution.co G).
+
+  Notation "'Grs'" := (imm_s_hb.rs G).
+  Notation "'Grelease'" := (imm_s_hb.release G).
+  Notation "'Gsw'" := (imm_s_hb.sw G).
+  Notation "'Ghb'" := (imm_s_hb.hb G).
+
+  Notation "'Gfurr'" := (furr G sc).
+
+  Notation "'Geco'" := (Execution_eco.eco G).
 
   Section Extraction.
 
@@ -188,7 +194,7 @@ Section Compilation.
         (IMMCONS : imm_consistent G sc) : 
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
-        ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
+        ⟪ STEPS : (step Weakestmo)＊ (ES.init prog) S ⟫ /\
         ⟪ SRC  : simrel_common prog S G sc TC X ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
@@ -208,7 +214,7 @@ Section Compilation.
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) :
     exists S X,
-      ⟪ STEPS : (ESstep.t Weakestmo)＊ (ES.init prog) S ⟫ /\
+      ⟪ STEPS : (step Weakestmo)＊ (ES.init prog) S ⟫ /\
       ⟪ EXEC  : simrel_extracted S X ⟫.
   Proof. 
     edestruct sim_traversal 

@@ -15,7 +15,6 @@ Require Import LblStep.
 Require Import SimRelCont.
 Require Import SimRelEventToAction.
 (* Require Import CertRf. *)
-Require Import SimRelJF.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -78,12 +77,12 @@ Section SimRel.
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Gtid'" := (tid).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
-  
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'Glab'" := (Execution.lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
+
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
@@ -91,24 +90,23 @@ Section SimRel.
 
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
   Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
-  
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Grf'" := (G.(rf)).
-  Notation "'Gco'" := (G.(co)).
 
-  Notation "'Grs'" := (G.(imm_s_hb.rs)).
-  Notation "'Grelease'" := (G.(imm_s_hb.release)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
+  Notation "'Grf'" := (Execution.rf G).
+  Notation "'Gco'" := (Execution.co G).
+
+  Notation "'Grs'" := (imm_s_hb.rs G).
+  Notation "'Grelease'" := (imm_s_hb.release G).
+  Notation "'Gsw'" := (imm_s_hb.sw G).
+  Notation "'Ghb'" := (imm_s_hb.hb G).
+  
+  Notation "'Gfurr'" := (furr G sc).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
 
   Notation "'Gfurr'" := (furr G sc).
-
-  Notation "'Ssim_jf'" := (sim_jf G sc TC S X).
-  Notation "'Ssim_vf'" := (sim_vf G sc TC S X).
-  Notation "'DR'" := (DR G TC S X).
 
   Notation "'e2a'" := (e2a S).
 
@@ -755,27 +753,31 @@ Section SimRelLemmas.
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Gtid'" := (tid).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
-  
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'Glab'" := (Execution.lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
+
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
   Notation "'GF'" := (fun a => is_true (is_f Glab a)).
 
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
-  
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Grf'" := (G.(rf)).
-  Notation "'Gco'" := (G.(co)).
+  Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
 
-  Notation "'Grs'" := (G.(imm_s_hb.rs)).
-  Notation "'Grelease'" := (G.(imm_s_hb.release)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
+  Notation "'Grf'" := (Execution.rf G).
+  Notation "'Gco'" := (Execution.co G).
+
+  Notation "'Grs'" := (imm_s_hb.rs G).
+  Notation "'Grelease'" := (imm_s_hb.release G).
+  Notation "'Gsw'" := (imm_s_hb.sw G).
+  Notation "'Ghb'" := (imm_s_hb.hb G).
+  
+  Notation "'Gfurr'" := (furr G sc).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).

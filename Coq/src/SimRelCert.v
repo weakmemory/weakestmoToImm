@@ -16,7 +16,6 @@ Require Import CertGraph.
 Require Import CertRf.
 Require Import SimRelCont.
 Require Import SimRelEventToAction.
-Require Import SimRelJF.
 Require Import SimRel.
 
 Set Implicit Arguments.
@@ -75,28 +74,28 @@ Section SimRelCert.
 
   Notation "'e2a'" := (e2a S).
 
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+  Notation "'thread_syntax' t"  := 
+    (Language.syntax (thread_lts t)) (at level 10, only parsing).  
 
-  Notation "'thread_st' tid" := 
-    (Language.state (thread_lts tid)) (at level 10, only parsing).
+  Notation "'thread_st' t" := 
+    (Language.state (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' tid" := 
-    (Language.init (thread_lts tid)) (at level 10, only parsing).
-  
-  Notation "'thread_cont_st' tid" :=
-    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
+  Notation "'thread_init_st' t" := 
+    (Language.init (thread_lts t)) (at level 10, only parsing).
+
+  Notation "'thread_cont_st' t" :=
+    (fun st => existT _ (thread_lts t) st) (at level 10, only parsing).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
-  Notation "'Gtid'" := (tid).
-  Notation "'Glab'" := (G.(lab)).
-  Notation "'Gloc'" := (loc G.(lab)).
-  
-  Notation "'GTid' t" := (fun x => tid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => tid x <> t) (at level 1).
+  Notation "'Glab'" := (Execution.lab G).
+  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gtid'" := (Events.tid).
+
+  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
+  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 
   Notation "'GR'" := (fun a => is_true (is_r Glab a)).
   Notation "'GW'" := (fun a => is_true (is_w Glab a)).
@@ -104,15 +103,16 @@ Section SimRelCert.
 
   Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
   Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
-  
-  Notation "'Gsb'" := (G.(sb)).
-  Notation "'Grmw'" := G.(rmw).
-  Notation "'Grf'" := (G.(rf)).
-  Notation "'Gco'" := (G.(co)).
 
-  Notation "'Grs'" := (G.(imm_s_hb.rs)).
-  Notation "'Grelease'" := (G.(imm_s_hb.release)).
-  Notation "'Ghb'" := (G.(imm_s_hb.hb)).
+  Notation "'Gsb'" := (Execution.sb G).
+  Notation "'Grmw'" := (Execution.rmw G).
+  Notation "'Grf'" := (Execution.rf G).
+  Notation "'Gco'" := (Execution.co G).
+
+  Notation "'Grs'" := (imm_s_hb.rs G).
+  Notation "'Grelease'" := (imm_s_hb.release G).
+  Notation "'Gsw'" := (imm_s_hb.sw G).
+  Notation "'Ghb'" := (imm_s_hb.hb G).
 
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
@@ -140,10 +140,6 @@ Section SimRelCert.
   Notation "'certX'" := ((X ∩₁ SNTid ktid) ∪₁ kE) (only parsing).
 
   Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
-
-  Notation "'Ssim_jf'" := (sim_jf G sc TC' S certX).
-  Notation "'Ssim_vf'" := (sim_vf G sc TC' S certX).
-  Notation "'DR'" := (DR G TC' S certX).
 
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>

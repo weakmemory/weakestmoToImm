@@ -4,6 +4,7 @@ Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
 Require Import Consistency.
+Require Import Execution.
 Require Import BasicStep.
 Require Import AddJF.
 Require Import AddEW.
@@ -57,10 +58,10 @@ Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
-Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 9).
-Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 9).
-Notation "'Val_' S" := (fun v e => val S e = v) (at level 9).
+Notation "'Tid_' S" := (fun t e => S.(ES.tid) e = t) (at level 1).
+Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 1).
+Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
+Notation "'Val_' S" := (fun v e => val S e = v) (at level 1).
 
 Definition fence_step
            (e  : eventid)
@@ -110,6 +111,10 @@ Definition step (m : model) (S S' : ES.t) : Prop := exists e e',
   ⟪ BSTEP : basic_step e e' S S' ⟫ /\
   ⟪ CONS : @es_consistent S' m ⟫.
 
+(******************************************************************************)
+(** ** Unfold step helper tactics *)
+(******************************************************************************)
+
 Ltac unfold_step_ H := 
   unfold step_, 
   fence_step, 
@@ -124,6 +129,18 @@ Ltac unfold_step H :=
   destruct H as [H [BSTEP_ CONS]];
   red in BSTEP_;
   unfold_step_ H.
+
+(******************************************************************************)
+(** ** Tactic for R/W/F sets after step lemmas *)
+(******************************************************************************)
+
+Ltac step_type_solver :=
+  erewrite basic_step_acts_set; eauto;
+  unfold eq_opt;
+  rewrite !set_inter_union_l;
+  autorewrite with same_lab_solveDb; 
+  eauto; type_solver 10.
+
 
 (******************************************************************************)
 (** ** Fence step properties *)
@@ -743,3 +760,69 @@ Proof.
   rewrite basic_step_hb_deltaE; eauto.
   rewrite hbE; auto. basic_solver 5.
 Qed. 
+
+(******************************************************************************)
+(** ** Step preserves executions lemma  *)
+(******************************************************************************)
+
+Lemma step_preserves_execution X e e' S S' 
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X) 
+      (BSTEP : basic_step e e' S S')
+      (STEP : step_ e e' S S') :
+  Execution.t S' X.
+Proof.       
+  cdes BSTEP; cdes BSTEP_.
+  constructor.
+  (* ex_inE : X ⊆₁ E S; *)
+  { etransitivity; [apply EXEC |].
+    eapply basic_step_acts_set_mon; eauto. }
+  (* init_in_ex : Einit S ⊆₁ X *)
+  { erewrite basic_step_acts_init_set; eauto. apply EXEC. } 
+  (* ex_sb_prcl : dom_rel (sb S ⨾ ⦗X⦘) ⊆₁ X *)
+  { rewrite SB'. 
+    relsf. splits.
+    { apply EXEC. }
+    arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto.
+    erewrite basic_step_sb_deltaE; eauto. 
+    basic_solver. }
+  (* ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
+  { (* TODO: add a corresponding lemma  *)
+    arewrite (sw S' ≡ sw S ∪ sw_delta S S' k e e').
+    { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
+      { cdes FSTEP. erewrite step_same_jf_sw; eauto.
+        eapply basic_step_nupd_rmw; subst; eauto. }
+      { cdes LSTEP. erewrite add_jf_sw; eauto.
+        subst. basic_solver. }
+      { cdes SSTEP. erewrite step_same_jf_sw; eauto.
+        eapply basic_step_nupd_rmw; subst; eauto. }
+      cdes USTEP. erewrite add_jf_sw; eauto.
+      cdes AEW. type_solver. }
+    relsf. splits.
+    { apply EXEC. }
+    arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto.
+    erewrite basic_step_sw_deltaE; eauto. 
+    basic_solver. }
+  (* ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
+  { rewrite RMW'. unfold rmw_delta.
+    relsf. splits.
+    { apply EXEC. }
+    arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto. 
+    step_solver. }
+  (* ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
+  { admit. }
+  (* ex_ncf : ES.cf_free S X *)
+  { red. 
+    rewrite <- set_interK with (s := X).
+    rewrite id_inter.
+    arewrite (X ⊆₁ E S) at 2 by apply Execution.ex_inE; auto. 
+    arewrite (X ⊆₁ E S) at 2 by apply Execution.ex_inE; auto. 
+    arewrite (⦗E S⦘ ⨾ cf S' ⨾ ⦗E S⦘ ≡ cf S).
+    { rewrite <- restr_relE. erewrite basic_step_cf_restr; eauto. }
+    apply EXEC. }
+  (* ex_vis : X ⊆₁ vis S *)
+  etransitivity.
+  { eapply Execution.ex_vis; eauto. }
+  eapply step_vis_mon; eauto. 
+Admitted.
+

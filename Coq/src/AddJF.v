@@ -54,10 +54,10 @@ Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 9).
-Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 9).
-Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 9).
-Notation "'Val_' S" := (fun v e => val S e = v) (at level 9).
+Notation "'Tid' S" := (fun t e => S.(ES.tid) e = t) (at level 1).
+Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 1).
+Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
+Notation "'Val_' S" := (fun v e => val S e = v) (at level 1).
 
 Definition jf_delta w r : relation eventid := 
   singl_rel w r.
@@ -154,7 +154,7 @@ Proof.
   { rewrite !seq_eqv.
     apply eqv_rel_more.
     rewrite set_interC.
-    autorewrite with same_lab_solveDb; eauto.
+    rewrite basic_step_rel_eq_rel; eauto.
     basic_solver. }
   rewrite ES.sbE; auto.
   basic_solver 10.
