@@ -4,6 +4,7 @@ From imm Require Import Events Prog ProgToExecution.
 From promising Require Import Basic.
 Require Import AuxDef.
 Require Import AuxRel.
+Require Import ProgLoc.
 
 Set Implicit Arguments.
 
@@ -132,9 +133,13 @@ Definition cont_cf_dom S c :=
 
 (* An initial event structure for a program. *)
 Definition init (prog : Prog.t) :=
-  (* TODO : something meaningful *)
-  {| next_act := 0 ;
-     lab  := fun _ => Afence Orlx ; 
+  let loc_labs :=
+      map (fun l => Astore Xpln Opln l 0) (prog_locs prog)
+  in
+  {| next_act := length loc_labs ;
+     lab  := list_to_fun Nat.eq_dec
+                         (Afence Orlx)
+                         (indexed_list loc_labs); 
      tid  := fun _ => tid_init ;
      sb   := ∅₂ ;
      rmw  := ∅₂ ;
