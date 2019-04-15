@@ -197,9 +197,23 @@ Notation "'Sc'" := (is_sc lab).
 Definition seqn (e : eventid) : nat := 
   countNatP (dom_rel (sb ∩ same_tid ⨾ ⦗ eq e ⦘)) (next_act S).
 
+Definition init_loc l :=
+      exists a, Einit a /\ loc a = Some l.
+
 Record Wf :=
   { initL : forall l b (EB : E b) (LB : loc b = Some l),
-      exists a, Einit a /\ loc a = Some l ;
+      init_loc l ;
+    
+    initLK : forall l k lang (s s' s'' : Language.state lang) lbl lbls
+                    (inK: K (k, existT _ lang s))
+                    (STEPS : (fun s s' =>
+                                exists lbls,
+                                  (Language.step lang) lbls s s')^* s s')
+                    (STEP : Language.step lang lbls s' s'')
+                    (LBL : List.In lbl lbls)
+                    (LB  : Events.loc id lbl = Some l),
+        init_loc l;
+
     init_lab : forall e (INIT : Einit e),
       exists l, lab e = Astore Xpln Opln l 0 ;
     init_uniq : inj_dom Einit loc ;

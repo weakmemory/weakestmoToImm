@@ -1027,6 +1027,8 @@ Proof.
        every location mentioned in the program used to construct
        an event structure. *)
     admit. }
+  { (* A related property. *)
+    admit. }
   { ins.
     set (EE:=INIT).
     eapply basic_step_acts_init_set with (S:=S) in EE; eauto.
