@@ -1,12 +1,16 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
-From imm Require Import Events Prog.
+From imm Require Import Events Prog ProgToExecution.
 Require Import AuxDef.
 Require Import AuxRel.
 
 Set Implicit Arguments.
 
 Definition eventid := nat.
+
+Inductive cont_label :=
+| CInit  (tid : thread_id)
+| CEvent (eid : eventid).
 
 Module Language.
 Record t :=
@@ -16,11 +20,27 @@ Record t :=
        is_terminal : state -> Prop;
        step : list label -> state -> state -> Prop
      }.
-End Language.
 
-Inductive cont_label :=
-| CInit  (tid : thread_id)
-| CEvent (eid : eventid).
+Definition prog_lang tid :=
+  @mk (list Instr.t) ProgToExecution.state
+     ProgToExecution.init
+     ProgToExecution.is_terminal
+     (istep tid).
+
+Definition prog_init_threads (prog : Prog.t) :
+  Basic.IdentMap.t {lang : t & state lang} :=
+  Basic.IdentMap.mapi
+    (fun tid (linstr : list Instr.t) =>
+       existT _ (prog_lang tid) (ProgToExecution.init linstr))
+    prog.
+
+Definition prog_init_K (prog : Prog.t) :=
+  map
+    (fun tidc =>
+       (CInit (fst tidc), (snd tidc)))
+    (RegMap.elements
+       (prog_init_threads prog)).
+End Language.
 
 Module ES.
 
@@ -109,7 +129,7 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
-(* Initial event structure for a progam. *)
+(* An initial event structure for a program. *)
 Definition init (prog : Prog.t) :=
   (* TODO : something meaningful *)
   {| next_act := 0 ;
@@ -120,7 +140,7 @@ Definition init (prog : Prog.t) :=
      jf   := ∅₂ ;
      co   := ∅₂ ;
      ew   := ∅₂ ;
-     cont := []  ;
+     cont := Language.prog_init_K prog ;
   |}.
 
 (******************************************************************************)
