@@ -1050,8 +1050,18 @@ Proof.
     rewrite upd_opt_some.
     rewrite upds.
     apply in_app_l. by constructor. }
-  { (* A related property. *)
-    admit. }
+  { ins.
+    cdes BSTEP. cdes BSTEP_.
+    red in inK. rewrite CONT' in inK.
+    apply PP.
+    inv inK.
+    2: { eapply ES.initLK; eauto. }
+    eapply ES.initLK; auto.
+    4,5: by eauto.
+    3: by eauto.
+    { apply CONT. }
+    apply rt_begin. right.
+    exists s. split; eauto. }
   { ins.
     set (EE:=INIT).
     eapply basic_step_acts_init_set with (S:=S) in EE; eauto.
