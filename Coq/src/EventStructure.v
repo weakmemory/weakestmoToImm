@@ -1,6 +1,7 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
 From imm Require Import Events Prog ProgToExecution.
+From promising Require Import Basic.
 Require Import AuxDef.
 Require Import AuxRel.
 
@@ -28,8 +29,8 @@ Definition prog_lang tid :=
      (istep tid).
 
 Definition prog_init_threads (prog : Prog.t) :
-  Basic.IdentMap.t {lang : t & state lang} :=
-  Basic.IdentMap.mapi
+  IdentMap.t {lang : t & state lang} :=
+  IdentMap.mapi
     (fun tid (linstr : list Instr.t) =>
        existT _ (prog_lang tid) (ProgToExecution.init linstr))
     prog.
