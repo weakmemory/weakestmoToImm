@@ -1331,17 +1331,7 @@ Proof.
       red. splits; auto. by apply WF.(ES.rmwl). }
     unfold rmw_delta.
     intros x y [AA BB]. red in BB. desf.
-    red in TT. desf; cdes TT; desf; auto.
-    red. unfold Events.loc. rewrite LAB'.
-    rewrite updo_opt; auto.
-    2: { simpls. omega. }
-    rewrite upds.
-    red in LABEL'. destruct lbl' as [lbl'|].
-    2: by desf.
-    rewrite upd_opt_some.
-    rewrite upds.
-    simpls.
-    admit. }
+    red in TT. desf; cdes TT; desf; auto. }
   { cdes BSTEP. cdes BSTEP_.
     rewrite SB'. rewrite RMW'.
     rewrite WF.(ES.rmwE). unfold rmw_delta.
@@ -1618,6 +1608,6 @@ Proof.
        repeat left. eapply WF.(ES.K_inEninit); eauto. }
   eapply basic_step_acts_ninit_set; eauto.
   unfold opt_ext. basic_solver.
-Admitted.
+Qed.
  
 End ESstepWf.
