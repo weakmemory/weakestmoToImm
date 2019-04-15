@@ -17,6 +17,7 @@ Require Import SimRelCont.
 Require Import SimRelEventToAction.
 Require Import SimRel.
 Require Import SimRelStep.
+Require Import ProgES.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -194,11 +195,11 @@ Section Compilation.
         (IMMCONS : imm_consistent G sc) : 
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
-        ⟪ STEPS : (step Weakestmo)＊ (ES.init prog) S ⟫ /\
+        ⟪ STEPS : (step Weakestmo)＊ (prog_es_init prog) S ⟫ /\
         ⟪ SRC  : simrel_common prog S G sc TC X ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
-    { exists (ES.init prog), (ES.acts_set (ES.init prog)).
+    { exists (prog_es_init prog), (ES.acts_set (prog_es_init prog)).
       splits; auto using rt_refl, simrel_init. }
     intros TC TC' TC_STEPS IH TC_STEP. desc.
     edestruct simrel_step as [X' [S' HH]]; eauto. 
@@ -214,7 +215,7 @@ Section Compilation.
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) :
     exists S X,
-      ⟪ STEPS : (step Weakestmo)＊ (ES.init prog) S ⟫ /\
+      ⟪ STEPS : (step Weakestmo)＊ (prog_es_init prog) S ⟫ /\
       ⟪ EXEC  : simrel_extracted S X ⟫.
   Proof. 
     edestruct sim_traversal 

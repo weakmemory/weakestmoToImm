@@ -1,10 +1,8 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
-From imm Require Import Events Prog ProgToExecution.
-From promising Require Import Basic.
+From imm Require Import Events.
 Require Import AuxDef.
 Require Import AuxRel.
-Require Import ProgLoc.
 
 Set Implicit Arguments.
 
@@ -22,26 +20,6 @@ Record t :=
        is_terminal : state -> Prop;
        step : list label -> state -> state -> Prop
      }.
-
-Definition prog_lang tid :=
-  @mk (list Instr.t) ProgToExecution.state
-     ProgToExecution.init
-     ProgToExecution.is_terminal
-     (istep tid).
-
-Definition prog_init_threads (prog : Prog.t) :
-  IdentMap.t {lang : t & state lang} :=
-  IdentMap.mapi
-    (fun tid (linstr : list Instr.t) =>
-       existT _ (prog_lang tid) (ProgToExecution.init linstr))
-    prog.
-
-Definition prog_init_K (prog : Prog.t) :=
-  map
-    (fun tidc =>
-       (CInit (fst tidc), (snd tidc)))
-    (RegMap.elements
-       (prog_init_threads prog)).
 End Language.
 
 Module ES.
@@ -131,11 +109,8 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
-(* An initial event structure for a program. *)
-Definition init (prog : Prog.t) :=
-  let loc_labs :=
-      map (fun l => Astore Xpln Opln l 0) (prog_locs prog)
-  in
+(* An initial event structure. *)
+Definition init loc_labs conts :=
   {| next_act := length loc_labs ;
      lab  := list_to_fun Nat.eq_dec
                          (Afence Orlx)
@@ -146,7 +121,7 @@ Definition init (prog : Prog.t) :=
      jf   := ∅₂ ;
      co   := ∅₂ ;
      ew   := ∅₂ ;
-     cont := Language.prog_init_K prog ;
+     cont := conts ;
   |}.
 
 (******************************************************************************)

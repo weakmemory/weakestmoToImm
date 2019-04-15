@@ -25,6 +25,7 @@ Require Import SimRel.
 Require Import SimRelCert.
 Require Import SimRelCertBasicStep.
 Require Import SimRelAddEW. 
+Require Import ProgES. 
 
 Set Implicit Arguments.
 Local Open Scope program_scope.

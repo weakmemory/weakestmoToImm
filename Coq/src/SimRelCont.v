@@ -11,6 +11,7 @@ Require Import Consistency.
 Require Import BasicStep.
 Require Import EventToAction.
 Require Import LblStep.
+Require Import ProgES.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -51,13 +52,6 @@ Section SimRelCont.
 
   Notation "'Gsb'" := (Execution.sb G).
   Notation "'Grmw'" := (Execution.rmw G).
-
-  Definition thread_lts (t : thread_id) : Language.t :=
-    @Language.mk
-      (list Instr.t) state
-      init
-      is_terminal
-      (ilbl_step t).
 
   Notation "'thread_syntax' t"  := 
     (Language.syntax (thread_lts t)) (at level 10, only parsing).  
