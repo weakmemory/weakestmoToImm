@@ -808,7 +808,7 @@ Section SimRelEventToActionLemmas.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e = certLab G st'' (e2a S' e).
   Proof. 
-    unfold certLab.
+    unfold certLab, restr_fun.
     destruct 
       (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S' e))) 
       as [GCE | nGCE].
@@ -826,7 +826,7 @@ Section SimRelEventToActionLemmas.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e' = certLab G st'' (e2a S' e').
   Proof. 
-    unfold certLab.
+    unfold certLab, restr_fun.
     destruct 
       (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S' e'))) 
       as [GCE | nGCE].
