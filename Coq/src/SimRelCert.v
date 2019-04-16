@@ -402,35 +402,33 @@ Section SimRelCert.
           econstructor. apply SRCC. }
         split; [|basic_solver].
         eapply Execution.init_in_ex; eauto.
-        eapply e2a_same_Einit in INITx; try apply SRCC.
-        unfolder in INITx. 
-        destruct INITx as [y [INITy e2aEQ]].
-        (* TODO : proof x = y *)
-        admit. }
+        set (INITx' := INITx).
+        eapply e2a_same_Einit in INITx'; try apply SRCC.
+        unfolder in INITx'. 
+        destruct INITx' as [y [INITy e2aEQ]].
+        eapply e2a_map_Einit.
+        split; eauto. }
       assert (certE (e2a x)) as CERTEx.
       { eapply steps_preserve_E; eauto.
         { apply wf_cont_state. }
         apply ilbl_steps_in_steps.
         apply SRCC. }
-      assert (~ SEinit x) as nINITx.
-      { intros INITx.
-        assert (GEinit (e2a x)) as GINITx.
-        { eapply e2a_same_Einit.
-          1-3 : apply SRCC.
-          basic_solver. }
-        edestruct acts_rep.
-        { apply wf_cont_state. }
-        { apply CONTEx. }
-        unfolder in GINITx.
-        unfold is_init in GINITx.
-        desf. }
       unfold CertGraph.certLab.
-      destruct 
-        (excluded_middle_informative (certE (e2a x)))
-        as [CertEx | nCertEx].
-      { apply kE_lab; auto. basic_solver. }
-      exfalso. auto.
-    Admitted.
+      erewrite restr_fun_fst; auto.
+      apply kE_lab; auto. 
+      split; auto.
+      intros INITx.
+      assert (GEinit (e2a x)) as GINITx.
+      { eapply e2a_same_Einit.
+        1-3 : apply SRCC.
+        basic_solver. }
+      edestruct acts_rep.
+      { apply wf_cont_state. }
+      { apply CONTEx. }
+      unfolder in GINITx.
+      unfold is_init in GINITx.
+      desf. 
+    Qed.
     
     Lemma cert_ex_cov_iss_lab : 
       eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a).
