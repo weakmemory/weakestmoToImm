@@ -23,6 +23,7 @@ Require Import SimRel.
 Require Import SimRelCert.
 Require Import SimRelCertBasicStep.
 Require Import SimRelCertStep.
+Require Import SimRelCertStepCoh.
 Require Import ProgES.
 
 Set Implicit Arguments.

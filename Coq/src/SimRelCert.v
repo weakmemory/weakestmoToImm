@@ -159,7 +159,7 @@ Section SimRelCert.
     }.
 
   Record simrel_cert :=
-    { sim_com : simrel_common prog S G sc TC X;
+    { sim : simrel prog S G sc TC X;
 
       tr_step : isim_trav_step G sc ktid TC TC';
 
