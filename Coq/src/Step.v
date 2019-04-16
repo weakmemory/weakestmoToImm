@@ -98,6 +98,7 @@ Definition update_step
            (e' : option eventid)
            (S S' : ES.t) : Prop := 
   exists w ews ws w',
+    ⟪ SLOC : same_loc S' e w' ⟫ /\
     ⟪ UPD : e' = Some w' ⟫ /\
     ⟪ AJF : add_jf w e S S' ⟫ /\
     ⟪ AEW : add_ew ews w' S S' ⟫ /\

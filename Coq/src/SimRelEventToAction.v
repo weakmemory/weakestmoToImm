@@ -15,6 +15,7 @@ Require Import CertGraph.
 Require Import EventToAction.
 Require Import LblStep.
 Require Import SimRelCont.
+Require Import ProgES.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -385,7 +386,7 @@ Section SimRelEventToActionLemmas.
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
   Lemma simrel_e2a_init :
-    simrel_e2a (ES.init prog) G sc.
+    simrel_e2a (prog_es_init prog) G sc.
   Proof. admit. Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 

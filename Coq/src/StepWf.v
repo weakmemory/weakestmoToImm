@@ -1018,15 +1018,50 @@ Proof.
   { intros HH. red in HH. omega. }
   assert (~ E S (Datatypes.S (ES.next_act S))) as NESN.
   { intros HH. red in HH. omega. }
+
+  assert (forall l (HH : ES.init_loc S l), ES.init_loc S' l) as PP.
+  { ins. red. cdes HH. exists a. split.
+    2: { erewrite basic_step_loc_eq_dom; eauto.
+         apply HH0. }
+    split.
+    { eapply basic_step_acts_set; eauto.
+      do 2 left. apply HH0. }
+    erewrite basic_step_tid_eq_dom; eauto.
+    all: apply HH0. }
   
   constructor.
   { ins; desf.
-    (* TODO :
-       Currently, it's not provable.
-       We need to state somehow that there is an initial write for
-       every location mentioned in the program used to construct
-       an event structure. *)
-    admit. }
+    cdes BSTEP. cdes BSTEP_.
+    ins; subst.
+    eapply basic_step_acts_set in EB; eauto.
+    destruct EB as [[EB|EB]|EB].
+    all: apply PP.
+    { eapply WF; eauto.
+      erewrite <- basic_step_loc_eq_dom; eauto. }
+    all: eapply ES.initLK; eauto.
+    1,3: by apply rtE; left.
+    all: desf; rewrite LAB'.
+    { rewrite updo_opt; auto.
+      2: { unfold eq_opt. desf.
+           simpls. subst. omega. }
+      rewrite upds. apply in_app_r. by constructor. }
+    red in EB. desf.
+    red in LABEL'. desf.
+    rewrite upd_opt_some.
+    rewrite upds.
+    apply in_app_l. by constructor. }
+  { ins.
+    cdes BSTEP. cdes BSTEP_.
+    red in inK. rewrite CONT' in inK.
+    apply PP.
+    inv inK.
+    2: { eapply ES.initLK; eauto. }
+    eapply ES.initLK; auto.
+    4,5: by eauto.
+    3: by eauto.
+    { apply CONT. }
+    apply rt_begin. right.
+    exists s. split; eauto. }
   { ins.
     set (EE:=INIT).
     eapply basic_step_acts_init_set with (S:=S) in EE; eauto.
@@ -1296,8 +1331,7 @@ Proof.
       red. splits; auto. by apply WF.(ES.rmwl). }
     unfold rmw_delta.
     intros x y [AA BB]. red in BB. desf.
-    red in TT. desf; cdes TT; desf; auto.
-    admit. }
+    red in TT. desf; cdes TT; desf; auto. }
   { cdes BSTEP. cdes BSTEP_.
     rewrite SB'. rewrite RMW'.
     rewrite WF.(ES.rmwE). unfold rmw_delta.
@@ -1574,6 +1608,6 @@ Proof.
        repeat left. eapply WF.(ES.K_inEninit); eauto. }
   eapply basic_step_acts_ninit_set; eauto.
   unfold opt_ext. basic_solver.
-Admitted.
+Qed.
  
 End ESstepWf.

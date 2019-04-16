@@ -30,6 +30,7 @@ Require Import SimRelCertBasicStep.
 Require Import SimRelAddJF.
 Require Import SimRelAddEW.
 Require Import SimRelAddCO.
+Require Import ProgES.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -182,6 +183,7 @@ Section SimRelCertStep.
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
     exists w w',
+      ⟪ SLOC : same_loc S' e w' ⟫ /\
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC' X k w e S S' ⟫ /\ 
       ⟪ AEW : sim_add_ew TC X w' S S' ⟫ /\
@@ -473,6 +475,8 @@ Section SimRelCertStepProps.
     desf; do 5 eexists; splits; eauto. 
     exists w. eexists.
     splits; eauto.
+    { red. unfold Events.loc.
+        by rewrite <- LBL, <- LBL''. }
     { econstructor; splits; eauto.
       erewrite basic_step_e2a_eq_dom; eauto. 
       2 : { eapply cert_ex_inE; eauto. } 

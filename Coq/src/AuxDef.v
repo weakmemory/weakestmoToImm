@@ -59,6 +59,29 @@ Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
     shift + countNatP p n
   end.
 
+Fixpoint indexed_list_helper {A} (i : nat) (l : list A) :
+  list (nat * A) :=
+  match l with
+  | nil => nil
+  | h :: l => (i, h) :: (indexed_list_helper (S i) l)
+  end.
+
+Definition indexed_list {A} (l : list A) : list (nat * A) :=
+  indexed_list_helper 0 l.
+
+Fixpoint list_to_fun {A B}
+         (DEC : forall (x y : A), {x = y} + {x <> y})
+         (def : B) (l : list (A * B)) : A -> B :=
+  fun v =>
+    match l with
+    | nil => def
+    | (hv, hf) :: l =>
+      if DEC hv v
+      then hf
+      else list_to_fun DEC def l v
+    end.
+
+
 Hint Unfold upd_opt : unfolderDb.
 
 Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B): 
