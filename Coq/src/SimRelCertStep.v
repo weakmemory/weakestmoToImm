@@ -93,7 +93,7 @@ Section SimRelCertStep.
   Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
 
   Notation "'Glab'" := (Execution.lab G).
-  Notation "'Gloc'" := (Events.loc (lab G)).
+  Notation "'Gloc'" := (Events.loc (Execution.lab G)).
   Notation "'Gtid'" := (Events.tid).
 
   Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
@@ -838,6 +838,63 @@ Section SimRelCertStepProps.
     all : rewrite step_same_jf_jfe; eauto; apply SRCC.
   Qed.
 
+  Lemma simrel_cert_step_wf k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    ES.Wf S'.
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (step_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (Wf G) as WFG by apply SRCC.
+    assert (simrel_e2a S G sc) as E2A by apply SRCC.
+    assert (simrel_e2a S' G sc) as E2A'.
+    { eapply simrel_cert_step_e2a; eauto. }
+    assert (SE S' e) as SEe.
+    { eapply basic_step_acts_set; eauto. 
+      basic_solver. }
+
+    eapply step_wf; eauto.
+    ins. red.
+
+    assert (exists ag, ⟪AIG : GEinit ag⟫ /\
+                       ⟪LLG : Gloc ag = Some l⟫); desf.
+    2: { set (BB:=AIG).
+         eapply e2a_GEinit in BB; [|by apply E2A'].
+         red in BB. desf.
+         exists y. splits; auto.
+         rewrite <- LLG.
+         apply e2a_lab in E2A'.
+         assert (SE S' y) as YY by apply BB.
+         specialize (E2A' y YY).
+         red in E2A'.
+         clear -E2A'.
+         unfold Events.loc in *.
+         unfold Basics.compose in *.
+         desf; desf. }
+    exists (InitEvent l).
+    splits; auto.
+    2: { unfold Events.loc. rewrite wf_init_lab; auto. }
+    split; auto.
+    apply wf_init; auto.
+    exists (e2a S' (ES.next_act S)).
+    split.
+    { eapply e2a_GE; eauto.
+      red. eexists. split; eauto. }
+    rewrite <- LL. symmetry.
+    apply e2a_lab in E2A'. red in E2A'.
+    specialize (E2A' (ES.next_act S) SEe).
+    clear -E2A'. red in E2A'.
+    unfold Events.loc in *.
+    unfold Basics.compose in *.
+    desf; desf.
+  Qed.
+
   Lemma simrel_cert_step_fr_simpl_coh k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -852,7 +909,7 @@ Section SimRelCertStepProps.
     { eapply simrel_cert_step_step_; eauto. }
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
-    { eapply step_wf; eauto. }
+    { eapply simrel_cert_step_wf; eauto. }
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (Wf G) as WFG. 
@@ -1143,7 +1200,7 @@ Section SimRelCertStepProps.
     { eapply simrel_cert_step_step_; eauto. }
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
-    { eapply step_wf; eauto. }
+    { eapply simrel_cert_step_wf; eauto. }
 
     unfold ES.fr.
     rewrite <- !seqA. apply irreflexive_seqC.
@@ -1178,7 +1235,7 @@ Section SimRelCertStepProps.
     { eapply simrel_cert_step_step_; eauto. }
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
-    { eapply step_wf; eauto. }
+    { eapply simrel_cert_step_wf; eauto. }
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (Wf G) as WFG. 
@@ -1266,7 +1323,7 @@ Section SimRelCertStepProps.
       eapply simrel_cert_step_consistent; eauto. }
     constructor.
     { constructor; try apply SRCC.
-      { eapply step_wf; eauto. }
+      { eapply simrel_cert_step_wf; eauto. }
       { eapply simrel_cert_step_consistent; eauto. }
       { eapply step_preserves_execution; eauto. apply SRCC. }
       { eapply basic_step_simrel_cont; eauto; apply SRCC. }
