@@ -656,7 +656,8 @@ Section SimRelCertStep.
     constructor; try apply SRCC.
     { eapply step_wf; eauto. }
     { eapply step_preserves_execution; eauto; apply SRCC. }
-    { eapply basic_step_simrel_cont; eauto; apply SRCC. }
+    { eapply basic_step_simrel_cont; eauto; try apply SRCC. 
+      eapply cstate_covered; eauto. }
     { eapply simrel_cert_step_e2a; eauto. }
     1-4 : admit.
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)

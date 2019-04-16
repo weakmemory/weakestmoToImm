@@ -155,27 +155,25 @@ Section SimRelCert.
     { cstate_stable : stable_state ktid st';
       cstate_cont : Kstate (k, st);
       cstate_reachable : (lbl_step ktid)＊ st st';
-      cstate_covered : C ∩₁ GTid ktid ⊆₁ contE; 
     }.
 
   Record simrel_cert :=
-    { sim : simrel prog S G sc TC X;
+    { sim : simrel prog S G sc TC X ;
 
-      tr_step : isim_trav_step G sc ktid TC TC';
+      tr_step : isim_trav_step G sc ktid TC TC' ;
 
-      cert : cert_graph G sc TC TC' ktid st';
-      cstate : simrel_cstate; 
+      cert : cert_graph G sc TC TC' ktid st' ;
+      cstate : simrel_cstate ; 
 
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
 
-      kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a);
+      kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
       (* rel_ew_cont_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ kE ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX ; *)
 
       (* cert_e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf; *)
 
-      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆
-                          cert_rf G sc TC' ktid;
+      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ktid ;
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
@@ -287,6 +285,27 @@ Section SimRelCert.
       2-4: by eapply SRCC.
       apply set_collect_mori; auto. 
       by apply SEinit_in_kE.
+    Qed.
+
+    Lemma cstate_covered : 
+      C ∩₁ GTid ktid ⊆₁ contE. 
+    Proof. 
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x. 
+      intros x [Cx TIDx].
+      eapply e2a_kE_ninit; eauto; try apply SRCC.
+      assert ((e2a □₁ X) x) as Xx.
+      { eapply ex_cov_iss; [apply SRCC|]. basic_solver. }
+      destruct Xx as [x' [Xx' EQx]]. subst x.
+      unfolder; eexists; splits; eauto.
+      { eapply ex_ktid_cov; auto.
+        unfolder; splits; auto.
+        by erewrite e2a_tid. }
+      intros INITx.
+      apply ktid_ninit.
+      rewrite <- TIDx.
+      erewrite <- e2a_tid.
+      apply INITx.
     Qed.
 
     Lemma cert_ex_inE : 

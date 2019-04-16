@@ -362,7 +362,8 @@ Section SimRelCertStepCoh.
     assert (ES.Wf S') as WFS.
     { eapply step_wf; eauto. }
     assert (simrel_cont prog S' G TC) as SRCONT.
-    { eapply basic_step_simrel_cont; try apply SRCC; eauto. }
+    { eapply basic_step_simrel_cont; try apply SRCC; eauto. 
+      eapply cstate_covered; eauto. }
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (simrel_ prog S' G sc TC X) as SR_.
