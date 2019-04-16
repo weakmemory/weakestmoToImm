@@ -361,8 +361,12 @@ Section SimRelCertStepCoh.
     assert (ES.Wf S) as WF by apply SRCC.
     assert (ES.Wf S') as WFS.
     { eapply step_wf; eauto. }
+    assert (simrel_cont prog S' G TC) as SRCONT.
+    { eapply basic_step_simrel_cont; try apply SRCC; eauto. }
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
+    assert (simrel_ prog S' G sc TC X) as SR_.
+    { eapply simrel_cert_step_simrel_; eauto. }
     assert (Wf G) as WFG. 
     { apply SRCC. }
     assert (coherence G) as GCOH.
@@ -428,7 +432,7 @@ Section SimRelCertStepCoh.
       eapply e2a_GE; eauto. }
     
     assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
-    { admit. }
+    { eapply e2a_hb; eauto; apply SRCC. }
 
     (* assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ *)
     (*             Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H. *)
@@ -487,8 +491,9 @@ Section SimRelCertStepCoh.
               ((e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗eq e⦘)
                  ⨾ (cert_rf G sc TC' (ES.cont_thread S k))⁻¹)) as IRR.
     { arewrite (Shb S' ⊆ ⦗X ∩₁ e2a S ⋄₁ covered TC⦘ ⨾ Shb S' ∪ Ssb S').
-      { (* TODO: hb_in_ex_cov_hb_sb requires too much. *)
-        admit. }
+      { erewrite <- basic_step_e2a_set_map_inter_old; eauto.
+        2 : apply Execution.ex_inE; apply SRCC.
+        eapply hb_in_ex_cov_hb_sb; eauto. }
       rewrite !seq_union_l, !seq_union_r, !seqA.
       arewrite ((Sjf S')^? ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆
                         (Sjf S' ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘)^? ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘)
@@ -635,7 +640,7 @@ Section SimRelCertStepCoh.
     (* rewrite (dom_r WFS.(ES.coD)) at 1. *)
     (* rewrite (dom_r WFS.(ES.coE)) at 1. *)
     (* basic_solver. *)
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_step_fr_coh k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
