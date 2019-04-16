@@ -141,7 +141,7 @@ Section SimRelStep.
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
   Lemma simrel_cert_graph_start thread S 
-        (SRC : simrel_common prog S G sc TC X) 
+        (SRC : simrel prog S G sc TC X) 
         (TC_STEP : isim_trav_step G sc thread TC TC') : 
     exists k st st',
       ⟪ kTID : thread = ktid S k ⟫ /\
@@ -151,7 +151,7 @@ Section SimRelStep.
   
   Lemma simrel_cert_start k S 
         (st st' : thread_st (ktid S k))
-        (SRC : simrel_common prog S G sc TC X) 
+        (SRC : simrel prog S G sc TC X) 
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC') 
         (CERTG : cert_graph G sc TC TC' (ktid S k) st')
         (CERT_ST : simrel_cstate S TC k st st') :
@@ -161,12 +161,12 @@ Section SimRelStep.
   Lemma simrel_cert_end k S 
         (st : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
-    simrel_common prog S G sc TC' (certX S k).
+    simrel prog S G sc TC' (certX S k).
   Proof. admit. Admitted.
 
   Lemma simrel_step_helper k S
         (st st''' : thread_st (ktid S k))
-        (SRC : simrel_common prog S G sc TC X)
+        (SRC : simrel prog S G sc TC X)
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC')
         (CERTG : cert_graph G sc TC TC' (ktid S k) st''')
         (CERT_ST : simrel_cstate S TC k st st''') 
@@ -197,11 +197,11 @@ Section SimRelStep.
   Qed.
   
   Lemma simrel_step S 
-        (SRC : simrel_common prog S G sc TC X) 
+        (SRC : simrel prog S G sc TC X) 
         (TRAV_STEP : sim_trav_step G sc TC TC') :
     exists X' S', 
       ⟪ STEPS : (step Weakestmo)＊ S S' ⟫ /\      
-      ⟪ SRC' : simrel_common prog S' G sc TC' X' ⟫.
+      ⟪ SRC' : simrel prog S' G sc TC' X' ⟫.
   Proof. 
     unfold sim_trav_step in TRAV_STEP. desc.
     edestruct simrel_cert_graph_start
