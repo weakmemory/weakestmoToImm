@@ -198,11 +198,11 @@ Section Compilation.
         (IMMCONS : imm_consistent G sc) : 
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
-        ⟪ STEPS : (step Weakestmo)＊ (prog_es_init prog) S ⟫ /\
+        ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
         ⟪ SRC  : simrel prog S G sc TC X ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
-    { exists (prog_es_init prog), (ES.acts_set (prog_es_init prog)).
+    { exists (prog_g_es_init prog G), (ES.acts_set (prog_g_es_init prog G)).
       splits; auto using rt_refl, simrel_init. }
     intros TC TC' TC_STEPS IH TC_STEP. desc.
     edestruct simrel_step as [X' [S' HH]]; eauto. 
@@ -218,7 +218,7 @@ Section Compilation.
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) :
     exists S X,
-      ⟪ STEPS : (step Weakestmo)＊ (prog_es_init prog) S ⟫ /\
+      ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
       ⟪ EXEC  : simrel_extracted S X ⟫.
   Proof. 
     edestruct sim_traversal 

@@ -470,7 +470,7 @@ Section SimRelEventToActionLemmas.
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
   Lemma simrel_e2a_init :
-    simrel_e2a (prog_es_init prog) G sc.
+    simrel_e2a (prog_g_es_init prog G) G sc.
   Proof. admit. Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 

@@ -110,7 +110,10 @@ Definition cont_cf_dom S c :=
   end.
 
 (* An initial event structure. *)
-Definition init loc_labs conts :=
+Definition init loc_list conts :=
+  let loc_labs :=
+      map (fun l => Astore Xpln Opln l 0) loc_list 
+  in
   {| next_act := length loc_labs ;
      lab  := list_to_fun Nat.eq_dec
                          (Afence Orlx)

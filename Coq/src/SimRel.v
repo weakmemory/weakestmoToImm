@@ -703,7 +703,7 @@ Section SimRelLemmas.
         (PExec : program_execution prog G)
         (WF : Execution.Wf G)
         (CONS : imm_consistent G sc) : 
-    let Sinit := prog_es_init prog in
+    let Sinit := prog_g_es_init prog G in
     simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
   Proof. clear S TC X. admit. Admitted.
 
