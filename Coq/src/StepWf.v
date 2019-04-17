@@ -1000,6 +1000,7 @@ Qed.
 
 Lemma step_wf S S' e e'
       (WF : ES.Wf S)
+      (ILOC : forall l (LL : loc S' e = Some l), ES.init_loc S' l)
       (TT    : step_ e e' S S')
       (BSTEP : basic_step e e' S S') :
   ES.Wf S'.
@@ -1022,12 +1023,12 @@ Proof.
   assert (forall l (HH : ES.init_loc S l), ES.init_loc S' l) as PP.
   { ins. red. cdes HH. exists a. split.
     2: { erewrite basic_step_loc_eq_dom; eauto.
-         apply HH0. }
+         apply EINA. }
     split.
     { eapply basic_step_acts_set; eauto.
-      do 2 left. apply HH0. }
+      do 2 left. apply EINA. }
     erewrite basic_step_tid_eq_dom; eauto.
-    all: apply HH0. }
+    all: apply EINA. }
   
   constructor.
   { ins; desf.
@@ -1035,33 +1036,14 @@ Proof.
     ins; subst.
     eapply basic_step_acts_set in EB; eauto.
     destruct EB as [[EB|EB]|EB].
-    all: apply PP.
-    { eapply WF; eauto.
+    { apply PP. eapply WF; eauto.
       erewrite <- basic_step_loc_eq_dom; eauto. }
-    all: eapply ES.initLK; eauto.
-    1,3: by apply rtE; left.
-    all: desf; rewrite LAB'.
-    { rewrite updo_opt; auto.
-      2: { unfold eq_opt. desf.
-           simpls. subst. omega. }
-      rewrite upds. apply in_app_r. by constructor. }
+    all: apply ILOC.
+    { by rewrite EB. }
+    rewrite <- LB.
     red in EB. desf.
     red in LABEL'. desf.
-    rewrite upd_opt_some.
-    rewrite upds.
-    apply in_app_l. by constructor. }
-  { ins.
-    cdes BSTEP. cdes BSTEP_.
-    red in inK. rewrite CONT' in inK.
-    apply PP.
-    inv inK.
-    2: { eapply ES.initLK; eauto. }
-    eapply ES.initLK; auto.
-    4,5: by eauto.
-    3: by eauto.
-    { apply CONT. }
-    apply rt_begin. right.
-    exists s. split; eauto. }
+    red in TT. desf; cdes TT; desf. }
   { ins.
     set (EE:=INIT).
     eapply basic_step_acts_init_set with (S:=S) in EE; eauto.
