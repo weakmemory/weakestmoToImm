@@ -109,10 +109,12 @@ Section Compilation.
       ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ X × X) ⟫.
 
     Lemma simrel_extract
-          (SRC : simrel_common prog S G sc TC X)
+          (SRC : simrel prog S G sc TC X)
           (COVinG : GE ⊆₁ C) :
       simrel_extracted.
     Proof. 
+      assert (simrel_ prog S G sc TC X) as SRC_.
+      { apply SRC. }
       assert (ES.Wf S) as SWF.
       { apply SRC. }
       assert (Wf G) as GWF.
@@ -144,7 +146,8 @@ Section Compilation.
         { eapply issuedE; eauto. }
         eapply issuedW; eauto. }
       constructor; splits.
-      { rewrite DCOV. symmetry. eapply ex_cov_iss; eauto. }
+      { rewrite DCOV. symmetry. 
+        eapply ex_cov_iss; apply SRC. }
       { eapply eq_dom_more; 
           [| | | eapply ex_cov_iss_lab; eauto].
         all : auto.
@@ -196,7 +199,7 @@ Section Compilation.
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
         ⟪ STEPS : (step Weakestmo)＊ (prog_es_init prog) S ⟫ /\
-        ⟪ SRC  : simrel_common prog S G sc TC X ⟫.
+        ⟪ SRC  : simrel prog S G sc TC X ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
     { exists (prog_es_init prog), (ES.acts_set (prog_es_init prog)).
