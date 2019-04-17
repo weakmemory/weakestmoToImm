@@ -201,6 +201,90 @@ Section SimRelEventToAction.
       all: by eauto.
     Qed.
 
+    Lemma e2a_rs : e2a □ Srs ⊆ Grs. 
+    Proof. 
+      rewrite rs_alt; auto.
+      rewrite !collect_rel_seqi.
+      rewrite !collect_rel_eqv.
+      rewrite !e2a_W; eauto.
+      repeat apply seq_mori; eauto with hahn.
+      2: { rewrite collect_rel_crt.
+           eauto using clos_refl_trans_mori, e2a_jfrmw. }
+      rewrite ES.sbE; auto.
+      rewrite wf_sbE.
+      rewrite <- !restr_relE.
+      rewrite <- restr_inter_absorb_r.
+      rewrite <- restr_inter_absorb_r 
+        with (r':=same_loc S).
+      rewrite collect_rel_cr.
+      rewrite collect_rel_interi. 
+      apply clos_refl_mori, inter_rel_mori. 
+      2: by eapply e2a_same_loc; eauto.
+      rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto.
+      eapply e2a_sb; eauto; apply SRE2A.
+    Qed.
+
+    Lemma e2a_release : e2a □ Srelease ⊆ Grelease.
+    Proof. 
+      rewrite release_alt; auto.
+      rewrite !collect_rel_seqi, !collect_rel_cr, !collect_rel_seqi.
+      rewrite !collect_rel_eqv.
+      arewrite (SE ∩₁ (SF ∪₁ SW) ⊆₁ SE) by basic_solver.
+      rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
+      { unfold imm_s_hb.release. basic_solver 10. }
+      all: eauto; apply SRE2A.
+    Qed.
+
+    Lemma e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
+                      Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘.
+    Proof.
+      inv SRE2A.
+      arewrite (Ssb ⨾ ⦗SF⦘ ⊆ Ssb ⨾ ⦗SE∩₁SF⦘).
+      { rewrite (dom_r WF.(ES.sbE)) at 1. basic_solver 10. }
+      arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
+                Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE∩₁SAcq⦘).
+      { rewrite (dom_r WF.(ES.jfE)) at 1. basic_solver 10. }
+      (* arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘ ⊆ *)
+      (*           Sjf ⨾ ⦗DR⦘ ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘). *)
+      (* 2: { rewrite <- !seqA. *)
+      (*      do 2 rewrite collect_rel_seqi. *)
+      (*      rewrite e2a_jfDR; auto. *)
+      (*      rewrite !collect_rel_cr, !collect_rel_seqi, !collect_rel_eqv. *)
+      (*      rewrite e2a_sb; eauto; try apply SRC. *)
+      (*      rewrite e2a_F, e2a_Acq; eauto; try apply SRC. *)
+      (*      arewrite (GE ∩₁ GF ⊆₁ GF) by basic_solver. *)
+      (*      arewrite (GE ∩₁ GAcq ⊆₁ GAcq) by basic_solver. } *)
+      (* rewrite crE. rewrite !seq_union_l, !seq_union_r, !seq_id_l. *)
+      (* apply union_mori. *)
+      (* { rewrite (dom_r WF.(ES.jfD)) at 1. *)
+      (*   rewrite !seqA. *)
+      (*   arewrite (⦗SR⦘ ⨾ ⦗SE ∩₁ SAcq⦘ ⊆ ⦗SR ∩₁ SE ∩₁ SAcq⦘ ⨾ ⦗SE ∩₁ SAcq⦘) *)
+      (*     by basic_solver. *)
+      (*   arewrite (SR ∩₁ SE ∩₁ SAcq ⊆₁ DR). *)
+      (*   2: done. *)
+      (*   unfold SimRelJF.DR. *)
+      (*   basic_solver 10. } *)
+      (* rewrite (dom_r WF.(ES.jfD)) at 1. *)
+      (* rewrite !seqA. *)
+      (* arewrite (Ssb ⨾ ⦗SE ∩₁ SF⦘ ⊆ ⦗X ∩₁ e2a ⋄₁ C⦘ ⨾ Ssb ⨾ ⦗SE ∩₁ SF⦘). *)
+      (* 2: { arewrite (⦗SR⦘ ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ⊆ ⦗DR⦘). *)
+      (*      2: done. *)
+      (*      unfold SimRelJF.DR. basic_solver 10. } *)
+    Admitted.
+
+    Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
+    Proof. 
+      unfold hb, imm_s_hb.hb.
+      rewrite collect_rel_ct.
+      apply clos_trans_mori.
+      rewrite collect_rel_union.
+      apply union_mori.
+      { eapply e2a_sb; eauto; apply SRE2A. }
+      unfold Consistency.sw.
+      rewrite collect_rel_seqi.
+      rewrite e2a_release. by rewrite e2a_jfacq.
+    Qed.
+
     Lemma e2a_kE_ninit k (st : thread_st (ktid k))
           (INK : K S (k, thread_cont_st (ktid k) st)) :
       e2a □₁ (kE k \₁ SEinit) ≡₁ acts_set st.(ProgToExecution.G).
@@ -724,7 +808,7 @@ Section SimRelEventToActionLemmas.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e = certLab G st'' (e2a S' e).
   Proof. 
-    unfold certLab.
+    unfold certLab, restr_fun.
     destruct 
       (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S' e))) 
       as [GCE | nGCE].
@@ -742,7 +826,7 @@ Section SimRelEventToActionLemmas.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e' = certLab G st'' (e2a S' e').
   Proof. 
-    unfold certLab.
+    unfold certLab, restr_fun.
     destruct 
       (excluded_middle_informative (acts_set (ProgToExecution.G st'') (e2a S' e'))) 
       as [GCE | nGCE].

@@ -140,8 +140,6 @@ Section SimRelCert.
 
   Notation "'certX'" := ((X ∩₁ SNTid ktid) ∪₁ kE) (only parsing).
 
-  Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
-
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>
       match l with
@@ -155,27 +153,25 @@ Section SimRelCert.
     { cstate_stable : stable_state ktid st';
       cstate_cont : Kstate (k, st);
       cstate_reachable : (lbl_step ktid)＊ st st';
-      cstate_covered : C ∩₁ GTid ktid ⊆₁ contE; 
     }.
 
   Record simrel_cert :=
-    { sim_com : simrel_common prog S G sc TC X;
+    { sim : simrel prog S G sc TC X ;
 
-      tr_step : isim_trav_step G sc ktid TC TC';
+      tr_step : isim_trav_step G sc ktid TC TC' ;
 
-      cert : cert_graph G sc TC TC' ktid st';
-      cstate : simrel_cstate; 
+      cert : cert_graph G sc TC TC' ktid st' ;
+      cstate : simrel_cstate ; 
 
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
 
-      kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a);
+      kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
       (* rel_ew_cont_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ kE ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX ; *)
 
       (* cert_e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf; *)
 
-      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆
-                          cert_rf G sc TC' ktid;
+      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ktid ;
 
       (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
       (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
@@ -185,19 +181,19 @@ Section SimRelCert.
     
     Variable SRCC : simrel_cert.
 
-    Lemma C_in_hdom : 
-      C ⊆₁ hdom.
+    Lemma cov_in_cert_dom : 
+      C ⊆₁ cert_dom G TC ktid st.
     Proof. unfold cert_dom. basic_solver. Qed.
 
-    Lemma GEinit_in_hdom (TCCOH : tc_coherent G sc TC) : 
-      GEinit ⊆₁ hdom. 
+    Lemma GEinit_in_cert_dom (TCCOH : tc_coherent G sc TC) : 
+      GEinit ⊆₁ cert_dom G TC ktid st. 
     Proof. 
-      etransitivity; [|apply C_in_hdom].
+      etransitivity; [|apply cov_in_cert_dom].
       eapply init_covered; eauto. 
     Qed.
 
-    Lemma hdom_sb_dom :
-      dom_rel (Gsb ⨾ ⦗ hdom ⦘) ⊆₁ hdom.
+    Lemma cert_dom_sb_prcl :
+      dom_rel (Gsb ⨾ ⦗ cert_dom G TC ktid st ⦘) ⊆₁ cert_dom G TC ktid st.
     Proof.
       assert (tc_coherent G sc TC) as TCCOH by apply SRCC.
       intros x [y SB].
@@ -205,15 +201,15 @@ Section SimRelCert.
       set (ESB := SB).
       destruct_seq ESB as [XE YE].
       destruct YY as [[YY|[YY NTID]]|YY].
-      { apply C_in_hdom. eapply dom_sb_covered; eauto.
+      { apply cov_in_cert_dom. eapply dom_sb_covered; eauto.
         eexists. apply seq_eqv_r. eauto. }
       { set (CC := SB). apply sb_tid_init in CC. desf.
         { left. right. split. 2: by rewrite CC.
           generalize (@sb_trans G) SB YY. basic_solver 10. }
-        apply C_in_hdom. eapply init_covered; eauto.
+        apply cov_in_cert_dom. eapply init_covered; eauto.
         split; auto. }
       destruct (classic (is_init x)) as [NN|NINIT].
-      { apply C_in_hdom. eapply init_covered; eauto.
+      { apply cov_in_cert_dom. eapply init_covered; eauto.
         split; auto. }
       right.
       edestruct cstate_cont as [lstate]; [apply SRCC|]. desf.
@@ -229,20 +225,6 @@ Section SimRelCert.
       etransitivity; eauto.  
     Qed.
 
-    Lemma hdom_sb_prefix :
-      Gsb ⨾ ⦗ hdom ⦘ ≡ ⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘.
-    Proof.
-      split.
-      all: intros x y SB.
-      2: { destruct_seq_l SB as AA. apply SB. }
-      apply seq_eqv_l. split; auto.
-      apply hdom_sb_dom; auto. red. eauto.
-    Qed.
-
-    Lemma tccoh' : 
-      tc_coherent G sc TC'.
-    Proof. eapply isim_trav_step_coherence; apply SRCC. Qed.
-
     Lemma ktid_ninit : 
       ktid <> tid_init. 
     Proof. 
@@ -253,14 +235,25 @@ Section SimRelCert.
       do 2 eexists. splits; eauto.
     Qed.
 
-    Lemma kE_inE : 
-      kE ⊆₁ SE. 
+    Lemma cstate_covered : 
+      C ∩₁ GTid ktid ⊆₁ contE. 
     Proof. 
       edestruct cstate_cont; [apply SRCC|]. 
       desc. subst x. 
-      intros x kSBx.
-      eapply ES.cont_sb_domE; eauto.
-      apply SRCC.
+      intros x [Cx TIDx].
+      eapply e2a_kE_ninit; eauto; try apply SRCC.
+      assert ((e2a □₁ X) x) as Xx.
+      { eapply ex_cov_iss; [apply SRCC|]. basic_solver. }
+      destruct Xx as [x' [Xx' EQx]]. subst x.
+      unfolder; eexists; splits; eauto.
+      { eapply ex_ktid_cov; auto.
+        unfolder; splits; auto.
+        by erewrite e2a_tid. }
+      intros INITx.
+      apply ktid_ninit.
+      rewrite <- TIDx.
+      erewrite <- e2a_tid.
+      apply INITx.
     Qed.
 
     Lemma wf_cont_state : 
@@ -270,6 +263,35 @@ Section SimRelCert.
       { apply SRCC. }
       eapply contwf; eauto. 
       apply SRCC. desf.
+    Qed.
+
+    Lemma cert_dom_cov_sb_iss : 
+      cert_dom G TC ktid st' ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘). 
+    Proof. 
+      rewrite cert_dom_alt.
+      { rewrite dcertE; [|apply SRCC].
+        unfold CertRf.E0.
+        admit. }
+      etransitivity.
+      { apply cstate_covered; eauto. }
+      eapply steps_preserve_E. 
+      { eapply wf_cont_state. }
+      apply ilbl_steps_in_steps.
+      apply SRCC.
+    Admitted.
+
+    Lemma tccoh' : 
+      tc_coherent G sc TC'.
+    Proof. eapply isim_trav_step_coherence; apply SRCC. Qed.
+
+    Lemma kE_inE : 
+      kE ⊆₁ SE. 
+    Proof. 
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x. 
+      intros x kSBx.
+      eapply ES.cont_sb_domE; eauto.
+      apply SRCC.
     Qed.
     
     Lemma SEinit_in_kE : 
@@ -383,35 +405,33 @@ Section SimRelCert.
           econstructor. apply SRCC. }
         split; [|basic_solver].
         eapply Execution.init_in_ex; eauto.
-        eapply e2a_same_Einit in INITx; try apply SRCC.
-        unfolder in INITx. 
-        destruct INITx as [y [INITy e2aEQ]].
-        (* TODO : proof x = y *)
-        admit. }
+        set (INITx' := INITx).
+        eapply e2a_same_Einit in INITx'; try apply SRCC.
+        unfolder in INITx'. 
+        destruct INITx' as [y [INITy e2aEQ]].
+        eapply e2a_map_Einit.
+        split; eauto. }
       assert (certE (e2a x)) as CERTEx.
       { eapply steps_preserve_E; eauto.
         { apply wf_cont_state. }
         apply ilbl_steps_in_steps.
         apply SRCC. }
-      assert (~ SEinit x) as nINITx.
-      { intros INITx.
-        assert (GEinit (e2a x)) as GINITx.
-        { eapply e2a_same_Einit.
-          1-3 : apply SRCC.
-          basic_solver. }
-        edestruct acts_rep.
-        { apply wf_cont_state. }
-        { apply CONTEx. }
-        unfolder in GINITx.
-        unfold is_init in GINITx.
-        desf. }
       unfold CertGraph.certLab.
-      destruct 
-        (excluded_middle_informative (certE (e2a x)))
-        as [CertEx | nCertEx].
-      { apply kE_lab; auto. basic_solver. }
-      exfalso. auto.
-    Admitted.
+      erewrite restr_fun_fst; auto.
+      apply kE_lab; auto. 
+      split; auto.
+      intros INITx.
+      assert (GEinit (e2a x)) as GINITx.
+      { eapply e2a_same_Einit.
+        1-3 : apply SRCC.
+        basic_solver. }
+      edestruct acts_rep.
+      { apply wf_cont_state. }
+      { apply CONTEx. }
+      unfolder in GINITx.
+      unfold is_init in GINITx.
+      desf. 
+    Qed.
     
     Lemma cert_ex_cov_iss_lab : 
       eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a).

@@ -23,6 +23,7 @@ Require Import SimRel.
 Require Import SimRelCert.
 Require Import SimRelCertBasicStep.
 Require Import SimRelCertStep.
+Require Import SimRelCertStepCoh.
 Require Import ProgES.
 
 Set Implicit Arguments.
@@ -140,35 +141,87 @@ Section SimRelStep.
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
   Lemma simrel_cert_graph_start thread S 
-        (SRC : simrel_common prog S G sc TC X) 
+        (SRC : simrel prog S G sc TC X) 
         (TC_STEP : isim_trav_step G sc thread TC TC') : 
     exists k st st',
       ⟪ kTID : thread = ktid S k ⟫ /\
+      ⟪ XkTIDCOV : kE S k ≡₁ X ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C ⟫ /\
+      ⟪ kECOV : X ∩₁ Stid_ S thread ∩₁ e2a S ⋄₁ C ⊆₁ kE S k ⟫ /\
       ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
-      ⟪ CERT_ST : simrel_cstate S TC k st st' ⟫.
+      ⟪ CERT_ST : simrel_cstate S k st st' ⟫.
   Proof. admit. Admitted.
   
   Lemma simrel_cert_start k S 
         (st st' : thread_st (ktid S k))
-        (SRC : simrel_common prog S G sc TC X) 
+        (SRC : simrel prog S G sc TC X) 
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC') 
+        (XkTIDCOV : kE S k ≡₁ X ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C)
         (CERTG : cert_graph G sc TC TC' (ktid S k) st')
-        (CERT_ST : simrel_cstate S TC k st st') :
+        (CERT_ST : simrel_cstate S k st st') :
     simrel_cert prog S G sc TC TC' X k st st'.
-  Proof. admit. Admitted.
+  Proof. 
+    constructor; auto.
+    { apply XkTIDCOV. }
+    { intros x [kEx nINITx].
+      erewrite ex_cov_iss_lab; try apply SRC.
+      2 : { apply XkTIDCOV in kEx. 
+            generalize kEx. basic_solver. }
+      unfold Basics.compose. 
+      erewrite <- cslab; eauto.
+      { unfold certLab.
+        erewrite restr_fun_fst; auto.
+        edestruct cstate_cont as [sta HH]; 
+          eauto; desf.
+        eapply steps_preserve_E; eauto.
+        { eapply contwf; eauto. apply SRC. }
+        { apply ilbl_steps_in_steps, CERT_ST. }
+        eapply e2a_kE_ninit; auto; try apply SRC.
+        basic_solver. }
+      red. do 4 left.
+      admit. }
+    arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
+    { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
+    arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 
+              ⦗X ∩₁ e2a S ⋄₁ C⦘ ⨾ ⦗e2a S ⋄₁ C⦘).
+    { basic_solver. }
+    rewrite <- seqA, collect_rel_seqi.
+    rewrite jf_cov_in_rf; [|apply SRC].
+    rewrite collect_rel_eqv.
+    rewrite collect_map_in_set.
+    admit. 
+  Admitted.
 
   Lemma simrel_cert_end k S 
         (st : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
-    simrel_common prog S G sc TC' (certX S k).
-  Proof. admit. Admitted.
+    simrel prog S G sc TC' (certX S k).
+  Proof. 
+    constructor; [|apply SRCC].
+    constructor; try apply SRCC.
+    { eapply tccoh'; eauto. }
+    { constructor.
+      { apply SRCC. }
+      { eapply sim_trav_step_rmw_covered;
+          try apply SRCC.
+        eexists. apply SRCC. }
+      eapply sim_trav_step_rel_covered;
+        try apply SRCC.
+      eexists. apply SRCC. }
+    { admit. }
+    { econstructor; try apply SRCC.
+      admit. }
+    { rewrite cert_ex_certD; eauto. 
+      rewrite cert_dom_cov_sb_iss; eauto. }
+    all: admit.
+  Admitted.
 
   Lemma simrel_step_helper k S
         (st st''' : thread_st (ktid S k))
-        (SRC : simrel_common prog S G sc TC X)
+        (SRC : simrel prog S G sc TC X)
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC')
+        (XkTIDCOV : kE S k ≡₁ X ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C)
         (CERTG : cert_graph G sc TC TC' (ktid S k) st''')
-        (CERT_ST : simrel_cstate S TC k st st''') 
+        (CERT_ST : simrel_cstate S k st st''') 
         (LBL_STEPS : (lbl_step (ktid S k))＊ st st''') :
     (fun st' => exists k' S',
       ⟪ kTID : ktid S' k' = ktid S k ⟫ /\
@@ -196,11 +249,11 @@ Section SimRelStep.
   Qed.
   
   Lemma simrel_step S 
-        (SRC : simrel_common prog S G sc TC X) 
+        (SRC : simrel prog S G sc TC X) 
         (TRAV_STEP : sim_trav_step G sc TC TC') :
     exists X' S', 
       ⟪ STEPS : (step Weakestmo)＊ S S' ⟫ /\      
-      ⟪ SRC' : simrel_common prog S' G sc TC' X' ⟫.
+      ⟪ SRC' : simrel prog S' G sc TC' X' ⟫.
   Proof. 
     unfold sim_trav_step in TRAV_STEP. desc.
     edestruct simrel_cert_graph_start

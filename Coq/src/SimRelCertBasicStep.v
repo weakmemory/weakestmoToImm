@@ -343,7 +343,7 @@ Section SimRelCertBasicStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    simrel_cstate S' TC k' st' st''. 
+    simrel_cstate S' k' st' st''. 
   Proof. 
     cdes BSTEP_. 
     constructor.
@@ -356,15 +356,7 @@ Section SimRelCertBasicStep.
       erewrite basic_step_cont_thread_k with (S' := S'); eauto.
       subst. basic_solver. }
     (* cstate_reachable : (step (ES.cont_thread S' k'))＊ st' st'' *)
-    { admit. }
-    (* cstate_covered : C ∩₁ GTid (ES.cont_thread S' k') ⊆₁ contE' *)
-    erewrite basic_step_cont_thread_k; eauto.
-    etransitivity.
-    { eapply cstate_covered. apply SRCC. }
-    unfold set_subset. 
-    eapply preserve_event.
-    eapply ilbl_steps_in_steps.
-    do 2 econstructor. apply STEP. 
+    admit. 
   Admitted.
 
   Lemma simrel_cert_basic_step_e2a_eqr k k' e e' S S' r r' r''

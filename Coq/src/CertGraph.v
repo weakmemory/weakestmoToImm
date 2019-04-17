@@ -32,10 +32,8 @@ Section CertGraph.
 
   Notation "'certE'" := certG.(acts_set).
 
-  Definition certLab (e : actid) : label :=
-    if excluded_middle_informative (certE e)
-    then certG.(lab) e
-    else G.(lab) e.
+  Definition certLab : actid -> label :=
+    restr_fun certE certG.(lab) G.(lab).
 
   Notation "'certRmw'" := (certG.(rmw)).
 
@@ -244,7 +242,9 @@ Section CertGraph.
       same_lab_u2v certLab G.(lab).
     Proof.
       red. red. ins.
-      unfold certLab. desf.
+      unfold certLab. 
+      unfold restr_fun.
+      desf.
       { by apply SCG. }
       red. desf.
     Qed.
@@ -727,6 +727,7 @@ Proof.
 
     assert (same_lab_u2v (certLab G cert_state) (lab G)) as SU2V.
     { intros e _. unfold certLab.
+      unfold restr_fun.
       destruct (excluded_middle_informative
                   (acts_set (ProgToExecution.G cert_state) e))
                as [AA|AA].
@@ -740,6 +741,7 @@ Proof.
     assert (eq_dom D (certLab G cert_state) (lab G))
       as CERTLABD.
     { intros e DE. unfold certLab.
+      unfold restr_fun.
       destruct (excluded_middle_informative
                   (acts_set (ProgToExecution.G cert_state) e))
                as [CEE|]; auto.
@@ -785,6 +787,7 @@ Proof.
       
       unfold certLab at 2.
       set (STE := EER). apply CACTS in STE.
+      unfold restr_fun.
       destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) r))
         as [VV|VV].
       2: { exfalso. apply VV. rewrite SCC. red. by rewrite <- RACTS. }
@@ -815,7 +818,7 @@ Proof.
         set (OO := TT). destruct_seq OO as [TTW TTR].
         assert (w' = w); subst.
         { destruct_seq_r OO as QQ. eapply cert_rff; eauto. }
-        unfold certLab.
+        unfold certLab. unfold restr_fun.
         set (OO' := OO). destruct_seq_r OO' as OOK.
         specialize (PP eq_refl).
         destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) w));
