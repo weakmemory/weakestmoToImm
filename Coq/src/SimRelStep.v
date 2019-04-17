@@ -145,6 +145,7 @@ Section SimRelStep.
         (TC_STEP : isim_trav_step G sc thread TC TC') : 
     exists k st st',
       ⟪ kTID : thread = ktid S k ⟫ /\
+      ⟪ XkTIDCOV : kE S k ≡₁ X ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C ⟫ /\
       ⟪ kECOV : X ∩₁ Stid_ S thread ∩₁ e2a S ⋄₁ C ⊆₁ kE S k ⟫ /\
       ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
       ⟪ CERT_ST : simrel_cstate S k st st' ⟫.
@@ -194,14 +195,33 @@ Section SimRelStep.
         (st : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
     simrel prog S G sc TC' (certX S k).
-  Proof. admit. Admitted.
+  Proof. 
+    constructor; [|apply SRCC].
+    constructor; try apply SRCC.
+    { eapply tccoh'; eauto. }
+    { constructor.
+      { apply SRCC. }
+      { eapply sim_trav_step_rmw_covered;
+          try apply SRCC.
+        eexists. apply SRCC. }
+      eapply sim_trav_step_rel_covered;
+        try apply SRCC.
+      eexists. apply SRCC. }
+    { admit. }
+    { econstructor; try apply SRCC.
+      admit. }
+    { rewrite cert_ex_certD; eauto. 
+      rewrite cert_dom_cov_sb_iss; eauto. }
+    all: admit.
+  Admitted.
 
   Lemma simrel_step_helper k S
         (st st''' : thread_st (ktid S k))
         (SRC : simrel prog S G sc TC X)
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC')
+        (XkTIDCOV : kE S k ≡₁ X ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C)
         (CERTG : cert_graph G sc TC TC' (ktid S k) st''')
-        (CERT_ST : simrel_cstate S TC k st st''') 
+        (CERT_ST : simrel_cstate S k st st''') 
         (LBL_STEPS : (lbl_step (ktid S k))＊ st st''') :
     (fun st' => exists k' S',
       ⟪ kTID : ktid S' k' = ktid S k ⟫ /\

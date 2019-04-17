@@ -140,8 +140,6 @@ Section SimRelCert.
 
   Notation "'certX'" := ((X ∩₁ SNTid ktid) ∪₁ kE) (only parsing).
 
-  Notation "'hdom'" := (cert_dom G TC ktid st) (only parsing).
-
   Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
     fun l =>
       match l with
@@ -183,19 +181,19 @@ Section SimRelCert.
     
     Variable SRCC : simrel_cert.
 
-    Lemma C_in_hdom : 
-      C ⊆₁ hdom.
+    Lemma cov_in_cert_dom : 
+      C ⊆₁ cert_dom G TC ktid st.
     Proof. unfold cert_dom. basic_solver. Qed.
 
-    Lemma GEinit_in_hdom (TCCOH : tc_coherent G sc TC) : 
-      GEinit ⊆₁ hdom. 
+    Lemma GEinit_in_cert_dom (TCCOH : tc_coherent G sc TC) : 
+      GEinit ⊆₁ cert_dom G TC ktid st. 
     Proof. 
-      etransitivity; [|apply C_in_hdom].
+      etransitivity; [|apply cov_in_cert_dom].
       eapply init_covered; eauto. 
     Qed.
 
-    Lemma hdom_sb_dom :
-      dom_rel (Gsb ⨾ ⦗ hdom ⦘) ⊆₁ hdom.
+    Lemma cert_dom_sb_prcl :
+      dom_rel (Gsb ⨾ ⦗ cert_dom G TC ktid st ⦘) ⊆₁ cert_dom G TC ktid st.
     Proof.
       assert (tc_coherent G sc TC) as TCCOH by apply SRCC.
       intros x [y SB].
@@ -203,15 +201,15 @@ Section SimRelCert.
       set (ESB := SB).
       destruct_seq ESB as [XE YE].
       destruct YY as [[YY|[YY NTID]]|YY].
-      { apply C_in_hdom. eapply dom_sb_covered; eauto.
+      { apply cov_in_cert_dom. eapply dom_sb_covered; eauto.
         eexists. apply seq_eqv_r. eauto. }
       { set (CC := SB). apply sb_tid_init in CC. desf.
         { left. right. split. 2: by rewrite CC.
           generalize (@sb_trans G) SB YY. basic_solver 10. }
-        apply C_in_hdom. eapply init_covered; eauto.
+        apply cov_in_cert_dom. eapply init_covered; eauto.
         split; auto. }
       destruct (classic (is_init x)) as [NN|NINIT].
-      { apply C_in_hdom. eapply init_covered; eauto.
+      { apply cov_in_cert_dom. eapply init_covered; eauto.
         split; auto. }
       right.
       edestruct cstate_cont as [lstate]; [apply SRCC|]. desf.
@@ -227,20 +225,6 @@ Section SimRelCert.
       etransitivity; eauto.  
     Qed.
 
-    Lemma hdom_sb_prefix :
-      Gsb ⨾ ⦗ hdom ⦘ ≡ ⦗ hdom ⦘ ⨾ Gsb ⨾ ⦗ hdom ⦘.
-    Proof.
-      split.
-      all: intros x y SB.
-      2: { destruct_seq_l SB as AA. apply SB. }
-      apply seq_eqv_l. split; auto.
-      apply hdom_sb_dom; auto. red. eauto.
-    Qed.
-
-    Lemma tccoh' : 
-      tc_coherent G sc TC'.
-    Proof. eapply isim_trav_step_coherence; apply SRCC. Qed.
-
     Lemma ktid_ninit : 
       ktid <> tid_init. 
     Proof. 
@@ -249,42 +233,6 @@ Section SimRelCert.
       intros kTID.
       edestruct ES.init_tid_K; [apply SRCC|].
       do 2 eexists. splits; eauto.
-    Qed.
-
-    Lemma kE_inE : 
-      kE ⊆₁ SE. 
-    Proof. 
-      edestruct cstate_cont; [apply SRCC|]. 
-      desc. subst x. 
-      intros x kSBx.
-      eapply ES.cont_sb_domE; eauto.
-      apply SRCC.
-    Qed.
-
-    Lemma wf_cont_state : 
-      wf_thread_state ktid st. 
-    Proof. 
-      edestruct cstate_cont. 
-      { apply SRCC. }
-      eapply contwf; eauto. 
-      apply SRCC. desf.
-    Qed.
-    
-    Lemma SEinit_in_kE : 
-      SEinit ⊆₁ kE.
-    Proof. 
-      eapply ES.cont_sb_dom_Einit; [apply SRCC|].
-      edestruct cstate_cont; [apply SRCC|].
-      desf. apply KK.
-    Qed.
-
-    Lemma GEinit_in_e2a_kE : 
-      GEinit ⊆₁ e2a □₁ kE. 
-    Proof. 
-      erewrite <- e2a_same_Einit.
-      2-4: by eapply SRCC.
-      apply set_collect_mori; auto. 
-      by apply SEinit_in_kE.
     Qed.
 
     Lemma cstate_covered : 
@@ -306,6 +254,61 @@ Section SimRelCert.
       rewrite <- TIDx.
       erewrite <- e2a_tid.
       apply INITx.
+    Qed.
+
+    Lemma wf_cont_state : 
+      wf_thread_state ktid st. 
+    Proof. 
+      edestruct cstate_cont. 
+      { apply SRCC. }
+      eapply contwf; eauto. 
+      apply SRCC. desf.
+    Qed.
+
+    Lemma cert_dom_cov_sb_iss : 
+      cert_dom G TC ktid st' ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘). 
+    Proof. 
+      rewrite cert_dom_alt.
+      { rewrite dcertE; [|apply SRCC].
+        unfold CertRf.E0.
+        admit. }
+      etransitivity.
+      { apply cstate_covered; eauto. }
+      eapply steps_preserve_E. 
+      { eapply wf_cont_state. }
+      apply ilbl_steps_in_steps.
+      apply SRCC.
+    Admitted.
+
+    Lemma tccoh' : 
+      tc_coherent G sc TC'.
+    Proof. eapply isim_trav_step_coherence; apply SRCC. Qed.
+
+    Lemma kE_inE : 
+      kE ⊆₁ SE. 
+    Proof. 
+      edestruct cstate_cont; [apply SRCC|]. 
+      desc. subst x. 
+      intros x kSBx.
+      eapply ES.cont_sb_domE; eauto.
+      apply SRCC.
+    Qed.
+    
+    Lemma SEinit_in_kE : 
+      SEinit ⊆₁ kE.
+    Proof. 
+      eapply ES.cont_sb_dom_Einit; [apply SRCC|].
+      edestruct cstate_cont; [apply SRCC|].
+      desf. apply KK.
+    Qed.
+
+    Lemma GEinit_in_e2a_kE : 
+      GEinit ⊆₁ e2a □₁ kE. 
+    Proof. 
+      erewrite <- e2a_same_Einit.
+      2-4: by eapply SRCC.
+      apply set_collect_mori; auto. 
+      by apply SEinit_in_kE.
     Qed.
 
     Lemma cert_ex_inE : 
