@@ -81,6 +81,27 @@ Fixpoint list_to_fun {A B}
       else list_to_fun DEC def l v
     end.
 
+Lemma In_map_fst {A B} (a : A) (b : B) l (IN : In (a, b) l) :
+  In a (map fst l).
+Proof. induction l; inv IN; simpls; eauto. Qed.
+
+Lemma In_map_snd {A B} (a : A) (b : B) l (IN : In (a, b) l) :
+  In b (map snd l).
+Proof. induction l; inv IN; simpls; eauto. Qed.
+
+Lemma l2f_in {A B} l (a : A) (b def : B) DEC
+      (NODUP : NoDup (map fst l))
+      (IN : In (a,b) l) :
+  list_to_fun DEC def l a = b.
+Proof.
+  induction l; inv IN; simpls; desf.
+  { destruct (classic (b0 = b)) as [|NEQ]; auto.
+    exfalso.
+    eapply NoDup_cons_iff; eauto.
+    simpls.
+    eapply In_map_fst; eauto. }
+  inv NODUP. intuition.
+Qed.
 
 Hint Unfold upd_opt : unfolderDb.
 

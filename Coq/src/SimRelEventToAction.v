@@ -471,7 +471,30 @@ Section SimRelEventToActionLemmas.
 
   Lemma simrel_e2a_init :
     simrel_e2a (prog_g_es_init prog G) G sc.
-  Proof. admit. Admitted.
+  Proof.
+    constructor.
+    { unfold e2a, prog_g_es_init.
+      simpls.
+      desf.
+      remember
+        (flatten
+           (map
+              (fun e0 : actid =>
+                 match e0 with
+                 | InitEvent l => [l]
+                 | ThreadEvent _ _ => []
+                 end) (acts G)))
+        as ll.
+      unfold Events.loc.
+      unfolder. intros x [y [AA BB]].
+      unfold ES.init in AA. red in AA. simpls.
+      assert (exists b, In (y, b) (indexed_list
+                   (map (fun l : location => Astore Xpln Opln l 0) ll)))
+        as [b IN].
+      { admit. }
+      erewrite l2f_in in BB; eauto.
+      2: admit.
+  Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
         (st st' : thread_st (ktid S k))
