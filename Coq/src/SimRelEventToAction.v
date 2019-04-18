@@ -473,9 +473,7 @@ Section SimRelEventToActionLemmas.
     simrel_e2a (prog_g_es_init prog G) G sc.
   Proof.
     constructor.
-    { unfold e2a, prog_g_es_init.
-      simpls.
-      desf.
+    { unfold e2a, prog_g_es_init. simpls. desf.
       remember
         (flatten
            (map
@@ -509,6 +507,38 @@ Section SimRelEventToActionLemmas.
       apply in_flatten_iff in INL. desf.
       apply in_map_iff in INL. desf.
       inv INL0. }
+    { unfold e2a, prog_g_es_init, is_init,
+        ES.acts_init_set, ES.init, ES.acts_set.
+      simpls. desf.
+      unfolder. ins. desf.
+      remember
+        (flatten
+           (map
+              (fun e : actid =>
+                 match e with
+                 | InitEvent l => [l]
+                 | ThreadEvent _ _ => []
+                 end) (acts G)))
+        as ll.
+      assert
+        (exists y,
+            In (y, Astore Xpln Opln l 0)
+               (indexed_list
+                  (map (fun l : location => Astore Xpln Opln l 0) ll)))
+        as [y INL].
+      2: { exists y. splits; auto.
+           { apply indexed_list_helper_in_to_range in INL. omega. }
+           unfold Events.loc. erewrite l2f_in; eauto; desf.
+           apply indexed_list_fst_nodup. }
+      apply indexed_list_in_exists.
+      apply in_map_iff.
+      eexists; splits; eauto.
+      desf.
+      apply in_flatten_iff.
+      exists [l]. splits.
+      2: done.
+      rewrite in_map_iff. eexists.
+      splits; eauto. desf. }
   Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 

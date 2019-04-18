@@ -197,6 +197,32 @@ Proof.
     by rewrite IHl.
 Qed.
 
+Lemma indexed_list_helper_length {A} n (l : list A) :
+  length (indexed_list_helper n l) = length l.
+Proof.
+  generalize dependent n.
+  induction l; ins. by rewrite IHl.
+Qed.
+
+Lemma indexed_list_length {A} (l : list A) :
+  length (indexed_list l) = length l.
+Proof.
+  unfold indexed_list.
+  apply indexed_list_helper_length.
+Qed.
+
+Lemma indexed_list_helper_in_exists {A} m a (l : list A) (IN : In a l) :
+  exists n, In (n, a) (indexed_list_helper m l).
+Proof.
+  generalize dependent m.
+  induction l; ins; desf; eauto.
+  specialize (IHl IN (S m)). desf. eauto.
+Qed.
+
+Lemma indexed_list_in_exists {A} a (l : list A) (IN : In a l) :
+  exists n, In (n, a) (indexed_list l).
+Proof. unfold indexed_list. by apply indexed_list_helper_in_exists. Qed.
+
 Hint Unfold upd_opt : unfolderDb.
 
 Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B): 
