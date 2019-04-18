@@ -488,10 +488,12 @@ Section SimRelEventToActionLemmas.
       unfold Events.loc.
       unfolder. intros x [y [AA BB]].
       unfold ES.init in AA. red in AA. simpls.
-      assert (exists b, In (y, b) (indexed_list
-                   (map (fun l : location => Astore Xpln Opln l 0) ll)))
+      assert
+        (exists b,
+            In (y, b) (indexed_list
+                         (map (fun l : location => Astore Xpln Opln l 0) ll)))
         as [b IN].
-      { admit. }
+      { by apply indexed_list_range. }
       erewrite l2f_in in BB; eauto.
       2: by apply indexed_list_fst_nodup.
   Admitted.

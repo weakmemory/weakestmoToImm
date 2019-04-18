@@ -103,7 +103,7 @@ Proof.
   inv NODUP. intuition.
 Qed.
 
-Lemma indexed_list_helper_range {A} a (l : list A) m n
+Lemma indexed_list_helper_in_to_range {A} a (l : list A) m n
       (IN : In (n, a) (indexed_list_helper m l)) :
   m <= n < m + length l.
 Proof.
@@ -122,7 +122,7 @@ Proof.
   induction l; ins.
   constructor.
   2: by intuition.
-  intros IN. apply indexed_list_helper_range in IN. omega.
+  intros IN. apply indexed_list_helper_in_to_range in IN. omega.
 Qed.
 
 Lemma indexed_list_nodup {A} (l : list A) : NoDup (indexed_list l).
@@ -142,7 +142,7 @@ Proof.
   destruct x; simpls; desf.
   2: destruct y; simpls; desf.
   all: match goal with
-       | H : In _ _ |- _ => apply indexed_list_helper_range in H; omega
+       | H : In _ _ |- _ => apply indexed_list_helper_in_to_range in H; omega
        end.
 Qed.
 
@@ -160,6 +160,30 @@ Proof.
   { apply indexed_list_helper_nodup. }
   ins. intros HH.
   eapply indexed_list_fst_eq in HH; eauto.
+Qed.
+
+Lemma indexed_list_helper_range {A} (l : list A) m n :
+  (exists a, In (n, a) (indexed_list_helper m l)) <->
+  m <= n < m + length l.
+Proof.
+  split.
+  { intros [a HH]. eapply indexed_list_helper_in_to_range; eauto. }
+  generalize dependent m.
+  induction l; ins; desf.
+  { omega. }
+  apply le_lt_or_eq in H. desf.
+  2: { eexists; eauto. }
+  edestruct IHl as [a' HH]; eauto.
+  omega.
+Qed.
+
+Lemma indexed_list_range {A} (l : list A) n :
+  (exists a, In (n, a) (indexed_list l)) <->
+  n < length l.
+Proof.
+  arewrite (n < length l <-> 0 <= n < 0 + length l).
+  2: by apply indexed_list_helper_range.
+  omega.
 Qed.
 
 Hint Unfold upd_opt : unfolderDb.
