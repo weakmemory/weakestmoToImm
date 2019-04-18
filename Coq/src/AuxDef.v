@@ -103,6 +103,65 @@ Proof.
   inv NODUP. intuition.
 Qed.
 
+Lemma indexed_list_helper_range {A} a (l : list A) m n
+      (IN : In (n, a) (indexed_list_helper m l)) :
+  m <= n < m + length l.
+Proof.
+  generalize dependent m.
+  generalize dependent a.
+  induction l; ins; desf.
+  { omega. }
+  apply IHl in IN.
+  omega.
+Qed.
+
+Lemma indexed_list_helper_nodup {A} n (l : list A) :
+  NoDup (indexed_list_helper n l).
+Proof.
+  generalize dependent n.
+  induction l; ins.
+  constructor.
+  2: by intuition.
+  intros IN. apply indexed_list_helper_range in IN. omega.
+Qed.
+
+Lemma indexed_list_nodup {A} (l : list A) : NoDup (indexed_list l).
+Proof. apply indexed_list_helper_nodup. Qed.
+
+Lemma indexed_list_helper_fst_eq {A} n (l : list A) x y
+      (INX : In x (indexed_list_helper n l))
+      (INY : In y (indexed_list_helper n l))
+      (EQ : fst x = fst y) :
+  x = y.
+Proof.
+  generalize dependent y.
+  generalize dependent x.
+  generalize dependent n.
+  induction l; ins; desf.
+  3: by eapply IHl; eauto.
+  destruct x; simpls; desf.
+  2: destruct y; simpls; desf.
+  all: match goal with
+       | H : In _ _ |- _ => apply indexed_list_helper_range in H; omega
+       end.
+Qed.
+
+Lemma indexed_list_fst_eq {A} (l : list A) x y
+      (INX : In x (indexed_list l))
+      (INY : In y (indexed_list l))
+      (EQ : fst x = fst y) :
+  x = y.
+Proof. eapply indexed_list_helper_fst_eq; eauto. Qed.
+
+Lemma indexed_list_fst_nodup {A} (l : list A) :
+  NoDup (map fst (indexed_list l)).
+Proof.
+  apply nodup_map.
+  { apply indexed_list_helper_nodup. }
+  ins. intros HH.
+  eapply indexed_list_fst_eq in HH; eauto.
+Qed.
+
 Hint Unfold upd_opt : unfolderDb.
 
 Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B): 

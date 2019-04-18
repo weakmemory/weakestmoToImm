@@ -468,7 +468,7 @@ Section SimRelEventToActionLemmas.
 
   Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
-
+  
   Lemma simrel_e2a_init :
     simrel_e2a (prog_g_es_init prog G) G sc.
   Proof.
@@ -493,7 +493,7 @@ Section SimRelEventToActionLemmas.
         as [b IN].
       { admit. }
       erewrite l2f_in in BB; eauto.
-      2: admit.
+      2: by apply indexed_list_fst_nodup.
   Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
