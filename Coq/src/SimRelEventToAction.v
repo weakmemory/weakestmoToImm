@@ -540,6 +540,12 @@ Section SimRelEventToActionLemmas.
       2: done.
       rewrite in_map_iff. eexists.
       splits; eauto. desf. }
+    red. intros.
+    arewrite ((Slab (prog_g_es_init prog G)) e = 
+              (Glab ∘ e2a (prog_g_es_init prog G)) e).
+    2: by red; desf.
+    unfold compose.
+    unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
     admit.
   Admitted.
 
