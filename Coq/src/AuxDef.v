@@ -186,6 +186,17 @@ Proof.
   omega.
 Qed.
 
+Lemma indexed_list_map_snd {A} (l : list A) :
+  map snd (indexed_list l) = l.
+Proof.
+  unfold indexed_list in *.
+  remember 0 as m.
+  clear Heqm.
+  generalize dependent m.
+  induction l; ins.
+    by rewrite IHl.
+Qed.
+
 Hint Unfold upd_opt : unfolderDb.
 
 Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B): 

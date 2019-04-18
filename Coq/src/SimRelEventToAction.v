@@ -496,6 +496,19 @@ Section SimRelEventToActionLemmas.
       { by apply indexed_list_range. }
       erewrite l2f_in in BB; eauto.
       2: by apply indexed_list_fst_nodup.
+      
+      assert (In b (map (fun l : location => Astore Xpln Opln l 0) ll))
+        as BIN.
+      { clear -IN.
+        apply In_map_snd in IN.
+        rewrite <- indexed_list_map_snd; eauto. }
+
+      apply in_map_iff in BIN. destruct BIN as [l [LB INL]].
+      rewrite <- LB in *. simpls. desf.
+      clear -INL.
+      apply in_flatten_iff in INL. desf.
+      apply in_map_iff in INL. desf.
+      inv INL0. }
   Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
