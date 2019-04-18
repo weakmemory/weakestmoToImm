@@ -382,6 +382,7 @@ Section SimRelEventToActionLemmas.
   Variable TC : trav_config.
   Variable GPROG : program_execution prog G.
   Variable WF : ES.Wf S.
+  Variable WFG : Wf G.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -472,30 +473,32 @@ Section SimRelEventToActionLemmas.
   Lemma simrel_e2a_init :
     simrel_e2a (prog_g_es_init prog G) G sc.
   Proof.
-    constructor.
-    4-8: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
-    { unfold e2a, prog_g_es_init. simpls. desf.
-      remember
-        (flatten
-           (map
-              (fun e0 : actid =>
-                 match e0 with
-                 | InitEvent l => [l]
-                 | ThreadEvent _ _ => []
-                 end) (acts G)))
-        as ll.
-      unfold Events.loc.
-      unfolder. intros x [y [AA BB]].
-      unfold ES.init in AA. red in AA. simpls.
+    remember
+      (flatten
+         (map
+            (fun e : actid =>
+               match e with
+               | InitEvent l => [l]
+               | ThreadEvent _ _ => []
+               end) (acts G)))
+      as ll.
+
+    assert
+      (forall y (LY : y < length ll),
+          exists l,
+            In (y, Astore Xpln Opln l 0)
+               (indexed_list
+                  (map (fun l : location => Astore Xpln Opln l 0) ll)))
+      as YY.
+    { ins.
+
       assert
         (exists b,
             In (y, b) (indexed_list
                          (map (fun l : location => Astore Xpln Opln l 0) ll)))
         as [b IN].
-      { by apply indexed_list_range. }
-      erewrite l2f_in in BB; eauto.
-      2: by apply indexed_list_fst_nodup.
-      
+      { apply indexed_list_range. desf. by rewrite length_map. }
+
       assert (In b (map (fun l : location => Astore Xpln Opln l 0) ll))
         as BIN.
       { clear -IN.
@@ -504,10 +507,11 @@ Section SimRelEventToActionLemmas.
 
       apply in_map_iff in BIN. destruct BIN as [l [LB INL]].
       rewrite <- LB in *. simpls. desf.
-      clear -INL.
-      apply in_flatten_iff in INL. desf.
-      apply in_map_iff in INL. desf.
-      inv INL0. }
+      eauto. }
+
+    assert (GEinit ⊆₁
+            e2a (prog_g_es_init prog G) □₁ SEinit (prog_g_es_init prog G))
+      as AINIT.
     { unfold e2a, prog_g_es_init, is_init,
         ES.acts_init_set, ES.init, ES.acts_set.
       simpls. desf.
@@ -540,14 +544,40 @@ Section SimRelEventToActionLemmas.
       2: done.
       rewrite in_map_iff. eexists.
       splits; eauto. desf. }
+
+    constructor; auto.
+    3-7: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
+    { unfold e2a, prog_g_es_init. simpls. desf.
+      unfold Events.loc.
+      unfolder. intros x [y [AA BB]].
+      unfold ES.init in AA. red in AA. simpls.
+      edestruct (YY y) as [l HH].
+      { by rewrite map_length in AA. }
+
+      erewrite l2f_in in BB; eauto.
+      2: by apply indexed_list_fst_nodup.
+      simpls. desf.
+      
+      clear -HH.
+      apply In_map_snd in HH.
+      rewrite indexed_list_map_snd in HH; eauto.
+      apply in_map_iff in HH. desf.
+      apply in_flatten_iff in HH0. desf.
+      apply in_map_iff in HH0. desf.
+      inv HH1. }
+    
     red. intros.
     arewrite ((Slab (prog_g_es_init prog G)) e = 
               (Glab ∘ e2a (prog_g_es_init prog G)) e).
     2: by red; desf.
     unfold compose.
     unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
-    admit.
-  Admitted.
+    rewrite map_length in EE.
+    eapply YY in EE. desf.
+    unfold Events.loc.
+    erewrite l2f_in; [|by apply indexed_list_fst_nodup|by eauto].
+    simpls. rewrite wf_init_lab; auto.
+  Qed.
 
   Lemma basic_step_e2a_e k k' e e' S' 
         (st st' : thread_st (ktid S k))
