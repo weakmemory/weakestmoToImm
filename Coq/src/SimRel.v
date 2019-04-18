@@ -705,6 +705,43 @@ Section SimRelLemmas.
         (CONS : imm_consistent G sc) : 
     let Sinit := prog_g_es_init prog G in
     simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
-  Proof. clear S TC X. admit. Admitted.
+  Proof.
+    clear S TC X.
+    assert (simrel_e2a (prog_g_es_init prog G) G sc) as HH.
+    { by apply simrel_e2a_init. }
+    simpls.
+    red. splits.
+    2: by apply prog_g_es_init_consistent.
+    constructor; auto.
+    { apply prog_g_es_init_wf. }
+    { apply init_trav_coherent; auto. }
+    { constructor.
+      3: basic_solver. 
+      { admit. }
+      simpls. ins.
+      apply rmw_from_non_init in RMW; auto.
+      (* trivial *)
+      admit. }
+    { constructor.
+      { basic_solver. }
+      { unfold ES.acts_init_set. basic_solver. }
+      { unfold prog_g_es_init, ES.init. basic_solver. }
+      { unfold sw, prog_g_es_init, ES.init. basic_solver. }
+      { unfold prog_g_es_init, ES.init. basic_solver. }
+      { admit. }
+      { red. admit. }
+      admit. }
+    { constructor.
+      all: admit. }
+    { simpls.
+      admit. }
+    { (* It should follow from HH. *)
+      admit. }
+    { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
+      basic_solver. }
+    { unfold prog_g_es_init, ES.init. basic_solver. }
+    { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
+    unfold prog_g_es_init, ES.init. basic_solver.
+  Admitted.
 
 End SimRelLemmas.
