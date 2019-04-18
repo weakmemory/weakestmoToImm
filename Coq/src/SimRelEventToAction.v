@@ -473,6 +473,7 @@ Section SimRelEventToActionLemmas.
     simrel_e2a (prog_g_es_init prog G) G sc.
   Proof.
     constructor.
+    4-8: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
     { unfold e2a, prog_g_es_init. simpls. desf.
       remember
         (flatten
@@ -539,6 +540,7 @@ Section SimRelEventToActionLemmas.
       2: done.
       rewrite in_map_iff. eexists.
       splits; eauto. desf. }
+    admit.
   Admitted.
 
   Lemma basic_step_e2a_e k k' e e' S' 
