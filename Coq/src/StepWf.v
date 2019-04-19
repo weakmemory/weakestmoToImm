@@ -703,22 +703,27 @@ Lemma step_same_co_init e e' S S'
       (BSTEP : basic_step e e' S S') 
       (CO' : co S' ≡ co S) 
       (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S) : 
-  ⦗Einit S'⦘ ⨾ same_loc S' ⨾ ⦗E S' ∩₁ W S'⦘ ⊆ co S'.
+  ⦗Einit S'⦘ ⨾ same_loc S' ⨾ ⦗Eninit S' ∩₁ W S'⦘ ⊆ co S'.
 Proof. 
-  rewrite WW', CO'. 
+  assert (Eninit S' ∩₁ W S' ≡₁ Eninit S ∩₁ W S) as WW.
+  { unfold ES.acts_ninit_set.
+    rewrite !set_inter_minus_l. rewrite WW'.
+    erewrite basic_step_acts_init_set; eauto. }
+
+  rewrite WW, CO'. 
   rewrite basic_step_acts_init_set; eauto.
   rewrite <- seq_eqvK with (dom := Einit S).
-  rewrite <- seq_eqvK with (dom := E S ∩₁ W S).
+  rewrite <- seq_eqvK with (dom := Eninit S ∩₁ W S).
   rewrite seqA.
-  arewrite (⦗Einit S⦘ ⨾ same_loc S' ⨾ ⦗E S ∩₁ W S⦘ ⊆ same_loc S).
-  { arewrite (Einit S ⊆₁ E S).
-    { unfold ES.acts_init_set. basic_solver. }
-    arewrite (E S ∩₁ W S ⊆₁ E S).
-    { basic_solver. }
-    rewrite <- restr_relE.
-    rewrite basic_step_same_loc_restr; eauto.
-    basic_solver. }
-  by apply ES.co_init.
+  arewrite (⦗Einit S⦘ ⨾ same_loc S' ⨾ ⦗Eninit S ∩₁ W S⦘ ⊆ same_loc S).
+  2: by apply ES.co_init.
+  arewrite (Einit S ⊆₁ E S).
+  { unfold ES.acts_init_set. basic_solver. }
+  arewrite (Eninit S ∩₁ W S ⊆₁ E S).
+  { unfold ES.acts_ninit_set. basic_solver. }
+  rewrite <- restr_relE.
+  rewrite basic_step_same_loc_restr; eauto.
+  basic_solver.
 Qed.
 
 Lemma step_add_co_co_init ews ws w' e e' S S' 
@@ -728,25 +733,39 @@ Lemma step_add_co_co_init ews ws w' e e' S S'
       (ACO : add_co ews ws w' S S') 
       (wEE' : (eq e ∪₁ eq_opt e') w') 
       (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
-  ⦗Einit S'⦘ ⨾ same_loc S' ⨾ ⦗E S' ∩₁ W S'⦘ ⊆ co S'.
+  ⦗Einit S'⦘ ⨾ same_loc S' ⨾ ⦗Eninit S' ∩₁ W S'⦘ ⊆ co S'.
 Proof. 
   cdes ACO.
-  rewrite WW', CO'.
+  assert (Eninit S' ∩₁ W S' ≡₁ Eninit S ∩₁ W S ∪₁ eq w') as WW.
+  { unfold ES.acts_ninit_set.
+    rewrite !set_inter_minus_l. rewrite WW'.
+    erewrite basic_step_acts_init_set; eauto.
+    rewrite set_minus_union_l.
+    arewrite (eq w' \₁ Einit S ≡₁ eq w'); [|done].
+    split; [basic_solver|].
+    unfolder. ins. desf.
+    splits; auto.
+    intros [AA BB].
+    red in wEE'. desf.
+    { eapply basic_step_acts_set_ne in AA; eauto. }
+    red in wEE'. desf.
+    eapply basic_step_acts_set_ne' in AA; eauto. }
+  rewrite WW, CO'.
   rewrite id_union. relsf.
   rewrite basic_step_acts_init_set; eauto.
   apply union_mori.
   { rewrite <- seq_eqvK with (dom := Einit S).
-    rewrite <- seq_eqvK with (dom := E S ∩₁ W S).
+    rewrite <- seq_eqvK with (dom := Eninit S ∩₁ W S).
     rewrite seqA.
-    arewrite (⦗Einit S⦘ ⨾ same_loc S' ⨾ ⦗E S ∩₁ W S⦘ ⊆ same_loc S).
-    { arewrite (Einit S ⊆₁ E S).
-      { unfold ES.acts_init_set. basic_solver. }
-      arewrite (E S ∩₁ W S ⊆₁ E S).
-      { basic_solver. }
-      rewrite <- restr_relE.
-      rewrite basic_step_same_loc_restr; eauto.
-      basic_solver. }
-    by apply ES.co_init. }
+    arewrite (⦗Einit S⦘ ⨾ same_loc S' ⨾ ⦗Eninit S ∩₁ W S⦘ ⊆ same_loc S).
+    2: by apply ES.co_init.
+    arewrite (Einit S ⊆₁ E S).
+    { unfold ES.acts_init_set. basic_solver. }
+    arewrite (Eninit S ∩₁ W S ⊆₁ E S).
+    { unfold ES.acts_ninit_set. basic_solver. }
+    rewrite <- restr_relE.
+    rewrite basic_step_same_loc_restr; eauto.
+    basic_solver. }
   unfold co_delta.
   apply inclusion_union_r. left.
   rewrite seq_eqv_lr.
@@ -862,7 +881,7 @@ Lemma add_co_split_writes ews ws w' S S'
       (wfE : ES.Wf S) 
       (ACO : add_co ews ws w' S S') : 
   E S ∩₁ W S ∩₁ Loc_ S (loc S' w') \₁ ews ⊆₁ 
-    (ws ∪₁ ws_compl ews ws S).
+  ws ∪₁ ws_compl ews ws S.
 Proof. 
   cdes ACO.
   intros w [[[wE wW] eqLOC] nEWS].
@@ -879,7 +898,11 @@ Proof.
     split; auto. congruence. }
   apply ES.co_init; auto.
   apply seq_eqv_lr; unfolder; splits; auto.
-  red. congruence. 
+  { red. congruence. }
+  split; auto.
+  intros HH.
+  apply nwWS. apply wsEinit.
+  split; auto.
 Qed.
 
 Lemma step_add_co_total_helper ews ws w' e e' S S'

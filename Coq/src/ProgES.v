@@ -176,8 +176,7 @@ Proof.
     apply prog_es_init_act_lab in AA. desf.
     unfold prog_g_es_init, ES.init in *. simpls.
     type_solver. }
-  { (* TODO: Currently, it doesn't hold since co isn't reflexive! *)
-    admit. }
+  { admit. }
   { ins. admit. }
   { admit. }
   { admit. }
