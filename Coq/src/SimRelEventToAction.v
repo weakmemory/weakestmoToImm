@@ -469,46 +469,10 @@ Section SimRelEventToActionLemmas.
 
   Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
-  
+
   Lemma simrel_e2a_init :
     simrel_e2a (prog_g_es_init prog G) G sc.
   Proof.
-    remember
-      (flatten
-         (map
-            (fun e : actid =>
-               match e with
-               | InitEvent l => [l]
-               | ThreadEvent _ _ => []
-               end) (acts G)))
-      as ll.
-
-    assert
-      (forall y (LY : y < length ll),
-          exists l,
-            In (y, Astore Xpln Opln l 0)
-               (indexed_list
-                  (map (fun l : location => Astore Xpln Opln l 0) ll)))
-      as YY.
-    { ins.
-
-      assert
-        (exists b,
-            In (y, b) (indexed_list
-                         (map (fun l : location => Astore Xpln Opln l 0) ll)))
-        as [b IN].
-      { apply indexed_list_range. desf. by rewrite length_map. }
-
-      assert (In b (map (fun l : location => Astore Xpln Opln l 0) ll))
-        as BIN.
-      { clear -IN.
-        apply In_map_snd in IN.
-        rewrite <- indexed_list_map_snd; eauto. }
-
-      apply in_map_iff in BIN. destruct BIN as [l [LB INL]].
-      rewrite <- LB in *. simpls. desf.
-      eauto. }
-
     assert (GEinit ⊆₁
             e2a (prog_g_es_init prog G) □₁ SEinit (prog_g_es_init prog G))
       as AINIT.
@@ -516,20 +480,12 @@ Section SimRelEventToActionLemmas.
         ES.acts_init_set, ES.init, ES.acts_set.
       simpls. desf.
       unfolder. ins. desf.
-      remember
-        (flatten
-           (map
-              (fun e : actid =>
-                 match e with
-                 | InitEvent l => [l]
-                 | ThreadEvent _ _ => []
-                 end) (acts G)))
-        as ll.
       assert
         (exists y,
             In (y, Astore Xpln Opln l 0)
                (indexed_list
-                  (map (fun l : location => Astore Xpln Opln l 0) ll)))
+                  (map (fun l : location => Astore Xpln Opln l 0)
+                       (g_locs G))))
         as [y INL].
       2: { exists y. splits; auto.
            { apply indexed_list_helper_in_to_range in INL. omega. }
@@ -547,33 +503,34 @@ Section SimRelEventToActionLemmas.
 
     constructor; auto.
     3-7: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
-    { unfold e2a, prog_g_es_init. simpls. desf.
-      unfold Events.loc.
-      unfolder. intros x [y [AA BB]].
-      unfold ES.init in AA. red in AA. simpls.
-      edestruct (YY y) as [l HH].
-      { by rewrite map_length in AA. }
-
-      erewrite l2f_in in BB; eauto.
-      2: by apply indexed_list_fst_nodup.
-      simpls. desf.
+    { unfold e2a, Events.loc.
+      intros x [y [AA BB]].
+      set (CC:=AA).
+      apply prog_es_init_act_in in CC.
+      destruct CC as [l CC].
+      assert (Slab (prog_g_es_init prog G) y =
+              Astore Xpln Opln l 0) as LAB.
+      { unfold prog_g_es_init, ES.init. simpls.
+        apply l2f_in; desf.
+        apply indexed_list_fst_nodup. }
+      desf. simpls.
       
-      clear -HH.
-      apply In_map_snd in HH.
-      rewrite indexed_list_map_snd in HH; eauto.
-      apply in_map_iff in HH. desf.
-      apply in_flatten_iff in HH0. desf.
-      apply in_map_iff in HH0. desf.
-      inv HH1. }
+      clear -CC.
+      apply In_map_snd in CC.
+      rewrite indexed_list_map_snd in CC; eauto.
+      apply in_map_iff in CC. desf.
+      apply in_flatten_iff in CC0. desf.
+      apply in_map_iff in CC0. desf.
+      inv CC1. }
     
     red. intros.
     arewrite ((Slab (prog_g_es_init prog G)) e = 
               (Glab ∘ e2a (prog_g_es_init prog G)) e).
     2: by red; desf.
     unfold compose.
+    apply prog_es_init_act_in in EE. desf.
+
     unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
-    rewrite map_length in EE.
-    eapply YY in EE. desf.
     unfold Events.loc.
     erewrite l2f_in; [|by apply indexed_list_fst_nodup|by eauto].
     simpls. rewrite wf_init_lab; auto.

@@ -35,17 +35,16 @@ Definition prog_init_K (prog : Prog.t) :=
 Definition prog_es_init (prog : Prog.t) :=
   ES.init (prog_locs prog) (prog_init_K prog).
 
+Definition g_locs (G : execution) :=
+  flatten (map (fun e =>
+                  match e with
+                  | InitEvent l => [l]
+                  | _ => []
+                  end)
+               (acts G)).
+
 Definition prog_g_es_init (prog : Prog.t) (G : execution) :=
-  let glocs :=
-      flatten
-        (map (fun e =>
-                match e with
-                | InitEvent l => [l]
-                | _ => []
-                end)
-             (acts G))
-  in
-  ES.init glocs (prog_init_K prog).
+  ES.init (g_locs G) (prog_init_K prog).
 
 Lemma prog_g_es_init_ninit G prog :
   ES.acts_ninit_set (prog_g_es_init prog G) ≡₁ ∅.
@@ -109,6 +108,51 @@ Proof.
   all: basic_solver.
 Qed.
 
+Lemma prog_es_init_act_in prog G
+      e (ACT : ES.acts_set (prog_g_es_init prog G) e) :
+  exists l,
+    In (e, Astore Xpln Opln l 0)
+       (indexed_list
+          (map (fun l : location => Astore Xpln Opln l 0)
+               (g_locs G))).
+Proof.
+  ins.
+  assert
+    (exists b,
+        In (e, b) (indexed_list
+                     (map (fun l : location => Astore Xpln Opln l 0)
+                          (g_locs G))))
+    as [b IN].
+  { apply indexed_list_range. desf. }
+
+  assert (In b (map (fun l : location => Astore Xpln Opln l 0) (g_locs G)))
+    as BIN.
+  { clear -IN.
+    apply In_map_snd in IN.
+    rewrite <- indexed_list_map_snd; eauto. }
+
+  apply in_map_iff in BIN. destruct BIN as [l [LB INL]].
+  rewrite <- LB in *. simpls. desf.
+  eauto.
+Qed.
+
+Lemma prog_es_init_act_lab prog G
+      e (ACT : ES.acts_set (prog_g_es_init prog G) e) :
+  exists l, ES.lab (prog_g_es_init prog G) e = Astore Xpln Opln l 0.
+Proof.
+  apply prog_es_init_act_in in ACT. destruct ACT as [l LL].
+  exists l. unfold ES.lab, prog_g_es_init, ES.init.
+  apply l2f_in; desf.
+  apply indexed_list_fst_nodup.
+Qed.
+
+Lemma prog_g_es_seqn G prog x : ES.seqn (prog_g_es_init prog G) x = 0.
+Proof.
+  unfold ES.seqn. autorewrite with prog_es_init_db; eauto.
+  relsf.
+  apply countNatP_empty.
+Qed.
+  
 Lemma prog_g_es_init_wf G prog :
   ES.Wf (prog_g_es_init prog G).
 Proof.
@@ -120,13 +164,20 @@ Proof.
     splits; auto.
     red. split; auto. }
   { intros e [AA BB]. 
-    admit. }
+    eapply prog_es_init_act_lab; eauto. }
   { red. ins.
     admit. }
   { red. basic_solver. }
-  { admit. }
-  { admit. }
-  { admit. }
+  { unfolder. ins. eexists.
+    splits; eauto.
+    2: by red.
+    apply prog_g_es_seqn. }
+  { intros x [AA BB].
+    apply prog_es_init_act_lab in AA. desf.
+    unfold prog_g_es_init, ES.init in *. simpls.
+    type_solver. }
+  { (* TODO: Currently, it doesn't hold since co isn't reflexive! *)
+    admit. }
   { ins. admit. }
   { admit. }
   { admit. }
