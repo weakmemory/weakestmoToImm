@@ -746,7 +746,19 @@ Section SimRelLemmas.
         rewrite RegMap.gmapi in *.
         unfold option_map in *. desf. }
       { ins. red in INK.
-        admit. }
+        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+        simpls.
+        apply in_map_iff in INK. desf.
+        destruct x. simpls. desf.
+        apply RegMap.elements_complete in INK0.
+        unfold prog_init_threads in *.
+        rewrite RegMap.gmapi in *.
+        unfold option_map in *. desf.
+        assert (state = init l); subst.
+        2: by apply wf_thread_state_init.
+        assert (forall A (a b : A), Some a = Some b -> a = b) as OO.
+        { intros A a b OO. inv OO. }
+        apply OO in INK0. inv INK0. }
       { ins. red in INK.
         (* TODO: It doesn't hold currently since it requires to
            initialize w/ stable_state.
