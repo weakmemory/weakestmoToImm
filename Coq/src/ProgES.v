@@ -230,10 +230,20 @@ Proof.
     apply nInitProg.
     apply RegMap.Facts.in_find_iff.
     rewrite Heq. desf. }
-  { admit. }
+  { unfold prog_g_es_init, ES.init, ES.cont_thread, ES.cont_set in *. 
+    simpls.
+    unfold prog_init_K in *.
+    ins.
+    apply in_map_iff in CK. apply in_map_iff in CK'.
+    desf.
+    destruct x. destruct x0.
+    apply RegMap.elements_complete in CK0.
+    apply RegMap.elements_complete in CK'0.
+    simpls; desf. }
   { ins. by apply prog_g_es_init_ninit in EE. }
   ins. exfalso.
   red in inK.
   unfold prog_g_es_init, ES.init in *. simpls.
-  admit.
-Admitted.
+  unfold prog_init_K in *.
+  apply in_map_iff in inK. desf.
+Qed.

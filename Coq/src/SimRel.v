@@ -713,7 +713,7 @@ Section SimRelLemmas.
     red. splits.
     2: by apply prog_g_es_init_consistent.
     constructor; auto.
-    { apply prog_g_es_init_wf. }
+    { apply prog_g_es_init_wf; auto. }
     { apply init_trav_coherent; auto. }
     { constructor.
       3: basic_solver. 
