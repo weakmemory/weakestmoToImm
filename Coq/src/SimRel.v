@@ -719,24 +719,60 @@ Section SimRelLemmas.
       3: basic_solver. 
       { admit. }
       simpls. ins.
-      apply rmw_from_non_init in RMW; auto.
-      (* trivial *)
-      admit. }
+      split.
+      { apply rmw_from_non_init in RMW; auto.
+        generalize RMW. basic_solver. }
+      apply WF.(rmw_in_sb) in RMW.
+      apply no_sb_to_init in RMW.
+      generalize RMW. basic_solver. }
     { constructor.
-      { basic_solver. }
-      { unfold ES.acts_init_set. basic_solver. }
-      { unfold prog_g_es_init, ES.init. basic_solver. }
-      { unfold sw, prog_g_es_init, ES.init. basic_solver. }
-      { unfold prog_g_es_init, ES.init. basic_solver. }
-      { admit. }
-      { red. admit. }
-      admit. }
+      all: unfold ES.cf_free, vis, cc, ES.acts_init_set.
+      all: autorewrite with prog_g_es_init_db; auto.
+      all: try basic_solver.
+      { rewrite prog_g_es_init_w at 1. type_solver. }
+      unfolder. ins. splits; auto.
+      unfold cc.
+      ins. desf.
+      exfalso.
+      eapply prog_g_es_init_cf; eauto. }
     { constructor.
-      all: admit. }
+      { ins. red in INK.
+        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+        simpls.
+        apply in_map_iff in INK. desf.
+        destruct x. simpls. desf.
+        apply RegMap.elements_complete in INK0.
+        unfold prog_init_threads in *.
+        rewrite RegMap.gmapi in *.
+        unfold option_map in *. desf. }
+      { ins. red in INK.
+        admit. }
+      { ins. red in INK.
+        (* TODO: It doesn't hold currently since it requires to
+           initialize w/ stable_state.
+         *)
+        admit. }
+      { ins. admit. }
+      { ins. admit. }
+
+      all: ins; exfalso.
+      red in INKe.
+      2: red in INK.
+      all: unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+      all: simpls.
+      { apply in_map_iff in INKe. desf. }
+      apply in_map_iff in INK. desf. }
     { simpls.
-      admit. }
-    { (* It should follow from HH. *)
-      admit. }
+      arewrite (GEinit ∪₁ dom_rel (Gsb^? ⨾ ⦗GEinit⦘) ≡₁ GEinit).
+      { rewrite (no_sb_to_init G). basic_solver. }
+      split.
+      2: { rewrite prog_g_es_init_init. apply HH. }
+      apply set_subset_inter_r. splits.
+      2: by apply HH.
+      unfold e2a. unfolder. ins. desf. }
+    { eapply eq_dom_mori; eauto.
+      2: by apply prog_g_es_init_same_lab.
+      red. basic_solver. }
     { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
       basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }

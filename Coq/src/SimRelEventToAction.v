@@ -504,42 +504,35 @@ Section SimRelEventToActionLemmas.
 
     constructor; auto.
     3-7: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
-    { unfold e2a, Events.loc.
-      intros x [y [AA BB]].
-      set (CC:=AA).
-      apply prog_g_es_init_act_in in CC.
-      destruct CC as [l CC].
-      assert (Slab (prog_g_es_init prog G) y =
-              Astore Xpln Opln l 0) as LAB.
-      { unfold prog_g_es_init, ES.init. simpls.
-        apply l2f_in; desf.
-        apply indexed_list_fst_nodup. }
-      desf. simpls.
-      
-      clear -CC.
-      apply In_map_snd in CC.
-      rewrite indexed_list_map_snd in CC; eauto.
-      apply in_map_iff in CC. desf.
-      unfold g_locs in CC0.
-      assert (forall (A : Type) (x : A) (l : list A),
-                 In x (undup l) -> In x l) as HH.
-      { ins. by apply in_undup_iff. }
-      apply HH in CC0.
-      apply in_flatten_iff in CC0. desf.
-      apply in_map_iff in CC0. desf.
-      inv CC1. }
+    2: { red. intros.
+         arewrite ((Slab (prog_g_es_init prog G)) e = 
+                   (Glab ∘ e2a (prog_g_es_init prog G)) e).
+         2: by red; desf.
+         apply prog_g_es_init_same_lab; auto. }
+    unfold e2a, Events.loc.
+    intros x [y [AA BB]].
+    set (CC:=AA).
+    apply prog_g_es_init_act_in in CC.
+    destruct CC as [l CC].
+    assert (Slab (prog_g_es_init prog G) y =
+            Astore Xpln Opln l 0) as LAB.
+    { unfold prog_g_es_init, ES.init. simpls.
+      apply l2f_in; desf.
+      apply indexed_list_fst_nodup. }
+    desf. simpls.
     
-    red. intros.
-    arewrite ((Slab (prog_g_es_init prog G)) e = 
-              (Glab ∘ e2a (prog_g_es_init prog G)) e).
-    2: by red; desf.
-    unfold compose.
-    apply prog_g_es_init_act_in in EE. desf.
-
-    unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
-    unfold Events.loc.
-    erewrite l2f_in; [|by apply indexed_list_fst_nodup|by eauto].
-    simpls. rewrite wf_init_lab; auto.
+    clear -CC.
+    apply In_map_snd in CC.
+    rewrite indexed_list_map_snd in CC; eauto.
+    apply in_map_iff in CC. desf.
+    unfold g_locs in CC0.
+    assert (forall (A : Type) (x : A) (l : list A),
+               In x (undup l) -> In x l) as HH.
+    { ins. by apply in_undup_iff. }
+    apply HH in CC0.
+    apply in_flatten_iff in CC0. desf.
+    apply in_map_iff in CC0. desf.
+    inv CC1.
   Qed.
 
   Lemma basic_step_e2a_e k k' e e' S' 

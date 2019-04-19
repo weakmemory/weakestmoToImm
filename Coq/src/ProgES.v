@@ -1,15 +1,17 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events Prog Execution ProgToExecution.
+From imm Require Import Events Prog Execution ProgToExecution AuxRel.
 Require Import AuxDef.
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import LblStep.
 Require Import ProgLoc.
 Require Import Consistency.
+Require Import EventToAction.
 
 Set Implicit Arguments.
+Local Open Scope program_scope.
 
 Definition thread_lts (t : thread_id) : Language.t :=
   @Language.mk
@@ -163,6 +165,11 @@ Proof.
   relsf.
   apply countNatP_empty.
 Qed.
+
+Lemma prog_g_es_init_init G prog :
+  ES.acts_set (prog_g_es_init prog G) ≡₁
+  ES.acts_init_set (prog_g_es_init prog G).
+Proof. unfold ES.acts_init_set. simpls. basic_solver. Qed.
   
 Lemma prog_g_es_init_wf G prog (nInitProg : ~ IdentMap.In tid_init prog) :
   ES.Wf (prog_g_es_init prog G).
@@ -246,4 +253,19 @@ Proof.
   unfold prog_g_es_init, ES.init in *. simpls.
   unfold prog_init_K in *.
   apply in_map_iff in inK. desf.
+Qed.
+
+Lemma prog_g_es_init_same_lab prog G (WF : Wf G) :
+  eq_dom (ES.acts_set (prog_g_es_init prog G))
+         (ES.lab (prog_g_es_init prog G))
+         (Execution.lab G ∘ e2a (prog_g_es_init prog G)).
+Proof.
+  red. ins.
+  unfold compose.
+  apply prog_g_es_init_act_in in SX. desf.
+
+  unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
+  unfold Events.loc.
+  erewrite l2f_in; [|by apply indexed_list_fst_nodup|by eauto].
+  simpls. rewrite wf_init_lab; auto.
 Qed.
