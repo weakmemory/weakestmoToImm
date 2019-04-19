@@ -164,7 +164,7 @@ Proof.
   apply countNatP_empty.
 Qed.
   
-Lemma prog_g_es_init_wf G prog :
+Lemma prog_g_es_init_wf G prog (nInitProg : ~ IdentMap.In tid_init prog) :
   ES.Wf (prog_g_es_init prog G).
 Proof.
   assert
@@ -215,7 +215,25 @@ Proof.
     eapply indexed_list_snd_nodup; eauto. }
   { split; [|basic_solver].
     unfolder. ins. desf. splits; auto.
-    all: eapply prog_g_es_init_w; eauto. }
-  1-4: admit.
-Unshelve. all: auto.
+    all: eapply prog_g_es_init_w; eauto.
+    Unshelve. all: auto. }
+  { intros HH. desf.
+    unfold prog_g_es_init, ES.init, ES.cont_thread, ES.cont_set in *. 
+    simpls.
+    unfold prog_init_K in KK.
+    apply in_map_iff in KK.
+    desf. destruct x as [tid k]; simpls; desf.
+    apply RegMap.elements_complete in KK0.
+    unfold prog_init_threads in *.
+    rewrite RegMap.gmapi in KK0.
+    unfold option_map in KK0. desf.
+    apply nInitProg.
+    apply RegMap.Facts.in_find_iff.
+    rewrite Heq. desf. }
+  { admit. }
+  { ins. by apply prog_g_es_init_ninit in EE. }
+  ins. exfalso.
+  red in inK.
+  unfold prog_g_es_init, ES.init in *. simpls.
+  admit.
 Admitted.
