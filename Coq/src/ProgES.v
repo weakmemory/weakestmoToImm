@@ -116,4 +116,18 @@ Proof.
   all: autorewrite with prog_es_init_db; auto.
   all: simpls.
   all: try basic_solver.
+  { ins. red. exists b.
+    splits; auto.
+    red. split; auto. }
+  { intros e [AA BB]. 
+    admit. }
+  { red. ins.
+    admit. }
+  { red. basic_solver. }
+  { admit. }
+  { admit. }
+  { admit. }
+  { ins. admit. }
+  { admit. }
+  { admit. }
 Admitted.

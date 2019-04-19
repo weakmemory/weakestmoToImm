@@ -114,6 +114,7 @@ Definition init loc_list conts :=
   let loc_labs :=
       map (fun l => Astore Xpln Opln l 0) loc_list 
   in
+  let acts := (fun e => e < length loc_labs) in
   {| next_act := length loc_labs ;
      lab  := list_to_fun Nat.eq_dec
                          (Afence Orlx)
@@ -123,7 +124,7 @@ Definition init loc_list conts :=
      rmw  := ∅₂ ;
      jf   := ∅₂ ;
      co   := ∅₂ ;
-     ew   := ∅₂ ;
+     ew   := <| acts |> ;
      cont := conts ;
   |}.
 
