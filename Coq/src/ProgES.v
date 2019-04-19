@@ -98,17 +98,17 @@ Hint Rewrite prog_g_es_init_ninit
      prog_g_es_init_sw
      prog_g_es_init_hb
      prog_g_es_init_cf
-  : prog_es_init_db.
+  : prog_g_es_init_db.
 
 Lemma prog_g_es_init_consistent G prog :
   @es_consistent (prog_g_es_init prog G) Weakestmo.
 Proof.
   constructor; unfold ecf, ES.jfe, icf.
-  all: autorewrite with prog_es_init_db; auto.
+  all: autorewrite with prog_g_es_init_db; auto.
   all: basic_solver.
 Qed.
 
-Lemma prog_es_init_act_in prog G
+Lemma prog_g_es_init_act_in prog G
       e (ACT : ES.acts_set (prog_g_es_init prog G) e) :
   exists l,
     In (e, Astore Xpln Opln l 0)
@@ -136,19 +136,30 @@ Proof.
   eauto.
 Qed.
 
-Lemma prog_es_init_act_lab prog G
+Lemma prog_g_es_init_act_lab prog G
       e (ACT : ES.acts_set (prog_g_es_init prog G) e) :
   exists l, ES.lab (prog_g_es_init prog G) e = Astore Xpln Opln l 0.
 Proof.
-  apply prog_es_init_act_in in ACT. destruct ACT as [l LL].
+  apply prog_g_es_init_act_in in ACT. destruct ACT as [l LL].
   exists l. unfold ES.lab, prog_g_es_init, ES.init.
   apply l2f_in; desf.
   apply indexed_list_fst_nodup.
 Qed.
 
+Lemma prog_g_es_init_w G prog :
+  ES.acts_set (prog_g_es_init prog G) ≡₁
+  ES.acts_set (prog_g_es_init prog G) ∩₁
+  (fun a => is_true (is_w (ES.lab (prog_g_es_init prog G)) a)).
+Proof.
+  split; [|basic_solver].
+  unfolder. intros. split; auto. 
+  unfold is_w.
+  apply prog_g_es_init_act_lab in H. desf.
+Qed.
+
 Lemma prog_g_es_seqn G prog x : ES.seqn (prog_g_es_init prog G) x = 0.
 Proof.
-  unfold ES.seqn. autorewrite with prog_es_init_db; eauto.
+  unfold ES.seqn. autorewrite with prog_g_es_init_db; eauto.
   relsf.
   apply countNatP_empty.
 Qed.
@@ -156,29 +167,42 @@ Qed.
 Lemma prog_g_es_init_wf G prog :
   ES.Wf (prog_g_es_init prog G).
 Proof.
+  assert
+    (NoDup (map (fun l0 : location => Astore Xpln Opln l0 0) (g_locs G)))
+    as NNDD.
+  { apply nodup_map.
+    2: { ins. intros HH. inv HH. }
+    unfold g_locs. apply nodup_undup. }
   constructor.
-  all: autorewrite with prog_es_init_db; auto.
+  all: autorewrite with prog_g_es_init_db; auto.
   all: simpls.
   all: try basic_solver.
   { ins. red. exists b.
     splits; auto.
     red. split; auto. }
   { intros e [AA BB]. 
-    eapply prog_es_init_act_lab; eauto. }
+    eapply prog_g_es_init_act_lab; eauto. }
   { red. ins.
-    admit. }
+    destruct SX as [SX _]. apply prog_g_es_init_act_in in SX.
+    destruct SY as [SY _]. apply prog_g_es_init_act_in in SY.
+    desf.
+    assert (l0 = l); subst.
+    { unfold loc in *.
+      erewrite l2f_in in EQ; eauto.
+      2: by apply indexed_list_fst_nodup.
+      erewrite l2f_in in EQ; eauto.
+      2: by apply indexed_list_fst_nodup.
+      desf. }
+    eapply indexed_list_snd_nodup; eauto. }
   { red. basic_solver. }
   { unfolder. ins. eexists.
     splits; eauto.
     2: by red.
     apply prog_g_es_seqn. }
-  { intros x [AA BB].
-    apply prog_es_init_act_lab in AA. desf.
-    unfold prog_g_es_init, ES.init in *. simpls.
-    type_solver. }
+  { rewrite prog_g_es_init_w. type_solver. }
   { intros ol a b [[EA _] WA] [[EB _] WB].
-    set (CA := EA). apply prog_es_init_act_in in CA. desf.
-    set (CB := EB). apply prog_es_init_act_in in CB. desf.
+    set (CA := EA). apply prog_g_es_init_act_in in CA. desf.
+    set (CB := EB). apply prog_g_es_init_act_in in CB. desf.
     assert (l0 = l); subst.
     { unfold loc in *.
       erewrite l2f_in in WB; eauto.
@@ -187,12 +211,11 @@ Proof.
       2: by apply indexed_list_fst_nodup.
       desf. }
     unfolder. ins. exfalso. apply nEW. splits; auto.
-    clear -CA CB.
-    eapply indexed_list_snd_nodup; [|by eauto|by eauto].
-    apply nodup_map.
-    2: { ins. intros HH. inv HH. }
-    unfold g_locs. apply nodup_undup. }
-  { admit. }
-  { admit. }
-  { admit. }
+    clear -CA CB NNDD.
+    eapply indexed_list_snd_nodup; eauto. }
+  { split; [|basic_solver].
+    unfolder. ins. desf. splits; auto.
+    all: eapply prog_g_es_init_w; eauto. }
+  1-4: admit.
+Unshelve. all: auto.
 Admitted.

@@ -507,7 +507,7 @@ Section SimRelEventToActionLemmas.
     { unfold e2a, Events.loc.
       intros x [y [AA BB]].
       set (CC:=AA).
-      apply prog_es_init_act_in in CC.
+      apply prog_g_es_init_act_in in CC.
       destruct CC as [l CC].
       assert (Slab (prog_g_es_init prog G) y =
               Astore Xpln Opln l 0) as LAB.
@@ -534,7 +534,7 @@ Section SimRelEventToActionLemmas.
               (Glab ∘ e2a (prog_g_es_init prog G)) e).
     2: by red; desf.
     unfold compose.
-    apply prog_es_init_act_in in EE. desf.
+    apply prog_g_es_init_act_in in EE. desf.
 
     unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
     unfold Events.loc.
