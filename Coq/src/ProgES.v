@@ -36,12 +36,12 @@ Definition prog_es_init (prog : Prog.t) :=
   ES.init (prog_locs prog) (prog_init_K prog).
 
 Definition g_locs (G : execution) :=
-  flatten (map (fun e =>
-                  match e with
-                  | InitEvent l => [l]
-                  | _ => []
-                  end)
-               (acts G)).
+  undup (flatten (map (fun e =>
+                         match e with
+                         | InitEvent l => [l]
+                         | _ => []
+                         end)
+                      (acts G))).
 
 Definition prog_g_es_init (prog : Prog.t) (G : execution) :=
   ES.init (g_locs G) (prog_init_K prog).
@@ -176,8 +176,23 @@ Proof.
     apply prog_es_init_act_lab in AA. desf.
     unfold prog_g_es_init, ES.init in *. simpls.
     type_solver. }
+  { intros ol a b [[EA _] WA] [[EB _] WB].
+    set (CA := EA). apply prog_es_init_act_in in CA. desf.
+    set (CB := EB). apply prog_es_init_act_in in CB. desf.
+    assert (l0 = l); subst.
+    { unfold loc in *.
+      erewrite l2f_in in WB; eauto.
+      2: by apply indexed_list_fst_nodup.
+      erewrite l2f_in in WB; eauto.
+      2: by apply indexed_list_fst_nodup.
+      desf. }
+    unfolder. ins. exfalso. apply nEW. splits; auto.
+    clear -CA CB.
+    eapply indexed_list_snd_nodup; [|by eauto|by eauto].
+    apply nodup_map.
+    2: { ins. intros HH. inv HH. }
+    unfold g_locs. apply nodup_undup. }
   { admit. }
-  { ins. admit. }
   { admit. }
   { admit. }
 Admitted.

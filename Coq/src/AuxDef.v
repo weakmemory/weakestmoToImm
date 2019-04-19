@@ -186,16 +186,38 @@ Proof.
   omega.
 Qed.
 
-Lemma indexed_list_map_snd {A} (l : list A) :
-  map snd (indexed_list l) = l.
+Lemma indexed_list_helper_map_snd {A} n (l : list A) :
+  map snd (indexed_list_helper n l) = l.
 Proof.
-  unfold indexed_list in *.
-  remember 0 as m.
-  clear Heqm.
-  generalize dependent m.
+  generalize dependent n.
   induction l; ins.
     by rewrite IHl.
 Qed.
+
+Lemma indexed_list_map_snd {A} (l : list A) :
+  map snd (indexed_list l) = l.
+Proof. apply indexed_list_helper_map_snd. Qed.
+
+Lemma indexed_list_helper_snd_nodup {A} n a b c (l : list A) (NODUP : NoDup l)
+      (INA : In (a, c) (indexed_list_helper n l))
+      (INB : In (b, c) (indexed_list_helper n l)) :
+  a = b.
+Proof.
+  generalize dependent n.
+  induction l; ins; desf.
+  3: { eapply IHl; eauto. inv NODUP. }
+  all: exfalso.
+  all: inv NODUP; apply H1.
+  apply In_map_snd in INA.
+  2: apply In_map_snd in INB.
+  all: erewrite <- indexed_list_helper_map_snd; eauto.
+Qed.
+
+Lemma indexed_list_snd_nodup {A} a b c (l : list A) (NODUP : NoDup l)
+      (INA : In (a, c) (indexed_list l))
+      (INB : In (b, c) (indexed_list l)) :
+  a = b.
+Proof. eapply indexed_list_helper_snd_nodup; eauto. Qed.
 
 Lemma indexed_list_helper_length {A} n (l : list A) :
   length (indexed_list_helper n l) = length l.

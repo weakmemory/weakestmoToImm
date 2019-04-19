@@ -495,6 +495,7 @@ Section SimRelEventToActionLemmas.
       apply in_map_iff.
       eexists; splits; eauto.
       desf.
+      apply in_undup_iff.
       apply in_flatten_iff.
       exists [l]. splits.
       2: done.
@@ -519,6 +520,11 @@ Section SimRelEventToActionLemmas.
       apply In_map_snd in CC.
       rewrite indexed_list_map_snd in CC; eauto.
       apply in_map_iff in CC. desf.
+      unfold g_locs in CC0.
+      assert (forall (A : Type) (x : A) (l : list A),
+                 In x (undup l) -> In x l) as HH.
+      { ins. by apply in_undup_iff. }
+      apply HH in CC0.
       apply in_flatten_iff in CC0. desf.
       apply in_map_iff in CC0. desf.
       inv CC1. }
