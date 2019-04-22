@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CertExecution2 CertExecutionMain
-     CombRelations SimTraversal SimulationRel AuxRel.
+     CombRelations SimTraversal SimTraversalProperties SimulationRel AuxRel.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -265,12 +265,66 @@ Section SimRelCert.
       apply SRCC. desf.
     Qed.
 
+    Lemma trav_step_cov_sb_iss_tid : 
+      C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘) ≡₁ 
+         C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘) ∪₁ (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘)) ∩₁ GTid ktid.
+    Proof. 
+      edestruct isim_trav_step_new_e_tid as [HA HB].
+      1-2 : apply SRCC.
+      apply set_subset_union_l in HA.
+      destruct HA as [HAC HAI].
+      split.
+      { rewrite crE at 1. relsf. splits. 
+        { intros x Cx.
+          apply HAC in Cx.
+          generalize Cx. basic_solver 10. }
+        { intros x Ix.
+          apply HAI in Ix.
+          generalize Ix. basic_solver 10. }
+        rewrite seq_eqv_r.
+        intros x [y [SB Iy]].
+        edestruct tid_set_dec 
+          with (thread := ktid)
+          as [_ Htid].
+        edestruct sb_tid_init as [EQtid | INITx]; eauto.
+        { specialize (Htid y (Logic.I)).
+          destruct Htid as [Htid | Htid].
+          { do 2 right. split. 
+            { exists y. basic_solver. }
+            congruence. }
+          apply HAI in Iy.
+          destruct Iy as [[Cy | Iy] | Ny].
+          { do 2 left.
+            eapply dom_sb_covered.
+            { apply SRCC. }
+            basic_solver 10. }
+          { left. right. 
+            basic_solver 10. }
+          destruct Ny as [_ Ntid].
+          exfalso. done. }
+        do 2 left.
+        eapply init_covered.
+        { apply SRCC. }
+        split; auto.
+        apply wf_sbE in SB.
+        generalize SB. basic_solver. }
+      rewrite !set_subset_union_l. splits.
+      { erewrite sim_trav_step_covered_le.
+        2 : eexists; apply SRCC.
+        basic_solver. }
+      { erewrite sim_trav_step_issued_le.
+        2 : eexists; apply SRCC.
+        basic_solver 5. }
+      basic_solver 5.
+    Qed.
+
     Lemma cert_dom_cov_sb_iss : 
       cert_dom G TC ktid st' ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘). 
     Proof. 
       rewrite cert_dom_alt.
       { rewrite dcertE; [|apply SRCC].
         unfold CertRf.E0.
+        rewrite trav_step_cov_sb_iss_tid at 2.
         admit. }
       etransitivity.
       { apply cstate_covered; eauto. }
