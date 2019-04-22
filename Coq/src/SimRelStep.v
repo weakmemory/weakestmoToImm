@@ -178,7 +178,12 @@ Section SimRelStep.
         eapply e2a_kE_ninit; auto; try apply SRC.
         basic_solver. }
       red. do 4 left.
-      admit. }
+      simpl in XkTIDCOV.
+      apply XkTIDCOV in kEx.
+      destruct kEx as [[_ _] Cx].
+      eapply sim_trav_step_covered_le in Cx.
+      2 : eexists; eauto.
+      basic_solver. }
     arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
     { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
     arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 

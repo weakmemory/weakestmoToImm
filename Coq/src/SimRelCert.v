@@ -267,9 +267,10 @@ Section SimRelCert.
 
     Lemma trav_step_cov_sb_iss_tid : 
       C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘) ≡₁ 
-         C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘) ∪₁ (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘)) ∩₁ GTid ktid.
+         (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘)) ∩₁ GNTid ktid ∪₁ 
+         (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘)) ∩₁ GTid ktid.
     Proof. 
-      edestruct isim_trav_step_new_e_tid as [HA HB].
+      edestruct isim_trav_step_new_e_tid_alt as [HA HB].
       1-2 : apply SRCC.
       apply set_subset_union_l in HA.
       destruct HA as [HAC HAI].
@@ -293,28 +294,30 @@ Section SimRelCert.
             { exists y. basic_solver. }
             congruence. }
           apply HAI in Iy.
-          destruct Iy as [[Cy | Iy] | Ny].
-          { do 2 left.
-            eapply dom_sb_covered.
-            { apply SRCC. }
-            basic_solver 10. }
-          { left. right. 
-            basic_solver 10. }
-          destruct Ny as [_ Ntid].
+          destruct Iy as [[[Cy | Iy] _] | [_ TIDy]].
+          { do 2 left. split. 
+            { eapply dom_sb_covered.
+              { apply SRCC. }
+              basic_solver 10. }
+            basic_solver. }
+          { left. right. split.
+            { basic_solver 10. }
+            congruence. }
           exfalso. done. }
-        do 2 left.
-        eapply init_covered.
-        { apply SRCC. }
-        split; auto.
-        apply wf_sbE in SB.
-        generalize SB. basic_solver. }
-      rewrite !set_subset_union_l. splits.
-      { erewrite sim_trav_step_covered_le.
-        2 : eexists; apply SRCC.
-        basic_solver. }
-      { erewrite sim_trav_step_issued_le.
-        2 : eexists; apply SRCC.
-        basic_solver 5. }
+        do 2 left. split. 
+        { eapply init_covered.
+          { apply SRCC. }
+          split; auto.
+          apply wf_sbE in SB.
+          generalize SB. basic_solver. }
+        apply is_init_tid in INITx. 
+        rewrite INITx.
+        intros HH. by eapply ktid_ninit. }
+      rewrite set_subset_union_l. splits.
+      { erewrite sim_trav_step_covered_le,
+                 sim_trav_step_issued_le.
+        2,3 : eexists; apply SRCC.
+        basic_solver 10. }
       basic_solver 5.
     Qed.
 
@@ -325,14 +328,14 @@ Section SimRelCert.
       { rewrite dcertE; [|apply SRCC].
         unfold CertRf.E0.
         rewrite trav_step_cov_sb_iss_tid at 2.
-        admit. }
+        basic_solver 10. }
       etransitivity.
       { apply cstate_covered; eauto. }
       eapply steps_preserve_E. 
       { eapply wf_cont_state. }
       apply ilbl_steps_in_steps.
       apply SRCC.
-    Admitted.
+    Qed.
 
     Lemma tccoh' : 
       tc_coherent G sc TC'.
