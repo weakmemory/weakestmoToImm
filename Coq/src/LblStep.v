@@ -25,15 +25,15 @@ Definition stable_state :=
   set_compl
     (dom_rel (fun x y => exists thread, istep thread [] x y)).
 
-Definition stable_lprog thread lprog :=
-  forall state (INSTR : state.(instrs) = lprog)
+Definition stable_lprog lprog :=
+  forall thread state (INSTR : state.(instrs) = lprog)
          (REACH : (step thread)＊ (init lprog) state),
     exists state',
       ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
       ⟪ STABLE : stable_state state' ⟫.
 
 Lemma get_stable thread state
-      (LPST : stable_lprog thread state.(instrs))
+      (LPST : stable_lprog state.(instrs))
       (REACH : (step thread)＊ (init state.(instrs)) state) :
   exists ! state',
     ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\

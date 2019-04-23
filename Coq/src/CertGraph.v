@@ -484,7 +484,7 @@ Lemma cert_graph_start
       (state : Language.Language.state (Promise.thread_lts thread))
       (NINITT : thread <> tid_init)
       (GPC : wf_thread_state thread state)
-      (PROGST : stable_lprog thread (instrs state))
+      (PROGST : stable_lprog (instrs state))
       (REACHABLE : (step thread)＊ (init (instrs state)) state)
       (SSTATE : sim_state G sim_normal C state)
       (STATECOV : acts_set state.(ProgToExecution.G) ⊆₁ C)
