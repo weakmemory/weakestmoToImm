@@ -131,18 +131,20 @@ Section SimRelEventToAction.
     }.
 
   Section SimRelEventToActionProps. 
-    Variable prog : Prog.t.
-    Variable GPROG : program_execution prog G.
+    Variable prog : stable_prog_type.
+    Variable GPROG : program_execution (stable_prog_to_prog prog) G.
     Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
     Variable WF : ES.Wf S.
-    Variable SRK : simrel_cont prog S G TC.
+    Variable SRK : simrel_cont (stable_prog_to_prog prog) S G TC.
     Variable SRE2A : simrel_e2a.
 
     Lemma e2a_same_Einit : 
       e2a □₁ SEinit ≡₁ GEinit.
     Proof. 
       split. 
-      { eapply e2a_Einit; eauto. apply SRE2A. }
+      { eapply e2a_Einit; eauto.
+        2: by apply SRE2A.
+        apply stable_prog_to_prog_no_init; auto. }
       unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set. 
       unfolder. intros a [INITa GEa].
       edestruct e2a_GEinit as [e [[INITe SEe] gEQ]].
@@ -221,7 +223,9 @@ Section SimRelEventToAction.
       apply clos_refl_mori, inter_rel_mori. 
       2: by eapply e2a_same_loc; eauto.
       rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto.
-      eapply e2a_sb; eauto; apply SRE2A.
+      eapply e2a_sb; eauto.
+      2: by apply SRE2A.
+      apply stable_prog_to_prog_no_init; auto.
     Qed.
 
     Lemma e2a_release : e2a □ Srelease ⊆ Grelease.
@@ -232,7 +236,9 @@ Section SimRelEventToAction.
       arewrite (SE ∩₁ (SF ∪₁ SW) ⊆₁ SE) by basic_solver.
       rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
       { unfold imm_s_hb.release. basic_solver 10. }
-      all: eauto; apply SRE2A.
+      all: eauto.
+      2: by apply SRE2A.
+      apply stable_prog_to_prog_no_init; auto.
     Qed.
 
     Lemma e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
@@ -279,7 +285,9 @@ Section SimRelEventToAction.
       apply clos_trans_mori.
       rewrite collect_rel_union.
       apply union_mori.
-      { eapply e2a_sb; eauto; apply SRE2A. }
+      { eapply e2a_sb; eauto.
+        2: by apply SRE2A.
+        apply stable_prog_to_prog_no_init; auto. }
       unfold Consistency.sw.
       rewrite collect_rel_seqi.
       rewrite e2a_release. by rewrite e2a_jfacq.
@@ -374,13 +382,13 @@ End SimRelEventToAction.
 
 Section SimRelEventToActionLemmas.
 
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.
   Variable TC : trav_config.
-  Variable GPROG : program_execution prog G.
+  Variable GPROG : program_execution (stable_prog_to_prog prog) G.
   Variable WF : ES.Wf S.
   Variable WFG : Wf G.
 
@@ -537,7 +545,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_e k k' e e' S' 
         (st st' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
     e2a S' e = ThreadEvent (ktid S k) (st.(eindex)).
   Proof. 
@@ -562,7 +570,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_e' k k' e e' S' 
         (st st' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S') :
     e2a S' e' = ThreadEvent (ktid S k) (1 + st.(eindex)).
   Proof. 
@@ -588,7 +596,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_cert_dom_ne k k' e e' S' 
         (st st' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
         (STCOV : C ∩₁ GTid (ktid S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
     ~ (cert_dom G TC (ktid S k) st) (e2a S' e).
@@ -610,7 +618,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_cert_dom_ne' k k' e e' S' 
         (st st' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S') 
         (STCOV : C ∩₁ GTid (ktid S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
     ~ (cert_dom G TC (ktid S k) st) (e2a S' e').
@@ -632,7 +640,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_cert_dom k k' e e' S' 
         (st st' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
     cert_dom G TC (ktid S' k') st' ≡₁ 
              cert_dom G TC (ktid S k) st ∪₁ 
@@ -672,7 +680,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_nupd_cert_dom k k' e S'
         (st st' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e None S S') :
     cert_dom G TC (ktid S' k') st' ≡₁
              cert_dom G TC (ktid S k) st ∪₁ eq (e2a S' e).
@@ -683,7 +691,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_E0_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
@@ -698,7 +706,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_E0_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
@@ -714,7 +722,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_GE_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
@@ -728,7 +736,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_GE_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S')
@@ -742,7 +750,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_GE TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (SRE2A : simrel_e2a S G sc)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
@@ -771,7 +779,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_lab_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
@@ -820,7 +828,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_lab_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
@@ -864,7 +872,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_certlab_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
@@ -882,7 +890,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_certlab_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
@@ -900,7 +908,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (SRK : simrel_cont prog S G TC)
+        (SRK : simrel_cont (stable_prog_to_prog prog) S G TC)
         (SRE2A : simrel_e2a S G sc)
         (CG : cert_graph G sc TC TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 

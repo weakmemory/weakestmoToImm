@@ -31,7 +31,7 @@ Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section SimRelAddCO.
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable G : execution.
   Variable sc : relation actid.
   Variable TC : trav_config.
@@ -293,6 +293,7 @@ Section SimRelAddCO.
       eapply init_co_w; auto.
       { apply SRCC. }
       { eapply e2a_Einit. 
+        apply stable_prog_to_prog_no_init.
         1-2 : apply SRCC. 
         { eapply e2a_GE. apply SRCC. } 
         basic_solver. }

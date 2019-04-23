@@ -27,15 +27,36 @@ Definition prog_init_threads (prog : Prog.t) :
        existT _ (thread_lts tid) (ProgToExecution.init linstr))
     prog.
 
-Definition prog_init_K (prog : Prog.t) :=
+Definition stable_prog_type := IdentMap.t { linstr & stable_lprog linstr }.
+Definition stable_prog_to_prog (prog : stable_prog_type) : Prog.t :=
+  (IdentMap.map (fun x => projT1 x) prog).
+
+Lemma stable_prog_to_prog_no_init prog
+      (PROG_NINIT : ~ IdentMap.In tid_init prog) :
+  ~ IdentMap.In tid_init (stable_prog_to_prog prog).
+Proof.
+  unfold stable_prog_to_prog.
+  intros HH.
+  apply RegMap.Facts.map_in_iff in HH. intuition.
+Qed.
+
+Definition prog_init_K
+           (prog : stable_prog_type) :
+  list (cont_label * {lang : Language.t & Language.state lang}) :=
   map
     (fun tidc =>
-       (CInit (fst tidc), (snd tidc)))
-    (RegMap.elements
-       (prog_init_threads prog)).
-
-Definition prog_es_init (prog : Prog.t) :=
-  ES.init (prog_locs prog) (prog_init_K prog).
+       let tid    := fst tidc in
+       let linstr := projT1 (snd tidc) in
+       let STBL   := projT2 (snd tidc) in
+       let st'    := proj1_sig (get_stable
+                                  tid (init linstr) STBL
+                                  (rt_refl _ _ (init linstr))) in
+       (CInit tid, existT _ (thread_lts tid) st'))
+    (RegMap.elements prog).
+ 
+Definition prog_es_init (prog : stable_prog_type) :=
+  ES.init (prog_locs (stable_prog_to_prog prog))
+          (prog_init_K prog).
 
 Definition g_locs (G : execution) :=
   undup (flatten (map (fun e =>
@@ -45,7 +66,7 @@ Definition g_locs (G : execution) :=
                          end)
                       (acts G))).
 
-Definition prog_g_es_init (prog : Prog.t) (G : execution) :=
+Definition prog_g_es_init prog (G : execution) :=
   ES.init (g_locs G) (prog_init_K prog).
 
 Lemma prog_g_es_init_ninit G prog :
@@ -231,12 +252,9 @@ Proof.
     apply in_map_iff in KK.
     desf. destruct x as [tid k]; simpls; desf.
     apply RegMap.elements_complete in KK0.
-    unfold prog_init_threads in *.
-    rewrite RegMap.gmapi in KK0.
-    unfold option_map in KK0. desf.
     apply nInitProg.
     apply RegMap.Facts.in_find_iff.
-    rewrite Heq. desf. }
+    rewrite KK0. desf. }
   { unfold prog_g_es_init, ES.init, ES.cont_thread, ES.cont_set in *. 
     simpls.
     unfold prog_init_K in *.

@@ -23,7 +23,7 @@ Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section Compilation.
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable G : execution.
   Variable sc : relation actid.
 
@@ -162,7 +162,8 @@ Section Compilation.
           eapply sb_restr_cov_in_ex; eauto. }
         rewrite collect_rel_interi.
         erewrite e2a_sb; try apply SRC. 
-        basic_solver. }
+        { basic_solver. }
+        apply stable_prog_to_prog_no_init; apply SRC. }
       { split. 
         { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
           { rewrite wf_rmwE at 1; auto. by rewrite COVG. }
@@ -193,7 +194,7 @@ Section Compilation.
 
   Lemma simrel_traversal
         (nInitProg : ~ IdentMap.In tid_init prog)
-        (GProg : program_execution prog G)
+        (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) : 
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
@@ -214,7 +215,7 @@ Section Compilation.
 
   Theorem compilation_correctness 
         (nInitProg : ~ IdentMap.In tid_init prog)
-        (GProg : program_execution prog G)
+        (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc) :
     exists S X,

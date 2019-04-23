@@ -28,16 +28,18 @@ Definition stable_state :=
 Definition stable_lprog lprog :=
   forall thread state (INSTR : state.(instrs) = lprog)
          (REACH : (step thread)＊ (init lprog) state),
-    exists state',
+    { state' |
       ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
-      ⟪ STABLE : stable_state state' ⟫.
+      ⟪ STABLE : stable_state state' ⟫ }.
 
 Lemma get_stable thread state
       (LPST : stable_lprog state.(instrs))
       (REACH : (step thread)＊ (init state.(instrs)) state) :
-  exists ! state',
-    ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
-    ⟪ STABLE : stable_state state' ⟫.
+  { state' |
+    unique (fun state' =>
+              ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
+              ⟪ STABLE : stable_state state' ⟫)
+    state' }.
 Proof.
   edestruct LPST as [state']; eauto.
   desf.

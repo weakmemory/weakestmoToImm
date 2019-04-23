@@ -20,7 +20,7 @@ Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section SimRel.
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.
@@ -119,7 +119,7 @@ Section SimRel.
 
   Record simrel_ :=
     { noinitprog : ~ IdentMap.In tid_init prog ;
-      gprog : program_execution prog G ;
+      gprog : program_execution (stable_prog_to_prog prog) G ;
       
       gwf   : Execution.Wf G ;
       swf   : ES.Wf S ;
@@ -132,7 +132,7 @@ Section SimRel.
 
       sr_exec : Execution.t S X ;
       
-      sr_cont : simrel_cont prog S G TC ;
+      sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC ;
 
       sr_e2a : simrel_e2a S G sc ;
       
@@ -188,7 +188,8 @@ Section SimRel.
       eapply dom_sb_covered; [apply SRC_|].
       unfolder; do 2 eexists; splits; eauto.
       eapply e2a_sb; try apply SRC_.
-      basic_solver 10.
+      2: basic_solver 10.
+      apply stable_prog_to_prog_no_init; apply SRC_.
     Qed.
 
     Lemma sb_ex_cov :
@@ -324,7 +325,8 @@ Section SimRel.
         destruct SB as [SB nINITy].
         apply nINITy. 
         eapply e2a_Einit.
-        1-3 : apply SRC_.
+        apply stable_prog_to_prog_no_init.
+        1-3: apply SRC_.
         basic_solver. }
       set (HH := SB).
       apply sb_tid_init in HH.
@@ -344,6 +346,7 @@ Section SimRel.
         { exfalso. eapply sb_irr; eauto. }
         { exfalso. eapply sb_irr, sb_trans; eauto. 
           eapply e2a_sb.
+          apply stable_prog_to_prog_no_init.
           1-4 : apply SRC_.
           basic_solver 10. }
         exfalso. eapply Execution.ex_ncf; eauto.
@@ -612,7 +615,7 @@ End SimRel.
 
 Section SimRelLemmas.
 
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.
@@ -700,12 +703,16 @@ Section SimRelLemmas.
 
   Lemma simrel_init 
         (nInitProg : ~ IdentMap.In tid_init prog)
-        (PExec : program_execution prog G)
+        (PExec : program_execution (stable_prog_to_prog prog) G)
         (WF : Execution.Wf G)
         (CONS : imm_consistent G sc) : 
     let Sinit := prog_g_es_init prog G in
     simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
   Proof.
+    assert (forall A B (c : A) (a b : B)
+                   (OO : (c, a) = (c, b)), a = b) as OO.
+    { ins. inv OO. }
+
     clear S TC X.
     assert (simrel_e2a (prog_g_es_init prog G) G sc) as HH.
     { by apply simrel_e2a_init. }
@@ -739,40 +746,68 @@ Section SimRelLemmas.
       { ins. red in INK.
         unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
         simpls.
-        apply in_map_iff in INK. desf.
-        destruct x. simpls. desf.
-        apply RegMap.elements_complete in INK0.
-        unfold prog_init_threads in *.
-        rewrite RegMap.gmapi in *.
-        unfold option_map in *. desf. }
+        apply in_map_iff in INK. desf. }
       { ins. red in INK.
         unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
         simpls.
-        apply in_map_iff in INK. desf.
+        apply in_map_iff in INK. desc. inv INK.
         destruct x. simpls. desf.
-        apply RegMap.elements_complete in INK0.
-        unfold prog_init_threads in *.
-        rewrite RegMap.gmapi in *.
-        unfold option_map in *. desf.
-        assert (state = init l); subst.
-        2: by apply wf_thread_state_init.
-        assert (forall A (a b : A), Some a = Some b -> a = b) as OO.
-        { intros A a b OO. inv OO. }
-        apply OO in INK0. inv INK0. }
+        apply OO in INK.
+        inv INK.
+        destruct s; simpls.
+        eapply wf_thread_state_steps.
+        { apply wf_thread_state_init with (l:=x). }
+        apply eps_steps_in_steps.
+        pose (AA :=
+                @proj2_sig 
+                  _ _ 
+                  (get_stable t (init x) s
+                              (rt_refl state (step t) (init x)))).
+        red in AA. desf. }
       { ins. red in INK.
-        (* TODO: It doesn't hold currently since it requires to
-           initialize w/ stable_state.
-         *)
-        admit. }
+        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+        simpls.
+        apply in_map_iff in INK. desc. inv INK.
+        destruct x. simpls. desf.
+        apply OO in INK.
+        inv INK.
+        destruct s; simpls.
+        pose (AA :=
+                @proj2_sig 
+                  _ _ 
+                  (get_stable t (init x) s
+                              (rt_refl state (step t) (init x)))).
+        red in AA. desf. }
+      { ins. 
+        assert (exists xst,
+                   IdentMap.find thread prog = Some xst /\
+                   lprog = projT1 xst) as [xst [XST]];
+          subst.
+        { unfold stable_prog_to_prog in *.
+          rewrite IdentMap.Facts.map_o in INPROG.
+          unfold option_map in *. desf.
+          eauto. }
+        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+          ES.cont_set in *.
+        simpls.
+        eexists. splits.
+        { apply in_map_iff.
+          exists (thread, xst). splits. simpls.
+            by apply IdentMap.elements_correct. }
+        destruct xst as [lprog BB]. simpls.
+        pose (AA :=
+                @proj2_sig 
+                  _ _ 
+                  (get_stable thread (init lprog) BB
+                              (rt_refl state (step thread) (init lprog)))).
+        red in AA. desf. }
       { ins. admit. }
       { ins. admit. }
 
       all: ins; exfalso.
-      red in INKe.
-      2: red in INK.
+      red in INK.
       all: unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
       all: simpls.
-      { apply in_map_iff in INKe. desf. }
       apply in_map_iff in INK. desf. }
     { simpls.
       arewrite (GEinit ∪₁ dom_rel (Gsb^? ⨾ ⦗GEinit⦘) ≡₁ GEinit).

@@ -23,7 +23,7 @@ Set Implicit Arguments.
 Local Open Scope program_scope.
 
 Section SimRelCert.
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable S : ES.t.
   Variable G : execution.
   Variable sc : relation actid.

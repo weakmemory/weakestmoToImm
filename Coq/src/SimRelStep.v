@@ -31,7 +31,7 @@ Local Open Scope program_scope.
 
 Section SimRelStep.
 
-  Variable prog : Prog.t.
+  Variable prog : stable_prog_type.
   Variable G : execution.
   Variable sc : relation actid.
   Variable TC : trav_config.
