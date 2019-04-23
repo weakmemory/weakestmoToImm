@@ -82,7 +82,7 @@ Section SimRelCont.
 
       contstable : forall k (state : thread_st (ES.cont_thread S k))
                           (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)), 
-          stable_state (ES.cont_thread S k) state;
+          stable_state state;
 
       contrun : forall thread (lprog : thread_syntax thread) 
                        (INPROG : IdentMap.find thread prog = Some lprog),
@@ -247,8 +247,7 @@ Section SimRelContLemmas.
       eapply basic_step_cont_set in KK; eauto.
       unfold set_union in KK. 
       destruct KK as [KK | KK].
-      { erewrite basic_step_cont_thread; eauto.
-        apply SRK.
+      { eapply SRK.
         erewrite <- basic_step_cont_thread; eauto. }
       assert (kk = CEvent (opt_ext e e')) as kkEQ.
       { by inversion KK. }

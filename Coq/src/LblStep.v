@@ -21,22 +21,23 @@ Proof.
   all: desf.
 Qed.
 
-Definition stable_state thread :=
-  set_compl (dom_rel (istep thread [])).
+Definition stable_state :=
+  set_compl
+    (dom_rel (fun x y => exists thread, istep thread [] x y)).
 
 Definition stable_lprog thread lprog :=
   forall state (INSTR : state.(instrs) = lprog)
          (REACH : (step thread)＊ (init lprog) state),
     exists state',
       ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
-      ⟪ STABLE : stable_state thread state' ⟫.
+      ⟪ STABLE : stable_state state' ⟫.
 
 Lemma get_stable thread state
       (LPST : stable_lprog thread state.(instrs))
       (REACH : (step thread)＊ (init state.(instrs)) state) :
   exists ! state',
     ⟪ STEPS : (istep thread [])＊ state state' ⟫ /\
-    ⟪ STABLE : stable_state thread state' ⟫.
+    ⟪ STABLE : stable_state state' ⟫.
 Proof.
   edestruct LPST as [state']; eauto.
   desf.
@@ -60,10 +61,10 @@ Proof.
   eapply unique_eps_step; eauto.
 Qed.
 
-Lemma terminal_stable thread : is_terminal ⊆₁ stable_state thread.
+Lemma terminal_stable : is_terminal ⊆₁ stable_state.
 Proof.
   intros state TERM [state' HH].
-  cdes HH.
+  desf. cdes HH.
   assert (nth_error (instrs state) (pc state) <> None) as YY.
   { by rewrite <- ISTEP. }
   apply nth_error_Some in YY.
@@ -81,7 +82,7 @@ Definition neps_step thread (state state' : state) :=
   exists lbls, ineps_step thread lbls state state'.
 
 Definition ilbl_step thread lbls :=
-  ineps_step thread lbls ⨾ (istep thread [])＊ ⨾ ⦗ stable_state thread ⦘.
+  ineps_step thread lbls ⨾ (istep thread [])＊ ⨾ ⦗ stable_state ⦘.
 
 Definition lbl_step thread (state state' : state) :=
   exists lbls, ilbl_step thread lbls state state'.
@@ -108,7 +109,8 @@ Lemma ilbl_steps_in_steps thread : (lbl_step thread)＊ ⊆ (step thread)＊.
 Proof. rewrite lbl_step_in_steps. apply rt_of_ct. Qed.
 
 Lemma ineps_eps_step_dom_empty thread lbls :
-  dom_rel (ineps_step thread lbls) ∩₁ dom_rel (istep thread []) ≡₁ ∅.
+  dom_rel (ineps_step thread lbls) ∩₁
+  dom_rel (fun x y => exists thread, istep thread [] x y) ≡₁ ∅.
 Proof.
   split; [|basic_solver].
   intros x [[y AA] [z BB]].
@@ -121,18 +123,18 @@ Proof.
 Qed.
 
 Lemma ineps_step_stable_l thread lbls :
-  ineps_step thread lbls ≡ ⦗ stable_state thread ⦘ ⨾ ineps_step thread lbls.
+  ineps_step thread lbls ≡ ⦗ stable_state ⦘ ⨾ ineps_step thread lbls.
 Proof.
   split; [|basic_solver].
   intros x y HH.
   apply seq_eqv_l. split; auto.
-  intros [z AA].
+  intros [z AA]. desf.
   eapply ineps_eps_step_dom_empty.
   split; eexists; eauto.
 Qed.
 
 Lemma neps_step_stable_l thread :
-  neps_step thread ≡ ⦗ stable_state thread ⦘ ⨾ neps_step thread.
+  neps_step thread ≡ ⦗ stable_state ⦘ ⨾ neps_step thread.
 Proof.
   split; [|basic_solver].
   intros x y HH.
@@ -143,7 +145,7 @@ Proof.
 Qed.
 
 Lemma lbl_step_alt thread :
-  lbl_step thread ≡ neps_step thread ⨾ (istep thread [])＊ ⨾ ⦗stable_state thread⦘.
+  lbl_step thread ≡ neps_step thread ⨾ (istep thread [])＊ ⨾ ⦗stable_state⦘.
 Proof.
   split.
   { intros x y [l [e HH]].
@@ -153,7 +155,7 @@ Proof.
 Qed.
 
 Lemma steps_stable_lbl_steps thread :
-  ⦗ stable_state thread ⦘ ⨾ (step thread)＊ ⨾ ⦗ stable_state thread ⦘ ⊆ (lbl_step thread)＊.
+  ⦗stable_state⦘ ⨾ (step thread)＊ ⨾ ⦗stable_state⦘ ⊆ (lbl_step thread)＊.
 Proof.
   arewrite (step thread ⊆ neps_step thread ∪ istep thread []).
   { intros x y HH. red in HH. desf.
@@ -162,15 +164,15 @@ Proof.
       by splits; eauto. }
   rewrite rt_unionE.
   rewrite seqA.
-  arewrite (⦗stable_state thread⦘ ⨾ (istep thread [])＊ ⊆ ⦗stable_state thread⦘).
+  arewrite (⦗stable_state⦘ ⨾ (istep thread [])＊ ⊆ ⦗stable_state⦘).
   { rewrite rtE. rewrite seq_union_r.
     apply inclusion_union_l; [basic_solver|].
     rewrite ct_begin.
-    arewrite (⦗stable_state thread⦘ ⨾ istep thread [] ⊆ ∅₂).
+    arewrite (⦗stable_state⦘ ⨾ istep thread [] ⊆ ∅₂).
     2: basic_solver.
     intros x y HH.
     apply seq_eqv_l in HH. apply HH.
-    eexists. apply HH. }
+    eexists. eexists. apply HH. }
   rewrite rt_dom_ri.
   2: { rewrite neps_step_stable_l at 1. by rewrite !seqA. }
   rewrite !seqA.
@@ -184,7 +186,7 @@ Lemma ilbl_step_alt thread lbls (state state'' : state)
     ⟪ NNIL     : lbls <> [] ⟫ /\
     ⟪ ISTEP    : istep thread lbls state state' ⟫ /\
     ⟪ EPS_STEP : (istep thread [])＊ state' state'' ⟫ /\
-    ⟪ STABLE   : stable_state thread state'' ⟫.
+    ⟪ STABLE   : stable_state state'' ⟫.
 Proof. 
   edestruct ILBL_STEP. 
   unfold seq in *. 
@@ -193,24 +195,25 @@ Proof.
   desf. eexists. splits; eauto. 
 Qed. 
 
-Lemma same_pos_stable thread state state'
+Lemma same_pos_stable state state'
       (INSTR : state.(instrs) = state'.(instrs))
       (PC : state.(pc) = state'.(pc))
-      (STABLE : stable_state thread state) :
-    stable_state thread state'.
+      (STABLE : stable_state state) :
+    stable_state state'.
 Proof.
   red. red. intros [state'' STEP].
-  cdes STEP. inv ISTEP0; eapply STABLE.
+  desf. cdes STEP. inv ISTEP0; eapply STABLE.
   eexists (Build_state _ _ _ _ _ _ _).
   2: eexists (Build_state _
                           (if Event.Const.eq_dec (RegFile.eval_expr (regf state) expr) 0
                            then pc state + 1
                            else shift) _ _ _ _ _).
-  all: red; splits; [by eauto|].
+  all: eexists; red; splits; [by eauto|].
   all: eexists; splits; [by rewrite PC, INSTR; eauto|].
   { eapply assign; eauto; simpls. }
   eapply if_; eauto; simpls.
   desf.
+Unshelve. all: eauto.
 Qed.
 
 (*****************************************

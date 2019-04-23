@@ -492,7 +492,7 @@ Lemma cert_graph_start
       (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) :
   exists state', 
     ⟪ CERTG : cert_graph G sc TC TC' thread state' ⟫ /\
-    ⟪ CST_STABLE : stable_state thread state' ⟫ /\
+    ⟪ CST_STABLE : stable_state state' ⟫ /\
     ⟪ CST_REACHABLE : (step thread)＊ state state' ⟫.
 Proof. 
     cdes SSTATE. cdes SSTATE1.

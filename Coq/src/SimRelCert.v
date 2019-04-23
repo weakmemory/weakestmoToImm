@@ -150,7 +150,7 @@ Section SimRelCert.
       end.
 
   Record simrel_cstate := 
-    { cstate_stable : stable_state ktid st';
+    { cstate_stable : stable_state st';
       cstate_cont : Kstate (k, st);
       cstate_reachable : (lbl_step ktid)＊ st st';
     }.

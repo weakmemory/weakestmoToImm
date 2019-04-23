@@ -348,8 +348,7 @@ Section SimRelCertBasicStep.
     cdes BSTEP_. 
     constructor.
     (* cstate_stable : stable_state (ES.cont_thread S' k') st'' *)
-    { erewrite basic_step_cont_thread_k; eauto.
-      eapply cstate_stable. apply SRCC. }
+    { eapply cstate_stable. apply SRCC. }
     (* cstate_q_cont : Kstate (k', st'); *)
     { red. exists st'. split; auto. 
       eapply basic_step_cont_set; eauto.
