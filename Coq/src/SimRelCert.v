@@ -431,8 +431,10 @@ Section SimRelCert.
       symmetry. eapply cslab.
       { apply SRCC. }
       unfold D. do 4 left. 
-      admit. 
-    Admitted.
+      eapply isim_trav_step_new_e_tid.
+      1,2: apply SRCC.
+      basic_solver.
+    Qed.
 
     Lemma kE_cert_lab : 
       eq_dom kE Slab (certLab ∘ e2a).
@@ -497,7 +499,16 @@ Section SimRelCert.
       apply eq_dom_union. split. 
       { arewrite (X ∩₁ SNTid ktid ∩₁ e2a ⋄₁ (C' ∪₁ I') ⊆₁ 
                   X ∩₁ e2a ⋄₁ (C ∪₁ I)).
-        { admit. }
+        { erewrite isim_trav_step_new_e_tid_alt.
+          2,3: apply SRCC.
+          rewrite set_map_union.
+          rewrite set_inter_union_r.
+          rewrite set_subset_union_l.
+          splits.
+          { basic_solver. }
+          intros x [[_ nTIDx] [_ TIDx]]. 
+          exfalso. apply nTIDx.
+          by rewrite e2a_tid. }
         eapply ex_cov_iss_lab. apply SRCC. }
       intros x [KSBx e2aCIx].
       erewrite kE_cert_lab; auto.
@@ -505,7 +516,7 @@ Section SimRelCert.
       erewrite <- cslab 
         with (G := G); [auto | apply SRCC|].
       unfold D. do 4 left. basic_solver.
-    Admitted.
+    Qed.
 
     Lemma cert_ex_cov_iss_cert_lab : 
       eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (certLab ∘ e2a).

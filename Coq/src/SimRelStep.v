@@ -8,6 +8,7 @@ From imm Require Import Events Execution
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
+Require Import Execution.
 Require Import BasicStep.
 Require Import Step.
 Require Import StepWf.
@@ -201,6 +202,13 @@ Section SimRelStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
     simrel prog S G sc TC' (certX S k).
   Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    edestruct cstate_cont as [stx [EQ KK]]; 
+      [apply SRCC|].
+    red in EQ, KK. subst stx.
     constructor; [|apply SRCC].
     constructor; try apply SRCC.
     { eapply tccoh'; eauto. }
@@ -215,8 +223,11 @@ Section SimRelStep.
     { admit. }
     { econstructor; try apply SRCC.
       admit. }
+    (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. }
+    (* ex_cov_iss_lab : eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a) *)
+    { eapply cert_ex_cov_iss_lab; apply SRCC. }
     all: admit.
   Admitted.
 
