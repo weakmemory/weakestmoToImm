@@ -595,6 +595,13 @@ Qed.
 (** ** ew properties *)
 (******************************************************************************)
 
+Lemma ew_tid WF : ew ⊆ same_tid.
+Proof. 
+  rewrite ewc; auto.
+  unfold ES.same_tid, ES.cf.
+  basic_solver 10.
+Qed.
+
 Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
 Proof. 
   intros x WW. 

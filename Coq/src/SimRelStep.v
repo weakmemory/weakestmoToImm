@@ -8,6 +8,7 @@ From imm Require Import Events Execution
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
+Require Import Execution.
 Require Import BasicStep.
 Require Import Step.
 Require Import StepWf.
@@ -178,16 +179,22 @@ Section SimRelStep.
         eapply e2a_kE_ninit; auto; try apply SRC.
         basic_solver. }
       red. do 4 left.
+      simpl in XkTIDCOV.
+      apply XkTIDCOV in kEx.
+      destruct kEx as [[_ _] Cx].
+      eapply sim_trav_step_covered_le in Cx.
+      2 : eexists; eauto.
+      basic_solver. }
+    { arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
+      { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
+      arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 
+                                  ⦗X ∩₁ e2a S ⋄₁ C⦘ ⨾ ⦗e2a S ⋄₁ C⦘).
+      { basic_solver. }
+      rewrite <- seqA, collect_rel_seqi.
+      rewrite jf_cov_in_rf; [|apply SRC].
+      rewrite collect_rel_eqv.
+      rewrite collect_map_in_set. 
       admit. }
-    arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
-    { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
-    arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 
-              ⦗X ∩₁ e2a S ⋄₁ C⦘ ⨾ ⦗e2a S ⋄₁ C⦘).
-    { basic_solver. }
-    rewrite <- seqA, collect_rel_seqi.
-    rewrite jf_cov_in_rf; [|apply SRC].
-    rewrite collect_rel_eqv.
-    rewrite collect_map_in_set.
     admit. 
   Admitted.
 
@@ -196,6 +203,36 @@ Section SimRelStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
     simrel prog S G sc TC' (certX S k).
   Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_ prog S G sc TC X) as SR_.
+    { apply SRCC. }
+    edestruct cstate_cont as [stx [EQ KK]]; 
+      [apply SRCC|].
+    red in EQ, KK. subst stx.
+    (* auxiliary lemma *)
+    assert (
+      dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) ⊆₁ 
+      dom_rel (Sew S ⨾ ⦗certX S k ∩₁ e2a S ⋄₁ I⦘) 
+    ) as EWH.
+    { rewrite !seq_eqv_r. 
+      intros x [y [EW [Xy Iy]]].
+      assert (Stid S x = Stid S y) as STID.
+      { apply ES.ew_tid; auto. }
+      edestruct ex_iss_cert_ex
+        as [z HH]; eauto.
+      { unfolder; splits; eauto.
+        eapply ex_in_certD; eauto.
+        basic_solver. }
+      apply seq_eqv_r in HH. 
+      destruct HH as [EW' [CERTXz Iz]].
+      eexists.
+      unfold set_inter. splits.
+      2,3: eauto.
+      eapply ES.ew_trans; eauto. }
+
     constructor; [|apply SRCC].
     constructor; try apply SRCC.
     { eapply tccoh'; eauto. }
@@ -210,9 +247,27 @@ Section SimRelStep.
     { admit. }
     { econstructor; try apply SRCC.
       admit. }
+    (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. }
-    all: admit.
+    (* ex_cov_iss_lab : eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a) *)
+    { eapply cert_ex_cov_iss_lab; apply SRCC. }
+    (* rmw_cov_in_ex : Grmw ⨾ ⦗ C' ⦘ ⊆ e2a □ Srmw ⨾ ⦗ certX ⦘ *)
+    { admit. }
+    (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
+    { admit. }
+    (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
+    { etransitivity.
+      { eapply jfe_ex_iss; eauto. }
+      rewrite EWH.
+      erewrite sim_trav_step_issued_le; eauto. 
+      eexists; apply SRCC. }
+    (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
+    etransitivity.
+    { eapply ew_ex_iss; eauto. }
+    rewrite EWH.
+    erewrite sim_trav_step_issued_le; eauto. 
+    eexists; apply SRCC. 
   Admitted.
 
   Lemma simrel_step_helper k S

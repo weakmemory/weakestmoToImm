@@ -3,7 +3,7 @@ From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CertExecution2 CertExecutionMain
-     CombRelations SimTraversal SimulationRel AuxRel.
+     CombRelations SimTraversal SimTraversalProperties SimulationRel AuxRel.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -167,14 +167,9 @@ Section SimRelCert.
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
-      (* rel_ew_cont_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ kE ∩₁ e2a ⋄₁ I ⦘) ⊆₁ certX ; *)
-
-      (* cert_e2a_jfDR : e2a □ (Sjf ⨾ ⦗DR⦘) ⊆ Grf; *)
-
       jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ktid ;
 
-      (* imgcc : ⦗ f □₁ sbq_dom ⦘ ⨾ Scc ⨾ ⦗ h □₁ sbq_dom ⦘ ⊆ *)
-      (*         ⦗ h □₁ GW ⦘ ⨾ Sew ⨾ Ssb⁼ ; *)
+      ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
     }.
 
   Section SimRelCertProps. 
@@ -265,20 +260,86 @@ Section SimRelCert.
       apply SRCC. desf.
     Qed.
 
+    Lemma trav_step_cov_sb_iss_le : 
+      C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘) ⊆₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘).
+    Proof. 
+      erewrite sim_trav_step_covered_le,
+               sim_trav_step_issued_le.
+      2,3: eexists; apply SRCC.
+      done.
+    Qed.
+
+    Lemma trav_step_cov_sb_iss_tid : 
+      C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘) ≡₁ 
+         (C ∪₁ dom_rel (Gsb^? ⨾ ⦗I⦘)) ∩₁ GNTid ktid ∪₁ 
+         (C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘)) ∩₁ GTid ktid.
+    Proof. 
+      edestruct isim_trav_step_new_e_tid_alt as [HA HB].
+      1-2 : apply SRCC.
+      apply set_subset_union_l in HA.
+      destruct HA as [HAC HAI].
+      split.
+      { rewrite crE at 1. relsf. splits. 
+        { intros x Cx.
+          apply HAC in Cx.
+          generalize Cx. basic_solver 10. }
+        { intros x Ix.
+          apply HAI in Ix.
+          generalize Ix. basic_solver 10. }
+        rewrite seq_eqv_r.
+        intros x [y [SB Iy]].
+        edestruct tid_set_dec 
+          with (thread := ktid)
+          as [_ Htid].
+        edestruct sb_tid_init as [EQtid | INITx]; eauto.
+        { specialize (Htid y (Logic.I)).
+          destruct Htid as [Htid | Htid].
+          { do 2 right. split. 
+            { exists y. basic_solver. }
+            congruence. }
+          apply HAI in Iy.
+          destruct Iy as [[[Cy | Iy] _] | [_ TIDy]].
+          { do 2 left. split. 
+            { eapply dom_sb_covered.
+              { apply SRCC. }
+              basic_solver 10. }
+            basic_solver. }
+          { left. right. split.
+            { basic_solver 10. }
+            congruence. }
+          exfalso. done. }
+        do 2 left. split. 
+        { eapply init_covered.
+          { apply SRCC. }
+          split; auto.
+          apply wf_sbE in SB.
+          generalize SB. basic_solver. }
+        apply is_init_tid in INITx. 
+        rewrite INITx.
+        intros HH. by eapply ktid_ninit. }
+      rewrite set_subset_union_l. splits.
+      { erewrite sim_trav_step_covered_le,
+                 sim_trav_step_issued_le.
+        2,3 : eexists; apply SRCC.
+        basic_solver 10. }
+      basic_solver 5.
+    Qed.
+
     Lemma cert_dom_cov_sb_iss : 
       cert_dom G TC ktid st' ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗I'⦘). 
     Proof. 
       rewrite cert_dom_alt.
       { rewrite dcertE; [|apply SRCC].
         unfold CertRf.E0.
-        admit. }
+        rewrite trav_step_cov_sb_iss_tid at 2.
+        basic_solver 10. }
       etransitivity.
       { apply cstate_covered; eauto. }
       eapply steps_preserve_E. 
       { eapply wf_cont_state. }
       apply ilbl_steps_in_steps.
       apply SRCC.
-    Admitted.
+    Qed.
 
     Lemma tccoh' : 
       tc_coherent G sc TC'.
@@ -364,6 +425,28 @@ Section SimRelCert.
       congruence.
     Qed.
 
+    Lemma ex_in_certD :
+      e2a □₁ X ⊆₁ cert_dom G TC ktid st'.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      assert (simrel_ prog S G sc TC X) as SR_.
+      { apply SRCC. }
+      rewrite ex_cov_iss; eauto.
+      rewrite cert_dom_cov_sb_iss.
+      apply trav_step_cov_sb_iss_le.
+    Qed.
+
+    Lemma ex_in_e2a_certD : 
+      X ⊆₁ e2a ⋄₁ cert_dom G TC ktid st'. 
+    Proof. 
+      rewrite set_in_map_collect 
+        with (s := X) (f := e2a).
+      by rewrite ex_in_certD.
+    Qed.
+
     Lemma ex_cov_iss_cert_lab : 
       eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (certLab ∘ e2a).
     Proof. 
@@ -374,8 +457,10 @@ Section SimRelCert.
       symmetry. eapply cslab.
       { apply SRCC. }
       unfold D. do 4 left. 
-      admit. 
-    Admitted.
+      eapply isim_trav_step_new_e_tid.
+      1,2: apply SRCC.
+      basic_solver.
+    Qed.
 
     Lemma kE_cert_lab : 
       eq_dom kE Slab (certLab ∘ e2a).
@@ -440,7 +525,16 @@ Section SimRelCert.
       apply eq_dom_union. split. 
       { arewrite (X ∩₁ SNTid ktid ∩₁ e2a ⋄₁ (C' ∪₁ I') ⊆₁ 
                   X ∩₁ e2a ⋄₁ (C ∪₁ I)).
-        { admit. }
+        { erewrite isim_trav_step_new_e_tid_alt.
+          2,3: apply SRCC.
+          rewrite set_map_union.
+          rewrite set_inter_union_r.
+          rewrite set_subset_union_l.
+          splits.
+          { basic_solver. }
+          intros x [[_ nTIDx] [_ TIDx]]. 
+          exfalso. apply nTIDx.
+          by rewrite e2a_tid. }
         eapply ex_cov_iss_lab. apply SRCC. }
       intros x [KSBx e2aCIx].
       erewrite kE_cert_lab; auto.
@@ -448,7 +542,7 @@ Section SimRelCert.
       erewrite <- cslab 
         with (G := G); [auto | apply SRCC|].
       unfold D. do 4 left. basic_solver.
-    Admitted.
+    Qed.
 
     Lemma cert_ex_cov_iss_cert_lab : 
       eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (certLab ∘ e2a).
@@ -502,6 +596,55 @@ Section SimRelCert.
     Lemma cert_ex_ncf : 
       ES.cf_free S certX.
     Proof. admit. Admitted.
+
+    Lemma ex_iss_cert_ex :
+      X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I) ⊆₁ 
+        dom_rel (Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘).
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      assert (simrel_ prog S G sc TC X) as SR_.
+      { apply SRCC. }
+      rewrite cert_dom_alt.
+      2 : apply cstate_covered.
+      rewrite !set_map_inter, 
+              !set_map_union,
+              !set_map_inter.
+      rewrite !set_inter_union_l, 
+              !set_inter_union_r,
+              !set_subset_union_l.
+      rewrite id_union. relsf.
+      splits.
+      { intros x [Xx [[_ nTIDx] Ix]].
+        left. exists x.
+        apply seq_eqv_r.
+        unfold set_inter. 
+        splits; auto.
+        { apply ES.ew_refl; auto.
+          unfolder; splits; auto.
+          { eapply Execution.ex_inE; eauto. }
+          eapply ex_iss_inW; eauto.
+          red. auto. }
+        intros TIDx. apply nTIDx. 
+        by rewrite <- e2a_tid. }
+      intros x [Xx [CONTx Ix]].
+      edestruct ex_cont_iss
+        as [z HH]; eauto.
+      { unfolder; split; eauto. }
+      apply seq_eqv_r in HH.
+      destruct HH as [EW kSB].
+      right. exists z.
+      apply seq_eqv_r.
+      unfold set_inter.
+      splits; auto.
+      red. erewrite e2a_ew; eauto.
+      { apply SRCC. }
+      do 2 eexists. splits.
+      2,3: eauto.
+      apply ES.ew_sym; auto.
+    Qed.
 
     Lemma rel_ew_cert_ex : 
       dom_rel (Srelease ⨾ Sew ⨾ ⦗ certX ⦘) ⊆₁ certX.

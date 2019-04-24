@@ -4,7 +4,7 @@ From imm Require Import AuxRel
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
-     TraversalConfig Traversal TraversalConfigAlt SimTraversal
+     TraversalConfig Traversal TraversalConfigAlt SimTraversal SimTraversalProperties
      CertExecution2.
 Require Import AuxRel.
 Require Import AuxDef.
@@ -24,6 +24,7 @@ Variable G : execution.
 Notation "'E'" := G.(acts_set).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
+Notation "'NTid' t" := (fun x => tid x <> t) (at level 1).
 
 Lemma is_init_tid : 
   is_init ⊆₁ Tid tid_init. 
@@ -219,6 +220,30 @@ Lemma isim_trav_step_thread_ninit prog thread TC'
 Proof.
   apply sim_trav_step_to_step in STEP. desf.
   eapply itrav_step_thread_ninit; eauto.
+Qed.
+
+Lemma isim_trav_step_new_e_tid_alt thread TC' 
+      (ITV : isim_trav_step G sc thread TC TC') : 
+  covered TC' ∪₁ issued TC' ≡₁ 
+    (covered TC ∪₁ issued TC) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
+Proof. 
+  rewrite isim_trav_step_new_e_tid at 1; 
+    eauto; split; [|basic_solver].
+    rewrite set_subset_union_l. splits.
+  { rewrite <- set_inter_full_r 
+      with (s := C ∪₁ I) at 1.
+    rewrite <- tid_set_dec 
+      with (thread := thread).
+    rewrite set_unionC 
+      with (s := Tid thread) (s' := NTid thread).
+    rewrite set_inter_union_r.
+    apply set_union_Proper; auto.
+    rewrite sim_trav_step_covered_le,
+            sim_trav_step_issued_le
+              at 1.
+    2,3 : eexists; eauto.
+    done. }
+  basic_solver.
 Qed.
 
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
