@@ -709,10 +709,6 @@ Section SimRelLemmas.
     let Sinit := prog_g_es_init prog G in
     simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
   Proof.
-    assert (forall A B (c : A) (a b : B)
-                   (OO : (c, a) = (c, b)), a = b) as OO.
-    { ins. inv OO. }
-
     clear S TC X.
     assert (simrel_e2a (prog_g_es_init prog G) G sc) as HH.
     { by apply simrel_e2a_init. }
@@ -743,72 +739,46 @@ Section SimRelLemmas.
       exfalso.
       eapply prog_g_es_init_cf; eauto. }
     { constructor.
+      all: try by (ins;
+                   match goal with
+                   | H : ES.cont_set _ _ |- _ => 
+                     apply prog_g_es_init_K in H; desf
+                   end).
+      4: { ins. apply prog_g_es_init_K in INKi; desf.
+           erewrite steps_same_eindex; eauto.
+           { by unfold init. }
+           apply wf_thread_state_init. }
       { ins. red in INK.
         unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
         simpls.
         apply in_map_iff in INK. desf. }
-      { ins. red in INK.
-        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
-        simpls.
-        apply in_map_iff in INK. desc. inv INK.
-        destruct x. simpls. desf.
-        apply OO in INK.
-        inv INK.
-        destruct s; simpls.
+      { ins. apply prog_g_es_init_K in INK. desf.
         eapply wf_thread_state_steps.
-        { apply wf_thread_state_init with (l:=x). }
-        apply eps_steps_in_steps.
-        pose (AA :=
-                @proj2_sig 
-                  _ _ 
-                  (get_stable t (init x) s
-                              (rt_refl state (step t) (init x)))).
-        red in AA. desf. }
-      { ins. red in INK.
-        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
-        simpls.
-        apply in_map_iff in INK. desc. inv INK.
-        destruct x. simpls. desf.
-        apply OO in INK.
-        inv INK.
-        destruct s; simpls.
-        pose (AA :=
-                @proj2_sig 
-                  _ _ 
-                  (get_stable t (init x) s
-                              (rt_refl state (step t) (init x)))).
-        red in AA. desf. }
-      { ins. 
-        assert (exists xst,
-                   IdentMap.find thread prog = Some xst /\
-                   lprog = projT1 xst) as [xst [XST]];
-          subst.
-        { unfold stable_prog_to_prog in *.
-          rewrite IdentMap.Facts.map_o in INPROG.
-          unfold option_map in *. desf.
-          eauto. }
-        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
-          ES.cont_set in *.
-        simpls.
-        eexists. splits.
-        { apply in_map_iff.
-          exists (thread, xst). splits. simpls.
-            by apply IdentMap.elements_correct. }
-        destruct xst as [lprog BB]. simpls.
-        pose (AA :=
-                @proj2_sig 
-                  _ _ 
-                  (get_stable thread (init lprog) BB
-                              (rt_refl state (step thread) (init lprog)))).
-        red in AA. desf. }
-      { ins. admit. }
-      { ins. admit. }
-
-      all: ins; exfalso.
-      red in INK.
-      all: unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
-      all: simpls.
-      apply in_map_iff in INK. desf. }
+        2: { simpls. apply eps_steps_in_steps. eauto. }
+        apply wf_thread_state_init. }
+      ins. 
+      assert (exists xst,
+                 IdentMap.find thread prog = Some xst /\
+                 lprog = projT1 xst) as [xst [XST]];
+        subst.
+      { unfold stable_prog_to_prog in *.
+        rewrite IdentMap.Facts.map_o in INPROG.
+        unfold option_map in *. desf.
+        eauto. }
+      unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+      ES.cont_set in *.
+      simpls.
+      eexists. splits.
+      { apply in_map_iff.
+        exists (thread, xst). splits. simpls.
+          by apply IdentMap.elements_correct. }
+      destruct xst as [lprog BB]. simpls.
+      pose (AA :=
+              @proj2_sig 
+                _ _ 
+                (get_stable thread (init lprog) BB
+                            (rt_refl state (step thread) (init lprog)))).
+      red in AA. desf. }
     { simpls.
       arewrite (GEinit ∪₁ dom_rel (Gsb^? ⨾ ⦗GEinit⦘) ≡₁ GEinit).
       { rewrite (no_sb_to_init G). basic_solver. }

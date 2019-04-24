@@ -287,3 +287,43 @@ Proof.
   erewrite l2f_in; [|by apply indexed_list_fst_nodup|by eauto].
   simpls. rewrite wf_init_lab; auto.
 Qed.
+
+Lemma prog_g_es_init_K prog G k state
+      (INK : ES.cont_set
+               (prog_g_es_init prog G)
+               (k, existT
+                     Language.state
+                     (thread_lts (ES.cont_thread (prog_g_es_init prog G)
+                                                 k))
+                     state)) :
+  exists thread,
+    << KTID  : k = CInit thread >> /\
+    << STEPS : (istep thread [])＊ (init (instrs state)) state >> /\
+    << STBL  : stable_state state >>.
+Proof.
+  assert (forall A B (c : A) (a b : B)
+                 (OO : (c, a) = (c, b)), a = b) as OO.
+  { ins. inv OO. }
+  ins. red in INK.
+  unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+  simpls.
+  apply in_map_iff in INK. desc. inv INK.
+  destruct x. simpls. desf.
+  apply OO in INK.
+  inv INK.
+  destruct s; simpls.
+  eexists; splits; eauto.
+  all: pose (AA :=
+               @proj2_sig 
+                 _ _ 
+                 (get_stable t (init x) s
+                             (rt_refl state (step t) (init x)))).
+  arewrite
+    (instrs
+       (proj1_sig
+          (get_stable t (init x) s (rt_refl state (step t) (init x)))) =
+     instrs (init x)).
+  all: red in AA; desf.
+  eapply steps_same_instrs; eauto.
+  apply eps_steps_in_steps. eauto.
+Qed.
