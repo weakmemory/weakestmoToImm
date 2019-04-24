@@ -206,9 +206,32 @@ Section SimRelStep.
     { apply SRCC. }
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
+    assert (simrel_ prog S G sc TC X) as SR_.
+    { apply SRCC. }
     edestruct cstate_cont as [stx [EQ KK]]; 
       [apply SRCC|].
     red in EQ, KK. subst stx.
+    (* auxiliary lemma *)
+    assert (
+      dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) ⊆₁ 
+      dom_rel (Sew S ⨾ ⦗certX S k ∩₁ e2a S ⋄₁ I⦘) 
+    ) as EWH.
+    { rewrite !seq_eqv_r. 
+      intros x [y [EW [Xy Iy]]].
+      assert (Stid S x = Stid S y) as STID.
+      { apply ES.ew_tid; auto. }
+      edestruct ex_iss_cert_ex
+        as [z HH]; eauto.
+      { unfolder; splits; eauto.
+        eapply ex_in_certD; eauto.
+        basic_solver. }
+      apply seq_eqv_r in HH. 
+      destruct HH as [EW' [CERTXz Iz]].
+      eexists.
+      unfold set_inter. splits.
+      2,3: eauto.
+      eapply ES.ew_trans; eauto. }
+
     constructor; [|apply SRCC].
     constructor; try apply SRCC.
     { eapply tccoh'; eauto. }
@@ -228,7 +251,22 @@ Section SimRelStep.
       rewrite cert_dom_cov_sb_iss; eauto. }
     (* ex_cov_iss_lab : eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a) *)
     { eapply cert_ex_cov_iss_lab; apply SRCC. }
-    all: admit.
+    (* rmw_cov_in_ex : Grmw ⨾ ⦗ C' ⦘ ⊆ e2a □ Srmw ⨾ ⦗ certX ⦘ *)
+    { admit. }
+    (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
+    { admit. }
+    (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
+    { etransitivity.
+      { eapply jfe_ex_iss; eauto. }
+      rewrite EWH.
+      erewrite sim_trav_step_issued_le; eauto. 
+      eexists; apply SRCC. }
+    (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
+    etransitivity.
+    { eapply ew_ex_iss; eauto. }
+    rewrite EWH.
+    erewrite sim_trav_step_issued_le; eauto. 
+    eexists; apply SRCC. 
   Admitted.
 
   Lemma simrel_step_helper k S
