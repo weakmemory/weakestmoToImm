@@ -705,7 +705,9 @@ Section SimRelLemmas.
         (nInitProg : ~ IdentMap.In tid_init prog)
         (PExec : program_execution (stable_prog_to_prog prog) G)
         (WF : Execution.Wf G)
-        (CONS : imm_consistent G sc) : 
+        (CONS : imm_consistent G sc)
+        (GCLOS : forall tid m n (LT : m < n) (NE : GE (ThreadEvent tid n)),
+            GE (ThreadEvent tid m)) : 
     let Sinit := prog_g_es_init prog G in
     simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
   Proof.
@@ -718,9 +720,8 @@ Section SimRelLemmas.
     constructor; auto.
     { apply prog_g_es_init_wf; auto. }
     { apply init_trav_coherent; auto. }
-    { constructor.
-      3: basic_solver. 
-      { admit. }
+    { constructor; eauto.
+      2: basic_solver. 
       simpls. ins.
       split.
       { apply rmw_from_non_init in RMW; auto.
@@ -795,6 +796,6 @@ Section SimRelLemmas.
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
     unfold prog_g_es_init, ES.init. basic_solver.
-  Admitted.
+  Qed.
 
 End SimRelLemmas.

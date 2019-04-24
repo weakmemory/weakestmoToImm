@@ -196,7 +196,9 @@ Section Compilation.
         (nInitProg : ~ IdentMap.In tid_init prog)
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
-        (IMMCONS : imm_consistent G sc) : 
+        (IMMCONS : imm_consistent G sc)
+        (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
+            GE (ThreadEvent t m)) :
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
         ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
@@ -217,7 +219,9 @@ Section Compilation.
         (nInitProg : ~ IdentMap.In tid_init prog)
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
-        (IMMCONS : imm_consistent G sc) :
+        (IMMCONS : imm_consistent G sc)
+        (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
+            GE (ThreadEvent t m)) :
     exists S X,
       ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
       ⟪ EXEC  : simrel_extracted S X ⟫.
