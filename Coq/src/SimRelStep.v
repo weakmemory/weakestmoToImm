@@ -185,15 +185,16 @@ Section SimRelStep.
       eapply sim_trav_step_covered_le in Cx.
       2 : eexists; eauto.
       basic_solver. }
-    arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
-    { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
-    arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 
-              ⦗X ∩₁ e2a S ⋄₁ C⦘ ⨾ ⦗e2a S ⋄₁ C⦘).
-    { basic_solver. }
-    rewrite <- seqA, collect_rel_seqi.
-    rewrite jf_cov_in_rf; [|apply SRC].
-    rewrite collect_rel_eqv.
-    rewrite collect_map_in_set.
+    { arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
+      { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
+      arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 
+                                  ⦗X ∩₁ e2a S ⋄₁ C⦘ ⨾ ⦗e2a S ⋄₁ C⦘).
+      { basic_solver. }
+      rewrite <- seqA, collect_rel_seqi.
+      rewrite jf_cov_in_rf; [|apply SRC].
+      rewrite collect_rel_eqv.
+      rewrite collect_map_in_set. 
+      admit. }
     admit. 
   Admitted.
 
