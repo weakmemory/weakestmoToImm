@@ -196,12 +196,13 @@ Section SimRelStep.
       2: { (* TODO: remove an extra argument of set_collect_inter in Hahn *) 
         ins. repeat constructor. }
       rewrite collect_map_in_set. 
-      arewrite (e2a S □₁ (X ∩₁ Tid_ S (ES.cont_thread S k)) ⊆₁
-                    GTid (ES.cont_thread S k)).
-      2: { arewrite (C ⊆₁ C').
-           { admit. }
-           apply rf_C_in_cert_rf; apply SRC. }
-      admit. }
+      arewrite (X ∩₁ Tid_ S (ES.cont_thread S k) ⊆₁
+                Tid_ S (ES.cont_thread S k)) by basic_solver.
+      rewrite e2a_Tid.
+      arewrite (C ⊆₁ C').
+      { eapply sim_trav_step_covered_le.
+        red. eauto. }
+      apply rf_C_in_cert_rf; apply SRC. }
   Admitted.
 
   Lemma simrel_cert_end k S 
