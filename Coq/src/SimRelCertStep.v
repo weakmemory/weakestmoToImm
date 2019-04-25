@@ -635,7 +635,9 @@ Section SimRelCertStep.
       all : eapply sim_add_co_e2a_co; eauto.
       all : basic_solver. }
     { assert (e2a S' □ Sjf S ⊆ Gfurr) as AA.
-      { admit. }
+      { eapply simrel_cert_basic_step_e2a_eqr; eauto.
+        2: by apply SRCC.
+        apply WF.(ES.jfE). }
       red in CertSTEP_. desf; cdes CertSTEP_.
       all: try cdes AJF.
       all: rewrite JF'; auto.
@@ -647,8 +649,47 @@ Section SimRelCertStep.
         | H : jf_delta _ _ _ _ |- _ => inv H
         end.
         apply CertRF. }
+      unfold jf_delta.
+      unfolder. ins. desf.
+      eapply cert_rf_in_furr; eauto.
+      all: apply SRCC. }
+    { assert (e2a S' □ Sjf S ⨾ Srmw S ⊆ Grf ⨾ Grmw) as AA.
+      { eapply simrel_cert_basic_step_e2a_eqr; eauto.
+        2: by apply SRCC.
+        split; [|basic_solver].
+        rewrite (dom_l WF.(ES.jfE)) at 1.
+        rewrite (dom_r WF.(ES.rmwE)) at 1.
+        basic_solver. }
+      assert (forall w,
+                 e2a S' □ jf_delta w (ES.next_act S) ⨾ Srmw S ⊆ Grf ⨾ Grmw)
+        as BB.
+      { unfold jf_delta. ins. rewrite (dom_l WF.(ES.rmwE)).
+        unfold ES.acts_set. unfolder. ins. desf. omega. }
+      rewrite RMW'. unfold rmw_delta, eq_opt.
+      red in CertSTEP_. desf; cdes CertSTEP_.
+      all: try cdes AJF.
+      all: rewrite JF'; desf.
+      all: rewrite seq_union_r, ?seq_union_l,
+           !collect_rel_union; unionL; auto.
+      1-4: basic_solver.
+      1,2: admit. }
+    assert (e2a S' □ Sjf S ⨾ ⦗SAcq S'⦘ ⊆ Grf ⨾ ⦗GAcq⦘) as AA.
+    { rewrite (dom_r WF.(ES.jfE)), !seqA.
+      rewrite <- id_inter.
+      rewrite basic_step_acq_in_acq; eauto.
+      eapply simrel_cert_basic_step_e2a_eqr; eauto.
+      { split; [|basic_solver].
+        rewrite WF.(ES.jfE). basic_solver. }
       admit. }
-
+    rewrite !crE. rewrite !seq_union_l, !seq_union_r, !seq_id_l.
+    rewrite collect_rel_union.
+    apply union_mori.
+    { red in CertSTEP_. desf; cdes CertSTEP_.
+      all: try cdes AJF.
+      all: rewrite JF'; auto.
+      all: rewrite seq_union_l, collect_rel_union; unionL; auto.
+      1,2: admit. }
+    admit.
   Admitted.
 
   Lemma simrel_cert_step_wf k k' e e' S S'
