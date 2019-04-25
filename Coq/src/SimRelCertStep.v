@@ -634,7 +634,21 @@ Section SimRelCertStep.
         try apply ES.coE; apply SRCC.
       all : eapply sim_add_co_e2a_co; eauto.
       all : basic_solver. }
-    1,2: admit.
+    { assert (e2a S' □ Sjf S ⊆ Gfurr) as AA.
+      { admit. }
+      red in CertSTEP_. desf; cdes CertSTEP_.
+      all: try cdes AJF.
+      all: rewrite JF'; auto.
+      all: rewrite collect_rel_union; unionL; auto.
+      { unfolder. ins. desf.
+        eapply cert_rf_in_furr.
+        1,2: by apply SRCC.
+        match goal with
+        | H : jf_delta _ _ _ _ |- _ => inv H
+        end.
+        apply CertRF. }
+      admit. }
+
   Admitted.
 
   Lemma simrel_cert_step_wf k k' e e' S S'
