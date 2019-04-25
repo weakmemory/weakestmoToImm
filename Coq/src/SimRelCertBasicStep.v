@@ -355,8 +355,10 @@ Section SimRelCertBasicStep.
       erewrite basic_step_cont_thread_k with (S' := S'); eauto.
       subst. basic_solver. }
     (* cstate_reachable : (step (ES.cont_thread S' k'))＊ st' st'' *)
-    admit. 
-  Admitted.
+    arewrite (ES.cont_thread S' k' = ES.cont_thread S k); [|done].
+    desf. simpls. rewrite TID'.
+    unfold opt_ext, upd_opt. desf; rewrite upds; auto.
+  Qed.
 
   Lemma simrel_cert_basic_step_e2a_eqr k k' e e' S S' r r' r''
         (st st' st'' : thread_st (ES.cont_thread S k))
