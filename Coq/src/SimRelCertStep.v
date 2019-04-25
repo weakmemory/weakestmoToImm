@@ -693,7 +693,8 @@ Section SimRelCertStep.
 
     assert (dom_rel (⦗SE S⦘ ⨾ (Ssb S' ⨾ ⦗SF S'⦘)^? ⨾ ⦗SE S' ∩₁ SAcq S'⦘) ⊆₁
             X ∩₁ e2a S ⋄₁ covered TC) as CC.
-    { admit. }
+    { (* TODO: This is not true! *)
+      admit. }
 
     assert (e2a S' □ Sjf S ⨾ (Ssb S' ⨾ ⦗SF S'⦘)^? ⨾ ⦗SE S' ∩₁ SAcq S'⦘ ⊆
             Grf ⨾ (Gsb ⨾ ⦗GF⦘)^?) as AA.
@@ -719,7 +720,28 @@ Section SimRelCertStep.
     all: try cdes AJF.
     all: rewrite JF'; auto.
     all: rewrite seq_union_l, collect_rel_union; unionL; auto.
-    1,2: admit.
+    all: unfold jf_delta.
+    { arewrite (singl_rel w (ES.next_act S) ⨾ (Ssb S' ⨾ ⦗SF S'⦘)^? ⊆
+                singl_rel w (ES.next_act S)).
+      { arewrite_id ⦗SF S'⦘. rewrite seq_id_r.
+        rewrite crE. rewrite seq_union_r, seq_id_r.
+        unionL; [done|].
+        rewrite SB'. rewrite seq_union_r.
+        unfold sb_delta. unfold eq_opt. desf.
+        rewrite (dom_l WF.(ES.sbE)).
+        rewrite kE_inE; eauto.
+        unfold ES.acts_set.
+        unfolder. ins. desf. omega. }
+      rewrite crE. rewrite seq_union_r, seq_id_r. unionR left.
+      unfolder. ins. desf. eapply cert_rf_D_rf; eauto; try apply SRCC.
+      apply seq_eqv_r. split; eauto.
+      split.
+      { erewrite <- e2a_tid. rewrite TID'.
+        unfold upd_opt. by rewrite upds. }
+      red.
+
+
+
   Admitted.
 
   Lemma simrel_cert_step_wf k k' e e' S S'

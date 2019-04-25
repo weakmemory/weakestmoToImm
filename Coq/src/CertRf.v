@@ -36,6 +36,7 @@ Notation "'sb'" := (G.(sb)).
 Notation "'sw'" := (G.(imm_s_hb.sw)).
 Notation "'hb'" := (G.(imm_s_hb.hb)).
 Notation "'rf'" := (G.(rf)).
+Notation "'rfi'" := (G.(rfi)).
 Notation "'co'" := (G.(co)).
 Notation "'loc'" := (loc lab).
 
@@ -297,6 +298,30 @@ Proof.
   apply fr_in_eco. eexists. split; eauto.
 Qed.
 
+Lemma rfi_in_cert_rf : rfi ;; ⦗ E0 ⦘ ⊆ cert_rf.
+Proof.
+  unfold cert_rf.
+  unfold cert_rf. rewrite minus_inter_compl.
+  apply inclusion_inter_r.
+  { rewrite (dom_r WF.(wf_rfiD)), !seqA.
+    arewrite (⦗R⦘ ⨾ ⦗E0⦘ ⊆ ⦗E0 ∩₁ R⦘) by basic_solver.
+    hahn_frame.
+    unfold Execution.rfi. 
+    apply inclusion_inter_r.
+    2: { rewrite WF.(wf_rfl). basic_solver. }
+    unfold vf. unionR left.
+    rewrite (dom_l WF.(wf_rfD)), (dom_r WF.(wf_rfE)).
+    rewrite sb_in_hb. basic_solver 30. }
+  unfold Execution.rfi.
+  rewrite vf_in_furr.
+  unfolder. ins. desf.
+  intros HH. desf.
+  eapply eco_furr_irr; eauto.
+  all: try apply COH.
+  eexists. split; eauto.
+  apply fr_in_eco. eexists. split; eauto.
+Qed.
+
 Lemma cert_rf_D_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
 Proof.
   unfold cert_rf.
@@ -404,7 +429,7 @@ Proof.
       rewrite !seq_union_l, !seq_union_r.
       unionL.
       { generalize (@sb_trans G). unfold Execution.rfi. basic_solver. }
-      arewrite (rfe G ⨾ ⦗Tid_ thread ∩₁ dom_rel ((rfi G)^? ⨾ imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
+      arewrite (rfe G ⨾ ⦗Tid_ thread ∩₁ dom_rel (rfi^? ⨾ imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
                 rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
       2: { arewrite (rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
                      ⦗I⦘ ⨾ rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
@@ -417,10 +442,10 @@ Proof.
       unionL; [done|].
       rewrite (dom_l WF.(wf_rfiD)), (dom_r WF.(wf_rfeD)), !seqA, dom_eqv1.
       type_solver. }
-    { arewrite (rf ⨾ ⦗Tid_ thread ∩₁ codom_rel (⦗I⦘ ⨾ rfi G)⦘ ⊆ sb).
+    { arewrite (rf ⨾ ⦗Tid_ thread ∩₁ codom_rel (⦗I⦘ ⨾ rfi)⦘ ⊆ sb).
       2: { generalize (@sb_trans G). basic_solver. }
       unfolder; ins; desf.
-      match goal with H : rfi _ _ _ |- _ => destruct H as [AA BB] end.
+      match goal with H : rfi _ _ |- _ => destruct H as [AA BB] end.
       eapply wf_rff in H; eauto.
       apply H in AA. by rewrite AA. }
     unfold A.
@@ -429,7 +454,7 @@ Proof.
     { rewrite seq_eqvC. sin_rewrite IRFC. basic_solver. }
     rewrite rfi_union_rfe. rewrite !seq_union_l, !seq_union_r.
     unionL.
-    { unfold rfi. basic_solver. }
+    { unfold Execution.rfi. basic_solver. }
     assert (∅₂ ⊆ sb) as UU by done.
     etransitivity; eauto.
     unfolder; ins; desf.
