@@ -269,6 +269,34 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
+Lemma rf_C_in_cert_rf : rf ⨾ ⦗ Tid_ thread ∩₁ C ⦘ ⊆ cert_rf.
+Proof.
+  unfold cert_rf. rewrite minus_inter_compl.
+  apply inclusion_inter_r.
+  { rewrite (dom_r WF.(wf_rfD)), !seqA.
+    arewrite (⦗R⦘ ⨾ ⦗Tid_ thread ∩₁ C⦘ ⊆ ⦗Tid_ thread ∩₁ C⦘ ⨾ ⦗E0 ∩₁ R⦘).
+    { arewrite (⦗Tid_ thread ∩₁ C⦘ ⊆
+                ⦗Tid_ thread ∩₁ C⦘ ⨾ ⦗Tid_ thread ∩₁ C⦘) at 1 by basic_solver.
+      arewrite (Tid_ thread ∩₁ C ⊆₁ E0) at 1.
+      { unfold E0. basic_solver. }
+      basic_solver. }
+    hahn_frame.
+    apply inclusion_inter_r.
+    2: { rewrite WF.(wf_rfl). basic_solver. }
+    unfold vf.
+    unionR right.
+    arewrite (Tid_ thread ∩₁ C ⊆₁ D).
+    2: basic_solver 10.
+    unfold CertExecution2.D. basic_solver 10. }
+  rewrite vf_in_furr.
+  unfolder. ins. desf.
+  intros HH. desf.
+  eapply eco_furr_irr; eauto.
+  all: try apply COH.
+  eexists. split; eauto.
+  apply fr_in_eco. eexists. split; eauto.
+Qed.
+
 Lemma cert_rf_D_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
 Proof.
   unfold cert_rf.
