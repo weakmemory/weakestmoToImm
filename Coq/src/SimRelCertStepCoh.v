@@ -434,7 +434,8 @@ Section SimRelCertStepCoh.
       apply stable_prog_to_prog_no_init; apply SRCC. }
     
     assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
-    { eapply e2a_hb; eauto; apply SRCC. }
+    { eapply e2a_hb; eauto; try apply SRCC.
+      all: apply SRE2A. }
 
     (* assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ *)
     (*             Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H. *)
