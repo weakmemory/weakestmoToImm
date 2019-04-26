@@ -270,7 +270,7 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
-Lemma rf_vf_in_cert_rf : (rf ;; <|E0|>) ∩ vf ⊆ cert_rf.
+Lemma rf_vf_in_cert_rf : (rf ⨾ ⦗E0⦘) ∩ vf ⊆ cert_rf.
 Proof.
   unfold cert_rf.
   rewrite minus_inter_compl.
@@ -302,7 +302,7 @@ Proof.
   basic_solver 10.
 Qed.
 
-Lemma rfi_in_cert_rf : rfi ;; ⦗ E0 ⦘ ⊆ cert_rf.
+Lemma rfi_in_cert_rf : rfi ⨾ ⦗ E0 ⦘ ⊆ cert_rf.
 Proof.
   unfold cert_rf. rewrite minus_inter_compl.
   apply inclusion_inter_r.
@@ -336,9 +336,9 @@ Proof.
   rewrite seq_id_l. by rewrite cert_rf_codomt at 1.
 Qed.
 
-Lemma cert_rf_D_in_rf : cert_rf ;; ⦗ D ∩₁ E0 ⦘ ⊆ rf.
+Lemma cert_rf_D_in_rf : cert_rf ⨾ ⦗ D ∩₁ E0 ⦘ ⊆ rf.
 Proof.
-  arewrite (cert_rf ⊆ cert_rf ;; <| E ∩₁ R |>).
+  arewrite (cert_rf ⊆ cert_rf ⨾ ⦗ E ∩₁ R ⦘).
   { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
     basic_solver. }
   cdes COH. red in Comp. rewrite Comp.
@@ -351,13 +351,13 @@ Proof.
   desf.
 Qed.
 
-Lemma cert_rf_D_eq_rf_D : cert_rf ;; ⦗ D ∩₁ E0 ⦘ ≡ rf ;; ⦗ D ∩₁ E0 ⦘.
+Lemma cert_rf_D_eq_rf_D : cert_rf ⨾ ⦗ D ∩₁ E0 ⦘ ≡ rf ⨾ ⦗ D ∩₁ E0 ⦘.
 Proof. generalize cert_rf_D_in_rf, rf_D_in_cert_rf. basic_solver 10. Qed.
 
-Lemma cert_rf_Acq_in_rf : cert_rf ;; ⦗ Acq ⦘ ⊆ rf.
+Lemma cert_rf_Acq_in_rf : cert_rf ⨾ ⦗ Acq ⦘ ⊆ rf.
 Proof.
   rewrite cert_rf_codomE0.
-  arewrite (cert_rf ⊆ cert_rf ;; <| E ∩₁ R |>).
+  arewrite (cert_rf ⊆ cert_rf ⨾ ⦗ E ∩₁ R ⦘).
   { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
     basic_solver. }
   cdes COH. red in Comp. rewrite Comp.

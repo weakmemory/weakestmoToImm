@@ -618,7 +618,7 @@ Section SimRelCertStepCoh.
     (* { (* eapply jf_in_sim_jf. *) *)
     (*   (* apply inclusion_minus_l. *) *)
     (*   (* unionR right. *) *)
-    (*   (* Sew ;; sim_jf ⊆ sim_jf *) *)
+    (*   (* Sew ⨾ sim_jf ⊆ sim_jf *) *)
     (*   admit. } *)
 
     (* arewrite (SimRelJF.sim_jf G sc TC' S' (certX S' k') ⊆ *)
@@ -665,7 +665,7 @@ Section SimRelCertStepCoh.
     rewrite <- !seqA. apply irreflexive_seqC.
     rewrite <- !seqA. apply irreflexive_seqC.
     
-    arewrite (Srf S' ⊆ Sew S' ;; Sjf S').
+    arewrite (Srf S' ⊆ Sew S' ⨾ Sjf S').
     arewrite ((Sew S' ⨾ Sjf S')^? ⊆ (Sew S')^? ⨾ (Sjf S')^?)
       by basic_solver 10.
     rewrite transp_seq.

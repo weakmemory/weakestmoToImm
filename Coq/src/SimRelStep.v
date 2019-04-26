@@ -161,6 +161,9 @@ Section SimRelStep.
         (CERT_ST : simrel_cstate S k st st') :
     simrel_cert prog S G sc TC TC' X k st st'.
   Proof. 
+    assert (tc_coherent G sc TC') as TCCOH'.
+    { eapply sim_trav_step_coherence; try apply SRC.
+      red. eauto. }
     constructor; auto.
     { apply XkTIDCOV. }
     { intros x [kEx nINITx].
@@ -202,7 +205,7 @@ Section SimRelStep.
       arewrite (C ⊆₁ C').
       { eapply sim_trav_step_covered_le.
         red. eauto. }
-      apply rf_C_in_cert_rf; apply SRC. }
+        by apply rf_C_in_cert_rf; try apply SRC. }
   Admitted.
 
   Lemma simrel_cert_end k S 

@@ -683,7 +683,7 @@ Section SimRelCertStep.
               Sjf S' ⨾ (Ssb S' ⨾ ⦗SF S'⦘)^? ⨾ ⦗SE S'⦘).
     { rewrite (dom_r WF'.(ES.jfE)).
       rewrite (dom_r WF'.(ES.sbE)). basic_solver 10. }
-    arewrite (⦗SE S'⦘ ⨾ ⦗SAcq S'⦘ ⊆ ⦗SE S' ∩₁ SAcq S'⦘ ;; ⦗SE S' ∩₁ SAcq S'⦘)
+    arewrite (⦗SE S'⦘ ⨾ ⦗SAcq S'⦘ ⊆ ⦗SE S' ∩₁ SAcq S'⦘ ⨾ ⦗SE S' ∩₁ SAcq S'⦘)
       by basic_solver.
     rewrite <- !seqA.
     rewrite collect_rel_seqi. 
