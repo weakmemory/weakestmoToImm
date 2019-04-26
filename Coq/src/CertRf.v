@@ -270,25 +270,13 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
-Lemma rf_C_in_cert_rf : rf ⨾ ⦗ Tid_ thread ∩₁ C ⦘ ⊆ cert_rf.
+Lemma rf_vf_in_cert_rf : (rf ;; <|E0|>) ∩ vf ⊆ cert_rf.
 Proof.
-  unfold cert_rf. rewrite minus_inter_compl.
+  unfold cert_rf.
+  rewrite minus_inter_compl.
   apply inclusion_inter_r.
-  { rewrite (dom_r WF.(wf_rfD)), !seqA.
-    arewrite (⦗R⦘ ⨾ ⦗Tid_ thread ∩₁ C⦘ ⊆ ⦗Tid_ thread ∩₁ C⦘ ⨾ ⦗E0 ∩₁ R⦘).
-    { arewrite (⦗Tid_ thread ∩₁ C⦘ ⊆
-                ⦗Tid_ thread ∩₁ C⦘ ⨾ ⦗Tid_ thread ∩₁ C⦘) at 1 by basic_solver.
-      arewrite (Tid_ thread ∩₁ C ⊆₁ E0) at 1.
-      { unfold E0. basic_solver. }
-      basic_solver. }
-    hahn_frame.
-    apply inclusion_inter_r.
-    2: { rewrite WF.(wf_rfl). basic_solver. }
-    unfold vf.
-    unionR right.
-    arewrite (Tid_ thread ∩₁ C ⊆₁ D).
-    2: basic_solver 10.
-    unfold CertExecution2.D. basic_solver 10. }
+  { rewrite (dom_r WF.(wf_rfD)).
+    rewrite WF.(wf_rfl). basic_solver. }
   rewrite vf_in_furr.
   unfolder. ins. desf.
   intros HH. desf.
@@ -298,9 +286,24 @@ Proof.
   apply fr_in_eco. eexists. split; eauto.
 Qed.
 
+Lemma rf_D_in_cert_rf : rf ⨾ ⦗ D ∩₁ E0 ⦘ ⊆ cert_rf.
+Proof.
+  rewrite <- rf_vf_in_cert_rf.
+  apply inclusion_inter_r.
+  { basic_solver 10. }
+  rewrite <- rf_D_in_vf. basic_solver.
+Qed.
+
+Lemma rf_C_in_cert_rf : rf ⨾ ⦗ Tid_ thread ∩₁ C ⦘ ⊆ cert_rf.
+Proof.
+  rewrite <- rf_D_in_cert_rf.
+  arewrite (Tid_ thread ∩₁ C ⊆₁ D ∩₁ E0); [|done].
+  unfold CertExecution2.D, E0.
+  basic_solver 10.
+Qed.
+
 Lemma rfi_in_cert_rf : rfi ;; ⦗ E0 ⦘ ⊆ cert_rf.
 Proof.
-  unfold cert_rf.
   unfold cert_rf. rewrite minus_inter_compl.
   apply inclusion_inter_r.
   { rewrite (dom_r WF.(wf_rfiD)), !seqA.
@@ -322,78 +325,68 @@ Proof.
   apply fr_in_eco. eexists. split; eauto.
 Qed.
 
+Lemma cert_rfi_union_cert_rfe : cert_rf ≡ cert_rfi ∪ cert_rfe.
+Proof.
+  unfold cert_rfi, cert_rfe.
+  rewrite <- seq_union_l.
+  rewrite <- id_union.
+  arewrite (Tid_ thread ∪₁ NTid_ thread ≡₁ ⊤₁).
+  { split; [basic_solver|].
+    unfolder. ins. apply classic. }
+  rewrite seq_id_l. by rewrite cert_rf_codomt at 1.
+Qed.
+
+Lemma cert_rf_D_in_rf : cert_rf ;; ⦗ D ∩₁ E0 ⦘ ⊆ rf.
+Proof.
+  arewrite (cert_rf ⊆ cert_rf ;; <| E ∩₁ R |>).
+  { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
+    basic_solver. }
+  cdes COH. red in Comp. rewrite Comp.
+  unfolder. ins. desf.
+  assert (x0 = x); try subst x0; desf.
+  eapply cert_rff; eauto.
+  apply rf_D_in_cert_rf.
+  apply seq_eqv_r.
+  do 3 (split; auto).
+  desf.
+Qed.
+
+Lemma cert_rf_D_eq_rf_D : cert_rf ;; ⦗ D ∩₁ E0 ⦘ ≡ rf ;; ⦗ D ∩₁ E0 ⦘.
+Proof. generalize cert_rf_D_in_rf, rf_D_in_cert_rf. basic_solver 10. Qed.
+
+Lemma cert_rf_Acq_in_rf : cert_rf ;; ⦗ Acq ⦘ ⊆ rf.
+Proof.
+  rewrite cert_rf_codomE0.
+  arewrite (cert_rf ⊆ cert_rf ;; <| E ∩₁ R |>).
+  { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
+    basic_solver. }
+  cdes COH. red in Comp. rewrite Comp.
+  rewrite rfi_union_rfe at 1.
+  rewrite codom_union, id_union, !seq_union_l, !seq_union_r.
+  unfold Execution.rfi.
+  rewrite cert_rf_codomt at 2.
+  rewrite !seqA.
+  rewrite <- !id_inter.
+  arewrite (Tid_ thread ∩₁ (codom_rel (rfe G) ∩₁ (E0 ∩₁ Acq)) ⊆₁
+            D ∩₁ E0).
+  { apply set_subset_inter_r; split; [|basic_solver].
+    unfold CertExecution2.D.
+    apply set_inter_Proper; auto.
+    unionR right. rewrite WF.(wf_rfeD) at 1. basic_solver. }
+  unionL.
+  2: by apply cert_rf_D_in_rf.
+  unfolder. ins. desf.
+  assert (x0 = x); desf.
+  eapply cert_rff; eauto.
+  apply rfi_in_cert_rf. apply seq_eqv_r.
+  do 2 (split; auto).
+Qed.
+
 Lemma cert_rf_D_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
 Proof.
-  unfold cert_rf.
-  arewrite (E0 ∩₁ R ⊆₁ R) by basic_solver.
-  unfolder. ins. desf.
-  assert ((E ∩₁ R) y) as HH.
-  { split; auto.
-    eapply D_in_E; eauto. }
-  cdes COH. edestruct Comp as [z RF]; eauto.
-  destruct (classic (x = z)) as [EQ|NEQ].
-  { by rewrite EQ. }
-  exfalso.
-  set (AA := RF).
-  apply WF.(wf_rfl) in AA.
-  assert (exists l, loc y = Some l) as [l BB].
-  { unfold Events.loc, is_r in *. desf; eauto. }
-  edestruct WF.(wf_co_total); eauto.
-  { red. split.
-    2: { rewrite H5. eauto. }
-    split.
-    { apply (dom_l vfE) in H. apply seq_eqv_l in H. desf. }
-    apply vf_dom in H. apply seq_eqv_l in H. desf. }
-  { red. split.
-    2: { rewrite AA. eauto. }
-    split.
-    { apply (dom_l WF.(wf_rfE)) in RF. apply seq_eqv_l in RF. desf. }
-    apply (dom_l WF.(wf_rfD)) in RF. apply seq_eqv_l in RF. desf. }
-  { apply H2. eexists. split; eauto.
-    apply rf_D_in_vf. apply seq_eqv_r. split; auto.
-    red. desf. }
-  clear -RF H3 H Csc Cint HH NEQ WF Wf_sc.
-  red in H. unfolder in *. desf.
-  { type_solver. }
-  { apply NEQ. eapply wf_rff; eauto. }
-  all: try by (eapply Cint; eexists; split; eauto; right;
-               apply fr_in_eco; eexists; eauto).
-  all: try (apply (dom_r Wf_sc.(wf_scD)) in H2;
-    apply seq_eqv_r in H2; type_solver).
-  all: try by (eapply Cint; eexists; split; eauto; right;
-               red; right; eexists; split; [eexists|right]; eauto).
-  { eapply Cint; eexists; split.
-    2: { right. apply fr_in_eco. eexists; eauto. }
-    eapply hb_trans; eauto. }
-  { eapply Cint; eexists; split.
-    2: { right. red. right.
-         eexists. split; [eexists|right]; eauto. }
-    eapply hb_trans; eauto. }
-  { apply (dom_l Wf_sc.(wf_scD)) in H2.
-    apply seq_eqv_l in H2.
-    apply (dom_r WF.(wf_coD)) in H3.
-    apply seq_eqv_r in H3.
-    type_solver. }
-  { apply (dom_l Wf_sc.(wf_scD)) in H2.
-    apply seq_eqv_l in H2.
-    apply (dom_r WF.(wf_rfD)) in H0.
-    apply seq_eqv_r in H0.
-    type_solver. }
-  { eapply Csc. eexists. split; eauto.
-    eexists. split; eauto. right.
-    eexists. split; eauto.
-    apply fr_in_eco. eexists; eauto. }
-  { eapply Csc. eexists. split; eauto.
-    eexists. split; eauto. right.
-    eexists. split; eauto.
-    red. right. 
-    eexists. split; [eexists|right]; eauto. }
-  { apply NEQ. eapply wf_rff; eauto. }
-  eapply Cint. eexists. split.
-  { apply sb_in_hb; eauto. }
-  right. eapply WF.(eco_trans).
-  2: by apply rf_in_eco; eauto.
-  apply fr_in_eco. eexists. split; eauto.
+  rewrite cert_rf_codomE0, !seqA.
+  rewrite <- id_inter, set_interC.
+  apply cert_rf_D_in_rf.
 Qed.
 
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
@@ -580,65 +573,6 @@ Proof.
   exists z. apply seq_eqv_r. split; auto.
   generalize (@sb_trans G) SBXY SBYZ. basic_solver. 
 Qed.
-
-(* Lemma cert_rfe_Acq : (cert_rf \ Gsb) ⨾ ⦗R∩₁Acq⦘ ⊆ ∅₂. *)
-(* Proof. *)
-(*   rewrite cert_rfE. *)
-(*   arewrite (⦗E⦘ ⊆ ⦗E \₁ I⦘ ∪ ⦗E ∩₁ I⦘). *)
-(*   unfolder; ins; desf; tauto. *)
-(*   relsf. *)
-(*   rewrite minus_union_l. *)
-(*   relsf; unionL. *)
-(*   sin_rewrite non_I_cert_rf. *)
-(*   basic_solver. *)
-(*   rewrite cert_rfD. *)
-(*   arewrite (cert_rf ⊆ cert_rf ∩ Gsame_loc). *)
-(*   generalize (cert_rfl); basic_solver. *)
-
-(*   unfolder; ins; desf. *)
-
-(*   assert (Lx:exists l, Gloc x = Some l); desc. *)
-(*     by apply is_w_loc. *)
-
-(*     assert (Ly:Gloc y = Some l). *)
-(*     unfold same_loc in *; congruence. *)
-
-(*     forward (apply COMP_ACQ). *)
-(*       by basic_solver. *)
-
-(*       ins; desc. *)
-
-(*       apply rfi_union_rfe in H10; unfolder in H10; desf; cycle 1. *)
-(*         by generalize R_Acq_codom_rfe; basic_solver 12. *)
-
-(*         ie_unfolder; unfolder in H10; desf. *)
-
-(*         hahn_rewrite (wf_rfD WF) in H10. *)
-(*         hahn_rewrite (wf_rfE WF) in H10. *)
-
-(*         unfolder in H10; desf. *)
-
-(*         assert (Lz:Gloc z = Some l). *)
-(*           by apply (wf_rfl WF) in H14; unfold same_loc in *; congruence. *)
-
-(*           forward (apply ((wf_co_total WF) (Some l) z)). *)
-(*           basic_solver. *)
-(*           instantiate (1 := x). *)
-(*           basic_solver. *)
-
-(*           intro; desf. *)
-
-(*           intro; desf. *)
-
-(*   - *)
-(*     eapply eco_furr_irr; try edone. *)
-(*     eexists; splits; [|eby apply cert_rf_in_furr]. *)
-(*     unfold eco, fr. *)
-(*     basic_solver 12. *)
-(*   - eapply H3. *)
-(*     exists z; split; [| apply furr_alt; basic_solver 12]. *)
-(*     apply I_co_in_cert_co; basic_solver. *)
-(* Qed. *)
 
 End Properties.
 
