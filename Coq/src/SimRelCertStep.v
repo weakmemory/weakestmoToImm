@@ -561,6 +561,8 @@ Section SimRelCertStep.
     assert (ES.Wf S') as WF'.
     { eapply step_wf; eauto.
       all: admit. }
+    assert (SE S' e) as SEE.
+    { eapply basic_step_acts_set; eauto. basic_solver. }
 
     assert (e2a S' □₁ SE S' ⊆₁ GE) as E2AGE.
     { rewrite basic_step_acts_set; eauto.  
@@ -679,6 +681,73 @@ Section SimRelCertStep.
       1-4: basic_solver.
       1,2: admit. }
 
+    rewrite SB'.
+    rewrite seq_union_l, cr_union_l.
+    rewrite !seq_union_l, !seq_union_r.
+    rewrite collect_rel_union.
+    unionL.
+    2: { unfold sb_delta.
+         rewrite !seq_union_l, !seq_union_r.
+         arewrite ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗SF S'⦘ ⊆ ∅₂).
+         { unfold eq_opt.
+           red in CertSTEP_. desf; cdes CertSTEP_; desf.
+           1-3: basic_solver.
+           arewrite ((fun b : eventid => w' = b) ⊆₁ SW S').
+           2: type_solver.
+           unfolder. ins. desf. unfold is_w.
+           rewrite LAB'. rewrite upds.
+           inv STEP. desc.
+           match goal with
+           | H : ineps_step _ _ _ _ |- _ => cdes H
+           end.
+           cdes STEP0. inv ISTEP0; inv LABELS. }
+         relsf.
+         arewrite (Sjf S' ⨾ ES.cont_sb_dom S k × eq e ⊆
+                   Sjf S' ;; <|ES.cont_sb_dom S k|> ⨾
+                   ES.cont_sb_dom S k × eq e) by basic_solver 10.
+         arewrite (ES.cont_sb_dom S k ⊆₁ SE S ∩₁ ES.cont_sb_dom S k) at 1.
+         { apply set_subset_inter_r. split; auto.
+           eapply kE_inE; eauto. }
+         rewrite id_inter, !seqA.
+         arewrite (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S).
+         { red in CertSTEP_. desf; cdes CertSTEP_; desf.
+           1,3: rewrite JF'; basic_solver.
+           all: eapply weaken_sim_add_jf in AJF; eauto.
+           all: eapply add_jf_jfE; eauto. }
+         rewrite <- seqA. rewrite collect_rel_seqi.
+         arewrite (e2a S' □ Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘ ⊆
+                   e2a S  □ Sjf S ⨾ ⦗ES.cont_sb_dom S k⦘).
+         { rewrite WF.(ES.jfE) at 1.
+           unfolder. ins. desf. do 2 eexists. splits; eauto.
+           all: symmetry.
+           all: eapply basic_step_e2a_eq_dom; eauto. }
+         arewrite (ES.cont_sb_dom S k × eq e ⨾ ⦗SF S'⦘ ⨾ ⦗SAcq S'⦘ ⊆
+                   ES.cont_sb_dom S k × eq e ⨾
+                   ⦗SE S' ∩₁ SF S'⦘ ⨾ ⦗SE S' ∩₁ SAcq S'⦘).
+         { generalize SEE. basic_solver 10. }
+         rewrite jf_in_cert_rf; eauto.
+         rewrite !collect_rel_seqi, !collect_rel_eqv.
+         erewrite e2a_F; eauto.
+         erewrite e2a_Acq; eauto.
+         arewrite (e2a S' □ ES.cont_sb_dom S k × eq e ⊆
+                   Gsb ;; <| eq (e2a S' e) |>).
+         { admit. }
+         arewrite (eq (e2a S' e) ⊆₁ E0 G TC' (ES.cont_thread S k)).
+         { unfolder. ins. desf. eapply basic_step_e2a_E0_e; eauto.
+           all: apply SRCC. }
+         arewrite (⦗GE ∩₁ GF⦘ ⨾ ⦗GE ∩₁ GAcq⦘ ⊆
+                   ⦗GE ∩₁ GF⦘ ⨾ ⦗GE ∩₁ GAcq⦘ ⨾ ⦗GF ∩₁ GAcq⦘) by basic_solver.
+         assert (Gsb ⨾ ⦗GF ∩₁ GAcq⦘ ⊆ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘) as BB
+             by basic_solver 10.
+         rewrite <- BB.
+         hahn_frame.
+         rewrite crE.
+         etransitivity.
+         2: { etransitivity.
+              { apply cert_rf_F_Acq_in_rf; eauto; try apply SRCC.
+                admit. }
+              basic_solver.
+
     arewrite (Sjf S' ⨾ (Ssb S' ⨾ ⦗SF S'⦘)^? ⊆
               Sjf S' ⨾ (Ssb S' ⨾ ⦗SF S'⦘)^? ⨾ ⦗SE S'⦘).
     { rewrite (dom_r WF'.(ES.jfE)).
@@ -739,9 +808,6 @@ Section SimRelCertStep.
       { erewrite <- e2a_tid. rewrite TID'.
         unfold upd_opt. by rewrite upds. }
       red.
-
-
-
   Admitted.
 
   Lemma simrel_cert_step_wf k k' e e' S S'
