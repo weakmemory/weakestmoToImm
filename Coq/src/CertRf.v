@@ -31,6 +31,7 @@ Notation "'F'" := (fun a => is_true (is_f lab a)).
 Notation "'Acq'" := (fun a => is_true (is_acq lab a)).
 Notation "'Rel'" := (fun a => is_true (is_rel lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
+Notation "'Acq/Rel'" := (fun a => is_true (is_ra lab a)).
 
 Notation "'sb'" := (G.(sb)).
 Notation "'sw'" := (G.(imm_s_hb.sw)).
@@ -387,6 +388,60 @@ Proof.
   rewrite cert_rf_codomE0, !seqA.
   rewrite <- id_inter, set_interC.
   apply cert_rf_D_in_rf.
+Qed.
+
+Lemma cert_rf_sb_F_Acq_in_rf :
+  cert_rf ⨾ sb ;; <|F|> ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb.
+Proof.
+  rewrite (dom_r cert_rfD), !seqA.
+  rewrite (dom_r cert_rfE), !seqA.
+  rewrite <- !id_inter, <- !set_interA.
+  arewrite (⦗E⦘ ⨾ ⦗R⦘ ⊆ ⦗E∩₁R⦘) by basic_solver.
+
+  assert (dom_rel (⦗E ∩₁ R⦘ ⨾ sb ⨾ ⦗F ∩₁ Acq ∩₁ E0⦘) ⊆₁ D) as AA.
+  2: { rewrite (dom_rel_helper AA).
+       sin_rewrite cert_rf_D_rf. basic_solver. }
+  unfold CertExecution2.D.
+  apply set_subset_inter_r. split.
+  { unfolder. ins. desf.
+    match goal with 
+    | H: sb _ _ |- _ => apply sb_tid_init in H
+    end.
+    match goal with
+    | H: E0 _ |- _ => inv H
+    end.
+    desf.
+    exfalso.
+    eapply read_or_fence_is_not_init with (G:=G); auto.
+    2: by eauto.
+    eauto. }
+  repeat unionR left.
+  unfolder. ins. desf.
+  assert (C y) as AA.
+  2: { eapply dom_sb_covered; eauto.
+       basic_solver 10. }
+  match goal with
+  | H: E0 _ |- _ => inv H
+  end.
+  match goal with
+  | H: (C ∪₁ _) _ |- _ => inv H
+  end.
+  destruct H7 as [z HH]. destruct_seq_r HH as IZ.
+  destruct HH as [HH|HH].
+  { rewrite HH in *. eapply issuedW in IZ; eauto. type_solver. }
+  eapply issued_in_issuable in IZ; eauto.
+  apply IZ. eexists. apply seq_eqv_r. split; eauto.
+  red. right. apply seq_eqv_l. do 2 (split; auto).
+  mode_solver.
+Qed.
+
+Lemma cert_rf_F_Acq_in_rf :
+  cert_rf ⨾ (sb ;; <|F|>)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb^?.
+Proof.
+  rewrite !crE, !seq_union_l, !seq_union_r, !seq_id_l, !seq_id_r, !seqA.
+  apply union_mori.   
+  { sin_rewrite cert_rf_Acq_in_rf. basic_solver. }
+  apply cert_rf_sb_F_Acq_in_rf.
 Qed.
 
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
