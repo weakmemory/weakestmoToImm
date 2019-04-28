@@ -560,7 +560,9 @@ Section SimRelCertStep.
     { eapply sim_trav_step_coherence; eauto. apply SRCC. }
     assert (ES.Wf S') as WF'.
     { eapply step_wf; eauto.
-      all: admit. }
+      2: { eapply simrel_cert_step_step_; eauto. }
+      (* TODO: for Anton *)
+      admit. }
     assert (SE S' e) as SEE.
     { eapply basic_step_acts_set; eauto. basic_solver. }
 
@@ -681,11 +683,18 @@ Section SimRelCertStep.
       1-4: basic_solver.
       { rewrite (dom_r WF.(ES.jfE)). unfold ES.acts_set.
         unfolder. ins. desf. omega. }
+      assert (Grf (e2a S' w) (e2a S' (ES.next_act S))) as RF.
+      { (* TODO: for Anton *)
+        admit. }
+      unfold jf_delta. unfolder. ins. desf.
+      eexists. splits; eauto.
+      (* TODO: for Evgenii *)
       admit. }
 
     assert (e2a S' □ ES.cont_sb_dom S k × eq e ⊆
             Gsb ;; <| eq (e2a S' e) |>) as HHSB.
-    { admit. }
+    { (* TODO: for Evgenii *)
+      admit. }
     assert (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S) as JFES.
     { (* TODO: generalize to a lemma *)
       red in CertSTEP_. desf; cdes CertSTEP_; desf.
