@@ -679,7 +679,9 @@ Section SimRelCertStep.
       all: rewrite seq_union_r, ?seq_union_l,
            !collect_rel_union; unionL; auto.
       1-4: basic_solver.
-      1,2: admit. }
+      { rewrite (dom_r WF.(ES.jfE)). unfold ES.acts_set.
+        unfolder. ins. desf. omega. }
+      admit. }
 
     assert (e2a S' □ ES.cont_sb_dom S k × eq e ⊆
             Gsb ;; <| eq (e2a S' e) |>) as HHSB.
