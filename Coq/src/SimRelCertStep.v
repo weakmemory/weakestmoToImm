@@ -542,6 +542,119 @@ Section SimRelCertStep.
     eapply weaken_sim_add_co; eauto. basic_solver.
   Qed.
 
+  Lemma simrel_cert_step_e2a_GE k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    e2a S' □₁ SE S' ⊆₁ GE.
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (tc_coherent G sc TC') as TCCOH'.
+    { eapply sim_trav_step_coherence; eauto; try apply SRCC.
+      red. eexists. apply SRCC. }
+    rewrite basic_step_acts_set; eauto.  
+    rewrite !set_collect_union. 
+    rewrite !set_subset_union_l.
+    splits. 
+    { erewrite set_collect_eq_dom; [eapply SRCC|].
+      eapply basic_step_e2a_eq_dom; eauto. } 
+    { rewrite set_collect_eq.
+      apply eq_predicate. 
+      eapply basic_step_e2a_GE_e with (S:=S); eauto; try apply SRCC. }
+    destruct e' as [e'|]; [|basic_solver]. 
+    unfold eq_opt. 
+    rewrite set_collect_eq.
+    apply eq_predicate. 
+    eapply basic_step_e2a_GE_e' with (S:=S); eauto; apply SRCC.
+  Qed.
+  
+  Lemma simrel_cert_step_e2a_GEinit k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S') :
+    GEinit ⊆₁ e2a S' □₁ SEinit S'.
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    etransitivity. 
+    { eapply e2a_GEinit. apply SRCC. }
+    erewrite basic_step_acts_init_set with (S' := S'); eauto.
+    eapply set_collect_eq_dom.
+    unfold ES.acts_init_set.
+    unfolder. ins. desf.
+    eapply basic_step_e2a_eq_dom; eauto.
+  Qed.
+
+  Lemma simrel_cert_step_e2a_lab k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    same_lab_u2v_dom (SE S') (Slab S')
+                     (Basics.compose Glab (e2a S')).
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    eapply basic_step_e2a_same_lab_u2v with (S:=S); eauto;
+      apply SRCC.
+  Qed.
+
+  Lemma simrel_cert_step_wf k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    ES.Wf S'.
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (step_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S) as WF by apply SRCC.
+    assert (Wf G) as WFG by apply SRCC.
+    assert (simrel_e2a S G sc) as E2A by apply SRCC.
+    assert (SE S' e) as SEe.
+    { eapply basic_step_acts_set; eauto. 
+      basic_solver. }
+
+    eapply step_wf; eauto.
+    ins. red.
+
+    assert (exists ag, ⟪AIG : GEinit ag⟫ /\
+                       ⟪LLG : Gloc ag = Some l⟫); desf.
+    2: { set (BB:=AIG).
+         eapply simrel_cert_step_e2a_GEinit in BB; eauto.
+         red in BB. desf.
+         exists y. splits; auto.
+         rewrite <- LLG.
+         arewrite (Gloc (e2a S' y) =
+                   Events.loc (Basics.compose Glab (e2a S')) y).
+         eapply same_lab_u2v_dom_loc.
+         { eapply simrel_cert_step_e2a_lab; eauto. }
+         apply BB. }
+   exists (InitEvent l).
+    splits; auto.
+    2: { unfold Events.loc. rewrite wf_init_lab; auto. }
+    split; auto.
+    apply wf_init; auto.
+    exists (e2a S' (ES.next_act S)).
+    split.
+    { eapply simrel_cert_step_e2a_GE; eauto.
+      red. eexists. split; eauto. }
+    rewrite <- LL. symmetry.
+    arewrite (Gloc (e2a S' (ES.next_act S)) =
+              Events.loc (Basics.compose Glab (e2a S')) (ES.next_act S)).
+    eapply same_lab_u2v_dom_loc.
+    { eapply simrel_cert_step_e2a_lab; eauto. }
+    done.
+  Qed.
+
   Lemma simrel_cert_step_e2a k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
@@ -559,43 +672,19 @@ Section SimRelCertStep.
     assert (tc_coherent G sc TC') as TCCOH'.
     { eapply sim_trav_step_coherence; eauto. apply SRCC. }
     assert (ES.Wf S') as WF'.
-    { eapply step_wf; eauto.
-      2: { eapply simrel_cert_step_step_; eauto. }
-      (* TODO: for Anton *)
-      admit. }
+    { eapply simrel_cert_step_wf; eauto. }
     assert (SE S' e) as SEE.
     { eapply basic_step_acts_set; eauto. basic_solver. }
 
     assert (e2a S' □₁ SE S' ⊆₁ GE) as E2AGE.
-    { rewrite basic_step_acts_set; eauto.  
-      rewrite !set_collect_union. 
-      rewrite !set_subset_union_l.
-      splits. 
-      { erewrite set_collect_eq_dom; [eapply SRCC|].
-        eapply basic_step_e2a_eq_dom; eauto. } 
-      { rewrite set_collect_eq.
-        apply eq_predicate. 
-        eapply basic_step_e2a_GE_e with (S:=S); eauto; apply SRCC. }
-      destruct e' as [e'|]; [|basic_solver]. 
-      unfold eq_opt. 
-      rewrite set_collect_eq.
-      apply eq_predicate. 
-      eapply basic_step_e2a_GE_e' with (S:=S); eauto; apply SRCC. }
+    { eapply simrel_cert_step_e2a_GE; eauto. }
 
     assert (same_lab_u2v_dom (SE S') (Slab S') (Basics.compose Glab (e2a S')))
       as E2ALAB.
-    { eapply basic_step_e2a_same_lab_u2v with (S:=S); eauto;
-        try apply SRCC; apply BSTEP_. }
-    
+    { eapply simrel_cert_step_e2a_lab; eauto. }
+
     constructor; auto.
-    (* e2a_GEinit : GEinit ⊆₁ g □₁ SEinit *)
-    { etransitivity. 
-      { eapply e2a_GEinit. apply SRCC. }
-      erewrite basic_step_acts_init_set with (S' := S'); eauto.  
-      eapply set_collect_eq_dom.
-      unfold ES.acts_init_set.
-      unfolder. ins. desf.
-      eapply basic_step_e2a_eq_dom; eauto. }
+    { eapply simrel_cert_step_e2a_GEinit; eauto. }
     (* e2a_rmw : e2a □ Srmw ⊆ Grmw *)
     { unfold_cert_step_ CertSTEP_.
       1-3 : 
@@ -808,63 +897,6 @@ Section SimRelCertStep.
     all: try by rewrite JF'.
     all: eapply BB; eauto.
   Admitted.
-
-  Lemma simrel_cert_step_wf k k' e e' S S'
-        (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
-        (CertSTEP : cert_step k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-    ES.Wf S'.
-  Proof.
-    cdes CertSTEP; cdes BSTEP_.
-    assert (basic_step e e' S S') as BSTEP.
-    { econstructor; eauto. }
-    assert (step_ e e' S S') as WMO_STEP_.
-    { eapply simrel_cert_step_step_; eauto. }
-    assert (ES.Wf S) as WF by apply SRCC.
-    assert (Wf G) as WFG by apply SRCC.
-    assert (simrel_e2a S G sc) as E2A by apply SRCC.
-    assert (simrel_e2a S' G sc) as E2A'.
-    { eapply simrel_cert_step_e2a; eauto. }
-    assert (SE S' e) as SEe.
-    { eapply basic_step_acts_set; eauto. 
-      basic_solver. }
-
-    eapply step_wf; eauto.
-    ins. red.
-
-    assert (exists ag, ⟪AIG : GEinit ag⟫ /\
-                       ⟪LLG : Gloc ag = Some l⟫); desf.
-    2: { set (BB:=AIG).
-         eapply e2a_GEinit in BB; [|by apply E2A'].
-         red in BB. desf.
-         exists y. splits; auto.
-         rewrite <- LLG.
-         apply e2a_lab in E2A'.
-         assert (SE S' y) as YY by apply BB.
-         specialize (E2A' y YY).
-         red in E2A'.
-         clear -E2A'.
-         unfold Events.loc in *.
-         unfold Basics.compose in *.
-         desf; desf. }
-    exists (InitEvent l).
-    splits; auto.
-    2: { unfold Events.loc. rewrite wf_init_lab; auto. }
-    split; auto.
-    apply wf_init; auto.
-    exists (e2a S' (ES.next_act S)).
-    split.
-    { eapply e2a_GE; eauto.
-      red. eexists. split; eauto. }
-    rewrite <- LL. symmetry.
-    apply e2a_lab in E2A'. red in E2A'.
-    specialize (E2A' (ES.next_act S) SEe).
-    clear -E2A'. red in E2A'.
-    unfold Events.loc in *.
-    unfold Basics.compose in *.
-    desf; desf.
-  Qed.
 
   Lemma simrel_cert_step_simrel_ k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
