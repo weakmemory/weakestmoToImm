@@ -621,6 +621,8 @@ Section SimRelCertStepCoh.
     { apply SRCC. }
     assert (coherence G) as GCOH.
     { eapply gcons. apply SRCC. }
+    set (AA:=SRE2A).
+    destruct AA.
     
     rewrite crE. rewrite eco_alt; auto.
     rewrite crE at 1.
@@ -635,12 +637,11 @@ Section SimRelCertStepCoh.
     erewrite e2a_co; eauto.
     rewrite !irreflexive_union. splits.
     { apply hb_irr; eauto. }
-    { admit. }
-    (* { erewrite e2a_rf, e2a_jf; eauto. *)
-    (*   intros x [y [HB VF]]. *)
-    (*   unfold furr in VF. desc.   *)
-    (*   eapply urr_hb_irr; try apply SRCC. *)
-    (*   basic_solver. } *)
+    { erewrite e2a_rf, e2a_jf; eauto.
+      intros x [y [HB VF]].
+      unfold furr in VF. desc.
+      eapply urr_hb_irr; try apply SRCC.
+      basic_solver. }
     { arewrite (Gco ⊆ Geco^?).
       2: by apply GCOH.
       rewrite Execution_eco.co_in_eco. basic_solver. }
@@ -651,7 +652,7 @@ Section SimRelCertStepCoh.
     eexists. splits.
     { unfold Execution_eco.eco. basic_solver 10. }
     eapply urr_hb. basic_solver.
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_step_consistent k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
