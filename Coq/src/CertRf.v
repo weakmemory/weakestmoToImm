@@ -31,11 +31,13 @@ Notation "'F'" := (fun a => is_true (is_f lab a)).
 Notation "'Acq'" := (fun a => is_true (is_acq lab a)).
 Notation "'Rel'" := (fun a => is_true (is_rel lab a)).
 Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
+Notation "'Acq/Rel'" := (fun a => is_true (is_ra lab a)).
 
 Notation "'sb'" := (G.(sb)).
 Notation "'sw'" := (G.(imm_s_hb.sw)).
 Notation "'hb'" := (G.(imm_s_hb.hb)).
 Notation "'rf'" := (G.(rf)).
+Notation "'rfi'" := (G.(rfi)).
 Notation "'co'" := (G.(co)).
 Notation "'loc'" := (loc lab).
 
@@ -269,78 +271,177 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
-Lemma cert_rf_D_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
+Lemma rf_vf_in_cert_rf : (rf ⨾ ⦗E0⦘) ∩ vf ⊆ cert_rf.
 Proof.
   unfold cert_rf.
-  arewrite (E0 ∩₁ R ⊆₁ R) by basic_solver.
+  rewrite minus_inter_compl.
+  apply inclusion_inter_r.
+  { rewrite (dom_r WF.(wf_rfD)).
+    rewrite WF.(wf_rfl). basic_solver. }
+  rewrite vf_in_furr.
   unfolder. ins. desf.
-  assert ((E ∩₁ R) y) as HH.
-  { split; auto.
-    eapply D_in_E; eauto. }
-  cdes COH. edestruct Comp as [z RF]; eauto.
-  destruct (classic (x = z)) as [EQ|NEQ].
-  { by rewrite EQ. }
-  exfalso.
-  set (AA := RF).
-  apply WF.(wf_rfl) in AA.
-  assert (exists l, loc y = Some l) as [l BB].
-  { unfold Events.loc, is_r in *. desf; eauto. }
-  edestruct WF.(wf_co_total); eauto.
-  { red. split.
-    2: { rewrite H5. eauto. }
-    split.
-    { apply (dom_l vfE) in H. apply seq_eqv_l in H. desf. }
-    apply vf_dom in H. apply seq_eqv_l in H. desf. }
-  { red. split.
-    2: { rewrite AA. eauto. }
-    split.
-    { apply (dom_l WF.(wf_rfE)) in RF. apply seq_eqv_l in RF. desf. }
-    apply (dom_l WF.(wf_rfD)) in RF. apply seq_eqv_l in RF. desf. }
-  { apply H2. eexists. split; eauto.
-    apply rf_D_in_vf. apply seq_eqv_r. split; auto.
-    red. desf. }
-  clear -RF H3 H Csc Cint HH NEQ WF Wf_sc.
-  red in H. unfolder in *. desf.
-  { type_solver. }
-  { apply NEQ. eapply wf_rff; eauto. }
-  all: try by (eapply Cint; eexists; split; eauto; right;
-               apply fr_in_eco; eexists; eauto).
-  all: try (apply (dom_r Wf_sc.(wf_scD)) in H2;
-    apply seq_eqv_r in H2; type_solver).
-  all: try by (eapply Cint; eexists; split; eauto; right;
-               red; right; eexists; split; [eexists|right]; eauto).
-  { eapply Cint; eexists; split.
-    2: { right. apply fr_in_eco. eexists; eauto. }
-    eapply hb_trans; eauto. }
-  { eapply Cint; eexists; split.
-    2: { right. red. right.
-         eexists. split; [eexists|right]; eauto. }
-    eapply hb_trans; eauto. }
-  { apply (dom_l Wf_sc.(wf_scD)) in H2.
-    apply seq_eqv_l in H2.
-    apply (dom_r WF.(wf_coD)) in H3.
-    apply seq_eqv_r in H3.
-    type_solver. }
-  { apply (dom_l Wf_sc.(wf_scD)) in H2.
-    apply seq_eqv_l in H2.
-    apply (dom_r WF.(wf_rfD)) in H0.
-    apply seq_eqv_r in H0.
-    type_solver. }
-  { eapply Csc. eexists. split; eauto.
-    eexists. split; eauto. right.
-    eexists. split; eauto.
-    apply fr_in_eco. eexists; eauto. }
-  { eapply Csc. eexists. split; eauto.
-    eexists. split; eauto. right.
-    eexists. split; eauto.
-    red. right. 
-    eexists. split; [eexists|right]; eauto. }
-  { apply NEQ. eapply wf_rff; eauto. }
-  eapply Cint. eexists. split.
-  { apply sb_in_hb; eauto. }
-  right. eapply WF.(eco_trans).
-  2: by apply rf_in_eco; eauto.
+  intros HH. desf.
+  eapply eco_furr_irr; eauto.
+  all: try apply COH.
+  eexists. split; eauto.
   apply fr_in_eco. eexists. split; eauto.
+Qed.
+
+Lemma rf_D_in_cert_rf : rf ⨾ ⦗ D ∩₁ E0 ⦘ ⊆ cert_rf.
+Proof.
+  rewrite <- rf_vf_in_cert_rf.
+  apply inclusion_inter_r.
+  { basic_solver 10. }
+  rewrite <- rf_D_in_vf. basic_solver.
+Qed.
+
+Lemma rf_C_in_cert_rf : rf ⨾ ⦗ Tid_ thread ∩₁ C ⦘ ⊆ cert_rf.
+Proof.
+  rewrite <- rf_D_in_cert_rf.
+  arewrite (Tid_ thread ∩₁ C ⊆₁ D ∩₁ E0); [|done].
+  unfold CertExecution2.D, E0.
+  basic_solver 10.
+Qed.
+
+Lemma rfi_in_cert_rf : rfi ⨾ ⦗ E0 ⦘ ⊆ cert_rf.
+Proof.
+  unfold cert_rf. rewrite minus_inter_compl.
+  apply inclusion_inter_r.
+  { rewrite (dom_r WF.(wf_rfiD)), !seqA.
+    arewrite (⦗R⦘ ⨾ ⦗E0⦘ ⊆ ⦗E0 ∩₁ R⦘) by basic_solver.
+    hahn_frame.
+    unfold Execution.rfi. 
+    apply inclusion_inter_r.
+    2: { rewrite WF.(wf_rfl). basic_solver. }
+    unfold vf. unionR left.
+    rewrite (dom_l WF.(wf_rfD)), (dom_r WF.(wf_rfE)).
+    rewrite sb_in_hb. basic_solver 30. }
+  unfold Execution.rfi.
+  rewrite vf_in_furr.
+  unfolder. ins. desf.
+  intros HH. desf.
+  eapply eco_furr_irr; eauto.
+  all: try apply COH.
+  eexists. split; eauto.
+  apply fr_in_eco. eexists. split; eauto.
+Qed.
+
+Lemma cert_rfi_union_cert_rfe : cert_rf ≡ cert_rfi ∪ cert_rfe.
+Proof.
+  unfold cert_rfi, cert_rfe.
+  rewrite <- seq_union_l.
+  rewrite <- id_union.
+  arewrite (Tid_ thread ∪₁ NTid_ thread ≡₁ ⊤₁).
+  { split; [basic_solver|].
+    unfolder. ins. apply classic. }
+  rewrite seq_id_l. by rewrite cert_rf_codomt at 1.
+Qed.
+
+Lemma cert_rf_D_in_rf : cert_rf ⨾ ⦗ D ∩₁ E0 ⦘ ⊆ rf.
+Proof.
+  arewrite (cert_rf ⊆ cert_rf ⨾ ⦗ E ∩₁ R ⦘).
+  { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
+    basic_solver. }
+  cdes COH. red in Comp. rewrite Comp.
+  unfolder. ins. desf.
+  assert (x0 = x); try subst x0; desf.
+  eapply cert_rff; eauto.
+  apply rf_D_in_cert_rf.
+  apply seq_eqv_r.
+  do 3 (split; auto).
+  desf.
+Qed.
+
+Lemma cert_rf_D_eq_rf_D : cert_rf ⨾ ⦗ D ∩₁ E0 ⦘ ≡ rf ⨾ ⦗ D ∩₁ E0 ⦘.
+Proof. generalize cert_rf_D_in_rf, rf_D_in_cert_rf. basic_solver 10. Qed.
+
+Lemma cert_rf_Acq_in_rf : cert_rf ⨾ ⦗ Acq ⦘ ⊆ rf.
+Proof.
+  rewrite cert_rf_codomE0.
+  arewrite (cert_rf ⊆ cert_rf ⨾ ⦗ E ∩₁ R ⦘).
+  { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
+    basic_solver. }
+  cdes COH. red in Comp. rewrite Comp.
+  rewrite rfi_union_rfe at 1.
+  rewrite codom_union, id_union, !seq_union_l, !seq_union_r.
+  unfold Execution.rfi.
+  rewrite cert_rf_codomt at 2.
+  rewrite !seqA.
+  rewrite <- !id_inter.
+  arewrite (Tid_ thread ∩₁ (codom_rel (rfe G) ∩₁ (E0 ∩₁ Acq)) ⊆₁
+            D ∩₁ E0).
+  { apply set_subset_inter_r; split; [|basic_solver].
+    unfold CertExecution2.D.
+    apply set_inter_Proper; auto.
+    unionR right. rewrite WF.(wf_rfeD) at 1. basic_solver. }
+  unionL.
+  2: by apply cert_rf_D_in_rf.
+  unfolder. ins. desf.
+  assert (x0 = x); desf.
+  eapply cert_rff; eauto.
+  apply rfi_in_cert_rf. apply seq_eqv_r.
+  do 2 (split; auto).
+Qed.
+
+Lemma cert_rf_D_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
+Proof.
+  rewrite cert_rf_codomE0, !seqA.
+  rewrite <- id_inter, set_interC.
+  apply cert_rf_D_in_rf.
+Qed.
+
+Lemma cert_rf_sb_F_Acq_in_rf :
+  cert_rf ⨾ sb ;; <|F|> ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb.
+Proof.
+  rewrite (dom_r cert_rfD), !seqA.
+  rewrite (dom_r cert_rfE), !seqA.
+  rewrite <- !id_inter, <- !set_interA.
+  arewrite (⦗E⦘ ⨾ ⦗R⦘ ⊆ ⦗E∩₁R⦘) by basic_solver.
+
+  assert (dom_rel (⦗E ∩₁ R⦘ ⨾ sb ⨾ ⦗F ∩₁ Acq ∩₁ E0⦘) ⊆₁ D) as AA.
+  2: { rewrite (dom_rel_helper AA).
+       sin_rewrite cert_rf_D_rf. basic_solver. }
+  unfold CertExecution2.D.
+  apply set_subset_inter_r. split.
+  { unfolder. ins. desf.
+    match goal with 
+    | H: sb _ _ |- _ => apply sb_tid_init in H
+    end.
+    match goal with
+    | H: E0 _ |- _ => inv H
+    end.
+    desf.
+    exfalso.
+    eapply read_or_fence_is_not_init with (G:=G); auto.
+    2: by eauto.
+    eauto. }
+  repeat unionR left.
+  unfolder. ins. desf.
+  assert (C y) as AA.
+  2: { eapply dom_sb_covered; eauto.
+       basic_solver 10. }
+  match goal with
+  | H: E0 _ |- _ => inv H
+  end.
+  match goal with
+  | H: (C ∪₁ _) _ |- _ => inv H
+  end.
+  destruct H7 as [z HH]. destruct_seq_r HH as IZ.
+  destruct HH as [HH|HH].
+  { rewrite HH in *. eapply issuedW in IZ; eauto. type_solver. }
+  eapply issued_in_issuable in IZ; eauto.
+  apply IZ. eexists. apply seq_eqv_r. split; eauto.
+  red. right. apply seq_eqv_l. do 2 (split; auto).
+  mode_solver.
+Qed.
+
+Lemma cert_rf_F_Acq_in_rf :
+  cert_rf ⨾ (sb ;; <|F|>)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb^?.
+Proof.
+  rewrite !crE, !seq_union_l, !seq_union_r, !seq_id_l, !seq_id_r, !seqA.
+  apply union_mori.   
+  { sin_rewrite cert_rf_Acq_in_rf. basic_solver. }
+  apply cert_rf_sb_F_Acq_in_rf.
 Qed.
 
 Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
@@ -376,7 +477,7 @@ Proof.
       rewrite !seq_union_l, !seq_union_r.
       unionL.
       { generalize (@sb_trans G). unfold Execution.rfi. basic_solver. }
-      arewrite (rfe G ⨾ ⦗Tid_ thread ∩₁ dom_rel ((rfi G)^? ⨾ imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
+      arewrite (rfe G ⨾ ⦗Tid_ thread ∩₁ dom_rel (rfi^? ⨾ imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
                 rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
       2: { arewrite (rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
                      ⦗I⦘ ⨾ rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
@@ -389,10 +490,10 @@ Proof.
       unionL; [done|].
       rewrite (dom_l WF.(wf_rfiD)), (dom_r WF.(wf_rfeD)), !seqA, dom_eqv1.
       type_solver. }
-    { arewrite (rf ⨾ ⦗Tid_ thread ∩₁ codom_rel (⦗I⦘ ⨾ rfi G)⦘ ⊆ sb).
+    { arewrite (rf ⨾ ⦗Tid_ thread ∩₁ codom_rel (⦗I⦘ ⨾ rfi)⦘ ⊆ sb).
       2: { generalize (@sb_trans G). basic_solver. }
       unfolder; ins; desf.
-      match goal with H : rfi _ _ _ |- _ => destruct H as [AA BB] end.
+      match goal with H : rfi _ _ |- _ => destruct H as [AA BB] end.
       eapply wf_rff in H; eauto.
       apply H in AA. by rewrite AA. }
     unfold A.
@@ -401,7 +502,7 @@ Proof.
     { rewrite seq_eqvC. sin_rewrite IRFC. basic_solver. }
     rewrite rfi_union_rfe. rewrite !seq_union_l, !seq_union_r.
     unionL.
-    { unfold rfi. basic_solver. }
+    { unfold Execution.rfi. basic_solver. }
     assert (∅₂ ⊆ sb) as UU by done.
     etransitivity; eauto.
     unfolder; ins; desf.
@@ -527,65 +628,6 @@ Proof.
   exists z. apply seq_eqv_r. split; auto.
   generalize (@sb_trans G) SBXY SBYZ. basic_solver. 
 Qed.
-
-(* Lemma cert_rfe_Acq : (cert_rf \ Gsb) ⨾ ⦗R∩₁Acq⦘ ⊆ ∅₂. *)
-(* Proof. *)
-(*   rewrite cert_rfE. *)
-(*   arewrite (⦗E⦘ ⊆ ⦗E \₁ I⦘ ∪ ⦗E ∩₁ I⦘). *)
-(*   unfolder; ins; desf; tauto. *)
-(*   relsf. *)
-(*   rewrite minus_union_l. *)
-(*   relsf; unionL. *)
-(*   sin_rewrite non_I_cert_rf. *)
-(*   basic_solver. *)
-(*   rewrite cert_rfD. *)
-(*   arewrite (cert_rf ⊆ cert_rf ∩ Gsame_loc). *)
-(*   generalize (cert_rfl); basic_solver. *)
-
-(*   unfolder; ins; desf. *)
-
-(*   assert (Lx:exists l, Gloc x = Some l); desc. *)
-(*     by apply is_w_loc. *)
-
-(*     assert (Ly:Gloc y = Some l). *)
-(*     unfold same_loc in *; congruence. *)
-
-(*     forward (apply COMP_ACQ). *)
-(*       by basic_solver. *)
-
-(*       ins; desc. *)
-
-(*       apply rfi_union_rfe in H10; unfolder in H10; desf; cycle 1. *)
-(*         by generalize R_Acq_codom_rfe; basic_solver 12. *)
-
-(*         ie_unfolder; unfolder in H10; desf. *)
-
-(*         hahn_rewrite (wf_rfD WF) in H10. *)
-(*         hahn_rewrite (wf_rfE WF) in H10. *)
-
-(*         unfolder in H10; desf. *)
-
-(*         assert (Lz:Gloc z = Some l). *)
-(*           by apply (wf_rfl WF) in H14; unfold same_loc in *; congruence. *)
-
-(*           forward (apply ((wf_co_total WF) (Some l) z)). *)
-(*           basic_solver. *)
-(*           instantiate (1 := x). *)
-(*           basic_solver. *)
-
-(*           intro; desf. *)
-
-(*           intro; desf. *)
-
-(*   - *)
-(*     eapply eco_furr_irr; try edone. *)
-(*     eexists; splits; [|eby apply cert_rf_in_furr]. *)
-(*     unfold eco, fr. *)
-(*     basic_solver 12. *)
-(*   - eapply H3. *)
-(*     exists z; split; [| apply furr_alt; basic_solver 12]. *)
-(*     apply I_co_in_cert_co; basic_solver. *)
-(* Qed. *)
 
 End Properties.
 

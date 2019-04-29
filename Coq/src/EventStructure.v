@@ -124,7 +124,7 @@ Definition init loc_list conts :=
      rmw  := ∅₂ ;
      jf   := ∅₂ ;
      co   := ∅₂ ;
-     ew   := <| acts |> ;
+     ew   := ⦗ acts ⦘ ;
      cont := conts ;
   |}.
 
@@ -203,8 +203,8 @@ Definition seqn (e : eventid) : nat :=
 
 Definition init_loc l :=
       exists a,
-        << EINA : Einit a >> /\
-        << LOCA : loc a = Some l >>.
+        ⟪ EINA : Einit a ⟫ /\
+        ⟪ LOCA : loc a = Some l ⟫.
 
 Record Wf :=
   { initL : forall l b (EB : E b) (LB : loc b = Some l),

@@ -434,7 +434,8 @@ Section SimRelCertStepCoh.
       apply stable_prog_to_prog_no_init; apply SRCC. }
     
     assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
-    { eapply e2a_hb; eauto; apply SRCC. }
+    { eapply e2a_hb; eauto; try apply SRCC.
+      all: apply SRE2A. }
 
     (* assert (e2a S' □ Sco S' ⨾ Sjf S' ⨾ Shb S' ⨾ ⦗eq e⦘ ⊆ *)
     (*             Gco ⨾ vf G sc TC' (ES.cont_thread S k)) as COVF_H. *)
@@ -617,7 +618,7 @@ Section SimRelCertStepCoh.
     (* { (* eapply jf_in_sim_jf. *) *)
     (*   (* apply inclusion_minus_l. *) *)
     (*   (* unionR right. *) *)
-    (*   (* Sew ;; sim_jf ⊆ sim_jf *) *)
+    (*   (* Sew ⨾ sim_jf ⊆ sim_jf *) *)
     (*   admit. } *)
 
     (* arewrite (SimRelJF.sim_jf G sc TC' S' (certX S' k') ⊆ *)
@@ -664,7 +665,7 @@ Section SimRelCertStepCoh.
     rewrite <- !seqA. apply irreflexive_seqC.
     rewrite <- !seqA. apply irreflexive_seqC.
     
-    arewrite (Srf S' ⊆ Sew S' ;; Sjf S').
+    arewrite (Srf S' ⊆ Sew S' ⨾ Sjf S').
     arewrite ((Sew S' ⨾ Sjf S')^? ⊆ (Sew S')^? ⨾ (Sjf S')^?)
       by basic_solver 10.
     rewrite transp_seq.

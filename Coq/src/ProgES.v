@@ -297,9 +297,9 @@ Lemma prog_g_es_init_K prog G k state
                                                  k))
                      state)) :
   exists thread,
-    << KTID  : k = CInit thread >> /\
-    << STEPS : (istep thread [])＊ (init (instrs state)) state >> /\
-    << STBL  : stable_state state >>.
+    ⟪ KTID  : k = CInit thread ⟫ /\
+    ⟪ STEPS : (istep thread [])＊ (init (instrs state)) state ⟫ /\
+    ⟪ STBL  : stable_state state ⟫.
 Proof.
   assert (forall A B (c : A) (a b : B)
                  (OO : (c, a) = (c, b)), a = b) as OO.

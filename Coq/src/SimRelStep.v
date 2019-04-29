@@ -161,6 +161,9 @@ Section SimRelStep.
         (CERT_ST : simrel_cstate S k st st') :
     simrel_cert prog S G sc TC TC' X k st st'.
   Proof. 
+    assert (tc_coherent G sc TC') as TCCOH'.
+    { eapply sim_trav_step_coherence; try apply SRC.
+      red. eauto. }
     constructor; auto.
     { apply XkTIDCOV. }
     { intros x [kEx nINITx].
@@ -185,17 +188,24 @@ Section SimRelStep.
       eapply sim_trav_step_covered_le in Cx.
       2 : eexists; eauto.
       basic_solver. }
-    { arewrite (kE S k ⊆₁ X ∩₁ e2a S ⋄₁ C) at 1.
-      { etransitivity; [apply XkTIDCOV|]. basic_solver. } 
-      arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ 
-                                  ⦗X ∩₁ e2a S ⋄₁ C⦘ ⨾ ⦗e2a S ⋄₁ C⦘).
-      { basic_solver. }
+    { rewrite XkTIDCOV.
+      rewrite <- seq_eqvK.
       rewrite <- seqA, collect_rel_seqi.
-      rewrite jf_cov_in_rf; [|apply SRC].
+      arewrite (X ∩₁ Tid_ S (ES.cont_thread S k) ∩₁ e2a S ⋄₁ C ⊆₁
+                X ∩₁ e2a S ⋄₁ C) at 1 by basic_solver.
+      rewrite jf_cov_in_rf; [|by apply SRC].
       rewrite collect_rel_eqv.
+      rewrite set_collect_inter.
+      2: { (* TODO: remove an extra argument of set_collect_inter in Hahn *) 
+        ins. repeat constructor. }
       rewrite collect_map_in_set. 
-      admit. }
-    admit. 
+      arewrite (X ∩₁ Tid_ S (ES.cont_thread S k) ⊆₁
+                Tid_ S (ES.cont_thread S k)) by basic_solver.
+      rewrite e2a_Tid.
+      arewrite (C ⊆₁ C').
+      { eapply sim_trav_step_covered_le.
+        red. eauto. }
+        by apply rf_C_in_cert_rf; try apply SRC. }
   Admitted.
 
   Lemma simrel_cert_end k S 

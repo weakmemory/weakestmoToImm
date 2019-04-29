@@ -128,6 +128,8 @@ Section SimRelEventToAction.
 
       e2a_jf  : e2a □ Sjf  ⊆ Gfurr;
       e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
+      e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
+                  Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘
     }.
 
   Section SimRelEventToActionProps. 
@@ -136,28 +138,28 @@ Section SimRelEventToAction.
     Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
     Variable WF : ES.Wf S.
     Variable SRK : simrel_cont (stable_prog_to_prog prog) S G TC.
-    Variable SRE2A : simrel_e2a.
 
-    Lemma e2a_same_Einit : 
+    Variable E2AGE : e2a □₁ SE ⊆₁ GE.
+    Variable E2ALAB : same_lab_u2v_dom SE Slab (Glab ∘ e2a).
+
+    Lemma e2a_same_Einit (SRE2A : simrel_e2a) : 
       e2a □₁ SEinit ≡₁ GEinit.
     Proof. 
       split. 
       { eapply e2a_Einit; eauto.
-        2: by apply SRE2A.
         apply stable_prog_to_prog_no_init; auto. }
       unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set. 
       unfolder. intros a [INITa GEa].
       edestruct e2a_GEinit as [e [[INITe SEe] gEQ]].
-      
-      1-2 : unfolder; eauto.  
+      1,2: unfolder; eauto.  
       eexists; splits; eauto. 
     Qed.
 
     Ltac e2a_type t :=
       intros x [y HH]; desf;
       eapply t in HH;
-        [|by apply same_lab_u2v_dom_comm; apply SRE2A];
-      split; [apply SRE2A.(e2a_GE); red; eexists; split; eauto|]; apply HH.
+        [|by apply same_lab_u2v_dom_comm; apply E2ALAB];
+      split; [apply E2AGE; red; eexists; split; eauto|]; apply HH.
     
     Lemma e2a_R : e2a □₁ (SE ∩₁ SR) ⊆₁ GE ∩₁ GR.
     Proof. e2a_type same_lab_u2v_dom_is_r. Qed.
@@ -179,16 +181,15 @@ Section SimRelEventToAction.
     Proof.
       intros x y HH. red in HH. desf.
       eapply same_lab_u2v_dom_same_loc in HH.
-      2: { apply same_lab_u2v_dom_comm. apply SRE2A. }
+      2: { apply same_lab_u2v_dom_comm. apply E2ALAB. }
       red in HH. desf. 
       red. splits.
       apply HH.
-      all: by eapply e2a_GE; eauto; eexists; eauto.
+      all: by eapply E2AGE; eauto; eexists; eauto.
     Qed.
     
-    Lemma e2a_rf : e2a □ Srf ≡ e2a □ Sjf.
+    Lemma e2a_rf (E2AEW : e2a □ Sew  ⊆ eq) : e2a □ Srf ≡ e2a □ Sjf.
     Proof.
-      destruct SRE2A.
       split.
       2: by rewrite ES.jf_in_rf; eauto.
       unfold ES.rf.
@@ -196,12 +197,14 @@ Section SimRelEventToAction.
       unfolder.
       ins. desf.
       eexists. eexists. splits; eauto.
-      eapply e2a_ew; auto. 
+      eapply E2AEW; auto. 
       eexists. eexists.
       splits.
       { eapply ES.ew_sym; eauto. }
       all: by eauto.
     Qed.
+    
+    Variable SRE2A : simrel_e2a.
 
     Lemma e2a_rs : e2a □ Srs ⊆ Grs. 
     Proof. 
@@ -224,7 +227,6 @@ Section SimRelEventToAction.
       2: by eapply e2a_same_loc; eauto.
       rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto.
       eapply e2a_sb; eauto.
-      2: by apply SRE2A.
       apply stable_prog_to_prog_no_init; auto.
     Qed.
 
@@ -237,46 +239,8 @@ Section SimRelEventToAction.
       rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
       { unfold imm_s_hb.release. basic_solver 10. }
       all: eauto.
-      2: by apply SRE2A.
       apply stable_prog_to_prog_no_init; auto.
     Qed.
-
-    Lemma e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
-                      Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘.
-    Proof.
-      inv SRE2A.
-      arewrite (Ssb ⨾ ⦗SF⦘ ⊆ Ssb ⨾ ⦗SE∩₁SF⦘).
-      { rewrite (dom_r WF.(ES.sbE)) at 1. basic_solver 10. }
-      arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
-                Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE∩₁SAcq⦘).
-      { rewrite (dom_r WF.(ES.jfE)) at 1. basic_solver 10. }
-      (* arewrite (Sjf ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘ ⊆ *)
-      (*           Sjf ⨾ ⦗DR⦘ ⨾ (Ssb ⨾ ⦗SE ∩₁ SF⦘)^? ⨾ ⦗SE ∩₁ SAcq⦘). *)
-      (* 2: { rewrite <- !seqA. *)
-      (*      do 2 rewrite collect_rel_seqi. *)
-      (*      rewrite e2a_jfDR; auto. *)
-      (*      rewrite !collect_rel_cr, !collect_rel_seqi, !collect_rel_eqv. *)
-      (*      rewrite e2a_sb; eauto; try apply SRC. *)
-      (*      rewrite e2a_F, e2a_Acq; eauto; try apply SRC. *)
-      (*      arewrite (GE ∩₁ GF ⊆₁ GF) by basic_solver. *)
-      (*      arewrite (GE ∩₁ GAcq ⊆₁ GAcq) by basic_solver. } *)
-      (* rewrite crE. rewrite !seq_union_l, !seq_union_r, !seq_id_l. *)
-      (* apply union_mori. *)
-      (* { rewrite (dom_r WF.(ES.jfD)) at 1. *)
-      (*   rewrite !seqA. *)
-      (*   arewrite (⦗SR⦘ ⨾ ⦗SE ∩₁ SAcq⦘ ⊆ ⦗SR ∩₁ SE ∩₁ SAcq⦘ ⨾ ⦗SE ∩₁ SAcq⦘) *)
-      (*     by basic_solver. *)
-      (*   arewrite (SR ∩₁ SE ∩₁ SAcq ⊆₁ DR). *)
-      (*   2: done. *)
-      (*   unfold SimRelJF.DR. *)
-      (*   basic_solver 10. } *)
-      (* rewrite (dom_r WF.(ES.jfD)) at 1. *)
-      (* rewrite !seqA. *)
-      (* arewrite (Ssb ⨾ ⦗SE ∩₁ SF⦘ ⊆ ⦗X ∩₁ e2a ⋄₁ C⦘ ⨾ Ssb ⨾ ⦗SE ∩₁ SF⦘). *)
-      (* 2: { arewrite (⦗SR⦘ ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ⊆ ⦗DR⦘). *)
-      (*      2: done. *)
-      (*      unfold SimRelJF.DR. basic_solver 10. } *)
-    Admitted.
 
     Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
     Proof. 
@@ -286,7 +250,6 @@ Section SimRelEventToAction.
       rewrite collect_rel_union.
       apply union_mori.
       { eapply e2a_sb; eauto.
-        2: by apply SRE2A.
         apply stable_prog_to_prog_no_init; auto. }
       unfold Consistency.sw.
       rewrite collect_rel_seqi.
@@ -372,7 +335,7 @@ Section SimRelEventToAction.
       2 : eapply ES.cont_sb_dom_Einit; eauto.
       rewrite set_unionC, set_collect_union.
       apply set_union_Propere.
-      { apply e2a_same_Einit. }
+      { apply e2a_same_Einit; auto. }
       by apply e2a_kE_ninit.
     Qed.
 
@@ -512,6 +475,7 @@ Section SimRelEventToActionLemmas.
 
     constructor; auto.
     3-7: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
+    3: { simpls. basic_solver. }
     2: { red. intros.
          arewrite ((Slab (prog_g_es_init prog G)) e = 
                    (Glab ∘ e2a (prog_g_es_init prog G)) e).
