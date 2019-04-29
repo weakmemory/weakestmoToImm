@@ -255,7 +255,33 @@ Section SimRelStep.
     (* rmw_cov_in_ex : Grmw ⨾ ⦗ C' ⦘ ⊆ e2a □ Srmw ⨾ ⦗ certX ⦘ *)
     { admit. }
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
-    { admit. }
+    { rewrite set_inter_union_l, id_union. relsf.
+      apply inclusion_union_l. 
+      { admit. }
+      arewrite (kE S k ∩₁ e2a S ⋄₁ C' ⊆₁ 
+                   SEinit S ∪₁ kE S k ∩₁ e2a S ⋄₁ (GTid (ktid S k) ∩₁ C')).
+      { unfolder. 
+        intros x [kSBx Cx].
+        set (HH := kSBx).
+        eapply ES.cont_sb_tid in HH; eauto.
+        edestruct HH as [INITx | TIDx].
+        { by left. }
+        right; splits; auto.
+        by rewrite <- e2a_tid. }
+      rewrite id_union. relsf.
+      apply inclusion_union_l. 
+      { rewrite ES.jf_nEinit; auto.
+        basic_solver. }
+      rewrite id_inter, <- seqA.
+      rewrite collect_rel_seqi.
+      rewrite jf_in_cert_rf; eauto.
+      rewrite collect_rel_eqv. 
+      rewrite collect_map_in_set.
+      arewrite (C' ⊆₁ D G TC' (ktid S k)).
+      { unfold D. basic_solver 10. }
+      erewrite cert_rf_D_rf; try done. 
+      1,2: apply SRCC.
+      eapply tccoh'; eauto. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply jfe_ex_iss; eauto. }
