@@ -222,30 +222,71 @@ Proof.
   eapply itrav_step_thread_ninit; eauto.
 Qed.
 
+(* TODO: move to AuxRel.v *)
+Lemma ntid_tid_set_inter s thread :
+  s ⊆₁ s ∩₁ NTid thread ∪₁ s ∩₁ Tid thread.
+Proof.
+  ins.
+  rewrite <- set_inter_union_r.
+  arewrite (NTid thread ∪₁ Tid thread ≡₁ ⊤₁).
+  2: basic_solver.
+  split; [basic_solver|].
+  unfolder. ins. apply or_comm. apply classic.
+Qed.
+
 Lemma isim_trav_step_new_e_tid_alt thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   covered TC' ∪₁ issued TC' ≡₁ 
-    (covered TC ∪₁ issued TC) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
+  (C ∪₁ I) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
 Proof. 
-  rewrite isim_trav_step_new_e_tid at 1; 
-    eauto; split; [|basic_solver].
-    rewrite set_subset_union_l. splits.
-  { rewrite <- set_inter_full_r 
-      with (s := C ∪₁ I) at 1.
-    rewrite <- tid_set_dec 
-      with (thread := thread).
-    rewrite set_unionC 
-      with (s := Tid thread) (s' := NTid thread).
-    rewrite set_inter_union_r.
-    apply set_union_Proper; auto.
-    rewrite sim_trav_step_covered_le,
-            sim_trav_step_issued_le
-              at 1.
-    2,3 : eexists; eauto.
-    done. }
-  basic_solver.
+  assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
+  rewrite isim_trav_step_new_e_tid at 1; eauto.
+  split; [|basic_solver].
+  rewrite set_subset_union_l. splits.
+  2: basic_solver.
+  rewrite <- sim_trav_step_covered_le with (C':=TC'); eauto.
+  rewrite <- sim_trav_step_issued_le with (C':=TC'); eauto.
+  apply ntid_tid_set_inter.
 Qed.
 
+Lemma isim_trav_step_new_covered_tid thread TC' 
+      (ITV : isim_trav_step G sc thread TC TC') : 
+  covered TC' ≡₁ 
+  C ∩₁ NTid thread ∪₁ covered TC' ∩₁ Tid thread.
+Proof. 
+  assert (C ⊆₁ C ∩₁ NTid thread ∪₁ C ∩₁ Tid thread) as BB.
+  { apply ntid_tid_set_inter. }
+  assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
+  split.
+  2: { rewrite sim_trav_step_covered_le with (C':=TC'); eauto.
+       basic_solver. }
+  inv ITV; simpls; unionL.
+  all: try (rewrite BB at 1; basic_solver 10).
+  all: try basic_solver 10.
+  all: try (apply WF.(wf_rmwt) in RMW; rewrite RMW).
+  all: basic_solver 10.
+Qed.
+
+Lemma isim_trav_step_new_issued_tid thread TC' 
+      (ITV : isim_trav_step G sc thread TC TC') : 
+  issued TC' ≡₁ 
+  I ∩₁ NTid thread ∪₁ issued TC' ∩₁ Tid thread.
+Proof. 
+  assert (I ⊆₁ I ∩₁ NTid thread ∪₁ I ∩₁ Tid thread) as BB.
+  { apply ntid_tid_set_inter. }
+  assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
+  split.
+  2: { rewrite sim_trav_step_issued_le with (C':=TC'); eauto.
+       basic_solver. }
+  inv ITV; simpls; unionL.
+  all: try (rewrite BB at 1; basic_solver 10).
+  1,2: basic_solver 10.
+  apply WF.(wf_rmwt) in RMW. rewrite RMW.
+  basic_solver 10.
+Qed.
+  
+Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
+  
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
