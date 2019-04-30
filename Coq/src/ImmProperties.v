@@ -286,8 +286,6 @@ Proof.
 Qed.
   
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
-  
-Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
 Proof.
