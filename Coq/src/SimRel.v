@@ -519,10 +519,10 @@ Section SimRel.
       dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ⊆₁ X ∩₁ e2a ⋄₁ C.
     Proof. 
       apply set_subset_inter_r. 
-      split; [admit|].
-      arewrite (X ∩₁ e2a ⋄₁ I ⊆₁ e2a ⋄₁ I).
-      { basic_solver. }
-      apply rel_ew_e2a_iss_cov.
+      split.
+      2: { arewrite (X ∩₁ e2a ⋄₁ I ⊆₁ e2a ⋄₁ I) by basic_solver.
+           apply rel_ew_e2a_iss_cov. }
+      admit.
     Admitted.
 
     Lemma rel_in_ex_cov_rel_sb : 

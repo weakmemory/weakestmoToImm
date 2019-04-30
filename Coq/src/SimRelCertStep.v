@@ -500,22 +500,12 @@ Section SimRelCertStep.
     edestruct lbl_step_cases as [lbl [lbl' HH]]; eauto.
     { apply SRCC. edestruct cstate_cont; [apply SRCC|]. desf. }
     desf.
-    1-4 : rewrite opt_to_list_none in ILBL_STEP.
-    { edestruct simrel_cert_load_step 
-        as [k' [e [e' [S' HH]]]]; eauto 10.
-      desf. unfold cert_step, cert_step_. eauto 20. }
-    { edestruct simrel_cert_load_step 
-        as [k' [e [e' [S' HH]]]]; eauto 10.
-      desf. unfold cert_step, cert_step_. eauto 20. }
-    { edestruct simrel_cert_store_step 
-        as [k' [e [e' [S' HH]]]]; eauto 10.
-      desf. unfold cert_step, cert_step_. eauto 20. }
-    { edestruct simrel_cert_fence_step 
-        as [k' [e [e' [S' HH]]]]; eauto 10.
-      desf. unfold cert_step, cert_step_. eauto 20. }
-    edestruct simrel_cert_update_step 
-      as [k' [e [e' [S' HH]]]]; eauto 20.
-    desf. unfold cert_step, cert_step_. eauto 20.
+    1-4: rewrite opt_to_list_none in ILBL_STEP.
+    1,2: edestruct simrel_cert_load_step; eauto.
+    3: edestruct simrel_cert_store_step; eauto.
+    4: edestruct simrel_cert_fence_step; eauto.
+    5: edestruct simrel_cert_update_step; eauto.
+    all: by desf; unfold cert_step, cert_step_; eauto 20.
   Qed.
   
   Lemma simrel_cert_step_step_ k k' e e' S S'
@@ -655,6 +645,24 @@ Section SimRelCertStep.
     done.
   Qed.
 
+  Lemma simrel_cert_step_jf_E k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    Sjf S' ⨾ ⦗SE S⦘ ≡ Sjf S.
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    red in CertSTEP_. desf; cdes CertSTEP_; desf.
+    1,3: rewrite (dom_r WF.(ES.jfE)); rewrite JF'; basic_solver.
+    all: eapply weaken_sim_add_jf in AJF; eauto.
+    all: eapply add_jf_jfE; eauto.
+  Qed.
+
   Lemma simrel_cert_step_e2a k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
@@ -785,11 +793,7 @@ Section SimRelCertStep.
     { (* TODO: for Evgenii *)
       admit. }
     assert (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S) as JFES.
-    { (* TODO: generalize to a lemma *)
-      red in CertSTEP_. desf; cdes CertSTEP_; desf.
-      1,3: rewrite JF'; basic_solver.
-      all: eapply weaken_sim_add_jf in AJF; eauto.
-      all: eapply add_jf_jfE; eauto. }
+    { eapply simrel_cert_step_jf_E; eauto. }
 
     rewrite SB'.
     rewrite seq_union_l, cr_union_l.

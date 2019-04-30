@@ -437,11 +437,8 @@ Section SimRelCertStepCoh.
     { eapply e2a_hb; eauto; try apply SRCC.
       all: apply SRE2A. }
 
-    (* TODO: introduce a lemma *)
     assert (Sjf S' ⨾ ⦗SE S⦘ ≡ Sjf S) as JFE.
-    { red in WMO_STEP_. desf; cdes WMO_STEP_.
-      1,3: rewrite JF', ES.jfE; auto; basic_solver.
-      all: erewrite add_jf_jfE; eauto. }
+    { eapply simrel_cert_step_jf_E; eauto. }
 
     assert (irreflexive
               ((e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ Shb S' ⨾ ⦗eq e⦘)
