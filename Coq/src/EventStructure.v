@@ -544,7 +544,7 @@ Proof.
   unfold minus_rel in HH.
   destruct HH as [STID nSBcrs].
   apply nSBcrs.
-  unfold clos_refl_sym; auto.
+  unfolder. auto.
 Qed.
 
 Lemma cf_sb_in_cf WF : cf ⨾ sb ⊆ cf.
@@ -563,7 +563,7 @@ Proof.
     apply sb_tid; auto.
     apply seq_eqv_l. split; auto. }
   intros DD. apply CF.
-  red in DD. desf.
+  unfolder in DD. desf.
   { generalize SB. basic_solver. }
   { assert (same_tid x y) as STIDxy.
     { eapply WF.(sb_tid). basic_solver. }
@@ -1124,7 +1124,7 @@ Proof.
   apply same_thread_cf_free in HH; auto. 
   apply seq_eqv_lr in HH.
   destruct HH as [_ [SB _]].
-  unfold clos_refl_sym in SB; desf.
+  unfolder in SB; desf.
   { assert (seqn x < seqn y) as HH; [|omega]. 
     eapply seqn_sb_alt; eauto. }
   assert (seqn y < seqn x) as HH; [|omega]. 
@@ -1375,7 +1375,7 @@ Proof.
   apply seq_eqv_l. split; auto.
   apply seq_eqv_r. split; auto.
   split; auto.
-  intros SB. red in SB. desf.
+  intros SB. unfolder in SB. desf.
   { omega. }
   apply seqn_sb_alt in SB; auto.
   omega.

@@ -8,10 +8,10 @@ Local Open Scope program_scope.
 Section AuxRel.
 
   Definition clos_sym {A : Type} (r : relation A) : relation A := 
-    fun x y => r x y \/ r y x. 
+    r ∪ r⁻¹. 
 
   Definition clos_refl_sym {A : Type} (r : relation A) : relation A := 
-    fun x y => x = y \/ r x y \/ r y x. 
+    (r ∪ r⁻¹)^?. 
 
   Definition eq_opt {A : Type} (a: option A) : A -> Prop := 
     fun b => 
@@ -857,15 +857,11 @@ Proof.
     assert (r^= z x) as Rzx. 
     { eapply PRCL; eauto; desf.  
       by apply immediate_in. }
+    unfolder in *.
     unfold clos_refl_sym in Rzx.
-    desf; eauto.  
-    apply immediateE in IMM. 
-    unfold minus_rel in IMM. 
-    destruct IMM as [Rxy NRR].
-    exfalso. apply NRR. 
-    unfolder. eauto. }
-  unfolder. 
-  intros z y' [[EQx | [x' [Rzx EQx']]] EQy].
+    desf; eauto. 
+    exfalso. eapply IMM0; eauto. }
+  unfolder.  ins. desf.
   { splits; desf.
     by apply immediate_in. }
   splits; desf. 
