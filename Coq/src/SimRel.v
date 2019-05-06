@@ -147,7 +147,7 @@ Section SimRel.
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
 
-      (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ⦘) ⊆₁ X ; *)
+      rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ X ;
     }.
 
   Definition simrel := 
@@ -520,10 +520,10 @@ Section SimRel.
     Proof. 
       apply set_subset_inter_r. 
       split.
-      2: { arewrite (X ∩₁ e2a ⋄₁ I ⊆₁ e2a ⋄₁ I) by basic_solver.
-           apply rel_ew_e2a_iss_cov. }
-      admit.
-    Admitted.
+      { by apply rel_ew_ex_iss. }
+      arewrite (X ∩₁ e2a ⋄₁ I ⊆₁ e2a ⋄₁ I) by basic_solver.
+      apply rel_ew_e2a_iss_cov.
+    Qed.
 
     Lemma rel_in_ex_cov_rel_sb : 
       Srelease ⊆ ⦗ X ∩₁ e2a ⋄₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
@@ -795,7 +795,14 @@ Section SimRelLemmas.
       basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
-    unfold prog_g_es_init, ES.init. basic_solver.
+    { unfold prog_g_es_init, ES.init. basic_solver. }
+    unfold release.
+    arewrite (is_rel (ES.lab (prog_g_es_init prog G)) ⊆₁ ∅).
+    2: basic_solver 20.
+    unfolder. ins.
+    pose proof (prog_g_es_init_lab prog G x) as AA.
+    unfold prog_g_es_init, ES.init, is_rel, mod, mode_le in *. simpls.
+    desf.
   Qed.
 
 End SimRelLemmas.
