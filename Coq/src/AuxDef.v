@@ -103,6 +103,39 @@ Proof.
   inv NODUP. intuition.
 Qed.
 
+Lemma l2f_v {A B} (l : list (A * B)) a def
+      (DEC : forall x y : A, {x = y} + {x <> y})
+      (NDP : NoDup (map fst l)) :
+  (exists b,
+      << BIN : In (a, b) l >>) \/
+  ((~ exists b, << BIN : In (a, b) l >>) /\
+   << VV  : list_to_fun DEC def l a = def >>).
+Proof.
+  induction l. 
+  { right. splits; eauto.
+    intros HH. desf. }
+  destruct a0 as [a' b'].
+  destruct (DEC a' a) as [EQ|NEQ]; subst.
+  { left. eexists. splits; eauto.
+    constructor. eauto. }
+  simpls. inv NDP.
+  apply IHl in H2. desf; [left|right].
+  { eexists. splits; eauto. }
+  splits; eauto. intros HH. desf.
+  apply H2. eauto.
+Qed.
+
+Lemma l2f_nin {A B} l (a : A) (def : B) DEC
+      (NIN : ~ exists b, In (a,b) l) :
+  list_to_fun DEC def l a = def.
+Proof.
+  induction l; simpls.
+  desf.
+  2: { apply IHl. intros HH; desf. apply NIN. eauto. }
+  exfalso. eapply NIN. eauto.
+Qed.
+
+
 Lemma indexed_list_helper_in_to_range {A} a (l : list A) m n
       (IN : In (n, a) (indexed_list_helper m l)) :
   m <= n < m + length l.
