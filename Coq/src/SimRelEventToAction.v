@@ -453,10 +453,9 @@ Section SimRelEventToActionLemmas.
       unfolder. ins. desf.
       assert
         (exists y,
-            In (y, Astore Xpln Opln l 0)
+            In (y, init_write l)
                (indexed_list
-                  (map (fun l : location => Astore Xpln Opln l 0)
-                       (g_locs G))))
+                  (map init_write (g_locs G))))
         as [y INL].
       2: { exists y. splits; auto.
            { apply indexed_list_helper_in_to_range in INL. omega. }
@@ -487,12 +486,12 @@ Section SimRelEventToActionLemmas.
     apply prog_g_es_init_act_in in CC.
     destruct CC as [l CC].
     assert (Slab (prog_g_es_init prog G) y =
-            Astore Xpln Opln l 0) as LAB.
+            init_write l) as LAB.
     { unfold prog_g_es_init, ES.init. simpls.
       apply l2f_in; desf.
       apply indexed_list_fst_nodup. }
-    desf. simpls.
-    
+    unfold init_write in *. desf. simpls.
+
     clear -CC.
     apply In_map_snd in CC.
     rewrite indexed_list_map_snd in CC; eauto.

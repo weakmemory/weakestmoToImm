@@ -134,21 +134,19 @@ Qed.
 Lemma prog_g_es_init_act_in prog G
       e (ACT : ES.acts_set (prog_g_es_init prog G) e) :
   exists l,
-    In (e, Astore Xpln Opln l 0)
+    In (e, init_write l)
        (indexed_list
-          (map (fun l : location => Astore Xpln Opln l 0)
-               (g_locs G))).
+          (map init_write (g_locs G))).
 Proof.
   ins.
   assert
     (exists b,
         In (e, b) (indexed_list
-                     (map (fun l : location => Astore Xpln Opln l 0)
-                          (g_locs G))))
+                     (map init_write (g_locs G))))
     as [b IN].
   { apply indexed_list_range. desf. }
 
-  assert (In b (map (fun l : location => Astore Xpln Opln l 0) (g_locs G)))
+  assert (In b (map init_write (g_locs G)))
     as BIN.
   { clear -IN.
     apply In_map_snd in IN.
@@ -196,7 +194,7 @@ Lemma prog_g_es_init_wf G prog (nInitProg : ~ IdentMap.In tid_init prog) :
   ES.Wf (prog_g_es_init prog G).
 Proof.
   assert
-    (NoDup (map (fun l0 : location => Astore Xpln Opln l0 0) (g_locs G)))
+    (NoDup (map init_write (g_locs G)))
     as NNDD.
   { apply nodup_map.
     2: { ins. intros HH. inv HH. }
@@ -215,7 +213,7 @@ Proof.
     destruct SY as [SY _]. apply prog_g_es_init_act_in in SY.
     desf.
     assert (l0 = l); subst.
-    { unfold loc in *.
+    { unfold loc, init_write in *.
       erewrite l2f_in in EQ; eauto.
       2: by apply indexed_list_fst_nodup.
       erewrite l2f_in in EQ; eauto.
@@ -232,7 +230,7 @@ Proof.
     set (CA := EA). apply prog_g_es_init_act_in in CA. desf.
     set (CB := EB). apply prog_g_es_init_act_in in CB. desf.
     assert (l0 = l); subst.
-    { unfold loc in *.
+    { unfold loc, init_write in *.
       erewrite l2f_in in WB; eauto.
       2: by apply indexed_list_fst_nodup.
       erewrite l2f_in in WB; eauto.

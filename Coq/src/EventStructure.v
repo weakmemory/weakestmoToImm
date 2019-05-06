@@ -22,6 +22,8 @@ Record t :=
      }.
 End Language.
 
+Definition init_write l := Astore Xpln Opln l 0.
+
 Module ES.
 
 Record t :=
@@ -111,9 +113,7 @@ Definition cont_cf_dom S c :=
 
 (* An initial event structure. *)
 Definition init loc_list conts :=
-  let loc_labs :=
-      map (fun l => Astore Xpln Opln l 0) loc_list 
-  in
+  let loc_labs := map init_write loc_list in
   let acts := (fun e => e < length loc_labs) in
   {| next_act := length loc_labs ;
      lab  := list_to_fun Nat.eq_dec
@@ -211,7 +211,7 @@ Record Wf :=
       init_loc l ;
     
     init_lab : forall e (INIT : Einit e),
-      exists l, lab e = Astore Xpln Opln l 0 ;
+      exists l, lab e = init_write l ;
     init_uniq : inj_dom Einit loc ;
     
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
