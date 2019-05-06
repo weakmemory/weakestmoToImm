@@ -325,3 +325,26 @@ Proof.
   eapply steps_same_instrs; eauto.
   apply eps_steps_in_steps. eauto.
 Qed.
+
+Lemma prog_g_es_init_lab prog G e :
+  << ELAB : ES.lab (prog_g_es_init prog G) e = Afence Orlx >> \/
+  exists l,
+  << ELAB : ES.lab (prog_g_es_init prog G) e = init_write l >>.
+Proof.
+  unfold prog_g_es_init, ES.init. simpls.
+  unnw.
+  edestruct @l2f_v with (A:=nat)
+                        (l:=indexed_list (map init_write (g_locs G)))
+                        (a:=e)
+                        (DEC:=Nat.eq_dec).
+  { apply indexed_list_fst_nodup. }
+  
+  2: { desf. left. eauto. }
+  desf. right.
+  generalize dependent e.
+  unfold indexed_list in *.
+  remember 0 as n. clear Heqn.
+  generalize dependent n.
+  induction (g_locs G); simpls.
+  ins. desf; eauto.
+Qed.
