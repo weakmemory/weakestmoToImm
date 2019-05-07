@@ -1048,8 +1048,27 @@ Section SimRelCertStep.
       assert (C (e2a S' x)) as CX.
       { apply ISN. eexists.
         apply seq_eqv_r. split; eauto. }
+      assert (ES.cont_sb_dom S k x) as SBDOMX.
+      { match goal with
+        | [ H: (Ssb S') x (ES.next_act S) |- _] => rename H into AA
+        end.
+        apply SB' in AA.
+        destruct AA as [AA|[AA|AA]].
+        { apply WFS.(ES.sbE) in AA.
+          destruct_seq AA as [PP QQ].
+          red in QQ. omega. }
+        { by destruct AA. }
+        destruct AA as [AA QQ]. by red in QQ. }
+      assert (SE S x) as EX.
+      { eapply kE_inE; eauto. }
+      eapply cov_in_ex; eauto.
+      split; auto.
+      red.
+      arewrite (e2a S x = e2a S' x).
+      2: done.
+      symmetry.
+      eapply basic_step_e2a_eq_dom; eauto. }
       (* TODO: need  e2a S ⋄₁ covered TC ∩₁ ES.cont_sb_dom S k ⊆ X *)
-      admit. }
     admit.
   Admitted.
 
