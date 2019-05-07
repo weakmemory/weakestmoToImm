@@ -1091,7 +1091,6 @@ Section SimRelCertStep.
       2: done.
       symmetry.
       eapply basic_step_e2a_eq_dom; eauto. }
-      (* TODO: need  e2a S ⋄₁ covered TC ∩₁ ES.cont_sb_dom S k ⊆ X *)
     admit.
   Admitted.
 
