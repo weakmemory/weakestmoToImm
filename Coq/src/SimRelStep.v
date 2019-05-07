@@ -166,6 +166,7 @@ Section SimRelStep.
       red. eauto. }
     constructor; auto.
     { apply XkTIDCOV. }
+    { admit. }
     { intros x [kEx nINITx].
       erewrite ex_cov_iss_lab; try apply SRC.
       2 : { apply XkTIDCOV in kEx. 
