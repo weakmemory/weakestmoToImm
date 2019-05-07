@@ -918,6 +918,8 @@ Section SimRelCertStep.
     { eapply simrel_cert_step_step_; eauto. }
     assert (ES.Wf S') as WFS'.
     { eapply simrel_cert_step_wf; eauto. }
+    assert (simrel_e2a S' G sc) as SRE2A.
+    { eapply simrel_cert_step_e2a; eauto. }
     cdes BSTEP_.
 
     arewrite (X ∩₁ e2a S' ⋄₁ I ⊆₁ X ∩₁ e2a S ⋄₁ I).
@@ -981,37 +983,73 @@ Section SimRelCertStep.
                sim_ews TC X (ES.next_act S) S S' × eq (ES.next_act S)).
         erewrite CC. basic_solver. }
       rewrite transp_cross.
-      arewrite (release S' ⊆ release S' ∩ eq ∪ release S' \ eq).
-      { unfolder. ins. destruct (classic (x = y)); basic_solver. }
-      rewrite !seq_union_l.
-      rewrite dom_union. unionL.
-      { unfold sim_ews. rewrite releaseD; auto.
-        unfolder. ins. desf.
-        { type_solver. }
-        exfalso.
-        apply WFS.(ES.ewE) in wEWI.
-        destruct_seq wEWI as [SEY SEY'].
+      arewrite
+        (release S' ⨾ Sew S' ∩
+                 eq (ES.next_act S) × sim_ews TC X (ES.next_act S) S S' ⊆
+         release S' ⨾ <| eq (ES.next_act S) |> ⨾ Sew S' ∩
+                 eq (ES.next_act S) × sim_ews TC X (ES.next_act S) S S').
+      { basic_solver 10. }
+
+      unfold Consistency.release, Consistency.rs.
+      rewrite !seqA.
+      arewrite ((Sjf S' ⨾ Srmw S')＊ ⨾ ⦗eq (ES.next_act S)⦘ ⊆
+                ⦗eq (ES.next_act S)⦘).
+      { rewrite rtE, !seq_union_l, seq_id_l. unionL; [basic_solver|].
+        rewrite ct_end, !seqA.
+        arewrite (Srmw S' ⨾ ⦗eq (ES.next_act S)⦘ ⊆ ∅₂).
+        2: basic_solver.
+        rewrite RMW'. unfold rmw_delta, eq_opt.
+        rewrite (dom_r WFS.(ES.rmwE)). unfold ES.acts_set.
+        unfolder. ins. desf. omega. }
+      arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾ ⦗SE S' ∩₁ SW S'⦘
+                          ⨾ (Ssb S' ∩ same_loc S')^? ⨾ ⦗SW S'⦘ ⨾
+                          ⦗eq (ES.next_act S)⦘ ⊆
+                ⦗SRel S'⦘ ⨾ ⦗eq (ES.next_act S)⦘ ∪
+                ⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪
+                            ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘ ⨾
+                   ⦗eq (ES.next_act S)⦘).
+      { rewrite !crE.
+        rewrite !seq_union_l, !seq_union_r, !seq_id_l.
+        unionL.
+        1-3: basic_solver 10.
+        rewrite !seqA.
+        arewrite_id ⦗SE S' ∩₁ SW S'⦘. rewrite !seq_id_l.
+        arewrite (Ssb S' ∩ same_loc S' ⊆ Ssb S').
+        arewrite (Ssb S' ⨾ Ssb S' ⊆ Ssb S').
+        { apply rewrite_trans. apply WFS'. }
+        basic_solver 10. }
+
+      arewrite
+      (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘
+                 ⊆ Ssb S' ∩ (e2a S' ⋄ fwbob G)).
+      { apply inclusion_inter_r.
+        { basic_solver. }
+        rewrite map_collect_id with (f:=e2a S').
+        apply map_rel_mori; auto.
+        rewrite WFS'.(ES.sbE).
+        (* TODO: trivial *)
+        admit. }
+ 
+      unfold sim_ews. unfolder. ins. desf.
+      { exfalso.
         match goal with
         | [H : (Sew S') (ES.next_act S) y |- _ ] => rename H into AA
         end.
+        apply WFS.(ES.ewE) in wEWI.
+        destruct_seq wEWI as [SEY SEY'].
         apply WFS'.(ES.ewm) in AA.
         destruct AA as [|[AA QQ]]; subst.
         { red in SEY. omega. }
         unfold is_only_rlx in *.
         mode_solver. }
-      (* TODO: continue from here *)
-
-      (* unfold sim_ews. *)
-      (* unfolder. ins. desf. *)
-      (* assert ((e2a S' ⋄₁ I) (ES.next_act S) -> *)
-      (*         dom_rel (release S' ⨾ ⦗eq (ES.next_act S)⦘) ⊆₁ X) *)
-      (*   as DD. *)
-      (* { intros AA. *)
-      (*   unfold Consistency.release, Consistency.rs. *)
-      (*   admit. } *)
-      (* eapply DD. *)
-      (* 2: { eexists. apply seq_eqv_r. split; eauto. } *)
-      (* red. by rewrite <- wsE2Aeq. } *)
+      assert (issuable G TC (e2a S' (ES.next_act S))) as ISN.
+      { eapply issued_in_issuable; [by apply SRCC|].
+          by rewrite <- wsE2Aeq. }
+      assert (C (e2a S' x)) as CX.
+      { apply ISN. eexists.
+        apply seq_eqv_r. split; eauto. }
+      (* TODO: need  e2a S ⋄₁ covered TC ∩₁ ES.cont_sb_dom S k ⊆ X *)
+      admit. }
     admit.
   Admitted.
 

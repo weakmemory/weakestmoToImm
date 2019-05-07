@@ -647,6 +647,14 @@ Proof.
   splits; ins; splits; desf. 
 Qed.
 
+Lemma seq_eqv_inter_rr {A} (S : A -> Prop) (r r' : relation A) :
+        r ∩ (r' ⨾ ⦗S⦘) ≡ r ∩ r' ⨾ ⦗S⦘.
+Proof. basic_solver. Qed.
+
+Lemma map_collect_id {A B} (f : A -> B) (r : relation A) :
+  r ⊆ f ⋄ (f □ r).
+Proof. basic_solver 10. Qed.
+
 Lemma set_subset_inter_l (LL : s ⊆₁ s'' \/ s' ⊆₁ s'') :
   s ∩₁ s' ⊆₁ s''.
 Proof.
