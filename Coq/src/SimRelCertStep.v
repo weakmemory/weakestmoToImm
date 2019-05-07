@@ -916,6 +916,8 @@ Section SimRelCertStep.
     { econstructor; eauto. }
     assert (step_ e e' S S') as WMO_STEP_.
     { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S') as WFS'.
+    { eapply simrel_cert_step_wf; eauto. }
     cdes BSTEP_.
 
     arewrite (X ∩₁ e2a S' ⋄₁ I ⊆₁ X ∩₁ e2a S ⋄₁ I).
@@ -953,31 +955,63 @@ Section SimRelCertStep.
     { erewrite add_jf_releaseE; eauto; [basic_solver|].
       eapply weaken_sim_add_jf; eauto. }
 
-    { cdes AEW. rewrite EW'.
+    { cdes AEW.
+      arewrite (Sew S' ⊆ Sew S' ∩ Sew S').
+      rewrite EW' at 2.
+      rewrite inter_union_r.
       rewrite !seq_union_l, !seq_union_r.
       rewrite dom_union.
       unionL.
-      { apply BB.
+      { arewrite (Sew S' ∩ Sew S ⊆ Sew S).
+        apply BB.
         erewrite step_same_jf_releaseE; eauto; [basic_solver|].
         rewrite RMW'. unfold rmw_delta, eq_opt. basic_solver. }
       unfold ew_delta.
+      rewrite inter_union_r.
       rewrite !seq_union_l, !seq_union_r. rewrite dom_union. unionL.
-      { erewrite CC. basic_solver. }
+      { arewrite (Sew S' ∩ eq (ES.next_act S) × eq (ES.next_act S) ⊆
+                  eq (ES.next_act S) × eq (ES.next_act S)).
+        erewrite CC. basic_solver. }
       unfold clos_sym.
+      rewrite inter_union_r.
       rewrite !seq_union_l, !seq_union_r.
       rewrite dom_union. unionL.
-      { erewrite CC. basic_solver. }
-      rewrite transp_cross. unfold sim_ews.
-      unfolder. ins. desf.
-      assert ((e2a S' ⋄₁ I) (ES.next_act S) ->
-              dom_rel (release S' ⨾ ⦗eq (ES.next_act S)⦘) ⊆₁ X)
-        as DD.
-      { intros AA.
-        unfold Consistency.release, Consistency.rs.
-        admit. }
-      eapply DD.
-      2: { eexists. apply seq_eqv_r. split; eauto. }
-      red. by rewrite <- wsE2Aeq. }
+      { arewrite
+          (Sew S' ∩ sim_ews TC X (ES.next_act S) S S' × eq (ES.next_act S) ⊆
+               sim_ews TC X (ES.next_act S) S S' × eq (ES.next_act S)).
+        erewrite CC. basic_solver. }
+      rewrite transp_cross.
+      arewrite (release S' ⊆ release S' ∩ eq ∪ release S' \ eq).
+      { unfolder. ins. destruct (classic (x = y)); basic_solver. }
+      rewrite !seq_union_l.
+      rewrite dom_union. unionL.
+      { unfold sim_ews. rewrite releaseD; auto.
+        unfolder. ins. desf.
+        { type_solver. }
+        exfalso.
+        apply WFS.(ES.ewE) in wEWI.
+        destruct_seq wEWI as [SEY SEY'].
+        match goal with
+        | [H : (Sew S') (ES.next_act S) y |- _ ] => rename H into AA
+        end.
+        apply WFS'.(ES.ewm) in AA.
+        destruct AA as [|[AA QQ]]; subst.
+        { red in SEY. omega. }
+        unfold is_only_rlx in *.
+        mode_solver. }
+      (* TODO: continue from here *)
+
+      (* unfold sim_ews. *)
+      (* unfolder. ins. desf. *)
+      (* assert ((e2a S' ⋄₁ I) (ES.next_act S) -> *)
+      (*         dom_rel (release S' ⨾ ⦗eq (ES.next_act S)⦘) ⊆₁ X) *)
+      (*   as DD. *)
+      (* { intros AA. *)
+      (*   unfold Consistency.release, Consistency.rs. *)
+      (*   admit. } *)
+      (* eapply DD. *)
+      (* 2: { eexists. apply seq_eqv_r. split; eauto. } *)
+      (* red. by rewrite <- wsE2Aeq. } *)
     admit.
   Admitted.
 
