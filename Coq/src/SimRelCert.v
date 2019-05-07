@@ -140,18 +140,14 @@ Section SimRelCert.
 
   Notation "'certX'" := ((X ∩₁ SNTid ktid) ∪₁ kE) (only parsing).
 
-  Definition Kstate : cont_label * ProgToExecution.state -> Prop :=
-    fun l =>
-      match l with
-      | (ll, lstate) =>
-        exists (st : (thread_lts (ES.cont_thread S ll)).(Language.state)),
-          ⟪ SSTATE : lstate = st ⟫ /\
-          ⟪ KK     : K (ll, existT _ _ st) ⟫
-      end.
+  Definition Kstate (ll : cont_label) (lstate : ProgToExecution.state) :=
+    exists (st : (thread_lts (ES.cont_thread S ll)).(Language.state)),
+      ⟪ SSTATE : lstate = st ⟫ /\
+      ⟪ KK     : K (ll, existT _ _ st) ⟫.
 
   Record simrel_cstate := 
     { cstate_stable : stable_state st';
-      cstate_cont : Kstate (k, st);
+      cstate_cont : Kstate k st;
       cstate_reachable : (lbl_step ktid)＊ st st';
     }.
 
@@ -164,6 +160,7 @@ Section SimRelCert.
       cstate : simrel_cstate ; 
 
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
+      cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
