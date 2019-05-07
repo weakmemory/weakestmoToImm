@@ -920,6 +920,12 @@ Section SimRelCertStep.
     { eapply simrel_cert_step_wf; eauto. }
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
+    assert (e2a S' □₁ SE S' ⊆₁ GE) as E2AGE.
+    { eapply simrel_cert_step_e2a_GE; eauto. }
+    assert (same_lab_u2v_dom (SE S') (Slab S') (Basics.compose Glab (e2a S')))
+      as E2ALAB.
+    { eapply simrel_cert_step_e2a_lab; eauto. }
+
     cdes BSTEP_.
 
     arewrite (X ∩₁ e2a S' ⋄₁ I ⊆₁ X ∩₁ e2a S ⋄₁ I).
@@ -1027,9 +1033,26 @@ Section SimRelCertStep.
         rewrite map_collect_id with (f:=e2a S').
         apply map_rel_mori; auto.
         rewrite WFS'.(ES.sbE).
-        (* TODO: trivial *)
-        admit. }
- 
+        arewrite
+          (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ ⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘ ∪
+           ⦗SW S'⦘ ⨾ (⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘) ∩ same_loc S') ⨾ ⦗SW S'⦘ ⊆
+           ⦗SE S' ∩₁ SRel S'⦘ ⨾ (⦗SE S' ∩₁ SF S'⦘ ⨾ Ssb S' ∪
+           ⦗SE S' ∩₁ SW S'⦘ ⨾ Ssb S' ∩ restr_rel (SE S') (same_loc S')) ⨾
+             ⦗SE S' ∩₁ SW S'⦘).
+        { basic_solver 20. }
+        rewrite !collect_rel_seqi.
+        rewrite !collect_rel_union, !collect_rel_seqi.
+        rewrite !collect_rel_interi.
+        rewrite !collect_rel_eqv.
+        rewrite e2a_Rel; eauto.
+        rewrite e2a_F; eauto.
+        rewrite e2a_W; eauto.
+        rewrite e2a_same_loc; eauto.
+        rewrite e2a_sb; eauto; try apply SRCC.
+        2: { apply stable_prog_to_prog_no_init.
+             apply SRCC. }
+        unfold fwbob. mode_solver 40. }
+
       unfold sim_ews. unfolder. ins. desf.
       { exfalso.
         match goal with
