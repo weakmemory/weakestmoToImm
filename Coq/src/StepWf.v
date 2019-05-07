@@ -48,6 +48,7 @@ Notation "'FR' S" := (F S ∪₁ R S) (at level 10).
 Notation "'FW' S" := (F S ∪₁ W S) (at level 10).
 
 Notation "'Pln' S" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
+Notation "'ORlx' S" := (fun a => is_true (is_only_rlx S.(ES.lab) a)) (at level 10).
 Notation "'Rlx' S" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
 Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
@@ -150,7 +151,7 @@ Lemma step_same_ew_ewm e e' S S'
       (wfE: ES.Wf S)
       (BSTEP : basic_step e e' S S') 
       (EW' : ew S' ≡ ew S) :
-  ew S' ⊆ (Rlx S' × Rlx S')^?. 
+  ew S' ⊆ (ORlx S' × ORlx S')^?.
 Proof. 
   rewrite EW'. 
   intros x y EW.
@@ -164,7 +165,7 @@ Proof.
   destruct EW as [EQ | [xRlx yRlx]].
   { basic_solver. }
   unfolder. right. 
-  unfold is_rlx, basic.Events.mode_le. 
+  unfold is_only_rlx. 
   erewrite basic_step_mod_eq_dom
     with (S' := S'); eauto.
   erewrite basic_step_mod_eq_dom
@@ -176,7 +177,7 @@ Lemma step_add_ew_ewm ews w' e e' S S'
       (BSTEP : basic_step e e' S S') 
       (AEW : add_ew ews w' S S') 
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  ew S' ⊆ (Rlx S' × Rlx S')^?. 
+  ew S' ⊆ (ORlx S' × ORlx S')^?.
 Proof. 
   cdes AEW.
   rewrite EW'.
@@ -194,36 +195,36 @@ Proof.
     destruct EW as [EQ | [xRlx yRlx]].
     { basic_solver. }
     unfolder. right. 
-    unfold is_rlx, basic.Events.mode_le. 
+    unfold is_only_rlx. 
     erewrite basic_step_mod_eq_dom
       with (S' := S'); eauto.
     erewrite basic_step_mod_eq_dom
       with (S' := S'); eauto. }
   { basic_solver. }
   { intros x y [xEWS EQy]. subst y.
-    assert (Rlx S' x).
-    { unfold is_rlx, basic.Events.mode_le. 
+    assert (ORlx S' x) as ORLXX.
+    { unfold is_only_rlx. 
       erewrite basic_step_mod_eq_dom
         with (S' := S'); eauto. }
     unfolder. right. split; auto.
     destruct 
-      (excluded_middle_informative (Rlx S' w'))
+      (excluded_middle_informative (ORlx S' w'))
       as [wRlx | nwRlx]; auto.
     exfalso. apply nwRlx.
-    unfold is_rlx, basic.Events.mode_le. 
+    unfold is_only_rlx. 
     apply ewsMOD in xEWS.
     red in xEWS. by rewrite xEWS. }
   intros x y [EQx yEWS]. subst x.
-  assert (Rlx S' y).
-  { unfold is_rlx, basic.Events.mode_le. 
+  assert (ORlx S' y).
+  { unfold is_only_rlx.
     erewrite basic_step_mod_eq_dom
       with (S' := S'); eauto. }
   unfolder. right. split; auto.
   destruct 
-    (excluded_middle_informative (Rlx S' w'))
+    (excluded_middle_informative (ORlx S' w'))
     as [wRlx | nwRlx]; auto.
   exfalso. apply nwRlx.
-  unfold is_rlx, basic.Events.mode_le. 
+  unfold is_only_rlx. 
   apply ewsMOD in yEWS.
   red in yEWS. by rewrite yEWS.
 Qed.    

@@ -192,6 +192,7 @@ Notation "'FW'" := (F ∪₁ W).
 Notation "'R_ex'" := (fun a => is_true (R_ex lab a)).
 
 Notation "'Pln'" := (is_only_pln lab).
+Notation "'ORlx'" := (is_only_rlx lab).
 Notation "'Rlx'" := (is_rlx lab).
 Notation "'Rel'" := (is_rel lab).
 Notation "'Acq'" := (is_acq lab).
@@ -255,7 +256,7 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
-    ewm : ew ⊆ (Rlx × Rlx)^? ;
+    ewm : ew ⊆ (ORlx × ORlx)^? ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
     ewc : ew ⊆ cf^? ; 

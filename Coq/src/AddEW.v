@@ -42,6 +42,7 @@ Notation "'FR' S" := (F S ∪₁ R S) (at level 10).
 Notation "'FW' S" := (F S ∪₁ W S) (at level 10).
 
 Notation "'Pln' S" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
+Notation "'ORlx' S" := (fun a => is_true (is_only_rlx S.(ES.lab) a)) (at level 10).
 Notation "'Rlx' S" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
 Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
@@ -69,7 +70,7 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ wW' : W S' w' ⟫ /\
   ⟪ ewsE : ews ⊆₁ E S ⟫ /\
   ⟪ ewsW : ews ⊆₁ W S ⟫ /\
-  ⟪ ewsRLX : ews ⊆₁ Rlx S ⟫ /\
+  ⟪ ewsRLX : ews ⊆₁ ORlx S ⟫ /\
   ⟪ ewsMOD : ews ⊆₁ same_mod S' w' ⟫ /\
   ⟪ ewsLOC : ews ⊆₁ same_loc S' w' ⟫ /\
   ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
