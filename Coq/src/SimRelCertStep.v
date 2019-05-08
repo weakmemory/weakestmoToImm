@@ -1294,6 +1294,30 @@ Section SimRelCertStep.
       sin_rewrite release_part_e2a_fwbob; eauto.
       eapply release_part_sim_ews_in_ex; eauto. }
     (* TODO : continue from here *)
+
+    (* rewrite !seqA. *)
+    (* arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾ *)
+    (*             ⦗SE S' ∩₁ SW S'⦘ ⨾ (Ssb S' ∩ same_loc S')^? ⨾ *)
+    (*             ⦗SW S'⦘ ⨾ (Sjf S' ⨾ Srmw S')＊ ⊆ *)
+    (*           release S'). *)
+    (* assert (SE S w) as SEW. *)
+    (* { admit. } *)
+    (* arewrite (release S' ⨾ eq w × eq (ES.next_act S) ⊆ *)
+    (*           release S' ;; <|SE S|> ⨾ eq w × eq (ES.next_act S)). *)
+    (* { arewrite (eq w ⊆₁ SE S ∩₁ eq w). *)
+    (*   2: basic_solver 10. *)
+    (*   apply set_subset_inter_r. split; [|done]. *)
+    (*   basic_solver. } *)
+    (* rewrite <- !seqA. *)
+    (* erewrite simrel_cert_step_same_releaseE; eauto. *)
+    (* rewrite !seqA. *)
+    (* arewrite (⦗SE S⦘ ⨾ eq w × eq (ES.next_act S) ⨾ *)
+    (*             eq (ES.next_act S) × eq w' ⨾ ⦗eq w'⦘ ⨾ *)
+    (*             Sew S' ∩ eq w' × sim_ews TC X w' S S' ⊆ *)
+    (*           Sew S). *)
+    (* 2: by apply SRCC. *)
+    (* unfold sim_ews. *)
+    (* unfolder. ins. desf. *)
   Admitted.
 
   Lemma simrel_cert_step_rel_ew_ex_iss k k' e e' S S'
