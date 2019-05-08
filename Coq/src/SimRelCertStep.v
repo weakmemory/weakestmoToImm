@@ -1121,10 +1121,16 @@ Section SimRelCertStep.
     assert (same_lab_u2v_dom (SE S') (Slab S') (Basics.compose Glab (e2a S')))
       as E2ALAB.
     { eapply simrel_cert_step_e2a_lab; eauto. }
-
+    
     cdes BSTEP_. subst.
-
     cdes CertSTEP_U. cdes AEW.
+
+    assert (~ SE S w') as NSEW'.
+    { intros HH. red in HH.
+      unfold opt_ext in *. desf. omega. }
+
+    assert (~ SE S (ES.next_act S)) as NSER.
+    { intros HH. red in HH. omega. }
 
     assert (forall r, r × eq w' ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘ ⊆ ∅₂) as DD.
     { ins.
@@ -1132,9 +1138,7 @@ Section SimRelCertStep.
       arewrite (eq w' ∩₁ (X ∩₁ e2a S ⋄₁ I) ⊆₁ ∅).
       2: basic_solver.
       arewrite (X ⊆₁ SE S) by apply SRCC.
-      unfold ES.acts_set.
-      unfold opt_ext in *. desf.
-      unfolder. ins. desf. omega. }
+      basic_solver. }
 
     arewrite (Sew S' ⊆ Sew S' ∩ Sew S').
     rewrite EW' at 2.
@@ -1162,10 +1166,45 @@ Section SimRelCertStep.
       (release S' ⨾ Sew S' ∩ eq w' × sim_ews TC X w' S S' ⊆
        release S' ⨾ <| eq w' |> ⨾ Sew S' ∩ eq w' × sim_ews TC X w' S S').
     { basic_solver 10. }
-    (* TODO: continue from here *)
 
-    (* unfold Consistency.release, Consistency.rs. *)
-    (* rewrite !seqA. *)
+    unfold Consistency.release, Consistency.rs.
+    rewrite !seqA.
+    arewrite ((Sjf S' ⨾ Srmw S')＊ ⨾ ⦗eq w'⦘ ⊆
+              ((Sjf S' ⨾ Srmw S')＊ ⨾
+               eq w × eq (ES.next_act S) ⨾ eq (ES.next_act S) × eq w')^? ⨾
+              ⦗eq w'⦘).
+    { rewrite <- cr_of_ct at 1.
+      rewrite !crE. rewrite !seq_union_l.
+      apply union_mori; [done|].
+      rewrite ct_end at 1. rewrite !seqA.
+      rewrite RMW' at 2.
+      rewrite !seq_union_l, !seq_union_r.
+      unionL.
+      { arewrite (Srmw S ⨾ ⦗eq w'⦘ ⊆ ∅₂).
+        2: basic_solver.
+        rewrite WFS.(ES.rmwE). basic_solver. }
+      unfold rmw_delta, eq_opt; desf.
+      arewrite (Sjf S' ⨾ eq (ES.next_act S) × eq w' ⊆
+                eq w × eq (ES.next_act S) ⨾ eq (ES.next_act S) × eq w').
+      2: done.
+      cdes AJF. rewrite JF'. unfold jf_delta.
+      rewrite !seq_union_l.
+      unionL; [|basic_solver 10].
+      rewrite WFS.(ES.jfE). basic_solver 10. }
+    rewrite crE
+      with (r:=(Sjf S' ⨾ Srmw S')＊ ⨾ eq w × eq (ES.next_act S)
+                                 ⨾ eq (ES.next_act S) × eq w').
+    rewrite !seq_union_l, !seq_union_r, seq_id_l.
+    rewrite dom_union.
+    unionL.
+    (* TODO : continue from here *)
+
+    (* arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? *)
+    (*                     ⨾ ⦗SE S' ∩₁ SW S'⦘ *)
+    (*                     ⨾ (Ssb S' ∩ same_loc S')^? ⨾ ⦗SW S'⦘ ⊆ release S'). *)
+    (* { hahn_frame. } *)
+
+
     (* arewrite ((Sjf S' ⨾ Srmw S')＊ ⨾ ⦗eq (ES.next_act S)⦘ ⊆ *)
     (*                             ⦗eq (ES.next_act S)⦘). *)
     (* { rewrite rtE, !seq_union_l, seq_id_l. unionL; [basic_solver|]. *)
