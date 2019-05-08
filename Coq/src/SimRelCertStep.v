@@ -934,6 +934,140 @@ Section SimRelCertStep.
     arewrite_id ⦗SE S⦘. rewrite seq_id_l.
     apply SRCC.
   Qed.
+  
+  Lemma release_part_alt S (WFS : ES.Wf S) :
+    ⦗SRel S⦘ ⨾ (⦗SF S⦘ ⨾ Ssb S)^? ⨾ ⦗SE S ∩₁ SW S⦘ ⨾
+    (Ssb S ∩ same_loc S)^? ⨾ ⦗SW S⦘ ⊆
+    ⦗SRel S⦘ ∪
+    ⦗SRel S⦘ ⨾ (⦗SF S⦘ ⨾ Ssb S ∪ ⦗SW S⦘ ⨾ Ssb S ∩ same_loc S) ⨾
+      ⦗SW S⦘.
+  Proof.
+    rewrite !crE.
+    rewrite !seq_union_l, !seq_union_r, !seq_id_l.
+    unionL.
+    1-3: basic_solver 10.
+    rewrite !seqA.
+    arewrite_id ⦗SE S ∩₁ SW S⦘. rewrite !seq_id_l.
+    arewrite (Ssb S ∩ same_loc S ⊆ Ssb S).
+    arewrite (Ssb S ⨾ Ssb S ⊆ Ssb S).
+    { apply rewrite_trans. apply WFS. }
+    basic_solver 10.
+  Qed.
+
+  Lemma release_part_e2a_fwbob k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    ⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘
+      ⊆ Ssb S' ∩ (e2a S' ⋄ fwbob G).
+  Proof.
+    cdes CertSTEP.
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (step_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.Wf S') as WFS'.
+    { eapply simrel_cert_step_wf; eauto. }
+    assert (simrel_e2a S' G sc) as SRE2A.
+    { eapply simrel_cert_step_e2a; eauto. }
+    assert (e2a S' □₁ SE S' ⊆₁ GE) as E2AGE.
+    { eapply simrel_cert_step_e2a_GE; eauto. }
+    assert (same_lab_u2v_dom (SE S') (Slab S') (Basics.compose Glab (e2a S')))
+      as E2ALAB.
+    { eapply simrel_cert_step_e2a_lab; eauto. }
+
+    apply inclusion_inter_r.
+    { basic_solver. }
+    rewrite map_collect_id with (f:=e2a S').
+    apply map_rel_mori; auto.
+    rewrite WFS'.(ES.sbE).
+    arewrite
+      (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ ⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘ ∪
+       ⦗SW S'⦘ ⨾ (⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘) ∩ same_loc S') ⨾ ⦗SW S'⦘ ⊆
+       ⦗SE S' ∩₁ SRel S'⦘ ⨾ (⦗SE S' ∩₁ SF S'⦘ ⨾ Ssb S' ∪
+       ⦗SE S' ∩₁ SW S'⦘ ⨾ Ssb S' ∩ restr_rel (SE S') (same_loc S')) ⨾
+         ⦗SE S' ∩₁ SW S'⦘).
+    { basic_solver 20. }
+    rewrite !collect_rel_seqi.
+    rewrite !collect_rel_union, !collect_rel_seqi.
+    rewrite !collect_rel_interi.
+    rewrite !collect_rel_eqv.
+    rewrite e2a_Rel; eauto.
+    rewrite e2a_F; eauto.
+    rewrite e2a_W; eauto.
+    rewrite e2a_same_loc; eauto.
+    rewrite e2a_sb; eauto; try apply SRCC.
+    2: { apply stable_prog_to_prog_no_init.
+         apply SRCC. }
+    unfold fwbob. mode_solver 40.
+  Qed.
+
+  Lemma release_part_sim_ews_in_ex k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
+        q (NESQ : ~ SE S q) :
+    dom_rel
+      ((⦗SRel S'⦘ ∪ Ssb S' ∩ (e2a S' ⋄ fwbob G)) ⨾ ⦗eq q⦘ ⨾
+        Sew S' ∩ eq q × sim_ews TC X q S S' ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘)
+      ⊆₁ X.
+  Proof.
+    cdes CertSTEP.
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ES.Wf S') as WFS'.
+    { eapply simrel_cert_step_wf; eauto. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (e2a S' □₁ SE S' ⊆₁ GE) as E2AGE.
+    { eapply simrel_cert_step_e2a_GE; eauto. }
+    assert (same_lab_u2v_dom (SE S') (Slab S') (Basics.compose Glab (e2a S')))
+      as E2ALAB.
+    { eapply simrel_cert_step_e2a_lab; eauto. }
+    cdes BSTEP_.
+    ins. unfold sim_ews. unfolder. ins. desf.
+    all: rename z into q.
+    { exfalso.
+      match goal with
+      | [H : (Sew S') q y |- _ ] => rename H into AA
+      end.
+      apply WFS.(ES.ewE) in wEWI.
+      destruct_seq wEWI as [SEY SEY'].
+      apply WFS'.(ES.ewm) in AA.
+      destruct AA as [|[AA QQ]]; desf.
+      unfold is_only_rlx in *.
+      mode_solver. }
+    assert (issuable G TC (e2a S' q)) as ISN.
+    { eapply issued_in_issuable; [by apply SRCC|].
+        by rewrite <- wsE2Aeq. }
+    assert (C (e2a S' x)) as CX.
+    { apply ISN. eexists.
+      apply seq_eqv_r. split; eauto. }
+    assert (ES.cont_sb_dom S k x \/ x = ES.next_act S) as [SBDOMX|]; subst.
+    { match goal with
+      | [ H: (Ssb S') x q |- _] => rename H into AA
+      end.
+      apply SB' in AA.
+      destruct AA as [AA|[AA|AA]].
+      { apply WFS.(ES.sbE) in AA.
+        destruct_seq AA as [PP QQ].
+        desf. }
+      { left. by destruct AA. }
+      destruct AA as [[|AA] QQ]; auto. }
+    2: { exfalso.
+         admit. }
+    assert (SE S x) as EX.
+    { eapply kE_inE; eauto. }
+    eapply cov_in_ex; eauto.
+    split; auto.
+    red.
+    arewrite (e2a S x = e2a S' x).
+    2: done.
+    symmetry.
+    eapply basic_step_e2a_eq_dom; eauto.
+  Admitted.
 
   Lemma simrel_cert_step_write_rel_ew_ex_iss k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
@@ -959,6 +1093,9 @@ Section SimRelCertStep.
       as E2ALAB.
     { eapply simrel_cert_step_e2a_lab; eauto. }
 
+    assert (~ (SE S) (ES.next_act S)) as NES.
+    { intros HH. red in HH. omega. }
+
     cdes BSTEP_. subst.
 
     assert (forall r, r × eq (ES.next_act S) ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘ ⊆ ∅₂) as CC.
@@ -967,8 +1104,7 @@ Section SimRelCertStep.
       arewrite (eq (ES.next_act S) ∩₁ (X ∩₁ e2a S ⋄₁ I) ⊆₁ ∅).
       2: basic_solver.
       arewrite (X ⊆₁ SE S) by apply SRCC.
-      unfold ES.acts_set.
-      unfolder. ins. desf. omega. }
+      basic_solver. }
 
     cdes CertSTEP_W. cdes AEW.
     arewrite (Sew S' ⊆ Sew S' ∩ Sew S').
@@ -1010,92 +1146,11 @@ Section SimRelCertStep.
       arewrite (Srmw S' ⨾ ⦗eq (ES.next_act S)⦘ ⊆ ∅₂).
       2: basic_solver.
       rewrite RMW'. unfold rmw_delta, eq_opt.
-      rewrite (dom_r WFS.(ES.rmwE)). unfold ES.acts_set.
-      unfolder. ins. desf. omega. }
-    arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾ ⦗SE S' ∩₁ SW S'⦘ ⨾
-               (Ssb S' ∩ same_loc S')^? ⨾ ⦗SW S'⦘ ⨾
-              ⦗eq (ES.next_act S)⦘ ⊆
-              ⦗SRel S'⦘ ⨾ ⦗eq (ES.next_act S)⦘ ∪
-              ⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪
-              ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘ ⨾
-                        ⦗eq (ES.next_act S)⦘).
-    { rewrite !crE.
-      rewrite !seq_union_l, !seq_union_r, !seq_id_l.
-      unionL.
-      1-3: basic_solver 10.
-      rewrite !seqA.
-      arewrite_id ⦗SE S' ∩₁ SW S'⦘. rewrite !seq_id_l.
-      arewrite (Ssb S' ∩ same_loc S' ⊆ Ssb S').
-      arewrite (Ssb S' ⨾ Ssb S' ⊆ Ssb S').
-      { apply rewrite_trans. apply WFS'. }
-      basic_solver 10. }
+      rewrite (dom_r WFS.(ES.rmwE)). basic_solver. }
 
-    arewrite
-    (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘
-               ⊆ Ssb S' ∩ (e2a S' ⋄ fwbob G)).
-    { apply inclusion_inter_r.
-      { basic_solver. }
-      rewrite map_collect_id with (f:=e2a S').
-      apply map_rel_mori; auto.
-      rewrite WFS'.(ES.sbE).
-      arewrite
-        (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ ⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘ ∪
-         ⦗SW S'⦘ ⨾ (⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘) ∩ same_loc S') ⨾ ⦗SW S'⦘ ⊆
-         ⦗SE S' ∩₁ SRel S'⦘ ⨾ (⦗SE S' ∩₁ SF S'⦘ ⨾ Ssb S' ∪
-         ⦗SE S' ∩₁ SW S'⦘ ⨾ Ssb S' ∩ restr_rel (SE S') (same_loc S')) ⨾
-                   ⦗SE S' ∩₁ SW S'⦘).
-      { basic_solver 20. }
-      rewrite !collect_rel_seqi.
-      rewrite !collect_rel_union, !collect_rel_seqi.
-      rewrite !collect_rel_interi.
-      rewrite !collect_rel_eqv.
-      rewrite e2a_Rel; eauto.
-      rewrite e2a_F; eauto.
-      rewrite e2a_W; eauto.
-      rewrite e2a_same_loc; eauto.
-      rewrite e2a_sb; eauto; try apply SRCC.
-      2: { apply stable_prog_to_prog_no_init.
-           apply SRCC. }
-      unfold fwbob. mode_solver 40. }
-
-    unfold sim_ews. unfolder. ins. desf.
-    { exfalso.
-      match goal with
-      | [H : (Sew S') (ES.next_act S) y |- _ ] => rename H into AA
-      end.
-      apply WFS.(ES.ewE) in wEWI.
-      destruct_seq wEWI as [SEY SEY'].
-      apply WFS'.(ES.ewm) in AA.
-      destruct AA as [|[AA QQ]]; subst.
-      { red in SEY. omega. }
-      unfold is_only_rlx in *.
-      mode_solver. }
-    assert (issuable G TC (e2a S' (ES.next_act S))) as ISN.
-    { eapply issued_in_issuable; [by apply SRCC|].
-        by rewrite <- wsE2Aeq. }
-    assert (C (e2a S' x)) as CX.
-    { apply ISN. eexists.
-      apply seq_eqv_r. split; eauto. }
-    assert (ES.cont_sb_dom S k x) as SBDOMX.
-    { match goal with
-      | [ H: (Ssb S') x (ES.next_act S) |- _] => rename H into AA
-      end.
-      apply SB' in AA.
-      destruct AA as [AA|[AA|AA]].
-      { apply WFS.(ES.sbE) in AA.
-        destruct_seq AA as [PP QQ].
-        red in QQ. omega. }
-      { by destruct AA. }
-      destruct AA as [AA QQ]. by red in QQ. }
-    assert (SE S x) as EX.
-    { eapply kE_inE; eauto. }
-    eapply cov_in_ex; eauto.
-    split; auto.
-    red.
-    arewrite (e2a S x = e2a S' x).
-    2: done.
-    symmetry.
-    eapply basic_step_e2a_eq_dom; eauto.
+    sin_rewrite WFS'.(release_part_alt).
+    sin_rewrite release_part_e2a_fwbob; eauto.
+    eapply release_part_sim_ews_in_ex; eauto.
   Qed.
 
   Lemma simrel_cert_step_update_rel_ew_ex_iss k k' e e' S S'
@@ -1197,107 +1252,10 @@ Section SimRelCertStep.
     rewrite !seq_union_l, !seq_union_r, seq_id_l.
     rewrite dom_union.
     unionL.
+    { sin_rewrite WFS'.(release_part_alt).
+      sin_rewrite release_part_e2a_fwbob; eauto.
+      eapply release_part_sim_ews_in_ex; eauto. }
     (* TODO : continue from here *)
-
-    (* arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? *)
-    (*                     ⨾ ⦗SE S' ∩₁ SW S'⦘ *)
-    (*                     ⨾ (Ssb S' ∩ same_loc S')^? ⨾ ⦗SW S'⦘ ⊆ release S'). *)
-    (* { hahn_frame. } *)
-
-
-    (* arewrite ((Sjf S' ⨾ Srmw S')＊ ⨾ ⦗eq (ES.next_act S)⦘ ⊆ *)
-    (*                             ⦗eq (ES.next_act S)⦘). *)
-    (* { rewrite rtE, !seq_union_l, seq_id_l. unionL; [basic_solver|]. *)
-    (*   rewrite ct_end, !seqA. *)
-    (*   arewrite (Srmw S' ⨾ ⦗eq (ES.next_act S)⦘ ⊆ ∅₂). *)
-    (*   2: basic_solver. *)
-    (*   rewrite RMW'. unfold rmw_delta, eq_opt. *)
-    (*   rewrite (dom_r WFS.(ES.rmwE)). unfold ES.acts_set. *)
-    (*   unfolder. ins. desf. omega. } *)
-    (* arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾ ⦗SE S' ∩₁ SW S'⦘ ⨾ *)
-    (*            (Ssb S' ∩ same_loc S')^? ⨾ ⦗SW S'⦘ ⨾ *)
-    (*           ⦗eq (ES.next_act S)⦘ ⊆ *)
-    (*           ⦗SRel S'⦘ ⨾ ⦗eq (ES.next_act S)⦘ ∪ *)
-    (*           ⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ *)
-    (*           ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘ ⨾ *)
-    (*                     ⦗eq (ES.next_act S)⦘). *)
-    (* { rewrite !crE. *)
-    (*   rewrite !seq_union_l, !seq_union_r, !seq_id_l. *)
-    (*   unionL. *)
-    (*   1-3: basic_solver 10. *)
-    (*   rewrite !seqA. *)
-    (*   arewrite_id ⦗SE S' ∩₁ SW S'⦘. rewrite !seq_id_l. *)
-    (*   arewrite (Ssb S' ∩ same_loc S' ⊆ Ssb S'). *)
-    (*   arewrite (Ssb S' ⨾ Ssb S' ⊆ Ssb S'). *)
-    (*   { apply rewrite_trans. apply WFS'. } *)
-    (*   basic_solver 10. } *)
-
-    (* arewrite *)
-    (* (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘ *)
-    (*            ⊆ Ssb S' ∩ (e2a S' ⋄ fwbob G)). *)
-    (* { apply inclusion_inter_r. *)
-    (*   { basic_solver. } *)
-    (*   rewrite map_collect_id with (f:=e2a S'). *)
-    (*   apply map_rel_mori; auto. *)
-    (*   rewrite WFS'.(ES.sbE). *)
-    (*   arewrite *)
-    (*     (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ ⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘ ∪ *)
-    (*      ⦗SW S'⦘ ⨾ (⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘) ∩ same_loc S') ⨾ ⦗SW S'⦘ ⊆ *)
-    (*      ⦗SE S' ∩₁ SRel S'⦘ ⨾ (⦗SE S' ∩₁ SF S'⦘ ⨾ Ssb S' ∪ *)
-    (*      ⦗SE S' ∩₁ SW S'⦘ ⨾ Ssb S' ∩ restr_rel (SE S') (same_loc S')) ⨾ *)
-    (*                ⦗SE S' ∩₁ SW S'⦘). *)
-    (*   { basic_solver 20. } *)
-    (*   rewrite !collect_rel_seqi. *)
-    (*   rewrite !collect_rel_union, !collect_rel_seqi. *)
-    (*   rewrite !collect_rel_interi. *)
-    (*   rewrite !collect_rel_eqv. *)
-    (*   rewrite e2a_Rel; eauto. *)
-    (*   rewrite e2a_F; eauto. *)
-    (*   rewrite e2a_W; eauto. *)
-    (*   rewrite e2a_same_loc; eauto. *)
-    (*   rewrite e2a_sb; eauto; try apply SRCC. *)
-    (*   2: { apply stable_prog_to_prog_no_init. *)
-    (*        apply SRCC. } *)
-    (*   unfold fwbob. mode_solver 40. } *)
-
-    (* unfold sim_ews. unfolder. ins. desf. *)
-    (* { exfalso. *)
-    (*   match goal with *)
-    (*   | [H : (Sew S') (ES.next_act S) y |- _ ] => rename H into AA *)
-    (*   end. *)
-    (*   apply WFS.(ES.ewE) in wEWI. *)
-    (*   destruct_seq wEWI as [SEY SEY']. *)
-    (*   apply WFS'.(ES.ewm) in AA. *)
-    (*   destruct AA as [|[AA QQ]]; subst. *)
-    (*   { red in SEY. omega. } *)
-    (*   unfold is_only_rlx in *. *)
-    (*   mode_solver. } *)
-    (* assert (issuable G TC (e2a S' (ES.next_act S))) as ISN. *)
-    (* { eapply issued_in_issuable; [by apply SRCC|]. *)
-    (*     by rewrite <- wsE2Aeq. } *)
-    (* assert (C (e2a S' x)) as CX. *)
-    (* { apply ISN. eexists. *)
-    (*   apply seq_eqv_r. split; eauto. } *)
-    (* assert (ES.cont_sb_dom S k x) as SBDOMX. *)
-    (* { match goal with *)
-    (*   | [ H: (Ssb S') x (ES.next_act S) |- _] => rename H into AA *)
-    (*   end. *)
-    (*   apply SB' in AA. *)
-    (*   destruct AA as [AA|[AA|AA]]. *)
-    (*   { apply WFS.(ES.sbE) in AA. *)
-    (*     destruct_seq AA as [PP QQ]. *)
-    (*     red in QQ. omega. } *)
-    (*   { by destruct AA. } *)
-    (*   destruct AA as [AA QQ]. by red in QQ. } *)
-    (* assert (SE S x) as EX. *)
-    (* { eapply kE_inE; eauto. } *)
-    (* eapply cov_in_ex; eauto. *)
-    (* split; auto. *)
-    (* red. *)
-    (* arewrite (e2a S x = e2a S' x). *)
-    (* 2: done. *)
-    (* symmetry. *)
-    (* eapply basic_step_e2a_eq_dom; eauto. *)
   Admitted.
 
   Lemma simrel_cert_step_rel_ew_ex_iss k k' e e' S S'
