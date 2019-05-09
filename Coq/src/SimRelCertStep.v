@@ -1373,7 +1373,28 @@ Section SimRelCertStep.
     rewrite dom_union.
     unionL.
     { basic_solver. }
-
+    
+    etransitivity.
+    2: { eapply release_part_sim_ews_in_ex with (q:=w'); eauto. }
+    apply dom_rel_mori.
+    hahn_frame.
+    unionR right.
+    arewrite (Ssb S ⊆ Ssb S') by (rewrite SB'; basic_solver).
+    apply inclusion_inter_r.
+    { arewrite ((Ssb S')^? ∩ release S ⨾ ⦗SE S⦘ ⊆ (Ssb S')^?).
+      { basic_solver. }
+      arewrite (Sjfi S' ∩ eq w × eq (ES.next_act S) ⊆ Ssb S').
+      arewrite (eq (ES.next_act S) × eq w' ⊆ Ssb S').
+      { rewrite SB'. unionR right. unfold sb_delta, eq_opt.
+        basic_solver. }
+      generalize WFS'.(ES.sb_trans). basic_solver. }
+    arewrite_id ⦗SE S⦘. rewrite seq_id_l.
+    arewrite (eq (ES.next_act S) × eq w' ⊆ Srmw S' ;; <|SE S' ∩₁ SW S'|>).
+    { unfolder. ins. desf. split; eauto.
+      apply RMW'. right. red. unfold eq_opt. basic_solver. }
+    rewrite map_collect_id.
+    apply map_rel_mori; eauto.
+    rewrite !collect_rel_seqi.
     (* TODO: continue from here *)
   Admitted.
 
