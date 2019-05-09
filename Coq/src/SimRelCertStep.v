@@ -1191,6 +1191,33 @@ Section SimRelCertStep.
     eapply release_part_sim_ews_in_ex; eauto.
   Qed.
 
+  Lemma simrel_cert_step_jfe_ex_iss k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    dom_rel (Sjfe S') ⊆₁ dom_rel (Sew S' ⨾ ⦗ X ∩₁ e2a S' ⋄₁ I ⦘).
+  Proof. 
+    cdes CertSTEP.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (step_ e e' S S') as WMO_STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+
+    erewrite basic_step_e2a_set_map_inter_old; eauto.
+    2 : apply Execution.ex_inE; auto.
+    etransitivity. 
+    { unfold_cert_step_ CertSTEP_.
+      2,4 : eapply sim_add_jf_jfe_ex_iss; eauto.
+      all : erewrite step_same_jf_jfe; 
+        eauto; apply SRCC. }
+    erewrite step_ew_mon; eauto.
+  Qed.
+
   Lemma simrel_cert_step_update_rel_ew_ex_iss k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -1293,31 +1320,61 @@ Section SimRelCertStep.
     { sin_rewrite WFS'.(release_part_alt).
       sin_rewrite release_part_e2a_fwbob; eauto.
       eapply release_part_sim_ews_in_ex; eauto. }
-    (* TODO : continue from here *)
 
-    (* rewrite !seqA. *)
-    (* arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾ *)
-    (*             ⦗SE S' ∩₁ SW S'⦘ ⨾ (Ssb S' ∩ same_loc S')^? ⨾ *)
-    (*             ⦗SW S'⦘ ⨾ (Sjf S' ⨾ Srmw S')＊ ⊆ *)
-    (*           release S'). *)
-    (* assert (SE S w) as SEW. *)
-    (* { admit. } *)
-    (* arewrite (release S' ⨾ eq w × eq (ES.next_act S) ⊆ *)
-    (*           release S' ;; <|SE S|> ⨾ eq w × eq (ES.next_act S)). *)
-    (* { arewrite (eq w ⊆₁ SE S ∩₁ eq w). *)
-    (*   2: basic_solver 10. *)
-    (*   apply set_subset_inter_r. split; [|done]. *)
-    (*   basic_solver. } *)
-    (* rewrite <- !seqA. *)
-    (* erewrite simrel_cert_step_same_releaseE; eauto. *)
-    (* rewrite !seqA. *)
-    (* arewrite (⦗SE S⦘ ⨾ eq w × eq (ES.next_act S) ⨾ *)
-    (*             eq (ES.next_act S) × eq w' ⨾ ⦗eq w'⦘ ⨾ *)
-    (*             Sew S' ∩ eq w' × sim_ews TC X w' S S' ⊆ *)
-    (*           Sew S). *)
-    (* 2: by apply SRCC. *)
-    (* unfold sim_ews. *)
-    (* unfolder. ins. desf. *)
+    rewrite !seqA.
+    arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾
+                ⦗SE S' ∩₁ SW S'⦘ ⨾ (Ssb S' ∩ same_loc S')^? ⨾
+                ⦗SW S'⦘ ⨾ (Sjf S' ⨾ Srmw S')＊ ⊆
+              release S').
+    assert (SE S w) as SEW.
+    { admit. }
+    arewrite (release S' ⨾ eq w × eq (ES.next_act S) ⊆
+              release S' ;; <|SE S|> ⨾ eq w × eq (ES.next_act S)).
+    { arewrite (eq w ⊆₁ SE S ∩₁ eq w).
+      2: basic_solver 10.
+      apply set_subset_inter_r. split; [|done].
+      basic_solver. }
+    rewrite <- !seqA.
+    erewrite simrel_cert_step_same_releaseE; eauto.
+    rewrite !seqA.
+    
+    arewrite (eq w × eq (ES.next_act S) ⊆ Sjf S' ∩ eq w × eq (ES.next_act S)).
+    { apply inclusion_inter_r; [|done].
+      cdes AJF. rewrite JF'. unionR right. unfold jf_delta. basic_solver. }
+    rewrite ES.jfi_union_jfe.
+    rewrite inter_union_l.
+    rewrite !seq_union_l, !seq_union_r.
+    rewrite dom_union.
+    unionL.
+    2: { unfolder. ins. desf.
+         eapply rel_ew_ex_iss.
+         { apply SRCC. }
+         assert (dom_rel (Sew S' ⨾ ⦗X ∩₁ e2a S' ⋄₁ issued TC⦘) z) as [q AA].
+         { eapply simrel_cert_step_jfe_ex_iss; eauto.
+           eexists; eauto. }
+         destruct_seq_r AA as QQ. destruct QQ as [XQ IQ].
+         assert (SE S q) as EQ.
+         { by eapply Execution.ex_inE; [by apply SRCC|]. }
+         red in IQ.
+         assert (e2a S' q = e2a S q) as HH.
+         { eapply basic_step_e2a_eq_dom; eauto. }
+         rewrite HH in IQ.
+         exists q. eexists. split; eauto.
+         apply seq_eqv_r; split; [|by split].
+         (* TODO: it should follow from the fact that
+                 restr_rel (SE S) (Sew S') ⊆ Sew S.
+          *)
+         admit. }
+
+    arewrite (release S ⊆ release S ∩ release S).
+    rewrite rel_in_ex_cov_rel_sb at 1; [|by apply SRCC].
+    rewrite inter_union_l.
+    rewrite !seq_union_l.
+    rewrite dom_union.
+    unionL.
+    { basic_solver. }
+
+    (* TODO: continue from here *)
   Admitted.
 
   Lemma simrel_cert_step_rel_ew_ex_iss k k' e e' S S'
@@ -1376,15 +1433,7 @@ Section SimRelCertStep.
       eapply cstate_covered; eauto. }
     { eapply simrel_cert_step_e2a; eauto. }
     1-4 : admit.
-    (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
-    { erewrite basic_step_e2a_set_map_inter_old; eauto.
-      2 : apply Execution.ex_inE; auto.
-      etransitivity. 
-      { unfold_cert_step_ CertSTEP_.
-        2,4 : eapply sim_add_jf_jfe_ex_iss; eauto.
-        all : erewrite step_same_jf_jfe; 
-          eauto; apply SRCC. }
-      erewrite step_ew_mon; eauto. }
+    { eapply simrel_cert_step_jfe_ex_iss; eauto. }
     (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
     { erewrite basic_step_e2a_set_map_inter_old; eauto.
       2 : apply Execution.ex_inE; auto.
