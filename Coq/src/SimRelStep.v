@@ -255,7 +255,29 @@ Section SimRelStep.
       eapply sim_trav_step_rel_covered;
         try apply SRCC.
       eexists. apply SRCC. }
-    { admit. }
+    { constructor.
+      (* ex_inE : certX ⊆₁ E  *)
+      { unionL.
+        { apply set_subset_inter_l. left. 
+          by eapply Execution.ex_inE. }
+        eapply ES.cont_sb_domE; eauto. }
+      (* init_in_ex : Einit ⊆₁ certX *)
+      { apply set_subset_union_r. left. 
+        apply set_subset_inter_r. split. 
+        { by apply Execution.init_in_ex. } 
+        unfold ES.acts_init_set.
+        intros x [_ INITx] TIDx.
+        edestruct ES.init_tid_K. eauto.
+        do 2 eexists; splits; eauto.
+        congruence. }
+      (* ex_sb_prcl : dom_rel (sb ⨾ ⦗certX⦘) ⊆₁ certX *)
+      { admit. }
+      (* ex_sw_prcl : dom_rel (sw ⨾ ⦗certX⦘) ⊆₁ certX *)
+      { admit. }
+      { admit. }
+      { admit. }
+      { eapply cert_ex_ncf; eauto. }
+      admit. }
     { econstructor; try apply SRCC.
       admit. }
     (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
