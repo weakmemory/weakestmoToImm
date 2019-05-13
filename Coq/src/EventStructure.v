@@ -578,6 +578,16 @@ Proof.
   generalize UU. basic_solver.
 Qed.
 
+Lemma sb_dom_cf_free WF x : cf_free S (dom_rel (sb ⨾ ⦗eq x⦘)).
+Proof.
+  red. unfolder. ins. desf. 
+  eapply n_sb_cf; splits; eauto.
+  eapply cf_sb_in_cf; auto.
+  eexists; splits.
+  { eapply cf_sym; eauto. }
+  done.
+Qed.
+
 (******************************************************************************)
 (** ** rmw properties *)
 (******************************************************************************)
@@ -899,6 +909,33 @@ Proof.
   eapply sb_irr; [|eapply sb_trans]; eauto. 
 Qed.
 
+Lemma cont_sb_cf_free k lang st WF 
+      (KK : K (k, existT _ lang st)) : 
+  cf_free S (cont_sb_dom S k).
+Proof. 
+  red. 
+  unfold cont_sb_dom.
+  destruct k.
+  { eapply ncfEinit. }
+  rewrite crE. relsf.
+  rewrite id_union. relsf.
+  rewrite seq_eqv_r with (r := sb).
+  rewrite !seq_eqv_lr.
+  unfold dom_rel.
+  unionL.
+  { intros x y HH. desf.
+    eapply cf_irr; eauto. }
+  { intros x y HH. desf.
+    eapply n_sb_cf; eauto. }
+  { intros x y HH. desf.
+    eapply n_sb_cf; splits; eauto. 
+    by apply cf_sym. }
+  intros x y HH. desf.
+  eapply sb_dom_cf_free; auto.
+  apply seq_eqv_lr.
+  splits; eauto; basic_solver 10.
+Qed.
+
 Lemma cont_cf_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ E.
 Proof. 
@@ -1153,16 +1190,6 @@ Proof.
   red. ins.
   eexists. intros. apply E_alt.
   apply WF.(sbE) in REL. by destruct_seq REL as [YY XX].
-Qed.
-
-Lemma sb_dom_cf_free WF x : cf_free S (dom_rel (sb ⨾ ⦗eq x⦘)).
-Proof.
-  red. unfolder. ins. desf. 
-  eapply n_sb_cf; splits; eauto.
-  eapply cf_sb_in_cf; auto.
-  eexists; splits.
-  { eapply cf_sym; eauto. }
-  done.
 Qed.
 
 Lemma sb_imm_split_r WF : sb ≡ sb^? ⨾ immediate sb.

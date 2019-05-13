@@ -593,7 +593,36 @@ Section SimRelCert.
 
     Lemma cert_ex_ncf : 
       ES.cf_free S certX.
-    Proof. admit. Admitted.
+    Proof. 
+      assert (ES.Wf S) as WFS by apply SRCC.
+      assert (Execution.t S X) as EXEC by apply SRCC.
+      edestruct cstate_cont as [st_ [stEQ KK]]; 
+        [apply SRCC|].
+      red in stEQ, KK. subst st_.
+      red. rewrite <- restr_relE.
+      intros x y [CF [CERTXx CERTXy]].
+      destruct CERTXx as [[Xx NTIDx] | kSBx];
+      destruct CERTXy as [[Xy NTIDy] | kSBy].
+      { eapply Execution.ex_ncf; [apply SRCC|].
+        apply restr_relE. red. eauto. }
+      { eapply ES.cont_sb_tid in kSBy; eauto.
+        destruct kSBy as [INITy | TIDy].
+        { eapply Execution.ex_ncf; [apply SRCC|].
+          apply restr_relE. red. splits; eauto.
+          eapply Execution.init_in_ex; eauto. }
+        apply NTIDx.
+        erewrite ES.cf_same_tid; eauto. }
+      { eapply ES.cont_sb_tid in kSBx; eauto.
+        destruct kSBx as [INITx | TIDx].
+        { eapply Execution.ex_ncf; [apply SRCC|].
+          apply restr_relE. red. splits; eauto.
+          eapply Execution.init_in_ex; eauto. }
+        apply NTIDy.
+        erewrite ES.cf_same_tid; eauto. 
+        by apply ES.cf_sym. }
+      eapply ES.cont_sb_cf_free; eauto.
+      apply seq_eqv_lr. eauto.
+    Qed.
 
     Lemma ex_iss_cert_ex :
       X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I) ⊆₁ 
