@@ -803,7 +803,13 @@ Section SimRelCertStep.
       { rewrite (dom_r WF.(ES.jfE)). unfold ES.acts_set.
         unfolder. ins. desf. omega. }
       assert (Grf (e2a S' w) (e2a S' (ES.next_act S))) as RF.
-      { (* TODO: for Anton *)
+      { eapply cert_rf_D_rf with (TC:=TC'); try apply SRCC; auto.
+        apply seq_eqv_r. splits; eauto.
+        split.
+        { rewrite <- e2a_tid.
+          rewrite TID'. simpls.
+          rewrite updo; [|by desf]. by rewrite upds. }
+        (* TODO: for Anton *)
         admit. }
       unfold jf_delta. unfolder. ins. desf.
       eexists. splits; eauto.
