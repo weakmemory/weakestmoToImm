@@ -689,6 +689,49 @@ Proof.
   basic_solver.
 Qed.  
 
+Lemma rfe_ew_jfe : rfe ≡ ew ⨾ jfe. 
+Proof. 
+  split; [apply ES.rfe_in_ew_jfe; auto|].
+  unfold ES.rfe, ES.rf.
+  rewrite jfe_alt.
+  rewrite seq_eqv_l.
+  intros x y [z [EW [nINITx [JF nSTID]]]].
+  unfolder; eexists; splits; eauto.
+  { intros CF. 
+    apply nSTID.
+    etransitivity.
+    { eapply ES.ew_tid; auto.
+      apply ES.ew_sym; eauto. }
+    by apply ES.cf_same_tid. }
+  intros SB.
+  apply ES.ewc in EW; auto.
+  destruct EW as [EQ | CF].
+  { subst. apply nSTID.
+    apply ES.sb_tid; auto.
+    basic_solver. }
+  apply nSTID.
+  etransitivity.
+  { apply ES.cf_same_tid.
+    apply ES.cf_sym; eauto. }
+  apply ES.sb_Einit_Eninit in SB; auto.
+  destruct SB as [[INITx _] | HH].
+  { exfalso. 
+    eapply ES.ncfEinit_l.
+    basic_solver. }
+  apply ES.sb_tid; auto.
+  generalize HH. 
+  basic_solver 20.
+Qed.
+
+Lemma ew_rfe_in_rfe : ew ⨾ rfe ⊆ rfe.
+Proof.
+  rewrite rfe_ew_jfe. 
+  rewrite <- seqA.
+  apply seq_mori; [|done]. 
+  rewrite transitiveI.
+  apply WF.
+Qed.
+
 End Properties.
 
 End Consistency.

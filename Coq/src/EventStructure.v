@@ -174,9 +174,11 @@ Notation "'sb'"    := S.(ES.sb).
 Notation "'rmw'"   := S.(ES.rmw).
 Notation "'ew'"    := S.(ES.ew).
 Notation "'jf'"    := S.(ES.jf).
-Notation "'jfi'"    := S.(ES.jfi).
-Notation "'jfe'"    := S.(ES.jfe).
+Notation "'jfi'"   := S.(ES.jfi).
+Notation "'jfe'"   := S.(ES.jfe).
 Notation "'rf'"    := S.(ES.rf).
+Notation "'rfi'"   := S.(ES.rfi).
+Notation "'rfe'"   := S.(ES.rfe).
 Notation "'fr'"    := S.(ES.fr).
 Notation "'co'"    := S.(ES.co).
 Notation "'cf'"    := S.(ES.cf).
@@ -754,7 +756,7 @@ Proof.
 Qed.
 
 Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
-Proof. rewrite <- jf_in_rf; apply WF. Qed.
+Proof. rewrite <- jf_in_rf; apply WF. Qed.  
 
 Lemma rf_trf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew. 
 Proof. 
@@ -772,6 +774,26 @@ Proof.
     rewrite transitiveI.
     apply WF. }
   apply WF.
+Qed.
+
+Lemma rfi_in_rf : rfi ⊆ rf. 
+Proof. unfold ES.rfi. basic_solver. Qed.
+
+Lemma rfe_in_rf : rfe ⊆ rf. 
+Proof. unfold ES.rfe. basic_solver. Qed.
+
+Lemma rfe_in_ew_jfe WF : rfe ⊆ ew ⨾ jfe. 
+Proof. 
+  unfold ES.rfe, ES.rf, ES.jfe.
+  intros x y [[[z [EW JF]] nCF] nSB].
+  unfolder; eexists; splits; eauto.
+  intros SB.
+  apply ewc in EW; auto.
+  destruct EW as [EQ | CF].
+  { subst; auto. }
+  apply nCF.
+  eapply cf_sb_in_cf; auto.
+  basic_solver. 
 Qed.
 
 (******************************************************************************)
@@ -797,22 +819,13 @@ Qed.
 (** ** rf/fr properties *)
 (******************************************************************************)
 
-Lemma rfrf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew^?.
-Proof.
-  unfold ES.rf. intros x y [z [[[p [HH DD]] BB] [[q [AA EE]] CC]]].
-  assert (p = q); subst.
-  { eapply jff; eauto. }
-  generalize WF.(ew_trans) WF.(ew_sym) HH AA.
-  basic_solver 10.
-Qed.
-
 Lemma rffr_in_co WF : rf ⨾ fr ⊆ co.
 Proof.
-  intros x y [z [HH [p [AA BB]]]].
-  edestruct rfrf_in_ew; eauto.
-  { exists z. split; [apply HH|apply AA]. }
-  { desf. }
-  apply WF.(ew_co_in_co). eexists. eauto.
+  intros x y [z [HH [z' [AA BB]]]].
+  apply ew_co_in_co; auto.
+  eexists; split; eauto.
+  eapply rf_trf_in_ew; eauto.
+  basic_solver.
 Qed.
 
 Lemma frco_in_fr WF : fr ⨾ co ⊆ fr.
