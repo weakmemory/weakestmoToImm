@@ -18,12 +18,6 @@ Tactic Notation "destruct_seq_r" constr(x)
 
 Export ListNotations.
 
-Definition is_only_rlx {A} (lab : A -> label) (a : A) :=
-  match Events.mod lab a with
-  | Orlx => true
-  | _ => false
-  end.
-
 Definition opt_same_ctor {A B} (a : option A) (b : option B) : Prop := 
   match a, b with
   | None  , None
