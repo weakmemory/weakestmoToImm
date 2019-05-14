@@ -663,6 +663,28 @@ Section SimRelCertStep.
     all: eapply add_jf_jfE; eauto.
   Qed.
 
+  Lemma simrel_cert_step_restr_E_ew k k' e e' S S'
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    restr_rel (SE S) (Sew S') ⊆ Sew S.
+  Proof.
+    cdes CertSTEP; cdes BSTEP_.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (restr_rel (SE S) (Sew S) ⊆ Sew S) as AA by basic_solver.
+    red in CertSTEP_. desf; cdes CertSTEP_; desf.
+    1,2: by rewrite EW'.
+    all: cdes AEW; rewrite EW'.
+    all: rewrite restr_union; unionL; auto.
+    all: unfold ew_delta.
+    all: rewrite restr_union; unionL; auto.
+    all: unfold ES.acts_set; unfolder; ins; desf; omega.
+  Qed.
+
   Lemma simrel_cert_step_e2a k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
@@ -1366,7 +1388,10 @@ Section SimRelCertStep.
                 ⦗SW S'⦘ ⨾ (Sjf S' ⨾ Srmw S')＊ ⊆
               release S').
     assert (SE S w) as SEW.
-    { admit. }
+    { cdes AJF.
+      destruct CertEx as [[AA]|AA].
+      { by eapply Execution.ex_inE; [by apply SRCC|]. }
+      eapply kE_inE; eauto. }
     arewrite (release S' ⨾ eq w × eq (ES.next_act S) ⊆
               release S' ;; <|SE S|> ⨾ eq w × eq (ES.next_act S)).
     { arewrite (eq w ⊆₁ SE S ∩₁ eq w).
@@ -1400,10 +1425,8 @@ Section SimRelCertStep.
          rewrite HH in IQ.
          exists q. eexists. split; eauto.
          apply seq_eqv_r; split; [|by split].
-         (* TODO: it should follow from the fact that
-                 restr_rel (SE S) (Sew S') ⊆ Sew S.
-          *)
-         admit. }
+         eapply simrel_cert_step_restr_E_ew; eauto.
+         basic_solver. }
 
     arewrite (release S ⊆ release S ∩ release S).
     rewrite rel_in_ex_cov_rel_sb at 1; [|by apply SRCC].
@@ -1457,7 +1480,7 @@ Section SimRelCertStep.
     rewrite e2a_release; try apply SRCC.
     apply sb_release_rmw_in_fwbob; try apply SRCC.
     apply coherence_sc_per_loc. apply SRCC.
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_step_rel_ew_ex_iss k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
