@@ -1514,7 +1514,45 @@ Section SimRelCertStep.
     { eapply basic_step_simrel_cont; eauto; try apply SRCC. 
       eapply cstate_covered; eauto. }
     { eapply simrel_cert_step_e2a; eauto. }
-    1-4 : admit.
+    { erewrite <- ex_cov_iss.
+      2: by apply SRCC.
+      split; unfolder; ins; desf.
+      all: eexists; splits; eauto.
+      symmetry.
+      all: eapply basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
+      all: eapply Execution.ex_inE; eauto. }
+    { unfold Basics.compose.
+      red. intros x [XX HH]. red in HH.
+      assert (SE S x) as EX.
+      { eapply Execution.ex_inE; eauto. }
+      etransitivity.
+      { eapply basic_step_lab_eq_dom; eauto. }
+      erewrite basic_step_e2a_eq_dom; eauto.
+      erewrite basic_step_e2a_eq_dom in HH; eauto.
+        by apply SRCC. }
+    { assert (e2a S □ Srmw S ⨾ ⦗X⦘ ⊆ e2a S' □ Srmw S' ⨾ ⦗X⦘) as AA.
+      2: { rewrite <- AA. apply SRCC. }
+      cdes BSTEP_.
+      rewrite WFS.(ES.rmwE).
+      arewrite (Srmw S ⊆ Srmw S').
+      { rewrite RMW'. eauto with hahn. }
+      unfolder. ins. desf.
+      do 2 eexists. splits; eauto.
+      all: eapply basic_step_e2a_eq_dom; eauto. }
+    { arewrite (X ∩₁ e2a S' ⋄₁ C ⊆₁ X ∩₁ e2a S ⋄₁ C).
+      { unfolder. ins. desf. split; eauto.
+        erewrite <- basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
+        eapply Execution.ex_inE; eauto. }
+      arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ ⦗SE S⦘ ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘).
+      { unfolder. ins. desf. splits; auto.
+        eapply Execution.ex_inE; eauto. }
+      arewrite (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S).
+      { eapply simrel_cert_step_jf_E; eauto. }
+      rewrite WFS.(ES.jfE).
+      unfolder. ins. desf.
+      do 2 (erewrite basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto).
+      eapply jf_cov_in_rf; try apply SRCC.
+      basic_solver 10. }
     { eapply simrel_cert_step_jfe_ex_iss; eauto. }
     (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
     { erewrite basic_step_e2a_set_map_inter_old; eauto.
@@ -1525,7 +1563,7 @@ Section SimRelCertStep.
       all : basic_solver. }
     (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ X *)
     eapply simrel_cert_step_rel_ew_ex_iss; eauto.
-  Admitted.
+  Qed.
         
 End SimRelCertStep.
 
