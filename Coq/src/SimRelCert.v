@@ -382,6 +382,18 @@ Section SimRelCert.
       apply SRCC.
     Qed.
 
+    Lemma init_in_cert_ex :
+      SEinit ⊆₁ certX.
+    Proof. 
+      assert (ES.Wf S) as WFS by apply SRCC.
+      assert (Execution.t S X) as EXEC by apply SRCC.
+      edestruct cstate_cont as [st_ [stEQ KK]]; 
+        [apply SRCC|].
+      red in stEQ, KK. subst st_.
+      rewrite ES.cont_sb_dom_Einit; eauto.
+      basic_solver.
+    Qed.
+
     Lemma ex_cov_in_certX :
       X ∩₁ e2a ⋄₁ C ⊆₁ certX. 
     Proof. 
@@ -578,6 +590,18 @@ Section SimRelCert.
       desc. apply KK.
     Qed.
 
+    Lemma cert_ex_sb_prcl : 
+      dom_rel (Ssb ⨾ ⦗ certX ⦘) ⊆₁ certX.
+    Proof.
+      rewrite id_union. 
+      relsf. split.
+      { rewrite ex_ntid_sb_prcl.
+        rewrite init_in_cert_ex.
+        basic_solver. }
+      rewrite kE_sb_prcl. 
+      basic_solver.
+    Qed.
+
     Lemma certX_ncf_cont : 
       certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
     Proof. 
@@ -757,6 +781,42 @@ Section SimRelCert.
       destruct KSB as [INITy | TIDy].
       { exfalso. eapply ES.jf_nEinit; eauto. basic_solver. }
       congruence.
+    Qed.
+
+    Lemma kE_rf_compl : 
+      kE ∩₁ SR ⊆₁ codom_rel (⦗certX⦘ ⨾ Srf).
+    Proof. 
+      assert (ES.Wf S) as WFS by apply SRCC.
+      assert (Execution.t S X) as EXEC by apply SRCC.
+      edestruct cstate_cont as [st_ [stEQ KK]];
+        [apply SRCC|].
+      red in stEQ, KK. subst st_.
+      intros x [kSBx Rx].
+      edestruct ES.jf_complete
+        as [y JF]; eauto.
+      { split; eauto.
+        eapply ES.cont_sb_domE; eauto. }
+      edestruct jf_kE_in_ew_cert_ex
+        as [z HH].
+      { basic_solver 10. }
+      apply seq_eqv_r in HH.
+      destruct HH as [EW CERTXz].
+      exists z. apply seq_eqv_l.
+      splits; auto.
+      unfold ES.rf.
+      unfolder. splits.
+      { eexists; splits; eauto.
+        by apply ES.ew_sym. }
+      intros CF.
+      destruct CERTXz as [[Xz nTIDz] | kSBz].
+      { eapply ES.cont_sb_tid in kSBx; eauto. 
+        destruct kSBx as [INITx | TIDx].
+        { eapply ES.ncfEinit_r. basic_solver. }
+        apply nTIDz.
+        apply ES.cf_same_tid in CF.
+        congruence. }
+      eapply ES.cont_sb_cf_free; eauto.
+      basic_solver.
     Qed.
 
     Lemma cert_ex_necf :
