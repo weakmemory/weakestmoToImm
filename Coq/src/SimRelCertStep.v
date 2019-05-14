@@ -713,22 +713,20 @@ Section SimRelCertStep.
       as E2ALAB.
     { eapply simrel_cert_step_e2a_lab; eauto. }
 
-    constructor; auto.
-    { eapply simrel_cert_step_e2a_GEinit; eauto. }
-    (* e2a_rmw : e2a □ Srmw ⊆ Grmw *)
+    assert (e2a S' □ Srmw S' ⊆ Grmw) as E2ARMW.
     { unfold_cert_step_ CertSTEP_.
-      1-3 : 
+      1-3 :
         eapply simrel_cert_basic_step_e2a_eqr;
-        try eapply basic_step_nupd_rmw; 
+        try eapply basic_step_nupd_rmw;
         try apply ES.rmwE; subst e'; eauto;
-        apply SRCC.
-      rewrite RMW'. 
+          apply SRCC.
+      rewrite RMW'.
       unfold rmw_delta.
-      rewrite collect_rel_union. 
+      rewrite collect_rel_union.
       unionL.
       { eapply simrel_cert_basic_step_e2a_eqr; eauto.
-         { by apply ES.rmwE. }
-         apply SRCC. }
+        { by apply ES.rmwE. }
+        apply SRCC. }
       unfold eq_opt. subst e'.
       rewrite collect_rel_cross, !set_collect_eq.
       etransitivity; [|eapply inclusion_restr].
@@ -748,6 +746,9 @@ Section SimRelCertStep.
       erewrite basic_step_e2a_e with (S:=S); eauto; try apply SRCC.
       erewrite basic_step_e2a_e' with (S0:=S); eauto; try apply SRCC.
       basic_solver. }
+
+    constructor; auto.
+    { eapply simrel_cert_step_e2a_GEinit; eauto. }
     (* e2a_ew  : e2a □ Sew  ⊆ eq *)
     { unfold_cert_step_ CertSTEP_.
       1,2 : 
@@ -809,8 +810,14 @@ Section SimRelCertStep.
         { rewrite <- e2a_tid.
           rewrite TID'. simpls.
           rewrite updo; [|by desf]. by rewrite upds. }
-        (* TODO: for Anton *)
-        admit. }
+        eapply dom_rmwE_in_D with (TC:=TC); eauto.
+        1-3: by apply SRCC.
+        eexists. apply seq_eqv_r. split.
+        { eapply E2ARMW. red.
+          do 2 eexists. splits; eauto.
+          apply RMW'. right. red. unfold eq_opt. basic_solver. }
+        eapply basic_step_e2a_E0_e'; eauto.
+        all: apply SRCC. }
       unfold jf_delta. unfolder. ins. desf.
       eexists. splits; eauto.
       (* TODO: for Evgenii *)
