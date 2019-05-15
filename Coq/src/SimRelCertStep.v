@@ -1071,6 +1071,8 @@ Section SimRelCertStep.
     assert (same_lab_u2v_dom (SE S') (Slab S') (Basics.compose Glab (e2a S')))
       as E2ALAB.
     { eapply simrel_cert_step_e2a_lab; eauto. }
+    assert (simrel_e2a S' G sc) as SRE2A.
+    { eapply simrel_cert_step_e2a; eauto. }
     assert (~ (SE S (ES.next_act S))) as NES.
     { intros HH. red in HH. omega. }
     cdes BSTEP_.
@@ -1127,9 +1129,12 @@ Section SimRelCertStep.
     red in QQ. desf.
     assert (C (e2a S y)) as CY.
     { rewrite wsE2Aeq.
-      (* TODO: Potentially, we need to add a restriction on Grmw and C
-               to simrel_cert. *)
-      admit. }
+      eapply rmwclos with (r:= e2a S' (ES.next_act S)).
+      { apply SRCC. }
+      2: by apply CX.
+      eapply e2a_rmw with (S:=S'); eauto.
+      unfolder. do 2 eexists. splits; eauto.
+      apply RMW'. right. red. basic_solver. }
     assert (SE S y) as SEY.
     { apply WFS.(ES.ewE) in wEWI. by destruct_seq wEWI as [SEY SEY']. }
     assert (ES.cont_sb_dom S k y) as SBDOMY.
@@ -1149,7 +1154,7 @@ Section SimRelCertStep.
     apply ES.ewc in EWQY; auto.
     destruct EWQY as [|EWQY]; desf.
     eapply WFS'.(ES.n_sb_cf) with (x:=y) (y:=q). by split.
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_step_write_rel_ew_ex_iss k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
