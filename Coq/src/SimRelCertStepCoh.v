@@ -697,6 +697,14 @@ Section SimRelCertStepCoh.
     { cdes BSTEP_. desf. simpls.
       rewrite TID'. unfold upd_opt, opt_ext. desf.
       all: by rewrite upds. }
+    assert (X ⊆₁ X ∩₁ SE S) as XSE.
+    { apply set_subset_inter_r. split; [done|].
+      eapply Execution.ex_inE. apply SRCC. }
+
+    assert (forall s (SES : s ⊆₁ SE S) s',
+               s ∩₁ e2a S' ⋄₁ s' ⊆₁ s ∩₁ e2a S ⋄₁ s') as SSE2A.
+    { unfolder. ins. desf. splits; auto.
+      erewrite <- basic_step_e2a_eq_dom; eauto. }
     exists k', S'. splits.
     { eapply basic_step_cont_thread_k; eauto. }
     { apply r_step. red.
@@ -714,20 +722,12 @@ Section SimRelCertStepCoh.
     { eapply simrel_cert_basic_step_cstate; eauto. } 
     { erewrite basic_step_cont_sb_dom; eauto.
       unionR left -> left.
-      arewrite (X ⊆₁ X ∩₁ SE S).
-      { apply set_subset_inter_r. split; [done|].
-        eapply Execution.ex_inE. apply SRCC. }
-      rewrite CTS.
+      rewrite XSE, CTS.
       arewrite (X ∩₁ SE S ∩₁ (fun x => Stid S' x = ES.cont_thread S k) ⊆₁
                 X ∩₁ SE S ∩₁ (fun x => Stid S  x = ES.cont_thread S k)).
       { unfolder. ins. desf. splits; auto.
         erewrite <- basic_step_tid_eq_dom; eauto. }
-      arewrite (X ∩₁ SE S ∩₁ (fun x  => (Stid S) x = ES.cont_thread S k)
-                  ∩₁ e2a S' ⋄₁ C ⊆₁
-                X ∩₁ SE S ∩₁ (fun x  => (Stid S) x = ES.cont_thread S k)
-                  ∩₁ e2a S ⋄₁ C).
-      { unfolder. ins. desf. splits; auto.
-        erewrite <- basic_step_e2a_eq_dom; eauto. }
+      rewrite SSE2A; [|basic_solver].
       arewrite (X ∩₁ SE S ⊆₁ X) by basic_solver.
       apply SRCC. }
     { erewrite basic_step_cont_sb_dom; eauto.
