@@ -693,6 +693,10 @@ Section SimRelCertStepCoh.
     { econstructor; eauto. }
     assert (step_ e e' S S') as WMO_STEP_.
     { eapply simrel_cert_step_step_; eauto. }
+    assert (ES.cont_thread S' k' = ES.cont_thread S k) as CTS.
+    { cdes BSTEP_. desf. simpls.
+      rewrite TID'. unfold upd_opt, opt_ext. desf.
+      all: by rewrite upds. }
     exists k', S'. splits.
     { eapply basic_step_cont_thread_k; eauto. }
     { apply r_step. red.
@@ -708,7 +712,84 @@ Section SimRelCertStepCoh.
     { erewrite basic_step_cont_thread_k; eauto. apply SRCC. }
     (* cstate : simrel_cstate *)
     { eapply simrel_cert_basic_step_cstate; eauto. } 
-    all : admit.
+    { erewrite basic_step_cont_sb_dom; eauto.
+      unionR left -> left.
+      arewrite (X ⊆₁ X ∩₁ SE S).
+      { apply set_subset_inter_r. split; [done|].
+        eapply Execution.ex_inE. apply SRCC. }
+      rewrite CTS.
+      arewrite (X ∩₁ SE S ∩₁ (fun x => Stid S' x = ES.cont_thread S k) ⊆₁
+                X ∩₁ SE S ∩₁ (fun x => Stid S  x = ES.cont_thread S k)).
+      { unfolder. ins. desf. splits; auto.
+        erewrite <- basic_step_tid_eq_dom; eauto. }
+      arewrite (X ∩₁ SE S ∩₁ (fun x  => (Stid S) x = ES.cont_thread S k)
+                  ∩₁ e2a S' ⋄₁ C ⊆₁
+                X ∩₁ SE S ∩₁ (fun x  => (Stid S) x = ES.cont_thread S k)
+                  ∩₁ e2a S ⋄₁ C).
+      { unfolder. ins. desf. splits; auto.
+        erewrite <- basic_step_e2a_eq_dom; eauto. }
+      arewrite (X ∩₁ SE S ⊆₁ X) by basic_solver.
+      apply SRCC. }
+    { erewrite basic_step_cont_sb_dom; eauto.
+      rewrite set_unionA.
+      rewrite set_inter_union_r.
+      unionL.
+      { unfolder. ins. desf. apply SRCC.(cov_in_ex).
+        unfolder. splits; auto.
+        erewrite <- basic_step_e2a_eq_dom; eauto.
+        eapply kE_inE; eauto. }
+      admit. }
+    { erewrite basic_step_cont_sb_dom; eauto.
+      erewrite basic_step_acts_init_set; eauto.
+      rewrite set_unionA.
+      rewrite set_minus_union_l.
+      eapply eq_dom_union. split.
+      { unfolder. ins. desf. unfold Basics.compose.
+        assert (SE S x) as EX.
+        { eapply kE_inE; eauto. }
+        erewrite basic_step_lab_eq_dom; eauto.
+        erewrite basic_step_e2a_eq_dom; eauto.
+        eapply kE_lab; eauto. by split. }
+      unfolder. ins. desf.
+      { eapply basic_step_e2a_lab_e; eauto; apply SRCC. }
+      eapply basic_step_e2a_lab_e'; eauto; apply SRCC. }
+    { erewrite basic_step_cont_sb_dom; eauto.
+      rewrite !id_union. rewrite !seq_union_r, !collect_rel_union.
+      rewrite CTS.
+      unionL.
+      { erewrite <- jf_in_cert_rf; eauto.
+        arewrite (⦗ES.cont_sb_dom S k⦘ ⊆ ⦗SE S⦘ ⨾ ⦗ES.cont_sb_dom S k⦘).
+        { rewrite <- seq_eqvK at 1. by erewrite kE_inE at 1; eauto. }
+        arewrite (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S).
+        { eapply simrel_cert_step_jf_E; eauto. }
+        (* TODO: introduce a lemma e2a S' □ restr_rel (SE S) r ⊆ e2a S □ r. *)
+        rewrite ES.jfE at 1; try apply SRCC.
+        unfolder. ins. desf. do 2 eexists. splits; eauto.
+        all: symmetry.
+        all: eapply basic_step_e2a_eq_dom; eauto. }
+      { assert (Sjf S ⨾ ⦗eq e⦘ ⊆ ∅₂) as AA.
+        { rewrite ES.jfE; try apply SRCC. unfold ES.acts_set.
+          cdes BSTEP_. desf. unfolder. ins. omega. }
+        red in CertSTEP_. desf; cdes CertSTEP_.
+        1,3: rewrite JF'; rewrite AA; basic_solver.
+        all: cdes AJF; rewrite JF';
+          rewrite seq_union_l, collect_rel_union; unionL.
+        1,3: rewrite AA; basic_solver.
+        all: unfold jf_delta; unfolder; ins; desf. }
+      arewrite (Sjf S' ⨾ ⦗eq_opt e'⦘ ⊆ ∅₂).
+      2: basic_solver.
+      assert (Sjf S ⨾ ⦗eq_opt e'⦘ ⊆ ∅₂) as AA.
+      { cdes BSTEP_. rewrite ES.jfE; try apply SRCC.
+        unfold ES.acts_set.
+        unfolder. ins. desf. simpls. desf. omega. }
+      cdes BSTEP_. desf.
+      red in CertSTEP_. desf; cdes CertSTEP_.
+      1,3: by rewrite JF'.
+      all: cdes AJF; rewrite JF'; rewrite seq_union_l; unionL; auto.
+      all: unfold jf_delta.
+      { basic_solver. }
+      desf. simpls. desf. unfolder. ins. desf. omega. }
+    admit.
   Admitted.
 
 End SimRelCertStepCoh.
