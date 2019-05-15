@@ -794,6 +794,15 @@ Section SimRelCertStep.
         as BB.
       { unfold jf_delta. ins. rewrite (dom_l WF.(ES.rmwE)).
         unfold ES.acts_set. unfolder. ins. desf. omega. }
+      assert (e' = Some (Datatypes.S (ES.next_act S)) ->
+        (Srmw S') (ES.next_act S) (Datatypes.S (ES.next_act S)))
+        as CC.
+      { intros CC. apply RMW'. right. red. unfold eq_opt. desf. }
+      assert (e' = Some (Datatypes.S (ES.next_act S)) ->
+              Grmw (e2a S' (ES.next_act S))
+                   (e2a S' (Datatypes.S (ES.next_act S)))) as DD.
+      { ins. eapply E2ARMW. red.
+        do 2 eexists. splits; eauto. }
       rewrite RMW'. unfold rmw_delta, eq_opt.
       red in CertSTEP_. desf; cdes CertSTEP_.
       all: try cdes AJF.
@@ -812,21 +821,22 @@ Section SimRelCertStep.
           rewrite updo; [|by desf]. by rewrite upds. }
         eapply dom_rmwE_in_D with (TC:=TC); eauto.
         1-3: by apply SRCC.
-        eexists. apply seq_eqv_r. split.
-        { eapply E2ARMW. red.
-          do 2 eexists. splits; eauto.
-          apply RMW'. right. red. unfold eq_opt. basic_solver. }
+        simpls. desf.
+        eexists. apply seq_eqv_r. split; eauto.
         eapply basic_step_e2a_E0_e'; eauto.
         all: apply SRCC. }
       unfold jf_delta. unfolder. ins. desf.
-      eexists. splits; eauto.
-      (* TODO: for Evgenii *)
-      admit. }
+      eexists. splits; eauto. }
 
     assert (e2a S' □ ES.cont_sb_dom S k × eq e ⊆
             Gsb ;; <| eq (e2a S' e) |>) as HHSB.
-    { (* TODO: for Evgenii *)
-      admit. }
+    { arewrite (ES.cont_sb_dom S k × eq e ⊆ (ES.sb S') ⨾ ⦗eq e⦘).
+      { rewrite SB'. unfold sb_delta. basic_solver. }
+      rewrite collect_rel_seqi, collect_rel_eqv.
+      rewrite e2a_sb; eauto.
+      3: by apply SRCC.
+      2: { apply stable_prog_to_prog_no_init. apply SRCC. }
+      basic_solver. }
     assert (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S) as JFES.
     { eapply simrel_cert_step_jf_E; eauto. }
 
@@ -935,7 +945,7 @@ Section SimRelCertStep.
     red in CertSTEP_. desf; cdes CertSTEP_.
     all: try by rewrite JF'.
     all: eapply BB; eauto.
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_step_same_releaseE k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
