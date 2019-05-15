@@ -290,6 +290,58 @@ Section SimRelStep.
     apply ES.ew_sym; auto. 
   Qed.
 
+  Lemma simrel_cert_vis k S
+        (st : thread_st (ktid S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
+    certX S k ⊆₁ vis S.
+  Proof. 
+    assert (ES.Wf S) as WFS by apply SRCC.      
+    assert (Execution.t S X) as EXEC by apply SRCC.
+    assert (es_consistent S) as CONS by apply SRCC.
+    assert (simrel_ prog S G sc TC X) as SR_ by apply SRCC.
+    edestruct cstate_cont as [st_ [stEQ KK]]; 
+      [apply SRCC|].
+    red in stEQ, KK. subst st_.
+    simpl.
+    intros x [[Xx nTIDx] | kSBx].
+    { eapply ex_cov_ntid_vis; eauto. basic_solver. }
+    red. splits. 
+    { eapply kE_inE; eauto. }
+    rewrite seq_eqv_r.
+    intros y z [CC EQz]. subst z.
+    assert 
+      ((dom_rel (Sew S ⨾ ⦗certX S k ∩₁ e2a S ⋄₁ I⦘)) y)
+      as EWCERTX.
+    { eapply ew_ex_iss_in_cert_ex_iss; eauto.
+      eapply jfe_ex_iss; eauto.
+      apply dom_cc_jfe.
+      basic_solver. }
+    destruct EWCERTX as [z HH].
+    apply seq_eqv_r in HH.
+    destruct HH as [EW CERTXz].
+    eexists; splits; eauto.
+    destruct CERTXz as [[[Xz nTIDz] | kSBz] Iz].
+    { eapply ES.cont_sb_tid in kSBx; eauto.
+      destruct kSBx as [INITx | TIDx].
+      { exfalso. 
+        apply cc_ninit in CC.
+        destruct CC as [_ nINITx].
+        by apply nINITx. }
+      exfalso. apply nTIDz.
+      etransitivity.
+      { symmetry; apply ES.ew_tid; eauto. }
+      etransitivity. 
+      { apply cc_tid; eauto. }
+      done. } 
+    edestruct ES.cont_sb_dom_cross
+      as [[INITz INITx] | HH]; eauto.
+    { basic_solver. }
+    exfalso. 
+    apply cc_ninit in CC.
+    destruct CC as [_ nINITx].
+    by apply nINITx.
+  Qed.
+
   Lemma simrel_cert_end k S 
         (st : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :
@@ -324,7 +376,7 @@ Section SimRelStep.
       { admit. }
       { eapply cert_ex_rf_compl; eauto. }
       { eapply cert_ex_ncf; eauto. }
-      admit. }
+      eapply simrel_cert_vis; eauto. }
     (* sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC' *)
     { econstructor; try apply SRCC.
       admit. }
