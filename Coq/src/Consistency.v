@@ -143,6 +143,15 @@ Variable m : model.
 (** ** Basic properties *)
 (******************************************************************************)
 
+Lemma dom_cc_jfe : dom_rel cc ⊆₁ dom_rel jfe.
+Proof. unfold cc. basic_solver. Qed.
+
+Lemma cc_tid : cc ⊆ same_tid.
+Proof. unfold cc, ES.cf. basic_solver. Qed.
+
+Lemma cc_ninit : cc ⊆ Eninit × Eninit. 
+Proof. unfold cc, ES.cf. basic_solver. Qed.
+
 Lemma cf_in_ecf : cf ⊆ ecf.
 Proof.
   unfold ecf. rewrite !crE, !seq_union_l, !seq_union_r.

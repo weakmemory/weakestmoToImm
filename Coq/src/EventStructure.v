@@ -949,6 +949,51 @@ Proof.
   splits; eauto; basic_solver 10.
 Qed.
 
+Lemma cont_sb_dom_cross k lang st WF 
+      (KK : K (k, existT _ lang st)) :  
+  cont_sb_dom S k × cont_sb_dom S k ⊆ Einit × Einit ∪ sb⁼.
+Proof.
+  unfold cont_sb_dom.
+  destruct k as [|e]. 
+  { basic_solver. }
+  rewrite crE. relsf.
+  rewrite seq_eqv_r.
+  intros x y [[EQe | HA] [EQe' | HB]].
+  { basic_solver. }
+  { generalize HB. basic_solver. }
+  { generalize HA. basic_solver. }
+  destruct HA as [z  [SB  EQz ]].
+  destruct HB as [z' [SB' EQz']].
+  subst z z'.
+  apply sb_Einit_Eninit in SB; auto.
+  apply sb_Einit_Eninit in SB'; auto.
+  destruct SB  as [[INITx _] | HA];
+  destruct SB' as [[INITy _] | HB].
+  { basic_solver. }
+  { unfolder. right. right. left.
+    apply sb_init; auto.
+    generalize INITx, HB. basic_solver. }
+  { unfolder. right. right. right.
+    apply sb_init; auto.
+    generalize INITy, HA. basic_solver. }
+  assert (sb x e) as SB.
+  { generalize HA. basic_solver. }
+  assert (sb y e) as SB'.
+  { generalize HB. basic_solver. }
+  assert (same_tid x e) as STID.
+  { eapply sb_tid; auto.
+    generalize HA. basic_solver. }
+  assert (same_tid y e) as STID'.
+  { eapply sb_tid; auto.
+    generalize HB. basic_solver. }
+  right. 
+  edestruct sb_prcl as [EQ | HH]; auto.
+  { unfolder; splits; [apply SB |]; eauto. }
+  { unfolder; splits; [apply SB'|]; eauto. }
+  { basic_solver. }
+  generalize HH. basic_solver.
+Qed.
+
 Lemma cont_cf_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ E.
 Proof. 
