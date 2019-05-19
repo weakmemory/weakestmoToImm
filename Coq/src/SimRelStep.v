@@ -413,7 +413,11 @@ Section SimRelStep.
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
     { rewrite set_inter_union_l, id_union. relsf.
       apply inclusion_union_l. 
-      { admit. }
+      { rewrite isim_trav_step_new_covered_tid; try apply SRCC.
+        rewrite seq_eqv_r.
+        unfolder. ins. desf.
+        { eapply jf_cov_in_rf; eauto. basic_solver 10. }
+        exfalso. rewrite e2a_tid in *. auto. }
       arewrite (kE S k ∩₁ e2a S ⋄₁ C' ⊆₁ 
                    SEinit S ∪₁ kE S k ∩₁ e2a S ⋄₁ (GTid (ktid S k) ∩₁ C')).
       { unfolder. 
@@ -444,12 +448,16 @@ Section SimRelStep.
       rewrite ew_ex_iss_in_cert_ex_iss; eauto.
       erewrite sim_trav_step_issued_le; eauto. 
       eexists; apply SRCC. }
-    (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
+    (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply ew_ex_iss; eauto. }
       rewrite ew_ex_iss_in_cert_ex_iss; eauto.
       erewrite sim_trav_step_issued_le; eauto. 
       eexists; apply SRCC. }
+    (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ certX *)
+    intros x HH.
+    eapply rel_ew_cert_ex; eauto.
+    generalize HH. basic_solver 10.
   Admitted.
 
   Lemma simrel_step_helper k S
