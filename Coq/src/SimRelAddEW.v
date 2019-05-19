@@ -370,7 +370,76 @@ Section SimRelAddEW.
       autounfold with ESStepDb.
       generalize wEE'. basic_solver 10.
     Qed.
-      
+
+    Lemma sim_ews_ew w' k k' e e' S S'
+          (st st' st'' : thread_st (ktid S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S')
+          (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
+          (wEE' : (eq e ∪₁ eq_opt e') w') :
+      sim_ews w' S S' × sim_ews w' S S' ⊆ Sew S.
+    Proof. 
+      cdes BSTEP_.
+      assert (basic_step e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRCC. }
+      unfold sim_ews.
+      intros x y [[_ [E2Ax DOMx]] [_ [E2Ay DOMy]]].
+      red in E2Ax, DOMx, DOMy, E2Ay.
+      unfolder in DOMx.
+      unfolder in DOMy.
+      destruct DOMx as [x' [z' [EWx [EQ [Xx' Ix']]]]]. subst z'.
+      destruct DOMy as [y' [z' [EWy [EQ [Xy' Iy']]]]]. subst z'.
+      assert (e2a S x' = e2a S y') as E2AEQ.
+      { etransitivity.
+        { symmetry. eapply e2a_ew; eauto. 
+          basic_solver 10. }
+        rewrite <- E2Ay.
+        eapply e2a_ew; eauto. 
+        basic_solver 10. }
+      assert (x' = y') as EQ.
+      { eapply e2a_inj.
+        1,4-6: eauto.
+        all: apply SRCC. }
+      eapply ES.ew_trans; eauto.
+      eapply ES.ew_sym; eauto. 
+      congruence.
+    Qed.
+
+    Lemma sim_ews_ew_prcl w' k k' e e' S S'
+          (st st' st'' : thread_st (ktid S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S')
+          (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
+          (wEE' : (eq e ∪₁ eq_opt e') w') :
+      dom_rel (Sew S ⨾ ⦗sim_ews w' S S'⦘) ⊆₁ sim_ews w' S S'.
+    Proof. 
+      cdes BSTEP_.
+      assert (basic_step e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRCC. }
+      rewrite seq_eqv_r.
+      unfold sim_ews.
+      unfolder. 
+      intros x [y [EW [ORLXy [E2Ay HH]]]].
+      red in ORLXy, E2Ay, HH.
+      splits.
+      { apply ES.ewm in EW; auto.
+        generalize EW ORLXy. basic_solver. }
+      { rewrite <- E2Ay.
+        eapply e2a_ew; eauto.
+        basic_solver 10. }
+      destruct HH as [z [z' [EW' [EQ [Xz Iz]]]]]. subst z'. 
+      exists z, z; splits; auto.
+      eapply ES.ew_trans; eauto.
+    Qed.
+
     Lemma weaken_sim_add_ew w' k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
           (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -419,11 +488,11 @@ Section SimRelAddEW.
         basic_solver. }
       (* ewsCF : ews ⊆₁ cf S' w' *)
       { eapply sim_ews_cf; eauto. }
-      (* ewsEW : ews × ews \ eq ⊆ ew S *)
-      { admit. }
+      (* ewsEW : ews × ews ⊆ ew S *)
+      { eapply sim_ews_ew; eauto. }
       (* ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews *)
-      admit. 
-    Admitted.
+      eapply sim_ews_ew_prcl; eauto.
+    Qed.
 
     Lemma sim_add_ew_e2a_ew_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
@@ -503,23 +572,24 @@ Section SimRelAddEW.
         intros x [y [EQx HH]]. subst x. desc.
         destruct wEWI as [z HH].
         apply seq_eqv_r in HH.
-        destruct HH as [EW Xe2aI].
-        exists z, z. splits.
-        { red; splits; auto. 
-          { rewrite <- wsE2Aeq. symmetry.
-            eapply e2a_ew; [apply SRCC|].
-            basic_solver 10. }
-          do 2 eexists. split.
-          2 : { red. split; [|apply Xe2aI]. done. }
-          apply ES.ew_refl; auto.
-          assert ((SE S ∩₁ SW S) z) as EWz.
-          { unfolder. split.
-            { apply ES.ewE in EW; auto. 
-              generalize EW. basic_solver. }
-            apply ES.ewD in EW; auto. 
+        destruct HH as [EW [Xz Iz]].
+        exists z, z; unfolder; splits; auto.
+        { eapply ES.ewm in EW; auto.
+          generalize EW wsRLX. basic_solver. }
+        { rewrite <- wsE2Aeq. symmetry.
+          eapply e2a_ew; [apply SRCC|].
+          basic_solver 10. }
+        do 2 eexists. splits.
+        3-4: eauto.
+        2 : done.
+        apply ES.ew_refl; auto.
+        assert ((SE S ∩₁ SW S) z) as EWz.
+        { unfolder. split.
+          { apply ES.ewE in EW; auto. 
             generalize EW. basic_solver. }
-          generalize EWz. basic_solver 10. }
-        red. split; [|apply Xe2aI]. done. }
+          apply ES.ewD in EW; auto. 
+          generalize EW. basic_solver. }
+        generalize EWz. basic_solver 10. }
       basic_solver 10.
     Qed.
 
