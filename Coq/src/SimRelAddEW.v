@@ -42,6 +42,7 @@ Section SimRelAddEW.
   Notation "'SEninit' S" := S.(ES.acts_ninit_set) (at level 10).
   Notation "'Stid' S" := (S.(ES.tid)) (at level 10).
   Notation "'Slab' S" := S.(ES.lab) (at level 10).
+  Notation "'Smod' S" := (Events.mod S.(ES.lab)) (at level 10).
   Notation "'Sloc' S" := (Events.loc S.(ES.lab)) (at level 10).
   Notation "'Sval' S" := (Events.val S.(ES.lab)) (at level 10).
 
@@ -69,12 +70,13 @@ Section SimRelAddEW.
   Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
   Notation "'SF' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
-  Notation "'SPln' S" := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
-  Notation "'SRlx' S" := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
-  Notation "'SRel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
-  Notation "'SAcq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
+  Notation "'SPln' S"    := (fun a => is_true (is_only_pln S.(ES.lab) a)) (at level 10).
+  Notation "'SORlx' S"   := (fun a => is_true (is_only_rlx S.(ES.lab) a)) (at level 10).
+  Notation "'SRlx' S"    := (fun a => is_true (is_rlx S.(ES.lab) a)) (at level 10).
+  Notation "'SRel' S"    := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
+  Notation "'SAcq' S"    := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
   Notation "'SAcqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
-  Notation "'SSc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
+  Notation "'SSc' S"     := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
@@ -134,6 +136,7 @@ Section SimRelAddEW.
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
   
   Definition sim_ews (w' : eventid) (S S' : ES.t) := fun w => 
+    ⟪ wsRLX : SORlx S w ⟫ /\               
     ⟪ wsE2Aeq : e2a S w = e2a S' w' ⟫ /\
     ⟪ wEWI : dom_rel (Sew S ⨾ ⦗ X ∩₁ e2a S ⋄₁ I ⦘) w ⟫.
 
@@ -176,6 +179,12 @@ Section SimRelAddEW.
       generalize EW. basic_solver.
     Qed.
 
+    Lemma sim_ewsRLX w' k S S'
+          (st st' : thread_st (ktid S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st') :
+      sim_ews w' S S' ⊆₁ ORlx S.
+    Proof. unfold sim_ews. basic_solver. Qed.
+
     Lemma sim_ews_e2a_eq w' S S' :
       e2a S □₁ sim_ews w' S S' ⊆₁ eq (e2a S' w').
     Proof. unfold sim_ews. basic_solver. Qed.
@@ -190,6 +199,43 @@ Section SimRelAddEW.
       arewrite (e2a S x = e2a S' w'); auto.
       generalize WSx. unfold sim_ews.
       basic_solver.
+    Qed.
+
+    Lemma sim_ews_mod w' k k' e e' S S' 
+          (st st' st'' : thread_st (ktid S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'')
+          (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (Smod S) □₁ sim_ews w' S S' ⊆₁ eq (Smod S' w').
+    Proof. 
+      assert (basic_step e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      intros l [x [WSx MODx]].
+      rewrite <- MODx.
+      arewrite ((Smod S) x = (Smod S') x).
+      { symmetry. eapply basic_step_mod_eq_dom; eauto.
+        eapply sim_ewsE; eauto. }
+      assert 
+        (restr_rel (SE S') (same_mod S') w' x -> (Smod S') w' = (Smod S') x)
+        as HH.
+      { basic_solver. }
+      apply HH.
+      eapply same_lab_u2v_dom_same_mod.
+      { eapply basic_step_e2a_same_lab_u2v; eauto; apply SRCC. }
+      unfolder. splits.
+      { red. unfold Events.mod, compose. 
+        erewrite sim_ews_e2a_eq; eauto.
+        arewrite (e2a S' x = e2a S x).
+        { eapply basic_step_e2a_eq_dom; eauto.
+          eapply sim_ewsE; eauto. }
+        basic_solver. }
+      { eapply basic_step_acts_set; eauto.
+        generalize wEE'. basic_solver. }
+      eapply basic_step_acts_set; eauto.
+      do 2 left. eapply sim_ewsE; eauto.
     Qed.
 
     Lemma sim_ews_loc w' k k' e e' S S' 
@@ -345,10 +391,16 @@ Section SimRelAddEW.
       { eapply sim_ewsE; eauto. }
       (* ewsW : ews ⊆₁ W S *)
       { eapply sim_ewsW; eauto. }
-      (* ewsRLX : ews ⊆₁ Rlx S *)
-      { admit. }
+      (* ewsRLX : ews ⊆₁ ORlx S *)
+      { eapply sim_ewsRLX; eauto. }
       (* ewsMOD : ews ⊆₁ same_mod S' w' *)
-      { admit. }
+      { intros x WSx.
+        unfold AuxDef.same_mod.
+        arewrite (Smod S' x = Smod S x).
+        { erewrite basic_step_mod_eq_dom; eauto.
+          eapply sim_ewsE; eauto. }
+        erewrite sim_ews_mod; eauto.
+        basic_solver. }
       (* ewsLOC : ews ⊆₁ same_loc S' w' *)
       { intros x WSx.
         unfold Events.same_loc.
