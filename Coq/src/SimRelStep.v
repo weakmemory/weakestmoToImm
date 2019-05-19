@@ -372,7 +372,7 @@ Section SimRelStep.
       { eapply cert_ex_inE; eauto. }
       { eapply init_in_cert_ex; eauto. }
       { eapply cert_ex_sb_prcl; eauto. }
-      { admit. }
+      { eapply cert_ex_sw_prcl; eauto. }
       { admit. }
       { eapply cert_ex_rf_compl; eauto. }
       { eapply cert_ex_ncf; eauto. }

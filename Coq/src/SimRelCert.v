@@ -723,14 +723,32 @@ Section SimRelCert.
       apply ex_cov_in_certX. 
     Qed.
 
+    Lemma cert_ex_sw_prcl :
+      dom_rel (Ssw ⨾ ⦗ certX ⦘) ⊆₁ certX. 
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      assert (simrel_ prog S G sc TC X) as SR_.
+      { apply SRCC. }
+      rewrite sw_in_ex_cov_sw_sb; eauto.
+      relsf. splits.
+      2 : apply cert_ex_sb_prcl.
+      rewrite seqA, dom_seq, dom_eqv.
+      apply ex_cov_in_certX.
+    Qed.
+
     Lemma cert_ex_hb_prcl :
       dom_rel (Shb ⨾ ⦗ certX ⦘) ⊆₁ certX.  
-    Proof. admit. Admitted.
-    (*   rewrite hb_in_ex_cov_hb_sb; [|apply SRCC]. *)
-    (*   rewrite seq_union_l, dom_union. unionL. *)
-    (*   2: eapply a2e_sb_prcl; eauto; apply SRCC. *)
-    (*   rewrite hfC. unfold cert_dom. basic_solver 10. *)
-    (* Qed. *)
+    Proof.
+      unfold hb.
+      rewrite seq_eqv_r.
+      intros x [y [HB yX]].
+      induction HB as [x y [SSB | SSW] | ]; auto.
+      { apply cert_ex_sb_prcl; auto. basic_solver 10. }
+      apply cert_ex_sw_prcl; auto. basic_solver 10. 
+    Qed.
 
     Lemma hb_rel_ew_cert_ex :
       dom_rel (Shb^? ⨾ Srelease ⨾ Sew ⨾ ⦗ certX ⦘) ⊆₁ certX.  
