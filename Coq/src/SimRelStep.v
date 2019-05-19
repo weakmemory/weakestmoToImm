@@ -165,8 +165,11 @@ Section SimRelStep.
     { eapply sim_trav_step_coherence; try apply SRC.
       red. eauto. }
     constructor; auto.
+    (* ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE *)
     { apply XkTIDCOV. }
+    (* cov_in_ex : e2a ⋄₁ C ∩₁ kE ⊆₁ X *)
     { rewrite XkTIDCOV. basic_solver. }
+    (* kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
     { intros x [kEx nINITx].
       erewrite ex_cov_iss_lab; try apply SRC.
       2 : { apply XkTIDCOV in kEx. 
@@ -189,6 +192,7 @@ Section SimRelStep.
       eapply sim_trav_step_covered_le in Cx.
       2 : eexists; eauto.
       basic_solver. }
+    (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ktid *)
     { rewrite XkTIDCOV.
       rewrite <- seq_eqvK.
       rewrite <- seqA, collect_rel_seqi.
@@ -206,8 +210,27 @@ Section SimRelStep.
       arewrite (C ⊆₁ C').
       { eapply sim_trav_step_covered_le.
         red. eauto. }
-        by apply rf_C_in_cert_rf; try apply SRC. }
-  Admitted.
+      by apply rf_C_in_cert_rf; try apply SRC. }
+    (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ; *)
+    arewrite (X ∩₁ e2a S ⋄₁ (acts_set (ProgToExecution.G st) ∩₁ I) ⊆₁ 
+              X ∩₁ SW S ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C).
+    { edestruct cstate_cont as [sta HH]; 
+        eauto; desf.
+      rewrite <- e2a_kE_ninit; try apply SRC; eauto.
+      rewrite XkTIDCOV.
+      unfolder. ins. desf. splits; auto; try congruence.
+      { eapply ex_iss_inW; [apply SRC|]. basic_solver. }
+      arewrite (Stid S x = Stid S y); auto.
+      rewrite !e2a_tid. congruence. }
+    rewrite XkTIDCOV.
+    rewrite seq_eqv_r.
+    unfolder. ins. desf. 
+    exists x; splits; auto.
+    apply ES.ew_refl; [apply SRC|].
+    unfolder; splits; auto.
+    eapply Execution.ex_inE; eauto.
+    apply SRC.
+  Qed.
 
   Lemma ew_ex_iss_in_cert_ex_iss k S 
         (st : thread_st (ktid S k))
