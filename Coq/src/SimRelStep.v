@@ -141,6 +141,39 @@ Section SimRelStep.
 
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
+  Lemma exists_pc thread e
+        (NINIT : thread <> tid_init)
+        (COV : C e)
+        (TID : GTid thread e) :
+    exists e', pc G TC thread e'.
+  Proof.
+    destruct e; simpls; desf.
+    (* TODO: continue from here *)
+
+    generalize dependent e.
+    set (Q e := C e -> Gtid e = thread ->
+                exists e' : actid, pc G TC thread e').
+    apply (@well_founded_ind _ Gsb (wf_sb G) Q).
+    ins; subst Q; simpls.
+    destruct (classic (exists e', sb e' x /\ ~ P e')) as
+        [[e' [H' COV]]| H']; ins.
+    { assert (E e') as ACTS.
+      { apply seq_eqv_l in H'; desf. }
+      specialize (H e' H' ACTS COV).
+      destruct H as [z [X Y]].
+      exists z; split; auto.
+      right.
+      red in X; desf.
+      eapply sb_trans; eauto. }
+    exists x; splits; [by left|]; red; splits; auto.
+unfolder; splits; eauto.
+unfold dom_cond; unfolder.
+ins; desc; subst.
+    destruct (classic (P x0)); auto.
+    exfalso; apply H'; vauto.
+  Qed.
+
+
   Lemma simrel_cert_graph_start thread S 
         (NINITT : thread <> tid_init)
         (SRC : simrel prog S G sc TC X) 
@@ -151,6 +184,7 @@ Section SimRelStep.
       ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
       ⟪ CERT_ST : simrel_cstate S k st st' ⟫.
   Proof.
+    cdes SRC.
     assert (ES.Wf S) as WFS by apply SRC.
 
     pose proof TC_STEP as HH. 
@@ -159,6 +193,7 @@ Section SimRelStep.
     destruct (Basic.IdentMap.find thread (stable_prog_to_prog prog))
       as [lprog|] eqn:AA; desf.
     
+    (* TODO: make it a separate lemma. *)
     assert
       (exists k (state : Language.state (thread_lts thread)),
           ⟪ INK : K S (k, thread_cont_st thread state) ⟫ /\
@@ -170,11 +205,21 @@ Section SimRelStep.
            edestruct contrun as [st]; try apply SRC; eauto. 
            desf.
            eexists. splits; eauto.
+           etransitivity.
+           { (* TODO: Improve interface of steps_same_E_empty
+                      to get rid of the second premise.
+              *)
+             eapply steps_same_E_empty; eauto.
+             { simpls. apply wf_thread_state_init. }
+             eapply clos_refl_trans_mori; eauto.
+             unfold ProgToExecution.step. basic_solver. }
            arewrite (C ∩₁ GTid thread ≡₁ ∅).
            { generalize NN. basic_solver. }
-           split; [|basic_solver].
-           admit. }
-      admit. }
+           simpls. }
+      assert ((e2a S □₁ X) x) as EE.
+      { eapply ex_cov_iss; eauto. by left. }
+      red in EE. desf.
+
     desf.
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
     all: try apply SRC.
