@@ -17,6 +17,17 @@ Lemma same_label_u2v_val {A} (lab lab' : A -> label) x
   lab x = lab' x.
 Proof. unfold same_label_u2v, val in *. desf; desf. Qed.
 
+Lemma same_lab_u2v_dom_same_mod {A} (lab lab' : A -> label) (s : A -> Prop)
+      (SAME: same_lab_u2v_dom s lab lab') :
+  restr_rel s (same_mod lab) ≡ restr_rel s (same_mod lab').
+Proof.
+  unfolder. split.
+  all: ins; desf; splits; auto.
+  all: unfold same_mod, mod, same_lab_u2v_dom, same_label_u2v in *.
+  all: set (SAMEY := SAME); specialize (SAMEY y H1).
+  all: specialize (SAME x H0); desf; desf.
+Qed.
+
 Section Properties.
 
 Variable G : execution.
