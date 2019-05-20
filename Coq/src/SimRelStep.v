@@ -142,15 +142,55 @@ Section SimRelStep.
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
   Lemma simrel_cert_graph_start thread S 
+        (NINITT : thread <> tid_init)
         (SRC : simrel prog S G sc TC X) 
         (TC_STEP : isim_trav_step G sc thread TC TC') : 
     exists k st st',
       ⟪ kTID : thread = ktid S k ⟫ /\
       ⟪ XkTIDCOV : kE S k ≡₁ X ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C ⟫ /\
-      ⟪ kECOV : X ∩₁ Stid_ S thread ∩₁ e2a S ⋄₁ C ⊆₁ kE S k ⟫ /\
       ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
       ⟪ CERT_ST : simrel_cstate S k st st' ⟫.
-  Proof. admit. Admitted.
+  Proof.
+    assert (ES.Wf S) as WFS by apply SRC.
+
+    pose proof TC_STEP as HH. 
+    eapply trstep_thread_prog in HH; try apply SRC.
+    apply Basic.IdentMap.Facts.in_find_iff in HH.
+    destruct (Basic.IdentMap.find thread (stable_prog_to_prog prog))
+      as [lprog|] eqn:AA; desf.
+
+    edestruct contcov with (thread:=thread) as [k state0];
+      try apply SRC; eauto.
+    desf.
+    edestruct cert_graph_start with (state0:=state) as [state']; eauto.
+    all: try apply SRC.
+    { auto. }
+    { admit. }
+    { destruct k.
+      { simpls.
+        edestruct contrun as [state0];
+          try apply SRC; eauto.
+        desf.
+        assert (state0 = state); subst.
+        { pose proof (ES.unique_K WFS _ _ INK INK0 eq_refl) as BB.
+          simpls. inv BB. }
+        simpls.
+        eapply clos_refl_trans_mori in INITST.
+        2: { apply eps_step_in_step. }
+        assert (lprog = instrs state); desf.
+        apply steps_same_instrs in INITST. simpls. }
+      simpls.
+      admit. }
+    { red.
+      splits.
+      { admit. }
+      eexists. red. splits; ins.
+      all: admit. }
+    { rewrite EST. basic_solver. }
+    desf.
+    do 3 eexists.
+    splits; eauto.
+  Admitted.
   
   Lemma simrel_cert_start k S 
         (st st' : thread_st (ktid S k))
@@ -379,7 +419,7 @@ Section SimRelStep.
       eapply simrel_cert_vis; eauto. }
     (* sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC' *)
     { econstructor; try apply SRCC.
-      admit. }
+      all: admit. }
     (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. }
@@ -473,6 +513,10 @@ Section SimRelStep.
     edestruct simrel_cert_graph_start
       as [k [st [st' HH]]]; 
       eauto; desc. 
+    { eapply isim_trav_step_thread_ninit; eauto.
+      all: try apply SRC.
+      apply stable_prog_to_prog_no_init.
+      apply SRC. }
     edestruct simrel_step_helper
       as [k' [S' HH]]; 
       subst; eauto; desc.
