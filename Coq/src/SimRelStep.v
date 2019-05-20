@@ -158,9 +158,23 @@ Section SimRelStep.
     apply Basic.IdentMap.Facts.in_find_iff in HH.
     destruct (Basic.IdentMap.find thread (stable_prog_to_prog prog))
       as [lprog|] eqn:AA; desf.
-
-    edestruct contcov with (thread:=thread) as [k state0];
-      try apply SRC; eauto.
+    
+    assert
+      (exists k (state : Language.state (thread_lts thread)),
+          ⟪ INK : K S (k, thread_cont_st thread state) ⟫ /\
+          ⟪ THK : thread = ES.cont_thread S k ⟫ /\
+          ⟪ EST : state.(ProgToExecution.G).(acts_set) ≡₁
+                  C ∩₁ GTid thread ⟫).
+    { destruct (classic (exists x, (C ∩₁ GTid thread) x)) as [[x [CX TX]]|NN].
+      2: { exists (CInit thread).
+           edestruct contrun as [st]; try apply SRC; eauto. 
+           desf.
+           eexists. splits; eauto.
+           arewrite (C ∩₁ GTid thread ≡₁ ∅).
+           { generalize NN. basic_solver. }
+           split; [|basic_solver].
+           admit. }
+      admit. }
     desf.
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
     all: try apply SRC.
