@@ -223,6 +223,15 @@ Section SimRelStep.
     simpls.
   Qed.
 
+  (* TODO: move to AuxRel.v *)
+  Lemma set_equiv_exp_equiv {A} (s s' : A -> Prop) :
+    s ≡₁ s' <-> forall x : A, s x <-> s' x.
+  Proof.
+    split.
+    { apply set_equiv_exp. }
+    intros HH. by split; red; ins; apply HH.
+  Qed.
+
   Lemma simrel_cert_graph_start thread S 
         (NINITT : thread <> tid_init)
         (SRC : simrel prog S G sc TC X) 
@@ -256,13 +265,7 @@ Section SimRelStep.
            desf.
            eexists. splits; eauto.
            etransitivity.
-           { (* TODO: Improve interface of steps_same_E_empty
-                      to get rid of the second premise.
-              *)
-             eapply steps_same_E_empty; eauto.
-             { simpls. apply wf_thread_state_init. }
-             eapply clos_refl_trans_mori; eauto.
-             unfold ProgToExecution.step. basic_solver. }
+           { eapply steps_empty_same_E; eauto. }
            arewrite (C ∩₁ GTid thread ≡₁ ∅).
            { generalize NN. basic_solver. }
            simpls. }
@@ -294,7 +297,25 @@ Section SimRelStep.
       exists (CEvent y). exists state.
       splits; eauto.
       { arewrite (Gtid x = ES.cont_thread S (CEvent y)). eauto. }
-      (* TODO: continue from here *)
+      (* TODO: generalize to a lemma *)
+      set (WFTS:=INKC).
+      eapply contwf in WFTS; try apply SRC.
+      simpls. rewrite <- TT in WFTS.
+      set (SS:=INKC).
+      eapply contpc in SS; try apply SRC; auto.
+      split.
+      { intros e CC.
+        set (DD:=CC).
+        eapply acts_rep in DD; eauto. desf.
+        split; auto.
+        cdes SS. rewrite TT. by apply PCOV. }
+      intros e [CC ET].
+      destruct e; simpls; desf.
+      { by rewrite ET in NINITT. }
+      cdes SS. rewrite TT in CC. apply PCOV in CC.
+      apply acts_clos; auto. }
+
+    (* TODO: continue from here *)
 
     desf.
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
