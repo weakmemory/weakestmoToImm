@@ -1,3 +1,4 @@
+Require Import Omega.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
@@ -140,39 +141,87 @@ Section SimRelStep.
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
+  
+  (* TODO: move to another file. *)
+  Lemma exists_nE thread :
+    exists n, ~ GE (ThreadEvent thread n).
+  Proof.
+    unfold acts_set.
+    destruct G. simpls.
+    clear.
+    assert (exists n, forall m (IN : In (ThreadEvent thread m) acts),
+                 m < n) as [n AA].
+    2: { desf. exists n. induction acts; simpls.
+         intros HH. apply AA in HH. omega. }
+    induction acts; simpls.
+    { exists 1. ins. }
+    desf.
+    destruct a.
+    { exists n. ins. desf. intuition. }
+    exists (1 + max n index).
+    ins. desf.
+    { apply Max.max_case_strong; omega. }
+    apply IHacts in IN.
+    etransitivity; eauto.
+    apply Max.max_case_strong; omega.
+  Qed.
+
+  Lemma exists_ncov thread
+        (TCCOH : tc_coherent G sc TC) :
+    exists n, ~ C (ThreadEvent thread n).
+  Proof.
+    destruct (exists_nE thread) as [n HH].
+    exists n. intros CC. apply HH.
+    eapply coveredE; eauto.
+  Qed.
 
   Lemma exists_pc thread e
+        (TCCOH : tc_coherent G sc TC)
+        (SRCG  : simrel_graph G TC)
         (NINIT : thread <> tid_init)
         (COV : C e)
         (TID : GTid thread e) :
     exists e', pc G TC thread e'.
   Proof.
     destruct e; simpls; desf.
-    (* TODO: continue from here *)
-
-    generalize dependent e.
-    set (Q e := C e -> Gtid e = thread ->
-                exists e' : actid, pc G TC thread e').
-    apply (@well_founded_ind _ Gsb (wf_sb G) Q).
-    ins; subst Q; simpls.
-    destruct (classic (exists e', sb e' x /\ ~ P e')) as
-        [[e' [H' COV]]| H']; ins.
-    { assert (E e') as ACTS.
-      { apply seq_eqv_l in H'; desf. }
-      specialize (H e' H' ACTS COV).
-      destruct H as [z [X Y]].
-      exists z; split; auto.
-      right.
-      red in X; desf.
-      eapply sb_trans; eauto. }
-    exists x; splits; [by left|]; red; splits; auto.
-unfolder; splits; eauto.
-unfold dom_cond; unfolder.
-ins; desc; subst.
-    destruct (classic (P x0)); auto.
-    exfalso; apply H'; vauto.
+    assert (GE (ThreadEvent thread index)) as EE by (eapply coveredE; eauto).
+    destruct (exists_ncov thread) as [m MM]; auto.
+    remember (m - index) as delta.
+    generalize dependent m.
+    generalize dependent index.
+    induction delta.
+    { ins. exfalso. apply MM.
+      assert (m = index \/ m < index) as [|HH] by omega; desf.
+      eapply dom_sb_covered; eauto.
+      eexists. apply seq_eqv_r. splits; eauto.
+      red. apply seq_eqv_l. split.
+      { eapply gprclos; eauto. }
+      apply seq_eqv_r.
+      splits; auto.
+      simpls. }
+    ins.
+    destruct (classic (C (ThreadEvent thread (S index)))) as [MCOV|NMCOV].
+    { apply IHdelta with (m:=m) in MCOV; eauto.
+      2: omega.
+      eapply coveredE; eauto. }
+    exists (ThreadEvent thread index).
+    red. split; [split|]; auto.
+    intros [e HH]. destruct_seq_r HH as CE.
+    assert (exists p, e = ThreadEvent thread p /\
+                      << LT : index < p >>); desf.
+    { red in HH. destruct_seq HH as [AA BB].
+      red in HH. desf; desf. eauto. }
+    apply NMCOV.
+    assert (p = S index \/ S index < p) by omega; desf.
+    eapply dom_sb_covered; eauto.
+    eexists. apply seq_eqv_r.
+    split; [|by apply CE].
+    assert (GE (ThreadEvent thread p)) as PE by (eapply coveredE; eauto).
+    red. apply seq_eqv_l. split.
+    { eapply gprclos; eauto. }
+    apply seq_eqv_r. split; auto.
+    simpls.
   Qed.
-
 
   Lemma simrel_cert_graph_start thread S 
         (NINITT : thread <> tid_init)
@@ -216,8 +265,15 @@ ins; desc; subst.
            arewrite (C ∩₁ GTid thread ≡₁ ∅).
            { generalize NN. basic_solver. }
            simpls. }
-      assert ((e2a S □₁ X) x) as EE.
-      { eapply ex_cov_iss; eauto. by left. }
+      edestruct exists_pc as [xpc XPC]; eauto; try apply SRC.
+      assert ((e2a S □₁ X) xpc) as EE.
+      { eapply ex_cov_iss; eauto. left. apply XPC. }
+      red in EE. desf.
+      assert (Gtid x = Stid S y) as TT.
+      { rewrite e2a_tid. red in XPC. generalize XPC. basic_solver. }
+      rewrite TT in XPC.
+      (* TODO: continue from here *)
+      eapply contpc in XPC; try apply SRC.
       red in EE. desf.
 
     desf.
