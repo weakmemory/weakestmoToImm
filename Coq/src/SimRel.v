@@ -1,3 +1,4 @@
+Require Import Omega.
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
@@ -154,8 +155,58 @@ Section SimRel.
     ⟪ SRC_ : simrel_ ⟫ /\ 
     ⟪ SCONS : @es_consistent S Weakestmo ⟫.
   
+  Section SimRelGraphProps. 
+    Lemma exists_pc thread e
+          (TCCOH : tc_coherent G sc TC)
+          (SRCG  : simrel_graph)
+          (NINIT : thread <> tid_init)
+          (COV : C e)
+          (TID : GTid thread e) :
+      exists e', pc G TC thread e'.
+    Proof.
+      destruct e; simpls; desf.
+      assert (GE (ThreadEvent thread index)) as EE by (eapply coveredE; eauto).
+      destruct (exists_ncov TCCOH thread) as [m MM]; auto.
+      remember (m - index) as delta.
+      generalize dependent m.
+      generalize dependent index.
+      induction delta.
+      { ins. exfalso. apply MM.
+        assert (m = index \/ m < index) as [|HH] by omega; desf.
+        eapply dom_sb_covered; eauto.
+        eexists. apply seq_eqv_r. splits; eauto.
+        red. apply seq_eqv_l. split.
+        { eapply gprclos; eauto. }
+        apply seq_eqv_r.
+        splits; auto.
+        simpls. }
+      ins.
+      destruct (classic (C (ThreadEvent thread (Datatypes.S index))))
+        as [MCOV|NMCOV].
+      { apply IHdelta with (m:=m) in MCOV; eauto.
+        2: omega.
+        eapply coveredE; eauto. }
+      exists (ThreadEvent thread index).
+      red. split; [split|]; auto.
+      intros [e HH]. destruct_seq_r HH as CE.
+      assert (exists p, e = ThreadEvent thread p /\
+                        << LT : index < p >>); desf.
+      { red in HH. destruct_seq HH as [AA BB].
+        red in HH. desf; desf. eauto. }
+      apply NMCOV.
+      assert (p = Datatypes.S index \/ Datatypes.S index < p) by omega; desf.
+      eapply dom_sb_covered; eauto.
+      eexists. apply seq_eqv_r.
+      split; [|by apply CE].
+      assert (GE (ThreadEvent thread p)) as PE by (eapply coveredE; eauto).
+      red. apply seq_eqv_l. split.
+      { eapply gprclos; eauto. }
+      apply seq_eqv_r. split; auto.
+      simpls.
+    Qed.
+  End SimRelGraphProps. 
+
   Section SimRelCommonProps. 
-    
     Variable SRC_ : simrel_.
 
     (******************************************************************************)
@@ -801,7 +852,7 @@ Section SimRelLemmas.
     2: basic_solver 20.
     unfolder. ins.
     pose proof (prog_g_es_init_lab prog G x) as AA.
-    unfold prog_g_es_init, ES.init, is_rel, mod, mode_le in *. simpls.
+    unfold prog_g_es_init, ES.init, is_rel, Events.mod, mode_le in *. simpls.
     desf.
   Qed.
 

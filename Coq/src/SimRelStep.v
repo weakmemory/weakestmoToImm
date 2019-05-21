@@ -142,96 +142,6 @@ Section SimRelStep.
 
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
   
-  (* TODO: move to another file. *)
-  Lemma exists_nE thread :
-    exists n, ~ GE (ThreadEvent thread n).
-  Proof.
-    unfold acts_set.
-    destruct G. simpls.
-    clear.
-    assert (exists n, forall m (IN : In (ThreadEvent thread m) acts),
-                 m < n) as [n AA].
-    2: { desf. exists n. induction acts; simpls.
-         intros HH. apply AA in HH. omega. }
-    induction acts; simpls.
-    { exists 1. ins. }
-    desf.
-    destruct a.
-    { exists n. ins. desf. intuition. }
-    exists (1 + max n index).
-    ins. desf.
-    { apply Max.max_case_strong; omega. }
-    apply IHacts in IN.
-    etransitivity; eauto.
-    apply Max.max_case_strong; omega.
-  Qed.
-
-  Lemma exists_ncov thread
-        (TCCOH : tc_coherent G sc TC) :
-    exists n, ~ C (ThreadEvent thread n).
-  Proof.
-    destruct (exists_nE thread) as [n HH].
-    exists n. intros CC. apply HH.
-    eapply coveredE; eauto.
-  Qed.
-
-  Lemma exists_pc thread e
-        (TCCOH : tc_coherent G sc TC)
-        (SRCG  : simrel_graph G TC)
-        (NINIT : thread <> tid_init)
-        (COV : C e)
-        (TID : GTid thread e) :
-    exists e', pc G TC thread e'.
-  Proof.
-    destruct e; simpls; desf.
-    assert (GE (ThreadEvent thread index)) as EE by (eapply coveredE; eauto).
-    destruct (exists_ncov thread) as [m MM]; auto.
-    remember (m - index) as delta.
-    generalize dependent m.
-    generalize dependent index.
-    induction delta.
-    { ins. exfalso. apply MM.
-      assert (m = index \/ m < index) as [|HH] by omega; desf.
-      eapply dom_sb_covered; eauto.
-      eexists. apply seq_eqv_r. splits; eauto.
-      red. apply seq_eqv_l. split.
-      { eapply gprclos; eauto. }
-      apply seq_eqv_r.
-      splits; auto.
-      simpls. }
-    ins.
-    destruct (classic (C (ThreadEvent thread (S index)))) as [MCOV|NMCOV].
-    { apply IHdelta with (m:=m) in MCOV; eauto.
-      2: omega.
-      eapply coveredE; eauto. }
-    exists (ThreadEvent thread index).
-    red. split; [split|]; auto.
-    intros [e HH]. destruct_seq_r HH as CE.
-    assert (exists p, e = ThreadEvent thread p /\
-                      << LT : index < p >>); desf.
-    { red in HH. destruct_seq HH as [AA BB].
-      red in HH. desf; desf. eauto. }
-    apply NMCOV.
-    assert (p = S index \/ S index < p) by omega; desf.
-    eapply dom_sb_covered; eauto.
-    eexists. apply seq_eqv_r.
-    split; [|by apply CE].
-    assert (GE (ThreadEvent thread p)) as PE by (eapply coveredE; eauto).
-    red. apply seq_eqv_l. split.
-    { eapply gprclos; eauto. }
-    apply seq_eqv_r. split; auto.
-    simpls.
-  Qed.
-
-  (* TODO: move to AuxRel.v *)
-  Lemma set_equiv_exp_equiv {A} (s s' : A -> Prop) :
-    s ≡₁ s' <-> forall x : A, s x <-> s' x.
-  Proof.
-    split.
-    { apply set_equiv_exp. }
-    intros HH. by split; red; ins; apply HH.
-  Qed.
-
   Lemma simrel_cert_graph_start thread S 
         (NINITT : thread <> tid_init)
         (SRC : simrel prog S G sc TC X) 
@@ -258,12 +168,21 @@ Section SimRelStep.
           ⟪ INK : K S (k, thread_cont_st thread state) ⟫ /\
           ⟪ THK : thread = ES.cont_thread S k ⟫ /\
           ⟪ EST : state.(ProgToExecution.G).(acts_set) ≡₁
-                  C ∩₁ GTid thread ⟫).
+                  C ∩₁ GTid thread ⟫ /\
+          ((exists thread,
+               << KREP : k = CInit thread >> /\
+               << CEMP : C ∩₁ GTid thread ≡₁ ∅ >>) \/
+           (exists e,
+               << KREP : k = CEvent e >> /\
+               << EPC  : pc G TC thread (e2a S e) >>))
+      ).
     { destruct (classic (exists x, (C ∩₁ GTid thread) x)) as [[x [CX TX]]|NN].
       2: { exists (CInit thread).
            edestruct contrun as [st]; try apply SRC; eauto. 
            desf.
            eexists. splits; eauto.
+           2: { left. eexists. splits; eauto.
+                generalize NN. basic_solver. }
            etransitivity.
            { eapply steps_empty_same_E; eauto. }
            arewrite (C ∩₁ GTid thread ≡₁ ∅).
@@ -297,6 +216,7 @@ Section SimRelStep.
       exists (CEvent y). exists state.
       splits; eauto.
       { arewrite (Gtid x = ES.cont_thread S (CEvent y)). eauto. }
+      2: { right. eexists. split; eauto. by rewrite TT. }
       (* TODO: generalize to a lemma *)
       set (WFTS:=INKC).
       eapply contwf in WFTS; try apply SRC.
@@ -315,14 +235,12 @@ Section SimRelStep.
       cdes SS. rewrite TT in CC. apply PCOV in CC.
       apply acts_clos; auto. }
 
-    (* TODO: continue from here *)
-
-    desf.
+    desc.
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
     all: try apply SRC.
-    { auto. }
+    { rewrite THK. eapply contwf; try apply SRC. desf. }
     { admit. }
-    { destruct k.
+    { desf.
       { simpls.
         edestruct contrun as [state0];
           try apply SRC; eauto.
@@ -337,15 +255,32 @@ Section SimRelStep.
         apply steps_same_instrs in INITST. simpls. }
       simpls.
       admit. }
-    { red.
-      splits.
-      { admit. }
-      eexists. red. splits; ins.
-      all: admit. }
+    { desf.
+      2: { eapply contpc; eauto. apply SRC. }
+      admit. }
+    (* { desf. *)
+    (*   red. *)
+    (*   splits. *)
+    (*   { admit. } *)
+    (*   eexists. red. splits; ins. *)
+    (*   all: admit. } *)
     { rewrite EST. basic_solver. }
-    desf.
+    desc.
     do 3 eexists.
     splits; eauto.
+    2: { constructor; eauto.
+         { red. eexists. splits; eauto.
+           rewrite <- THK. eauto. }
+         rewrite <- THK.
+         apply steps_stable_lbl_steps.
+         apply seq_eqv_l. split.
+         { eapply contstable; try apply SRC; eauto.
+           rewrite <- THK. eauto. }
+         apply seq_eqv_r. by split. }
+    desf; simpls.
+    { (* TODO: it's wrong! *) admit. }
+    (* TODO: it's wrong! *)
+    admit.
   Admitted.
   
   Lemma simrel_cert_start k S 

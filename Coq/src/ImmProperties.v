@@ -1,3 +1,4 @@
+Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import AuxRel
@@ -23,7 +24,7 @@ Lemma same_lab_u2v_dom_same_mod {A} (lab lab' : A -> label) (s : A -> Prop)
 Proof.
   unfolder. split.
   all: ins; desf; splits; auto.
-  all: unfold same_mod, mod, same_lab_u2v_dom, same_label_u2v in *.
+  all: unfold same_mod, Events.mod, same_lab_u2v_dom, same_label_u2v in *.
   all: set (SAMEY := SAME); specialize (SAMEY y H1).
   all: specialize (SAME x H0); desf; desf.
 Qed.
@@ -56,6 +57,29 @@ Proof.
   desf. 
 Qed.
 
+Lemma exists_nE thread :
+  exists n, ~ E (ThreadEvent thread n).
+Proof.
+  unfold acts_set.
+  destruct G. simpls.
+  clear.
+  assert (exists n, forall m (IN : In (ThreadEvent thread m) acts),
+               m < n) as [n AA].
+  2: { desf. exists n. induction acts; simpls.
+       intros HH. apply AA in HH. omega. }
+  induction acts; simpls.
+  { exists 1. ins. }
+  desf.
+  destruct a.
+  { exists n. ins. desf. intuition. }
+  exists (1 + max n index).
+  ins. desf.
+  { apply Max.max_case_strong; omega. }
+  apply IHacts in IN.
+  etransitivity; eauto.
+  apply Max.max_case_strong; omega.
+Qed.
+
 Variable WF : Wf G.
 Variable sc : relation actid.
 Variable CON : imm_consistent G sc.
@@ -65,6 +89,14 @@ Variable TCCOH : tc_coherent G sc TC.
 
 Notation "'C'" := (covered TC).
 Notation "'I'" := (issued TC).
+
+Lemma exists_ncov thread :
+  exists n, ~ C (ThreadEvent thread n).
+Proof.
+  destruct (exists_nE thread) as [n HH].
+  exists n. intros CC. apply HH.
+  eapply coveredE; eauto.
+Qed.
 
 Notation "'sb'" := G.(sb).
 Notation "'rf'" := G.(rf).

@@ -896,6 +896,14 @@ Proof.
   eapply rt_trans; eauto.
 Qed.
 
+Lemma set_equiv_exp_equiv :
+  s ≡₁ s' <-> forall x : A, s x <-> s' x.
+Proof.
+  split.
+  { apply set_equiv_exp. }
+  intros HH. by split; red; ins; apply HH.
+Qed.
+
 End Props.
 
 Require Import Setoid.
