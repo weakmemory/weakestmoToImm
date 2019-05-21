@@ -235,6 +235,7 @@ Section SimRelStep.
   Proof.
     cdes SRC.
     assert (ES.Wf S) as WFS by apply SRC.
+    assert (Wf G) as WF by apply SRC.
 
     pose proof TC_STEP as HH. 
     eapply trstep_thread_prog in HH; try apply SRC.
@@ -272,9 +273,28 @@ Section SimRelStep.
       assert (Gtid x = Stid S y) as TT.
       { rewrite e2a_tid. red in XPC. generalize XPC. basic_solver. }
       rewrite TT in XPC.
+      edestruct ES.event_K with (e:=y) as [c INKC]; try apply SRC.
+      { split.
+        { eapply Execution.ex_inE; eauto. apply SRC. }
+        intros [CC BB].
+        rewrite <- TT in BB. desf. }
+      { intros [z RMW].
+        apply XPC. exists (e2a S z).
+        assert (Grmw (e2a S y) (e2a S z)) as GRMW.
+        { eapply e2a_rmw; try apply SRC.
+          red. eauto. }
+        apply seq_eqv_r. split.
+        { apply rmw_in_sb; auto. }
+        eapply (rmwclos _ _ _ GRMW).
+          by apply XPC. }
+      destruct c as [lang state].
+      set (BB := INKC).
+      eapply contlang in BB; try apply SRC.
+      desf.
+      exists (CEvent y). exists state.
+      splits; eauto.
+      { arewrite (Gtid x = ES.cont_thread S (CEvent y)). eauto. }
       (* TODO: continue from here *)
-      eapply contpc in XPC; try apply SRC.
-      red in EE. desf.
 
     desf.
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
