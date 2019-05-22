@@ -531,7 +531,8 @@ Section SimRelStep.
           | H : _ <> _ |- _ => apply H
           end.
           rewrite <- AA. desf. }
-        eapply ES.cont_sb_dom_rmw; eauto. }
+        eapply cont_sb_dom_rmw; eauto. 
+        apply SRCC. }
       { eapply cert_ex_rf_compl; eauto. }
       { eapply cert_ex_ncf; eauto. }
       eapply simrel_cert_vis; eauto. }
