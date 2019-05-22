@@ -239,7 +239,12 @@ Section SimRelStep.
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
     all: try apply SRC.
     { rewrite THK. eapply contwf; try apply SRC. desf. }
-    { admit. }
+    { arewrite (instrs state = lprog).
+      2: { unfold stable_prog_to_prog in *.
+           rewrite Basic.IdentMap.Facts.map_o in AA.
+           unfold option_map in *. desf.
+           destruct s. simpls. }
+      admit. }
     { desf.
       { simpls.
         edestruct contrun as [state0];
