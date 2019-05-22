@@ -24,6 +24,7 @@ Notation "'rf'" := S.(ES.rf).
 Notation "'fr'" := S.(ES.fr).
 Notation "'co'" := S.(ES.co).
 Notation "'cf'" := S.(ES.cf).
+Notation "'icf'" := S.(ES.icf).
 
 Notation "'jfe'" := S.(ES.jfe).
 Notation "'rfe'" := S.(ES.rfe).
@@ -55,10 +56,7 @@ Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel'" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-(* immediate conflict *)
-
-Definition icf : relation eventid :=
-  cf \ (sb⁻¹ ⨾ cf ∪ cf ⨾ sb).
+Notation "'K'"     := S.(ES.cont_set).
 
 (* causality conflict  *)
 
@@ -121,7 +119,7 @@ Record es_consistent {m} :=
     (*   irreflexive (jfe ⨾ (sb ∪ jf)＊ ⨾ sb ⨾ *)
     (*                jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾ *)
     (*                (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew))); *)
-    icf_lab : dom_rel (icf ∩ same_lab) ⊆₁ R;
+    icf_R : dom_rel icf ⊆₁ R;
     icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew^?);
   }.
 
@@ -615,11 +613,59 @@ Proof.
   red. exists y. splits; eauto. 
 Qed.
 
+Variable ESC : @es_consistent m.
+
+Lemma cont_sb_dom_rmw k s
+      (INK : K (k, s)) :
+  codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.
+Proof.
+  unfold ES.cont_sb_dom.
+  desf.
+  { sin_rewrite WF.(ES.acts_init_set_inW).
+    rewrite WF.(ES.rmwD). mode_solver. }
+  rewrite WF.(ES.rmwE).
+  rewrite WF.(ES.sbE) at 1.
+  unfolder. ins. desf.
+  { exfalso. apply WF.(ES.rmw_K). unfold dom_rel. eauto 10. }
+  destruct (classic (x = y)) as [|NEQ]; subst.
+  { do 2 eexists. splits.
+    { by left. }
+    all: eauto. }
+  do 2 (exists y). splits; auto.
+  right.
+  apply WF.(ES.sb_imm_split_l) in H5.
+  destruct H5 as [z [SBI SB]].
+  destruct (classic (z = x)) as [|XZNEQ]; subst.
+  { destruct SB; desf. }
+  exfalso.
+  assert (icf x z) as CF.
+  2: { apply WF.(ES.rmwD) in H0.
+       assert (R x) as RX.
+       { eapply icf_R; eauto. eexists. eauto. }
+       destruct_seq H0 as [RR WW].
+       type_solver. }
+  set (SBIX := H0).
+  apply WF.(ES.rmwi) in SBIX.
+  apply WF.(ES.rmwEninit) in H0.
+  destruct_seq H0 as [EZ EX].
+  edestruct WF.(ES.imm_tsb_imm_sb_in_icf).
+  { split.
+    { exists z0. splits.
+      { apply SBI. }
+      apply SBIX. }
+    red.
+    erewrite <- WF.(ES.sb_tid) with (x:=z0).
+    { by apply WF.(ES.rmwt). }
+    apply seq_eqv_l. split; auto. apply SBI. }
+  { desf. }
+  (* TODO: by symmetry of icf *)
+  admit.
+Admitted.
+
 (******************************************************************************)
 (** ** Consistent rf properties *)
 (******************************************************************************)
 
-Variable ESC : @es_consistent m.
 
 Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
 Proof. 

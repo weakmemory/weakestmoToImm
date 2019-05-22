@@ -126,7 +126,7 @@ Hint Rewrite prog_g_es_init_ninit
 Lemma prog_g_es_init_consistent G prog :
   @es_consistent (prog_g_es_init prog G) Weakestmo.
 Proof.
-  constructor; unfold ecf, ES.jfe, icf.
+  constructor; unfold ecf, ES.jfe, ES.icf.
   all: autorewrite with prog_g_es_init_db; auto.
   all: basic_solver.
 Qed.

@@ -58,6 +58,11 @@ Definition coi (S : t) := S.(co) ∩ S.(sb).
 Definition cf (S : t) :=
   ⦗ S.(acts_ninit_set) ⦘ ⨾ (S.(same_tid) \ (S.(sb)⁼)) ⨾ ⦗ S.(acts_ninit_set) ⦘.
 
+(* immediate conflict *)
+
+Definition icf (S : t) :=
+  cf S \ ((sb S) ⁻¹ ⨾ (cf S) ∪ (cf S) ⨾ (sb S)).
+
 Definition cf_free (S : t) X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
 
 Definition rf (S : t) := S.(ew) ⨾ S.(jf) \ S.(cf).
@@ -182,6 +187,7 @@ Notation "'rfe'"   := S.(ES.rfe).
 Notation "'fr'"    := S.(ES.fr).
 Notation "'co'"    := S.(ES.co).
 Notation "'cf'"    := S.(ES.cf).
+Notation "'icf'"    := S.(ES.icf).
 
 Notation "'K'"     := S.(ES.cont_set).
 
@@ -593,6 +599,37 @@ Proof.
   { eapply cf_sym; eauto. }
   done.
 Qed.
+
+Lemma imm_tsb_imm_sb_in_cf WF :
+  ((immediate sb)⁻¹ ;; immediate sb) ∩ same_tid ⊆ cf^?.
+Proof.
+  unfolder. ins. desf.
+  destruct (classic (x = y)) as [|NEQ]; [by left|right].
+  red.
+  assert (Eninit x) as EX.
+  { apply WF.(sb_seq_Eninit_r) in H.
+      by destruct_seq_r H as AA. }
+  assert (Eninit y) as EY.
+  { apply WF.(sb_seq_Eninit_r) in H1.
+      by destruct_seq_r H1 as AA. }
+  apply seq_eqv_lr. splits; auto.
+  split; auto.
+  intros [|[HH|HH]]; desf.
+  { by apply H2 with (c:=x). }
+    by apply H3 with (c:=y).
+Qed.
+
+Lemma imm_tsb_imm_sb_in_icf WF :
+  ((immediate sb)⁻¹ ;; immediate sb) ∩ same_tid ⊆ icf^?.
+Proof.
+  unfolder. ins. desf.
+  assert (cf^? x y) as CF.
+  { apply WF.(imm_tsb_imm_sb_in_cf). basic_solver 10. }
+  destruct CF as [|CF]; auto.
+  right.
+  split; auto.
+  intros HH.
+Admitted.
 
 (******************************************************************************)
 (** ** rmw properties *)
