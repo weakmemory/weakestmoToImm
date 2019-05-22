@@ -171,10 +171,10 @@ Section SimRelContLemmas.
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
   
-  Lemma kstate_instrs thread (state : thread_st thread)
-        (lprog : thread_syntax thread)
-        (INPROG : IdentMap.find thread prog = Some lprog)
-        (INK : K S (CInit thread, thread_cont_st thread state)) :
+  Lemma kstate_instrs k (state : thread_st (ES.cont_thread S k))
+        (lprog : thread_syntax (ES.cont_thread S k))
+        (INPROG : IdentMap.find (ES.cont_thread S k) prog = Some lprog)
+        (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)) :
     lprog = instrs state.
   Proof.
     eapply contreach in INK; eauto.

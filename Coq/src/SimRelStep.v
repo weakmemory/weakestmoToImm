@@ -236,30 +236,20 @@ Section SimRelStep.
       apply acts_clos; auto. }
 
     desc.
+    assert (lprog = instrs state) as UU.
+    { rewrite THK in *. eapply kstate_instrs; eauto; try apply SRC. }
+
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
     all: try apply SRC.
     { rewrite THK. eapply contwf; try apply SRC. desf. }
-    { arewrite (instrs state = lprog).
-      2: { unfold stable_prog_to_prog in *.
-           rewrite Basic.IdentMap.Facts.map_o in AA.
-           unfold option_map in *. desf.
-           destruct s. simpls. }
-      admit. }
-    { desf.
-      { simpls.
-        edestruct contrun as [state0];
-          try apply SRC; eauto.
-        desf.
-        assert (state0 = state); subst.
-        { pose proof (ES.unique_K WFS _ _ INK INK0 eq_refl) as BB.
-          simpls. inv BB. }
-        simpls.
-        eapply clos_refl_trans_mori in INITST.
-        2: { apply eps_step_in_step. }
-        assert (lprog = instrs state); desf.
-        apply steps_same_instrs in INITST. simpls. }
-      simpls.
-      admit. }
+    { rewrite <- UU. 
+      unfold stable_prog_to_prog in *.
+      rewrite Basic.IdentMap.Facts.map_o in AA.
+      unfold option_map in *. clear UU. desf.
+      destruct s. simpls. }
+    { rewrite <- UU.
+      rewrite THK in *.
+      eapply contreach; eauto. apply SRC. }
     { desf.
       2: { eapply contpc; eauto. apply SRC. }
       admit. }
