@@ -1569,6 +1569,22 @@ Proof.
     unfold upd_opt in CTK. desf.
     all: rewrite upds in *.
     all: eapply WF.(ES.init_tid_K); eauto. }
+  { cdes BSTEP. cdes BSTEP_.
+    unfold ES.cont_set. rewrite CONT'.
+    intros HH. desf.
+    red in RMW. desf.
+    apply RMW' in RMW. destruct RMW as [RMW|RMW].
+    { inv KK.
+      { apply (dom_l WF.(ES.rmwE)) in RMW.
+        destruct_seq_l RMW as EE.
+        unfold opt_ext in *. desf. }
+      apply WF.(ES.rmw_K). do 2 eexists. splits; eauto.
+      red. eauto. }
+    unfold opt_ext in *.
+    red in RMW. 
+    unfold eq_opt in *. inv RMW. desf.
+    inv KK; [omega|].
+    destruct c. apply NES. eapply ES.K_inE; eauto. }
   { ins. red in CK. red in CK'.
     cdes BSTEP. cdes BSTEP_.
     rewrite CONT' in *.

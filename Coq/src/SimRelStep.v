@@ -518,7 +518,20 @@ Section SimRelStep.
       { eapply init_in_cert_ex; eauto. }
       { eapply cert_ex_sb_prcl; eauto. }
       { eapply cert_ex_sw_prcl; eauto. }
-      { admit. }
+      { rewrite id_union, seq_union_l, codom_union.
+        apply set_union_Proper.
+        { apply set_subset_inter_r. split.
+          { etransitivity.
+            2: { apply Execution.ex_rmw_fwcl; eauto. }
+            basic_solver. }
+          rewrite WFS.(ES.rmwt).
+          unfold ES.same_tid.
+          unfolder. ins. desf. intros AA.
+          match goal with
+          | H : _ <> _ |- _ => apply H
+          end.
+          rewrite <- AA. desf. }
+        eapply ES.cont_sb_dom_rmw; eauto. }
       { eapply cert_ex_rf_compl; eauto. }
       { eapply cert_ex_ncf; eauto. }
       eapply simrel_cert_vis; eauto. }

@@ -276,6 +276,10 @@ Record Wf :=
       ~ (exists c k,
             ⟪ KK  : K (k, c) ⟫ /\
             ⟪ CTK : cont_thread S k = tid_init ⟫);
+    rmw_K :
+      ~ (exists c e,
+            ⟪ KK  : K (CEvent e, c) ⟫ /\
+            ⟪ RMW : dom_rel rmw e ⟫);
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
     event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
@@ -603,6 +607,41 @@ Proof.
   rewrite (sbE WF).
   basic_solver.
 Qed.
+
+Lemma rmwt WF : rmw ⊆ same_tid.
+Proof.
+  rewrite <- WF.(sb_tid).
+  rewrite (dom_l WF.(rmwE)).
+  rewrite (dom_l WF.(rmwD)).
+  unfolder. ins. desf. split.
+  2: by apply rmwi.
+  split; auto. intros AA.
+  apply WF.(init_lab) in AA.
+  desf. unfold init_write in *.
+  mode_solver.
+Qed.
+
+Lemma cont_sb_dom_rmw WF k s
+      (INK : K (k, s)) :
+  codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.
+Proof.
+  unfold ES.cont_sb_dom.
+  desf.
+  { sin_rewrite WF.(acts_init_set_inW).
+    rewrite WF.(rmwD). mode_solver. }
+  rewrite WF.(rmwE).
+  rewrite WF.(sbE) at 1.
+  unfolder. ins. desf.
+  { exfalso. apply WF.(rmw_K). unfold dom_rel. eauto 10. }
+  destruct (classic (x = y)) as [|NEQ]; subst.
+  { do 2 eexists. splits.
+    { by left. }
+    all: eauto. }
+  do 2 (exists y). splits; auto.
+  right.
+  (* TODO: Unclear due to potential conflicts. *)
+  admit.
+Admitted.
 
 (******************************************************************************)
 (** ** ew properties *)

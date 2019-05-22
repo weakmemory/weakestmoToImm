@@ -253,6 +253,7 @@ Proof.
     apply nInitProg.
     apply RegMap.Facts.in_find_iff.
     rewrite KK0. desf. }
+  { intros HH. desf. inv RMW. }
   { unfold prog_g_es_init, ES.init, ES.cont_thread, ES.cont_set in *. 
     simpls.
     unfold prog_init_K in *.
