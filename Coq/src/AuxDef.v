@@ -18,6 +18,10 @@ Tactic Notation "destruct_seq_r" constr(x)
 
 Export ListNotations.
 
+Lemma pair_inj {A B} (a c : A) (b d : B) (EQ: (a, b) = (c, d)) :
+  a = c /\ b = d.
+Proof. ins. inv EQ. Qed.
+
 Definition opt_same_ctor {A B} (a : option A) (b : option B) : Prop := 
   match a, b with
   | None  , None

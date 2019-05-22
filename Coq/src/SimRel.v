@@ -796,7 +796,7 @@ Section SimRelLemmas.
                    | H : ES.cont_set _ _ |- _ => 
                      apply prog_g_es_init_K in H; desf
                    end).
-      4: { ins. apply prog_g_es_init_K in INKi; desf.
+      5: { ins. apply prog_g_es_init_K in INKi; desf.
            erewrite steps_same_eindex; eauto.
            { by unfold init. }
            apply wf_thread_state_init. }
@@ -808,6 +808,29 @@ Section SimRelLemmas.
         eapply wf_thread_state_steps.
         2: { simpls. apply eps_steps_in_steps. eauto. }
         apply wf_thread_state_init. }
+      2: { ins.
+           apply eps_steps_in_steps.
+           unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+           ES.cont_set in *.
+           simpls.
+           apply in_map_iff in INK.
+           destruct INK as [xst [INK REP]].
+           apply pair_inj in INK. destruct INK as [AA INK].
+           rewrite <- AA in *.
+           inv INK.
+           destruct xst as [thread [xprog BB]]. simpls.
+           assert (xprog = lprog); subst.
+           { clear -REP INPROG.
+             apply IdentMap.elements_complete in REP.
+             unfold stable_prog_to_prog in *.
+             rewrite IdentMap.Facts.map_o in INPROG.
+             unfold option_map in *. desf. }
+           pose (AA :=
+                   @proj2_sig 
+                     _ _ 
+                     (get_stable thread (init lprog) BB
+                                 (rt_refl state (step thread) (init lprog)))).
+           red in AA. desf. }
       ins. 
       assert (exists xst,
                  IdentMap.find thread prog = Some xst /\

@@ -90,6 +90,16 @@ Section SimRelCont.
             ⟪ INK : K S (CInit thread, thread_cont_st thread state) ⟫ /\
             ⟪ INITST : (istep thread [])＊ (thread_init_st thread lprog) state⟫;
 
+      contreach :
+        forall k (state : thread_st (ES.cont_thread S k))
+               (lprog : thread_syntax (ES.cont_thread S k)) 
+               (INPROG : IdentMap.find (ES.cont_thread S k) prog =
+                         Some lprog)
+               (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)),
+          (step (ES.cont_thread S k))＊
+            (thread_init_st (ES.cont_thread S k) lprog)
+            state;
+
       continit : forall thread (state : thread_st thread)
                         (INKi : K S (CInit thread, thread_cont_st thread state)),
           state.(eindex) = 0;
@@ -160,6 +170,16 @@ Section SimRelContLemmas.
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
+  
+  Lemma kstate_instrs thread (state : thread_st thread)
+        (lprog : thread_syntax thread)
+        (INPROG : IdentMap.find thread prog = Some lprog)
+        (INK : K S (CInit thread, thread_cont_st thread state)) :
+    lprog = instrs state.
+  Proof.
+    eapply contreach in INK; eauto.
+    apply steps_same_instrs in INK. simpls.
+  Qed.
 
   Lemma basic_step_simrel_cont k k' e e' S'
         (st st' : thread_st (ES.cont_thread S k))
@@ -270,6 +290,30 @@ Section SimRelContLemmas.
       eexists; split; eauto.
       eapply basic_step_cont_set; eauto.
       left. eauto. }
+
+    (* contreach *)
+    { ins. red in INK. rewrite CONT' in INK.
+      apply in_inv in INK. destruct INK as [INK|INK].
+      2: { (* TODO: introduce a corresponding lemma *)
+           assert (ES.cont_thread S' k0 = ES.cont_thread S k0) as HH.
+           { unfold ES.cont_thread.
+             desf.
+             eapply basic_step_tid_eq_dom.
+             { red. eauto. }
+             eapply ES.K_inEninit; eauto. }
+           rewrite HH in *.
+           eapply contreach; eauto. }
+      assert (k0 = k') as YY by inv INK; rewrite YY in *.
+      assert (ES.cont_thread S' k' = ES.cont_thread S k) as BB.
+      { eapply basic_step_cont_thread_k; eauto. }
+      rewrite BB in *.
+      assert (state = st'); subst.
+      { apply pair_inj in INK. destruct INK as [AA INK]; subst.
+        inv INK. }
+      apply rt_rt. exists st. split.
+      { eapply contreach; eauto. }
+      apply inclusion_t_rt.
+      eapply ilbl_step_in_steps; eauto. }
 
     (* contseqn *)
     { intros thread st'' KK. 
