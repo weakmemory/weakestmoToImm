@@ -240,7 +240,7 @@ Section SimRelStep.
     { rewrite THK in *. eapply kstate_instrs; eauto; try apply SRC. }
 
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
-    all: try apply SRC.
+    1,2,3,4: by apply SRC.
     { rewrite THK. eapply contwf; try apply SRC. desf. }
     { rewrite <- UU. 
       unfold stable_prog_to_prog in *.
@@ -252,14 +252,10 @@ Section SimRelStep.
       eapply contreach; eauto. apply SRC. }
     { desf.
       2: { eapply contpc; eauto. apply SRC. }
-      admit. }
-    (* { desf. *)
-    (*   red. *)
-    (*   splits. *)
-    (*   { admit. } *)
-    (*   eexists. red. splits; ins. *)
-    (*   all: admit. } *)
+      eapply continitstate; simpls; eauto; try apply SRC.
+      simpls. apply CEMP. }
     { rewrite EST. basic_solver. }
+    all: try by apply SRC.
     desc.
     do 3 eexists.
     splits; eauto.

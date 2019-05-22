@@ -124,6 +124,31 @@ Proof.
   all: inv ISTEP0.
 Qed.
 
+Lemma steps_to_eps_steps_steps thread state state' state''
+      (STBL : stable_state state'')
+      (EPS_STEPS : (istep thread [])^* state state')
+      (    STEPS : (step thread)^*     state state'') :
+  (step thread)^* state' state''.
+Proof.
+  apply clos_rt_rt1n in EPS_STEPS.
+  induction EPS_STEPS; auto.
+  apply IHEPS_STEPS.
+  clear dependent z.
+  apply clos_rt_rt1n in STEPS.
+  inv STEPS.
+  { exfalso. apply STBL. eexists. eauto. }
+  assert (y0 = y); subst.
+  2: by apply clos_rt1n_rt.
+  match goal with
+  | H : step thread x y0 |- _ => inv H
+  end.
+  destruct (classic (x0 = [])); subst.
+  { eapply unique_eps_step; eauto. }
+  exfalso.
+  eapply ineps_eps_step_dom_empty.
+  split; eexists; [red; splits|]; eauto.
+Qed.
+
 Lemma ineps_step_stable_l thread lbls :
   ineps_step thread lbls ≡ ⦗ stable_state ⦘ ⨾ ineps_step thread lbls.
 Proof.

@@ -108,10 +108,16 @@ Section SimRelCont.
                         (INKe : K S (CEvent e, thread_cont_st (Stid e) state)),
           state.(eindex) = 1 + ES.seqn S e;
 
-      contpc : forall e (state : (thread_st (Stid e)))
+      contpc : forall e (state : thread_st (Stid e))
                       (PC : pc (Stid e) (e2a S e))
                       (INK : K S (CEvent e, thread_cont_st (Stid e) state)),
           @sim_state G sim_normal C (Stid e) state;
+
+      continitstate :
+        forall thread (state : thread_st thread)
+               (CEMP : C ∩₁ GTid thread ⊆₁ ∅)
+               (INK : K S (CInit thread, thread_cont_st thread state)),
+          @sim_state G sim_normal C thread state;
     }.
 
 End SimRelCont.
@@ -336,6 +342,12 @@ Section SimRelContLemmas.
       inversion KK as [HST].
       apply inj_pair2 in HST.
       congruence. }
+
+    (* continitstate *)
+    2: { ins.
+         unfold ES.cont_set in *. rewrite CONT' in INK.
+         inv INK.
+         eapply continitstate; eauto. }
 
     (* contpc *)
     intros x st'' PC KK. 

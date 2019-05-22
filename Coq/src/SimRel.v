@@ -808,6 +808,42 @@ Section SimRelLemmas.
         eapply wf_thread_state_steps.
         2: { simpls. apply eps_steps_in_steps. eauto. }
         apply wf_thread_state_init. }
+      3: { ins. red. splits.
+           { ins. split; intros BB; exfalso.
+             { eapply CEMP. split; eauto. }
+             assert (eindex state = 0); [|omega].
+             apply prog_g_es_init_K in INK.
+             desf.
+             erewrite steps_same_eindex; eauto.
+             { simpls. }
+             apply wf_thread_state_init. }
+           unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+           ES.cont_set in *. simpls.
+           apply in_map_iff in INK.
+           destruct INK as [[tid [lprog BB]] [INK REP]].
+           apply pair_inj in INK. destruct INK as [AA INK].
+           assert (tid = thread) as TT by inv AA.
+           rewrite TT in *.
+           inv INK. desf.
+           apply RegMap.elements_complete in REP.
+           cdes PExec.
+           edestruct (PExec1 thread lprog) as [pe [CC DD]].
+           { unfold stable_prog_to_prog.
+             rewrite IdentMap.Facts.map_o. unfold option_map.
+             desf. }
+           cdes CC.
+           exists s.
+           red. splits.
+           2,3: by desf.
+           eapply steps_to_eps_steps_steps; eauto.
+           { by apply terminal_stable. }
+           simpls.
+           pose (WW :=
+                   @proj2_sig 
+                     _ _ 
+                     (get_stable thread (init lprog) BB
+                                 (rt_refl state (step thread) (init lprog)))).
+           red in WW. desf. }
       2: { ins.
            apply eps_steps_in_steps.
            unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
