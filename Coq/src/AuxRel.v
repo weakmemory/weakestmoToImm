@@ -203,6 +203,14 @@ Proof. basic_solver. Qed.
 Lemma transp_sym_equiv : symmetric r -> r⁻¹ ≡ r. 
 Proof. basic_solver. Qed.
 
+Lemma sym_transp_equiv : symmetric r <-> r⁻¹ ≡ r. 
+Proof.
+  split.
+  { basic_solver. }
+  intros HH.
+  red. ins. by apply HH.
+Qed.
+
 (* TODO : rename *)
 Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
 Proof. 
