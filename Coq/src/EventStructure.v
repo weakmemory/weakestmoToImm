@@ -638,9 +638,50 @@ Proof.
   { apply WF.(imm_tsb_imm_sb_in_cf). basic_solver 10. }
   destruct CF as [|CF]; auto.
   right.
+  apply WF.(sb_seq_Eninit_r) in H . destruct_seq_r H  as NINX.
+  apply WF.(sb_seq_Eninit_r) in H1. destruct_seq_r H1 as NINY.
   split; auto.
-  intros HH.
-Admitted.
+  intros [[r [SB CF']]|[r [CF' SB]]].
+  { red in SB.
+    apply WF.(sbE) in SB.
+    destruct_seq SB as [ER EX].
+    destruct (classic (Einit r)) as [INR|NINR].
+    { eapply WF.(n_sb_cf). split; [|apply CF'].
+      apply WF.(sb_Einit_Eninit). by left. }
+    destruct (classic (r = z)) as [|NEQ]; subst.
+    { eapply WF.(n_sb_cf). by splits; [|apply CF']. }
+    destruct (classic (Einit z)) as [INZ|NINZ].
+    { apply H3 with (c:=r); auto.
+      apply WF.(sb_Einit_Eninit). by left. }
+    eapply sb_tot in NEQ; eauto.
+    2,3: red; splits; auto; basic_solver 10.
+    desf.
+    2: by apply H3 with (c:=r).
+    eapply WF.(n_sb_cf). split; [|apply CF'].
+    apply rewrite_trans.
+    { apply WF.(sb_trans). }
+    eexists. splits; eauto. }
+  apply cf_sym in CF'.
+  red in SB.
+  apply WF.(sbE) in SB.
+  destruct_seq SB as [ER EY].
+  destruct (classic (Einit r)) as [INR|NINR].
+  { eapply WF.(n_sb_cf). split; [|apply CF'].
+    apply WF.(sb_Einit_Eninit). by left. }
+  destruct (classic (r = z)) as [|NEQ]; subst.
+  { eapply WF.(n_sb_cf). by splits; [|apply CF']. }
+  destruct (classic (Einit z)) as [INZ|NINZ].
+  { apply H2 with (c:=r); auto.
+    apply WF.(sb_Einit_Eninit). by left. }
+  eapply sb_tot in NEQ; eauto.
+  2,3: red; splits; auto; basic_solver 10.
+  desf.
+  2: by apply H2 with (c:=r).
+  eapply WF.(n_sb_cf). split; [|apply CF'].
+  apply rewrite_trans.
+  { apply WF.(sb_trans). }
+  eexists. splits; eauto.
+Qed.
 
 (******************************************************************************)
 (** ** rmw properties *)
