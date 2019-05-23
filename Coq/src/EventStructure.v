@@ -466,6 +466,17 @@ Proof.
   apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
 Qed.
 
+Lemma icf_sym : symmetric icf.
+Proof. 
+  assert (symmetric cf) as AA by apply cf_sym.
+  apply minus_sym; auto.
+  apply sym_transp_equiv.
+  rewrite transp_union, !transp_seq, transp_inv.
+  rewrite (transp_sym_equiv AA).
+  rewrite unionC.
+  done.
+Qed.
+
 (******************************************************************************)
 (** ** sb/cf properties *)
 (******************************************************************************)
