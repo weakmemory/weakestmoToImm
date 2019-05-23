@@ -658,9 +658,8 @@ Proof.
     { by apply WF.(ES.rmwt). }
     apply seq_eqv_l. split; auto. apply SBI. }
   { desf. }
-  (* TODO: by symmetry of icf *)
-  admit.
-Admitted.
+    by apply ES.icf_sym.
+Qed.
 
 (******************************************************************************)
 (** ** Consistent rf properties *)
