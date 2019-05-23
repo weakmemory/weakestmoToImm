@@ -155,6 +155,25 @@ Section SimRelEventToAction.
       eexists; splits; eauto. 
     Qed.
 
+    Lemma e2a_map_same_Einit (SRE2A : simrel_e2a) : 
+      SE ∩₁ e2a ⋄₁ GEinit ≡₁ SEinit.
+    Proof. 
+      split. 
+      { apply e2a_map_Einit. }
+      unfolder. intros x INITx. splits.
+      { apply INITx. }
+      { eapply e2a_Einit; eauto. 
+        (* TODO: make a lemma *)
+        { intros PROG_INIT. apply PROG_NINIT.
+          unfold stable_prog_to_prog in PROG_INIT.
+          eapply IdentMap.map_2; eauto. }
+        basic_solver. }
+      eapply e2a_GE; eauto.
+      generalize INITx. 
+      unfold ES.acts_init_set.
+      basic_solver. 
+    Qed.
+
     Ltac e2a_type t :=
       intros x [y HH]; desf;
       eapply t in HH;
@@ -256,7 +275,7 @@ Section SimRelEventToAction.
       rewrite e2a_release. by rewrite e2a_jfacq.
     Qed.
 
-    Lemma e2a_kE_ninit k (st : thread_st (ktid k))
+    Lemma e2a_kEninit k (st : thread_st (ktid k))
           (INK : K S (k, thread_cont_st (ktid k) st)) :
       e2a □₁ (kE k \₁ SEinit) ≡₁ acts_set st.(ProgToExecution.G).
     Proof. 
@@ -336,7 +355,7 @@ Section SimRelEventToAction.
       rewrite set_unionC, set_collect_union.
       apply set_union_Propere.
       { apply e2a_same_Einit; auto. }
-      by apply e2a_kE_ninit.
+      by apply e2a_kEninit.
     Qed.
 
   End SimRelEventToActionProps. 

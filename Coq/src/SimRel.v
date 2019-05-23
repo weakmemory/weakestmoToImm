@@ -210,6 +210,21 @@ Section SimRel.
     Variable SRC_ : simrel_.
 
     (******************************************************************************)
+    (** ** E/Einit/Eninit properties  *)
+    (******************************************************************************)
+
+    Lemma init_in_map_cov :
+      SEinit ⊆₁ e2a ⋄₁ C.
+    Proof. 
+      erewrite <- e2a_map_same_Einit;
+        try apply SRC_.
+      apply set_subset_inter_l. right.
+      apply set_map_mori; auto.
+      eapply init_covered.
+      apply SRC_.
+    Qed.
+
+    (******************************************************************************)
     (** ** X properties  *)
     (******************************************************************************)
 
@@ -394,6 +409,7 @@ Section SimRel.
           congruence. }
         edestruct ES.same_thread_alt with (x := x') (y := y')
           as [[EQ | [SB' | SB']] | CF]; subst; eauto.
+        { eapply Execution.ex_inE; eauto. }
         { exfalso. eapply sb_irr; eauto. }
         { exfalso. eapply sb_irr, sb_trans; eauto. 
           eapply e2a_sb.

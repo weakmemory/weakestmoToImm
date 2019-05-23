@@ -725,6 +725,7 @@ Proof.
     intros STID. unfold ES.same_tid in STID.
     edestruct ES.same_thread_alt as [crsSB | CF]; 
       try apply STID; eauto.
+    { apply Enix. }
     { apply crsE in crsSB. 
       destruct crsSB as [[ID | SB] | tSB]; auto.
       { unfolder in ID. desc.

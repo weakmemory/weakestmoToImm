@@ -499,11 +499,16 @@ Proof.
 Qed.  
 
 Lemma same_thread_alt WF x y 
-      (Enix : Eninit x) 
+      (Ex : E x)
       (Eniy : Eninit y) 
       (EQtid : tid x = tid y) :
   sb⁼ x y \/ cf x y. 
-Proof. 
+Proof.
+  apply acts_set_split in Ex.
+  destruct Ex as [INITx | nINITx].
+  { left. right. left. 
+    apply sb_init; auto.
+    basic_solver. }
   edestruct same_thread as [HH _]; auto.
   assert ((⦗Eninit⦘ ⨾ same_tid ⨾ ⦗Eninit⦘) x y) as STID.
   { basic_solver. }

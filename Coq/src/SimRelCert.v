@@ -233,7 +233,7 @@ Section SimRelCert.
       edestruct cstate_cont; [apply SRCC|]. 
       desc. subst x. 
       intros x [Cx TIDx].
-      eapply e2a_kE_ninit; eauto; try apply SRCC.
+      eapply e2a_kEninit; eauto; try apply SRCC.
       assert ((e2a □₁ X) x) as Xx.
       { eapply ex_cov_iss; [apply SRCC|]. basic_solver. }
       destruct Xx as [x' [Xx' EQx]]. subst x.
