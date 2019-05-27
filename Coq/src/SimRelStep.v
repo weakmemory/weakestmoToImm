@@ -651,7 +651,17 @@ Section SimRelStep.
     (* ex_cov_iss_lab : eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a) *)
     { eapply cert_ex_cov_iss_lab; apply SRCC. }
     (* rmw_cov_in_ex : Grmw ⨾ ⦗ C' ⦘ ⊆ e2a □ Srmw ⨾ ⦗ certX ⦘ *)
-    { admit. }
+    { rewrite isim_trav_step_new_covered_tid; try apply SRCC.
+      rewrite !id_union, !seq_union_r.
+      rewrite collect_rel_union.
+      apply union_mori.
+      { rewrite !id_inter.
+        rewrite <- seqA.
+        rewrite rmw_cov_in_ex; eauto.
+        unfolder. ins. desf.
+        do 2 eexists. splits; eauto.
+        eexists. splits; eauto. by rewrite e2a_tid. }
+      admit. }
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
     { rewrite set_inter_union_l, id_union. relsf.
       apply inclusion_union_l. 
