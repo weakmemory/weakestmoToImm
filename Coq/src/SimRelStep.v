@@ -692,6 +692,7 @@ Section SimRelStep.
         eexists. splits; eauto. by rewrite e2a_tid. }
       etransitivity.
       2: by eapply rmw_cov_in_kE; eauto.
+      (* TODO: for Evgenii *)
       admit. }
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
     { rewrite set_inter_union_l, id_union. relsf.

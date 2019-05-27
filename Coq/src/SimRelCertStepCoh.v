@@ -484,7 +484,7 @@ Section SimRelCertStepCoh.
                          restr_rel (SE S) (Sjf S ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘)).
         { basic_solver. }
         apply collect_rel_restr_eq_dom.
-        red. ins. symmetry. 
+        red. ins. symmetry.
         eapply basic_step_e2a_eq_dom; eauto. }
       arewrite (e2a S □ Sjf S ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ Grf ⨾ ⦗C⦘).
       { rewrite <- seq_eqvK, <- seqA. rewrite collect_rel_seqi.
@@ -687,8 +687,8 @@ Section SimRelCertStepCoh.
     edestruct LBL_STEP as [lbl ILBL_STEP].
     edestruct simrel_cert_step as [k' HH]; eauto. desc.
     cdes CertSTEP.
-    assert (ES.Wf S) as WFS.
-    { apply SRCC. }
+    assert (Wf G) as WF by apply SRCC.
+    assert (ES.Wf S) as WFS by apply SRCC.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
     assert (step_ e e' S S') as WMO_STEP_.
@@ -700,6 +700,10 @@ Section SimRelCertStepCoh.
     assert (X ⊆₁ X ∩₁ SE S) as XSE.
     { apply set_subset_inter_r. split; [done|].
       eapply Execution.ex_inE. apply SRCC. }
+    assert (simrel prog S' G sc TC X) as SRC'.
+    { red. splits.
+      { eapply simrel_cert_step_simrel_; eauto. }
+      eapply simrel_cert_step_consistent; eauto. }
 
     assert (forall s (SES : s ⊆₁ SE S) s',
                s ∩₁ e2a S' ⋄₁ s' ⊆₁ s ∩₁ e2a S ⋄₁ s') as SSE2A.
@@ -710,10 +714,7 @@ Section SimRelCertStepCoh.
     { apply r_step. red.
       do 2 eexists; splits; eauto.
       eapply simrel_cert_step_consistent; eauto. }
-    constructor.
-    { red. splits.
-      { eapply simrel_cert_step_simrel_; eauto. }
-      eapply simrel_cert_step_consistent; eauto. }
+    constructor; auto.
     (* tr_step : isim_trav_step G sc (ktid S k') TC TC' *)
     { erewrite basic_step_cont_thread_k; eauto. apply SRCC. }
     (* cert : cert_graph G sc TC TC' (ktid S k') state'' *)
@@ -789,7 +790,61 @@ Section SimRelCertStepCoh.
       all: unfold jf_delta.
       { basic_solver. }
       desf. simpls. desf. unfolder. ins. desf. omega. }
-    admit.
+    { admit. }
+    erewrite basic_step_cont_sb_dom; eauto.
+    rewrite !set_collect_union.
+    rewrite !set_inter_union_r.
+    rewrite !id_union.
+    rewrite !seq_union_r, !collect_rel_union.
+    
+    cdes BSTEP_.
+    repeat apply union_mori.
+    { (* TODO: make a lemma *)
+      arewrite (e2a S' □₁ ES.cont_sb_dom S k ⊆₁ e2a S □₁ ES.cont_sb_dom S k).
+      { unfolder. ins. desf.
+        eexists. splits; eauto.
+        symmetry.
+        eapply basic_step_e2a_eq_dom; eauto.
+        eapply kE_inE; eauto. }
+      rewrite rmw_cov_in_kE; eauto.
+      assert (Srmw S ⊆ Srmw S') as AA.
+      { rewrite RMW'. eauto with hahn. }
+      rewrite <- AA.
+      unfolder. ins. desf.
+      do 2 eexists. splits; eauto.
+      all: eapply basic_step_e2a_eq_dom; eauto.
+      all: eapply kE_inE; eauto.
+      match goal with
+      | H : (Srmw S) _ _ |- _ => rename H into RMW
+      end.
+      match goal with
+      | H : ES.cont_sb_dom S k _ |- _ => rename H into CY
+      end.
+      unfold ES.cont_sb_dom in *. desf.
+      { exfalso.
+        apply WFS.(ES.rmw_in_sb) in RMW.
+        eapply WFS.(ES.sb_ninit).
+        apply seq_eqv_r. eauto. }
+      apply WFS.(ES.rmw_in_sb) in RMW.
+      generalize WFS.(ES.sb_trans) RMW CY. basic_solver 10. }
+    { unfolder. ins. desf.
+      exfalso.
+      match goal with
+      | H : Grmw ?x _ |- _ => rename H into RMW
+      end.
+      admit. }
+    rewrite RMW'; unfold rmw_delta.
+    rewrite seq_union_l, collect_rel_union.
+    unionR right.
+    unfold eq_opt. unfolder. ins. desf.
+    do 2 eexists. splits; eauto.
+    eapply wf_rmw_invf; eauto.
+    eapply e2a_rmw with (S:=S'); eauto.
+    { apply SRC'. }
+    red.
+    do 2 eexists.
+    splits; eauto.
+    apply RMW'. right. red. unfold eq_opt. basic_solver.
   Admitted.
 
 End SimRelCertStepCoh.
