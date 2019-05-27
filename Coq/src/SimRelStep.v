@@ -382,6 +382,7 @@ Section SimRelStep.
     assert (tc_coherent G sc TC') as TCCOH'.
     { eapply sim_trav_step_coherence; try apply SRC.
       red. eauto. }
+    assert (Wf G) as WFG by apply SRC.
     constructor; auto.
     (* ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE *)
     { generalize XkTIDCOV. basic_solver 10. }
@@ -441,23 +442,51 @@ Section SimRelStep.
         red. eauto. }
       by apply rf_C_in_cert_rf; try apply SRC. }
     (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ; *)
-    arewrite (X ∩₁ e2a S ⋄₁ (acts_set (ProgToExecution.G st) ∩₁ I) ⊆₁ 
-              X ∩₁ SW S ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C).
-    { edestruct cstate_cont as [sta HH]; 
-        eauto; desf.
-      rewrite <- e2a_kEninit; try apply SRC; eauto.
+    { arewrite (X ∩₁ e2a S ⋄₁ (acts_set (ProgToExecution.G st) ∩₁ I) ⊆₁ 
+                  X ∩₁ SW S ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C).
+      { edestruct cstate_cont as [sta HH]; 
+          eauto; desf.
+        rewrite <- e2a_kEninit; try apply SRC; eauto.
+        rewrite XkTIDCOV.
+        unfolder. ins. desf. splits; auto; try congruence.
+        { eapply ex_iss_inW; [apply SRC|]. basic_solver. }
+        arewrite (Stid S x = Stid S y); auto.
+        rewrite !e2a_tid. congruence. }
       rewrite XkTIDCOV.
-      unfolder. ins. desf. splits; auto; try congruence.
-      { eapply ex_iss_inW; [apply SRC|]. basic_solver. }
-      arewrite (Stid S x = Stid S y); auto.
-      rewrite !e2a_tid. congruence. }
-    rewrite XkTIDCOV.
-    rewrite seq_eqv_r.
-    unfolder. ins. desf. 
-    exists x; splits; auto.
-    apply ES.ew_refl; [apply SRC|].
-    unfolder; splits; auto.
-    eapply Execution.ex_inE; eauto.
+      rewrite seq_eqv_r.
+      unfolder. ins. desf. 
+      exists x; splits; auto.
+      apply ES.ew_refl; [apply SRC|].
+      unfolder; splits; auto.
+      eapply Execution.ex_inE; eauto. }
+    (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ; *)
+    rewrite XkTIDCOV at 1.
+    unfolder. ins. desf.
+    { exfalso.
+      match goal with
+      | H : Grmw ?x ?y |- _ => rename H into RMW
+      end.
+      apply WFG.(rmw_in_sb) in RMW.
+      apply no_sb_to_init in RMW.
+      destruct_seq_r RMW as AA.
+      match goal with
+      | H : SEinit S ?z |- _ => rename H into IN
+      end.
+      apply e2a_init in IN. rewrite IN in *.
+      desf. }
+    edestruct rmw_cov_in_ex as [x' [y' [RMW']]]; try apply SRC.
+    { apply seq_eqv_r. splits; eauto. }
+    desf.
+    destruct_seq_r RMW' as XY.
+    exists x'. exists y'. splits; eauto.
+    apply XkTIDCOV.
+    match goal with
+    | H : e2a S ?y' = e2a S ?y |- _ => rename H into EQ 
+    end.
+    unfolder. splits; auto.
+    { by rewrite EQ. }
+    right. erewrite e2a_tid.
+    rewrite EQ. by erewrite <- e2a_tid.
   Qed.
 
   Lemma ew_ex_iss_in_cert_ex_iss k S 
@@ -661,6 +690,8 @@ Section SimRelStep.
         unfolder. ins. desf.
         do 2 eexists. splits; eauto.
         eexists. splits; eauto. by rewrite e2a_tid. }
+      etransitivity.
+      2: by eapply rmw_cov_in_kE; eauto.
       admit. }
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
     { rewrite set_inter_union_l, id_union. relsf.
