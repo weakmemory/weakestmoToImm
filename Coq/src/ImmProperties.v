@@ -584,4 +584,60 @@ Qed.
 Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
 Proof. unfold ext_sb. basic_solver. Qed.
 
+Lemma eindex_step_mon thread st st'
+      (STEP : ProgToExecution.step thread st st') :
+  eindex st <= eindex st'.
+Proof.
+  cdes STEP. cdes STEP0.
+  inv ISTEP0.
+  all: rewrite UINDEX; omega.
+Qed.
+
+Lemma eindex_steps_mon thread st st'
+      (STEPS : (ProgToExecution.step thread)＊ st st') :
+  eindex st <= eindex st'.
+Proof.
+  apply clos_rt_rt1n in STEPS.
+  induction STEPS; auto.
+  apply eindex_step_mon in H.
+  omega.
+Qed.
+
+Lemma eindex_not_in_rmw thread st st'
+      (TNIL : thread <> tid_init)
+      (WTS : wf_thread_state thread st)
+      (STEPS : (ProgToExecution.step thread)＊ st st')
+      (TRE   : thread_restricted_execution G thread (ProgToExecution.G st')) :
+  ~ (codom_rel rmw (ThreadEvent thread (eindex st))).
+Proof.
+  intros [y HH].
+  set (TT:=HH).
+  apply WF.(wf_rmwt) in TT.
+  red in TT. destruct y; simpls; desf.
+  assert (Execution.rmw
+            (ProgToExecution.G st')
+            (ThreadEvent thread index)
+            (ThreadEvent thread (eindex st))
+         ) as RMW.
+  { eapply tr_rmw; eauto. basic_solver. }
+  clear TRE HH.
+  apply clos_rt_rtn1 in STEPS.
+  induction STEPS.
+  { eapply wft_rmwE in RMW; eauto.
+    destruct_seq RMW as [AA BB].
+    eapply acts_rep in BB; eauto.
+    desf. omega. }
+  apply IHSTEPS.
+  destruct H as [ll HH].
+  cdes HH.
+  inv ISTEP0; simpls.
+  1,2: by rewrite <- UG.
+  all: rewrite UG in RMW; unfold add in RMW; simpls.
+  all: destruct RMW as [RMW|RMW]; simpls.
+  all: red in RMW; desf.
+  all: apply clos_rtn1_rt in STEPS.
+  all: apply eindex_steps_mon in STEPS.
+  all: omega.
+Qed.
+
 End Properties.

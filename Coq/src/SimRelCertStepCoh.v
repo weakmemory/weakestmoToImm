@@ -832,7 +832,12 @@ Section SimRelCertStepCoh.
       match goal with
       | H : Grmw ?x _ |- _ => rename H into RMW
       end.
-      admit. }
+      erewrite basic_step_e2a_e in RMW; eauto.
+      2: by apply SRCC.
+      eapply eindex_not_in_rmw with (thread:=ES.cont_thread S k)
+                                    (st:=st); eauto.
+      (* TODO: a lemma about Grmw and eindex is needed *)
+      all: admit. }
     rewrite RMW'; unfold rmw_delta.
     rewrite seq_union_l, collect_rel_union.
     unionR right.
