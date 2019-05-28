@@ -264,7 +264,7 @@ Section SimRelContLemmas.
       rewrite <- HH.
       eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
-      eapply ilbl_steps_in_steps.
+      eapply lbl_steps_in_steps.
       do 2 econstructor. 
       eapply STEP. }
 

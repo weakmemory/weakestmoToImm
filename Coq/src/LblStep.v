@@ -107,7 +107,7 @@ Proof.
   eapply ilbl_step_in_steps. eauto.
 Qed.
 
-Lemma ilbl_steps_in_steps thread : (lbl_step thread)＊ ⊆ (step thread)＊.
+Lemma lbl_steps_in_steps thread : (lbl_step thread)＊ ⊆ (step thread)＊.
 Proof. rewrite lbl_step_in_steps. apply rt_of_ct. Qed.
 
 Lemma ineps_eps_step_dom_empty thread lbls :

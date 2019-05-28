@@ -318,9 +318,9 @@ Section SimRelCertStep.
       rewrite updo_opt, upds; desf.
       red. ins. inv H. omega. }
       { eapply wf_thread_state_steps; eauto.
-        eapply ilbl_steps_in_steps.
+        eapply lbl_steps_in_steps.
         econstructor; econstructor; eauto. }
-      { by eapply ilbl_steps_in_steps. }
+      { by eapply lbl_steps_in_steps. }
       edestruct lbl_step_cases as [la [lb [LBLS HH]]]; eauto.
       generalize HH. basic_solver. }
     assert (cert_dom G TC (ktid S k) st w') as CertDw'.
@@ -734,7 +734,7 @@ Section SimRelCertStep.
       erewrite <- dcertRMW; [|apply SRCC].
       etransitivity.
       2 : { eapply steps_preserve_rmw.
-            eapply ilbl_steps_in_steps; eauto. }
+            eapply lbl_steps_in_steps; eauto. }
       edestruct cstate_cont; [apply SRCC|]. desc.
       edestruct lbl_step_cases as [l [l' HH]].
       { eapply wf_cont_state; eauto. }

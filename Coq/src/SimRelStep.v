@@ -401,7 +401,7 @@ Section SimRelStep.
           eauto; desf.
         eapply steps_preserve_E; eauto.
         { eapply contwf; eauto. apply SRC. }
-        { apply ilbl_steps_in_steps, CERT_ST. }
+        { apply lbl_steps_in_steps, CERT_ST. }
         eapply e2a_kEninit; auto; try apply SRC.
         basic_solver. }
       red. do 4 left.

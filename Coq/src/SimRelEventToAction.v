@@ -773,7 +773,7 @@ Section SimRelEventToActionLemmas.
     assert (wf_thread_state (ktid S k) st') as WFTS. 
     { eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
-      eapply ilbl_steps_in_steps.
+      eapply lbl_steps_in_steps.
       do 2 econstructor. eapply STEP. }
     arewrite ((Slab S') e = lbl).
     { rewrite LAB'. unfold upd_opt, opt_ext in *.
@@ -801,7 +801,7 @@ Section SimRelEventToActionLemmas.
       { rewrite upds. basic_solver. }
       red. intros HH. inversion HH. omega. }
     { by rewrite GTIDe. }
-    { apply ilbl_steps_in_steps. 
+    { apply lbl_steps_in_steps. 
       by rewrite GTIDe. }    
     erewrite basic_step_e2a_e.
     2-5 : eauto; apply SRCC.
@@ -822,7 +822,7 @@ Section SimRelEventToActionLemmas.
     assert (wf_thread_state (ktid S k) st') as WFTS. 
     { eapply wf_thread_state_steps.
       { eapply SRK; eauto. }
-      eapply ilbl_steps_in_steps.
+      eapply lbl_steps_in_steps.
       do 2 econstructor. eapply STEP. }
     destruct lbl' as [lbl' | ].
     2 : { by unfold opt_same_ctor in LABEL'. }
@@ -845,7 +845,7 @@ Section SimRelEventToActionLemmas.
         unfold upd_opt.
         by rewrite upds. }
     { by rewrite GTIDe. }
-    { apply ilbl_steps_in_steps. 
+    { apply lbl_steps_in_steps. 
       by rewrite GTIDe. }    
     erewrite basic_step_e2a_e'.
     2-5 : eauto; apply SRCC.

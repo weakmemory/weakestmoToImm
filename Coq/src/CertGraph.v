@@ -902,7 +902,7 @@ Lemma ilbl_step_E0_eindex lbls
 Proof. 
   eapply dcertE; [apply CG|].
   eapply preserve_event.
-  { eapply ilbl_steps_in_steps; eauto. }
+  { eapply lbl_steps_in_steps; eauto. }
   edestruct lbl_step_cases as [l [l' HH]]; eauto. 
   desf; apply ACTS; basic_solver.
 Qed.
@@ -919,7 +919,7 @@ Lemma ilbl_step_E0_eindex' lbls lbl lbl'
 Proof. 
   eapply dcertE; [apply CG|].
   eapply preserve_event.
-  { eapply ilbl_steps_in_steps; eauto. }
+  { eapply lbl_steps_in_steps; eauto. }
   edestruct lbl_step_cases as [l [l' HH]]; eauto. 
   desf. 
   1-4 : apply opt_to_list_app_singl in LBLS; intuition.

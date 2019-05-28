@@ -336,7 +336,7 @@ Section SimRelCert.
       { apply cstate_covered; eauto. }
       eapply steps_preserve_E. 
       { eapply wf_cont_state. }
-      apply ilbl_steps_in_steps.
+      apply lbl_steps_in_steps.
       apply SRCC.
     Qed.
 
@@ -511,7 +511,7 @@ Section SimRelCert.
       assert (certE (e2a x)) as CERTEx.
       { eapply steps_preserve_E; eauto.
         { apply wf_cont_state. }
-        apply ilbl_steps_in_steps.
+        apply lbl_steps_in_steps.
         apply SRCC. }
       unfold CertGraph.certLab.
       erewrite restr_fun_fst; auto.
