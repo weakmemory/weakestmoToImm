@@ -217,8 +217,11 @@ Section SimRelAddJF.
         rewrite e2a_tid, STID, <- e2a_tid. 
         erewrite basic_step_tid_e; eauto. }
       eapply ES.cont_sb_dom_Einit; eauto.
-      admit. 
-    Admitted.
+      eapply e2a_map_Einit.
+      unfolder; splits; auto.
+      apply wf_sbE in SB.
+      generalize SB. basic_solver.
+    Qed.
 
     Lemma weaken_sim_add_jf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
@@ -278,7 +281,9 @@ Section SimRelAddJF.
           { unfold compose. by rewrite SAME_VAL. }
           split; auto.
           unfolder. right.
-          admit. }
+          eapply sim_trav_step_issued_le.
+          { eexists. apply SRCC. }
+          basic_solver. }
         erewrite kE_cert_lab; [| apply SRCC | auto].
         unfold compose. by rewrite SAME_VAL. }
       intros CF.
@@ -287,7 +292,7 @@ Section SimRelAddJF.
       apply JF'. 
       autounfold with ESStepDb.
       basic_solver.
-    Admitted.
+    Qed.
 
     Lemma sim_add_jf_jf_delta_dom w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
