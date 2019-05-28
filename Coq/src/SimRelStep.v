@@ -673,7 +673,18 @@ Section SimRelStep.
       eapply simrel_cert_vis; eauto. }
     (* sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC' *)
     { econstructor; try apply SRCC.
-      all: admit. }
+      2: { ins.
+           assert (sim_trav_step G sc TC TC') as STEP.
+           { eexists. apply SRCC. }
+           assert (C ∩₁ GTid thread ⊆₁ ∅) as CEMPOLD.
+           { erewrite sim_trav_step_covered_le; eauto. }
+           eapply continitstate in CEMPOLD; eauto.
+           2: by apply SRCC.
+           cdes CEMPOLD. red. splits; eauto.
+           ins. split; intros AA.
+           2: { eapply sim_trav_step_covered_le; eauto. by apply PCOV. }
+           exfalso. eapply CEMP. split; eauto. }
+      admit. }
     (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. }
