@@ -866,7 +866,7 @@ Section SimRelCertStepCoh.
       eapply steps_dont_add_rmw; eauto.
       
       assert (eindex st < eindex st') as LTST.
-      { admit. }
+      { eapply ilbl_step_eindex_lt; eauto. }
       assert (eindex st' <= eindex st'') as LTST'.
       { eapply eindex_steps_mon; eauto. }
 

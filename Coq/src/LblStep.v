@@ -4,6 +4,7 @@ From imm Require Import Events Execution
      Prog ProgToExecution ProgToExecutionProperties.
 Require Import AuxDef.
 Require Import AuxRel.
+Require Import ImmProperties.
 
 Lemma unique_eps_step thread state state' state''
       (EPS_STEP1 : istep thread [] state state')
@@ -364,4 +365,31 @@ Proof.
 
   all: upd_helper UINDEX UG.
 
+Qed.
+
+Lemma ineps_step_eindex_lt thread st st' lbl (STEP : ineps_step thread lbl st st') :
+  eindex st < eindex st'.
+Proof.
+  cdes STEP. cdes STEP1.
+  inv ISTEP0; rewrite UINDEX; omega.
+Qed.
+
+Lemma ilbl_step_eindex_lt thread st st' lbl (STEP : ilbl_step thread lbl st st') :
+  eindex st < eindex st'.
+Proof.
+  cdes STEP.
+  destruct STEP0 as [st'' [ST ST']].
+  destruct_seq_r ST' as BB.
+  assert (eindex st'' <= eindex st') as AA.
+  { eapply eindex_steps_mon. apply eps_steps_in_steps. eauto. }
+  assert (eindex st < eindex st'') as CC.
+  2: omega.
+  eapply ineps_step_eindex_lt; eauto.
+Qed.
+
+Lemma lbl_step_eindex_lt thread st st' (STEP : lbl_step thread st st') :
+  eindex st < eindex st'.
+Proof.
+  cdes STEP.
+  eapply ilbl_step_eindex_lt; eauto.
 Qed.
