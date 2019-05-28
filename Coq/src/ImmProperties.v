@@ -606,21 +606,11 @@ Qed.
 Lemma eindex_not_in_rmw thread st st'
       (TNIL : thread <> tid_init)
       (WTS : wf_thread_state thread st)
-      (STEPS : (ProgToExecution.step thread)＊ st st')
-      (TRE   : thread_restricted_execution G thread (ProgToExecution.G st')) :
-  ~ (codom_rel rmw (ThreadEvent thread (eindex st))).
+      (STEPS : (ProgToExecution.step thread)＊ st st') :
+  ~ (codom_rel (Execution.rmw (ProgToExecution.G st'))
+               (ThreadEvent thread (eindex st))).
 Proof.
-  intros [y HH].
-  set (TT:=HH).
-  apply WF.(wf_rmwt) in TT.
-  red in TT. destruct y; simpls; desf.
-  assert (Execution.rmw
-            (ProgToExecution.G st')
-            (ThreadEvent thread index)
-            (ThreadEvent thread (eindex st))
-         ) as RMW.
-  { eapply tr_rmw; eauto. basic_solver. }
-  clear TRE HH.
+  intros [y RMW].
   apply clos_rt_rtn1 in STEPS.
   induction STEPS.
   { eapply wft_rmwE in RMW; eauto.

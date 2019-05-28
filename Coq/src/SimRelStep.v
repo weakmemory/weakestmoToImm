@@ -764,9 +764,13 @@ Section SimRelStep.
     { eapply LBL_STEPS. }
     intros st' st'' HH. desc.
     intros LBL_STEP LBL_STEPS'.
-    edestruct simrel_cert_lbl_step
+    edestruct simrel_cert_lbl_step with (k:=k')
       as [k'' [S'' HH]]; 
       eauto; desc.
+    { rewrite kTID.
+      eapply isim_trav_step_thread_ninit; eauto.
+      4: apply stable_prog_to_prog_no_init.
+      all: apply SRC. }
     { rewrite kTID. apply LBL_STEP. }
     { rewrite kTID. apply LBL_STEPS'. }
     exists k'', S''. splits; auto.

@@ -676,6 +676,7 @@ Section SimRelCertStepCoh.
 
   Lemma simrel_cert_lbl_step k S
         (st st' st'': (thread_lts (ktid S k)).(Language.state))
+        (NINIT : ktid S k <> tid_init)
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (LBL_STEP : lbl_step (ktid S k) st st')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
@@ -834,10 +835,52 @@ Section SimRelCertStepCoh.
       end.
       erewrite basic_step_e2a_e in RMW; eauto.
       2: by apply SRCC.
+      
+      assert (exists xindex,
+             << ILT : xindex < eindex st >> /\
+             x = ThreadEvent (ES.cont_thread S k) xindex).
+      { destruct x; simpls.
+        { apply WF.(rmw_from_non_init) in RMW.
+          destruct_seq_l RMW as AA. desf. }
+        apply WF.(rmw_in_sb) in RMW.
+        destruct_seq RMW as [AA BB].
+        red in RMW. desf.
+        eauto. }
+      desf.
+
+      assert (wf_thread_state (ES.cont_thread S k) st) as WTS.
+      { eapply contwf; eauto. apply SRCC. }
+      assert ((ProgToExecution.step (ES.cont_thread S k))＊ st st') as STEPS.
+      { apply inclusion_t_rt. eapply ilbl_step_in_steps; eauto. }
+      assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
+      { eapply wf_thread_state_steps; eauto. }
+      assert ((ProgToExecution.step (ES.cont_thread S k))＊ st' st'')
+        as STEPS'.
+      { apply lbl_steps_in_steps; eauto. }
+      assert (wf_thread_state (ES.cont_thread S k) st'') as WTS''.
+      { eapply wf_thread_state_steps; eauto. }
+
       eapply eindex_not_in_rmw with (thread:=ES.cont_thread S k)
-                                    (st:=st); eauto.
-      (* TODO: a lemma about Grmw and eindex is needed *)
-      all: admit. }
+                                    (st:=st) (st':=st'); eauto.
+      exists (ThreadEvent (ES.cont_thread S k) xindex).
+      eapply steps_dont_add_rmw; eauto.
+      
+      assert (eindex st < eindex st') as LTST.
+      { admit. }
+      assert (eindex st' <= eindex st'') as LTST'.
+      { eapply eindex_steps_mon; eauto. }
+
+      assert (acts_set (ProgToExecution.G st')
+                       (ThreadEvent (ES.cont_thread S k) xindex))
+        as XINDST'.
+      { red. apply acts_clos; auto. omega. }
+      apply seq_eqv_l. split; auto.
+
+      eapply dcertRMW. 
+      { apply SRCC. }
+      apply seq_eqv_lr. splits; auto.
+      all: apply acts_clos; auto.
+      all: omega. }
     rewrite RMW'; unfold rmw_delta.
     rewrite seq_union_l, collect_rel_union.
     unionR right.
