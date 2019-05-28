@@ -710,6 +710,14 @@ Section SimRelCertStepCoh.
                s ∩₁ e2a S' ⋄₁ s' ⊆₁ s ∩₁ e2a S ⋄₁ s') as SSE2A.
     { unfolder. ins. desf. splits; auto.
       erewrite <- basic_step_e2a_eq_dom; eauto. }
+    
+    (* TODO: make a lemma *)
+    assert (e2a S' □₁ ES.cont_sb_dom S k ≡₁ e2a S □₁ ES.cont_sb_dom S k) as CONTDOMEQ.
+    { unfolder. ins. desf. splits; ins; desf; eexists; splits; eauto.
+      symmetry.
+      all: eapply basic_step_e2a_eq_dom; eauto.
+      all: eapply kE_inE; eauto. }
+
     exists k', S'. splits.
     { eapply basic_step_cont_thread_k; eauto. }
     { apply r_step. red.
@@ -792,107 +800,161 @@ Section SimRelCertStepCoh.
       { basic_solver. }
       desf. simpls. desf. unfolder. ins. desf. omega. }
     { admit. }
-    erewrite basic_step_cont_sb_dom; eauto.
-    rewrite !set_collect_union.
-    rewrite !set_inter_union_r.
-    rewrite !id_union.
-    rewrite !seq_union_r, !collect_rel_union.
-    
-    cdes BSTEP_.
-    repeat apply union_mori.
-    { (* TODO: make a lemma *)
-      arewrite (e2a S' □₁ ES.cont_sb_dom S k ⊆₁ e2a S □₁ ES.cont_sb_dom S k).
-      { unfolder. ins. desf.
-        eexists. splits; eauto.
-        symmetry.
-        eapply basic_step_e2a_eq_dom; eauto.
-        eapply kE_inE; eauto. }
-      rewrite rmw_cov_in_kE; eauto.
-      assert (Srmw S ⊆ Srmw S') as AA.
-      { rewrite RMW'. eauto with hahn. }
-      rewrite <- AA.
-      unfolder. ins. desf.
-      do 2 eexists. splits; eauto.
-      all: eapply basic_step_e2a_eq_dom; eauto.
-      all: eapply kE_inE; eauto.
-      match goal with
-      | H : (Srmw S) _ _ |- _ => rename H into RMW
-      end.
-      match goal with
-      | H : ES.cont_sb_dom S k _ |- _ => rename H into CY
-      end.
-      unfold ES.cont_sb_dom in *. desf.
-      { exfalso.
+    { erewrite basic_step_cont_sb_dom; eauto.
+      rewrite !set_collect_union.
+      rewrite !set_inter_union_r.
+      rewrite !id_union.
+      rewrite !seq_union_r, !collect_rel_union.
+      
+      cdes BSTEP_.
+      repeat apply union_mori.
+      { (* TODO: make a lemma *)
+        rewrite CONTDOMEQ.
+        rewrite rmw_cov_in_kE; eauto.
+        assert (Srmw S ⊆ Srmw S') as AA.
+        { rewrite RMW'. eauto with hahn. }
+        rewrite <- AA.
+        unfolder. ins. desf.
+        do 2 eexists. splits; eauto.
+        all: eapply basic_step_e2a_eq_dom; eauto.
+        all: eapply kE_inE; eauto.
+        match goal with
+        | H : (Srmw S) _ _ |- _ => rename H into RMW
+        end.
+        match goal with
+        | H : ES.cont_sb_dom S k _ |- _ => rename H into CY
+        end.
+        unfold ES.cont_sb_dom in *. desf.
+        { exfalso.
+          apply WFS.(ES.rmw_in_sb) in RMW.
+          eapply WFS.(ES.sb_ninit).
+          apply seq_eqv_r. eauto. }
         apply WFS.(ES.rmw_in_sb) in RMW.
-        eapply WFS.(ES.sb_ninit).
-        apply seq_eqv_r. eauto. }
-      apply WFS.(ES.rmw_in_sb) in RMW.
-      generalize WFS.(ES.sb_trans) RMW CY. basic_solver 10. }
-    { unfolder. ins. desf.
-      exfalso.
-      match goal with
-      | H : Grmw ?x _ |- _ => rename H into RMW
-      end.
-      erewrite basic_step_e2a_e in RMW; eauto.
-      2: by apply SRCC.
-      
-      assert (exists xindex,
-             << ILT : xindex < eindex st >> /\
-             x = ThreadEvent (ES.cont_thread S k) xindex).
-      { destruct x; simpls.
-        { apply WF.(rmw_from_non_init) in RMW.
-          destruct_seq_l RMW as AA. desf. }
-        apply WF.(rmw_in_sb) in RMW.
-        destruct_seq RMW as [AA BB].
-        red in RMW. desf.
-        eauto. }
-      desf.
+        generalize WFS.(ES.sb_trans) RMW CY. basic_solver 10. }
+      { unfolder. ins. desf.
+        exfalso.
+        match goal with
+        | H : Grmw ?x _ |- _ => rename H into RMW
+        end.
+        erewrite basic_step_e2a_e in RMW; eauto.
+        2: by apply SRCC.
+        
+        assert (exists xindex,
+                   << ILT : xindex < eindex st >> /\
+                            x = ThreadEvent (ES.cont_thread S k) xindex).
+        { destruct x; simpls.
+          { apply WF.(rmw_from_non_init) in RMW.
+            destruct_seq_l RMW as AA. desf. }
+          apply WF.(rmw_in_sb) in RMW.
+          destruct_seq RMW as [AA BB].
+          red in RMW. desf.
+          eauto. }
+        desf.
 
-      assert (wf_thread_state (ES.cont_thread S k) st) as WTS.
-      { eapply contwf; eauto. apply SRCC. }
-      assert ((ProgToExecution.step (ES.cont_thread S k))＊ st st') as STEPS.
-      { apply inclusion_t_rt. eapply ilbl_step_in_steps; eauto. }
-      assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
-      { eapply wf_thread_state_steps; eauto. }
-      assert ((ProgToExecution.step (ES.cont_thread S k))＊ st' st'')
-        as STEPS'.
-      { apply lbl_steps_in_steps; eauto. }
-      assert (wf_thread_state (ES.cont_thread S k) st'') as WTS''.
-      { eapply wf_thread_state_steps; eauto. }
+        assert (wf_thread_state (ES.cont_thread S k) st) as WTS.
+        { eapply contwf; eauto. apply SRCC. }
+        assert ((ProgToExecution.step (ES.cont_thread S k))＊ st st') as STEPS.
+        { apply inclusion_t_rt. eapply ilbl_step_in_steps; eauto. }
+        assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
+        { eapply wf_thread_state_steps; eauto. }
+        assert ((ProgToExecution.step (ES.cont_thread S k))＊ st' st'')
+          as STEPS'.
+        { apply lbl_steps_in_steps; eauto. }
+        assert (wf_thread_state (ES.cont_thread S k) st'') as WTS''.
+        { eapply wf_thread_state_steps; eauto. }
 
-      eapply eindex_not_in_rmw with (thread:=ES.cont_thread S k)
-                                    (st:=st) (st':=st'); eauto.
-      exists (ThreadEvent (ES.cont_thread S k) xindex).
-      eapply steps_dont_add_rmw; eauto.
-      
-      assert (eindex st < eindex st') as LTST.
-      { eapply ilbl_step_eindex_lt; eauto. }
-      assert (eindex st' <= eindex st'') as LTST'.
-      { eapply eindex_steps_mon; eauto. }
+        eapply eindex_not_in_rmw with (thread:=ES.cont_thread S k)
+                                      (st:=st) (st':=st'); eauto.
+        exists (ThreadEvent (ES.cont_thread S k) xindex).
+        eapply steps_dont_add_rmw; eauto.
+        
+        assert (eindex st < eindex st') as LTST.
+        { eapply ilbl_step_eindex_lt; eauto. }
+        assert (eindex st' <= eindex st'') as LTST'.
+        { eapply eindex_steps_mon; eauto. }
 
-      assert (acts_set (ProgToExecution.G st')
-                       (ThreadEvent (ES.cont_thread S k) xindex))
-        as XINDST'.
-      { red. apply acts_clos; auto. omega. }
-      apply seq_eqv_l. split; auto.
+        assert (acts_set (ProgToExecution.G st')
+                         (ThreadEvent (ES.cont_thread S k) xindex))
+          as XINDST'.
+        { red. apply acts_clos; auto. omega. }
+        apply seq_eqv_l. split; auto.
 
-      eapply dcertRMW. 
-      { apply SRCC. }
-      apply seq_eqv_lr. splits; auto.
-      all: apply acts_clos; auto.
-      all: omega. }
-    rewrite RMW'; unfold rmw_delta.
-    rewrite seq_union_l, collect_rel_union.
-    unionR right.
-    unfold eq_opt. unfolder. ins. desf.
-    do 2 eexists. splits; eauto.
-    eapply wf_rmw_invf; eauto.
-    eapply e2a_rmw with (S:=S'); eauto.
-    { apply SRC'. }
-    red.
-    do 2 eexists.
-    splits; eauto.
-    apply RMW'. right. red. unfold eq_opt. basic_solver.
+        eapply dcertRMW. 
+        { apply SRCC. }
+        apply seq_eqv_lr. splits; auto.
+        all: apply acts_clos; auto.
+        all: omega. }
+      rewrite RMW'; unfold rmw_delta.
+      rewrite seq_union_l, collect_rel_union.
+      unionR right.
+      unfold eq_opt. unfolder. ins. desf.
+      do 2 eexists. splits; eauto.
+      eapply wf_rmw_invf; eauto.
+      eapply e2a_rmw with (S:=S'); eauto.
+      { apply SRC'. }
+      red.
+      do 2 eexists.
+      splits; eauto.
+      apply RMW'. right. red. unfold eq_opt. basic_solver. }
+    
+    assert (C ⊆₁ C') as CINC.
+    { eapply sim_trav_step_covered_le.
+      eexists. apply SRCC. }
+
+    assert (Ssb S' ≡ Ssb S ∪ sb_delta S k e e') as SB'.
+    { cdes BSTEP_. apply SB'. }
+
+    ins.
+    destruct PC as [[[CC [y [SY UU]]] TT] PP].
+    eapply basic_step_cont_sb_dom in SY; eauto.
+    apply set_unionA in SY.
+    destruct SY as [SY|SY].
+    { assert (C' ∩₁ e2a S' □₁ ES.cont_sb_dom S' k' ≡₁ C' ∩₁ e2a S □₁ ES.cont_sb_dom S k)
+        as COLD.
+      { split.
+        2: { erewrite basic_step_cont_sb_dom with (S':=S'); eauto.
+             rewrite <- CONTDOMEQ.
+             basic_solver 10. }
+        erewrite basic_step_cont_sb_dom with (S':=S'); eauto.
+        rewrite set_unionA.
+        rewrite set_collect_union.
+        rewrite !set_inter_union_r.
+        unionL.
+        { by rewrite CONTDOMEQ. }
+        etransitivity.
+        2: by apply set_subset_empty_l.
+        unfold eq_opt.
+        unfolder. ins. desf.
+        all: eapply PP; exists (e2a S' y0).
+        all: apply seq_eqv_r; split; [|split]; auto.
+        2,4: red; eexists; splits; eauto;
+          eapply basic_step_cont_sb_dom with (S':=S'); eauto; unfold eq_opt;
+            basic_solver.
+        all: eapply e2a_sb; try apply SRC'.
+        1,3: apply stable_prog_to_prog_no_init; apply SRC'.
+        all: red; do 2 eexists; splits; eauto.
+        all: apply SB'; right; red; unfold eq_opt.
+        all: basic_solver. }
+      (* TODO: continue from here *)
+      red. splits.
+      { ins. split; intros HH; [apply COLD in HH|apply COLD].
+        { destruct k; simpls.
+          2: { eapply contpckE; eauto.
+
+
+          unfolder. ins. desf. splits; eauto.
+          destruct (classic (C (e2a S y0))) as [|NCOV]; auto.
+          exfalso.
+          apply PP. exists (e2a S y0).
+          apply seq_eqv_r.
+          split; [|split]; auto.
+          2: { red. exists y0. splits.
+               { eapply basic_step_cont_sb_dom with (S':=S'); eauto. basic_solver. }
+               eapply basic_step_e2a_eq_dom; eauto.
+               eapply kE_inE; eauto. }
+
+          
+
   Admitted.
 
 End SimRelCertStepCoh.

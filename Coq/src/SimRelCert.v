@@ -150,6 +150,8 @@ Section SimRelCert.
       cstate_cont : Kstate k st;
       cstate_reachable : (lbl_step ktid)＊ st st';
     }.
+  
+  Notation "'certC'" := (C' ∩₁ e2a □₁ kE).
 
   Record simrel_cert :=
     { sim : simrel prog S G sc TC X ;
@@ -169,6 +171,11 @@ Section SimRelCert.
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
+
+      contpckE : forall e (state : thread_st (Stid e))
+                      (PC : (certC ∩₁ GTid (Stid e) \₁ dom_rel (sb G ⨾ ⦗certC⦘)) (e2a e))
+                      (INK : K (CEvent e, thread_cont_st (Stid e) state)),
+          @sim_state G sim_normal certC (Stid e) state;
     }.
 
   Section SimRelCertProps. 

@@ -487,7 +487,7 @@ Section SimRelStep.
     { by rewrite EQ. }
     right. erewrite e2a_tid.
     rewrite EQ. by erewrite <- e2a_tid.
-  Qed.
+  Admitted.
 
   Lemma ew_ex_iss_in_cert_ex_iss k S 
         (st : thread_st (ktid S k))
