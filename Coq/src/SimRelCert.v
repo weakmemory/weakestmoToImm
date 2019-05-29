@@ -172,7 +172,7 @@ Section SimRelCert.
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
 
-      contpckE : forall e (state : thread_st (Stid e))
+      contpckE : forall e (XE : certX e) (state : thread_st (Stid e))
                       (PC : (certC ∩₁ GTid (Stid e) \₁ dom_rel (sb G ⨾ ⦗certC⦘)) (e2a e))
                       (INK : K (CEvent e, thread_cont_st (Stid e) state)),
           @sim_state G sim_normal certC (Stid e) state;
