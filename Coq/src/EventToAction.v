@@ -19,8 +19,9 @@ Section EventToAction.
   Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
 
   Variable S : ES.t.
+  Hypothesis WF : ES.Wf S.
   Variable G : execution.
-  Variable GPROG : program_execution prog G.
+  Hypothesis GPROG : program_execution prog G.
   
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -70,7 +71,7 @@ Section EventToAction.
       [auto | congruence]. 
   Qed.
 
-  Lemma e2a_init_loc (WF : ES.Wf S) e (EINITe : SEinit e) : 
+  Lemma e2a_init_loc e (EINITe : SEinit e) : 
     exists l, 
       ⟪ SLOC : Sloc e = Some l⟫ /\
       ⟪ E2Ai : e2a e = InitEvent l⟫. 
@@ -165,9 +166,7 @@ Section EventToAction.
   (** ** e2a sb properties *)
   (******************************************************************************)
 
-  Lemma e2a_ext_sb 
-        (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S) :
+  Lemma e2a_ext_sb (EE : e2a □₁ SE ⊆₁ GE) :
     e2a □ Ssb ⊆ ext_sb.
   Proof.
     rewrite WF.(ES.sb_Einit_Eninit). 
@@ -191,9 +190,7 @@ Section EventToAction.
     apply seq_eqv_l in HH; desf. 
   Qed.
 
-  Lemma e2a_sb 
-        (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S) : 
+  Lemma e2a_sb (EE : e2a □₁ SE ⊆₁ GE) :
     e2a □ Ssb ⊆ Gsb.
   Proof.
     rewrite ES.sbE; [|by apply WF].
@@ -209,7 +206,7 @@ Section EventToAction.
   (*   x = y. *)
   (* Proof.  *)
 
-  Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
+  Lemma e2a_inj X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
     inj_dom X e2a. 
   Proof. 
     unfolder. ins. 
@@ -223,10 +220,10 @@ Section EventToAction.
       assert (SEinit y) as EINITy. 
       { unfold ES.acts_init_set, set_inter.
         split; auto. }
-      edestruct e2a_init_loc as [lx [SLOCx GEx]]; 
-        [auto | apply EINITx |].
-      edestruct e2a_init_loc as [ly [SLOCy GEy]]; 
-        [auto | apply EINITy |].
+      edestruct e2a_init_loc as [lx [SLOCx GEx]]; auto. 
+      { apply EINITx. }
+      edestruct e2a_init_loc as [ly [SLOCy GEy]]; auto. 
+      { apply EINITy. }
       eapply WF.(ES.init_uniq); auto; congruence. }
     all: unfold e2a in *; desf.
     eapply ES.seqn_inj. 
@@ -249,12 +246,46 @@ Section EventToAction.
     red. intros [_ HH]. auto. 
   Qed.
 
-  Lemma e2a_inj_init (WF : ES.Wf S) : 
+  Lemma e2a_inj_init : 
     inj_dom SEinit e2a. 
   Proof. 
     eapply e2a_inj; auto.
     { unfold ES.acts_init_set. basic_solver. }
     apply ES.ncfEinit.
+  Qed.
+
+  Lemma e2a_cont_sb_dom_inj k a b lang (st : Language.state lang)
+        (KE : K S (k, existT Language.state lang st))
+        (ACTS : e2a □₁ SE ⊆₁ acts_set G)
+        (AIN : ES.cont_sb_dom S k a)
+        (BIN : ES.cont_sb_dom S k b)
+        (EQ  : e2a a = e2a b) :
+    a = b.
+  Proof.
+    assert (SE a) as EA.
+    { eapply ES.cont_sb_domE; eauto. }
+    assert (SE b) as EB.
+    { eapply ES.cont_sb_domE; eauto. }
+    red in AIN. red in BIN. desf.
+    { eapply e2a_inj_init; eauto. }
+    assert (a = b \/ (Ssb a b \/ Ssb b a)) as AA.
+    2: { destruct AA as [|AA]; auto.
+         exfalso. desf.
+         all: eapply sb_irr with (G:=G); eapply e2a_sb; eauto.
+         1,2: by red; eauto. }
+    destruct (classic (SEinit a)) as [AINIT|ANINIT].
+    { destruct (classic (SEinit b)) as [BINIT|BNINIT].
+      { left. eapply e2a_inj_init; eauto. }
+      right. left. apply WF.(ES.sb_Einit_Eninit). left.
+      repeat (split; auto). }
+    destruct (classic (SEinit b)) as [BINIT|BNINIT].
+    { right. right. apply WF.(ES.sb_Einit_Eninit). left.
+      repeat (split; auto). }
+    destruct (classic (a = b)) as [|NEQ]; [by left|right].
+    unfolder in AIN. unfolder in BIN. desf; auto.
+    eapply WF.(ES.sb_tot); auto.
+    { eapply ES.K_inEninit; eauto. }
+    all: unfolder; splits; eauto.
   Qed.
 
 End EventToAction.

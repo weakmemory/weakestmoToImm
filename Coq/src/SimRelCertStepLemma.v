@@ -146,6 +146,8 @@ Section SimRelCertStepLemma.
     cdes CertSTEP.
     assert (Wf G) as WF by apply SRCC.
     assert (ES.Wf S) as WFS by apply SRCC.
+    assert (ES.Wf S') as WFS'.
+    { eapply simrel_cert_step_wf; eauto. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
     assert (step_ e e' S S') as WMO_STEP_.
@@ -161,6 +163,9 @@ Section SimRelCertStepLemma.
     { red. splits.
       { eapply simrel_cert_step_simrel_; eauto. }
       eapply simrel_cert_step_consistent; eauto. }
+    assert (~ Basic.IdentMap.In tid_init (stable_prog_to_prog prog)) as PTINN.
+    { apply stable_prog_to_prog_no_init. apply SRCC. }
+    assert (simrel_e2a S' G sc) as SRE2A by apply SRC'.
 
     assert (forall s (SES : s ⊆₁ SE S) s',
                s ∩₁ e2a S' ⋄₁ s' ⊆₁ s ∩₁ e2a S ⋄₁ s') as SSE2A.
@@ -214,11 +219,11 @@ Section SimRelCertStepLemma.
         assert (SE S x) as EX.
         { eapply kE_inE; eauto. }
         erewrite basic_step_lab_eq_dom; eauto.
-        erewrite basic_step_e2a_eq_dom; eauto.
+        erewrite basic_step_e2a_eq_dom with (S:=S); eauto.
         eapply kE_lab; eauto. by split. }
       unfolder. ins. desf.
-      { eapply basic_step_e2a_lab_e; eauto; apply SRCC. }
-      eapply basic_step_e2a_lab_e'; eauto; apply SRCC. }
+      { eapply basic_step_e2a_lab_e with (S:=S); eauto; apply SRCC. }
+      eapply basic_step_e2a_lab_e' with (S:=S); eauto; apply SRCC. }
     { erewrite basic_step_cont_sb_dom; eauto.
       rewrite !id_union. rewrite !seq_union_r, !collect_rel_union.
       rewrite CTS.
@@ -292,7 +297,7 @@ Section SimRelCertStepLemma.
         match goal with
         | H : Grmw ?x _ |- _ => rename H into RMW
         end.
-        erewrite basic_step_e2a_e in RMW; eauto.
+        erewrite basic_step_e2a_e with (S:=S) in RMW; eauto.
         2: by apply SRCC.
         
         assert (exists xindex,
@@ -347,7 +352,6 @@ Section SimRelCertStepLemma.
       do 2 eexists. splits; eauto.
       eapply wf_rmw_invf; eauto.
       eapply e2a_rmw with (S:=S'); eauto.
-      { apply SRC'. }
       red.
       do 2 eexists.
       splits; eauto.
@@ -362,6 +366,27 @@ Section SimRelCertStepLemma.
 
     ins.
     destruct PC as [[[CC [y [SY UU]]] TT] PP].
+
+    assert (SEninit S' e0) as EE0'.
+    { eapply ES.K_inEninit; eauto. }
+    assert ((Stid S') e0 = (Stid S') y) as EYTT.
+    { rewrite !e2a_tid. by rewrite UU. }
+
+    assert ((K S') (k', existT Language.state (thread_lts (ES.cont_thread S k)) st')) as KK.
+    { cdes BSTEP_. red. rewrite CONT'. constructor. done. }
+      
+    destruct XE as [[XE NT]|XE]; auto.
+    { exfalso. 
+      eapply ES.cont_sb_tid with (lang:=thread_lts (ES.cont_thread S k)) in SY; eauto.
+      destruct SY as [SY|SY].
+      2: { apply NT. by rewrite <- SY. }
+      apply EE0'. split; [apply EE0'|].
+      rewrite EYTT. apply SY. }
+
+    assert (e0 = y); subst.
+    { eapply e2a_cont_sb_dom_inj with (k:=k'); eauto; try apply SRCC.
+      eapply e2a_GE; eauto. }
+
     eapply basic_step_cont_sb_dom in SY; eauto.
     apply set_unionA in SY.
     destruct SY as [SY|SY].
