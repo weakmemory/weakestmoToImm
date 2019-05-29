@@ -408,7 +408,7 @@ Section SimRelCertStepLemma.
         unfolder. ins. desf.
         all: eapply PP; exists (e2a S' y0).
         all: apply seq_eqv_r; split; [|split]; auto.
-        2,4: red; eexists; splits; eauto;
+        2,4: red; eexists; splits; [|by eauto];
           eapply basic_step_cont_sb_dom with (S':=S'); eauto; unfold eq_opt;
             basic_solver.
         all: eapply e2a_sb; try apply SRC'.
@@ -416,29 +416,31 @@ Section SimRelCertStepLemma.
         all: red; do 2 eexists; splits; eauto.
         all: apply SB'; right; red; unfold eq_opt.
         all: basic_solver. }
-
-      (* TODO: continue from here *)
+      
+      assert (SE S y) as EY.
+      { eapply kE_inE; eauto. }
+      assert (Stid S' y = Stid S y) as TTY.
+      { eapply basic_step_tid_eq_dom; eauto. }
+      rewrite TTY in *.
+      assert (e2a S' y = e2a S y) as E2AY.
+      { eapply basic_step_e2a_eq_dom; eauto. }
+      rewrite E2AY in *.
+      assert ((K S) (CEvent y, existT Language.state (thread_lts ((Stid S) y)) state))
+        as YCONTOLD.
+      { (* TODO: introduce a lemma *)
+        admit. }
+      assert (~ dom_rel (Gsb ⨾ ⦗C' ∩₁ e2a S □₁ ES.cont_sb_dom S k⦘) (e2a S y)) as YND.
+      { intros [z AA]. destruct_seq_r AA as BB.
+        apply COLD in BB.
+        apply PP. basic_solver 10. }
+      assert ((C' ∩₁ e2a S □₁ ES.cont_sb_dom S k ∩₁ GTid ((Stid S) y) \₁
+                  dom_rel (Gsb ⨾ ⦗C' ∩₁ e2a S □₁ ES.cont_sb_dom S k⦘)) (e2a S y)) as YD.
+      { split; auto. basic_solver. }
       red. splits.
-      {
-        (* TODO: get a continuation related to event y *)
-        
-        ins. split; intros HH; [apply COLD in HH|apply COLD].
-        { destruct k; simpls.
-          2: { eapply contpckE; eauto.
-
-
-          unfolder. ins. desf. splits; eauto.
-          destruct (classic (C (e2a S y0))) as [|NCOV]; auto.
-          exfalso.
-          apply PP. exists (e2a S y0).
-          apply seq_eqv_r.
-          split; [|split]; auto.
-          2: { red. exists y0. splits.
-               { eapply basic_step_cont_sb_dom with (S':=S'); eauto. basic_solver. }
-               eapply basic_step_e2a_eq_dom; eauto.
-               eapply kE_inE; eauto. }
-
-          
+      { ins. split; intros HH; [apply COLD in HH|apply COLD].
+        all: eapply contpckE; eauto; basic_solver. }
+      eapply contpckE; eauto.
+      basic_solver. }
 
   Admitted.
 
