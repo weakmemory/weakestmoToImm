@@ -22,6 +22,7 @@ Section SimRelCont.
   Variable G : execution.
   Variable sc : relation actid.
   Variable TC : trav_config.
+  Variable X : eventid -> Prop.
 
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -109,6 +110,7 @@ Section SimRelCont.
           state.(eindex) = 1 + ES.seqn S e;
 
       contpc : forall e (state : thread_st (Stid e))
+                      (XE : X e)
                       (PC : pc (Stid e) (e2a S e))
                       (INK : K S (CEvent e, thread_cont_st (Stid e) state)),
           @sim_state G sim_normal C (Stid e) state;
@@ -128,8 +130,9 @@ Section SimRelContLemmas.
   Variable G  : execution.
   Variable GPROG : program_execution prog G.
   Variable TC : trav_config.
+  Variable X : eventid -> Prop.
   Variable WF : ES.Wf S.
-  Variable SRK : simrel_cont prog S G TC.
+  Variable SRK : simrel_cont prog S G TC X.
   
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -191,7 +194,7 @@ Section SimRelContLemmas.
         (st st' : thread_st (ES.cont_thread S k))
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (STCOV : C ∩₁ GTid_ (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
-    simrel_cont prog S' G TC.
+    simrel_cont prog S' G TC X.
   Proof. 
     cdes BSTEP_.
     assert (basic_step e e' S S') as BSTEP.
@@ -350,7 +353,7 @@ Section SimRelContLemmas.
          eapply continitstate; eauto. }
 
     (* contpc *)
-    intros x st'' PC KK. 
+    intros x st'' EX PC KK. 
     eapply basic_step_cont_set in KK; eauto.
     unfold set_union in KK. 
     destruct KK as [KK | KK].
