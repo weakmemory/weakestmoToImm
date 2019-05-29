@@ -167,6 +167,10 @@ Section SimRelCertStepLemma.
     { apply stable_prog_to_prog_no_init. apply SRCC. }
     assert (simrel_e2a S' G sc) as SRE2A by apply SRC'.
 
+    assert (~ SE S (opt_ext e e')) as NSE.
+    { cdes BSTEP_. desf. unfold opt_ext, ES.acts_set in *; simpls. 
+      desf; omega. }
+
     assert (forall s (SES : s ⊆₁ SE S) s',
                s ∩₁ e2a S' ⋄₁ s' ⊆₁ s ∩₁ e2a S ⋄₁ s') as SSE2A.
     { unfolder. ins. desf. splits; auto.
@@ -252,7 +256,7 @@ Section SimRelCertStepLemma.
       assert (Sjf S ⨾ ⦗eq_opt e'⦘ ⊆ ∅₂) as AA.
       { cdes BSTEP_. rewrite ES.jfE; try apply SRCC.
         unfold ES.acts_set.
-        unfolder. ins. desf. simpls. desf. omega. }
+        unfolder. ins. desf. }
       cdes BSTEP_. desf.
       red in CertSTEP_. desf; cdes CertSTEP_.
       1,3: by rewrite JF'.
@@ -441,7 +445,40 @@ Section SimRelCertStepLemma.
         all: eapply contpckE; eauto; basic_solver. }
       eapply contpckE; eauto.
       basic_solver. }
+    assert (y = opt_ext e e'); subst.
+    { unfold opt_ext, eq_opt in *. desf.
+      2: { generalize SY. basic_solver. }
+      destruct SY; desf.
+      exfalso.
+      apply ES.rmw_K with (S:=S'); auto.
+      do 2 eexists. splits.
+      { apply INK. }
+      cdes BSTEP_. eexists. apply RMW'. unfold rmw_delta, eq_opt.
+      basic_solver. }
 
+    assert ((Stid S') (opt_ext e e') = ES.cont_thread S k) as ETT.
+    { cdes BSTEP_. rewrite TID'. unfold upd_opt, opt_ext. desf.
+      all: by rewrite upds. }
+
+    assert (k' = CEvent (opt_ext e e')) by (by cdes BSTEP_); subst.
+    assert (state = st'); subst.
+    { rewrite ETT in INK.
+      red in INK. cdes BSTEP_. rewrite CONT' in INK. inv INK.
+      { match goal with
+        | H: (_, _) = (_, _) |- _ => rename H into EQ
+        end.
+        apply pair_inj in EQ. inv EQ. }
+      exfalso.
+      match goal with
+      | H: In _ (ES.cont S) |- _ => rename H into IN
+      end.
+      eapply WFS.(ES.K_inEninit) in IN.
+
+    (* assert (@sim_state G sim_normal (C' ∩₁ e2a S □₁ ES.cont_sb_dom S k) *)
+    (*                    (ES.cont_thread S k) st) as SST. *)
+    (* { admit. } *)
+    (* red. splits. *)
+    (* 2: {  *)
   Admitted.
 
 End SimRelCertStepLemma.
