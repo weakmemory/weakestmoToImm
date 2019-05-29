@@ -220,7 +220,8 @@ Section SimRelStep.
     eapply contwf in WFTS; try apply SRC.
     simpls. rewrite <- TT in WFTS.
     set (SS:=INKC).
-    eapply contpc in SS; try apply SRC; auto.
+    eapply contpc in SS; eauto.
+    2: by apply SRC.
     split.
     { intros e CC.
       set (DD:=CC).
@@ -231,7 +232,7 @@ Section SimRelStep.
     destruct e; simpls; desf.
     { by rewrite ET in NINITT. }
     cdes SS. rewrite TT in CC. apply PCOV in CC.
-    apply acts_clos; auto. 
+    apply acts_clos; auto.
   Qed.
   
   Lemma simrel_cert_graph_start thread S 

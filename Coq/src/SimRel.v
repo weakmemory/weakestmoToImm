@@ -133,7 +133,7 @@ Section SimRel.
 
       sr_exec : Execution.t S X ;
       
-      sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC ;
+      sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC X ;
 
       sr_e2a : simrel_e2a S G sc ;
       
