@@ -109,17 +109,26 @@ Section SimRelCont.
                         (INKe : K S (CEvent e, thread_cont_st (Stid e) state)),
           state.(eindex) = 1 + ES.seqn S e;
 
-      contpc : forall e (state : thread_st (Stid e))
-                      (XE : X e)
-                      (PC : pc (Stid e) (e2a S e))
-                      (INK : K S (CEvent e, thread_cont_st (Stid e) state)),
-          @sim_state G sim_normal C (Stid e) state;
+      (* contpc : forall e (state : thread_st (Stid e)) *)
+      (*                 (XE : X e) *)
+      (*                 (PC : pc (Stid e) (e2a S e)) *)
+      (*                 (INK : K S (CEvent e, thread_cont_st (Stid e) state)), *)
+      (*     @sim_state G sim_normal C (Stid e) state; *)
 
-      continitstate :
-        forall thread (state : thread_st thread)
-               (CEMP : C ∩₁ GTid thread ⊆₁ ∅)
-               (INK : K S (CInit thread, thread_cont_st thread state)),
-          @sim_state G sim_normal C thread state;
+      (* continitstate : *)
+      (*   forall thread (state : thread_st thread) *)
+      (*          (CEMP : C ∩₁ GTid thread ⊆₁ ∅) *)
+      (*          (INK : K S (CInit thread, thread_cont_st thread state)), *)
+      (*     @sim_state G sim_normal C thread state; *)
+      
+      contsimstate :
+        forall thread (lprog : thread_syntax thread) 
+               (INPROG : IdentMap.find thread prog = Some lprog),
+          exists k (state : thread_st (ES.cont_thread S k)),
+            << INK   : K S (k, thread_cont_st (ES.cont_thread S k) state) >> /\
+            << INX   : ES.cont_sb_dom S k ≡₁
+                       X ∩₁ STid (ES.cont_thread S k) ∩₁ e2a S ⋄₁ C >> /\
+            << SIMST : @sim_state G sim_normal C (ES.cont_thread S k) state >>;
     }.
 
 End SimRelCont.
@@ -142,8 +151,6 @@ Section SimRelContLemmas.
   Notation "'Sloc' S" := (loc S.(ES.lab)) (at level 10).
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
-
-  Notation "'Stid_' t" := (fun x => Stid x = t) (at level 1).
 
   Notation "'Ssb' S" := S.(ES.sb) (at level 10).
   Notation "'Srmw' S" := S.(ES.rmw) (at level 10).
@@ -179,6 +186,8 @@ Section SimRelContLemmas.
 
   Notation "'cont_lang'" :=
     (fun S k => thread_lts (ES.cont_thread S k)) (at level 10, only parsing).
+
+  Notation "'STid'" := (fun S t x => ES.tid S x = t) (at level 1).
   
   Lemma kstate_instrs k (state : thread_st (ES.cont_thread S k))
         (lprog : thread_syntax (ES.cont_thread S k))
@@ -193,7 +202,8 @@ Section SimRelContLemmas.
   Lemma basic_step_simrel_cont k k' e e' S'
         (st st' : thread_st (ES.cont_thread S k))
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
-        (STCOV : C ∩₁ GTid_ (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) : 
+        (XE : X ⊆₁ SE S) :
+        (* (STCOV : C ∩₁ GTid_ (ES.cont_thread S k) ⊆₁ acts_set st.(ProgToExecution.G)) :  *)
     simrel_cont prog S' G TC X.
   Proof. 
     cdes BSTEP_.
@@ -346,52 +356,30 @@ Section SimRelContLemmas.
       apply inj_pair2 in HST.
       congruence. }
 
-    (* continitstate *)
-    2: { ins.
-         unfold ES.cont_set in *. rewrite CONT' in INK.
-         inv INK.
-         eapply continitstate; eauto. }
-
-    (* contpc *)
-    intros x st'' EX PC KK. 
-    eapply basic_step_cont_set in KK; eauto.
-    unfold set_union in KK. 
-    destruct KK as [KK | KK].
-    { assert (Stid S' x = Stid S x) as EQtid. 
-      { eapply basic_step_tid_eq_dom; eauto.  
-        eapply ES.K_inEninit; eauto. } 
-      assert (e2a S' x = e2a S x) as EQe2a. 
-      { eapply basic_step_e2a_eq_dom; eauto.  
-        eapply ES.K_inEninit; eauto. } 
-      rewrite EQtid, EQe2a in *. 
-      eapply contpc; eauto. }
-    exfalso. 
-    assert (x = opt_ext e e') as xEQ.
-    { by inversion KK. }
-    rewrite xEQ in KK. 
-    rewrite TIDee in KK. 
-    inversion KK as [HST].
-    apply inj_pair2 in HST. 
-    assert (e2a S' x = ThreadEvent ((Stid S') x) (ES.seqn S' x)) as EQe2a.
-    { unfold e2a. 
-      destruct 
-        (excluded_middle_informative ((Stid S') x = tid_init)) 
-        as [INIT | TE]; auto. 
-      exfalso. eapply ES.init_tid_K; eauto. 
-      do 2 eexists; splits; eauto. congruence. }
-    rewrite EQe2a in PC. 
-    unfold pc in PC.
-    destruct PC as [CTIDx nDOMx].
-    rewrite xEQ, TIDee in CTIDx.
-    apply STCOV in CTIDx.
-    eapply acts_rep in CTIDx.
-    2: { eapply contwf; eauto. }
-    assert (st.(eindex) < st'.(eindex)) as IDX_LE. 
-    2: { desf. omega. }
-    edestruct lbl_step_cases as [l [l' HH]]; eauto.
-    { eapply contwf; eauto. }
-    { apply STEP. }
-    desf; omega.
-  Qed.
+    ins.
+    edestruct contsimstate as [ok]; eauto. desf.
+    exists ok. exists state.
+    arewrite (ES.cont_thread S' ok = ES.cont_thread S ok).
+    { eapply basic_step_cont_thread; eauto. }
+    splits; auto.
+    { eapply basic_step_cont_set; eauto. by left. }
+    arewrite (ES.cont_sb_dom S' ok ≡₁ ES.cont_sb_dom S ok).
+    { (* TODO: a lemma is needed. *)
+      admit. }
+    rewrite INX.
+    arewrite (X ∩₁ (STid S' (ES.cont_thread S ok)) ≡₁
+              X ∩₁ (STid S  (ES.cont_thread S ok))).
+    { unfolder. split; intros x [XX BB]; desf; splits; auto.
+      all: rewrite <- BB.
+      symmetry.
+      all: eapply basic_step_tid_eq_dom; eauto. }
+    rewrite set_interC with (s:=X).
+    rewrite !set_interA.
+    arewrite (X ∩₁ e2a S' ⋄₁ C ≡₁ X ∩₁ e2a S ⋄₁ C).
+    2: done.
+    unfolder. split; ins; desf; splits; auto.
+    { erewrite <- basic_step_e2a_eq_dom; eauto. }
+    erewrite basic_step_e2a_eq_dom; eauto. 
+  Admitted.
 
 End SimRelContLemmas.
