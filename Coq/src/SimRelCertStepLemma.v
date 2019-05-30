@@ -473,7 +473,8 @@ Section SimRelCertStepLemma.
       | H: In _ (ES.cont S) |- _ => rename H into IN
       end.
       eapply WFS.(ES.K_inEninit) in IN.
-
+      apply NSE. apply IN. }
+    
     (* assert (@sim_state G sim_normal (C' ∩₁ e2a S □₁ ES.cont_sb_dom S k) *)
     (*                    (ES.cont_thread S k) st) as SST. *)
     (* { admit. } *)
