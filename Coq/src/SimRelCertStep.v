@@ -947,6 +947,31 @@ Section SimRelCertStep.
     all: eapply BB; eauto.
   Qed.
 
+  Lemma simrel_cert_step_e2a_co_ew k k' e e' S S'        
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    e2a S' □ (Sco S' ⨾ Sew S' ⨾ ⦗X ∩₁ e2a S' ⋄₁ I⦘) ⊆ Gco.
+  Proof. 
+    cdes CertSTEP. 
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    erewrite basic_step_e2a_set_map_inter_old; 
+      eauto; try apply SRCC.
+    unfold_cert_step_ CertSTEP_.
+    1,2: rewrite EW', CO'. 
+    1,2: erewrite basic_step_e2a_collect_rel_eq_dom; 
+      eauto; try apply SRCC.
+    1,2: rewrite ES.ewE, ES.coE; auto.
+    1,2: basic_solver 20.
+    all: eapply sim_add_co_e2a_co_ew; eauto. 
+    1,3: basic_solver.
+    (* TODO *)
+    all: admit.
+  Admitted.
+
   Lemma simrel_cert_step_same_releaseE k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
@@ -1603,6 +1628,9 @@ Section SimRelCertStep.
       do 2 (erewrite basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto).
       eapply jf_cov_in_rf; try apply SRCC.
       basic_solver 10. }
+    (* e2a_co_ew : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
+    { eapply simrel_cert_step_e2a_co_ew; eauto. }
+    (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
     { eapply simrel_cert_step_jfe_ex_iss; eauto. }
     (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
     { erewrite basic_step_e2a_set_map_inter_old; eauto.

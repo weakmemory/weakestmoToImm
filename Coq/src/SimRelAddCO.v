@@ -682,7 +682,7 @@ Section SimRelAddCO.
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') 
           (nRelIss : ~ (SRel S' ∩₁ e2a S' ⋄₁ I) w') : 
-      e2a S' □ (Sco S' ⨾ Sew S' ⨾ ⦗X ∩₁ e2a S' ⋄₁ I⦘) ⊆ Gco.
+      e2a S' □ (Sco S' ⨾ Sew S' ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) ⊆ Gco.
     Proof. 
       cdes BSTEP_; cdes SAEW; cdes SACO.
       assert (basic_step e e' S S') as BSTEP.
@@ -697,8 +697,6 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }
-      erewrite basic_step_e2a_set_map_inter_old; eauto.
-      2 : { apply SRCC. }
       rewrite EW', CO'.
       unfold co_delta, ew_delta.
       relsf. unionL.
