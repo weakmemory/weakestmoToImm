@@ -568,7 +568,7 @@ Section SimRelAddCO.
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
           (wEE' : (eq e ∪₁ eq_opt e') w')
           (nRelIss : ~ (SRel S' ∩₁ e2a S' ⋄₁ I) w') :
-    codom_rel (e2a S' □
+    codom_rel (e2a S □
       ⦗ws_compl (sim_ews TC X w' S S') (sim_ws k w' S S') S⦘ ⨾ Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘
     ) ⊆₁ fun w => Gco (e2a S' w') w.
     Proof.
@@ -595,8 +595,6 @@ Section SimRelAddCO.
       subst x' y' z''. desc.
       assert (SE S y) as Ey.
       { eapply Execution.ex_inE in Xy; eauto. }
-      arewrite (e2a S' y = e2a S y).
-      { erewrite basic_step_e2a_eq_dom; eauto. }
       assert (Gco (e2a S z') (e2a S y)) as GCO.
       { eapply e2a_co_ew; eauto. basic_solver 10. }
       destruct EWSWS as [EWS | WS].
@@ -732,191 +730,20 @@ Section SimRelAddCO.
         { eapply Execution.ex_inE in Xy; eauto.
           erewrite basic_step_e2a_eq_dom; eauto. }
         congruence. }
-      { rewrite seq_eqv_r.
-        intros x' y' [x [y HH]].
-        destruct HH as [[z HH] [EQx' EQy']].
-        destruct HH as [[EQz WSC] [EW [Xy Iy]]].
-        unfold ws_compl in WSC.
-        destruct WSC as [[z' [z'' [HH COz]]] nEWSWS].
-        destruct HH as [EQz'' EWSWS].
-        subst x' y' z'' w'. desc.
-        assert (SE S y) as Ey.
-        { eapply Execution.ex_inE in Xy; eauto. }
-        arewrite (e2a S' y = e2a S y).
-        { erewrite basic_step_e2a_eq_dom; eauto. }
-        assert (Gco (e2a S z') (e2a S y)) as GCO.
-        { eapply e2a_co_ew; eauto. basic_solver 10. }
-        destruct EWSWS as [EWS | WS].
-        { unfold sim_ews in EWS. desc. congruence. }
-        unfold sim_ws in WS. desc. 
-        destruct (classic (e2a S' x = e2a S y)) as [EQ | nEQ].
-        { exfalso. apply nEWSWS. left. 
-          unfold sim_ews. splits.
-          { apply ES.ewm in EW; auto.
-            destruct EW as [EQz | [RLX _]]; 
-              auto; subst z.
-            assert 
-              (Events.mod (Slab S) y = Events.mod Glab (e2a S' x))
-              as MODEQ.
-            { erewrite same_lab_u2v_dom_mod
-                with (s := SE S) (lab2 := Glab ∘ e2a S); 
-                eauto using e2a_lab.
-              unfold Events.mod, compose. by rewrite EQ. }
-            assert (~ SRel S y) as nRELy.
-            { intros RELy. apply nRelIss.
-              red in Iy. unfolder. split; [|congruence]. 
-              unfold is_rel, mode_le.
-              erewrite same_lab_u2v_dom_mod
-                with (s := SE S') (lab2 := Glab ∘ e2a S').
-              { unfold Events.mod, compose. 
-                fold (Events.mod Glab (e2a S' x)).
-                rewrite <- MODEQ. 
-                apply RELy. }
-              { eapply basic_step_e2a_same_lab_u2v; 
-                  eauto; apply SRCC. }
-              basic_solver. }
-            unfold is_only_rlx.
-            destruct (Events.mod (Slab S) y) 
-              eqn:Hmod; auto.
-            { (* TODO: we need `~ Opln` prop *)
-              admit. }
-            { (* TODO: we need `~ OAcq /\ W` prop *)
-              admit. }
-            all: exfalso; apply nRELy. 
-            all: unfold is_rel, mode_le. 
-            all: by rewrite Hmod. }
-          { rewrite EQ.
-            eapply e2a_ew; eauto.
-            basic_solver 10. }
-          basic_solver 10. }
-        edestruct wf_co_total
-          with (a := e2a S' x) (b := e2a S y); eauto.
-        3 : { 
-          exfalso. 
-          apply nEWSWS.
-          right.
-          unfold sim_ws.
-          splits.
-          3 : { 
-
-            { exfalso. apply nRELy. 
-              unfold is_rel, mode_le. 
-              by rewrite Hmod. }
-              
-              3 : {} 
-                with ().
-
-              2 : { congruence.
- is_only_rlx.
-            destruct (Events.mod (Slab S) y)
-              eqn:Heq; auto.
-             : { 
-            exfalso. eapply nRelIss.
-            
-            admit. }
-          { 
-
-
-        rewrite Execution.ex_inE 
-          with (X := X) at 2; eauto.
-        rewrite sim_ewsE; eauto.
-        rewrite csE.
+      { unfolder. ins. desf.
+        arewrite (e2a S' y' = e2a S y').
+        { erewrite basic_step_e2a_eq_dom; eauto. 
+          eapply Execution.ex_inE; eauto. }
+        eapply sim_add_co_e2a_codom_ws_compl_ew; eauto.
+        exists (e2a S z).
+        basic_solver 10. }
+      { erewrite add_co_ws_complE; auto.
         unfolder in wEE'; desf; step_solver. }
-      { unfold ws_compl. 
-        intros x' y' [x [y HH]].
-        destruct HH as [HH [EQx EQy]].
-        destruct HH as [z [HH EW]].
-        destruct HH as [EQw HH].
-        destruct HH as [[z' HH] nEWSWS].
-        apply seq_eqv_l in HH.
-        subst x' y' w'.
-        destruct HH as [EWSWS CO].
-        assert (Gco (e2a S z') (e2a S y)) as COy.
-        { eapply e2a_co_ew; eauto. basic_solver 10. }
-        arewrite (e2a S' y = e2a S y).
-        { eapply basic_step_e2a_eq_dom; eauto.
-          apply ES.ewE in EW; auto. 
-          generalize EW. basic_solver. }
-        destruct EWSWS as [EWS | WS].
-        { unfold sim_ews in EWS. desf. congruence. }
-        edestruct e2a_co as [EQ | COz].
-        { apply SRE2A. }
-        { exists z', z. splits; auto. }
-        { assert (e2a S z' = e2a S y) as EQQ.
-          { rewrite EQ. eapply e2a_ew; eauto. basic_solver 10. }
-          exfalso. eapply co_irr; eauto. 
-          rewrite EQQ in COy; eauto. }
-        unfold sim_ws in WS; desc.
-        
-
-        2 : { 
-
-        assert (e2a S' z' = e2a S z') as E2Az'.
-        { eapply basic_step_e2a_eq_dom; eauto.
-          apply ES.coE in CO; auto. 
-          generalize CO. basic_solver. }
-
-
-
-        rewrite E2Ay.
-        assert (e2a S' x <> e2a S y) as nEQ.
-        { intros EQ. rewrite <- EQ in *.
-          destruct EWSWS as [EWS | WS].
-          { unfold sim_ews in EWS. desf.
-            eapply co_irr; eauto. 
-            rewrite wsE2Aeq in COy; eauto. }
-          unfold sim_ws in WS. desf.
-            eauto.
-            congruence.
-            
-            d
-
-
-        destruct EWSWS as [EWS | WS].
-        { unfold sim_ews in EWS. desf. congruence. }
-        unfold sim_ws in WS. desf.
-        assert (e2a S' x <> e2a S y) as nEQ.
-        { intros EQ. rewrite EQ in *.
-          destruct (classic (z = y))
-            as [EQz | nEQz].
-          { subst z. 
-            rewrite EQ in *.
-            unfold sim_ws.
-            
-          
-          left.
-          unfold sim_ews. splits.
-          { apply ES.ewm in EW; auto.
-            destruct EW as [EQ' | [ORLX _]]; auto.
-            subst z. 
-            subst zexfalso
-            2 
-          arewrit
-          splits. 
-          
-          left
-          
-
-
-        unfolder. ins. desf. 
-        { rewrite <- wsE2Aeq.
-          eapply e2a_co_ew; eauto.
-          arewrite (e2a S' y' = e2a S y').
-          { eapply basic_step_e2a_eq_dom; eauto.
-            apply ES.ewE in H2; auto. 
-            generalize H2. basic_solver. }
-          basic_solver 10. }
-        
-          do 2 eexists; splits; eauto; eaut
-
-        
-        
-      { arewrite (sim_ws k w' S S' × eq w' ⨾ Sew S ⊆ ∅₂).
-        { unfolder in wEE'; desf; step_solver. }
-      rewrite collect_rel_union.
-
-
-    e2a_ew_co : e2a □ (Sco ⨾ Sew) ⊆ Gco;
+      erewrite add_co_ws_complE; auto.
+      rewrite Execution.ex_inE 
+          with (X := X) at 2; eauto.
+      unfolder in wEE'; desf; step_solver.
+    Qed.
 
   End SimRelAddCOProps. 
 
