@@ -144,6 +144,7 @@ Section SimRel.
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
       
       jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
+      e2a_co_ew : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco;
 
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
@@ -560,8 +561,18 @@ Section SimRel.
       { done. }
       exfalso. eapply co_irr; eauto.
       eapply co_trans; eauto.
-      eapply e2a_co; [apply SRC_|].
-      basic_solver 10. 
+      assert ((e2a □ Sco) y x) as E2ACO.
+      { basic_solver 10. }
+      eapply e2a_co in E2ACO.
+      2 : apply SRC_.
+      destruct E2ACO as [EQ | GCO']; auto.
+      exfalso.
+      assert (x' = y') as EQ'.
+      { eapply e2a_inj with (X := X); 
+          eauto; try apply EXEC.
+        congruence. }
+      rewrite EQ' in *.
+      eapply ES.co_irr; eauto.
     Qed.
 
     (******************************************************************************)
@@ -919,6 +930,7 @@ Section SimRelLemmas.
       red. basic_solver. }
     { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
       basic_solver. }
+    { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }

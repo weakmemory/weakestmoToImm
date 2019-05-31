@@ -124,9 +124,9 @@ Section SimRelEventToAction.
 
       e2a_rmw : e2a □ Srmw ⊆ Grmw;
       e2a_ew  : e2a □ Sew  ⊆ eq;
-      e2a_co  : e2a □ Sco  ⊆ Gco;
+      e2a_co  : e2a □ Sco  ⊆ Gco^?;
 
-      e2a_jf  : e2a □ Sjf  ⊆ Gfurr;
+      e2a_jf  : e2a □ Sjf ⊆ Gfurr;
       e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
       e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
                   Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘

@@ -322,6 +322,26 @@ Section EventToActionLemmas.
     congruence.
   Qed.
 
+  Lemma basic_step_e2a_set_collect_eq_dom e e' S' s
+        (BSTEP : basic_step e e' S S') 
+        (inE : s ⊆₁ SE S) :
+    e2a S' □₁ s ≡₁ e2a S □₁ s.
+  Proof. 
+    eapply set_collect_eq_dom.
+    rewrite inE.
+    eapply basic_step_e2a_eq_dom; eauto.
+  Qed.
+
+  Lemma basic_step_e2a_collect_rel_eq_dom e e' S' r
+        (BSTEP : basic_step e e' S S') 
+        (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘) :
+    e2a S' □ r ≡ e2a S □ r.
+  Proof. 
+    rewrite restrE, <- restr_relE. 
+    eapply collect_rel_restr_eq_dom.
+    eapply basic_step_e2a_eq_dom; eauto.
+  Qed.
+
   Lemma basic_step_e2a_set_map_inter_old e e' S' s s'
         (BSTEP : basic_step e e' S S') 
         (inE : s ⊆₁ SE S) :
