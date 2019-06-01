@@ -143,13 +143,13 @@ Section SimRel.
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
       
-      jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
-      e2a_co_ew : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco;
+      jf_cov_in_rf  : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
+      e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco;
 
-      jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
-      ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
+      jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
+      ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
 
-      rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ X ;
+      rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆₁ X ;
     }.
 
   Definition simrel := 
@@ -242,6 +242,21 @@ Section SimRel.
       basic_solver.
     Qed.
 
+    Lemma ex_w_cov_inIss : 
+      X ∩₁ SW ∩₁ e2a ⋄₁ C ⊆₁ X ∩₁ e2a ⋄₁ I.
+    Proof. 
+      unfolder.
+      intros x [[Xx Wx] Cx].
+      split; auto.
+      eapply w_covered_issued.
+      { apply SRC_. }
+      split; auto.
+      eapply e2a_W; try apply SRC_.
+      unfolder; eexists; splits; eauto.
+      eapply Execution.ex_inE; eauto.
+      apply SRC_.
+    Qed.
+
     (******************************************************************************)
     (** ** sb/rmw/jf/ew/co properties  *)
     (******************************************************************************)
@@ -267,6 +282,39 @@ Section SimRel.
       split.
       { eapply Execution.ex_sb_prcl; [apply SRC_|]. basic_solver 10. }
       eapply sb_cov. basic_solver 10.
+    Qed.
+
+    Lemma jf_ex_cov : 
+      dom_rel (Sjf ⨾ ⦗ X ∩₁ e2a ⋄₁ C ⦘) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘). 
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      rewrite !seq_eqv_r. unfolder.
+      intros x [y [JF [Xy Cy]]].
+      edestruct Execution.ex_rf_compl 
+        as [z HH]; eauto.
+      { apply ES.jfD in JF; auto.
+        generalize JF. basic_solver. }
+      apply seq_eqv_l in HH.
+      destruct HH as [Xz RF].
+      assert (Sew x z) as EW.
+      { apply ES.rf_trf_in_ew; auto.
+        unfolder; eexists; splits; eauto.
+        by apply ES.jf_in_rf. }
+      exists z; splits; auto.
+      eapply dom_rf_covered; 
+        try apply SRC_.
+      eexists. 
+      apply seq_eqv_r.
+      splits; eauto.
+      arewrite (e2a z = e2a x).
+      { symmetry. 
+        eapply e2a_ew; try apply SRC_. 
+        basic_solver 10. }
+      eapply jf_cov_in_rf; auto.
+      basic_solver 10.
     Qed.
     
     Lemma rfe_ex_iss :
@@ -354,6 +402,57 @@ Section SimRel.
       arewrite (e2a a = e2a x); auto.
       eapply e2a_ew; [apply SRC_|].
       eexists; eauto.
+    Qed.
+
+    Lemma e2a_co_iss : 
+      e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      unfolder. ins. desf.
+      eapply e2a_co_ew_iss; auto.
+      unfolder; do 2 eexists; splits; eauto. 
+      eexists; splits; eauto.
+      apply ES.ew_refl; auto.
+      unfolder; splits; auto.
+      { eapply Execution.ex_inE; eauto. }
+      apply ex_iss_inW.
+      split; done.
+    Qed.
+
+    Lemma e2a_co_jf_cov : 
+      e2a □ Sco ⨾ Sjf^? ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ⊆ Gco ⨾ (Grf ⨾ ⦗C⦘)^?.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      rewrite crE. relsf. unionL.
+      { arewrite (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ≡ 
+                  Sco ⨾ ⦗X ∩₁ SW ∩₁ e2a ⋄₁ C⦘).
+        { rewrite ES.coD; auto. basic_solver. }
+        rewrite ex_w_cov_inIss.
+        rewrite e2a_co_iss.
+        basic_solver. }
+      rewrite !seq_eqv_r. unfolder.
+      intros x' y' [x [y [HH [EQx' EQy']]]].
+      destruct HH as [z [CO [JF [Xy Cy]]]].
+      subst x' y'.
+      edestruct jf_ex_cov as [z' HH].
+      { basic_solver 10. }
+      apply seq_eqv_r in HH.
+      destruct HH as [EW [Xz' Iz']].
+      exists (e2a z'). splits.
+      { eapply e2a_co_ew_iss; auto. basic_solver 10. }
+      right; splits; auto.
+      arewrite (e2a z' = e2a z).
+      { symmetry.
+        eapply e2a_ew; try apply SRC_.
+        basic_solver 10. }
+      eapply jf_cov_in_rf; auto.
+      basic_solver 10.
     Qed.
 
     (******************************************************************************)
