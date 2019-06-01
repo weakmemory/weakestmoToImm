@@ -730,40 +730,6 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** ew properties *)
-(******************************************************************************)
-
-Lemma ew_tid WF : ew ⊆ same_tid.
-Proof. 
-  rewrite ewc; auto.
-  unfold ES.same_tid, ES.cf.
-  basic_solver 10.
-Qed.
-
-Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
-Proof. 
-  intros x WW. 
-  exists x, x. 
-  unfolder; splits; eauto.
-  eapply ew_refl; auto.
-  apply inEW in WW.
-  generalize WW. 
-  basic_solver 10.
-Qed.
-
-Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
-Proof. 
-  intros x y RR. 
-  eexists x. 
-  splits; auto.
-  eapply ew_refl; auto.
-  specialize (domEW x).
-  assert ((E ∩₁ W) x) as EWx.
-  { apply domEW. basic_solver. }
-  generalize EWx. basic_solver 10.
-Qed.
-
-(******************************************************************************)
 (** ** jf properties *)
 (******************************************************************************)
 
@@ -829,6 +795,63 @@ Proof.
   red. ins. 
   eapply jf_ncf; auto.
   split; eauto.
+Qed.
+
+Lemma jfi_in_sb WF : jfi ⊆ sb.
+Proof. unfold ES.jfi. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** ew properties *)
+(******************************************************************************)
+
+Lemma ew_tid WF : ew ⊆ same_tid.
+Proof. 
+  rewrite ewc; auto.
+  unfold ES.same_tid, ES.cf.
+  basic_solver 10.
+Qed.
+
+Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
+Proof. 
+  intros x WW. 
+  exists x, x. 
+  unfolder; splits; eauto.
+  eapply ew_refl; auto.
+  apply inEW in WW.
+  generalize WW. 
+  basic_solver 10.
+Qed.
+
+Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
+Proof. 
+  intros x y RR. 
+  eexists x. 
+  splits; auto.
+  eapply ew_refl; auto.
+  specialize (domEW x).
+  assert ((E ∩₁ W) x) as EWx.
+  { apply domEW. basic_solver. }
+  generalize EWx. basic_solver 10.
+Qed.
+
+(******************************************************************************)
+(** ** ew/co properties *)
+(******************************************************************************)
+
+Lemma ew_co_eq_co WF : ew ⨾ co ≡ co.
+Proof.
+  split; [apply ew_co_in_co|]; auto.
+  rewrite <- ew_refl; auto.
+  rewrite coE, coD; auto.
+  basic_solver.
+Qed.
+
+Lemma co_ew_eq_co WF : co ⨾ ew ≡ co.
+Proof. 
+  split; [apply co_ew_in_co|]; auto.
+  rewrite <- ew_refl; auto.
+  rewrite coE, coD; auto.
+  basic_solver.
 Qed.
 
 (******************************************************************************)
@@ -939,6 +962,19 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma fr_alt WF : fr ≡ jf⁻¹ ⨾ co.
+Proof. 
+  unfold ES.fr. split.
+  2 : by rewrite jf_in_rf. 
+  unfold ES.rf.
+  rewrite inclusion_minus_rel.
+  rewrite transp_seq.
+  rewrite transp_sym_equiv
+    with (r := ew).
+  2 : apply WF.
+  rewrite seqA.
+  by rewrite ew_co_in_co. 
+Qed.
 
 (******************************************************************************)
 (** ** rf/fr properties *)
