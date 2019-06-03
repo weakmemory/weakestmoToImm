@@ -127,6 +127,7 @@ Section SimRelCont.
           exists k (state : thread_st (ES.cont_thread S k)),
             << INK   : K S (k, thread_cont_st (ES.cont_thread S k) state) >> /\
             << INX   : ES.cont_sb_dom S k ≡₁
+                       SEinit ∪₁
                        X ∩₁ STid (ES.cont_thread S k) ∩₁ e2a S ⋄₁ C >> /\
             << SIMST : @sim_state G sim_normal C (ES.cont_thread S k) state >>;
     }.
@@ -367,6 +368,8 @@ Section SimRelContLemmas.
     { (* TODO: a lemma is needed. *)
       admit. }
     rewrite INX.
+    apply set_union_Propere.
+    { symmetry. eapply basic_step_acts_init_set; eauto. }
     arewrite (X ∩₁ (STid S' (ES.cont_thread S ok)) ≡₁
               X ∩₁ (STid S  (ES.cont_thread S ok))).
     { unfolder. split; intros x [XX BB]; desf; splits; auto.

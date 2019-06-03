@@ -884,6 +884,15 @@ Section SimRelLemmas.
         eexists. splits.
         2: { apply IdentMap.elements_correct; eauto. }
         done. }
+      { arewrite
+          ((fun _ : eventid =>
+              tid_init = ES.cont_thread (prog_g_es_init prog G)
+                                        (CInit thread)) ≡₁ ∅).
+        2: basic_solver.
+        split; [|basic_solver].
+        unfolder. ins. apply nInitProg.
+        apply IdentMap.Facts.in_find_iff. desf.
+        destruct (IdentMap.find tid_init prog); desf. }
       (* TODO: continue from here *)
         
 
