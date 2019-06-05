@@ -129,6 +129,39 @@ Section SimRelCertStepLemma.
   Notation "'I''"  := (issued TC').
 
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
+  
+  (* TODO: move to another file. *)
+  Lemma sim_state_set_eq mode thread s s' state (EQ : s ≡₁ s'):
+    @sim_state G mode s thread state <->
+    @sim_state G mode s' thread state.
+  Proof.
+    split; intros AA. 
+    all: red; splits; [|by apply AA].
+    all: ins; split; intros BB.
+    1,3: by apply AA; apply EQ.
+    all: by apply EQ; apply AA.
+  Qed.
+
+  (* TODO: move to another file. *)
+  Lemma basic_step_cont_sb_dom_eq S S' e e'
+        kC (state : (thread_lts (ktid S kC)).(Language.state))
+        (WFS : ES.Wf S)
+        (BSTEP : basic_step e e' S S')
+        (INK : K S (kC, existT _ (thread_lts (ktid S kC)) state)) :
+    ES.cont_sb_dom S' kC ≡₁ ES.cont_sb_dom S kC.
+  Proof.
+    unfold ES.cont_sb_dom. desf.
+    { eapply basic_step_acts_init_set; eauto. }
+    arewrite ((Ssb S')^? ⨾ ⦗eq eid⦘ ≡ (Ssb S)^? ⨾ ⦗eq eid⦘).
+    2: basic_solver.
+    split.
+    2: by erewrite basic_step_sb_mon; eauto.
+    rewrite !crE, !seq_union_l. apply union_mori; [done|].
+    arewrite (⦗eq eid⦘ ⊆ ⦗SE S⦘ ⨾ ⦗eq eid⦘).
+    2: { rewrite <- !seqA. by rewrite basic_step_sbE; eauto. }
+    unfolder. ins. desf. splits; auto.
+    eapply ES.K_inEninit; eauto.
+  Qed.
 
   Lemma simrel_cert_lbl_step k S
         (st st' st'': (thread_lts (ktid S k)).(Language.state))
@@ -368,7 +401,51 @@ Section SimRelCertStepLemma.
     assert (Ssb S' ≡ Ssb S ∪ sb_delta S k e e') as SB'.
     { cdes BSTEP_. apply SB'. }
 
+    assert (e2a S ⋄₁ C' ∩₁ ES.cont_sb_dom S k ⊆₁ e2a S' ⋄₁ C' ∩₁ ES.cont_sb_dom S' k')
+      as CSBDIN.
+    { erewrite basic_step_cont_sb_dom with (S:=S) (S':=S'); eauto.
+      unfolder. ins. desc. splits; auto.
+      erewrite basic_step_e2a_eq_dom; eauto.
+      eapply kE_inE; eauto. }
+
+    assert (C' ∩₁ e2a S  □₁ ES.cont_sb_dom S  k  ⊆₁
+            C' ∩₁ e2a S' □₁ ES.cont_sb_dom S' k') as CSBDINE.
+    { erewrite basic_step_cont_sb_dom with (S:=S) (S':=S'); eauto.
+      rewrite <- CONTDOMEQ. basic_solver 10. }
+
     ins.
+    destruct (classic (e2a S' ⋄₁ C' ∩₁ ES.cont_sb_dom S' k' ⊆₁
+                       e2a S  ⋄₁ C' ∩₁ ES.cont_sb_dom S  k)) as [INC|NINC].
+    { assert (e2a S' ⋄₁ C' ∩₁ ES.cont_sb_dom S' k' ≡₁
+              e2a S  ⋄₁ C' ∩₁ ES.cont_sb_dom S  k) as CEQ by (by split).
+      assert (C' ∩₁ e2a S' □₁ ES.cont_sb_dom S' k' ≡₁
+              C' ∩₁ e2a S  □₁ ES.cont_sb_dom S  k ) as CEQE.
+      { split; auto.
+        unfolder. ins. desf. splits; eauto.
+        specialize (INC y). unfolder in INC.
+        destruct INC as [AA BB].
+        { by split. }
+        eexists. splits; eauto. symmetry.
+        eapply basic_step_e2a_eq_dom; eauto. 
+        eapply kE_inE; eauto. }
+      edestruct contsimstate_kE as [kC]; try apply SRCC. desf.
+      assert (ES.cont_thread S' kC = ES.cont_thread S kC) as KT.
+      { erewrite basic_step_cont_thread; eauto. }
+      exists kC. exists state. splits.
+      { rewrite CTS. by rewrite KT. }
+      { eapply basic_step_cont_set; eauto. left. by rewrite KT. }
+      { rewrite CEQ. rewrite basic_step_cont_sb_dom_eq; eauto. }
+      eapply sim_state_set_eq; eauto.
+      red. by rewrite KT. }
+    exists k'. eexists.
+    splits; eauto.
+    { eapply basic_step_cont_set; eauto. right.
+      cdes BSTEP_. desf. simpls. by rewrite CTS. }
+    { split; [|basic_solver].
+      apply set_subset_inter_r. split; [|done].
+      rewrite basic_step_cont_sb_dom.
+
+
     destruct PC as [[[CC [y [SY UU]]] TT] PP].
 
     assert (SEninit S' e0) as EE0'.

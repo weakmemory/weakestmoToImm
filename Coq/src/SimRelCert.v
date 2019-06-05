@@ -172,10 +172,17 @@ Section SimRelCert.
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
 
-      contpckE : forall e (XE : certX e) (state : thread_st (Stid e))
-                      (PC : (certC ∩₁ GTid (Stid e) \₁ dom_rel (sb G ⨾ ⦗certC⦘)) (e2a e))
-                      (INK : K (CEvent e, thread_cont_st (Stid e) state)),
-          @sim_state G sim_normal certC (Stid e) state;
+      (* contpckE : forall e (XE : certX e) (state : thread_st (Stid e)) *)
+      (*                 (PC : (certC ∩₁ GTid (Stid e) \₁ dom_rel (sb G ⨾ ⦗certC⦘)) (e2a e)) *)
+      (*                 (INK : K (CEvent e, thread_cont_st (Stid e) state)), *)
+      (*     @sim_state G sim_normal certC (Stid e) state; *)
+
+      contsimstate_kE :
+          exists kC (state : thread_st (ES.cont_thread S kC)),
+            << THK   : ES.cont_thread S kC = ktid >> /\
+            << INK   : K (kC, thread_cont_st (ES.cont_thread S kC) state) >> /\
+            << INX   : ES.cont_sb_dom S kC ≡₁ e2a ⋄₁ C' ∩₁ kE >> /\
+            << SIMST : @sim_state G sim_normal certC (ES.cont_thread S kC) state >>;
     }.
 
   Section SimRelCertProps. 
