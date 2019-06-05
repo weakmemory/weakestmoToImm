@@ -977,7 +977,7 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** rf/fr properties *)
+(** ** rf/fr/co properties *)
 (******************************************************************************)
 
 Lemma rffr_in_co WF : rf ⨾ fr ⊆ co.
@@ -994,6 +994,26 @@ Proof.
   intros x y [z [[p [AA BB]] HH]].
   red. eexists. splits; eauto.
   eapply WF.(co_trans); eauto.
+Qed.
+
+Lemma co_rf_alt WF : co ⨾ rf ≡ co ⨾ jf.
+Proof. 
+  unfold ES.rf. 
+  unfolder; split; ins; desf.
+  { eexists; splits; [|eauto].
+    eapply co_ew_in_co; eauto.
+    basic_solver. }
+  eexists; splits; eauto.
+  { eexists; splits; eauto.
+    eapply ew_refl; auto.
+    unfolder; splits; auto.
+    { apply coE in H; auto. 
+      generalize H. basic_solver. }
+    apply coD in H; auto. 
+    generalize H. basic_solver. }
+  intros CF.
+  eapply jf_ncf; eauto.
+  basic_solver.
 Qed.
 
 (******************************************************************************)

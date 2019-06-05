@@ -338,6 +338,10 @@ Lemma collect_rel_singl (f : A -> B) x y :
   f □ singl_rel x y ≡ singl_rel (f x) (f y).
 Proof. basic_solver 42. Qed.
 
+Lemma collect_rel_transp (f : A -> B) : 
+  f □ r⁻¹ ≡ (f □ r)⁻¹.
+Proof. basic_solver 42. Qed.
+
 Lemma collect_rel_eqv (f : A -> B) : 
   f □ ⦗ s ⦘ ≡ ⦗ f □₁ s ⦘.
 Proof.
