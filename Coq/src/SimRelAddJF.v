@@ -175,6 +175,21 @@ Section SimRelAddJF.
       eapply certX_ncf_cont; eauto.
       basic_solver.
     Qed.
+
+    Lemma sim_add_jf_ncf_we w k k' e e' S S' 
+          (st st' st'' : thread_st (ES.cont_thread S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+          (SAJF : sim_add_jf k w e S S')
+          (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+      ~ Scf S' w e.
+    Proof. 
+      intros CF.
+      eapply sim_add_jf_jf_ncf; eauto.
+      split; eauto.
+      cdes SAJF. apply JF'.
+      unfold jf_delta. basic_solver.
+    Qed.
     
     Lemma sim_add_jf_iss_sb_w w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))

@@ -404,6 +404,29 @@ Section SimRel.
       eexists; eauto.
     Qed.
 
+    Lemma e2a_co_ncf : 
+      e2a □ (Sco \ Scf) ⊆ Gco.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRC_. }
+      intros x' y' [x [y [[CO nCF] [EQx' EQy']]]].
+      subst x' y'.
+      edestruct e2a_co as [EQ | CO']; eauto. 
+      { basic_solver 10. }
+      exfalso. 
+      assert (SE x /\ SE y) as HH.
+      { apply ES.coE in CO; auto.
+        generalize CO. basic_solver. }
+      destruct HH as [Ex Ey].
+      eapply e2a_eq_in_cf in EQ; auto.
+      destruct EQ as [EQ | CF]; auto.
+      subst y. eapply ES.co_irr; eauto.
+    Qed.
+
     Lemma e2a_co_iss : 
       e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco.
     Proof. 
