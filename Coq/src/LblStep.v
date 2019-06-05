@@ -367,27 +367,58 @@ Proof.
 
 Qed.
 
-Lemma ineps_step_eindex_lt thread st st' lbl (STEP : ineps_step thread lbl st st') :
-  eindex st < eindex st'.
+Lemma ineps_step_eindex_shift thread lbl st st'
+      (STEP : ineps_step thread lbl st st') :
+  eindex st' = eindex st + length lbl.
 Proof.
-  cdes STEP. cdes STEP1.
-  inv ISTEP0; rewrite UINDEX; omega.
+  cdes STEP. erewrite istep_eindex_shift with (st':=st'); eauto.
 Qed.
 
-Lemma ilbl_step_eindex_lt thread st st' lbl (STEP : ilbl_step thread lbl st st') :
-  eindex st < eindex st'.
+Lemma eps_step_eindex_same thread st st'
+      (STEP : istep thread [] st st') :
+  eindex st' = eindex st.
+Proof. erewrite istep_eindex_shift; eauto. simpls. omega. Qed.
+
+Lemma eps_steps_eindex_same thread st st'
+      (STEP : (istep thread [])^* st st') :
+  eindex st' = eindex st.
+Proof.
+  induction STEP; auto.
+  2: by intuition.
+  erewrite eps_step_eindex_same; eauto.
+Qed.
+
+Lemma ilbl_step_eindex_shift thread lbl st st'
+      (STEP : ilbl_step thread lbl st st') :
+  eindex st' = eindex st + length lbl.
 Proof.
   cdes STEP.
   destruct STEP0 as [st'' [ST ST']].
   destruct_seq_r ST' as BB.
-  assert (eindex st'' <= eindex st') as AA.
-  { eapply eindex_steps_mon. apply eps_steps_in_steps. eauto. }
-  assert (eindex st < eindex st'') as CC.
-  2: omega.
-  eapply ineps_step_eindex_lt; eauto.
+  arewrite (eindex st' = eindex st'').
+  { eapply eps_steps_eindex_same. eauto. }
+  eapply ineps_step_eindex_shift; eauto.
 Qed.
 
-Lemma lbl_step_eindex_lt thread st st' (STEP : lbl_step thread st st') :
+Lemma ineps_step_eindex_lt thread st st' lbl
+      (STEP : ineps_step thread lbl st st') :
+  eindex st < eindex st'.
+Proof.
+  erewrite ineps_step_eindex_shift with (st':=st'); eauto.
+  cdes STEP. destruct lbl; simpls. omega.
+Qed.
+
+Lemma ilbl_step_eindex_lt thread st st' lbl
+      (STEP : ilbl_step thread lbl st st') :
+  eindex st < eindex st'.
+Proof.
+  erewrite ilbl_step_eindex_shift with (st':=st'); eauto.
+  apply ilbl_step_alt in STEP. desf.
+  destruct lbl; simpls. omega.
+Qed.
+
+Lemma lbl_step_eindex_lt thread st st'
+      (STEP : lbl_step thread st st') :
   eindex st < eindex st'.
 Proof.
   cdes STEP.

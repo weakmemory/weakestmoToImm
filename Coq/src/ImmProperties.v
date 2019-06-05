@@ -584,13 +584,20 @@ Qed.
 Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
 Proof. unfold ext_sb. basic_solver. Qed.
 
+Lemma istep_eindex_shift thread st st' lbl
+      (STEP : ProgToExecution.istep thread lbl st st') :
+  eindex st' = eindex st + length lbl.
+Proof.
+  cdes STEP. inv ISTEP0. 
+  all: simpls; omega.
+Qed.
+
 Lemma eindex_step_mon thread st st'
       (STEP : ProgToExecution.step thread st st') :
   eindex st <= eindex st'.
 Proof.
-  cdes STEP. cdes STEP0.
-  inv ISTEP0.
-  all: rewrite UINDEX; omega.
+  cdes STEP.
+  rewrite (istep_eindex_shift STEP0). omega.
 Qed.
 
 Lemma eindex_steps_mon thread st st'
