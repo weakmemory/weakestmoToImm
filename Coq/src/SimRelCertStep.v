@@ -1561,8 +1561,7 @@ Section SimRelCertStep.
     constructor; try apply SRCC.
     { eapply simrel_cert_step_wf; eauto. }
     { eapply step_preserves_execution; eauto; apply SRCC. }
-    { eapply basic_step_simrel_cont; eauto; try apply SRCC. 
-      eapply cstate_covered; eauto. }
+    { eapply basic_step_simrel_cont; eauto; try apply SRCC. }
     { eapply simrel_cert_step_e2a; eauto. }
     { erewrite <- ex_cov_iss.
       2: by apply SRCC.
