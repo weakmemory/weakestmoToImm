@@ -435,15 +435,23 @@ Section SimRelCertStepLemma.
       { rewrite CTS. by rewrite KT. }
       { eapply basic_step_cont_set; eauto. left. by rewrite KT. }
       { rewrite CEQ. rewrite basic_step_cont_sb_dom_eq; eauto. }
+      { intros AA. exfalso.
+        eapply basic_step_acts_set_ne; eauto.
+        eapply kE_inE; eauto.
+        assert (ES.cont_sb_dom S' k' e) as BB.
+        { eapply basic_step_cont_sb_dom; eauto. basic_solver. }
+        apply INC. split; auto. }
       eapply sim_state_set_eq; eauto.
       red. by rewrite KT. }
+    (* TODO: continue from here. *)
+
     exists k'. eexists.
     splits; eauto.
     { eapply basic_step_cont_set; eauto. right.
       cdes BSTEP_. desf. simpls. by rewrite CTS. }
     { split; [|basic_solver].
       apply set_subset_inter_r. split; [|done].
-      rewrite basic_step_cont_sb_dom.
+      rewrite basic_step_cont_sb_dom; eauto.
 
 
     destruct PC as [[[CC [y [SY UU]]] TT] PP].
