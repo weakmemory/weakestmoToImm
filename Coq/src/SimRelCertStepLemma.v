@@ -204,6 +204,10 @@ Section SimRelCertStepLemma.
     { cdes BSTEP_. desf. unfold opt_ext, ES.acts_set in *; simpls. 
       desf; omega. }
 
+    assert (tc_coherent G sc TC ) as TCCOH by apply SRCC.
+    assert (tc_coherent G sc TC') as TCCOH'.
+    { eapply isim_trav_step_coherence; eauto. apply SRCC. }
+
     assert (forall s (SES : s ⊆₁ SE S) s',
                s ∩₁ e2a S' ⋄₁ s' ⊆₁ s ∩₁ e2a S ⋄₁ s') as SSE2A.
     { unfolder. ins. desf. splits; auto.
@@ -443,8 +447,52 @@ Section SimRelCertStepLemma.
         apply INC. split; auto. }
       eapply sim_state_set_eq; eauto.
       red. by rewrite KT. }
-    (* TODO: continue from here. *)
+    assert (C' (e2a S' e) -> eq_opt e' ⊆₁ e2a S' ⋄₁ C') as EEC.
+    { unfolder. ins. desf.
+      eapply sim_trav_step_rmw_covered with (r:=e2a S' e); eauto.
+      { red. eexists. apply SRCC. }
+      { apply SRCC. }
+      eapply e2a_rmw; eauto.
+      do 2 eexists. splits; eauto.
+      cdes BSTEP_. apply RMW'. unfold rmw_delta, eq_opt. basic_solver. }
+    destruct (classic (C' (e2a S' e))) as [EE|NEE].
+    2: { exfalso. apply NINC.
+         rewrite basic_step_cont_sb_dom; eauto.
+         rewrite set_unionA.
+         rewrite set_inter_union_r.
+         unionL.
+         { unfolder. ins. desf. splits; auto.
+           erewrite <- basic_step_e2a_eq_dom with (S':=S'); eauto.
+           eapply kE_inE; eauto. }
+         unfolder. ins. desf.
+         exfalso. apply NEE.
+         unfolder. ins. desf.
+         eapply sim_trav_step_rmw_covered with (w:=e2a S' x); eauto.
+         { red. eexists. apply SRCC. }
+         { apply SRCC. }
+         eapply e2a_rmw; eauto.
+         do 2 eexists. splits; eauto.
+         cdes BSTEP_. apply RMW'. unfold rmw_delta, eq_opt. basic_solver. }
+    assert (eq e ∪₁ eq_opt e' ⊆₁ e2a S' ⋄₁ C') as EECE.
+    { unfolder. ins. desf. apply EEC; auto. by red. }
+    assert (ES.cont_sb_dom S k ⊆₁ e2a S' ⋄₁ C') as CSBECE.
+    { unfolder. ins.
+      eapply dom_sb_covered; eauto.
+      exists (e2a S' e). apply seq_eqv_r. split; auto.
+      eapply e2a_sb; eauto; try apply SRCC.
+      { admit. }
+      unfolder. do 2 eexists. splits; eauto. 
+      apply SB'. right. unfold sb_delta.
+      basic_solver. }
+    assert (ES.cont_sb_dom S k ⊆₁ e2a S ⋄₁ C') as CSBEC.
+    { arewrite (ES.cont_sb_dom S k ⊆₁ SE S ∩₁ ES.cont_sb_dom S k).
+      { apply set_subset_inter_r. split; [|done].
+        eapply kE_inE; eauto. }
+      sin_rewrite CSBECE.
+      unfolder. ins. desf. erewrite <- basic_step_e2a_eq_dom; eauto. }
 
+    edestruct contsimstate_kE as [kC]; try apply SRCC. desf.
+    assert (kC = k) by (by apply KINEQ); subst.
     exists k'. eexists.
     splits; eauto.
     { eapply basic_step_cont_set; eauto. right.
@@ -452,6 +500,8 @@ Section SimRelCertStepLemma.
     { split; [|basic_solver].
       apply set_subset_inter_r. split; [|done].
       rewrite basic_step_cont_sb_dom; eauto.
+      rewrite set_unionA. apply set_subset_union_l. by split. }
+    (* TODO: continue from here. *)
 
 
     destruct PC as [[[CC [y [SY UU]]] TT] PP].
