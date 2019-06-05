@@ -397,7 +397,7 @@ Section SimRelAddCO.
       destruct HH as [EW [Xz Iz]].
       exfalso. 
       eapply co_irr; eauto.
-      eapply e2a_co_ew; eauto. 
+      eapply e2a_co_ew_iss; eauto. 
       exists x, z. splits.
       { basic_solver 10. }
       { apply EQ. }
@@ -566,7 +566,7 @@ Section SimRelAddCO.
           (SAEW : sim_add_ew TC X w' S S')
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
-          (wEE' : (eq e ∪₁ eq_opt e') w')
+          (wEE' : (eq e ∪₁ eq_opt e') w') 
           (nRelIss : ~ (SRel S' ∩₁ e2a S' ⋄₁ I) w') :
     codom_rel (e2a S □
       ⦗ws_compl (sim_ews TC X w' S S') (sim_ws k w' S S') S⦘ ⨾ Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘
@@ -596,7 +596,7 @@ Section SimRelAddCO.
       assert (SE S y) as Ey.
       { eapply Execution.ex_inE in Xy; eauto. }
       assert (Gco (e2a S z') (e2a S y)) as GCO.
-      { eapply e2a_co_ew; eauto. basic_solver 10. }
+      { eapply e2a_co_ew_iss; eauto. basic_solver 10. }
       destruct EWSWS as [EWS | WS].
       { unfold sim_ews in EWS. desc. congruence. }
       unfold sim_ws in WS. desc.
