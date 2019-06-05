@@ -125,6 +125,7 @@ Section SimRelCont.
         forall thread (lprog : thread_syntax thread) 
                (INPROG : IdentMap.find thread prog = Some lprog),
           exists k (state : thread_st (ES.cont_thread S k)),
+            << THK   : thread = ES.cont_thread S k >> /\
             << INK   : K S (k, thread_cont_st (ES.cont_thread S k) state) >> /\
             << INX   : ES.cont_sb_dom S k ≡₁
                        SEinit ∪₁
