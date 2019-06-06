@@ -242,7 +242,7 @@ Section SimRel.
       basic_solver.
     Qed.
 
-    Lemma ex_w_cov_inIss : 
+    Lemma ex_w_cov_in_iss : 
       X ∩₁ SW ∩₁ e2a ⋄₁ C ⊆₁ X ∩₁ e2a ⋄₁ I.
     Proof. 
       unfolder.
@@ -255,6 +255,34 @@ Section SimRel.
       unfolder; eexists; splits; eauto.
       eapply Execution.ex_inE; eauto.
       apply SRC_.
+    Qed.
+
+    Lemma ex_w_rel_iss_in_cov : 
+      X ∩₁ SW ∩₁ SRel ∩₁ e2a ⋄₁ I ⊆₁ X ∩₁ e2a ⋄₁ C.
+    Proof. 
+      unfolder.
+      intros x [[[Xx Wx] RELx] Ix].
+      splits; auto.
+      apply irelcov; [apply SRC_|].
+      assert (SE x) as Ex.
+      { eapply Execution.ex_inE; eauto. 
+        apply SRC_. }
+      unfolder; splits; auto.
+      { unfold is_w.
+        fold (compose Glab e2a x).
+        fold (is_w (Glab ∘ e2a) x).
+        eapply same_lab_u2v_dom_is_w.
+        { apply same_lab_u2v_dom_comm. 
+          eapply e2a_lab. apply SRC_. }
+        done. }
+      unfold is_rel, Events.mod.
+      fold (compose Glab e2a x).
+      fold (Events.mod (Glab ∘ e2a) x).
+      fold (is_rel (Glab ∘ e2a) x).
+      eapply same_lab_u2v_dom_is_rel.
+      { apply same_lab_u2v_dom_comm. 
+        eapply e2a_lab. apply SRC_. }
+      done.
     Qed.
 
     (******************************************************************************)
@@ -456,7 +484,7 @@ Section SimRel.
       { arewrite (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ≡ 
                   Sco ⨾ ⦗X ∩₁ SW ∩₁ e2a ⋄₁ C⦘).
         { rewrite ES.coD; auto. basic_solver. }
-        rewrite ex_w_cov_inIss.
+        rewrite ex_w_cov_in_iss.
         rewrite e2a_co_iss.
         basic_solver. }
       rewrite !seq_eqv_r. unfolder.
