@@ -613,179 +613,203 @@ Proof.
   red. exists y. splits; eauto. 
 Qed.
 
-Variable ESC : @es_consistent m.
-
-Lemma cont_sb_dom_rmw k s
-      (INK : K (k, s)) :
-  codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.
-Proof.
-  unfold ES.cont_sb_dom.
-  desf.
-  { sin_rewrite WF.(ES.acts_init_set_inW).
-    rewrite WF.(ES.rmwD). mode_solver. }
-  rewrite WF.(ES.rmwE).
-  rewrite WF.(ES.sbE) at 1.
-  unfolder. ins. desf.
-  { exfalso. apply WF.(ES.rmw_K). unfold dom_rel. eauto 10. }
-  destruct (classic (x = y)) as [|NEQ]; subst.
-  { do 2 eexists. splits.
-    { by left. }
-    all: eauto. }
-  do 2 (exists y). splits; auto.
-  right.
-  apply WF.(ES.sb_imm_split_l) in H5.
-  destruct H5 as [z [SBI SB]].
-  destruct (classic (z = x)) as [|XZNEQ]; subst.
-  { destruct SB; desf. }
-  exfalso.
-  assert (icf x z) as CF.
-  2: { apply WF.(ES.rmwD) in H0.
-       assert (R x) as RX.
-       { eapply icf_R; eauto. eexists. eauto. }
-       destruct_seq H0 as [RR WW].
-       type_solver. }
-  set (SBIX := H0).
-  apply WF.(ES.rmwi) in SBIX.
-  apply WF.(ES.rmwEninit) in H0.
-  destruct_seq H0 as [EZ EX].
-  edestruct WF.(ES.imm_tsb_imm_sb_in_icf).
-  { split.
-    { exists z0. splits.
-      { apply SBI. }
-      apply SBIX. }
-    red.
-    erewrite <- WF.(ES.sb_tid) with (x:=z0).
-    { by apply WF.(ES.rmwt). }
-    apply seq_eqv_l. split; auto. apply SBI. }
-  { desf. }
-    by apply ES.icf_sym.
-Qed.
-
 (******************************************************************************)
-(** ** Consistent rf properties *)
+(** ** Consistent EventStructure properties *)
 (******************************************************************************)
 
+Section ConsistentProps.
 
-Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
-Proof. 
-  intros x y [JF tSB].
-  eapply coh; [apply ESC|].
-  eexists. split.
-  { apply sb_in_hb. basic_solver. }
-  apply r_step. unfold eco. 
-  apply t_step. unfold ES.rf. 
-  do 2 left. split.
-  { apply ES.jf_in_ew_jf; auto. }
-  intros CF. 
-  apply ES.cf_sym in CF.
-  eapply ES.n_sb_cf; eauto.
-Qed.
+  Variable ESC : @es_consistent m.
 
-Lemma jfi_alt : jfi ≡ ⦗Einit⦘ ⨾ jf ∪ (jf ∩ same_tid).
-Proof. 
-  unfold ES.jfi.
-  rewrite ES.sb_Einit_Eninit; auto.
-  rewrite inter_union_r. 
-  apply union_more.
-  { red. split. 
-    { basic_solver. }
-    rewrite ES.jfE at 1; auto.
-    rewrite ES.acts_set_split at 2. 
-    rewrite id_union. relsf.
-    arewrite_false (jf ⨾ ⦗Einit⦘).
-    { rewrite ES.jfD, ES.acts_init_set_inW; auto. type_solver. }
-    basic_solver. }
-  rewrite ES.jf_same_tid; auto.
-  rewrite ES.same_thread; auto.
-  rewrite crsE. relsf.
-  rewrite !inter_union_r.
-  arewrite_false (jf ∩ ⦗Eninit⦘).
-  { rewrite ES.jfD; auto. type_solver. }
-  arewrite_false (jf ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Eninit⦘)).
-  { generalize jf_tsb. basic_solver. }
-  arewrite_false (jf ∩ cf).
-  { eapply ES.jf_ncf; auto. }
-  basic_solver 10.
-Qed.
+  Lemma cont_sb_dom_rmw k s
+        (INK : K (k, s)) :
+    codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.
+  Proof.
+    unfold ES.cont_sb_dom.
+    desf.
+    { sin_rewrite WF.(ES.acts_init_set_inW).
+      rewrite WF.(ES.rmwD). mode_solver. }
+    rewrite WF.(ES.rmwE).
+    rewrite WF.(ES.sbE) at 1.
+    unfolder. ins. desf.
+    { exfalso. apply WF.(ES.rmw_K). unfold dom_rel. eauto 10. }
+    destruct (classic (x = y)) as [|NEQ]; subst.
+    { do 2 eexists. splits.
+      { by left. }
+      all: eauto. }
+    do 2 (exists y). splits; auto.
+    right.
+    apply WF.(ES.sb_imm_split_l) in H5.
+    destruct H5 as [z [SBI SB]].
+    destruct (classic (z = x)) as [|XZNEQ]; subst.
+    { destruct SB; desf. }
+    exfalso.
+    assert (icf x z) as CF.
+    2: { apply WF.(ES.rmwD) in H0.
+         assert (R x) as RX.
+         { eapply icf_R; eauto. eexists. eauto. }
+         destruct_seq H0 as [RR WW].
+         type_solver. }
+    set (SBIX := H0).
+    apply WF.(ES.rmwi) in SBIX.
+    apply WF.(ES.rmwEninit) in H0.
+    destruct_seq H0 as [EZ EX].
+    edestruct WF.(ES.imm_tsb_imm_sb_in_icf).
+    { split.
+      { exists z0. splits.
+        { apply SBI. }
+        apply SBIX. }
+      red.
+      erewrite <- WF.(ES.sb_tid) with (x:=z0).
+      { by apply WF.(ES.rmwt). }
+      apply seq_eqv_l. split; auto. apply SBI. }
+    { desf. }
+      by apply ES.icf_sym.
+  Qed.
 
-Lemma jfe_alt : jfe ≡ ⦗Eninit⦘ ⨾ jf ∩ compl_rel same_tid.
-Proof. 
-  unfold ES.jfe.
-  erewrite <- inter_absorb_r
-    with (r := jf) at 1.
-  2 : eapply ES.jf_nEinit_alt; auto.
-  rewrite inter_union_r, minus_union_l.
-  arewrite_false (jf ∩ Einit × Eninit \ sb).
-  { rewrite ES.sb_init; auto. basic_solver. }
-  relsf. split.
-  { intros x y [[JF [Enix Eniy]] nSB].
-    apply seq_eqv_l. unfold inter_rel.
-    splits; auto.
-    intros STID. unfold ES.same_tid in STID.
-    edestruct ES.same_thread_alt as [crsSB | CF]; 
-      try apply STID; eauto.
-    { apply Enix. }
-    { apply crsE in crsSB. 
-      destruct crsSB as [[ID | SB] | tSB]; auto.
-      { unfolder in ID. desc.
-        eapply ES.jf_eq; eauto.
-        split; eauto. }
-      eapply jf_tsb. basic_solver. }
-    eapply ES.jf_ncf; eauto. 
-    basic_solver. }
-  rewrite seq_eqv_l. 
-  unfold compl_rel, ES.same_tid.
-  intros x y [Enix [JF nSTID]].
-  unfolder; splits; auto.
-  { eapply ES.jf_nEinit_alt in JF; auto.
-    generalize JF. basic_solver. }
-  intros SB. apply nSTID.
-  apply ES.sb_tid; auto.
-  basic_solver.
-Qed.  
+  Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
+  Proof. 
+    intros x y [JF tSB].
+    eapply coh; [apply ESC|].
+    eexists. split.
+    { apply sb_in_hb. basic_solver. }
+    apply r_step. unfold eco. 
+    apply t_step. unfold ES.rf. 
+    do 2 left. split.
+    { apply ES.jf_in_ew_jf; auto. }
+    intros CF. 
+    apply ES.cf_sym in CF.
+    eapply ES.n_sb_cf; eauto.
+  Qed.
 
-Lemma rfe_ew_jfe : rfe ≡ ew ⨾ jfe. 
-Proof. 
-  split; [apply ES.rfe_in_ew_jfe; auto|].
-  unfold ES.rfe, ES.rf.
-  rewrite jfe_alt.
-  rewrite seq_eqv_l.
-  intros x y [z [EW [nINITx [JF nSTID]]]].
-  unfolder; eexists; splits; eauto.
-  { intros CF. 
+  Lemma jfi_alt : jfi ≡ ⦗Einit⦘ ⨾ jf ∪ (jf ∩ same_tid).
+  Proof. 
+    unfold ES.jfi.
+    rewrite ES.sb_Einit_Eninit; auto.
+    rewrite inter_union_r. 
+    apply union_more.
+    { red. split. 
+      { basic_solver. }
+      rewrite ES.jfE at 1; auto.
+      rewrite ES.acts_set_split at 2. 
+      rewrite id_union. relsf.
+      arewrite_false (jf ⨾ ⦗Einit⦘).
+      { rewrite ES.jfD, ES.acts_init_set_inW; auto. type_solver. }
+      basic_solver. }
+    rewrite ES.jf_same_tid; auto.
+    rewrite ES.same_thread; auto.
+    rewrite crsE. relsf.
+    rewrite !inter_union_r.
+    arewrite_false (jf ∩ ⦗Eninit⦘).
+    { rewrite ES.jfD; auto. type_solver. }
+    arewrite_false (jf ∩ (⦗Eninit⦘ ⨾ sb⁻¹ ⨾ ⦗Eninit⦘)).
+    { generalize jf_tsb. basic_solver. }
+    arewrite_false (jf ∩ cf).
+    { eapply ES.jf_ncf; auto. }
+    basic_solver 10.
+  Qed.
+
+  Lemma jfe_alt : jfe ≡ ⦗Eninit⦘ ⨾ jf ∩ compl_rel same_tid.
+  Proof. 
+    unfold ES.jfe.
+    erewrite <- inter_absorb_r
+      with (r := jf) at 1.
+    2 : eapply ES.jf_nEinit_alt; auto.
+    rewrite inter_union_r, minus_union_l.
+    arewrite_false (jf ∩ Einit × Eninit \ sb).
+    { rewrite ES.sb_init; auto. basic_solver. }
+    relsf. split.
+    { intros x y [[JF [Enix Eniy]] nSB].
+      apply seq_eqv_l. unfold inter_rel.
+      splits; auto.
+      intros STID. unfold ES.same_tid in STID.
+      edestruct ES.same_thread_alt as [crsSB | CF]; 
+        try apply STID; eauto.
+      { apply Enix. }
+      { apply crsE in crsSB. 
+        destruct crsSB as [[ID | SB] | tSB]; auto.
+        { unfolder in ID. desc.
+          eapply ES.jf_eq; eauto.
+          split; eauto. }
+        eapply jf_tsb. basic_solver. }
+      eapply ES.jf_ncf; eauto. 
+      basic_solver. }
+    rewrite seq_eqv_l. 
+    unfold compl_rel, ES.same_tid.
+    intros x y [Enix [JF nSTID]].
+    unfolder; splits; auto.
+    { eapply ES.jf_nEinit_alt in JF; auto.
+      generalize JF. basic_solver. }
+    intros SB. apply nSTID.
+    apply ES.sb_tid; auto.
+    basic_solver.
+  Qed.  
+
+  Lemma rfe_ew_jfe : rfe ≡ ew ⨾ jfe. 
+  Proof. 
+    split; [apply ES.rfe_in_ew_jfe; auto|].
+    unfold ES.rfe, ES.rf.
+    rewrite jfe_alt.
+    rewrite seq_eqv_l.
+    intros x y [z [EW [nINITx [JF nSTID]]]].
+    unfolder; eexists; splits; eauto.
+    { intros CF. 
+      apply nSTID.
+      etransitivity.
+      { eapply ES.ew_tid; auto.
+        apply ES.ew_sym; eauto. }
+        by apply ES.cf_same_tid. }
+    intros SB.
+    apply ES.ewc in EW; auto.
+    destruct EW as [EQ | CF].
+    { subst. apply nSTID.
+      apply ES.sb_tid; auto.
+      basic_solver. }
     apply nSTID.
     etransitivity.
-    { eapply ES.ew_tid; auto.
-      apply ES.ew_sym; eauto. }
-    by apply ES.cf_same_tid. }
-  intros SB.
-  apply ES.ewc in EW; auto.
-  destruct EW as [EQ | CF].
-  { subst. apply nSTID.
+    { apply ES.cf_same_tid.
+      apply ES.cf_sym; eauto. }
+    apply ES.sb_Einit_Eninit in SB; auto.
+    destruct SB as [[INITx _] | HH].
+    { exfalso. 
+      eapply ES.ncfEinit_l.
+      basic_solver. }
     apply ES.sb_tid; auto.
-    basic_solver. }
-  apply nSTID.
-  etransitivity.
-  { apply ES.cf_same_tid.
-    apply ES.cf_sym; eauto. }
-  apply ES.sb_Einit_Eninit in SB; auto.
-  destruct SB as [[INITx _] | HH].
-  { exfalso. 
-    eapply ES.ncfEinit_l.
-    basic_solver. }
-  apply ES.sb_tid; auto.
-  generalize HH. 
-  basic_solver 20.
-Qed.
+    generalize HH. 
+    basic_solver 20.
+  Qed.
 
-Lemma ew_rfe_in_rfe : ew ⨾ rfe ⊆ rfe.
-Proof.
-  rewrite rfe_ew_jfe. 
-  rewrite <- seqA.
-  apply seq_mori; [|done]. 
-  rewrite transitiveI.
-  apply WF.
-Qed.
+  Lemma ew_rfe_in_rfe : ew ⨾ rfe ⊆ rfe.
+  Proof.
+    rewrite rfe_ew_jfe. 
+    rewrite <- seqA.
+    apply seq_mori; [|done]. 
+    rewrite transitiveI.
+    apply WF.
+  Qed.
+
+End ConsistentProps.
+
+Section WeakestMOConsistentProps.
+
+  Variable ESC : @es_consistent Weakestmo.
+
+  Lemma co_jf_hb_tjf_irr : 
+    irreflexive (co ⨾ jf^? ⨾ hb ⨾ jf⁻¹).
+  Proof. 
+    apply irreflexive_seqC. rewrite !seqA.
+    apply irreflexive_seqC. rewrite !seqA.
+    seq_rewrite <- ES.fr_alt; auto.
+    arewrite (fr ⨾ jf^? ⊆ (eco Weakestmo)^?).
+    2: by apply ESC.
+    rewrite ES.jf_in_rf; auto.
+    rewrite fr_in_eco.
+    arewrite (rf ⊆ eco Weakestmo).
+    generalize (eco_trans Weakestmo).
+    basic_solver. 
+  Qed. 
+
+End WeakestMOConsistentProps.
 
 End Properties.
 

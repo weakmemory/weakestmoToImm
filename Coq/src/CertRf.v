@@ -106,9 +106,32 @@ Proof.
   basic_solver 20.
 Qed.
 
+Lemma sb_in_vf : ⦗ W ⦘ ⨾ sb ⊆ vf.
+Proof. 
+  unfold vf.
+  rewrite wf_sbE.
+  rewrite sb_in_hb at 1.
+  basic_solver 20.
+Qed.
+
+Lemma vf_sb_in_vf : vf ⨾ sb ⊆ vf.
+Proof. 
+  unfold vf.
+  rewrite seq_union_l, !seqA.
+  apply union_mori.
+  { do 4 (apply seq_mori; [done|]).
+    rewrite wf_sbE.
+    rewrite sb_in_hb.
+    generalize hb_trans.
+    basic_solver. }
+  do 2 (apply seq_mori; [done|]).
+  generalize sb_trans.
+  basic_solver.
+Qed.
+
 Lemma cert_rf_in_vf : cert_rf ⊆ vf.
 Proof. unfold cert_rf. basic_solver. Qed.
-  
+
 Lemma cert_rfE : cert_rf ≡ ⦗E⦘ ⨾ cert_rf ⨾ ⦗E⦘.
 Proof.
   cdes COH.

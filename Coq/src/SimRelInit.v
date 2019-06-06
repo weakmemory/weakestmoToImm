@@ -296,6 +296,7 @@ Section SimRelInit.
     { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
       basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
+    { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     unfold release.

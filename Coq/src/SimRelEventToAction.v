@@ -124,9 +124,9 @@ Section SimRelEventToAction.
 
       e2a_rmw : e2a □ Srmw ⊆ Grmw;
       e2a_ew  : e2a □ Sew  ⊆ eq;
-      e2a_co  : e2a □ Sco  ⊆ Gco;
+      e2a_co  : e2a □ Sco  ⊆ Gco^?;
 
-      e2a_jf  : e2a □ Sjf  ⊆ Gfurr;
+      e2a_jf  : e2a □ Sjf ⊆ Gfurr;
       e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
       e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
                   Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘
@@ -357,6 +357,25 @@ Section SimRelEventToAction.
       apply set_union_Propere.
       { apply e2a_same_Einit; auto. }
       by apply e2a_kEninit.
+    Qed.
+
+    Lemma e2a_kE_eindex k (st : thread_st (ktid k))
+          (INK : K S (k, thread_cont_st (ktid k) st)) :
+      ES.seqn S □₁ (kE k \₁ SEinit) ⊆₁ fun n => n < eindex st.
+    Proof. 
+      unfolder.
+      intros n [x [[kSBx nINITx] SEQNx]].
+      unfold ES.cont_sb_dom in kSBx.
+      subst n. destruct k.
+      { by exfalso. }
+      erewrite contseqn; eauto.
+      unfolder in kSBx. desf.
+      apply ES.seqn_sb_alt in kSBx; auto.
+      apply ES.sb_tid; auto.
+      apply seq_eqv_l. 
+      do 2 (split; auto).
+      apply ES.sbE in kSBx; auto.
+      generalize kSBx. basic_solver.
     Qed.
 
   End SimRelEventToActionProps. 
