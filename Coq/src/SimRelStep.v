@@ -404,13 +404,18 @@ Section SimRelStep.
     assert (st0 = state); subst.
     { admit. }
 
-    apply sim_state_set_eq with (s':=C); auto.
+    apply sim_state_set_tid_eq with (s':=C); auto.
     split.
-    { unfolder. ins. desf. by apply SBDC. }
-    unfolder. ins. desf. splits.
-    { by apply AA. }
-    (* It's wrong... *)
-    admit.
+    { unfolder. ins. desf. split; auto. by apply SBDC. }
+    rewrite XkTIDCOV.
+    unfolder. ins. desf. splits; auto.
+    assert ((e2a S □₁ X) x) as UU.
+    { eapply ex_cov_iss.
+      { apply SRC. }
+      basic_solver. }
+    red in UU. desf.
+    eexists. splits; eauto.
+    right. by rewrite e2a_tid.
   Admitted.
 
   Lemma ew_ex_iss_in_cert_ex_iss k S 

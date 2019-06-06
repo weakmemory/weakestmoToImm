@@ -6,7 +6,7 @@ From imm Require Import AuxRel
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
      TraversalConfig Traversal TraversalConfigAlt SimTraversal SimTraversalProperties
-     CertExecution2.
+     CertExecution2 SimulationRel.
 Require Import AuxRel.
 Require Import AuxDef.
 
@@ -37,6 +37,24 @@ Notation "'E'" := G.(acts_set).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 Notation "'NTid' t" := (fun x => tid x <> t) (at level 1).
+
+Lemma sim_state_set_tid_eq mode thread s s' state
+      (EQ : s ∩₁ Tid thread ≡₁ s' ∩₁ Tid thread):
+  @sim_state G mode s thread state <->
+  @sim_state G mode s' thread state.
+Proof.
+  split; intros AA. 
+  all: red; splits; [|by apply AA].
+  all: ins; split; intros BB.
+  1,3: by apply AA; apply EQ.
+  all: by apply EQ; split; auto; apply AA.
+Qed.
+
+Lemma sim_state_set_eq mode thread s s' state
+      (EQ : s ≡₁ s'):
+  @sim_state G mode s thread state <->
+  @sim_state G mode s' thread state.
+Proof. apply sim_state_set_tid_eq. by rewrite EQ. Qed.
 
 Lemma is_init_tid : 
   is_init ⊆₁ Tid tid_init. 

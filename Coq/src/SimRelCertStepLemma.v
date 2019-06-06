@@ -131,18 +131,6 @@ Section SimRelCertStepLemma.
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
   
   (* TODO: move to another file. *)
-  Lemma sim_state_set_eq mode thread s s' state (EQ : s ≡₁ s'):
-    @sim_state G mode s thread state <->
-    @sim_state G mode s' thread state.
-  Proof.
-    split; intros AA. 
-    all: red; splits; [|by apply AA].
-    all: ins; split; intros BB.
-    1,3: by apply AA; apply EQ.
-    all: by apply EQ; apply AA.
-  Qed.
-
-  (* TODO: move to another file. *)
   Lemma basic_step_cont_sb_dom_eq S S' e e'
         kC (state : (thread_lts (ktid S kC)).(Language.state))
         (WFS : ES.Wf S)
