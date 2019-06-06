@@ -151,7 +151,7 @@ Lemma step_same_ew_ewm e e' S S'
       (wfE: ES.Wf S)
       (BSTEP : basic_step e e' S S') 
       (EW' : ew S' ≡ ew S) :
-  ew S' ⊆ (ORlx S' × ORlx S')^?.
+  ew S' ⊆ (set_compl (Rel S') × set_compl (Rel S'))^?.
 Proof. 
   rewrite EW'. 
   intros x y EW.
@@ -165,7 +165,7 @@ Proof.
   destruct EW as [EQ | [xRlx yRlx]].
   { basic_solver. }
   unfolder. right. 
-  unfold is_only_rlx. 
+  unfold is_rel. 
   erewrite basic_step_mod_eq_dom
     with (S' := S'); eauto.
   erewrite basic_step_mod_eq_dom
@@ -177,7 +177,7 @@ Lemma step_add_ew_ewm ews w' e e' S S'
       (BSTEP : basic_step e e' S S') 
       (AEW : add_ew ews w' S S') 
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  ew S' ⊆ (ORlx S' × ORlx S')^?.
+  ew S' ⊆ (set_compl (Rel S') × set_compl (Rel S'))^?.
 Proof. 
   cdes AEW.
   rewrite EW'.
@@ -195,38 +195,40 @@ Proof.
     destruct EW as [EQ | [xRlx yRlx]].
     { basic_solver. }
     unfolder. right. 
-    unfold is_only_rlx. 
+    unfold is_rel. 
     erewrite basic_step_mod_eq_dom
       with (S' := S'); eauto.
     erewrite basic_step_mod_eq_dom
       with (S' := S'); eauto. }
   { basic_solver. }
   { intros x y [xEWS EQy]. subst y.
-    assert (ORlx S' x) as ORLXX.
-    { unfold is_only_rlx. 
+    assert (~ Rel S' x) as nRELx.
+    { unfold is_rel in *. 
       erewrite basic_step_mod_eq_dom
-        with (S' := S'); eauto. }
+        with (S' := S'); eauto. 
+      by apply ewsnREL. }
     unfolder. right. split; auto.
     destruct 
-      (excluded_middle_informative (ORlx S' w'))
-      as [wRlx | nwRlx]; auto.
-    exfalso. apply nwRlx.
-    unfold is_only_rlx. 
+      (excluded_middle_informative (Rel S' w'))
+      as [wREL | nwREL]; auto.
+    exfalso. apply nRELx.
+    unfold is_rel. 
     apply ewsMOD in xEWS.
-    red in xEWS. by rewrite xEWS. }
+    red in xEWS. by rewrite <- xEWS. }
   intros x y [EQx yEWS]. subst x.
-  assert (ORlx S' y).
-  { unfold is_only_rlx.
+  assert (~ Rel S' y) as nRELy.
+  { unfold is_rel.
     erewrite basic_step_mod_eq_dom
-      with (S' := S'); eauto. }
+      with (S' := S'); eauto. 
+    by apply ewsnREL. }
   unfolder. right. split; auto.
   destruct 
-    (excluded_middle_informative (ORlx S' w'))
-    as [wRlx | nwRlx]; auto.
-  exfalso. apply nwRlx.
-  unfold is_only_rlx. 
+    (excluded_middle_informative (Rel S' w'))
+    as [wREL | nwREL]; auto.
+  exfalso. apply nRELy.
+  unfold is_rel. 
   apply ewsMOD in yEWS.
-  red in yEWS. by rewrite yEWS.
+  red in yEWS. by rewrite <- yEWS.
 Qed.    
 
 Lemma step_same_ew_ewl e e' S S' 
