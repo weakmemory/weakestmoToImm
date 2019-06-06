@@ -493,6 +493,11 @@ Section SimRelCertStepLemma.
 
     edestruct contsimstate_kE as [kC]; try apply SRCC. desf.
     assert (kC = k) by (by apply KINEQ); subst.
+    assert (state = st); subst.
+    { cdes BSTEP_.
+      pose proof (ES.unique_K WFS _ _ CONT INK eq_refl) as HH.
+      simpls. inv HH. }
+
     exists k'. eexists.
     splits; eauto.
     { eapply basic_step_cont_set; eauto. right.
@@ -501,6 +506,32 @@ Section SimRelCertStepLemma.
       apply set_subset_inter_r. split; [|done].
       rewrite basic_step_cont_sb_dom; eauto.
       rewrite set_unionA. apply set_subset_union_l. by split. }
+    
+    assert (ES.cont_sb_dom S' k' e) as SBDE.
+    { eapply basic_step_cont_sb_dom; eauto. basic_solver. }
+    assert (eq_opt e' ⊆₁ ES.cont_sb_dom S' k') as SBDE'.
+    { erewrite basic_step_cont_sb_dom; eauto. basic_solver. }
+
+    assert (C' ∩₁ e2a S' □₁ ES.cont_sb_dom S' k' ≡₁
+            e2a S' □₁ ES.cont_sb_dom S' k') as CALT.
+    { split; [basic_solver|].
+      apply set_subset_inter_r. split; [|done].
+      erewrite basic_step_cont_sb_dom; eauto.
+      rewrite set_unionA, set_collect_union.
+      apply set_subset_union_l. split.
+      2: { unfold eq_opt in *. unfolder. ins. desf; splits; eauto.
+           apply EECE. basic_solver. }
+      unfolder. ins. desf. splits; auto.
+        by apply CSBECE. }
+    eapply sim_state_set_eq; eauto.
+
+    red. splits.
+    { ins. erewrite ilbl_step_eindex_shift; eauto.
+      split.
+      {
+      
+
+
     (* TODO: continue from here. *)
 
 
