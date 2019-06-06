@@ -70,10 +70,10 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ wW' : W S' w' ⟫ /\
   ⟪ ewsE : ews ⊆₁ E S ⟫ /\
   ⟪ ewsW : ews ⊆₁ W S ⟫ /\
-  ⟪ ewsRLX : ews ⊆₁ ORlx S ⟫ /\
-  ⟪ ewsMOD : ews ⊆₁ same_mod S' w' ⟫ /\
-  ⟪ ewsLOC : ews ⊆₁ same_loc S' w' ⟫ /\
-  ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
+  ⟪ ewsnREL : ews ⊆₁ set_compl (Rel S) ⟫ /\
+  ⟪ ewsMOD  : ews ⊆₁ same_mod S' w' ⟫ /\
+  ⟪ ewsLOC  : ews ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ ewsVAL  : ews ⊆₁ same_val S' w' ⟫ /\
   ⟪ ewsCF : ews ⊆₁ cf S' w' ⟫ /\
   ⟪ ewsEW : ews × ews ⊆ ew S ⟫ /\
   ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\

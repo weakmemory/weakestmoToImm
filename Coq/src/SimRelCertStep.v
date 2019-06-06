@@ -1110,8 +1110,7 @@ Section SimRelCertStep.
       apply WFS.(ES.ewE) in wEWI.
       destruct_seq wEWI as [SEY SEY'].
       apply WFS'.(ES.ewm) in AA.
-      destruct AA as [|[AA QQ]]; desf.
-      mode_solver. }
+      destruct AA as [|[AA QQ]]; desf. }
     assert (issuable G TC (e2a S' q)) as ISN.
     { eapply issued_in_issuable; [by apply SRCC|].
         by rewrite <- wsE2Aeq. }

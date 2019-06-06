@@ -264,7 +264,7 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
-    ewm : ew ⊆ (ORlx × ORlx)^? ;
+    ewm : ew ⊆ (set_compl Rel × set_compl Rel)^? ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
     ewc : ew ⊆ cf^? ; 
@@ -809,7 +809,7 @@ Proof.
   rewrite ewc; auto.
   unfold ES.same_tid, ES.cf.
   basic_solver 10.
-Qed.
+Qed.  
 
 Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
 Proof. 

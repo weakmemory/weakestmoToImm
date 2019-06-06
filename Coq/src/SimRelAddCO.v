@@ -567,7 +567,6 @@ Section SimRelAddCO.
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
           (wEE' : (eq e ∪₁ eq_opt e') w') :
-          (* (nRelIss : ~ (SRel S' ∩₁ e2a S' ⋄₁ I) w') : *)
     codom_rel (e2a S □
       ⦗ws_compl (sim_ews TC X w' S S') (sim_ws k w' S S') S⦘ ⨾ Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘
     ) ⊆₁ fun w => Gco (e2a S' w') w.
@@ -609,56 +608,38 @@ Section SimRelAddCO.
         { apply ES.ewm in EW; auto.
           destruct EW as [EQx | [RLX _]];
             auto; subst x.
-          assert
-            (Events.mod (Slab S) y = Events.mod Glab (e2a S' w'))
-            as MODEQ.
-          { erewrite same_lab_u2v_dom_mod
-              with (s := SE S) (lab2 := Glab ∘ e2a S);
-              eauto using e2a_lab.
-            unfold Events.mod, compose. by rewrite EQ. }
-          assert (~ SRel S y) as nRELy.
-          { intros RELy. 
-            assert (SEninit S y) as nINITy.
-            { apply ES.acts_set_split in Ey.
-              destruct Ey as [INITy | nINITy]; auto.
-              edestruct ES.init_lab as [l LAB]; eauto.
-              unfold init_write in LAB.
-              unfold is_rel, mode_le, Events.mod in RELy.
-              exfalso. by rewrite LAB in *. }
-            erewrite e2a_ninit with (e := y) in EQ; auto.
-            assert (Stid S y = ES.cont_thread S k) as TIDy.
-            { unfolder in wEE'. desf.
-              { erewrite basic_step_e2a_e in EQ; eauto.
-                  by inversion EQ. }
-              erewrite basic_step_e2a_e' in EQ; eauto.
+          intros RELy. 
+          assert (SEninit S y) as nINITy.
+          { apply ES.acts_set_split in Ey.
+            destruct Ey as [INITy | nINITy]; auto.
+            edestruct ES.init_lab as [l LAB]; eauto.
+            unfold init_write in LAB.
+            unfold is_rel, mode_le, Events.mod in RELy.
+            exfalso. by rewrite LAB in *. }
+          erewrite e2a_ninit with (e := y) in EQ; auto.
+          assert (Stid S y = ES.cont_thread S k) as TIDy.
+          { unfolder in wEE'. desf.
+            { erewrite basic_step_e2a_e in EQ; eauto.
                 by inversion EQ. }
-            assert (kE S k y) as kSBy.
-            { eapply ex_ktid_cov; eauto.
-              unfolder; splits; auto. 
-              eapply ex_w_rel_iss_in_cov; eauto.
-              unfolder; splits; auto.
-              apply ES.coD in COz; auto.
-              generalize COz. basic_solver. }
-            simpl in kSBy.
-            assert (ES.seqn S y < eindex st) as SEQNle.
-            { eapply e2a_kE_eindex; eauto.
-              unfolder; eexists; splits; eauto.
-              apply nINITy. }
-            unfolder in wEE'. desf.
-            { erewrite basic_step_e2a_e in EQ; eauto. 
-              inversion EQ. omega. }
             erewrite basic_step_e2a_e' in EQ; eauto.
+              by inversion EQ. }
+          assert (kE S k y) as kSBy.
+          { eapply ex_ktid_cov; eauto.
+            unfolder; splits; auto. 
+            eapply ex_w_rel_iss_in_cov; eauto.
+            unfolder; splits; auto.
+            apply ES.coD in COz; auto.
+            generalize COz. basic_solver. }
+          simpl in kSBy.
+          assert (ES.seqn S y < eindex st) as SEQNle.
+          { eapply e2a_kE_eindex; eauto.
+            unfolder; eexists; splits; eauto.
+            apply nINITy. }
+          unfolder in wEE'. desf.
+          { erewrite basic_step_e2a_e in EQ; eauto. 
             inversion EQ. omega. }
-          unfold is_only_rlx.
-          destruct (Events.mod (Slab S) y)
-                   eqn:Hmod; auto.
-          { (* TODO: we need `~ Opln` prop *)
-            admit. }
-          { (* TODO: we need `~ OAcq /\ W` prop *)
-            admit. }
-          all: exfalso; apply nRELy.
-          all: unfold is_rel, mode_le.
-          all: by rewrite Hmod. }
+          erewrite basic_step_e2a_e' in EQ; eauto.
+          inversion EQ. omega. }
         { rewrite EQ.
           eapply e2a_ew; eauto.
           basic_solver 10. }
@@ -694,7 +675,7 @@ Section SimRelAddCO.
         generalize EW. basic_solver. }
       arewrite (e2a S x = e2a S y); auto.
       eapply e2a_ew; eauto. basic_solver 10. 
-    Admitted.
+    Qed.
 
     Lemma sim_add_co_e2a_co_ew w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
