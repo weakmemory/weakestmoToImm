@@ -523,129 +523,54 @@ Section SimRelCertStepLemma.
            apply EECE. basic_solver. }
       unfolder. ins. desf. splits; auto.
         by apply CSBECE. }
+    assert (e2a S □₁ ES.cont_sb_dom S k ⊆₁ C') as ECSBC.
+    { unfolder. ins. desf. by eapply CSBEC. }
+
     eapply sim_state_set_eq; eauto.
+    eapply sim_state_set_eq with (s:=e2a S □₁ ES.cont_sb_dom S k) in SIMST.
+    2: { split; [|basic_solver]. apply set_subset_inter_r. by split. }
 
-    red. splits.
-    { ins. erewrite ilbl_step_eindex_shift; eauto.
-      split.
-      {
-      
-
-
+    (* TODO: generalize to a lemma. *)
+    assert (SEninit S' e) as NENS.
+    { split.
+      2: by eapply basic_step_acts_ninit_set_e; eauto.
+      admit. }
     (* TODO: continue from here. *)
 
-
-    destruct PC as [[[CC [y [SY UU]]] TT] PP].
-
-    assert (SEninit S' e0) as EE0'.
-    { eapply ES.K_inEninit; eauto. }
-    assert ((Stid S') e0 = (Stid S') y) as EYTT.
-    { rewrite !e2a_tid. by rewrite UU. }
-
-    assert ((K S') (k', existT Language.state (thread_lts (ES.cont_thread S k)) st')) as KK.
-    { cdes BSTEP_. red. rewrite CONT'. constructor. done. }
-      
-    destruct XE as [[XE NT]|XE]; auto.
-    { exfalso. 
-      eapply ES.cont_sb_tid with (lang:=thread_lts (ES.cont_thread S k)) in SY; eauto.
-      destruct SY as [SY|SY].
-      2: { apply NT. by rewrite <- SY. }
-      apply EE0'. split; [apply EE0'|].
-      rewrite EYTT. apply SY. }
-
-    assert (e0 = y); subst.
-    { eapply e2a_cont_sb_dom_inj with (k:=k'); eauto; try apply SRCC.
-      eapply e2a_GE; eauto. }
-
-    eapply basic_step_cont_sb_dom in SY; eauto.
-    apply set_unionA in SY.
-    destruct SY as [SY|SY].
-    { assert (C' ∩₁ e2a S' □₁ ES.cont_sb_dom S' k' ≡₁ C' ∩₁ e2a S □₁ ES.cont_sb_dom S k)
-        as COLD.
-      { split.
-        2: { erewrite basic_step_cont_sb_dom with (S':=S'); eauto.
-             rewrite <- CONTDOMEQ.
-             basic_solver 10. }
-        erewrite basic_step_cont_sb_dom with (S':=S'); eauto.
-        rewrite set_unionA.
-        rewrite set_collect_union.
-        rewrite !set_inter_union_r.
-        unionL.
-        { by rewrite CONTDOMEQ. }
-        etransitivity.
-        2: by apply set_subset_empty_l.
-        unfold eq_opt.
-        unfolder. ins. desf.
-        all: eapply PP; exists (e2a S' y0).
-        all: apply seq_eqv_r; split; [|split]; auto.
-        2,4: red; eexists; splits; [|by eauto];
-          eapply basic_step_cont_sb_dom with (S':=S'); eauto; unfold eq_opt;
-            basic_solver.
-        all: eapply e2a_sb; try apply SRC'.
-        1,3: apply stable_prog_to_prog_no_init; apply SRC'.
-        all: red; do 2 eexists; splits; eauto.
-        all: apply SB'; right; red; unfold eq_opt.
-        all: basic_solver. }
-      
-      assert (SE S y) as EY.
-      { eapply kE_inE; eauto. }
-      assert (Stid S' y = Stid S y) as TTY.
-      { eapply basic_step_tid_eq_dom; eauto. }
-      rewrite TTY in *.
-      assert (e2a S' y = e2a S y) as E2AY.
-      { eapply basic_step_e2a_eq_dom; eauto. }
-      rewrite E2AY in *.
-      assert ((K S) (CEvent y, existT Language.state (thread_lts ((Stid S) y)) state))
-        as YCONTOLD.
-      { (* TODO: introduce a lemma *)
-        admit. }
-      assert (~ dom_rel (Gsb ⨾ ⦗C' ∩₁ e2a S □₁ ES.cont_sb_dom S k⦘) (e2a S y)) as YND.
-      { intros [z AA]. destruct_seq_r AA as BB.
-        apply COLD in BB.
-        apply PP. basic_solver 10. }
-      assert ((C' ∩₁ e2a S □₁ ES.cont_sb_dom S k ∩₁ GTid ((Stid S) y) \₁
-                  dom_rel (Gsb ⨾ ⦗C' ∩₁ e2a S □₁ ES.cont_sb_dom S k⦘)) (e2a S y)) as YD.
-      { split; auto. basic_solver. }
-      red. splits.
-      { ins. split; intros HH; [apply COLD in HH|apply COLD].
-        all: eapply contpckE; eauto; basic_solver. }
-      eapply contpckE; eauto.
-      basic_solver. }
-    assert (y = opt_ext e e'); subst.
-    { unfold opt_ext, eq_opt in *. desf.
-      2: { generalize SY. basic_solver. }
-      destruct SY; desf.
-      exfalso.
-      apply ES.rmw_K with (S:=S'); auto.
-      do 2 eexists. splits.
-      { apply INK. }
-      cdes BSTEP_. eexists. apply RMW'. unfold rmw_delta, eq_opt.
-      basic_solver. }
-
-    assert ((Stid S') (opt_ext e e') = ES.cont_thread S k) as ETT.
-    { cdes BSTEP_. rewrite TID'. unfold upd_opt, opt_ext. desf.
-      all: by rewrite upds. }
-
-    assert (k' = CEvent (opt_ext e e')) by (by cdes BSTEP_); subst.
-    assert (state = st'); subst.
-    { rewrite ETT in INK.
-      red in INK. cdes BSTEP_. rewrite CONT' in INK. inv INK.
-      { match goal with
-        | H: (_, _) = (_, _) |- _ => rename H into EQ
-        end.
-        apply pair_inj in EQ. inv EQ. }
-      exfalso.
-      match goal with
-      | H: In _ (ES.cont S) |- _ => rename H into IN
-      end.
-      eapply WFS.(ES.K_inEninit) in IN.
-      apply NSE. apply IN. }
-    
-    (* assert (@sim_state G sim_normal (C' ∩₁ e2a S □₁ ES.cont_sb_dom S k) *)
-    (*                    (ES.cont_thread S k) st) as SST. *)
+    (* cdes BSTEP_. *)
+    (* assert (lbl = opt_to_list lbl' ++ [lbl0]); subst. *)
     (* { admit. } *)
+    
     (* red. splits. *)
-    (* 2: {  *)
+    (* { arewrite (eindex st' = *)
+    (*             match e' with *)
+    (*             | None => ES.seqn S' (ES.next_act S) *)
+    (*             | Some e' => ES.seqn S' e' *)
+    (*             end). *)
+    (*   { erewrite ilbl_step_eindex_shift; eauto. *)
+    (*     desf; simpls; desf. *)
+    (*     all: admit. } *)
+        
+      (* ins. *)
+      (* split. *)
+      (* { unfolder. ins. desf. *)
+      (*   match goal with *)
+      (*   | H : ES.cont_sb_dom S' k' y |- _ => rename H into SBD *)
+      (*   end. *)
+      (*   eapply basic_step_cont_sb_dom in SBD; eauto. *)
+      (*   unfolder in SBD. desf. *)
+      (*   { erewrite ilbl_step_eindex_shift; eauto. *)
+      (*     etransitivity. eapply SIMST. *)
+      (*     2: destruct lbl; simpls; omega. *)
+      (*     red. eexists. splits; eauto. *)
+      (*     rewrite <- CTS. erewrite <- basic_step_e2a_eq_dom; eauto. *)
+      (*     eapply kE_inE; eauto. } *)
+      (*   { match goal with *)
+      (*     | H : e2a S' y = _ |- _ => rename H into AA *)
+      (*     end. *)
+      (*     erewrite e2a_ninit in AA; eauto. *)
+      (*     inv AA. *)
+
   Admitted.
 
 End SimRelCertStepLemma.

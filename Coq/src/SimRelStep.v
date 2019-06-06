@@ -270,6 +270,13 @@ Section SimRelStep.
     { eapply sim_trav_step_coherence; try apply SRC.
       red. eauto. }
     assert (Wf G) as WFG by apply SRC.
+
+    pose proof TC_ISTEP as TT.
+    eapply trstep_thread_prog in TT; try apply SRC.
+    apply Basic.IdentMap.Facts.in_find_iff in TT.
+    destruct (Basic.IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog prog))
+      as [lprog|] eqn:TTN; desf.
+
     constructor; auto.
     (* ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE *)
     { generalize XkTIDCOV. basic_solver 10. }
@@ -374,10 +381,35 @@ Section SimRelStep.
       { by rewrite EQ. }
       right. erewrite e2a_tid.
       rewrite EQ. by erewrite <- e2a_tid. }
-    assert (C' ∩₁ e2a S □₁ ES.cont_sb_dom S k ≡ C' ∩₁ e2a S □₁ ES.cont_sb_dom S k)
+    inv CERT_ST.
+    cdes cstate_cont; desf.
+    assert (C ⊆₁ C') as AA.
+    { eapply sim_trav_step_covered_le. red; eauto. }
 
-    ins.
+    assert (ES.cont_sb_dom S k ⊆₁ e2a S ⋄₁ C) as SBDC.
+    { rewrite XkTIDCOV. basic_solver. }
+    assert (ES.cont_sb_dom S k ⊆₁ e2a S ⋄₁ C') as SBDC'.
+    { by rewrite <- AA. }
 
+    edestruct contsimstate as [kC]; try apply SRC; eauto.
+    desf.
+    assert (kC = k); subst.
+    { assert (ES.cont_sb_dom S kC ≡₁ ES.cont_sb_dom S k) as EQSBD.
+      { admit. }
+      admit. }
+
+    exists k. exists st0. splits; eauto.
+    { split; [|basic_solver].
+      apply set_subset_inter_r. by split. }
+    assert (st0 = state); subst.
+    { admit. }
+
+    apply sim_state_set_eq with (s':=C); auto.
+    split.
+    { unfolder. ins. desf. by apply SBDC. }
+    unfolder. ins. desf. splits.
+    { by apply AA. }
+    (* It's wrong... *)
     admit.
   Admitted.
 

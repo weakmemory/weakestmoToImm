@@ -206,14 +206,16 @@ Section Compilation.
   Proof. 
     eapply clos_refl_trans_ind_left.
     { exists (prog_g_es_init prog G), (ES.acts_set (prog_g_es_init prog G)).
-      splits; auto using rt_refl, simrel_init. }
+      splits; auto using rt_refl, simrel_init.
+      (* eapply simrel_init. *)
+      admit. }
     intros TC TC' TC_STEPS IH TC_STEP. desc.
     edestruct simrel_step as [X' [S' HH]]; eauto. 
     destruct HH as [STEPS' SRC']. 
     red in STEPS', SRC'.
     exists S', X'. splits; auto.
     eapply rt_trans; eauto.
-  Qed.
+  Admitted.
 
   Theorem compilation_correctness 
         (nInitProg : ~ IdentMap.In tid_init prog)
