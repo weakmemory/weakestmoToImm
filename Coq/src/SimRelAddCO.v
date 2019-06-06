@@ -1,4 +1,4 @@
-Require Import Program.Basics.
+Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
@@ -566,8 +566,8 @@ Section SimRelAddCO.
           (SAEW : sim_add_ew TC X w' S S')
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
-          (wEE' : (eq e ∪₁ eq_opt e') w') 
-          (nRelIss : ~ (SRel S' ∩₁ e2a S' ⋄₁ I) w') :
+          (wEE' : (eq e ∪₁ eq_opt e') w') :
+          (* (nRelIss : ~ (SRel S' ∩₁ e2a S' ⋄₁ I) w') : *)
     codom_rel (e2a S □
       ⦗ws_compl (sim_ews TC X w' S S') (sim_ws k w' S S') S⦘ ⨾ Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘
     ) ⊆₁ fun w => Gco (e2a S' w') w.
@@ -578,6 +578,8 @@ Section SimRelAddCO.
       assert (ES.Wf S) as WFS.
       { apply SRCC. }
       assert (Wf G) as WFG.
+      { apply SRCC. }
+      assert (simrel_cont (stable_prog_to_prog prog) S G TC) as SRCONT.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
@@ -600,7 +602,8 @@ Section SimRelAddCO.
       destruct EWSWS as [EWS | WS].
       { unfold sim_ews in EWS. desc. congruence. }
       unfold sim_ws in WS. desc.
-      destruct (classic (e2a S' w' = e2a S y)) as [EQ | nEQ].
+      destruct (classic (e2a S' w' = e2a S y)) 
+        as [EQ | nEQ].
       { exfalso. apply nEWSWS. left.
         unfold sim_ews. splits.
         { apply ES.ewm in EW; auto.
@@ -614,18 +617,38 @@ Section SimRelAddCO.
               eauto using e2a_lab.
             unfold Events.mod, compose. by rewrite EQ. }
           assert (~ SRel S y) as nRELy.
-          { intros RELy. apply nRelIss.
-            red in Iy. unfolder. split; [|congruence].
-            unfold is_rel, mode_le.
-            erewrite same_lab_u2v_dom_mod
-              with (s := SE S') (lab2 := Glab ∘ e2a S').
-            { unfold Events.mod, compose.
-              fold (Events.mod Glab (e2a S' w')).
-              rewrite <- MODEQ.
-              apply RELy. }
-            { eapply basic_step_e2a_same_lab_u2v;
-                eauto; apply SRCC. }
-            basic_solver. }
+          { intros RELy. 
+            assert (SEninit S y) as nINITy.
+            { apply ES.acts_set_split in Ey.
+              destruct Ey as [INITy | nINITy]; auto.
+              edestruct ES.init_lab as [l LAB]; eauto.
+              unfold init_write in LAB.
+              unfold is_rel, mode_le, Events.mod in RELy.
+              exfalso. by rewrite LAB in *. }
+            erewrite e2a_ninit with (e := y) in EQ; auto.
+            assert (Stid S y = ES.cont_thread S k) as TIDy.
+            { unfolder in wEE'. desf.
+              { erewrite basic_step_e2a_e in EQ; eauto.
+                  by inversion EQ. }
+              erewrite basic_step_e2a_e' in EQ; eauto.
+                by inversion EQ. }
+            assert (kE S k y) as kSBy.
+            { eapply ex_ktid_cov; eauto.
+              unfolder; splits; auto. 
+              eapply ex_w_rel_iss_in_cov; eauto.
+              unfolder; splits; auto.
+              apply ES.coD in COz; auto.
+              generalize COz. basic_solver. }
+            simpl in kSBy.
+            assert (ES.seqn S y < eindex st) as SEQNle.
+            { eapply e2a_kE_eindex; eauto.
+              unfolder; eexists; splits; eauto.
+              apply nINITy. }
+            unfolder in wEE'. desf.
+            { erewrite basic_step_e2a_e in EQ; eauto. 
+              inversion EQ. omega. }
+            erewrite basic_step_e2a_e' in EQ; eauto.
+            inversion EQ. omega. }
           unfold is_only_rlx.
           destruct (Events.mod (Slab S) y)
                    eqn:Hmod; auto.
