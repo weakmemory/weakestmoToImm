@@ -185,9 +185,13 @@ Section Compilation.
         rewrite ISSG.
         rewrite <- restr_cross, restr_relE.
         eapply co_restr_iss_in_ex; eauto. }
-      rewrite collect_rel_interi.
-      erewrite e2a_co; try apply SRC. 
-      basic_solver.
+      unfolder. ins. desf.
+      eapply e2a_co_ncf; eauto.
+      unfolder; do 2 eexists; splits; eauto. 
+      intros CF.
+      eapply Execution.ex_ncf.
+      { apply SRC. }
+      apply seq_eqv_lr; eauto.
     Admitted.
 
   End Extraction.

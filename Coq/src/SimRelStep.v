@@ -738,6 +738,8 @@ Section SimRelStep.
       erewrite cert_rf_D_rf; try done. 
       1,2: apply SRCC.
       eapply tccoh'; eauto. }
+    (*  e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
+    { admit. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply jfe_ex_iss; eauto. }

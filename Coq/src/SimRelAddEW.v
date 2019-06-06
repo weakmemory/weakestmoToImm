@@ -136,7 +136,7 @@ Section SimRelAddEW.
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
   
   Definition sim_ews (w' : eventid) (S S' : ES.t) := fun w => 
-    ⟪ wsRLX : SORlx S w ⟫ /\               
+    ⟪ wsnREL : ~ SRel S w ⟫ /\               
     ⟪ wsE2Aeq : e2a S w = e2a S' w' ⟫ /\
     ⟪ wEWI : dom_rel (Sew S ⨾ ⦗ X ∩₁ e2a S ⋄₁ I ⦘) w ⟫.
 
@@ -182,7 +182,7 @@ Section SimRelAddEW.
     Lemma sim_ewsRLX w' k S S'
           (st st' : thread_st (ktid S k))
           (SRCC : simrel_cert prog S G sc TC TC' X k st st') :
-      sim_ews w' S S' ⊆₁ ORlx S.
+      sim_ews w' S S' ⊆₁ set_compl (SRel S).
     Proof. unfold sim_ews. basic_solver. Qed.
 
     Lemma sim_ews_e2a_eq w' S S' :
@@ -575,7 +575,7 @@ Section SimRelAddEW.
         destruct HH as [EW [Xz Iz]].
         exists z, z; unfolder; splits; auto.
         { eapply ES.ewm in EW; auto.
-          generalize EW wsRLX. basic_solver. }
+          generalize EW wsnREL. basic_solver. }
         { rewrite <- wsE2Aeq. symmetry.
           eapply e2a_ew; [apply SRCC|].
           basic_solver 10. }

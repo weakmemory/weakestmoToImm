@@ -864,6 +864,34 @@ Section SimRelCert.
       apply SRCC.
     Qed.
 
+    Lemma e2a_co_jfe_kE : 
+      e2a □ Sco ⨾ Sjfe ⨾ ⦗kE⦘ ⊆ Gco ⨾ cert_rf G sc TC' ktid.
+    Proof. 
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRCC. }
+      assert (simrel_ prog S G sc TC X) as SR_.
+      { apply SRCC. }
+      rewrite seq_eqv_r.
+      intros x' y' [x [y [HH [EQx' EQy']]]].
+      destruct HH as [z [CO [JFE kSB]]].
+      subst x' y'.
+      exists (e2a z). split.
+      { edestruct jfe_ex_iss
+          as [z' HH]; eauto.
+        { basic_solver. }
+        apply seq_eqv_r in HH.
+        destruct HH as [EW [Xz' Iz']].
+        arewrite (e2a z = e2a z').
+        { eapply e2a_ew; eauto. basic_solver 10. }
+        eapply e2a_co_ew_iss; eauto.
+        basic_solver 10. }
+      eapply jf_in_cert_rf; auto.
+      exists z, y; splits; auto.
+      apply seq_eqv_r. 
+      splits; auto.
+      apply JFE.
+    Qed.
+
   End SimRelCertProps. 
 
 End SimRelCert.

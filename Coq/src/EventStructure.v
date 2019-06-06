@@ -264,7 +264,7 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
-    ewm : ew ⊆ (ORlx × ORlx)^? ;
+    ewm : ew ⊆ (set_compl Rel × set_compl Rel)^? ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
     ewc : ew ⊆ cf^? ; 
@@ -730,40 +730,6 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** ew properties *)
-(******************************************************************************)
-
-Lemma ew_tid WF : ew ⊆ same_tid.
-Proof. 
-  rewrite ewc; auto.
-  unfold ES.same_tid, ES.cf.
-  basic_solver 10.
-Qed.
-
-Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
-Proof. 
-  intros x WW. 
-  exists x, x. 
-  unfolder; splits; eauto.
-  eapply ew_refl; auto.
-  apply inEW in WW.
-  generalize WW. 
-  basic_solver 10.
-Qed.
-
-Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
-Proof. 
-  intros x y RR. 
-  eexists x. 
-  splits; auto.
-  eapply ew_refl; auto.
-  specialize (domEW x).
-  assert ((E ∩₁ W) x) as EWx.
-  { apply domEW. basic_solver. }
-  generalize EWx. basic_solver 10.
-Qed.
-
-(******************************************************************************)
 (** ** jf properties *)
 (******************************************************************************)
 
@@ -829,6 +795,63 @@ Proof.
   red. ins. 
   eapply jf_ncf; auto.
   split; eauto.
+Qed.
+
+Lemma jfi_in_sb WF : jfi ⊆ sb.
+Proof. unfold ES.jfi. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** ew properties *)
+(******************************************************************************)
+
+Lemma ew_tid WF : ew ⊆ same_tid.
+Proof. 
+  rewrite ewc; auto.
+  unfold ES.same_tid, ES.cf.
+  basic_solver 10.
+Qed.  
+
+Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
+Proof. 
+  intros x WW. 
+  exists x, x. 
+  unfolder; splits; eauto.
+  eapply ew_refl; auto.
+  apply inEW in WW.
+  generalize WW. 
+  basic_solver 10.
+Qed.
+
+Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
+Proof. 
+  intros x y RR. 
+  eexists x. 
+  splits; auto.
+  eapply ew_refl; auto.
+  specialize (domEW x).
+  assert ((E ∩₁ W) x) as EWx.
+  { apply domEW. basic_solver. }
+  generalize EWx. basic_solver 10.
+Qed.
+
+(******************************************************************************)
+(** ** ew/co properties *)
+(******************************************************************************)
+
+Lemma ew_co_eq_co WF : ew ⨾ co ≡ co.
+Proof.
+  split; [apply ew_co_in_co|]; auto.
+  rewrite <- ew_refl; auto.
+  rewrite coE, coD; auto.
+  basic_solver.
+Qed.
+
+Lemma co_ew_eq_co WF : co ⨾ ew ≡ co.
+Proof. 
+  split; [apply co_ew_in_co|]; auto.
+  rewrite <- ew_refl; auto.
+  rewrite coE, coD; auto.
+  basic_solver.
 Qed.
 
 (******************************************************************************)
@@ -939,9 +962,22 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma fr_alt WF : fr ≡ jf⁻¹ ⨾ co.
+Proof. 
+  unfold ES.fr. split.
+  2 : by rewrite jf_in_rf. 
+  unfold ES.rf.
+  rewrite inclusion_minus_rel.
+  rewrite transp_seq.
+  rewrite transp_sym_equiv
+    with (r := ew).
+  2 : apply WF.
+  rewrite seqA.
+  by rewrite ew_co_in_co. 
+Qed.
 
 (******************************************************************************)
-(** ** rf/fr properties *)
+(** ** rf/fr/co properties *)
 (******************************************************************************)
 
 Lemma rffr_in_co WF : rf ⨾ fr ⊆ co.
@@ -958,6 +994,26 @@ Proof.
   intros x y [z [[p [AA BB]] HH]].
   red. eexists. splits; eauto.
   eapply WF.(co_trans); eauto.
+Qed.
+
+Lemma co_rf_alt WF : co ⨾ rf ≡ co ⨾ jf.
+Proof. 
+  unfold ES.rf. 
+  unfolder; split; ins; desf.
+  { eexists; splits; [|eauto].
+    eapply co_ew_in_co; eauto.
+    basic_solver. }
+  eexists; splits; eauto.
+  { eexists; splits; eauto.
+    eapply ew_refl; auto.
+    unfolder; splits; auto.
+    { apply coE in H; auto. 
+      generalize H. basic_solver. }
+    apply coD in H; auto. 
+    generalize H. basic_solver. }
+  intros CF.
+  eapply jf_ncf; eauto.
+  basic_solver.
 Qed.
 
 (******************************************************************************)

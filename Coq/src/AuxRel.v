@@ -49,8 +49,8 @@ Notation "a ⁼" := (clos_refl_sym a) (at level 1, format "a ⁼").
 Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
 Notation "f ⋄₁ s"  := (set_map f s) (at level 39).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
-Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "f ⋄ r"  := (map_rel f r) (at level 45).
+Notation "f □ r"  := (collect_rel f r) (at level 45).
 
 Hint Unfold 
      clos_sym clos_refl_sym 
@@ -336,6 +336,10 @@ Qed.
 
 Lemma collect_rel_singl (f : A -> B) x y : 
   f □ singl_rel x y ≡ singl_rel (f x) (f y).
+Proof. basic_solver 42. Qed.
+
+Lemma collect_rel_transp (f : A -> B) : 
+  f □ r⁻¹ ≡ (f □ r)⁻¹.
 Proof. basic_solver 42. Qed.
 
 Lemma collect_rel_eqv (f : A -> B) : 
