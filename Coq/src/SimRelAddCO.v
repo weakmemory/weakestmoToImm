@@ -578,7 +578,8 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (Wf G) as WFG.
       { apply SRCC. }
-      assert (simrel_cont (stable_prog_to_prog prog) S G TC) as SRCONT.
+      assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+        as SRCONT.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
