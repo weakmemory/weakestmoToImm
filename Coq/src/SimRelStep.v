@@ -254,6 +254,32 @@ Section SimRelStep.
       eapply init_in_map_cov; eauto. }
     basic_solver.
   Qed.
+
+  (* TODO: move to another file. *)
+  Lemma same_sb_dom_same_k S k k' lst lst'
+        (WF    : ES.Wf S)
+        (INK   : ES.cont_set S (k, lst))
+        (INK'  : ES.cont_set S (k', lst'))
+        (TEQ   : ES.cont_thread S k = ES.cont_thread S k')
+        (SBDEQ : ES.cont_sb_dom S k ≡₁ ES.cont_sb_dom S k') :
+    k = k'.
+  Proof.
+    destruct k; simpls.
+    all: destruct k'; simpls; desf.
+
+    1,2: exfalso.
+    1,2: eapply WF.(ES.K_inEninit); eauto.
+    1,2: apply SBDEQ; basic_solver 10.
+   
+    assert (dom_rel ((Ssb S)^? ⨾ ⦗eq eid⦘) eid0) as AA.
+    { apply SBDEQ. basic_solver 10. }
+    assert (dom_rel ((Ssb S)^? ⨾ ⦗eq eid0⦘) eid) as BB.
+    { apply SBDEQ. basic_solver 10. }
+    unfolder in AA. unfolder in BB. desf.
+    exfalso.
+    eapply WF.(ES.sb_irr).
+    eapply WF.(ES.sb_trans); eauto.
+  Qed.
   
   Lemma simrel_cert_start k S 
         (st st' : thread_st (ktid S k))
@@ -395,14 +421,20 @@ Section SimRelStep.
     desf.
     assert (kC = k); subst.
     { assert (ES.cont_sb_dom S kC ≡₁ ES.cont_sb_dom S k) as EQSBD.
-      { admit. }
-      admit. }
+      2: { eapply same_sb_dom_same_k; eauto. }
+      rewrite INX. rewrite XkTIDCOV.
+      split; unfolder; ins; desf; splits; eauto.
+      { eapply Execution.init_in_ex; eauto. }
+      { eapply init_in_map_cov; eauto. apply SRC. }
+      { rewrite THK. eauto. }
+      right. splits; eauto. by rewrite <- THK. }
 
     exists k. exists st0. splits; eauto.
     { split; [|basic_solver].
       apply set_subset_inter_r. by split. }
     assert (st0 = state); subst.
-    { admit. }
+    { pose proof (ES.unique_K WF _ _ KK INK eq_refl) as HH. simpls.
+      inv HH. }
 
     apply sim_state_set_tid_eq with (s':=C); auto.
     split.
@@ -416,7 +448,7 @@ Section SimRelStep.
     red in UU. desf.
     eexists. splits; eauto.
     right. by rewrite e2a_tid.
-  Admitted.
+  Qed.
 
   Lemma ew_ex_iss_in_cert_ex_iss k S 
         (st : thread_st (ktid S k))
