@@ -566,13 +566,8 @@ Section SimRelCertStepCoh.
         apply union_more; auto.
         arewrite (Shb S ≡ ⦗SE S⦘ ⨾ Shb S) at 1.
         { rewrite hbE; auto. basic_solver. }
-        (* TODO: lemma *)
         arewrite (Sjf S' ⨾ ⦗SE S⦘ ≡ Sjf S); auto.
-        unfold_cert_step_ CertSTEP_.
-        1,3: rewrite JF', ES.jfE; basic_solver.
-        all : 
-          eapply add_jf_jfE; eauto;
-          eapply weaken_sim_add_jf; eauto. }
+        eapply simrel_cert_step_jf_E; eauto. }
       unfold_cert_step_ CertSTEP_.
       all: try cdes ACO; rewrite CO'.
       1,2: apply co_jf_hb_tjf_irr; auto.
