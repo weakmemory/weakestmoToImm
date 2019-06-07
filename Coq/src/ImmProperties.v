@@ -655,4 +655,39 @@ Proof.
   all: omega.
 Qed.
 
+Lemma sb_release_rmw_in_fwbob
+      (SPL  : Execution_eco.sc_per_loc G)
+      (COMP : complete G) :
+  sb^? ∩ release ⨾ sb ∩ Events.same_loc lab ⨾ rmw ⊆ fwbob G.
+Proof.
+  rewrite (dom_r WF.(wf_rmwD)).
+  rewrite WF.(rmw_in_sb_loc).
+  sin_rewrite rewrite_trans.
+  2: by apply sb_same_loc_trans.
+  rewrite (dom_l WF.(wf_releaseD)).
+  arewrite (sb^? ∩ (⦗(F ∪₁ W) ∩₁ Rel⦘ ⨾ release) ⊆
+            ⦗(F ∪₁ W) ∩₁ Rel⦘ ⨾ (sb^? ∩ release)).
+  { basic_solver. }
+  rewrite set_inter_union_l.
+  rewrite id_union, seq_union_l.
+  unionL.
+  { unfold fwbob.
+    unionR right. 
+    arewrite (sb^? ∩ release ⨾ sb ∩ Events.same_loc lab ⊆ sb).
+    { generalize (@sb_trans G). basic_solver. }
+    mode_solver. }
+  unfold imm_s_hb.release.
+  arewrite (⦗W ∩₁ Rel⦘ ⨾ sb^? ∩ (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs G) ⊆
+            ⦗W ∩₁ Rel⦘ ⨾ sb^? ∩ (⦗Rel⦘ ⨾ rs G)).
+  { type_solver 10. }
+  rewrite rs_in_co; auto.
+  rewrite WF.(wf_col).
+  arewrite (sb^? ∩ (⦗Rel⦘ ⨾ ⦗W⦘ ⨾ (Events.same_loc lab)^?) ⊆
+               (sb ∩ Events.same_loc lab)^?).
+  { basic_solver. }
+  sin_rewrite rewrite_trans_seq_cr_l.
+  2: by apply sb_same_loc_trans.
+  unfold fwbob. eauto with hahn.
+Qed.
+
 End Properties.

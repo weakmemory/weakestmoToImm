@@ -255,32 +255,6 @@ Section SimRelStep.
     basic_solver.
   Qed.
 
-  (* TODO: move to another file. *)
-  Lemma same_sb_dom_same_k S k k' lst lst'
-        (WF    : ES.Wf S)
-        (INK   : ES.cont_set S (k, lst))
-        (INK'  : ES.cont_set S (k', lst'))
-        (TEQ   : ES.cont_thread S k = ES.cont_thread S k')
-        (SBDEQ : ES.cont_sb_dom S k ≡₁ ES.cont_sb_dom S k') :
-    k = k'.
-  Proof.
-    destruct k; simpls.
-    all: destruct k'; simpls; desf.
-
-    1,2: exfalso.
-    1,2: eapply WF.(ES.K_inEninit); eauto.
-    1,2: apply SBDEQ; basic_solver 10.
-   
-    assert (dom_rel ((Ssb S)^? ⨾ ⦗eq eid⦘) eid0) as AA.
-    { apply SBDEQ. basic_solver 10. }
-    assert (dom_rel ((Ssb S)^? ⨾ ⦗eq eid0⦘) eid) as BB.
-    { apply SBDEQ. basic_solver 10. }
-    unfolder in AA. unfolder in BB. desf.
-    exfalso.
-    eapply WF.(ES.sb_irr).
-    eapply WF.(ES.sb_trans); eauto.
-  Qed.
-  
   Lemma simrel_cert_start k S 
         (st st' : thread_st (ktid S k))
         (SRC : simrel prog S G sc TC X) 
@@ -421,7 +395,7 @@ Section SimRelStep.
     desf.
     assert (kC = k); subst.
     { assert (ES.cont_sb_dom S kC ≡₁ ES.cont_sb_dom S k) as EQSBD.
-      2: { eapply same_sb_dom_same_k; eauto. }
+      2: { eapply ES.same_sb_dom_same_k; eauto. }
       rewrite INX. rewrite XkTIDCOV.
       split; unfolder; ins; desf; splits; eauto.
       { eapply Execution.init_in_ex; eauto. }

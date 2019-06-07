@@ -1291,42 +1291,6 @@ Section SimRelCertStep.
     erewrite step_ew_mon; eauto.
   Qed.
   
-  (* TODO: move to ImmProperties.v *)
-  Lemma sb_release_rmw_in_fwbob (WF : Wf G)
-        (SPL  : Execution_eco.sc_per_loc G)
-        (COMP : complete G) :
-    Gsb^? ∩ Grelease ⨾ Gsb ∩ Events.same_loc Glab ⨾ Grmw ⊆ fwbob G.
-  Proof.
-    rewrite (dom_r WF.(wf_rmwD)).
-    rewrite WF.(rmw_in_sb_loc).
-    sin_rewrite rewrite_trans.
-    2: by apply sb_same_loc_trans.
-    rewrite (dom_l WF.(wf_releaseD)).
-    arewrite (Gsb^? ∩ (⦗(GF ∪₁ GW) ∩₁ GRel⦘ ⨾ Grelease) ⊆
-              ⦗(GF ∪₁ GW) ∩₁ GRel⦘ ⨾ (Gsb^? ∩ Grelease)).
-    { basic_solver. }
-    rewrite set_inter_union_l.
-    rewrite id_union, seq_union_l.
-    unionL.
-    { unfold fwbob.
-      unionR right. 
-      arewrite (Gsb^? ∩ Grelease ⨾ Gsb ∩ Events.same_loc Glab ⊆ Gsb).
-      { generalize (@sb_trans G). basic_solver. }
-      mode_solver. }
-    unfold imm_s_hb.release.
-    arewrite (⦗GW ∩₁ GRel⦘ ⨾ Gsb^? ∩ (⦗GRel⦘ ⨾ (⦗GF⦘ ⨾ Gsb)^? ⨾ Grs) ⊆
-              ⦗GW ∩₁ GRel⦘ ⨾ Gsb^? ∩ (⦗GRel⦘ ⨾ Grs)).
-    { type_solver 10. }
-    rewrite rs_in_co; auto.
-    rewrite WF.(wf_col).
-    arewrite (Gsb^? ∩ (⦗GRel⦘ ⨾ ⦗GW⦘ ⨾ (Events.same_loc Glab)^?) ⊆
-              (Gsb ∩ Events.same_loc Glab)^?).
-    { basic_solver. }
-    sin_rewrite rewrite_trans_seq_cr_l.
-    2: by apply sb_same_loc_trans.
-    unfold fwbob. eauto with hahn.
-  Qed.
-
   Lemma simrel_cert_step_update_rel_ew_ex_iss k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -1529,7 +1493,7 @@ Section SimRelCertStep.
       erewrite e2a_same_loc; eauto.
       basic_solver. }
     rewrite e2a_release; try apply SRCC.
-    apply sb_release_rmw_in_fwbob; try apply SRCC.
+    eapply sb_release_rmw_in_fwbob; eauto; try apply SRCC.
     apply coherence_sc_per_loc. apply SRCC.
   Qed.
 

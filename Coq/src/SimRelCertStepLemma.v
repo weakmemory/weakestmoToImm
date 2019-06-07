@@ -130,27 +130,6 @@ Section SimRelCertStepLemma.
 
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
   
-  (* TODO: move to another file. *)
-  Lemma basic_step_cont_sb_dom_eq S S' e e'
-        kC (state : (thread_lts (ktid S kC)).(Language.state))
-        (WFS : ES.Wf S)
-        (BSTEP : basic_step e e' S S')
-        (INK : K S (kC, existT _ (thread_lts (ktid S kC)) state)) :
-    ES.cont_sb_dom S' kC ≡₁ ES.cont_sb_dom S kC.
-  Proof.
-    unfold ES.cont_sb_dom. desf.
-    { eapply basic_step_acts_init_set; eauto. }
-    arewrite ((Ssb S')^? ⨾ ⦗eq eid⦘ ≡ (Ssb S)^? ⨾ ⦗eq eid⦘).
-    2: basic_solver.
-    split.
-    2: by erewrite basic_step_sb_mon; eauto.
-    rewrite !crE, !seq_union_l. apply union_mori; [done|].
-    arewrite (⦗eq eid⦘ ⊆ ⦗SE S⦘ ⨾ ⦗eq eid⦘).
-    2: { rewrite <- !seqA. by rewrite basic_step_sbE; eauto. }
-    unfolder. ins. desf. splits; auto.
-    eapply ES.K_inEninit; eauto.
-  Qed.
-
   Lemma simrel_cert_lbl_step k S
         (st st' st'': (thread_lts (ktid S k)).(Language.state))
         (NINIT : ktid S k <> tid_init)

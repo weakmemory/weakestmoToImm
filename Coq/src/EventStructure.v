@@ -1628,5 +1628,29 @@ Proof.
   omega.
 Qed.
 
+Lemma same_sb_dom_same_k k k' lst lst' WF
+      (INK   : ES.cont_set S (k, lst))
+      (INK'  : ES.cont_set S (k', lst'))
+      (TEQ   : ES.cont_thread S k = ES.cont_thread S k')
+      (SBDEQ : ES.cont_sb_dom S k ≡₁ ES.cont_sb_dom S k') :
+  k = k'.
+Proof.
+  destruct k; simpls.
+  all: destruct k'; simpls; desf.
+
+  1,2: exfalso.
+  1,2: eapply WF.(K_inEninit); eauto.
+  1,2: apply SBDEQ; basic_solver 10.
+  
+  assert (dom_rel (sb^? ⨾ ⦗eq eid⦘) eid0) as AA.
+  { apply SBDEQ. basic_solver 10. }
+  assert (dom_rel (sb^? ⨾ ⦗eq eid0⦘) eid) as BB.
+  { apply SBDEQ. basic_solver 10. }
+  unfolder in AA. unfolder in BB. desf.
+  exfalso.
+  eapply WF.(sb_irr).
+  eapply WF.(sb_trans); eauto.
+Qed.
+
 End EventStructure.
 End ES.

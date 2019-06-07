@@ -1514,3 +1514,22 @@ Proof.
   eapply basic_step_sb_irr; eauto.
 Qed.
 
+Lemma basic_step_cont_sb_dom_eq S S' e e'
+      kC state
+      (WFS : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
+      (INK : K S (kC, state)) :
+  ES.cont_sb_dom S' kC ≡₁ ES.cont_sb_dom S kC.
+Proof.
+  unfold ES.cont_sb_dom. desf.
+  { eapply basic_step_acts_init_set; eauto. }
+  arewrite ((sb S')^? ⨾ ⦗eq eid⦘ ≡ (sb S)^? ⨾ ⦗eq eid⦘).
+  2: basic_solver.
+  split.
+  2: by erewrite basic_step_sb_mon; eauto.
+  rewrite !crE, !seq_union_l. apply union_mori; [done|].
+  arewrite (⦗eq eid⦘ ⊆ ⦗E S⦘ ⨾ ⦗eq eid⦘).
+  2: { rewrite <- !seqA. by rewrite basic_step_sbE; eauto. }
+  unfolder. ins. desf. splits; auto.
+  eapply ES.K_inEninit; eauto.
+Qed.
