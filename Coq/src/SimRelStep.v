@@ -655,7 +655,13 @@ Section SimRelStep.
         eapply sim_state_set_tid_eq; [|by eauto].
         split; [|basic_solver].
         unfolder. ins. desf. splits; eauto.
-        admit. }
+        rewrite THK in *.
+        assert (acts_set (ProgToExecution.G st) x) as BB.
+        { eapply dcertE.
+          { apply SRCC. }
+          red. split; auto. by left. }
+        eapply e2a_kEninit in BB; eauto; try apply SRCC.
+        unfolder in BB. desf. eexists. splits; eauto. }
       edestruct contsimstate as [kC].
       { apply SRCC. }
       { eauto. }
