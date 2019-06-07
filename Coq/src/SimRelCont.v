@@ -315,13 +315,8 @@ Section SimRelContLemmas.
     (* contreach *)
     { ins. red in INK. rewrite CONT' in INK.
       apply in_inv in INK. destruct INK as [INK|INK].
-      2: { (* TODO: introduce a corresponding lemma *)
-           assert (ES.cont_thread S' k0 = ES.cont_thread S k0) as HH.
-           { unfold ES.cont_thread.
-             desf.
-             eapply basic_step_tid_eq_dom.
-             { red. eauto. }
-             eapply ES.K_inEninit; eauto. }
+      2: { assert (ES.cont_thread S' k0 = ES.cont_thread S k0) as HH.
+           { eapply basic_step_cont_thread; eauto. }
            rewrite HH in *.
            eapply contreach; eauto. }
       assert (k0 = k') as YY by inv INK; rewrite YY in *.
@@ -366,8 +361,7 @@ Section SimRelContLemmas.
     splits; auto.
     { eapply basic_step_cont_set; eauto. by left. }
     arewrite (ES.cont_sb_dom S' ok ≡₁ ES.cont_sb_dom S ok).
-    { (* TODO: a lemma is needed. *)
-      admit. }
+    { eapply basic_step_cont_sb_dom_eq; eauto. }
     rewrite INX.
     apply set_union_Propere.
     { symmetry. eapply basic_step_acts_init_set; eauto. }
@@ -384,6 +378,6 @@ Section SimRelContLemmas.
     unfolder. split; ins; desf; splits; auto.
     { erewrite <- basic_step_e2a_eq_dom; eauto. }
     erewrite basic_step_e2a_eq_dom; eauto. 
-  Admitted.
+  Qed.
 
 End SimRelContLemmas.
