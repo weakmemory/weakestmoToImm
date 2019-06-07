@@ -634,17 +634,29 @@ Section SimRelStep.
       eapply simrel_cert_vis; eauto. }
     (* sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC' *)
     { econstructor; try apply SRCC.
-      (* 2: { ins. *)
-      (*      assert (sim_trav_step G sc TC TC') as STEP. *)
-      (*      { eexists. apply SRCC. } *)
-      (*      assert (C ∩₁ GTid thread ⊆₁ ∅) as CEMPOLD. *)
-      (*      { erewrite sim_trav_step_covered_le; eauto. } *)
-      (*      eapply continitstate in CEMPOLD; eauto. *)
-      (*      2: by apply SRCC. *)
-      (*      cdes CEMPOLD. red. splits; eauto. *)
-      (*      ins. split; intros AA. *)
-      (*      2: { eapply sim_trav_step_covered_le; eauto. by apply PCOV. } *)
-      (*      exfalso. eapply CEMP. split; eauto. } *)
+      ins.
+      destruct (classic (thread = ES.cont_thread S k)) as [|TNEQ]; subst.
+      { edestruct contsimstate_kE as [kC]; eauto; desf.
+        exists kC. eexists. splits; eauto.
+        { rewrite INX.
+          split; unfolder; ins; desf; splits; auto.
+          { match goal with
+            | H : ES.cont_sb_dom S k x |- _ => pose proof H as AA
+            end.
+            eapply ES.cont_sb_tid in AA; eauto.
+            unfolder in AA; desf; eauto.
+            right. splits; auto. by rewrite THK. }
+          { admit. }
+          { eapply SEinit_in_kE; eauto. }
+          admit. }
+        admit. }
+      edestruct contsimstate as [kC].
+      { apply SRCC. }
+      { eauto. }
+      desf.
+      exists kC. eexists. splits; eauto.
+      { admit. }
+      eapply sim_state_set_tid_eq with (s':=C); auto.
       admit. }
     (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
