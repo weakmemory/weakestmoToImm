@@ -198,9 +198,11 @@ Lemma basic_step_acts_ninit_set_e
       (S S' : ES.t) 
       (BSTEP : basic_step e e' S S')
       (wfE: ES.Wf S) :
-  ~ Einit S' e.
+  Eninit S' e.
 Proof.
   cdes BSTEP; cdes BSTEP_.
+  split.
+  { desf. red. rewrite EVENT'. unfold opt_ext in *. desf. omega. }
   unfold ES.acts_init_set.
   red. unfolder. intros [_ TIDe].
   apply wfE.(ES.init_tid_K).
@@ -217,9 +219,11 @@ Qed.
 Lemma basic_step_acts_ninit_set_e' e e' S S'
       (BSTEP : basic_step e (Some e') S S')
       (wfE: ES.Wf S) :
-  ~ Einit S' e'.
+  Eninit S' e'.
 Proof. 
   cdes BSTEP; cdes BSTEP_.
+  split.
+  { desf. red. rewrite EVENT'. unfold opt_ext in *. desf. }
   unfold ES.acts_init_set.
   red. unfolder. intros [_ TIDe].
   apply wfE.(ES.init_tid_K).

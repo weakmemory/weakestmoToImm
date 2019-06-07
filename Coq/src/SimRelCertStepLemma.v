@@ -475,11 +475,8 @@ Section SimRelCertStepLemma.
     eapply sim_state_set_eq with (s:=e2a S □₁ ES.cont_sb_dom S k) in SIMST.
     2: { split; [|basic_solver]. apply set_subset_inter_r. by split. }
 
-    (* TODO: generalize to a lemma. *)
     assert (SEninit S' e) as NENS.
-    { split.
-      2: by eapply basic_step_acts_ninit_set_e; eauto.
-      admit. }
+    { by eapply basic_step_acts_ninit_set_e; eauto. }
     (* TODO: continue from here. *)
 
     (* cdes BSTEP_. *)
