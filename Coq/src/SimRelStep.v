@@ -594,6 +594,9 @@ Section SimRelStep.
     { apply SRCC. }
     assert (simrel_ prog S G sc TC X) as SR_.
     { apply SRCC. }
+    assert (C ⊆₁ C') as ICC.
+    { eapply sim_trav_step_covered_le. eexists. apply SRCC. }
+
     edestruct cstate_cont as [stx [EQ KK]]; 
       [apply SRCC|].
     red in EQ, KK. subst stx.
@@ -646,18 +649,49 @@ Section SimRelStep.
             eapply ES.cont_sb_tid in AA; eauto.
             unfolder in AA; desf; eauto.
             right. splits; auto. by rewrite THK. }
-          { admit. }
+          { apply ICC. eapply init_in_map_cov; eauto. }
           { eapply SEinit_in_kE; eauto. }
-          admit. }
+          rewrite THK in *. desf. }
+        eapply sim_state_set_tid_eq; [|by eauto].
+        split; [|basic_solver].
+        unfolder. ins. desf. splits; eauto.
         admit. }
       edestruct contsimstate as [kC].
       { apply SRCC. }
       { eauto. }
       desf.
       exists kC. eexists. splits; eauto.
-      { admit. }
+      { rewrite !set_interA.
+        arewrite ((STid S (ES.cont_thread S kC)) ∩₁ e2a S ⋄₁ C' ≡₁
+                  (STid S (ES.cont_thread S kC)) ∩₁ e2a S ⋄₁ C).
+        { split.
+          2: by rewrite ICC.
+          rewrite isim_trav_step_new_covered_tid; try apply SRCC.
+          unfolder. ins. desf. 
+          exfalso.
+          apply TNEQ.
+          match goal with 
+          | H : Gtid (e2a S x) = ES.cont_thread S k |- _ => rewrite <- H
+          end.
+            by rewrite <- e2a_tid. }
+        rewrite INX.
+        split; unfolder; ins; desf; eauto 10.
+        match goal with
+        | H : ES.cont_sb_dom S k x |- _ => rename H into AA
+        end.
+        eapply ES.cont_sb_tid in AA; eauto.
+        unfolder in AA; desf; eauto.
+        exfalso.
+        apply TNEQ. by rewrite <- AA. }
       eapply sim_state_set_tid_eq with (s':=C); auto.
-      admit. }
+      rewrite isim_trav_step_new_covered_tid; try apply SRCC.
+      split; unfolder; ins; desf.
+      2: by splits; eauto.
+      exfalso. apply TNEQ.
+      match goal with 
+      | H : Gtid x = ES.cont_thread S k |- _ => rewrite <- H
+      end.
+      done. }
     (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. }
