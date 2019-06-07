@@ -287,7 +287,7 @@ Section SimRelCertStepLemma.
         2: by apply SRCC.
         
         assert (exists xindex,
-                   << ILT : xindex < eindex st >> /\
+                   ⟪ ILT : xindex < eindex st ⟫ /\
                             x = ThreadEvent (ES.cont_thread S k) xindex).
         { destruct x; simpls.
           { apply WF.(rmw_from_non_init) in RMW.

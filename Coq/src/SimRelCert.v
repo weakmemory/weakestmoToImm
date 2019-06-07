@@ -179,11 +179,11 @@ Section SimRelCert.
 
       contsimstate_kE :
           exists kC (state : thread_st (ES.cont_thread S kC)),
-            << THK   : ES.cont_thread S kC = ktid >> /\
-            << INK   : K (kC, thread_cont_st (ES.cont_thread S kC) state) >> /\
-            << INX   : ES.cont_sb_dom S kC ≡₁ e2a ⋄₁ C' ∩₁ kE >> /\
-            << KINEQ : kE ⊆₁ e2a ⋄₁ C' -> kC = k >> /\
-            << SIMST : @sim_state G sim_normal certC (ES.cont_thread S kC) state >>;
+            ⟪ THK   : ES.cont_thread S kC = ktid ⟫ /\
+            ⟪ INK   : K (kC, thread_cont_st (ES.cont_thread S kC) state) ⟫ /\
+            ⟪ INX   : ES.cont_sb_dom S kC ≡₁ e2a ⋄₁ C' ∩₁ kE ⟫ /\
+            ⟪ KINEQ : kE ⊆₁ e2a ⋄₁ C' -> kC = k ⟫ /\
+            ⟪ SIMST : @sim_state G sim_normal certC (ES.cont_thread S kC) state ⟫;
     }.
 
   Section SimRelCertProps. 

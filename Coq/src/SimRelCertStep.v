@@ -829,7 +829,7 @@ Section SimRelCertStep.
       eexists. splits; eauto. }
 
     assert (e2a S' □ ES.cont_sb_dom S k × eq e ⊆
-            Gsb ;; <| eq (e2a S' e) |>) as HHSB.
+            Gsb ⨾ ⦗ eq (e2a S' e) ⦘) as HHSB.
     { arewrite (ES.cont_sb_dom S k × eq e ⊆ (ES.sb S') ⨾ ⦗eq e⦘).
       { rewrite SB'. unfold sb_delta. basic_solver. }
       rewrite collect_rel_seqi, collect_rel_eqv.
@@ -862,7 +862,7 @@ Section SimRelCertStep.
            cdes STEP0. inv ISTEP0; inv LABELS. }
          relsf.
          arewrite (Sjf S' ⨾ ES.cont_sb_dom S k × eq e ⊆
-                   Sjf S' ;; <|ES.cont_sb_dom S k|> ⨾
+                   Sjf S' ⨾ ⦗ES.cont_sb_dom S k⦘ ⨾
                    ES.cont_sb_dom S k × eq e) by basic_solver 10.
          arewrite (ES.cont_sb_dom S k ⊆₁ SE S ∩₁ ES.cont_sb_dom S k) at 1.
          { apply set_subset_inter_r. split; auto.
@@ -1244,7 +1244,7 @@ Section SimRelCertStep.
     arewrite
       (release S' ⨾ Sew S' ∩
                eq (ES.next_act S) × sim_ews TC X (ES.next_act S) S S' ⊆
-               release S' ⨾ <| eq (ES.next_act S) |> ⨾ Sew S' ∩
+               release S' ⨾ ⦗ eq (ES.next_act S) ⦘ ⨾ Sew S' ∩
                eq (ES.next_act S) × sim_ews TC X (ES.next_act S) S S').
     { basic_solver 10. }
 
@@ -1360,7 +1360,7 @@ Section SimRelCertStep.
     rewrite transp_cross.
     arewrite
       (release S' ⨾ Sew S' ∩ eq w' × sim_ews TC X w' S S' ⊆
-       release S' ⨾ <| eq w' |> ⨾ Sew S' ∩ eq w' × sim_ews TC X w' S S').
+       release S' ⨾ ⦗ eq w' ⦘ ⨾ Sew S' ∩ eq w' × sim_ews TC X w' S S').
     { basic_solver 10. }
 
     unfold Consistency.release, Consistency.rs.
@@ -1408,7 +1408,7 @@ Section SimRelCertStep.
       { by eapply Execution.ex_inE; [by apply SRCC|]. }
       eapply kE_inE; eauto. }
     arewrite (release S' ⨾ eq w × eq (ES.next_act S) ⊆
-              release S' ;; <|SE S|> ⨾ eq w × eq (ES.next_act S)).
+              release S' ⨾ ⦗SE S⦘ ⨾ eq w × eq (ES.next_act S)).
     { arewrite (eq w ⊆₁ SE S ∩₁ eq w).
       2: basic_solver 10.
       apply set_subset_inter_r. split; [|done].

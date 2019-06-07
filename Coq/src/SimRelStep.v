@@ -145,13 +145,13 @@ Section SimRelStep.
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
   (* Definition cont_pc S X k thread :=  *)
-  (*   (<< KREP : k = CInit thread >> /\ *)
-  (*    << CEMP : C ∩₁ GTid thread ≡₁ ∅ >>)  *)
+  (*   (⟪ KREP : k = CInit thread ⟫ /\ *)
+  (*    ⟪ CEMP : C ∩₁ GTid thread ≡₁ ∅ ⟫)  *)
   (*   \/ *)
   (*   (exists e, *)
-  (*       << KREP : k = CEvent e >> /\ *)
-  (*       << Xe   : X e >> /\ *)
-  (*       << EPC  : pc G TC thread (e2a S e) >>  *)
+  (*       ⟪ KREP : k = CEvent e ⟫ /\ *)
+  (*       ⟪ Xe   : X e ⟫ /\ *)
+  (*       ⟪ EPC  : pc G TC thread (e2a S e) ⟫  *)
   (*   ). *)
 
   Lemma simrel_cert_cont_pc S thread 

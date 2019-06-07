@@ -414,7 +414,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_sb_F_Acq_in_rf :
-  cert_rf ⨾ sb ;; <|F|> ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb.
+  cert_rf ⨾ sb ⨾ ⦗F⦘ ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ⨾ sb.
 Proof.
   rewrite (dom_r cert_rfD), !seqA.
   rewrite (dom_r cert_rfE), !seqA.
@@ -459,7 +459,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_F_Acq_in_rf :
-  cert_rf ⨾ (sb ;; <|F|>)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb^?.
+  cert_rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ⨾ sb^?.
 Proof.
   rewrite !crE, !seq_union_l, !seq_union_r, !seq_id_l, !seq_id_r, !seqA.
   apply union_mori.   

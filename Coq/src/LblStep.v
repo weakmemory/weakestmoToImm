@@ -127,9 +127,9 @@ Qed.
 
 Lemma steps_to_eps_steps_steps thread state state' state''
       (STBL : stable_state state'')
-      (EPS_STEPS : (istep thread [])^* state state')
-      (    STEPS : (step thread)^*     state state'') :
-  (step thread)^* state' state''.
+      (EPS_STEPS : (istep thread [])＊ state state')
+      (    STEPS : (step thread)＊     state state'') :
+  (step thread)＊ state' state''.
 Proof.
   apply clos_rt_rt1n in EPS_STEPS.
   induction EPS_STEPS; auto.
@@ -380,7 +380,7 @@ Lemma eps_step_eindex_same thread st st'
 Proof. erewrite istep_eindex_shift; eauto. simpls. omega. Qed.
 
 Lemma eps_steps_eindex_same thread st st'
-      (STEP : (istep thread [])^* st st') :
+      (STEP : (istep thread [])＊ st st') :
   eindex st' = eindex st.
 Proof.
   induction STEP; auto.

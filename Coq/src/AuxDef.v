@@ -111,9 +111,9 @@ Lemma l2f_v {A B} (l : list (A * B)) a def
       (DEC : forall x y : A, {x = y} + {x <> y})
       (NDP : NoDup (map fst l)) :
   (exists b,
-      << BIN : In (a, b) l >>) \/
-  ((~ exists b, << BIN : In (a, b) l >>) /\
-   << VV  : list_to_fun DEC def l a = def >>).
+      ⟪ BIN : In (a, b) l ⟫) \/
+  ((~ exists b, ⟪ BIN : In (a, b) l ⟫) /\
+   ⟪ VV  : list_to_fun DEC def l a = def ⟫).
 Proof.
   induction l. 
   { right. splits; eauto.

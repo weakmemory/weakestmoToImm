@@ -328,9 +328,9 @@ Proof.
 Qed.
 
 Lemma prog_g_es_init_lab prog G e :
-  << ELAB : ES.lab (prog_g_es_init prog G) e = Afence Orlx >> \/
+  ⟪ ELAB : ES.lab (prog_g_es_init prog G) e = Afence Orlx ⟫ \/
   exists l,
-  << ELAB : ES.lab (prog_g_es_init prog G) e = init_write l >>.
+  ⟪ ELAB : ES.lab (prog_g_es_init prog G) e = init_write l ⟫.
 Proof.
   unfold prog_g_es_init, ES.init. simpls.
   unnw.

@@ -617,7 +617,7 @@ Proof.
 Qed.
 
 Lemma imm_tsb_imm_sb_in_cf WF :
-  ((immediate sb)⁻¹ ;; immediate sb) ∩ same_tid ⊆ cf^?.
+  ((immediate sb)⁻¹ ⨾ immediate sb) ∩ same_tid ⊆ cf^?.
 Proof.
   unfolder. ins. desf.
   destruct (classic (x = y)) as [|NEQ]; [by left|right].
@@ -636,7 +636,7 @@ Proof.
 Qed.
 
 Lemma imm_tsb_imm_sb_in_icf WF :
-  ((immediate sb)⁻¹ ;; immediate sb) ∩ same_tid ⊆ icf^?.
+  ((immediate sb)⁻¹ ⨾ immediate sb) ∩ same_tid ⊆ icf^?.
 Proof.
   unfolder. ins. desf.
   assert (cf^? x y) as CF.

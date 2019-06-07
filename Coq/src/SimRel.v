@@ -191,7 +191,7 @@ Section SimRel.
       red. split; [split|]; auto.
       intros [e HH]. destruct_seq_r HH as CE.
       assert (exists p, e = ThreadEvent thread p /\
-                        << LT : index < p >>); desf.
+                        ⟪ LT : index < p ⟫); desf.
       { red in HH. destruct_seq HH as [AA BB].
         red in HH. desf; desf. eauto. }
       apply NMCOV.
