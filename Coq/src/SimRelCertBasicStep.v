@@ -74,8 +74,8 @@ Section SimRelCertBasicStep.
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-  Notation "'STid_' S" := (fun t x => Stid S x = t) (at level 1).
-  Notation "'SNTid_' S" := (fun t x => Stid S x <> t) (at level 1).
+  Notation "'STid' S" := (fun t x => Stid S x = t) (at level 1).
+  Notation "'SNTid' S" := (fun t x => Stid S x <> t) (at level 1).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -125,7 +125,7 @@ Section SimRelCertBasicStep.
   Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
-  Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
+  Notation "'certX' S" := (fun k => (X ∩₁ SNTid S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
   (* Definition upd_a2e a2e e e' S' :=  *)
   (*   upd_opt (upd a2e (e2a S' e) e) (option_map (e2a S') e') e'. *)
@@ -180,6 +180,27 @@ Section SimRelCertBasicStep.
   (*   by rewrite upds. *)
   (* Qed. *)
 
+  Lemma simrel_cert_basic_step_ex_tid k k' e e' S S' 
+        (st st' st'': thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
+    X ∩₁ SNTid S' (ES.cont_thread S' k') ≡₁
+    X ∩₁ SNTid S  (ES.cont_thread S  k ).
+  Proof.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    erewrite basic_step_cont_thread_k; eauto.
+    split; unfolder; intros x [AA BB]; desf; splits; auto.
+    all: intros CC.
+    all: apply BB; rewrite <- CC.
+    2: symmetry.
+    all: eapply basic_step_tid_eq_dom; eauto.
+    all: eapply Execution.ex_inE; eauto.
+    all: apply SRCC.
+  Qed.
+
   Lemma simrel_cert_basic_step_cert_ex k k' e e' S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -192,22 +213,7 @@ Section SimRelCertBasicStep.
     { econstructor. eauto. }
     simpl. do 2 rewrite set_unionA.
     apply set_union_Propere.
-    { (* TODO : separate lemma *)
-      split. 
-      { intros x [Xx NTIDx]. 
-        split; auto.
-        intros TIDx. apply NTIDx.
-        erewrite basic_step_tid_eq_dom; eauto.
-        2 : { eapply Execution.ex_inE; eauto. apply SRCC. }
-        rewrite TIDx. symmetry.
-        eapply basic_step_cont_thread_k; eauto. }
-      intros x [Xx NTIDx]. 
-      split; auto.
-      intros TIDx. apply NTIDx.
-      erewrite <- basic_step_tid_eq_dom; eauto.
-      2 : { eapply Execution.ex_inE; eauto. apply SRCC. }
-      rewrite TIDx. 
-      eapply basic_step_cont_thread_k; eauto. }
+    { eapply simrel_cert_basic_step_ex_tid; eauto. }
     rewrite <- set_unionA.
     eapply basic_step_cont_sb_dom; eauto.
   Qed.
