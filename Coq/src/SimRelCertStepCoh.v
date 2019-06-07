@@ -503,11 +503,7 @@ Section SimRelCertStepCoh.
       apply ES.coD in CO; auto.
       generalize CO. basic_solver. }
     eapply e2a_sb; eauto; try apply SR_.
-    (* TODO: make a lemma *)
-    { intros PROG_INIT. 
-      eapply noinitprog; eauto. 
-      unfold stable_prog_to_prog in PROG_INIT.
-      eapply IdentMap.map_2; eauto. }
+    { apply stable_prog_to_prog_no_init. apply SRCC. }
     basic_solver 10.
   Qed.
 
