@@ -906,17 +906,20 @@ Qed.
 Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf; apply WF. Qed.  
 
+Lemma jf_tjf_in_top WF : jf ⨾ jf⁻¹ ⊆ ⦗⊤₁⦘.
+Proof.
+  arewrite (jf ≡ ((jf)⁻¹)⁻¹).
+  rewrite <- functional_alt.
+  apply WF.
+Qed.
+
 Lemma rf_trf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew. 
 Proof. 
   unfold ES.rf.
   rewrite transp_minus, transp_seq.
   rewrite !inclusion_minus_rel.
   rewrite !seqA.
-  arewrite (jf ⨾ jf⁻¹ ⊆ ⦗⊤₁⦘).
-  { (* TODO : introduce corresponding lemma *)
-    arewrite (jf ≡ ((jf)⁻¹)⁻¹).
-    rewrite <- functional_alt.
-    apply WF. }
+  sin_rewrite WF.(jf_tjf_in_top).
   rewrite transp_sym_equiv.
   { rewrite seq_id_l. 
     rewrite transitiveI.
