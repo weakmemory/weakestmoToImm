@@ -778,7 +778,7 @@ Section SimRelCert.
       eexists. apply seq_eqv_r. split; eauto.
       apply rel_ew_cert_ex; auto. basic_solver.
     Qed.
-
+    
     Lemma jf_kE_in_ew_cert_ex : 
       dom_rel (Sjf ⨾ ⦗ kE ⦘) ⊆₁ dom_rel (Sew ⨾ ⦗ certX ⦘).  
     Proof.
@@ -806,11 +806,7 @@ Section SimRelCert.
       unfolder in JFE. 
       destruct JFE as [nINITx [JF nSTID]].
       intros TIDz. apply nSTID. red. 
-      arewrite (Stid x = Stid z).
-      { (* TODO : separate lemma *)
-        apply ES.ewc in EW; auto.
-        destruct EW as [EQ | CF]; auto.
-        by apply ES.cf_same_tid. }
+      arewrite (Stid x = Stid z) by (by apply ES.ew_tid).
       edestruct cstate_cont; [apply SRCC|]. desc.
       eapply ES.cont_sb_tid in KSB; eauto.
       destruct KSB as [INITy | TIDy].
@@ -873,10 +869,9 @@ Section SimRelCert.
       X ∩₁ e2a ⋄₁ C ∪₁ X ∩₁ SNTid ktid ⊆₁ vis S. 
     Proof. 
       rewrite <- set_inter_union_r.
-      (* TODO : vis_mori *)
-      intros x [Xx _].
-      eapply Execution.ex_vis; eauto. 
-      apply SRCC.
+      erewrite <- Execution.ex_vis. 
+      2: apply SRCC.
+      basic_solver.
     Qed.
 
     Lemma e2a_co_jfe_kE : 
