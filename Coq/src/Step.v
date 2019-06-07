@@ -766,6 +766,31 @@ Qed.
 (** ** Step preserves executions lemma  *)
 (******************************************************************************)
 
+Lemma step_preserves_old_sw X e e' S S' 
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X) 
+      (BSTEP : basic_step e e' S S')
+      (STEP : step_ e e' S S') :
+  dom_rel (sw S' ⨾ ⦗X⦘) ⊆₁ X.
+Proof.
+  cdes BSTEP; cdes BSTEP_.
+  arewrite (sw S' ≡ sw S ∪ sw_delta S S' k e e').
+  { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
+    { cdes FSTEP. erewrite step_same_jf_sw; eauto.
+      eapply basic_step_nupd_rmw; subst; eauto. }
+    { cdes LSTEP. erewrite add_jf_sw; eauto.
+      subst. basic_solver. }
+    { cdes SSTEP. erewrite step_same_jf_sw; eauto.
+      eapply basic_step_nupd_rmw; subst; eauto. }
+    cdes USTEP. erewrite add_jf_sw; eauto.
+    cdes AEW. type_solver. }
+  relsf. splits.
+  { apply EXEC. }
+  arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto.
+  erewrite basic_step_sw_deltaE; eauto. 
+  basic_solver.
+Qed.
+
 Lemma step_preserves_execution X e e' S S' 
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) 
@@ -788,22 +813,7 @@ Proof.
     erewrite basic_step_sb_deltaE; eauto. 
     basic_solver. }
   (* ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
-  { (* TODO: add a corresponding lemma  *)
-    arewrite (sw S' ≡ sw S ∪ sw_delta S S' k e e').
-    { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
-      { cdes FSTEP. erewrite step_same_jf_sw; eauto.
-        eapply basic_step_nupd_rmw; subst; eauto. }
-      { cdes LSTEP. erewrite add_jf_sw; eauto.
-        subst. basic_solver. }
-      { cdes SSTEP. erewrite step_same_jf_sw; eauto.
-        eapply basic_step_nupd_rmw; subst; eauto. }
-      cdes USTEP. erewrite add_jf_sw; eauto.
-      cdes AEW. type_solver. }
-    relsf. splits.
-    { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto.
-    erewrite basic_step_sw_deltaE; eauto. 
-    basic_solver. }
+  { eapply step_preserves_old_sw; eauto. }
   (* ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
   { rewrite RMW'. unfold rmw_delta.
     relsf. splits.

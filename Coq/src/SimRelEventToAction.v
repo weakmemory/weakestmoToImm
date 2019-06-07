@@ -164,10 +164,7 @@ Section SimRelEventToAction.
       unfolder. intros x INITx. splits.
       { apply INITx. }
       { eapply e2a_Einit; eauto. 
-        (* TODO: make a lemma *)
-        { intros PROG_INIT. apply PROG_NINIT.
-          unfold stable_prog_to_prog in PROG_INIT.
-          eapply IdentMap.map_2; eauto. }
+        { by eapply stable_prog_to_prog_no_init. }
         basic_solver. }
       eapply e2a_GE; eauto.
       generalize INITx. 
