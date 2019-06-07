@@ -180,12 +180,9 @@ Section SimRelCertStepLemma.
     { unfolder. ins. desf. splits; auto.
       erewrite <- basic_step_e2a_eq_dom; eauto. }
     
-    (* TODO: make a lemma *)
     assert (e2a S' □₁ ES.cont_sb_dom S k ≡₁ e2a S □₁ ES.cont_sb_dom S k) as CONTDOMEQ.
-    { unfolder. ins. desf. splits; ins; desf; eexists; splits; eauto.
-      symmetry.
-      all: eapply basic_step_e2a_eq_dom; eauto.
-      all: eapply kE_inE; eauto. }
+    { eapply basic_step_e2a_set_collect_eq_dom; eauto.
+      eapply kE_inE; eauto. }
 
     exists k', S'. splits.
     { eapply basic_step_cont_thread_k; eauto. }
@@ -241,11 +238,8 @@ Section SimRelCertStepLemma.
         { rewrite <- seq_eqvK at 1. by erewrite kE_inE at 1; eauto. }
         arewrite (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S).
         { eapply simrel_cert_step_jf_E; eauto. }
-        (* TODO: introduce a lemma e2a S' □ restr_rel (SE S) r ⊆ e2a S □ r. *)
-        rewrite ES.jfE at 1; try apply SRCC.
-        unfolder. ins. desf. do 2 eexists. splits; eauto.
-        all: symmetry.
-        all: eapply basic_step_e2a_eq_dom; eauto. }
+        eapply basic_step_e2a_collect_rel_eq_dom with (S':=S'); eauto.
+        rewrite ES.jfE at 1; try apply SRCC. basic_solver. }
       { assert (Sjf S ⨾ ⦗eq e⦘ ⊆ ∅₂) as AA.
         { rewrite ES.jfE; try apply SRCC. unfold ES.acts_set.
           cdes BSTEP_. desf. unfolder. ins. omega. }
@@ -277,29 +271,13 @@ Section SimRelCertStepLemma.
       
       cdes BSTEP_.
       repeat apply union_mori.
-      { (* TODO: make a lemma *)
-        rewrite CONTDOMEQ.
-        rewrite rmw_cov_in_kE; eauto.
+      { rewrite CONTDOMEQ.
         assert (Srmw S ⊆ Srmw S') as AA.
         { rewrite RMW'. eauto with hahn. }
         rewrite <- AA.
-        unfolder. ins. desf.
-        do 2 eexists. splits; eauto.
-        all: eapply basic_step_e2a_eq_dom; eauto.
-        all: eapply kE_inE; eauto.
-        match goal with
-        | H : (Srmw S) _ _ |- _ => rename H into RMW
-        end.
-        match goal with
-        | H : ES.cont_sb_dom S k _ |- _ => rename H into CY
-        end.
-        unfold ES.cont_sb_dom in *. desf.
-        { exfalso.
-          apply WFS.(ES.rmw_in_sb) in RMW.
-          eapply WFS.(ES.sb_ninit).
-          apply seq_eqv_r. eauto. }
-        apply WFS.(ES.rmw_in_sb) in RMW.
-        generalize WFS.(ES.sb_trans) RMW CY. basic_solver 10. }
+        rewrite rmw_cov_in_kE; eauto.
+        eapply basic_step_e2a_collect_rel_eq_dom with (S':=S'); eauto.
+        rewrite WFS.(ES.rmwE) at 1. basic_solver. }
       { unfolder. ins. desf.
         exfalso.
         match goal with
