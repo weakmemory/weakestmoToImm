@@ -22,6 +22,22 @@ Proof.
   all: desf.
 Qed.
 
+Lemma unique_ineps_step thread lbl state state' state''
+      (STEP1 : istep thread lbl state state')
+      (STEP2 : istep thread lbl state state'') :
+  state' = state''.
+Proof.
+  cdes STEP1.
+  cdes STEP2.
+  rewrite <- ISTEP in ISTEP1. inv ISTEP1.
+  inv ISTEP0.
+  all: inv ISTEP2.
+  all: destruct state'.
+  all: destruct state''.
+  all: simpls.
+  all: desf.
+Qed.
+
 Definition stable_state :=
   set_compl
     (dom_rel (fun x y => exists thread, istep thread [] x y)).
