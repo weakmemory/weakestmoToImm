@@ -365,6 +365,57 @@ Proof.
   eapply unique_eps_steps_to_stable; eauto.
 Qed.
 
+(* TODO: replace w/ something standard or move to AuxDef.v. *)
+Lemma app_eq {A B} (f f' : A -> B) (EQ : f = f') (a : A) :
+  f a = f' a.
+Proof. by rewrite EQ. Qed.
+
+Lemma unique_lbl_istep_same_G thread lbl lbl' state state' state''
+      (STEP1 : istep thread lbl  state state')
+      (STEP2 : istep thread lbl' state state'')
+      (GEQ   : ProgToExecution.G state' = ProgToExecution.G state'') :
+  lbl = lbl'.
+Proof.
+  cdes STEP1. cdes STEP2.
+  inv ISTEP0.
+  all: inv ISTEP2; rewrite <- ISTEP in ISTEP1; inv ISTEP1.
+  3,4: by exfalso;
+    unfold add, add_rmw in *;
+    rewrite <- GEQ in UG0; rewrite UG in UG0; inv UG0;
+      clear -H1; induction (acts (G state)); inv H1.
+  all: assert (val = val0); desf;
+    rewrite <- GEQ in UG0; rewrite UG in UG0; inv UG0;
+    pose proof (app_eq _ _ H0 (ThreadEvent thread (eindex state))) as AA.
+  1,2: by rewrite !upds in *; inv AA.
+  rewrite updo in *; [rewrite upds in *|].
+  2: { intros BB. inv BB. omega. }
+  rewrite updo in *; [rewrite upds in *|].
+  2: { intros BB. inv BB. omega. }
+  inv AA.
+Qed.
+
+Lemma unique_lbl_istep thread lbl lbl' state state'
+      (STEP1 : istep thread lbl  state state')
+      (STEP2 : istep thread lbl' state state') :
+  lbl = lbl'.
+Proof. eapply unique_lbl_istep_same_G; eauto. Qed.
+
+Lemma unique_lbl_ilbl_step thread lbl lbl' state state'
+      (STEP1 : ilbl_step thread lbl  state state')
+      (STEP2 : ilbl_step thread lbl' state state') :
+  lbl = lbl'.
+Proof.
+  cdes STEP1.
+  cdes STEP2.
+  destruct STEP0 as [st0 [ST01 ST02]]. cdes ST01.
+  destruct STEP3 as [st1 [ST11 ST12]]. cdes ST11.
+  destruct_seq_r ST02 as STBL.
+  destruct_seq_r ST12 as STBL'.
+  eapply unique_lbl_istep_same_G; eauto.
+  erewrite <- eps_steps_same_G with (state':=state'); eauto.
+  eapply eps_steps_same_G; eauto.
+Qed.
+
 (****************************
 ** Destruction of lbl_step **
 *****************************)
