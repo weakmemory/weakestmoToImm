@@ -298,6 +298,73 @@ Proof. unfold step. basic_solver. Qed.
 Lemma eps_steps_in_steps thread : (istep thread [])＊ ⊆ (step thread)＊.
 Proof. by rewrite eps_step_in_step. Qed.
 
+Lemma no_step_from_terminal thread : <| is_terminal |> ;; (step thread) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  unfolder. intros x y [TERM STEP]. red in TERM.
+  assert (nth_error (instrs x) (pc x) <> None) as NN.
+  { cdes STEP. cdes STEP0. by inv ISTEP0; rewrite <- ISTEP. }
+  apply nth_error_Some in NN. omega.
+Qed.
+
+Lemma no_lbl_step_from_terminal thread : <| is_terminal |> ;; (lbl_step thread) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  rewrite lbl_step_in_steps. rewrite ct_begin, <- seqA.
+  rewrite no_step_from_terminal. basic_solver.
+Qed.
+
+Lemma stable_state_no_eps_step thread : <|stable_state|> ;; (istep thread []) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  unfolder. intros x y [ST STEP].
+  apply ST. do 2 eexists. eauto.
+Qed.
+
+Lemma stable_state_eps_steps_refl thread :
+  <|stable_state|> ;; (istep thread [])^* ≡ <|stable_state|>.
+Proof.
+  rewrite rtE, ct_begin, seq_union_r, seq_id_r.
+  rewrite <- seqA. rewrite stable_state_no_eps_step.
+  basic_solver.
+Qed.
+
+Lemma unique_eps_steps_to_stable thread st st' st''
+      (STEP1 : ((istep thread [])＊ ⨾ ⦗stable_state⦘) st st')
+      (STEP2 : ((istep thread [])＊ ⨾ ⦗stable_state⦘) st st'') :
+  st'' = st'.
+Proof.
+  destruct_seq_r STEP1 as ST1.
+  destruct_seq_r STEP2 as ST2.
+  apply clos_rt_rt1n in STEP1.
+  induction STEP1.
+  { symmetry. eapply stable_state_eps_steps_refl.
+    apply seq_eqv_l. split; eauto. }
+  apply IHSTEP1.
+  specialize (IHSTEP1 ST1); auto.
+  apply clos_rt_rt1n in STEP2.
+  destruct STEP2 as [|w].
+  { exfalso.
+    apply ST2. do 2 eexists. eauto. }
+  assert (w = y); subst.
+  2: by apply clos_rt1n_rt.
+  eapply unique_eps_step; eauto.
+Qed.
+
+Lemma unique_ilbl_step thread lbl state state' state''
+      (STEP1 : ilbl_step thread lbl state state')
+      (STEP2 : ilbl_step thread lbl state state'') :
+  state' = state''.
+Proof.
+  cdes STEP1.
+  cdes STEP2.
+  destruct STEP0 as [st0 [ST01 ST02]].
+  destruct STEP3 as [st1 [ST11 ST12]].
+  assert (st0 = st1); subst.
+  { cdes ST01. cdes ST11. eapply unique_ineps_step; eauto. }
+  eapply unique_eps_steps_to_stable; eauto.
+Qed.
+
 (****************************
 ** Destruction of lbl_step **
 *****************************)
