@@ -500,7 +500,7 @@ Section SimRelCertStepLemma.
          assert (st''' = st'); subst.
          2: by rewrite CTS.
          cdes STEP''.
-         apply unique_ilbl_step.
+         (* apply unique_ilbl_step. *)
          (* TODO: continue from here. *)
          admit. }
 
