@@ -481,6 +481,9 @@ Section SimRelCertStepLemma.
     assert (stable_state st) as STBLST.
     { eapply contstable; eauto. apply SRCC. }
 
+    assert (wf_thread_state (ES.cont_thread S k) st) as WTS.
+    { eapply contwf; eauto. apply SRCC. }
+
     cdes SIMST.
     red. splits.
     2: { exists state'. red. splits.
@@ -506,7 +509,82 @@ Section SimRelCertStepLemma.
          cdes BSTEP_.
          assert (lbl = opt_to_list lbl' ++ [lbl0]); subst.
          { eapply unique_lbl_ilbl_step; eauto. }
-    
+         
+         assert (exists lbls0 lbls', lbls = opt_to_list lbls' ++ [lbls0]); desf.
+         { clear -STEP''0.
+           red in STEP''0.
+           unfolder in STEP''0. desf.
+           unfold opt_to_list.
+           cdes STEP''0. cdes STEP. inv ISTEP0.
+           1-4: by eexists; exists None; simpls.
+           all: eexists; eexists (Some _); simpls. }
+
+         assert (wf_thread_state (ES.cont_thread S k) st''') as WTS'''.
+         { (* TODO: generalize to a lemma. *)
+           eapply wf_thread_state_steps; eauto.
+           apply rtE. right. eapply ilbl_step_in_steps; eauto. }
+
+         assert (acts_set (ProgToExecution.G st''')
+                          (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'''.
+         { eapply acts_clos; eauto. eapply lbl_step_eindex_lt; eauto. }
+
+         assert ((ProgToExecution.step (ES.cont_thread S k))＊ st''' state') as STEPS'''.
+         { by eapply lbl_steps_in_steps; eauto. }
+         
+         assert (lbls0 = Glab (ThreadEvent (ES.cont_thread S k) (eindex st))); subst.
+         { arewrite (lbls0 =
+                     Execution.lab st'''.(ProgToExecution.G)
+                                   (ThreadEvent (ES.cont_thread S k) (eindex st))).
+           { (* TODO: generalize to a lemma *)
+             edestruct lbl_step_cases with (state0:=st) (state':=st''')
+               as [l [l']]; eauto. desf.
+             all: rewrite GLAB.
+             1-4: by rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS.
+             unfold upd_opt. rewrite updo.
+             2: intros BB; inv BB; omega.
+             rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS. }
+           erewrite <- steps_preserve_lab; simpls; eauto.
+           eapply TEH. eapply steps_preserve_E; eauto. }
+         
+         assert (C' (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIC'.
+         { admit. }
+
+         assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
+         { (* TODO: use a generalized lemma from the previous TODO. *)
+           eapply wf_thread_state_steps with (s:=st); eauto.
+           apply rtE. right. eapply ilbl_step_in_steps; eauto. }
+
+         assert (acts_set (ProgToExecution.G st')
+                          (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'.
+         { eapply acts_clos; eauto. eapply lbl_step_eindex_lt; eauto. }
+
+         assert ((ProgToExecution.step (ES.cont_thread S k))＊ st' st'') as STEPS'.
+         { by eapply lbl_steps_in_steps; eauto. }
+
+         assert (acts_set (ProgToExecution.G st'')
+                          (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST''.
+         { eapply steps_preserve_E; eauto. }
+
+         assert (lbl0 = Glab (ThreadEvent (ES.cont_thread S k) (eindex st))); subst.
+         { arewrite (lbl0 =
+                     Execution.lab st'.(ProgToExecution.G)
+                                   (ThreadEvent (ES.cont_thread S k) (eindex st))).
+           { (* TODO: use a generalized lemma from the previous TODO. *)
+             edestruct lbl_step_cases with (state0:=st) (state':=st')
+               as [l [l']]; eauto. desf.
+             all: rewrite GLAB.
+             1-4: by rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS.
+             unfold upd_opt. rewrite updo.
+             2: intros BB; inv BB; omega.
+             rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS. }
+           erewrite <- steps_preserve_lab; simpls; eauto.
+           erewrite <- cslab with (G:=G) (state:=st'').
+           3: by apply C_in_D; eauto.
+           2: by apply SRCC.
+           unfold certLab, restr_fun; desf. }
+         
+         assert (lbl' = lbls'); desf.
+
          (* TODO: continue from here. *)
          admit. }
 
