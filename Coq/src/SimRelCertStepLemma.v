@@ -481,8 +481,6 @@ Section SimRelCertStepLemma.
     assert (stable_state st) as STBLST.
     { eapply contstable; eauto. apply SRCC. }
 
-    (* TODO: continue from here. *)
-    
     cdes SIMST.
     red. splits.
     2: { exists state'. red. splits.
@@ -495,7 +493,15 @@ Section SimRelCertStepLemma.
          apply lbl_steps_in_steps.
          apply rtE in LBLSTEPS. destruct LBLSTEPS as [AA|LBLSTEPS].
          { exfalso. red in AA. desf.
-           admit. }
+           eapply no_lbl_step_from_terminal.
+           apply seq_eqv_l. split; eauto. }
+         apply ct_begin in LBLSTEPS.
+         destruct LBLSTEPS as [st''' [STEP'' LBLSTEPS]].
+         assert (st''' = st'); subst.
+         2: by rewrite CTS.
+         cdes STEP''.
+         apply unique_ilbl_step.
+         (* TODO: continue from here. *)
          admit. }
 
     (* cdes BSTEP_. *)
