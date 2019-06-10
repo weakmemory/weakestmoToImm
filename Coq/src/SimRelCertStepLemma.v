@@ -477,7 +477,26 @@ Section SimRelCertStepLemma.
 
     assert (SEninit S' e) as NENS.
     { by eapply basic_step_acts_ninit_set_e; eauto. }
+
+    assert (stable_state st) as STBLST.
+    { eapply contstable; eauto. apply SRCC. }
+
     (* TODO: continue from here. *)
+    
+    cdes SIMST.
+    red. splits.
+    2: { exists state'. red. splits.
+         3: rewrite CTS.
+         2,3: by apply SIMST1.
+         cdes SIMST1.
+         assert ((lbl_step (ES.cont_thread S k))＊ st state') as LBLSTEPS.
+         { eapply steps_stable_lbl_steps. apply seq_eqv_lr. splits; auto.
+           apply terminal_stable. by apply TERMINAL. }
+         apply lbl_steps_in_steps.
+         apply rtE in LBLSTEPS. destruct LBLSTEPS as [AA|LBLSTEPS].
+         { exfalso. red in AA. desf.
+           admit. }
+         admit. }
 
     (* cdes BSTEP_. *)
     (* assert (lbl = opt_to_list lbl' ++ [lbl0]); subst. *)
