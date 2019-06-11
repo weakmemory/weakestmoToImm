@@ -520,9 +520,7 @@ Section SimRelCertStepLemma.
            all: eexists; eexists (Some _); simpls. }
 
          assert (wf_thread_state (ES.cont_thread S k) st''') as WTS'''.
-         { (* TODO: generalize to a lemma. *)
-           eapply wf_thread_state_steps; eauto.
-           apply rtE. right. eapply ilbl_step_in_steps; eauto. }
+         { eapply wf_thread_state_lbl_step; eauto. }
 
          assert (acts_set (ProgToExecution.G st''')
                           (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'''.
@@ -535,14 +533,7 @@ Section SimRelCertStepLemma.
          { arewrite (lbls0 =
                      Execution.lab st'''.(ProgToExecution.G)
                                    (ThreadEvent (ES.cont_thread S k) (eindex st))).
-           { (* TODO: generalize to a lemma *)
-             edestruct lbl_step_cases with (state0:=st) (state':=st''')
-               as [l [l']]; eauto. desf.
-             all: rewrite GLAB.
-             1-4: by rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS.
-             unfold upd_opt. rewrite updo.
-             2: intros BB; inv BB; omega.
-             rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS. }
+           { eapply ilbl_step_eindex_lbl; eauto. }
            erewrite <- steps_preserve_lab; simpls; eauto.
            eapply TEH. eapply steps_preserve_E; eauto. }
          
@@ -550,9 +541,7 @@ Section SimRelCertStepLemma.
          { admit. }
 
          assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
-         { (* TODO: use a generalized lemma from the previous TODO. *)
-           eapply wf_thread_state_steps with (s:=st); eauto.
-           apply rtE. right. eapply ilbl_step_in_steps; eauto. }
+         { eapply wf_thread_state_lbl_step with (state0:=st); eauto. }
 
          assert (acts_set (ProgToExecution.G st')
                           (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'.
@@ -569,14 +558,7 @@ Section SimRelCertStepLemma.
          { arewrite (lbl0 =
                      Execution.lab st'.(ProgToExecution.G)
                                    (ThreadEvent (ES.cont_thread S k) (eindex st))).
-           { (* TODO: use a generalized lemma from the previous TODO. *)
-             edestruct lbl_step_cases with (state0:=st) (state':=st')
-               as [l [l']]; eauto. desf.
-             all: rewrite GLAB.
-             1-4: by rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS.
-             unfold upd_opt. rewrite updo.
-             2: intros BB; inv BB; omega.
-             rewrite upds; unfold opt_to_list in *; desf; simpls; inv LBLS. }
+           { eapply ilbl_step_eindex_lbl; eauto. }
            erewrite <- steps_preserve_lab; simpls; eauto.
            erewrite <- cslab with (G:=G) (state:=st'').
            3: by apply C_in_D; eauto.
