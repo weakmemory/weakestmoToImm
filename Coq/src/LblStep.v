@@ -298,7 +298,7 @@ Proof. unfold step. basic_solver. Qed.
 Lemma eps_steps_in_steps thread : (istep thread [])＊ ⊆ (step thread)＊.
 Proof. by rewrite eps_step_in_step. Qed.
 
-Lemma no_step_from_terminal thread : <| is_terminal |> ;; (step thread) ≡ ∅₂.
+Lemma no_step_from_terminal thread : ⦗ is_terminal ⦘ ⨾ (step thread) ≡ ∅₂.
 Proof.
   split; [|basic_solver].
   unfolder. intros x y [TERM STEP]. red in TERM.
@@ -307,14 +307,14 @@ Proof.
   apply nth_error_Some in NN. omega.
 Qed.
 
-Lemma no_lbl_step_from_terminal thread : <| is_terminal |> ;; (lbl_step thread) ≡ ∅₂.
+Lemma no_lbl_step_from_terminal thread : ⦗ is_terminal ⦘ ⨾ (lbl_step thread) ≡ ∅₂.
 Proof.
   split; [|basic_solver].
   rewrite lbl_step_in_steps. rewrite ct_begin, <- seqA.
   rewrite no_step_from_terminal. basic_solver.
 Qed.
 
-Lemma stable_state_no_eps_step thread : <|stable_state|> ;; (istep thread []) ≡ ∅₂.
+Lemma stable_state_no_eps_step thread : ⦗stable_state⦘ ⨾ (istep thread []) ≡ ∅₂.
 Proof.
   split; [|basic_solver].
   unfolder. intros x y [ST STEP].
@@ -322,7 +322,7 @@ Proof.
 Qed.
 
 Lemma stable_state_eps_steps_refl thread :
-  <|stable_state|> ;; (istep thread [])^* ≡ <|stable_state|>.
+  ⦗stable_state⦘ ⨾ (istep thread [])＊ ≡ ⦗stable_state⦘.
 Proof.
   rewrite rtE, ct_begin, seq_union_r, seq_id_r.
   rewrite <- seqA. rewrite stable_state_no_eps_step.
@@ -433,7 +433,7 @@ Proof. cdes STEP. eapply wf_thread_state_ilbl_step; eauto. Qed.
 
 Lemma wf_thread_state_lbl_steps thread state state'
       (WTS  : wf_thread_state thread state)
-      (STEPS : (lbl_step thread)^* state state') :
+      (STEPS : (lbl_step thread)＊ state state') :
   wf_thread_state thread state'.
 Proof.
   apply clos_rt_rt1n in STEPS.
