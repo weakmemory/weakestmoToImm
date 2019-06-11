@@ -583,3 +583,34 @@ Proof.
   cdes STEP.
   eapply ilbl_step_eindex_lt; eauto.
 Qed.
+
+Lemma istep_eindex_lbl thread lbls lbl st st'
+      (WTS : wf_thread_state thread st)
+      (STEP: istep thread (lbls ++ [lbl]) st st') :
+  lbl = lab (ProgToExecution.G st') (ThreadEvent thread (eindex st)).
+Proof.
+  cdes STEP. inv ISTEP0.
+  1-2: by destruct lbls; simpls.
+
+  1-4: apply app_eq_unit in LABELS; desf.
+  1-4: by rewrite UG; unfold add in *; simpls; rewrite upds.
+
+  all: apply app_eq_unit2 in LABELS; desf.
+  all: rewrite UG; unfold add_rmw in *; simpls.
+  all: rewrite updo; [|intros BB; inv BB; omega].
+  all: by rewrite upds.
+Qed.
+
+Lemma ilbl_step_eindex_lbl thread lbls lbl st st'
+      (WTS : wf_thread_state thread st)
+      (STEP: ilbl_step thread (lbls ++ [lbl]) st st') :
+  lbl = lab (ProgToExecution.G st') (ThreadEvent thread (eindex st)).
+Proof.
+  edestruct lbl_step_cases with (state0:=st) (state':=st')
+    as [l [l']]; eauto. desf.
+  all: rewrite GLAB.
+  1-4: by rewrite upds; apply app_inj_tail in LBLS; desf.
+  unfold upd_opt. rewrite updo.
+  2: intros BB; inv BB; omega.
+  apply app_inj_tail in LBLS; desf. by rewrite upds.
+Qed.

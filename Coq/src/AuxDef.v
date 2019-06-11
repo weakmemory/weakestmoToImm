@@ -466,3 +466,14 @@ Proof.
   { specialize_full IHn; auto. }
   inversion HH; auto.
 Qed.
+
+Lemma app_eq_unit2 {A} (x y : list A) (a b : A)
+      (EQ : x ++ y = [a; b]) :
+  x = [] /\ y = [a; b] \/
+  x = [a] /\ y = [b] \/
+  x = [a; b] /\ y = [].
+Proof.
+  destruct x; simpls; eauto.
+  inv EQ.
+  apply app_eq_unit in H0. desf; eauto.
+Qed.
