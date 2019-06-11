@@ -599,6 +599,64 @@ Section SimRelCertStepLemma.
               symmetry.
               eapply ilbl_step_nrmw_None with (st:=st); eauto. }
 
+         assert (acts_set (ProgToExecution.G st'')
+                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST''.
+         { admit. }
+
+         assert (Execution.rmw
+                   (ProgToExecution.G st'')
+                   (ThreadEvent (ES.cont_thread S k) (eindex st))
+                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMW''.
+         { eapply dcertRMW.
+           { apply SRCC. }
+           apply seq_eqv_lr. splits; auto. }
+
+         assert (Execution.rmw
+                   (ProgToExecution.G st')
+                   (ThreadEvent (ES.cont_thread S k) (eindex st))
+                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as ARMW'.
+         { eapply steps_dont_add_rmw; eauto.
+           apply seq_eqv_l. split; auto. }
+
+         assert (acts_set (ProgToExecution.G st')
+                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST'.
+         { eapply wft_rmwE in ARMW'; eauto. unfolder in ARMW'. desf. }
+
+         assert (C' (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as EIC''.
+         { eapply sim_trav_step_rmw_covered with (G:=G)
+               (r:= ThreadEvent (ES.cont_thread S k) (eindex st)); eauto.
+           { red. eexists. apply SRCC. }
+           apply SRCC. }
+         
+         assert (lbl' =
+                 Some (Glab (ThreadEvent (ES.cont_thread S k) (1 + eindex st)))); subst.
+         { arewrite (lbl' =
+                     Some (Execution.lab st'.(ProgToExecution.G)
+                                         (ThreadEvent (ES.cont_thread S k) (1 + eindex st)))).
+           { (* TODO: introduce a lemma. *) admit. }
+           erewrite <- steps_preserve_lab; simpls; eauto.
+           erewrite <- cslab with (G:=G) (state:=st'').
+           3: by apply C_in_D; eauto.
+           2: by apply SRCC.
+           unfold certLab, restr_fun; desf. }
+
+         assert (Execution.rmw
+                   (ProgToExecution.G state')
+                   (ThreadEvent (ES.cont_thread S k) (eindex st))
+                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMWST'.
+         { eapply tr_rmw; eauto. apply seq_eqv_lr; auto. }
+
+         assert (Execution.rmw
+                   (ProgToExecution.G st''')
+                   (ThreadEvent (ES.cont_thread S k) (eindex st))
+                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMW'''.
+         { eapply steps_dont_add_rmw; eauto.
+           apply seq_eqv_l. split; auto. }
+
+         symmetry.
+         (* TODO: introduce a lemma. *)
+         admit. }
+
     (* red. splits. *)
     (* { intros index. split. *)
     (*   { unfolder. intros [y [AA BB]]. *)
