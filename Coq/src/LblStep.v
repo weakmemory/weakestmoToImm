@@ -416,8 +416,6 @@ Proof.
   eapply eps_steps_same_G; eauto.
 Qed.
 
-Lemma 
-
 (****************************
 ** Destruction of lbl_step **
 *****************************)
