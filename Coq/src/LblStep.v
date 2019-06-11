@@ -416,6 +416,31 @@ Proof.
   eapply eps_steps_same_G; eauto.
 Qed.
 
+Lemma wf_thread_state_ilbl_step thread lbls state state'
+      (WTS  : wf_thread_state thread state)
+      (STEP : ilbl_step thread lbls state state') :
+  wf_thread_state thread state'.
+Proof.
+  eapply wf_thread_state_steps; eauto.
+  apply rtE. right. eapply ilbl_step_in_steps; eauto.
+Qed.
+
+Lemma wf_thread_state_lbl_step thread state state'
+      (WTS  : wf_thread_state thread state)
+      (STEP : lbl_step thread state state') :
+  wf_thread_state thread state'.
+Proof. cdes STEP. eapply wf_thread_state_ilbl_step; eauto. Qed.
+
+Lemma wf_thread_state_lbl_steps thread state state'
+      (WTS  : wf_thread_state thread state)
+      (STEPS : (lbl_step thread)^* state state') :
+  wf_thread_state thread state'.
+Proof.
+  apply clos_rt_rt1n in STEPS.
+  induction STEPS; auto.
+  apply IHSTEPS. eapply wf_thread_state_lbl_step; eauto.
+Qed.
+
 (****************************
 ** Destruction of lbl_step **
 *****************************)
