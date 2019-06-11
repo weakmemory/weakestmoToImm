@@ -614,3 +614,18 @@ Proof.
   2: intros BB; inv BB; omega.
   apply app_inj_tail in LBLS; desf. by rewrite upds.
 Qed.
+
+Lemma ilbl_step_nrmw_None thread lbl lbl' st st'
+      (WTS : wf_thread_state thread st)
+      (STEP : ilbl_step
+                thread 
+                (opt_to_list lbl' ++ [lbl]) st st')
+      (NRMW : ~ rmw (ProgToExecution.G st') (ThreadEvent thread (eindex st))
+                (ThreadEvent thread (1 + eindex st))) :
+  lbl' = None.
+Proof.
+  edestruct lbl_step_cases with (state0:=st) (state':=st')
+    as [l [l']]; eauto. desf.
+  1-4: by apply app_eq_unit in LBLS; desf; destruct lbl'; simpls; inv LBLS.
+  exfalso. apply NRMW. apply GRMW. basic_solver.
+Qed.

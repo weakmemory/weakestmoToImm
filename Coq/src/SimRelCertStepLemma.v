@@ -566,16 +566,62 @@ Section SimRelCertStepLemma.
            unfold certLab, restr_fun; desf. }
          
          assert (lbl' = lbls'); desf.
+         destruct (classic (Grmw (ThreadEvent (ES.cont_thread S k)
+                                              (eindex st))
+                                 (ThreadEvent (ES.cont_thread S k)
+                                              (1 + eindex st)))) as [RMW|NRMW].
+         2: { assert (~ Execution.rmw (ProgToExecution.G st')
+                        (ThreadEvent (ES.cont_thread S k) (eindex st))
+                        (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as NRMW'.
+              { intros AA. apply NRMW.
+                assert (Execution.rmw
+                          (ProgToExecution.G st'')
+                          (ThreadEvent (ES.cont_thread S k) (eindex st))
+                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as BB.
+                { eapply steps_preserve_rmw; eauto. }
+                eapply dcertRMW in BB.
+                2: by apply SRCC.
+                unfolder in BB. desf. }
+              assert (lbl' = None); subst.
+              { eapply ilbl_step_nrmw_None with (st:=st); eauto. }
 
-         (* TODO: continue from here. *)
-         admit. }
+              assert (~ Execution.rmw (ProgToExecution.G st''')
+                        (ThreadEvent (ES.cont_thread S k) (eindex st))
+                        (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as NRMW'''.
+              { intros AA. apply NRMW.
+                assert (Execution.rmw
+                          (ProgToExecution.G state')
+                          (ThreadEvent (ES.cont_thread S k) (eindex st))
+                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as BB.
+                { eapply steps_preserve_rmw; eauto. }
+                eapply tr_rmw in BB; eauto.
+                unfolder in BB. desf. }
+              symmetry.
+              eapply ilbl_step_nrmw_None with (st:=st); eauto. }
 
-    (* cdes BSTEP_. *)
-    (* assert (lbl = opt_to_list lbl' ++ [lbl0]); subst. *)
-    (* { admit. } *)
-    
     (* red. splits. *)
-    (* { arewrite (eindex st' = *)
+    (* { intros index. split. *)
+    (*   { unfolder. intros [y [AA BB]]. *)
+    (*     eapply basic_step_cont_sb_dom in AA. desf. *)
+    (*     desf. *)
+    (*     match goal with *)
+    (*     | H : ES.cont_sb_dom S' k' y |- _ => rename H into SBD *)
+    (*     end. *)
+    (*     eapply basic_step_cont_sb_dom in SBD; eauto. *)
+    (*     unfolder in SBD. desf. *)
+    (*     { erewrite ilbl_step_eindex_shift; eauto. *)
+    (*       etransitivity. eapply SIMST. *)
+    (*       2: destruct lbl; simpls; omega. *)
+    (*       red. eexists. splits; eauto. *)
+    (*       rewrite <- CTS. erewrite <- basic_step_e2a_eq_dom; eauto. *)
+    (*       eapply kE_inE; eauto. } *)
+    (*     { match goal with *)
+    (*       | H : e2a S' y = _ |- _ => rename H into AA *)
+    (*       end. *)
+    (*       erewrite e2a_ninit in AA; eauto. *)
+    (*       inv AA. *)
+
+    (*   arewrite (eindex st' = *)
     (*             match e' with *)
     (*             | None => ES.seqn S' (ES.next_act S) *)
     (*             | Some e' => ES.seqn S' e' *)
@@ -584,25 +630,6 @@ Section SimRelCertStepLemma.
     (*     desf; simpls; desf. *)
     (*     all: admit. } *)
         
-      (* ins. *)
-      (* split. *)
-      (* { unfolder. ins. desf. *)
-      (*   match goal with *)
-      (*   | H : ES.cont_sb_dom S' k' y |- _ => rename H into SBD *)
-      (*   end. *)
-      (*   eapply basic_step_cont_sb_dom in SBD; eauto. *)
-      (*   unfolder in SBD. desf. *)
-      (*   { erewrite ilbl_step_eindex_shift; eauto. *)
-      (*     etransitivity. eapply SIMST. *)
-      (*     2: destruct lbl; simpls; omega. *)
-      (*     red. eexists. splits; eauto. *)
-      (*     rewrite <- CTS. erewrite <- basic_step_e2a_eq_dom; eauto. *)
-      (*     eapply kE_inE; eauto. } *)
-      (*   { match goal with *)
-      (*     | H : e2a S' y = _ |- _ => rename H into AA *)
-      (*     end. *)
-      (*     erewrite e2a_ninit in AA; eauto. *)
-      (*     inv AA. *)
 
   Admitted.
 
