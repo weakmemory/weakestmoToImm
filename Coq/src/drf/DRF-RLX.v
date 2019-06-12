@@ -65,26 +65,17 @@ Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel'" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-Definition concurrent_events e1 e2 : Prop :=
-  ⟪ non_conflict: not(cf e1 e2) ⟫ /\
-  ⟪ hb_related: not(hb^⋈ e1 e2) ⟫. (* Should be C11 hb *)
+Definition one {A : Type} (X : A -> Prop) a b := X a \/ X b. 
 
-Definition racy_events e1 e2 :=
-  ⟪ rw: RW e1 /\ RW e2 ⟫ /\
-  ⟪ one_W: (W e1 \/ W e2) ⟫ /\
-  ⟪ concurrent: concurrent_events e1 e2 ⟫ /\
-  ⟪ same_location: same_loc e1 e2 ⟫.
-
-Definition racy_event e (X : eventid -> Prop) :=
-  X e /\ exists e', X e' -> racy_events e e'.
+Definition race (X : eventid -> Prop) :=
+  dom_rel ((X × X) \ (hb⁼ ∪ cf) ∩ same_loc ∩ one W). (* hb should be hbc11? *)
 
 Definition RLX_race_free (X : eventid -> Prop) :=
-  forall e, racy_event e X -> Rel e /\ Acq e. 
-
+  race X ⊆₁ (Rel ∩₁ W) ∪₁ (Acq ∩₁ R). 
+       
 Definition RA_race_free (X : eventid -> Prop) :=
-  forall e, racy_event e X -> Sc e.
+  race X ⊆₁ Sc.
 
- 
 End Races.
 End Races.
 
