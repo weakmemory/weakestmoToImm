@@ -1,5 +1,5 @@
 COQMODULE    := es2imm
-COQTHEORIES  := src/*.v
+COQTHEORIES  := src/*.v src/drf/*.v
 
 .PHONY: all theories clean tounicode
 
