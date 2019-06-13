@@ -44,4 +44,23 @@ Proof.
     destruct cf_free with (x := x) (y := x0); basic_solver.
 Qed.
 
+Lemma po_rf_acyclic (S : ES.t) (X : eventid -> Prop)
+      (wf : ES.Wf S)
+      (cons : es_consistent S (m:=Weakestmo))
+      (exec : Execution.t S X)
+      (p : S.(ES.jf) ⊆ S.(hb)):
+  acyclic (⦗X⦘ ⨾ S.(ES.sb) ⨾ ⦗X⦘ ∪ ⦗X⦘ ⨾ S.(ES.rf) ⨾ ⦗X⦘).
+Proof.
+  specialize (rf_in_jf S X wf exec p) as rf_in_jf.
+  assert (hb_acyclic: acyclic S.(hb)).
+  { apply trans_irr_acyclic.
+    { eapply hb_irr; eauto. }
+      eauto with hahn. 
+  } assert ( ⦗X⦘ ⨾ rf S ⨾ ⦗X⦘ ⊆ hb S). { eapply inclusion_trans; eauto. }
+    assert (S.(ES.sb) ⊆ S.(hb)). { eauto with hahn. }
+    apply inclusion_acyclic with (r' := S.(hb)).
+    { apply inclusion_union_l; eauto; basic_solver. }
+      auto. 
+Qed. 
+  
 End DRF.
