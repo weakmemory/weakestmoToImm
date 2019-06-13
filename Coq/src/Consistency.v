@@ -615,6 +615,12 @@ Qed.
 
 Variable ESC : @es_consistent m.
 
+Lemma hb_irr : irreflexive hb.
+Proof.
+  specialize (coh ESC) as hb_eco_irr. apply irreflexive_inclusion with (r' :=  hb ⨾ (eco m)^?).  { basic_solver. }
+    eauto with hahn.                                                                           
+Qed.
+  
 Lemma cont_sb_dom_rmw k s
       (INK : K (k, s)) :
   codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.
