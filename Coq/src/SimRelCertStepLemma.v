@@ -417,9 +417,31 @@ Section SimRelCertStepLemma.
     apply RMW'. right. red. 
     unfold eq_opt. basic_solver. 
   Qed.
+
+  (* TODO: move to EventStructure.v *)
+  Definition cont_last S k := 
+    match k with
+    | CInit  i => SEinit S
+    | CEvent e => eq e
+    end.
+
+  (* TODO: move to EventStructure.v *)
+  Definition cont_adjacent S k k' := 
+    cont_last S k × cont_last S k' ⊆ immediate (Ssb S) ⨾ (Srmw S)^?.
+
+  Definition forwarding S lbl lbl' k k' 
+             (st st' : thread_st (ktid S k))
+             (Kk  : K S (k , existT _ _ st ))
+             (Kk' : K S (k', existT _ _ st')) :=
+    exists e e',
+      ⟪ kREP' : k' = CEvent (opt_ext e e') ⟫ /\ 
+      ⟪ LBL   : lbl  = Slab S e ⟫ /\
+      ⟪ LBL'  : lbl' = option_map (Slab S) e' ⟫ /\
+      ⟪ ADJ   : cont_adjacent S k k' ⟫ /\
+      ⟪ STEP  : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫. 
   
   Lemma simrel_cert_lbl_step k S
-        (st st' st'': (thread_lts (ktid S k)).(Language.state))
+        (st st' st'': thread_st (ktid S k))
         (NINIT : ktid S k <> tid_init)
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (LBL_STEP : lbl_step (ktid S k) st st')
@@ -427,9 +449,26 @@ Section SimRelCertStepLemma.
     exists k' S',
       ⟪ kTID : ktid S' k' = ktid S k ⟫ /\
       ⟪ ESSTEP : (step Weakestmo)^? S S' ⟫ /\
-      ⟪ SRCC' : simrel_cert prog S' G sc TC TC' X k' st' st''⟫.
+      ⟪ SRCC' : simrel_cert prog S' G sc TC TC' X k' st' st'' ⟫.
   Proof.
     edestruct LBL_STEP as [lbl ILBL_STEP].
+    edestruct lbl_step_lbls as [l [l' EQlbl]]; eauto.
+    { eapply wf_cont_state; eauto. }
+    
+    assert (K S (k , existT _ _ st )) as Kk.
+    { edestruct cstate_cont; [apply SRCC|]. desf. }
+
+    destruct (classic 
+      (exists k' Kk', forwarding S l l' k k' st st' Kk Kk'))
+      as [[k' [Kk' FRWD]] | nFRWD].
+    { exists k', S. splits; auto.
+      { admit. }
+      constructor; auto; try apply SRCC.
+      
+      
+
+      all: admit. }
+
     edestruct simrel_cert_step as [k' HH]; eauto. desc.
     cdes CertSTEP.
     assert (Wf G) as WF by apply SRCC.
@@ -503,6 +542,8 @@ Section SimRelCertStepLemma.
     { admit. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a' □₁ kE'⦘ ⊆ e2a' □ Srmw' ⨾ ⦗ kE' ⦘ *)
     { eapply simrel_cert_step_rmw_cov_in_kE; eauto. }
+
+    clear EQlbl.
     
     assert (C ⊆₁ C') as CINC.
     { eapply sim_trav_step_covered_le.

@@ -526,6 +526,14 @@ Proof.
 
 Qed.
 
+Lemma lbl_step_lbls thread lbls state state'
+      (WFT : wf_thread_state thread state)
+      (ILBL_STEP : ilbl_step thread lbls state state') :
+  exists lbl lbl', lbls = opt_to_list lbl' ++ [lbl].
+Proof. 
+  edestruct lbl_step_cases as [lbl [lbl' [LBLS _]]]; eauto. 
+Qed.
+
 Lemma ineps_step_eindex_shift thread lbl st st'
       (STEP : ineps_step thread lbl st st') :
   eindex st' = eindex st + length lbl.
