@@ -44,3 +44,4 @@ Proof.
     destruct cf_free with (x := x) (y := x0); basic_solver.
 Qed.
 
+End DRF.
