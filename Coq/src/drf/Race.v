@@ -5,9 +5,9 @@ Require Import EventStructure.
 Require Import Consistency.
 Require Import Execution.
 
-Module Races.
+Module Race.
   
-Section Races.
+Section Race.
 
 Variable S : ES.t.
 
@@ -37,6 +37,6 @@ Definition RLX_race_free (X : eventid -> Prop) :=
 Definition RA_race_free (X : eventid -> Prop) :=
   race X ⊆₁ Sc.
 
-End Races.
+End Race.
 
-End Races.
+End Race.
