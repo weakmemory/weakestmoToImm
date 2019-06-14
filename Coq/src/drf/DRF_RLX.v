@@ -11,14 +11,15 @@ Require Import ProgES.
 
 Module DRF.
 
-Definition rc11_consistent_ (S : ES.t) (X : eventid -> Prop) := True. (* TODO *)
-
 Definition program_execution P S X :=
   ⟪ steps : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
   ⟪ exec : Execution.t S X ⟫.
-  
+
+Definition RLX_race_free_program P :=
+  (forall S X, program_execution P S X -> Race.rc11_consistent_x S X -> Race.RLX_race_free S X).
+
 Lemma jf_in_hb P
-      (pr : forall S X, program_execution P S X -> rc11_consistent_ S X -> Race.RLX_race_free S X)
+      (RACE_FREE : RLX_race_free_program P)
       (S : ES.t)
       (steps : (step Weakestmo)＊ (prog_es_init P) S):
   S.(ES.jf) ⊆ S.(hb).

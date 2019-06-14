@@ -1,9 +1,10 @@
 From hahn Require Import Hahn.
-From imm Require Import Events.
+From imm Require Import Events Prog RC11.
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Consistency.
 Require Import Execution.
+Require Import ExecutionToG.
 
 Module Race.
   
@@ -33,9 +34,14 @@ Definition race (X : eventid -> Prop) :=
 
 Definition RLX_race_free (X : eventid -> Prop) :=
   race X ⊆₁ (Rel ∩₁ W) ∪₁ (Acq ∩₁ R). 
-       
+
+Definition rc11_consistent_x (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ rc11 : rc11_consistent G ⟫.  
+
 Definition RA_race_free (X : eventid -> Prop) :=
   race X ⊆₁ Sc.
+
 
 End Race.
 
