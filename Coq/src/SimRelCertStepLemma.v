@@ -426,52 +426,76 @@ Section SimRelCertStepLemma.
   Qed.
 
   (* TODO: move to EventStructure.v *)
-  Definition cont_last S k := 
-    match k with
-    | CInit  i => SEinit S
-    | CEvent e => eq e
-    end.
-
-  Lemma cont_last_in_cont_sb S (WF : ES.Wf S) k : 
-    cont_last S k ⊆₁ ES.cont_sb_dom S k. 
-  Proof. 
-    unfold ES.cont_sb_dom, cont_last.
-    destruct k as [|e]; auto.
-    basic_solver.
-  Qed.
-
-  Lemma sb_cont_last_in_cont_sb_dom S (WF : ES.Wf S) k : 
-    dom_rel (Ssb S ⨾ ⦗cont_last S k⦘) ⊆₁ ES.cont_sb_dom S k. 
-  Proof. 
-    unfold ES.cont_sb_dom, cont_last.
-    destruct k as [|e].
-    { rewrite ES.sb_ninit; auto. basic_solver. }
-    basic_solver.
-  Qed.
-
-  Lemma cont_sb_dom_alt S (WF : ES.Wf S) k : 
-     ES.cont_sb_dom S k ≡₁ dom_rel ((Ssb S)^? ⨾ ⦗cont_last S k⦘). 
-  Proof. 
-    split. 
-    { unfold ES.cont_sb_dom, cont_last.
-      destruct k; basic_solver. }
-    rewrite crE. relsf. split.
-    { by apply cont_last_in_cont_sb. }
-    by apply sb_cont_last_in_cont_sb_dom.
-  Qed.
-
-  (* TODO: move to EventStructure.v *)
   Definition cont_adjacent S k k' e e' := 
     ⟪ kREP' : k' = CEvent (opt_ext e e') ⟫ /\ 
     ⟪ kEQTID : ES.cont_thread S k = ES.cont_thread S k' ⟫ /\
-    ⟪ eRMW : eq e × eq_opt e' ⊆ Srmw S ⟫ /\
-    ⟪ kSBRMW : cont_last S k ≡₁ dom_rel (immediate (Ssb S) ⨾ ⦗eq e⦘) ⟫.
+    ⟪ nINITe : SEninit S e ⟫ /\
+    ⟪ RMWe : eq e × eq_opt e' ⊆ Srmw S ⟫ /\
+    ⟪ kSBRMW : ES.cont_sb_dom S k ≡₁ dom_rel (Ssb S ⨾ ⦗eq e⦘) ⟫.
 
-  Lemma cont_adjacent_ninit S (WF : ES.Wf S) k k' e e' 
-        (ADJ : cont_adjacent S k k' e e') :
-     ⊆ Eninit S × Eninit S.
+  Lemma cont_adjacent_rmw S (WF : ES.Wf S) k k' e e' 
+        (ADJ : cont_adjacent S k k' e (Some e')) :
+     Srmw S e e'.
   Proof. 
-    
+    unfold cont_adjacent in ADJ; desc. 
+    apply RMWe. basic_solver.
+  Qed.
+
+  Lemma cont_adjacent_ninit_e S (WF : ES.Wf S) k k' e e' 
+        (ADJ : cont_adjacent S k k' e e') :
+     SEninit S e.
+  Proof. by unfold cont_adjacent in ADJ; desc. Qed.
+
+  Lemma cont_adjacent_ninit_e' S (WF : ES.Wf S) k k' e e' 
+        (ADJ : cont_adjacent S k k' e (Some e')) :
+     SEninit S e'.
+  Proof. 
+    pose proof (cont_adjacent_rmw WF ADJ) as RMW.
+    apply ES.rmwEninit in RMW; auto.
+    generalize RMW. basic_solver. 
+  Qed.
+
+  Lemma cont_adjacent_tid_e S (WF : ES.Wf S) k k' e e' 
+        (ADJ : cont_adjacent S k k' e e') :
+     Stid S e = ES.cont_thread S k.
+  Proof. 
+    unfold cont_adjacent in ADJ; desc.
+    rewrite kEQTID. subst k'.
+    unfold ES.cont_thread, opt_ext in *.
+    destruct e' as [e'|]; auto.
+    apply ES.rmwt; auto.
+    apply RMWe. basic_solver. 
+  Qed.
+
+  Lemma cont_adjacent_tid_e' S (WF : ES.Wf S) k k' e e' 
+        (ADJ : cont_adjacent S k k' e (Some e')) :
+    Stid S e' = ES.cont_thread S k.
+  Proof. 
+    unfold cont_adjacent in ADJ; desc.
+    rewrite kEQTID. subst k'.
+    unfold ES.cont_thread, opt_ext in *; auto.
+  Qed.
+
+  (* Lemma cont_adjacent_K S (WF : ES.Wf S) k k' e e'  *)
+  (*       (ADJ : cont_adjacent S k k' e e') : *)
+  (*   exists st, ⟪ Kk : K S (k', st) ⟫. *)
+  (* Proof.  *)
+  (*   set (AA := ADJ). *)
+  (*   unfold cont_adjacent in AA; desc. subst k'. *)
+  (*   unfold opt_ext, eq_opt in *. *)
+  (*   eapply ES.event_K; auto. *)
+  (*   { destruct e' as [e'|]. *)
+  (*     { eapply cont_adjacent_ninit'; eauto. } *)
+  (*     eapply cont_adjacent_ninit; eauto. } *)
+  (*   destruct e' as [e'|]. *)
+  (*   { intros [x RMW]. *)
+  (*     assert (Srmw S e e') as RMW'. *)
+  (*     { generalize eRMW. basic_solver. } *)
+  (*     apply ES.rmwD in RMW; auto.  *)
+  (*     apply ES.rmwD in RMW'; auto.  *)
+  (*     unfolder in RMW.  *)
+  (*     unfolder in RMW'. *)
+  (*     desc. type_solver. } *)
 
   (* TODO: move to AuxRel *)
   Lemma immediate_transp {A : Type} (r : relation A) : 
@@ -518,7 +542,7 @@ Section SimRelCertStepLemma.
     destruct e' as [e'|].
 
     { assert (Srmw S e e') as RMW.
-      { generalize eRMW. basic_solver. }
+      { generalize RMWe. basic_solver. }
       rewrite crE. relsf.
       rewrite set_unionC.
       apply set_union_Propere; auto.
@@ -531,14 +555,6 @@ Section SimRelCertStepLemma.
           subst y. exists z. 
           splits; auto.
           eapply immediate_tsb_functional; eauto.
-          { split.
-            { apply ES.rmwE in RMW; auto.
-              generalize RMW. basic_solver. }
-            intros INITe.
-            apply ES.acts_init_set_inW in INITe; auto.
-            apply ES.rmwD in RMW; auto.
-            apply seq_eqv_lr in RMW.
-            type_solver. }
           { apply immediate_transp with (r := Ssb S). red.
             eapply ES.rmwi; eauto. }
           apply immediate_transp with (r := Ssb S). by red. }
@@ -554,20 +570,12 @@ Section SimRelCertStepLemma.
       rewrite crE. relsf.
       rewrite set_unionC.
       apply set_union_Propere; auto.
-      rewrite cont_sb_dom_alt; auto.
-      rewrite kSBRMW.
-      rewrite ES.sb_imm_split_r at 1; auto.
-      rewrite seqA.
-      basic_solver 10. }
+      by rewrite kSBRMW. }
 
     rewrite crE. relsf.
     rewrite set_unionC.
     apply set_union_Propere; auto.
-    rewrite cont_sb_dom_alt; auto.
-    rewrite kSBRMW.
-    rewrite ES.sb_imm_split_r at 1; auto.
-    rewrite seqA.
-    basic_solver 10.
+    by rewrite kSBRMW.
   Qed.
 
   Lemma cont_adjacent_sb_dom_mon S (WF : ES.Wf S) k k' e e'
@@ -579,15 +587,72 @@ Section SimRelCertStepLemma.
     basic_solver.
   Qed.
 
-  Definition forwarding S lbl lbl' k k' 
+  Definition forwarding S lbl lbl' k k' e e'
              (st st' : thread_st (ktid S k))
              (Kk  : K S (k , existT _ _ st ))
              (Kk' : K S (k', existT _ _ st')) :=
-    exists e e',
       ⟪ LBL   : lbl  = Slab S e ⟫ /\
       ⟪ LBL'  : lbl' = option_map (Slab S) e' ⟫ /\
       ⟪ ADJ   : cont_adjacent S k k' e e'⟫ /\
       ⟪ STEP  : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫. 
+
+  Lemma forwarding_e2a_e S lbl lbl' k k' e e'
+             (st st' st'': thread_st (ktid S k))
+             (Kk  : K S (k , existT _ _ st ))
+             (Kk' : K S (k', existT _ _ st'))
+             (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+             (FRWD : forwarding S lbl lbl' k k' e e' st st' Kk Kk') :
+    e2a S e = ThreadEvent (ES.cont_thread S k) (eindex st).
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. }
+    
+    unfold forwarding in FRWD. desc.
+    set (AA := ADJ).
+    unfold cont_adjacent in AA. desc.
+    rewrite e2a_ninit; auto. 
+    erewrite cont_adjacent_tid_e; eauto.
+    arewrite (ES.seqn S e = eindex st); auto.
+    unfold ES.cont_sb_dom in kSBRMW.
+    destruct k eqn:Heq.
+    { erewrite continit; eauto.
+      unfold ES.seqn.
+      arewrite (dom_rel (Ssb S ∩ ES.same_tid S ⨾ ⦗eq e⦘) ≡₁ ∅).
+      2 : by erewrite countNatP_empty.
+      split; [|done].
+      rewrite seq_eqv_r.
+      intros x [y [[SB STID] EQy]].
+      red. subst y.
+      eapply ES.init_tid_K; eauto.
+      exists (existT _ _ st), k.
+      splits; [by subst k|]. 
+      subst k. erewrite <- cont_adjacent_tid_e; eauto.
+      rewrite <- STID.
+      assert (SEinit S x) as INITx.
+      { apply kSBRMW. basic_solver 10. }
+      red in INITx. unfolder in INITx. desf. }
+    erewrite contseqn; eauto.
+    erewrite ES.seqn_immsb; eauto.
+    { red. 
+      erewrite cont_adjacent_tid_e 
+        with (k := k) (e := e); eauto.
+      2 : eby subst k.
+      unfold ES.cont_thread. desf. }
+    red. splits.
+    { assert (dom_rel (Ssb S ⨾ ⦗eq e⦘) eid) as HH.
+      { apply kSBRMW. basic_solver 10. }
+      unfolder in HH. desf. } 
+    intros x SB SB'.
+    assert (dom_rel ((Ssb S)^? ⨾ ⦗eq eid⦘) x) as HH.
+    { apply kSBRMW. basic_solver 10. }
+    unfolder in HH. desf.
+    { eapply ES.sb_irr; eauto. }
+    eapply ES.sb_irr; eauto.
+    eapply ES.sb_trans; eauto.
+  Qed.
   
   Lemma simrel_cert_lbl_step k S
         (st st' st'': thread_st (ktid S k))
