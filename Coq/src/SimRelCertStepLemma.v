@@ -467,6 +467,12 @@ Section SimRelCertStepLemma.
     ⟪ eRMW : eq e × eq_opt e' ⊆ Srmw S ⟫ /\
     ⟪ kSBRMW : cont_last S k ≡₁ dom_rel (immediate (Ssb S) ⨾ ⦗eq e⦘) ⟫.
 
+  Lemma cont_adjacent_ninit S (WF : ES.Wf S) k k' e e' 
+        (ADJ : cont_adjacent S k k' e e') :
+     ⊆ Eninit S × Eninit S.
+  Proof. 
+    
+
   (* TODO: move to AuxRel *)
   Lemma immediate_transp {A : Type} (r : relation A) : 
     (immediate r)⁻¹ ≡ immediate (r⁻¹).
@@ -634,6 +640,24 @@ Section SimRelCertStepLemma.
         { apply SRCC. }
         { intros x [EQx _]. subst x.
           unfold compose.
+          erewrite steps_preserve_lab; eauto.
+          { rewrite <- LBL.
+            rewrite e2a_ninit.
+            2 : admit.
+            erewrite ES.seqn_immsb.
+            2-4: admit. 
+            erewrite <- contseqn.
+            2-3: admit.
+            eapply ilbl_step_eindex_lbl; eauto.
+            2 : apply ILBL_STEP. }
+          { by rewrite GTIDe. }
+          { apply lbl_steps_in_steps. 
+              by rewrite GTIDe. }    
+          erewrite basic_step_e2a_e; eauto.
+          eapply acts_clos; auto.
+          eapply ilbl_step_eindex_lt.
+          apply STEP.
+
           erewrite steps_preserve_lab; eauto.    
           unfolder.
           
