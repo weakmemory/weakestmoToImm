@@ -309,12 +309,12 @@ Section SimRelStep.
     { rewrite XkTIDCOV.
       rewrite <- seq_eqvK.
       rewrite <- seqA, collect_rel_seqi.
-      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Tid_ S (ES.cont_thread S k)) ⊆₁
+      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ⊆₁
                 X ∩₁ e2a S ⋄₁ C) at 1 by basic_solver.
       rewrite jf_cov_in_rf; [|by apply SRC].
       rewrite collect_rel_eqv.
-      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Tid_ S (ES.cont_thread S k)) ≡₁
-                X ∩₁ (SEinit S ∪₁ Tid_ S (ES.cont_thread S k)) ∩₁ e2a S ⋄₁ C). 
+      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ≡₁
+                X ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ∩₁ e2a S ⋄₁ C). 
       { basic_solver. }
       rewrite set_collect_inter.
       2: ins; repeat constructor. 
@@ -328,8 +328,8 @@ Section SimRelStep.
         rewrite wf_rfD; try apply SRC.
         type_solver. }
       rewrite collect_map_in_set. 
-      arewrite (X ∩₁ Tid_ S (ES.cont_thread S k) ⊆₁
-                Tid_ S (ES.cont_thread S k)) by basic_solver.
+      arewrite (X ∩₁ STid S (ES.cont_thread S k) ⊆₁
+                STid S (ES.cont_thread S k)) by basic_solver.
       rewrite e2a_Tid.
       arewrite (C ⊆₁ C').
       { eapply sim_trav_step_covered_le.

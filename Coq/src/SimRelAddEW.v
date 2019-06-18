@@ -219,7 +219,7 @@ Section SimRelAddEW.
       { symmetry. eapply basic_step_mod_eq_dom; eauto.
         eapply sim_ewsE; eauto. }
       assert 
-        (restr_rel (SE S') (same_mod S') w' x -> (Smod S') w' = (Smod S') x)
+        (restr_rel (SE S') (same_mod (Slab S')) w' x -> (Smod S') w' = (Smod S') x)
         as HH.
       { basic_solver. }
       apply HH.
@@ -256,7 +256,7 @@ Section SimRelAddEW.
       { symmetry. eapply basic_step_loc_eq_dom; eauto.
         eapply sim_ewsE; eauto. }
       assert 
-        (restr_rel (SE S') (same_loc S') w' x -> (Sloc S') w' = (Sloc S') x)
+        (restr_rel (SE S') (same_loc (Slab S')) w' x -> (Sloc S') w' = (Sloc S') x)
         as HH.
       { basic_solver. }
       apply HH.

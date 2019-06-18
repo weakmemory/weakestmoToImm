@@ -8,6 +8,8 @@ Require Import Consistency.
 
 Set Implicit Arguments.
 
+Section BasicStep.
+
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
 Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
@@ -1537,3 +1539,41 @@ Proof.
   unfolder. ins. desf. splits; auto.
   eapply ES.K_inEninit; eauto.
 Qed.
+
+End BasicStep.
+
+(* Section hides the tactics and hints, so we repeat it here.
+ * TODO: invent a better solution, 
+ *       perhaps it is better to get rid of notation here at all. 
+ *)
+Hint Unfold sb_delta rmw_delta cf_delta : ESStepDb.
+
+Hint Rewrite
+     basic_step_rel_in_rel
+     basic_step_acq_in_acq
+     basic_step_sc_in_sc
+     basic_step_r_in_r
+     basic_step_w_in_w
+     basic_step_f_in_f
+     basic_step_rel_eq_rel
+     basic_step_acq_eq_acq
+     basic_step_sc_eq_sc
+     basic_step_r_eq_r
+     basic_step_w_eq_w
+     basic_step_f_eq_f
+     basic_step_fr_eq_fr
+     basic_step_fw_eq_fw
+     basic_step_fracq_eq_fracq
+     basic_step_fwrel_eq_fwrel
+  : same_lab_solveDb.
+
+Ltac step_solver := 
+  repeat autounfold with ESStepDb in *; 
+  unfold eq_opt, opt_ext in *; 
+  rewrite 1?ES.sbE, 1?ES.rmwE, 1?ES.cfE, 
+    1?ES.cont_sb_domE, 1?ES.cont_cf_domE,
+    1?ES.jfE, 1?ES.jfiE, 1?ES.jfeE,
+    1?ES.rfE, 1?ES.coE, 1?ES.ewE, 
+    1?rsE, 1?releaseE, 1?swE, 1?hbE;
+  unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set in *;
+  eauto; unfolder; ins; splits; desf; omega.

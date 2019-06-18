@@ -237,7 +237,7 @@ Section SimRelEventToAction.
       rewrite <- !restr_relE.
       rewrite <- restr_inter_absorb_r.
       rewrite <- restr_inter_absorb_r 
-        with (r':=same_loc S).
+        with (r':=same_loc Slab).
       rewrite collect_rel_cr.
       rewrite collect_rel_interi. 
       apply clos_refl_mori, inter_rel_mori. 
@@ -274,7 +274,7 @@ Section SimRelEventToAction.
     Qed.
 
     Lemma e2a_kEninit k (st : thread_st (ktid k))
-          (INK : K S (k, thread_cont_st (ktid k) st)) :
+          (INK : K (k, thread_cont_st (ktid k) st)) :
       e2a □₁ (kE k \₁ SEinit) ≡₁ acts_set st.(ProgToExecution.G).
     Proof. 
       assert (wf_thread_state (ktid k) st) as WFT.
@@ -341,7 +341,7 @@ Section SimRelEventToAction.
     Qed.
 
     Lemma e2a_kE k (st : thread_st (ktid k))
-          (INK : K S (k, thread_cont_st (ktid k) st)) :
+          (INK : K (k, thread_cont_st (ktid k) st)) :
       e2a □₁ kE k ≡₁ GEinit ∪₁ acts_set st.(ProgToExecution.G).
     Proof.
       assert (wf_thread_state (ktid k) st) as WFT.
@@ -357,7 +357,7 @@ Section SimRelEventToAction.
     Qed.
 
     Lemma e2a_kE_eindex k (st : thread_st (ktid k))
-          (INK : K S (k, thread_cont_st (ktid k) st)) :
+          (INK : K (k, thread_cont_st (ktid k) st)) :
       ES.seqn S □₁ (kE k \₁ SEinit) ⊆₁ fun n => n < eindex st.
     Proof. 
       unfolder.

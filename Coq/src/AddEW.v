@@ -8,6 +8,8 @@ Require Import BasicStep.
 
 Set Implicit Arguments.
 
+Section AddEW.
+
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
 Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
@@ -49,9 +51,9 @@ Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-(* Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10). *)
-(* Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10). *)
-(* Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10). *)
+Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10).
+Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
+Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
@@ -167,3 +169,10 @@ Proof.
   generalize ewsE. basic_solver.
 Qed.
 
+End AddEW.
+
+(* Section hides the tactics and hints, so we repeat it here.
+ * TODO: invent a better solution, 
+ *       perhaps it is better to get rid of notation here at all. 
+ *)
+Hint Unfold ew_delta : ESStepDb.

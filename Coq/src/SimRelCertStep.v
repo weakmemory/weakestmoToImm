@@ -183,7 +183,7 @@ Section SimRelCertStep.
              (e' : option eventid)
              (S S' : ES.t) : Prop := 
     exists w w',
-      ⟪ SLOC : same_loc S' e w' ⟫ /\
+      ⟪ SLOC : same_loc (Slab S') e w' ⟫ /\
       ⟪ ESOME : e' = Some w' ⟫ /\ 
       ⟪ AJF : sim_add_jf G sc TC' X k w e S S' ⟫ /\ 
       ⟪ AEW : sim_add_ew TC X w' S S' ⟫ /\
@@ -1007,9 +1007,9 @@ Section SimRelCertStep.
   
   Lemma release_part_alt S (WFS : ES.Wf S) :
     ⦗SRel S⦘ ⨾ (⦗SF S⦘ ⨾ Ssb S)^? ⨾ ⦗SE S ∩₁ SW S⦘ ⨾
-    (Ssb S ∩ same_loc S)^? ⨾ ⦗SW S⦘ ⊆
+    (Ssb S ∩ same_loc (Slab S))^? ⨾ ⦗SW S⦘ ⊆
     ⦗SRel S⦘ ∪
-    ⦗SRel S⦘ ⨾ (⦗SF S⦘ ⨾ Ssb S ∪ ⦗SW S⦘ ⨾ Ssb S ∩ same_loc S) ⨾
+    ⦗SRel S⦘ ⨾ (⦗SF S⦘ ⨾ Ssb S ∪ ⦗SW S⦘ ⨾ Ssb S ∩ same_loc (Slab S)) ⨾
       ⦗SW S⦘.
   Proof.
     rewrite !crE.
@@ -1018,7 +1018,7 @@ Section SimRelCertStep.
     1-3: basic_solver 10.
     rewrite !seqA.
     arewrite_id ⦗SE S ∩₁ SW S⦘. rewrite !seq_id_l.
-    arewrite (Ssb S ∩ same_loc S ⊆ Ssb S).
+    arewrite (Ssb S ∩ same_loc (Slab S) ⊆ Ssb S).
     arewrite (Ssb S ⨾ Ssb S ⊆ Ssb S).
     { apply rewrite_trans. apply WFS. }
     basic_solver 10.
@@ -1029,7 +1029,7 @@ Section SimRelCertStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
         (CertSTEP : cert_step k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    ⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc S') ⨾ ⦗SW S'⦘
+    ⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S' ∪ ⦗SW S'⦘ ⨾ Ssb S' ∩ same_loc (Slab S')) ⨾ ⦗SW S'⦘
       ⊆ Ssb S' ∩ (e2a S' ⋄ fwbob G).
   Proof.
     cdes CertSTEP.
@@ -1055,9 +1055,9 @@ Section SimRelCertStep.
     rewrite WFS'.(ES.sbE).
     arewrite
       (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ ⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘ ∪
-       ⦗SW S'⦘ ⨾ (⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘) ∩ same_loc S') ⨾ ⦗SW S'⦘ ⊆
+       ⦗SW S'⦘ ⨾ (⦗SE S'⦘ ⨾ Ssb S' ⨾ ⦗SE S'⦘) ∩ same_loc (Slab S')) ⨾ ⦗SW S'⦘ ⊆
        ⦗SE S' ∩₁ SRel S'⦘ ⨾ (⦗SE S' ∩₁ SF S'⦘ ⨾ Ssb S' ∪
-       ⦗SE S' ∩₁ SW S'⦘ ⨾ Ssb S' ∩ restr_rel (SE S') (same_loc S')) ⨾
+       ⦗SE S' ∩₁ SW S'⦘ ⨾ Ssb S' ∩ restr_rel (SE S') (same_loc (Slab S'))) ⨾
          ⦗SE S' ∩₁ SW S'⦘).
     { basic_solver 20. }
     rewrite !collect_rel_seqi.
@@ -1399,7 +1399,7 @@ Section SimRelCertStep.
 
     rewrite !seqA.
     arewrite (⦗SRel S'⦘ ⨾ (⦗SF S'⦘ ⨾ Ssb S')^? ⨾
-                ⦗SE S' ∩₁ SW S'⦘ ⨾ (Ssb S' ∩ same_loc S')^? ⨾
+                ⦗SE S' ∩₁ SW S'⦘ ⨾ (Ssb S' ∩ same_loc (Slab S'))^? ⨾
                 ⦗SW S'⦘ ⨾ (Sjf S' ⨾ Srmw S')＊ ⊆
               release S').
     assert (SE S w) as SEW.
@@ -1483,9 +1483,9 @@ Section SimRelCertStep.
     rewrite e2a_rmw; eauto.
     rewrite e2a_sb; eauto; try apply SRCC.
     
-    arewrite (e2a S' □ same_loc S' ∩ Ssb S' ⊆ Gsb ∩ Events.same_loc Glab).
+    arewrite (e2a S' □ same_loc (Slab S') ∩ Ssb S' ⊆ Gsb ∩ same_loc Glab).
     { apply inclusion_inter_r.
-      { arewrite (same_loc S' ∩ Ssb S' ⊆ Ssb S').
+      { arewrite (same_loc (Slab S') ∩ Ssb S' ⊆ Ssb S').
         eapply e2a_sb; eauto; try apply SRCC. }
       rewrite WFS'.(ES.sbE). rewrite <- restr_relE.
       rewrite <- restr_inter_absorb_l.
