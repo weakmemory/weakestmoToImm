@@ -205,7 +205,7 @@ Section SimRelAddCO.
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
-      sim_ws k w' S S' ⊆₁ same_loc S' w'.
+      sim_ws k w' S S' ⊆₁ same_loc (Slab S') w'.
     Proof.
       cdes BSTEP_. 
       assert (basic_step e e' S S') as BSTEP.
@@ -215,7 +215,7 @@ Section SimRelAddCO.
       assert (Wf G) as WFG.
       { apply SRCC. }
       intros w Wx. desc.
-      assert ((restr_rel (SE S') (same_loc S')) w' w) as SLOC.
+      assert ((restr_rel (SE S') (same_loc (Slab S'))) w' w) as SLOC.
       { eapply same_lab_u2v_dom_same_loc.
         { eapply basic_step_e2a_same_lab_u2v; eauto; apply SRCC. }
         red; splits; auto.

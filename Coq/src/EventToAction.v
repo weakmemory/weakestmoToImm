@@ -203,7 +203,7 @@ Section EventToAction.
   (******************************************************************************)
 
   Lemma e2a_eq_in_cf x y (Ex : SE x) (Ey : SE y) :
-    e2a x = e2a y -> x = y \/ cf S x y. 
+    e2a x = e2a y -> x = y \/ Scf x y. 
   Proof. 
     intros EQ.
     apply ES.acts_set_split in Ex.
@@ -300,7 +300,7 @@ Section EventToAction.
   Qed.
 
   Lemma e2a_cont_sb_dom_inj k a b lang (st : Language.state lang)
-        (KE : K S (k, existT Language.state lang st))
+        (KE : K (k, existT Language.state lang st))
         (ACTS : e2a □₁ SE ⊆₁ acts_set G)
         (AIN : ES.cont_sb_dom S k a)
         (BIN : ES.cont_sb_dom S k b)

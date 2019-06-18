@@ -268,7 +268,7 @@ Section SimRelAddJF.
         eapply same_lab_u2v_dom_is_w; eauto.
         { eapply e2a_lab. apply SRCC. }
         red; split; auto. }
-      { assert (restr_rel (SE S') (same_loc S') w e) as HH.
+      { assert (restr_rel (SE S') (same_loc (Slab S')) w e) as HH.
         { eapply same_lab_u2v_dom_same_loc.
           { eapply basic_step_e2a_same_lab_u2v; eauto; apply SRCC. }
           apply restr_relE, seq_eqv_lr. 
@@ -327,7 +327,7 @@ Section SimRelAddJF.
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-      e2a S' □ jf S' ⨾ ⦗kE S' k'⦘ ⊆ cert_rf G sc TC' (ktid S' k').
+      e2a S' □ Sjf S' ⨾ ⦗kE S' k'⦘ ⊆ cert_rf G sc TC' (ktid S' k').
     Proof. 
       cdes BSTEP_; cdes SAJF.
       assert (ES.Wf S) as WFS by apply SRCC.
