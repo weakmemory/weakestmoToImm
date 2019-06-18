@@ -762,6 +762,16 @@ Proof.
   rewrite hbE; auto. basic_solver 5.
 Qed. 
 
+Lemma step_hb_mon e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (STEP : step_ e e' S S')
+      (wfE: ES.Wf S) :
+  hb S ⊆ hb S'.
+Proof.
+  rewrite <- step_hbE; eauto with hahn.
+  basic_solver.
+Qed.  
+
 (******************************************************************************)
 (** ** Step preserves executions lemma  *)
 (******************************************************************************)
