@@ -667,6 +667,9 @@ Section SimRelCertStepLemma.
   Proof.
     assert (Wf G) as WF by apply SRCC.
     assert (ES.Wf S) as WFS by apply SRCC.
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
 
     edestruct LBL_STEP as [lbl ILBL_STEP].
     edestruct lbl_step_lbls as [l [l' EQlbl]]; eauto.
@@ -676,12 +679,23 @@ Section SimRelCertStepLemma.
     { edestruct cstate_cont; [apply SRCC|]. desf. }
 
     destruct (classic 
-      (exists k' Kk', forwarding S l l' k k' st st' Kk Kk')
-    ) as [[k' [Kk' FRWD]] | nFRWD].
-    { unfold forwarding in FRWD. desc.
+      (exists k' e e' Kk', forwarding S l l' k k' e e' st st' Kk Kk')
+    ) as [[k' [e [e' [Kk' FRWD]]]] | nFRWD].
+    { set (HH := FRWD).
+      unfold forwarding in HH. desc.
       assert (ktid S k = ktid S k') as kEQTID.
       { by apply ADJ. }
       exists k', S. splits; auto.
+      
+      assert (wf_thread_state (ktid S k) st) as WFst.
+      { eapply contwf; eauto. }
+      assert (wf_thread_state (ktid S k) st') as WFst'.
+      { rewrite kEQTID. eapply contwf; eauto. by rewrite <- kEQTID. }
+      assert (Gtid (e2a S e) = ES.cont_thread S k) as GTIDe.
+      { erewrite e2a_ninit; [|apply ADJ].
+        unfold Events.tid.
+        erewrite cont_adjacent_tid_e; eauto. }
+      
       constructor; auto. 
       all: try rewrite <- kEQTID.
       all: try apply SRCC.
@@ -707,32 +721,17 @@ Section SimRelCertStepLemma.
           unfold compose.
           erewrite steps_preserve_lab; eauto.
           { rewrite <- LBL.
-            rewrite e2a_ninit.
-            2 : admit.
-            erewrite ES.seqn_immsb.
-            2-4: admit. 
-            erewrite <- contseqn.
-            2-3: admit.
-            eapply ilbl_step_eindex_lbl; eauto.
-            2 : apply ILBL_STEP. }
+            erewrite forwarding_e2a_e; eauto.
+            eapply ilbl_step_eindex_lbl; eauto. }
           { by rewrite GTIDe. }
           { apply lbl_steps_in_steps. 
-              by rewrite GTIDe. }    
-          erewrite basic_step_e2a_e; eauto.
-          eapply acts_clos; auto.
+              by rewrite GTIDe. }
+          erewrite forwarding_e2a_e; eauto.
+          eapply acts_clos; eauto.
           eapply ilbl_step_eindex_lt.
-          apply STEP.
+          apply STEP. }
 
-          erewrite steps_preserve_lab; eauto.    
-          unfolder.
-          
-          eapply basic_step_e2a_lab_e with (S:=S); eauto; apply SRCC. }
-        eapply basic_step_e2a_lab_e' with (S:=S); eauto; apply SRCC.
-
-
-        eapply simrel_cert_step_kE_lab; eauto. } 
-        {  }
-      
+        
 
     edestruct simrel_cert_step as [k' HH]; eauto. desc.
     cdes CertSTEP.
