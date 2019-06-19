@@ -657,8 +657,12 @@ Section SimRelCertStepLemma.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     simrel_cert prog S G sc TC TC' X k' st' st''.
   Proof. 
-    assert (Wf G) as WF by apply SRCC.
+    assert (Wf G) as WFG by apply SRCC.
     assert (ES.Wf S) as WFS by apply SRCC.
+    assert (simrel_e2a S G sc) as SRE2A.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. } 
     assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
       as SRCONT.
     { apply SRCC. } 
@@ -773,8 +777,92 @@ Section SimRelCertStepLemma.
       apply ES.rmwD in RMW; auto.
       rewrite ES.jfD; auto.
       generalize RMW. type_solver. }
-   
-      
+    (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE' ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE' ⦘) *)
+    { erewrite cont_adjacent_sb_dom; eauto.
+      edestruct ilbl_step_acts_set as [a [a' HH]].
+      { apply WFst. }
+      { edone. }
+      destruct HH as [EQa [EQa' ACTS]].
+      red in EQa, EQa', ACTS. 
+      rewrite ACTS.
+      rewrite !set_inter_union_l, !set_map_union.
+      rewrite !set_inter_union_r, !id_union, 
+              !seq_union_r, !dom_union.
+      apply set_union_Proper;
+        [apply set_union_Proper|].
+      { apply SRCC. }
+      { intros x [Xx [EQx Ix]].
+        assert (x = e) as EQe.
+        { edestruct e2a_eq_in_cf
+            with (x := x) (y := e) as [EQ | CF]; eauto.
+          { eapply Execution.ex_inE; eauto. }
+          { eapply cont_adjacent_ninit_e; eauto. }
+          { rewrite <- EQx.
+            erewrite forwarding_e2a_e; eauto. }
+          exfalso. 
+          admit. }
+        admit. }
+      admit. }
+    (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE'⦘ ⊆ e2a □ Srmw ⨾ ⦗kE'⦘ *)
+    { erewrite cont_adjacent_sb_dom; eauto.
+      rewrite !set_collect_union.
+      rewrite !set_inter_union_r.
+      rewrite !id_union.
+      rewrite !seq_union_r, !collect_rel_union.
+      repeat apply union_mori.
+      { apply SRCC. }
+      { rewrite !seq_eqv_r.
+        intros x y [RMW [Cy [y' [EQy' E2Ae]]]].
+        subst y y'. exfalso. 
+        erewrite forwarding_e2a_e in Cy, RMW; eauto.
+        assert (exists xindex,
+                   ⟪ ILT : xindex < eindex st ⟫ /\
+                   x = ThreadEvent (ES.cont_thread S k) xindex).
+        { destruct x; simpls.
+          { apply WFG.(rmw_from_non_init) in RMW.
+            destruct_seq_l RMW as AA. desf. }
+          apply WFG.(rmw_in_sb) in RMW.
+          destruct_seq RMW as [AA BB].
+          red in RMW. desf. eauto. }
+        desf.
+        assert (eindex st < eindex st') as LTST.
+        { eapply ilbl_step_eindex_lt. apply STEP. }
+        assert (eindex st' <= eindex st'') as LTST'.
+        { eapply eindex_steps_mon; eauto. 
+          apply lbl_steps_in_steps; eauto. }
+        eapply eindex_not_in_rmw
+          with (thread := ktid S k) (st := st) (st' := st'); eauto.
+        { eapply ktid_ninit; eauto. }
+        { apply lbl_steps_in_steps; eauto.
+          apply rt_step. red. eauto. }
+        eexists. 
+        eapply steps_dont_add_rmw; eauto.
+        { apply lbl_steps_in_steps; eauto. }
+        apply seq_eqv_l. split.
+        { red. eapply acts_clos; [edone|].
+          etransitivity.
+          2 : eapply lbl_step_eindex_lt; red; eauto. 
+          eapply ILT. }
+        eapply dcertRMW; [eapply SRCC|]. 
+        apply seq_eqv_lr; splits; auto.
+        all: apply acts_clos; auto.
+        all: try omega.
+        all: eapply wf_cert_state; eauto. }
+      unfold eq_opt.
+      destruct e' as [e'|].
+      2 : basic_solver. 
+      rewrite !seq_eqv_r.
+      intros x y [RMW [Cy [y' [EQy' E2Ae]]]].
+      subst y y'. 
+      exists e, e'. splits; auto.
+      { eapply cont_adjacent_rmw; eauto. }
+      eapply wf_rmw_invf; eauto.
+      eapply e2a_rmw with (S := S); eauto.
+      red. do 2 eexists.
+      splits; eauto.
+      eapply cont_adjacent_rmw; eauto. }
+    admit.
+  Admitted.
   
   Lemma simrel_cert_lbl_step k S
         (st st' st'': thread_st (ktid S k))

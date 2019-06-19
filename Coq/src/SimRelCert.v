@@ -274,6 +274,14 @@ Section SimRelCert.
       apply SRCC. desf.
     Qed.
 
+    Lemma wf_cert_state : 
+      wf_thread_state ktid st'. 
+    Proof.
+      eapply wf_thread_state_lbl_steps.
+      { eapply wf_cont_state. }
+      apply SRCC. 
+    Qed.
+
     Lemma thread_event_ge_ncov idx (ge : idx >= eindex st) : 
       ~ C (ThreadEvent ktid idx).
     Proof. 
