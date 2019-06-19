@@ -588,34 +588,28 @@ Section SimRelCertStepLemma.
   Qed.
 
   Definition forwarding S lbl lbl' k k' e e'
-             (st st' : thread_st (ktid S k))
-             (Kk  : K S (k , existT _ _ st ))
-             (Kk' : K S (k', existT _ _ st')) :=
-      ⟪ LBL   : lbl  = Slab S e ⟫ /\
-      ⟪ LBL'  : lbl' = option_map (Slab S) e' ⟫ /\
-      ⟪ ADJ   : cont_adjacent S k k' e e'⟫ /\
-      ⟪ STEP  : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫. 
+             (st st' : thread_st (ktid S k)) :=
+    ⟪ LBL  : lbl  = Slab S e ⟫ /\
+    ⟪ LBL' : lbl' = option_map (Slab S) e' ⟫ /\
+    ⟪ Kk   : K S (k , existT _ _ st ) ⟫ /\
+    ⟪ Kk'  : K S (k', existT _ _ st') ⟫ /\
+    ⟪ ADJ  : cont_adjacent S k k' e e'⟫ /\
+    ⟪ STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫. 
 
-  Lemma forwarding_e2a_e S lbl lbl' k k' e e'
+  Lemma forwarding_seqn_e S lbl lbl' k k' e e'
              (st st' st'': thread_st (ktid S k))
-             (Kk  : K S (k , existT _ _ st ))
-             (Kk' : K S (k', existT _ _ st'))
              (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
-             (FRWD : forwarding S lbl lbl' k k' e e' st st' Kk Kk') :
-    e2a S e = ThreadEvent (ES.cont_thread S k) (eindex st).
+             (FRWD : forwarding S lbl lbl' k k' e e' st st') :
+    ES.seqn S e = eindex st.
   Proof. 
     assert (ES.Wf S) as WF.
     { apply SRCC. }
     assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
       as SRCONT.
     { apply SRCC. }
-    
     unfold forwarding in FRWD. desc.
     set (AA := ADJ).
     unfold cont_adjacent in AA. desc.
-    rewrite e2a_ninit; auto. 
-    erewrite cont_adjacent_tid_e; eauto.
-    arewrite (ES.seqn S e = eindex st); auto.
     unfold ES.cont_sb_dom in kSBRMW.
     destruct k eqn:Heq.
     { erewrite continit; eauto.
@@ -653,6 +647,157 @@ Section SimRelCertStepLemma.
     eapply ES.sb_irr; eauto.
     eapply ES.sb_trans; eauto.
   Qed.
+
+  Lemma forwarding_seqn_e' S lbl lbl' k k' e e'
+        (st st' st'': thread_st (ktid S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e (Some e') st st') :
+    ES.seqn S e' = 1 + eindex st.
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. }
+    set (AA := FRWD).
+    unfold forwarding in AA. desc.
+    set (AA := ADJ).
+    unfold cont_adjacent in AA. desc.
+    assert (immediate (ES.sb S) e e') as IMMSB.
+    { apply ES.rmwi; auto.
+      apply RMWe. basic_solver. }
+    erewrite ES.seqn_immsb 
+      with (x := e); eauto; try red; splits.
+    { erewrite forwarding_seqn_e; eauto. }
+    erewrite cont_adjacent_tid_e; eauto. 
+    erewrite cont_adjacent_tid_e'
+      with (k := k); eauto. 
+  Qed.
+
+  Lemma forwarding_e2a_e S lbl lbl' k k' e e'
+             (st st' st'': thread_st (ktid S k))
+             (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+             (FRWD : forwarding S lbl lbl' k k' e e' st st') :
+    e2a S e = ThreadEvent (ES.cont_thread S k) (eindex st).
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (cont_adjacent S k k' e e') as ADJ.
+    { apply FRWD. }
+    rewrite e2a_ninit; auto.
+    2 : eapply cont_adjacent_ninit_e; eauto.
+    erewrite cont_adjacent_tid_e; eauto.
+    erewrite forwarding_seqn_e; eauto.
+  Qed.
+
+  Lemma forwarding_e2a_e' S lbl lbl' k k' e e'
+        (st st' st'': thread_st (ktid S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e (Some e') st st') :
+    e2a S e' = ThreadEvent (ES.cont_thread S k) (1 + eindex st).
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (cont_adjacent S k k' e (Some e')) as ADJ.
+    { apply FRWD. }
+    rewrite e2a_ninit; auto.
+    2 : eapply cont_adjacent_ninit_e'; eauto.
+    erewrite cont_adjacent_tid_e'; eauto.
+    erewrite forwarding_seqn_e'; eauto.
+  Qed.
+
+  Lemma simrel_cert_forwarding lbl lbl' k k' e e' S
+        (st st' st'': thread_st (ktid S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (ILBL_STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    simrel_cert prog S G sc TC TC' X k' st' st''.
+  Proof. 
+    assert (Wf G) as WF by apply SRCC.
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+
+    set (HH := FRWD).
+    unfold forwarding in HH. desc.
+    assert (ktid S k = ktid S k') as kEQTID.
+    { by apply ADJ. }
+
+    assert (wf_thread_state (ktid S k) st) as WFst.
+    { eapply contwf; eauto. }
+    assert (wf_thread_state (ktid S k) st') as WFst'.
+    { rewrite kEQTID. eapply contwf; eauto. by rewrite <- kEQTID. }
+    assert (Gtid (e2a S e) = ES.cont_thread S k) as GTIDe.
+    { erewrite e2a_ninit; [|apply ADJ].
+      unfold Events.tid.
+      erewrite cont_adjacent_tid_e; eauto. }
+    
+    constructor; auto. 
+    all: try rewrite <- kEQTID.
+    all: try apply SRCC.
+    (* cstate : simrel_cstate S k' st' st'' *)      
+    { constructor. 
+      { eapply cstate_stable, SRCC. }
+      { red. exists st'. splits; eauto.
+          by rewrite <- kEQTID. }
+        by rewrite <- kEQTID. }
+    (* ex_ktid_cov : X ∩₁ STid ktid' ∩₁ e2a ⋄₁ C ⊆₁ kE' *)
+    { etransitivity; [apply SRCC|].
+      eapply cont_adjacent_sb_dom_mon; eauto. }
+    (* cov_in_ex : e2a ⋄₁ C ∩₁ kE' ⊆₁ X *)
+    { admit. }
+    (* kE_lab : eq_dom (kE' \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
+    { rewrite cont_adjacent_sb_dom 
+        with (k' := k'); eauto.
+      rewrite set_unionA.
+      rewrite !set_minus_union_l.
+      rewrite !eq_dom_union. splits.
+      { apply SRCC. }
+      { intros x [EQx _]. subst x.
+        unfold compose.
+        erewrite steps_preserve_lab; eauto.
+        { rewrite <- LBL.
+          erewrite forwarding_e2a_e; eauto.
+          eapply ilbl_step_eindex_lbl; eauto. }
+        { by rewrite GTIDe. }
+        { apply lbl_steps_in_steps. 
+            by rewrite GTIDe. }
+        erewrite forwarding_e2a_e; eauto.
+        eapply acts_clos; eauto.
+        eapply ilbl_step_eindex_lt.
+        apply STEP. }
+      intros x [EQx _]. 
+      unfold eq_opt in EQx. 
+      destruct e' as [e'|]; [|done]. 
+      assert (Gtid (e2a S e') = ES.cont_thread S k) as GTIDe'.
+      { erewrite e2a_ninit.
+        2 : eapply cont_adjacent_ninit_e'; eauto.
+        unfold Events.tid.
+        erewrite cont_adjacent_tid_e'; eauto. }
+      subst x. unfold compose.
+      erewrite steps_preserve_lab; eauto.
+      { unfold option_map in LBL'.
+        destruct lbl' as [lbl'|]; 
+          inversion LBL' as [HLBL'].
+        rewrite <- HLBL'.
+        erewrite forwarding_e2a_e'; eauto.
+        eapply ilbl_step_eindex_lbl'; eauto. }
+      { by rewrite GTIDe'. }
+      { apply lbl_steps_in_steps. 
+          by rewrite GTIDe'. }
+      erewrite forwarding_e2a_e'; eauto.
+      eapply acts_clos; eauto.
+      erewrite ilbl_step_eindex_shift
+        with (st' := st'); eauto.
+      unfold option_map in LBL'.
+      destruct lbl' as [lbl'|].
+      2 : inversion LBL'.
+      unfold opt_to_list, app, length.
+      omega. }
+    
+      
   
   Lemma simrel_cert_lbl_step k S
         (st st' st'': thread_st (ktid S k))
@@ -681,55 +826,7 @@ Section SimRelCertStepLemma.
     destruct (classic 
       (exists k' e e' Kk', forwarding S l l' k k' e e' st st' Kk Kk')
     ) as [[k' [e [e' [Kk' FRWD]]]] | nFRWD].
-    { set (HH := FRWD).
-      unfold forwarding in HH. desc.
-      assert (ktid S k = ktid S k') as kEQTID.
-      { by apply ADJ. }
-      exists k', S. splits; auto.
-      
-      assert (wf_thread_state (ktid S k) st) as WFst.
-      { eapply contwf; eauto. }
-      assert (wf_thread_state (ktid S k) st') as WFst'.
-      { rewrite kEQTID. eapply contwf; eauto. by rewrite <- kEQTID. }
-      assert (Gtid (e2a S e) = ES.cont_thread S k) as GTIDe.
-      { erewrite e2a_ninit; [|apply ADJ].
-        unfold Events.tid.
-        erewrite cont_adjacent_tid_e; eauto. }
-      
-      constructor; auto. 
-      all: try rewrite <- kEQTID.
-      all: try apply SRCC.
-      (* cstate : simrel_cstate S k' st' st'' *)      
-      { constructor. 
-        { eapply cstate_stable, SRCC. }
-        { red. exists st'. splits; eauto.
-          by rewrite <- kEQTID. }
-        by rewrite <- kEQTID. }
-      (* ex_ktid_cov : X ∩₁ STid ktid' ∩₁ e2a ⋄₁ C ⊆₁ kE' *)
-      { etransitivity; [apply SRCC|].
-        eapply cont_adjacent_sb_dom_mon; eauto. }
-      (* cov_in_ex : e2a ⋄₁ C ∩₁ kE' ⊆₁ X *)
-      { admit. }
-      (* kE_lab : eq_dom (kE' \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
-      { rewrite cont_adjacent_sb_dom 
-          with (k' := k'); eauto.
-        rewrite set_unionA.
-        rewrite !set_minus_union_l.
-        rewrite !eq_dom_union. splits.
-        { apply SRCC. }
-        { intros x [EQx _]. subst x.
-          unfold compose.
-          erewrite steps_preserve_lab; eauto.
-          { rewrite <- LBL.
-            erewrite forwarding_e2a_e; eauto.
-            eapply ilbl_step_eindex_lbl; eauto. }
-          { by rewrite GTIDe. }
-          { apply lbl_steps_in_steps. 
-              by rewrite GTIDe. }
-          erewrite forwarding_e2a_e; eauto.
-          eapply acts_clos; eauto.
-          eapply ilbl_step_eindex_lt.
-          apply STEP. }
+    { exists k', S. splits; auto.
 
         
 

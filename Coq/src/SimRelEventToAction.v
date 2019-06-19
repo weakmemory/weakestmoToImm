@@ -822,27 +822,22 @@ Section SimRelEventToActionLemmas.
     arewrite ((Slab S') e' = lbl').
     { rewrite LAB'. unfold upd_opt, opt_ext in *.
       by rewrite upds. }
-    edestruct lbl_step_cases as [l [l' HH]]. 
-    { eapply SRK; eauto. }
-    { eapply STEP. }
-    destruct HH as [AA BB].
-    apply opt_to_list_app_singl in AA.
-    destruct AA as [LA LB].
-    subst l l'.
-    destruct BB as [BB | BB]; [desf|].
-    erewrite steps_preserve_lab.    
-    { erewrite basic_step_e2a_e'.
-        2-5 : eauto; apply SRCC.
-        destruct BB as [_ [ACTS [LAB HH]]].
-        desf. rewrite LAB.
-        unfold upd_opt.
-        by rewrite upds. }
+    erewrite steps_preserve_lab; eauto.
+    { erewrite basic_step_e2a_e'; eauto.
+      eapply ilbl_step_eindex_lbl'; eauto.
+      { eapply SRK; eauto. }
+      apply STEP. }
     { by rewrite GTIDe. }
     { apply lbl_steps_in_steps. 
       by rewrite GTIDe. }    
     erewrite basic_step_e2a_e'.
     2-5 : eauto; apply SRCC.
-    desf; apply ACTS; basic_solver.    
+    eapply acts_clos; auto.
+    erewrite ilbl_step_eindex_shift 
+      with (st' := st').
+    2 : eapply STEP.
+    unfold opt_to_list, app, length.
+    omega.
   Qed.
 
   Lemma basic_step_e2a_certlab_e TC' k k' e e' S' 
