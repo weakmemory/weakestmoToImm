@@ -1,4 +1,4 @@
-Require Import Program.Basics.
+Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
@@ -264,7 +264,7 @@ Section SimRelCert.
       erewrite <- e2a_tid.
       apply INITx.
     Qed.
-
+        
     Lemma wf_cont_state : 
       wf_thread_state ktid st. 
     Proof. 
@@ -272,6 +272,34 @@ Section SimRelCert.
       { apply SRCC. }
       eapply contwf; eauto. 
       apply SRCC. desf.
+    Qed.
+
+    Lemma thread_event_ge_ncov idx (ge : idx >= eindex st) : 
+      ~ C (ThreadEvent ktid idx).
+    Proof. 
+      intros Cx.  
+      assert ((C ∩₁ GTid ktid) (ThreadEvent ktid idx)) as HH.
+      { split; auto. }
+      eapply cstate_covered in HH; eauto.
+      eapply acts_rep in HH; desc.
+      2 : eapply wf_cont_state; eauto.
+      inversion REP. omega.
+    Qed.
+
+    Lemma e2a_ge_ncov e 
+          (Se : SE e)
+          (TIDe : Stid e = ktid)
+          (SEQNe : ES.seqn S e >= eindex st) :
+      ~ C (e2a e).
+    Proof. 
+      intros Ce.
+      erewrite e2a_ninit in Ce.
+      { eapply thread_event_ge_ncov; eauto.
+        congruence. }
+      split; auto.
+      intros [_ INITe].
+      eapply ktid_ninit.
+      congruence.
     Qed.
 
     Lemma trav_step_cov_sb_iss_le : 

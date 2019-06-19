@@ -173,31 +173,6 @@ Section SimRelCertStepLemma.
     basic_solver. 
   Qed.
 
-  (* Lemma simrel_cert_step_ex_ktid_cov k k' e e' S S' *)
-  (*       (st st' st'': (thread_st (ktid S k))) *)
-  (*       (SRCC : simrel_cert prog S G sc TC TC' X k st st'')  *)
-  (*       (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S') *)
-  (*       (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : *)
-  (*   X ∩₁ Stid_ S' (ktid S' k') ∩₁ e2a S' ⋄₁ C ⊆₁ kE S' k'.  *)
-  (* Proof.  *)
-  (*   cdes CertSTEP. *)
-  (*   assert (ES.Wf S) as WFS by apply SRCC. *)
-  (*   assert (Execution.t S X) as EXEC by apply SRCC. *)
-  (*   assert (basic_step e e' S S') as BSTEP. *)
-  (*   { econstructor; eauto. } *)
-  (*   (* TODO: make a lemma `cont_sb_mon` *) *)
-  (*   erewrite basic_step_cont_sb_dom; eauto. *)
-  (*   unionR left -> left. *)
-  (*   erewrite basic_step_cont_thread_k; eauto. *)
-  (*   erewrite simrel_cert_basic_step_ex_tid; eauto. *)
-  (*   erewrite basic_step_e2a_set_map_inter_old *)
-  (*     with (S := S); eauto. *)
-  (*   { apply SRCC. } *)
-  (*   erewrite Execution.ex_inE  *)
-  (*     with (X := X); eauto. *)
-  (*   basic_solver.  *)
-  (* Qed. *)
-
   Lemma simrel_cert_step_cov_in_ex k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
@@ -224,27 +199,15 @@ Section SimRelCertStepLemma.
     rewrite set_inter_union_r. 
     unfolder. unionL.
     { intros x [Cx EQx]. subst x. exfalso. 
-      assert ((C ∩₁ GTid ktid S k) (e2a S' e)) as HH.
-      { split; auto.
-        erewrite basic_step_e2a_e; eauto.
-        by unfold Events.tid. }
-      eapply cstate_covered in HH; eauto.
-      eapply acts_rep in HH; desc.
-      2 : eapply wf_cont_state; eauto.
-      erewrite basic_step_e2a_e in REP; eauto.
-      inversion REP. omega. }
+      erewrite basic_step_e2a_e in Cx; eauto.
+      eapply thread_event_ge_ncov; eauto. }
     intros x [Cx EQx].
     destruct e' as [e'|]; [|done].
     subst x. exfalso. 
-    assert ((C ∩₁ GTid ktid S k) (e2a S' e')) as HH.
-    { split; auto.
-      erewrite basic_step_e2a_e'; eauto.
-      by unfold Events.tid. }
-    eapply cstate_covered in HH; eauto.
-    eapply acts_rep in HH; desc.
-    2 : eapply wf_cont_state; eauto.
-    erewrite basic_step_e2a_e' in REP; eauto.
-    inversion REP. omega.
+    erewrite basic_step_e2a_e' in Cx; eauto.
+    eapply thread_event_ge_ncov.
+    1,3: eauto.
+    omega.
   Qed.
 
   Lemma simrel_cert_step_kE_lab k k' e e' S S'
@@ -475,27 +438,6 @@ Section SimRelCertStepLemma.
     rewrite kEQTID. subst k'.
     unfold ES.cont_thread, opt_ext in *; auto.
   Qed.
-
-  (* Lemma cont_adjacent_K S (WF : ES.Wf S) k k' e e'  *)
-  (*       (ADJ : cont_adjacent S k k' e e') : *)
-  (*   exists st, ⟪ Kk : K S (k', st) ⟫. *)
-  (* Proof.  *)
-  (*   set (AA := ADJ). *)
-  (*   unfold cont_adjacent in AA; desc. subst k'. *)
-  (*   unfold opt_ext, eq_opt in *. *)
-  (*   eapply ES.event_K; auto. *)
-  (*   { destruct e' as [e'|]. *)
-  (*     { eapply cont_adjacent_ninit'; eauto. } *)
-  (*     eapply cont_adjacent_ninit; eauto. } *)
-  (*   destruct e' as [e'|]. *)
-  (*   { intros [x RMW]. *)
-  (*     assert (Srmw S e e') as RMW'. *)
-  (*     { generalize eRMW. basic_solver. } *)
-  (*     apply ES.rmwD in RMW; auto.  *)
-  (*     apply ES.rmwD in RMW'; auto.  *)
-  (*     unfolder in RMW.  *)
-  (*     unfolder in RMW'. *)
-  (*     desc. type_solver. } *)
 
   (* TODO: move to AuxRel *)
   Lemma immediate_transp {A : Type} (r : relation A) : 
@@ -748,7 +690,28 @@ Section SimRelCertStepLemma.
     { etransitivity; [apply SRCC|].
       eapply cont_adjacent_sb_dom_mon; eauto. }
     (* cov_in_ex : e2a ⋄₁ C ∩₁ kE' ⊆₁ X *)
-    { admit. }
+    { rewrite cont_adjacent_sb_dom 
+        with (k' := k'); eauto.
+      rewrite set_unionA.
+      rewrite set_inter_union_r.
+      unionL.
+      { rewrite set_interC. 
+        rewrite set_interC. 
+        apply SRCC. }
+      rewrite set_inter_union_r. 
+      unfolder. unionL.
+      { intros x [Cx EQx]. subst x. exfalso. 
+        eapply e2a_ge_ncov; eauto.
+        { apply FRWD. }
+        { erewrite cont_adjacent_tid_e; eauto. }
+        erewrite forwarding_seqn_e; eauto. }
+      intros x [Cx EQx].
+      destruct e' as [e'|]; [|done].
+      subst x. exfalso. 
+      eapply e2a_ge_ncov; eauto.
+      { eapply cont_adjacent_ninit_e'; eauto. }
+      { erewrite cont_adjacent_tid_e'; eauto. }
+      erewrite forwarding_seqn_e'; eauto. }
     (* kE_lab : eq_dom (kE' \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
     { rewrite cont_adjacent_sb_dom 
         with (k' := k'); eauto.
