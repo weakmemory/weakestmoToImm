@@ -28,15 +28,31 @@ Lemma wf_es P
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
   ES.Wf S.
 Proof.
-   specialize (clos_refl_trans_ind_left ES.t
-                                       (step Weakestmo)
-                                       (prog_es_init P)
-                                       (ES.Wf)).
-   intro H. apply H. 
-   { admit.  (* apply prog_init_wf. *) }
-   { admit. }
-   auto.
+  eapply clos_refl_trans_ind_left; eauto.
+  { admit. }
+  ins. eapply step_wf; eauto.
 Admitted.
+
+
+Lemma ra_jf_in_hb S (WF : ES.Wf S) :
+  ⦗Rel S⦘ ⨾ S.(ES.jf) ⨾ ⦗Acq S⦘ ⊆ S.(hb). 
+Proof.
+  rewrite ES.jfD; auto.
+  rewrite ES.jfE; auto.
+  rewrite <- sw_in_hb.
+  unfold sw. 
+  repeat rewrite seqA.
+  rewrite <- seqA.
+  rewrite <- seqA.
+  apply inclusion_seq_mon.
+  { rewrite seqA. rewrite <- id_inter.
+    unfold release. 
+    rewrite <- seq_eqvK at 1; rewrite seqA; apply inclusion_seq_mon; eauto with hahn.
+    rewrite <- seq_eqvK at 1; rewrite seqA; apply inclusion_seq_mon; eauto with hahn. 
+    unfold rs. basic_solver 10. }
+  basic_solver 10.
+Qed.  
+  
   
 Lemma jf_in_hb P
       (RACE_FREE : RLX_race_free_program P)
@@ -52,10 +68,13 @@ Proof.
   intro H. apply H. 1, 3: auto; basic_solver.
   clear H STEPS S. intros G G' STEPS IH STEP.
   
+  assert (STEPS_G' : (step Weakestmo)＊ (prog_es_init P) G').
+  { eapply transitive_rt; eauto. apply rt_step. auto. }
+  
   assert (WF_G : ES.Wf G).
   { eapply wf_es; eauto. }
   assert (WF_G' : ES.Wf G').
-  { eapply wf_es. eapply transitive_rt. 2: apply rt_step. all: eauto. } 
+  { eapply wf_es; eauto. } 
   
   inversion_clear STEP as [e H]. destruct H as [e']. desc. 
   assert (q: G.(hb) ⊆ G'.(hb)).
@@ -93,8 +112,8 @@ Proof.
     exfalso.
     set (A := HB_prefix G' e w).
     assert (PREF_EXEC : program_execution P G' A).
-    { split; unfold A; unfold HB_prefix.
-      all: admit. }
+    { split; unfold A; unfold HB_prefix; auto.
+      admit. }
     assert (PREF_RC11 : Race.rc11_consistent_x G' A).
     { unfold Race.rc11_consistent_x. admit. }
     
@@ -119,23 +138,7 @@ Proof.
     apply proj1 in True_E. apply proj1 in True_W.
     unfold Race.RLX_race_free in RACE_FREE.
     unfolder in NOT_HB_W_E. apply NOT_HB_W_E. right. left.
-    unfold hb. apply ct_step. apply inclusion_union_r2. unfold sw.
-    unfold "⨾".
-    exists w. split.
-    { unfold release. unfold "⨾".
-      exists w. split.
-      { basic_solver. }
-      exists w. split; auto.
-      unfold rs. unfold "⨾".
-      exists w. split.
-      { unfolder. splits; auto. 
-        eapply BasicStep.basic_step_acts_set_mon; eauto. }
-      exists w. split; auto.
-      exists w. split.
-      { basic_solver. }
-      apply reflexive_rt. }
-    exists e. split; auto.
-    exists e. split; basic_solver. }
+    apply ra_jf_in_hb; eauto with hahn. basic_solver. }
   admit. 
 
 Admitted.
