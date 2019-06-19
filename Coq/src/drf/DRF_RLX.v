@@ -37,23 +37,27 @@ Admitted.
 Lemma ra_jf_in_hb S (WF : ES.Wf S) :
   ⦗Rel S⦘ ⨾ S.(ES.jf) ⨾ ⦗Acq S⦘ ⊆ S.(hb). 
 Proof.
-  rewrite ES.jfD; auto.
-  rewrite ES.jfE; auto.
   rewrite <- sw_in_hb.
-  unfold sw. 
-  repeat rewrite seqA.
-  rewrite <- seqA.
-  rewrite <- seqA.
-  apply inclusion_seq_mon.
-  { rewrite seqA. rewrite <- id_inter.
-    unfold release. 
-    rewrite <- seq_eqvK at 1; rewrite seqA; apply inclusion_seq_mon; eauto with hahn.
-    rewrite <- seq_eqvK at 1; rewrite seqA; apply inclusion_seq_mon; eauto with hahn. 
-    unfold rs. basic_solver 10. }
-  basic_solver 10.
-Qed.  
-  
-  
+  unfold sw.
+  rewrite <- inclusion_id_cr. rewrite seq_id_l.
+  rewrite (dom_l WF.(ES.jfE)) at 1.
+  rewrite (dom_l WF.(ES.jfD)) at 1.
+  rewrite !seqA.
+  arewrite (⦗Rel S⦘ ⨾ ⦗E S⦘ ⨾ ⦗W S⦘ ⊆ release S); [|done].
+  unfold release, rs.
+  basic_solver 20.
+Qed.
+
+Lemma codom_rel_helper {A} (r : relation A) d (IN:  codom_rel r ⊆₁ d) : r ≡ r ⨾ ⦗d⦘.
+Proof.
+unfolder in *; basic_solver.
+Qed.
+
+Lemma r_hb_in_imm_sb_hb S (WF : ES.Wf S) :
+  ⦗R S⦘ ⨾ S.(hb) ⊆ immediate S.(ES.sb) ⨾ S.(hb)^?.
+Admitted. 
+
+
 Lemma jf_in_hb P
       (RACE_FREE : RLX_race_free_program P)
       (S : ES.t)
@@ -65,8 +69,8 @@ Proof.
                                        (step Weakestmo)
                                        (prog_es_init P)
                                        (fun s => s.(ES.jf) ⊆ s.(hb))).
-  intro H. apply H. 1, 3: auto; basic_solver.
-  clear H STEPS S. intros G G' STEPS IH STEP.
+  intro HH. apply HH. 1, 3: auto; basic_solver.
+  clear HH STEPS S. intros G G' STEPS IH STEP.
   
   assert (STEPS_G' : (step Weakestmo)＊ (prog_es_init P) G').
   { eapply transitive_rt; eauto. apply rt_step. auto. }
@@ -81,7 +85,7 @@ Proof.
   { eapply step_hb_mon; eauto. }
   inversion_clear TT as [S | [S | [S | S]]].
   1, 3: inversion_clear S; desc; rewrite JF'; basic_solver. 
-  { 
+  {
     inversion S as [w]; desc.
     inversion_clear AJF. desf.
     assert (NCF: ~ (cf G') w e) by auto. 
@@ -91,6 +95,8 @@ Proof.
     assert (HB : (G'.(hb)⁼ w e) \/ (not (G'.(hb)⁼ w e))) by apply classic.
     assert (JF : jf G' w e).
     { apply JF'. apply inclusion_union_r2. basic_solver. }
+    assert (ACTS_MON : E G ⊆₁ E G').
+    { eapply BasicStep.basic_step_nupd_acts_mon. eauto. }
 
     destruct HB as [[EQ_W_E | [ HB_W_E | HB_E_W]] | NOT_HB_W_E].
     { exfalso. SearchAbout ES.acts_set.
@@ -112,8 +118,26 @@ Proof.
     exfalso.
     set (A := HB_prefix G' e w).
     assert (PREF_EXEC : program_execution P G' A).
-    { split; unfold A; unfold HB_prefix; auto.
-      admit. }
+    { red. splits; auto. unfold A, HB_prefix. constructor.
+      { rewrite cr_seq. 
+        repeat rewrite dom_union, set_subset_union_l. splits.
+        1, 2: basic_solver.
+        rewrite hbE; basic_solver. }
+      { erewrite <- dom_cross with (d := Einit G') (d' := eq e).
+        apply dom_rel_mori. rewrite <- sb_in_hb.
+        { rewrite  codom_rel_helper with (d := eq e).
+          { apply inclusion_seq_mon; [|done].
+            erewrite cross_mori with (x0 := eq e) (y0 := Eninit G'); eauto.
+            { erewrite ES.sb_init; eauto with hahn. }
+            rewrite BasicStep.basic_step_acts_ninit_set; eauto with hahn. }
+          basic_solver. }
+        unfolder. intuition. eauto with hahn. }
+      1: rewrite sb_in_hb.
+      2: rewrite sw_in_hb.
+      1, 2: rewrite dom_rel_eqv_dom_rel; apply dom_rel_mori;
+        rewrite <- seqA; apply inclusion_seq_mon; eauto with hahn;
+          rewrite (rewrite_trans_seq_cr_r (hb_trans G')); eauto with hahn.
+      all: admit. }
     assert (PREF_RC11 : Race.rc11_consistent_x G' A).
     { unfold Race.rc11_consistent_x. admit. }
     
@@ -179,6 +203,6 @@ Proof.
   arewrite (S.(ES.sb) ⊆ S.(hb)).
   rewrite <- restr_relE, inclusion_restr.
   by rewrite unionK.
-Qed. 
+  Qed.
   
 End DRF.
