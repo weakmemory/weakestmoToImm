@@ -594,7 +594,8 @@ Section SimRelCertStepLemma.
     ⟪ Kk   : K S (k , existT _ _ st ) ⟫ /\
     ⟪ Kk'  : K S (k', existT _ _ st') ⟫ /\
     ⟪ ADJ  : cont_adjacent S k k' e e'⟫ /\
-    ⟪ STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫. 
+    ⟪ STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫ /\  
+    ⟪ CertRF : e2a S □ Sjf S ⨾ ⦗eq e⦘ ⊆ cert_rf G sc TC' (ktid S k) ⟫.  
 
   Lemma forwarding_seqn_e S lbl lbl' k k' e e'
              (st st' st'': thread_st (ktid S k))
@@ -796,7 +797,20 @@ Section SimRelCertStepLemma.
       2 : inversion LBL'.
       unfold opt_to_list, app, length.
       omega. }
-    
+    (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
+    { erewrite cont_adjacent_sb_dom; eauto.
+      rewrite !id_union, !seq_union_r, !collect_rel_union.
+      unionL; auto.
+      { apply SRCC. }
+      unfold eq_opt.
+      destruct e' as [e'|].
+      2 : basic_solver.
+      assert (ES.rmw S e e') as RMW.
+      { eapply cont_adjacent_rmw; eauto. }
+      apply ES.rmwD in RMW; auto.
+      rewrite ES.jfD; auto.
+      generalize RMW. type_solver. }
+   
       
   
   Lemma simrel_cert_lbl_step k S
