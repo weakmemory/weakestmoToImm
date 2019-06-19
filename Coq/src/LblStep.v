@@ -445,7 +445,7 @@ Qed.
 ** Destruction of lbl_step **
 *****************************)
 
-Lemma lbl_step_cases thread lbls state state'
+Lemma ilbl_step_cases thread lbls state state'
       (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread lbls state state') :
   exists lbl lbl',
@@ -526,12 +526,36 @@ Proof.
 
 Qed.
 
-Lemma lbl_step_lbls thread lbls state state'
+Lemma ilbl_step_acts_set thread lbl lbl' state state'
+      (WFT : wf_thread_state thread state)
+      (ILBL_STEP : ilbl_step thread (opt_to_list lbl' ++ [lbl]) state state') :
+  exists e e',
+    ⟪ REPe  : e = ThreadEvent thread state.(eindex) ⟫ /\
+    ⟪ REPe' : match lbl' with
+              | None   => e' = None
+              | Some _ => e' = Some (ThreadEvent thread (1 + state.(eindex)))
+              end ⟫ /\
+    ⟪ ACTS : acts_set state'.(G) ≡₁ acts_set state.(G) ∪₁ eq e ∪₁ eq_opt e'⟫.
+Proof.
+  unfold eq_opt.
+  edestruct ilbl_step_cases as [l [l' [LBLS HH]]]; eauto. 
+  apply opt_to_list_app_singl in LBLS. desc. subst l l'.
+  destruct HH as [HA | HB].
+  { destruct HA as [_ [ACTS [_ [LBL' _]]]].
+    red in ACTS, LBL'. subst lbl'.
+    do 2 eexists; splits; eauto.
+    generalize ACTS. basic_solver. }
+  destruct HB as [_ [ACTS [_ [LBL' _]]]].
+  desc. subst lbl'.
+  do 2 eexists; splits; eauto.
+Qed.
+
+Lemma ilbl_step_lbls thread lbls state state'
       (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread lbls state state') :
   exists lbl lbl', lbls = opt_to_list lbl' ++ [lbl].
 Proof. 
-  edestruct lbl_step_cases as [lbl [lbl' [LBLS _]]]; eauto. 
+  edestruct ilbl_step_cases as [lbl [lbl' [LBLS _]]]; eauto. 
 Qed.
 
 Lemma ineps_step_eindex_shift thread lbl st st'
@@ -614,7 +638,7 @@ Lemma ilbl_step_eindex_lbl thread lbl lbl' st st'
       (STEP: ilbl_step thread (opt_to_list lbl' ++ [lbl]) st st') :
   lbl = lab (ProgToExecution.G st') (ThreadEvent thread (eindex st)).
 Proof.
-  edestruct lbl_step_cases with (state0:=st) (state':=st')
+  edestruct ilbl_step_cases with (state0:=st) (state':=st')
     as [l [l']]; eauto. desf.
   all: rewrite GLAB.
   1-4: by rewrite upds; apply app_inj_tail in LBLS; desf.
@@ -641,7 +665,7 @@ Lemma ilbl_step_eindex_lbl' thread lbl lbl' st st'
       (STEP: ilbl_step thread (opt_to_list (Some lbl') ++ [lbl]) st st') :
   lbl' = lab (ProgToExecution.G st') (ThreadEvent thread (1 + eindex st)).
 Proof.
-  edestruct lbl_step_cases with (state0:=st) (state':=st')
+  edestruct ilbl_step_cases with (state0:=st) (state':=st')
     as [l [l']]; eauto. desf.
   all: rewrite GLAB.
   by rewrite upd_opt_some, upds.

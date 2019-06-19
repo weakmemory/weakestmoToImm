@@ -903,7 +903,7 @@ Proof.
   eapply dcertE; [apply CG|].
   eapply preserve_event.
   { eapply lbl_steps_in_steps; eauto. }
-  edestruct lbl_step_cases as [l [l' HH]]; eauto. 
+  edestruct ilbl_step_cases as [l [l' HH]]; eauto. 
   desf; apply ACTS; basic_solver.
 Qed.
 
@@ -920,7 +920,7 @@ Proof.
   eapply dcertE; [apply CG|].
   eapply preserve_event.
   { eapply lbl_steps_in_steps; eauto. }
-  edestruct lbl_step_cases as [l [l' HH]]; eauto. 
+  edestruct ilbl_step_cases as [l [l' HH]]; eauto. 
   desf. 
   1-4 : apply opt_to_list_app_singl in LBLS; intuition.
   desf; apply ACTS; basic_solver.

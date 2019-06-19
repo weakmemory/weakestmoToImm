@@ -649,7 +649,7 @@ Section SimRelEventToActionLemmas.
     erewrite basic_step_cont_thread_k; eauto. 
     rewrite !set_unionA.
     do 2 (eapply set_union_Propere; auto). 
-    edestruct lbl_step_cases as [l [l' HH]].
+    edestruct ilbl_step_cases as [l [l' HH]].
     { eapply SRK. eauto. }
     { apply STEP. }
     destruct HH as [LBLS HH].

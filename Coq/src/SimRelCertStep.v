@@ -245,7 +245,7 @@ Section SimRelCertStep.
     { by apply SRCC. }
 
     set (ILBL_STEP' := ILBL_STEP).
-    eapply lbl_step_cases in ILBL_STEP'; auto. 
+    eapply ilbl_step_cases in ILBL_STEP'; auto. 
     subst lbls. desc.
     eapply opt_to_list_app_singl in LBLS. 
     desf.
@@ -307,7 +307,7 @@ Section SimRelCertStep.
       { eapply dcertE; eauto; apply SRCC. }
       unfold is_r.
       erewrite steps_preserve_lab.
-      { edestruct lbl_step_cases as [la [lb [LBLS HH]]]; eauto.
+      { edestruct ilbl_step_cases as [la [lb [LBLS HH]]]; eauto.
       subst lbls. apply opt_to_list_app_singl in LBLS.
       desc. subst la lb.
       destruct HH as [HA | HB].
@@ -321,7 +321,7 @@ Section SimRelCertStep.
         eapply lbl_steps_in_steps.
         econstructor; econstructor; eauto. }
       { by eapply lbl_steps_in_steps. }
-      edestruct lbl_step_cases as [la [lb [LBLS HH]]]; eauto.
+      edestruct ilbl_step_cases as [la [lb [LBLS HH]]]; eauto.
       generalize HH. basic_solver. }
     assert (cert_dom G TC (ktid S k) st w') as CertDw'.
     { eapply cert_rf_cert_dom; try apply SRCC; auto.
@@ -497,7 +497,7 @@ Section SimRelCertStep.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
     exists k' e e' S', ⟪ CertSTEP : cert_step k k' st st' e e' S S' ⟫. 
   Proof. 
-    edestruct lbl_step_cases as [lbl [lbl' HH]]; eauto.
+    edestruct ilbl_step_cases as [lbl [lbl' HH]]; eauto.
     { apply SRCC. edestruct cstate_cont; [apply SRCC|]. desf. }
     desf.
     1-4: rewrite opt_to_list_none in ILBL_STEP.
@@ -736,7 +736,7 @@ Section SimRelCertStep.
       2 : { eapply steps_preserve_rmw.
             eapply lbl_steps_in_steps; eauto. }
       edestruct cstate_cont; [apply SRCC|]. desc.
-      edestruct lbl_step_cases as [l [l' HH]].
+      edestruct ilbl_step_cases as [l [l' HH]].
       { eapply wf_cont_state; eauto. }
       { apply STEP. }
       destruct HH as [EE HH].

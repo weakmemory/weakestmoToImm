@@ -218,7 +218,7 @@ Section SimRelContLemmas.
         eauto. }
 
     assert (st'.(eindex) = 1 + ES.seqn S' (opt_ext e e')) as ST_IDX. 
-    { edestruct lbl_step_cases as [l [l' HH]]; eauto.
+    { edestruct ilbl_step_cases as [l [l' HH]]; eauto.
       { eapply contwf; eauto. }
       { apply STEP. }
       edestruct HH as [EE _].
