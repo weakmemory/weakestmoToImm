@@ -61,7 +61,8 @@ Definition cf (S : t) :=
 (* immediate conflict *)
 
 Definition icf (S : t) :=
-  cf S \ ((sb S) ⁻¹ ⨾ (cf S) ∪ (cf S) ⨾ (sb S)).
+  cf S ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S)).
+  (* cf S \ ((sb S) ⁻¹ ⨾ (cf S) ∪ (cf S) ⨾ (sb S)). *)
 
 Definition cf_free (S : t) X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
 
@@ -540,13 +541,17 @@ Qed.
 
 Lemma icf_sym : symmetric icf.
 Proof. 
-  assert (symmetric cf) as AA by apply cf_sym.
-  apply minus_sym; auto.
-  apply sym_transp_equiv.
-  rewrite transp_union, !transp_seq, transp_inv.
-  rewrite (transp_sym_equiv AA).
-  rewrite unionC.
-  done.
+  unfold ES.icf.
+  apply inter_sym.
+  { apply cf_sym. }
+  intros x y [z [IMMSB IMMSB']].
+  exists z. split.
+  { apply immediate_transp 
+      with (r := sb). 
+    apply IMMSB'. }
+  apply immediate_transp 
+      with (r := sb) in IMMSB. 
+  apply IMMSB.
 Qed.
 
 (******************************************************************************)
@@ -710,54 +715,17 @@ Qed.
 Lemma imm_tsb_imm_sb_in_icf WF :
   ((immediate sb)⁻¹ ⨾ immediate sb) ∩ same_tid ⊆ icf^?.
 Proof.
-  unfolder. ins. desf.
+  intros x y [[z [tIMMSB IMMSB]] STID].
   assert (cf^? x y) as CF.
-  { apply WF.(imm_tsb_imm_sb_in_cf). basic_solver 10. }
-  destruct CF as [|CF]; auto.
+  { apply WF.(imm_tsb_imm_sb_in_cf). 
+    basic_solver 10. }
+  red. destruct CF as [|CF]; auto.
   right.
-  apply WF.(sb_seq_Eninit_r) in H . destruct_seq_r H  as NINX.
-  apply WF.(sb_seq_Eninit_r) in H1. destruct_seq_r H1 as NINY.
+  unfold ES.icf. 
   split; auto.
-  intros [[r [SB CF']]|[r [CF' SB]]].
-  { red in SB.
-    apply WF.(sbE) in SB.
-    destruct_seq SB as [ER EX].
-    destruct (classic (Einit r)) as [INR|NINR].
-    { eapply WF.(n_sb_cf). split; [|apply CF'].
-      apply WF.(sb_Einit_Eninit). by left. }
-    destruct (classic (r = z)) as [|NEQ]; subst.
-    { eapply WF.(n_sb_cf). by splits; [|apply CF']. }
-    destruct (classic (Einit z)) as [INZ|NINZ].
-    { apply H3 with (c:=r); auto.
-      apply WF.(sb_Einit_Eninit). by left. }
-    eapply sb_tot in NEQ; eauto.
-    2,3: red; splits; auto; basic_solver 10.
-    desf.
-    2: by apply H3 with (c:=r).
-    eapply WF.(n_sb_cf). split; [|apply CF'].
-    apply rewrite_trans.
-    { apply WF.(sb_trans). }
-    eexists. splits; eauto. }
-  apply cf_sym in CF'.
-  red in SB.
-  apply WF.(sbE) in SB.
-  destruct_seq SB as [ER EY].
-  destruct (classic (Einit r)) as [INR|NINR].
-  { eapply WF.(n_sb_cf). split; [|apply CF'].
-    apply WF.(sb_Einit_Eninit). by left. }
-  destruct (classic (r = z)) as [|NEQ]; subst.
-  { eapply WF.(n_sb_cf). by splits; [|apply CF']. }
-  destruct (classic (Einit z)) as [INZ|NINZ].
-  { apply H2 with (c:=r); auto.
-    apply WF.(sb_Einit_Eninit). by left. }
-  eapply sb_tot in NEQ; eauto.
-  2,3: red; splits; auto; basic_solver 10.
-  desf.
-  2: by apply H2 with (c:=r).
-  eapply WF.(n_sb_cf). split; [|apply CF'].
-  apply rewrite_trans.
-  { apply WF.(sb_trans). }
-  eexists. splits; eauto.
+  exists z; splits; auto.
+  by apply immediate_transp
+    with (r := sb).
 Qed.
 
 (******************************************************************************)

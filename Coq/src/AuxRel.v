@@ -117,6 +117,9 @@ Proof. basic_solver. Qed.
 Lemma union_sym : symmetric r -> symmetric r' -> symmetric (r ∪ r').
 Proof. basic_solver. Qed.
 
+Lemma inter_sym : symmetric r -> symmetric r' -> symmetric (r ∩ r').
+Proof. basic_solver. Qed.
+
 Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
 Proof. basic_solver. Qed.
 
