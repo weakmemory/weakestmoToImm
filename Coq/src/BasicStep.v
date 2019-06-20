@@ -77,7 +77,7 @@ Definition cf_delta S k e e' : relation eventid :=
   (ES.cont_cf_dom S k × eq e)^⋈ ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
 
 Definition icf_delta S k e : relation eventid := 
-  (codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ immediate (sb S)) × eq e)^⋈.
+  (codom_rel (⦗ES.cont_sb_dom S k \₁ dom_rel (sb S ⨾ ⦗ES.cont_sb_dom S k⦘)⦘ ⨾ immediate (sb S)) × eq e)^⋈.
 
 Hint Unfold sb_delta imm_sb_delta rmw_delta cf_delta icf_delta : ESStepDb.
 
@@ -1195,6 +1195,120 @@ Proof.
   all : unfolder; ins; desf.
   all : eapply nCFkX; unfolder; splits; eauto. 
 Qed.
+
+(******************************************************************************)
+(** ** basic_step : `icf` properties *)
+(******************************************************************************)
+
+Lemma basic_step_icf lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S')
+      (wfE: ES.Wf S) :
+  icf S' ≡ icf S ∪ icf_delta S k e.
+Proof.
+  assert (basic_step e e' S S') as BSTEP.
+  { unfold basic_step. do 5 eexists. eauto. }
+  cdes BSTEP_.
+  unfold ES.icf.
+  erewrite basic_step_cf; eauto.
+  rewrite inter_union_l.
+  apply union_more.
+
+  { rewrite <- immediate_transp.
+    erewrite basic_step_imm_sb; eauto.
+    rewrite transp_union, immediate_transp.
+    rewrite !seq_union_r, !seq_union_l.
+    rewrite !inter_union_r.
+    
+    arewrite_false (
+      cf S ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ immediate (sb S))
+    ).
+    { step_solver. }
+    arewrite_false (
+      cf S ∩ (immediate (sb S)⁻¹ ⨾ imm_sb_delta S k e e')
+    ).
+    { step_solver. }
+    arewrite_false (
+      cf S ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ imm_sb_delta S k e e')
+    ).
+    { step_solver. }
+    basic_solver 10. }
+  
+  unfold cf_delta.
+  rewrite <- immediate_transp.
+  erewrite basic_step_imm_sb; eauto.
+  rewrite transp_union, immediate_transp.
+  rewrite !seq_union_r, !seq_union_l.
+  rewrite !inter_union_l, !inter_union_r.
+  
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq e)^⋈ ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq e) ^⋈ ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e')^⋈ ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e') ^⋈ ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e') ^⋈ ∩ (immediate (sb S)⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e') ^⋈ ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  relsf.
+
+  rewrite !csE.
+  rewrite !inter_union_l.
+  arewrite_false (
+    ES.cont_cf_dom S k × eq e ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq e)⁻¹ ∩ (immediate (sb S)⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  relsf.
+  
+  unfold icf_delta.
+  rewrite csE, transp_cross.
+  rewrite unionC. apply union_more.
+  { unfold imm_sb_delta.
+    rewrite seq_union_r, inter_union_r.
+    arewrite_false (immediate (sb S)⁻¹ ⨾ eq e × eq_opt e').
+    { step_solver. } 
+    rewrite inter_false_r, union_false_r.
+    split. 
+    { unfolder. ins. desf.
+      splits; auto.
+      eexists; splits; eauto. }
+    rewrite <- immediate_transp.
+    unfolder. ins. desf.
+    splits; auto.
+    { admit. }
+    exists x0; splits; eauto. }
+  unfold imm_sb_delta.
+  rewrite transp_union, !seq_union_l, inter_union_r.
+  arewrite_false ((eq e × eq_opt e')⁻¹ ⨾ immediate (sb S)).
+  { step_solver. } 
+  rewrite inter_false_r, union_false_r.
+  split. 
+  { unfolder. ins. desf.
+    splits; auto.
+    eexists; splits; eauto. }
+  unfolder. ins. desf.
+  splits; auto.
+  { admit. }
+  exists x0; splits; eauto. 
+Admitted.
 
 (******************************************************************************)
 (** ** basic_step : `rmw` properties *)
