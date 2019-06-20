@@ -53,10 +53,119 @@ Proof.
 unfolder in *; basic_solver.
 Qed.
 
-Lemma r_hb_in_imm_sb_hb S (WF : ES.Wf S) :
-  ⦗R S⦘ ⨾ S.(hb) ⊆ immediate S.(ES.sb) ⨾ S.(hb)^?.
-Admitted. 
 
+Lemma ct_imm_split_l {A} (r : relation A)
+      (IRR: irreflexive r)
+      (TANS: transitive r)
+      (acts : list A)
+      (DOM_IN_ACTS: dom_rel r ⊆₁ (fun x : A => In x acts)):
+  r ≡ immediate r ⨾ r^?.
+Proof.
+  split.
+  2: { basic_solver. }
+  rewrite ct_imm1 at 1; eauto.
+  rewrite ct_begin. apply seq_mori; [done|].
+  rewrite immediate_in. apply  rt_of_trans; eauto.
+Qed.
+
+Lemma hb_imm_split_l S
+      (WF: ES.Wf S)
+      (CONS : es_consistent S (m := Weakestmo)):
+  S.(hb) ≡ immediate S.(hb) ⨾ S.(hb)^?.
+Proof.
+  eapply ct_imm_split_l.
+  { eapply hb_irr. eauto. }
+  { eauto with hahn. }
+  rewrite (dom_l (hbE S WF)).
+  rewrite dom_seq, dom_eqv, ES.E_alt.
+  eauto.
+Qed.
+
+Lemma imm_clos_trans {A} (r : relation A) :
+  immediate r⁺ ⊆ immediate r.
+Proof.
+  split.
+  { assert (immediate r⁺ ⊆ r); eauto.
+    rewrite immediateE.
+    rewrite ct_begin at 1. rewrite rt_begin, seq_union_r, minus_union_l.
+    rewrite seq_id_r. apply inclusion_union_l; eauto with hahn.
+    erewrite inclusion_minus_mon with (r' := r ⨾ r ⨾ r＊) (s' := r ⨾ r ⨾ r＊); [|done|].
+    { rewrite minus_absorb; done. }
+    rewrite ct_begin at 1. rewrite ct_end, seqA.  apply seq_mori; eauto with hahn.
+    rewrite <- seqA, rt_rt.
+    rewrite <- ct_begin, ct_end.
+    eauto with hahn. }
+  intros. apply ct_step in R1. apply ct_step in R2.
+  inversion H. eauto.
+Qed.
+
+Lemma imm_union {A} (r1 r2 : relation A):
+  immediate (r1 ∪ r2) ⊆ immediate r1 ∪ immediate r2.
+Proof.
+  basic_solver 10.
+Qed.  
+
+Lemma r_hb_in_imm_sb_hb S
+      (WF : ES.Wf S)
+      (CONS : es_consistent S (m := Weakestmo)):
+  ⦗R S⦘ ⨾ S.(hb) ⊆ immediate S.(ES.sb) ⨾ S.(hb)^?.
+Proof.
+  rewrite hb_imm_split_l at 1; auto.
+  rewrite <- seqA. apply seq_mori; [|done]. 
+  unfold hb. rewrite imm_clos_trans.
+  rewrite imm_union, seq_union_r.
+  apply inclusion_union_l; [basic_solver|].
+  rewrite immediate_in, (dom_l (swD S WF)). type_solver. 
+Qed.
+
+Lemma dom_eqv_tr_codom {A} (r : relation A):
+  dom_rel r ≡₁ codom_rel r⁻¹.
+Proof.
+  basic_solver.
+Qed.
+
+Lemma tr_dom_eqv_codom {A} (r : relation A):
+  dom_rel r⁻¹ ≡₁ codom_rel r.
+Proof.
+  basic_solver.
+Qed.
+
+Lemma codom_rel_eqv_dom_rel {A} (r r' : relation A):
+  codom_rel (⦗dom_rel r⦘ ⨾ r') ≡₁ codom_rel (r⁻¹ ⨾ r').
+Proof.
+  basic_solver.
+Qed.  
+
+Lemma t_rmw_hb_in_hb S
+      (WF : ES.Wf S)
+      (CONS : es_consistent S (m := Weakestmo)):
+  S.(ES.rmw)⁻¹ ⨾ S.(hb) ⊆ S.(hb)^?.
+Proof.
+  rewrite WF.(ES.rmwD).
+  rewrite (dom_l WF.(ES.rmwEninit)).
+  repeat rewrite transp_seq.
+  rewrite ES.rmwi; eauto.
+  rewrite !seqA, !transp_eqv_rel.
+  rewrite r_hb_in_imm_sb_hb; eauto.
+  rewrite <- seq_eqvK with (dom := Eninit S), seqA.
+  rewrite <- seqA with (r1 := (immediate (sb S))⁻¹).
+  rewrite <- transp_eqv_rel with (d := Eninit S) at 1.
+  rewrite <- transp_seq.
+  rewrite <- seqA with (r3 := (hb S)^?).
+  arewrite !(⦗Eninit S⦘ ⨾ immediate (sb S) ⊆ immediate (sb S) ∩  ES.same_tid S).
+  { erewrite <- inter_absorb_l with (r := ⦗Eninit S⦘ ⨾ immediate (sb S))
+                                   (r' := immediate (sb S)); [|basic_solver].
+    erewrite seq_mori; [|apply inclusion_refl2|apply immediate_in].
+    rewrite ES.sb_tid; eauto with hahn. }
+  rewrite transp_inter.
+  erewrite transp_sym_equiv with (r := (ES.same_tid S)); [| apply ES.same_tid_sym].
+  rewrite <- seqA with (r3 := (hb S)^?).
+  rewrite HahnEquational.inter_trans; [| apply ES.same_tid_trans].
+  rewrite ES.imm_tsb_imm_sb_in_icf; auto.
+  arewrite (⦗W S⦘ ⨾ (ES.icf S)^? ≡ ⦗W S⦘).
+  { erewrite  (dom_rel_helper (icf_R S CONS)). type_solver. }
+  basic_solver.
+Qed.
 
 Lemma jf_in_hb P
       (RACE_FREE : RLX_race_free_program P)
@@ -137,6 +246,20 @@ Proof.
       1, 2: rewrite dom_rel_eqv_dom_rel; apply dom_rel_mori;
         rewrite <- seqA; apply inclusion_seq_mon; eauto with hahn;
           rewrite (rewrite_trans_seq_cr_r (hb_trans G')); eauto with hahn.
+      { rewrite codom_rel_eqv_dom_rel, <- tr_dom_eqv_codom.
+        apply dom_rel_mori.
+        rewrite !transp_seq, !transp_inv.
+        rewrite crE at 1. rewrite seq_union_l, seq_union_r. apply inclusion_union_l. 
+        { rewrite seq_id_l. rewrite seq_union_r. apply inclusion_union_l.
+          { rewrite BasicStep.basic_step_nupd_rmw; eauto.
+            rewrite ES.rmwE; auto.
+            assert (E_NOT_IN_G: ~ E G e).
+            { eapply BasicStep.basic_step_acts_set_ne; eauto. }
+            type_solver. }
+          rewrite ES.rmwD; eauto. type_solver. }
+        rewrite <- seqA. 
+        apply inclusion_seq_mon; eauto with hahn.
+        apply t_rmw_hb_in_hb; eauto. }
       all: admit. }
     assert (PREF_RC11 : Race.rc11_consistent_x G' A).
     { unfold Race.rc11_consistent_x. admit. }
