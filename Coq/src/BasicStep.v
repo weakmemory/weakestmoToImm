@@ -68,7 +68,7 @@ Definition sb_delta S k e e' : relation eventid :=
   ES.cont_sb_dom S k × eq e ∪ ES.cont_sb_dom S k × eq_opt e' ∪ eq e × eq_opt e'.
 
 Definition imm_sb_delta S k e e' : relation eventid := 
-  (ES.cont_sb_dom S k \₁ dom_rel (sb S ⨾ ⦗ES.cont_sb_dom S k⦘)) × eq e ∪ eq e × eq_opt e'. 
+  ES.cont_last S k × eq e ∪ eq e × eq_opt e'. 
 
 Definition rmw_delta e e' : relation eventid := 
   eq e × eq_opt e'.
@@ -77,7 +77,7 @@ Definition cf_delta S k e e' : relation eventid :=
   (ES.cont_cf_dom S k × eq e)^⋈ ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
 
 Definition icf_delta S k e : relation eventid := 
-  (codom_rel (⦗ES.cont_sb_dom S k \₁ dom_rel (sb S ⨾ ⦗ES.cont_sb_dom S k⦘)⦘ ⨾ immediate (sb S)) × eq e)^⋈.
+  (codom_rel (⦗ES.cont_last S k⦘ ⨾ immediate (sb S) ⨾ ⦗Tid_ S (ES.cont_thread S k)⦘) × eq e)^⋈.
 
 Hint Unfold sb_delta imm_sb_delta rmw_delta cf_delta icf_delta : ESStepDb.
 
@@ -798,6 +798,7 @@ Proof.
 
   unfold imm_sb_delta.
   apply union_more; auto.
+  rewrite ES.cont_last_alt; auto.
   rewrite seq_eqv_r.
   split.
   { intros x y [[kSB EQy] nSB].
@@ -824,15 +825,6 @@ Proof.
   subst k.
   right. left.
   split; auto; split.
-  { exists a. basic_solver. }
-  intros [y HH].
-  apply seq_eqv_r in HH.
-  destruct HH as [SB [z HH]].
-  apply seq_eqv_r in HH.
-  destruct HH as [[EQ | SB''] EQz]; subst z.
-  { subst y. eapply ES.sb_irr; eauto. }
-  eapply ES.sb_irr; eauto.
-  eapply ES.sb_trans; eauto.
 Qed.
 
 Lemma basic_step_imm_sb_e' lang k k' st st' e e' S S'
@@ -1289,11 +1281,17 @@ Proof.
     split. 
     { unfolder. ins. desf.
       splits; auto.
-      eexists; splits; eauto. }
+      eexists; splits; eauto. 
+      eapply ES.cont_cf_tid; eauto. }
     rewrite <- immediate_transp.
     unfolder. ins. desf.
     splits; auto.
-    { admit. }
+    { unfold ES.cont_last, ES.cont_cf_dom in *.
+      destruct k. 
+      { split; auto.
+        apply ES.sbE in H1; auto.
+        generalize H1. basic_solver. }
+      right. basic_solver 10. }
     exists x0; splits; eauto. }
   unfold imm_sb_delta.
   rewrite transp_union, !seq_union_l, inter_union_r.
@@ -1303,12 +1301,18 @@ Proof.
   split. 
   { unfolder. ins. desf.
     splits; auto.
-    eexists; splits; eauto. }
+    eexists; splits; eauto. 
+    eapply ES.cont_cf_tid; eauto. }
   unfolder. ins. desf.
   splits; auto.
-  { admit. }
+  { unfold ES.cont_last, ES.cont_cf_dom in *.
+    destruct k. 
+    { split; auto.
+      apply ES.sbE in H1; auto.
+      generalize H1. basic_solver. }
+    right. basic_solver 10. }
   exists x0; splits; eauto. 
-Admitted.
+Qed.
 
 (******************************************************************************)
 (** ** basic_step : `rmw` properties *)

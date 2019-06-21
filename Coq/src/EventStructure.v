@@ -99,6 +99,12 @@ Definition cont_lab S (cont : cont_label) : option label :=
   | CEvent e => Some (S.(ES.lab) e)
   end.
 
+Definition cont_last S k :=
+  match k with
+  | CInit  i => ES.acts_init_set S
+  | CEvent e => eq e
+  end.
+
 Definition cont_sb_dom S c :=
   match c with
   | CInit  _ => S.(ES.acts_init_set)
@@ -1217,6 +1223,58 @@ Proof.
   { basic_solver. }
   generalize HH. basic_solver.
 Qed.
+
+Lemma cont_last_in_cont_sb WF k : 
+  cont_last S k ⊆₁ cont_sb_dom S k. 
+Proof. 
+  unfold cont_sb_dom, cont_last.
+  destruct k as [|e]; auto.
+  basic_solver.
+Qed.
+
+Lemma sb_cont_last_in_cont_sb_dom WF k : 
+  dom_rel (sb ⨾ ⦗cont_last S k⦘) ⊆₁ cont_sb_dom S k. 
+Proof. 
+  unfold cont_sb_dom, cont_last.
+  destruct k as [|e].
+  { rewrite sb_ninit; auto. basic_solver. }
+  basic_solver.
+Qed.
+
+Lemma cont_sb_dom_alt WF k : 
+  cont_sb_dom S k ≡₁ dom_rel ((sb)^? ⨾ ⦗cont_last S k⦘). 
+Proof. 
+  split. 
+  { unfold cont_sb_dom, cont_last.
+    destruct k; basic_solver. }
+  rewrite crE. relsf. split.
+  { by apply cont_last_in_cont_sb. }
+    by apply sb_cont_last_in_cont_sb_dom.
+Qed.
+
+Lemma cont_last_alt WF k : 
+  cont_last S k ≡₁ cont_sb_dom S k \₁ dom_rel (sb ⨾ ⦗cont_sb_dom S k⦘).
+Proof. 
+  unfold cont_sb_dom, cont_last.
+  destruct k.
+  { rewrite sb_ninit; auto. 
+    rewrite dom_empty. 
+    basic_solver. }
+  rewrite crE, seq_union_l, seq_id_l. 
+  rewrite dom_union, !dom_eqv.
+  rewrite id_union, seq_union_r, dom_union.
+  rewrite !set_minus_union_l, !set_minus_union_r.
+  rewrite set_minusK. relsf. 
+  split; [|basic_solver].
+  rewrite seq_eqv_r. unfolder.
+  intros x EQx. subst x.
+  splits; auto.
+  { intros HH. desf.
+    eapply sb_irr; eauto. }
+  intros HH. desf.
+  eapply sb_irr; eauto.
+  eapply sb_trans; eauto.
+Qed.  
 
 Lemma cont_cf_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ E.
