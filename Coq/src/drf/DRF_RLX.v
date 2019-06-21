@@ -134,7 +134,22 @@ Lemma codom_rel_eqv_dom_rel {A} (r r' : relation A):
   codom_rel (⦗dom_rel r⦘ ⨾ r') ≡₁ codom_rel (r⁻¹ ⨾ r').
 Proof.
   basic_solver.
-Qed.  
+Qed.
+
+Lemma dom_in_seq_with_tr {A} (r: relation A):
+  ⦗dom_rel r⦘ ⊆ r ⨾ r⁻¹. 
+Proof.
+  basic_solver.
+Qed.
+
+
+Lemma load_step_hbE e e' S S'
+      (BSTEP : BasicStep.basic_step e e' S S') 
+      (LSTEP : load_step e e' S S')
+      (wfE: ES.Wf S) :
+  dom_rel (hb S') ⊆₁ E S.
+Proof.
+Admitted.
 
 Lemma t_rmw_hb_in_hb S
       (WF : ES.Wf S)
@@ -260,7 +275,65 @@ Proof.
         rewrite <- seqA. 
         apply inclusion_seq_mon; eauto with hahn.
         apply t_rmw_hb_in_hb; eauto. }
-      all: admit. }
+      { rewrite set_interC, <- dom_eqv1.
+        rewrite dom_eqv_tr_codom.
+        rewrite codom_rel_eqv_dom_rel.
+        rewrite !transp_seq, transp_union, !transp_eqv_rel, transp_cr, !seqA.
+        rewrite crE at 1. rewrite seq_union_l with (r2 := (hb G')⁻¹).
+        rewrite seq_union_r, codom_union. apply set_subset_union_l. split.
+        { rewrite seq_id_l, seq_union_l, codom_union.
+          apply set_subset_union_l. split.
+          { rewrite <- ES.jf_in_rf by auto.
+            basic_solver 10. }
+          type_solver. }
+        apply codom_rel_mori.
+        assert (hbEG : G'.(hb) ≡ ⦗E G⦘ ⨾ G'.(hb)).
+        { apply dom_rel_helper. eapply load_step_hbE; eauto. }
+        rewrite hbEG. 
+        rewrite transp_seq, seqA, transp_eqv_rel, seq_eqv.
+        arewrite (E G ∩₁ R G' ≡₁ E G ∩₁ R G).
+        { admit. }
+        rewrite (ES.jf_complete WF_G).
+       (* rewrite <- seq_eqvK with (dom := codom_rel (jf G)). *)
+        rewrite <- tr_dom_eqv_codom at 1.
+        rewrite dom_in_seq_with_tr, transp_inv.
+        rewrite IH at 1.
+        rewrite ES.jf_in_rf; auto.
+        rewrite q.
+        rewrite <- seqA with (r3 := rf G).
+        rewrite rewrite_trans.
+        2: {apply transitive_transp, hb_trans. }
+        apply inclusion_seq_mon; [done|].
+        rewrite crE, seq_union_l, seq_id_l.
+        
+        rewrite <- inclusion_union_r2, seqA.
+        apply inclusion_seq_mon; [done|].
+        admit. }        
+      { red. rewrite dom_in_seq_with_tr, !seqA.
+        arewrite (((hb G')^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘))⁻¹
+                   ⨾ cf G' ⨾
+                   (hb G')^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘) ⊆ ∅₂); [|basic_solver].
+        rewrite transp_seq, transp_union, transp_cr, !transp_eqv_rel, !seqA.
+        rewrite !seq_union_r, !seq_union_l.
+   
+        apply inclusion_union_l; apply inclusion_union_l.
+        1, 4:
+          rewrite <- seqA with (r3 := (hb G')^? ⨾ ⦗eq _⦘);
+          rewrite <- seqA with (r3 := ⦗eq _⦘);
+          rewrite <- restr_relE;
+          rewrite restr_irrefl_eq; eauto with hahn;
+          rewrite !seqA;
+          apply (ecf_irf G' CONS).
+        2:   apply inclusion_transpE;
+             rewrite !transp_seq, !transp_eqv_rel;
+             rewrite !transp_cr, transp_inv, !seqA;
+             rewrite transp_sym_equiv with (r := cf G'); [| apply ES.cf_sym];
+             rewrite transp_sym_equiv with (r := ∅₂); [| basic_solver].
+        all:
+          erewrite <- jf_necf; eauto;
+          apply inclusion_inter_r; [basic_solver|];
+          rewrite inclusion_seq_eqv_l, inclusion_seq_eqv_r; eauto with hahn. }
+      admit. }
     assert (PREF_RC11 : Race.rc11_consistent_x G' A).
     { unfold Race.rc11_consistent_x. admit. }
     
@@ -329,3 +402,4 @@ Proof.
   Qed.
   
 End DRF.
+
