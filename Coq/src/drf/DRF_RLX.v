@@ -332,8 +332,13 @@ Proof.
         all:
           erewrite <- jf_necf; eauto;
           apply inclusion_inter_r; [basic_solver|];
-          rewrite inclusion_seq_eqv_l, inclusion_seq_eqv_r; eauto with hahn. }
-      admit. }
+            rewrite inclusion_seq_eqv_l, inclusion_seq_eqv_r; eauto with hahn. }
+      constructor; splits.
+      { assert (dom_rel ((hb G')^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘)) ⊆₁ (E G')); [|basic_solver].
+        rewrite hbE; auto. basic_solver. }
+      unfold cc. admit.
+    }
+    
     assert (PREF_RC11 : Race.rc11_consistent_x G' A).
     { unfold Race.rc11_consistent_x. admit. }
     
