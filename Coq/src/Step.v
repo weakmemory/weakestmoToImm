@@ -885,7 +885,20 @@ Proof.
     arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto. 
     step_solver. }
   (* ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
-  { admit. }
+  { intros x [Xx Rx'].
+    assert (R S x) as Rx.
+    { eapply basic_step_r_in_r; eauto.
+      split; auto.
+      eapply Execution.ex_inE; eauto. }
+    edestruct Execution.ex_rf_compl 
+      as [y XRF]; eauto.
+    { split; eauto. }
+    apply seq_eqv_l in XRF.
+    destruct XRF as [Xy RF].
+    exists y. 
+    apply seq_eqv_l. 
+    split; auto.
+    eapply step_rf_mon; eauto. }
   (* ex_ncf : ES.cf_free S X *)
   { red. 
     rewrite <- set_interK with (s := X).
@@ -899,6 +912,6 @@ Proof.
   etransitivity.
   { eapply Execution.ex_vis; eauto. }
   eapply step_vis_mon; eauto. 
-Admitted.
+Qed.
 
 End Step.
