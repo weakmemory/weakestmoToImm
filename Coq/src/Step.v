@@ -807,6 +807,20 @@ Proof.
   basic_solver.
 Qed. 
 
+Lemma step_nupd_hb_dom e S S'
+      (BSTEP : basic_step e None S S') 
+      (STEP : step_ e None S S')
+      (wfE: ES.Wf S) :
+  dom_rel (hb S') ⊆₁ E S. 
+Proof.
+  cdes BSTEP.
+  cdes BSTEP_. 
+  rewrite step_hb; eauto.
+  rewrite dom_union, set_subset_union_l. split.
+  { rewrite hbE; auto. basic_solver. }
+  cdes BSTEP_. step_solver.
+Qed.
+
 Lemma step_hbE e e' S S' 
       (BSTEP : basic_step e e' S S') 
       (STEP : step_ e e' S S')
