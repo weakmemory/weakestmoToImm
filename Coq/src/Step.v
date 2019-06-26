@@ -842,7 +842,17 @@ Lemma step_hb_mon e e' S S'
 Proof.
   rewrite <- step_hbE; eauto with hahn.
   basic_solver.
-Qed.  
+Qed.
+
+Lemma step_nupd_sb_dom e S S'
+      (BSTEP : basic_step e None S S') 
+      (STEP : step_ e None S S')
+      (wfE: ES.Wf S) :
+  dom_rel (sb S') ⊆₁ E S. 
+Proof.
+  rewrite sb_in_hb.
+  eapply step_nupd_hb_dom; eauto.
+Qed.
 
 (******************************************************************************)
 (** ** Step preserves executions lemma  *)
