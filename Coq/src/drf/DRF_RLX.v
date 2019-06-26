@@ -227,6 +227,48 @@ Proof.
   eauto with hahn.
 Qed.
 
+Lemma union_seq_compl_sym_trans_rr {A} (e r1 r2 : relation A)
+      (SYM : symmetric e)
+      (TRANS : transitive e)
+      (R2_IN_CE : r2 ⊆ e):
+  ((compl_rel e) ∩ (r1 ⨾ r2) ≡ (compl_rel e) ∩ r1 ⨾ r2).
+Proof.
+  basic_solver 10.
+Qed.
+
+Lemma compl_rel_invol {A} (r : relation A)
+  (DECID : forall x y : A, Decidable.decidable (r x y)):
+  (compl_rel (compl_rel r) ≡ r).
+Proof.
+  generalize NNPP. ins.
+  unfolder. split. 
+  { ins. apply H. auto. }
+  ins. apply Decidable.not_not; intuition.
+Qed.
+
+Lemma union_seq_compl_equiv_rr2 {A} (e r1 r2 : relation A)
+      (DECID : forall x y : A, Decidable.decidable (e x y))
+      (SYM : symmetric (compl_rel e))
+      (TRANS : transitive (compl_rel e))
+      (R2_IN_CE : r2 ⊆ compl_rel e):
+  (e ∩ (r1 ⨾ r2) ≡ e ∩ r1 ⨾ r2).
+Proof.
+  set (e' := compl_rel e) in *.
+  arewrite (e ≡ compl_rel e').
+  { apply same_rel_Symmetric. eapply compl_rel_invol; eauto. }
+  apply union_seq_compl_sym_trans_rr; eauto.
+Qed.
+
+Lemma union_seq_cf_same_tid_r (S : ES.t) (m : model)
+      (CONS : es_consistent S (m := m))
+      (WF : ES.Wf S)
+      (r1 r2 : relation eventid)
+      (SAME_TID : r2 ⊆ compl_rel (ES.same_tid S))
+  : S.(ES.cf) ∩ (r1 ⨾ r2) ≡ S.(ES.cf) ∩ r1 ⨾ r2.
+Admitted.
+    
+  
+
 Lemma cc_alt (S : ES.t) (m : model) (CONS : es_consistent S (m := m)) (WF : ES.Wf S):
   cc S ≡ S.(ES.cf) ∩ (S.(ES.jfe) ⨾ (S.(ES.sb) ∪ S.(ES.jf))＊).
 Proof.
@@ -296,13 +338,14 @@ Proof.
   assert (WF_G' : ES.Wf G').
   { eapply wf_es; eauto. } 
   
+  generalize (hb_trans G'). intro HB_TRANS.    
+  
   inversion_clear STEP as [e HH]. destruct HH as [e']. desf. 
   assert (q: G.(hb) ⊆ G'.(hb)).
   { eapply step_hb_mon; eauto. }
   inversion_clear TT as [S | [S | [S | S]]].
   1, 3: inversion_clear S; desf; rewrite JF'; basic_solver. 
-  {
-    inversion S as [w HH]. desf.
+  { inversion S as [w HH]. desf.
     unfold AddJF.add_jf in AJF. desf.
     assert (W_w : is_w (lab G') w). 
     { eapply load_step_W; eauto. intuition. }
@@ -331,6 +374,20 @@ Proof.
         apply SAME_W. desf. }
     exfalso.
     set (A := HB_prefix G' e w).
+    assert (HB_CLOS_PREFIX : dom_rel(hb G' ⨾ ⦗HB_prefix G' e w⦘) ⊆₁ HB_prefix G' e w).
+    { unfold HB_prefix.
+      rewrite dom_rel_eqv_dom_rel.
+      rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans G')).      
+      basic_solver 10. }
+    assert (HB_DOM : dom_rel (hb G') ⊆₁ E G).
+    { eapply step_nupd_hb_dom; eauto.
+      red. auto. }
+    assert (JF_CLOS_PREFIX : dom_rel(jf G' ⨾ ⦗HB_prefix G' e w⦘) ⊆₁ HB_prefix G' e w).
+    { unfold HB_prefix.
+      rewrite dom_rel_eqv_dom_rel.
+      rewrite JF', IH.
+      unfold AddJF.jf_delta.
+      type_solver 9. }
     assert (PREF_EXEC : program_execution P G' A).
     { red. splits; auto. unfold A, HB_prefix. constructor.
       { rewrite cr_seq. 
@@ -346,11 +403,8 @@ Proof.
             rewrite BasicStep.basic_step_acts_ninit_set; eauto with hahn. }
           basic_solver. }
         unfolder. intuition. eauto with hahn. }
-      1: rewrite sb_in_hb.
-      2: rewrite sw_in_hb.
-      1, 2: rewrite dom_rel_eqv_dom_rel; apply dom_rel_mori;
-        rewrite <- seqA; apply inclusion_seq_mon; eauto with hahn;
-          rewrite (rewrite_trans_seq_cr_r (hb_trans G')); eauto with hahn.
+      { rewrite sb_in_hb. apply HB_CLOS_PREFIX. }
+      { rewrite sw_in_hb. apply HB_CLOS_PREFIX. }
       { rewrite codom_rel_eqv_dom_rel, <- tr_dom_eqv_codom.
         apply dom_rel_mori.
         rewrite !transp_seq, !transp_inv.
@@ -409,16 +463,78 @@ Proof.
         rewrite hbE; auto. basic_solver. }
       arewrite (cc G' ⨾ ⦗eq v⦘ ⊆ ∅₂); [|done].
       apply eq_predicate in HH.
-      assert (vE' : eq v ⊆₁ E G').
-      { rewrite HH, hbE; auto. basic_solver. }
-      assert (DOM_CC_E_IN_A : dom_rel (cc G' ⨾ ⦗eq v⦘) ⊆₁ A).
-      { rewrite (BasicStep.basic_step_nupd_acts_set BSTEP) in vE'.
-        rewrite vE', id_union, seq_union_r, dom_union.
+      assert (AE' : HB_prefix G' e w ⊆₁ E G').
+      { unfold HB_prefix.
+        rewrite hbE; auto. basic_solver. }
+      assert (VE' : eq v ⊆₁ E G').
+      { rewrite HH. auto. }
+      assert (CC_IN_HB : cc G ⊆ hb G).
+      { unfold cc. rewrite inclusion_inter_l2.
+        arewrite (ES.jfe G ⊆ ES.jf G).
+        rewrite sb_in_hb, IH.
+        generalize (hb_trans G). ins.
+        relsf. }
+      assert (DOM_CC_A_IN_A : dom_rel (cc G ⨾ ⦗HB_prefix G' e w⦘) ⊆₁ HB_prefix G' e w).
+      { unfold HB_prefix.
+        rewrite CC_IN_HB, dom_rel_eqv_dom_rel, q.
+        rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans G')).
+        basic_solver 10. }
+      
+      assert (DOM_CC'_V_IN_A : dom_rel (cc G' ⨾ ⦗eq v⦘) ⊆₁ HB_prefix G' e w).
+      { rewrite (BasicStep.basic_step_nupd_acts_set BSTEP) in VE'.
+        rewrite <- seq_eqvK.
+        rewrite VE' at 1.
+        rewrite id_union, seq_union_l, seq_union_r, dom_union.
         apply set_subset_union_l. split.
-        { rewrite step_ccE; eauto; [|red; auto].
+        { rewrite <- seqA, step_ccE; eauto; [|red; auto]. 
+          rewrite HH. eauto. }
+        rewrite <- seqA, dom_seq.
+        rewrite cc_alt; eauto.
+        assert (EE_DOM : dom_rel(jfe G' ⨾ (sb G' ∪ jf G')＊ ⨾ ⦗HB_prefix G' e w⦘)
+                                ⊆₁ HB_prefix G' e w).
+        { arewrite ((sb G' ∪ jf G')＊ ⨾ ⦗HB_prefix G' e w⦘
+                                   ⊆ ⦗HB_prefix G' e w⦘ ⨾ (sb G' ∪ jf G')＊).
+          { apply dom_r2l_rt.
+            assert (DOM': dom_rel((sb G' ∪ jf G') ⨾ ⦗HB_prefix G' e w⦘)
+                                 ⊆₁ HB_prefix G' e w).
+            2: { rewrite (dom_rel_helper DOM'). basic_solver. }
+            rewrite sb_in_hb.
+            rewrite seq_union_l, dom_union.
+            apply set_subset_union_l. eauto. }
+          rewrite jfe_in_jf; eauto.
+          rewrite <-seqA, dom_seq. auto. }
+        assert (EE_CODOM : codom_rel((jfe G' ⨾ (sb G' ∪ jf G')＊) ⨾ ⦗eq e⦘)
+                                    ⊆₁ HB_prefix G' e w).
+        { rewrite codom_seq. unfold HB_prefix.
+          basic_solver 10. }
         
+          eauto with hahn. basic_solver.  basic_solver 300.
+        
+        unfold HB_prefix.
+        assert (test : dom_rel(jf G' ⨾ ⦗eq e⦘) ≡₁ eq w).
+        { rewrite JF'. rewrite ES.jfE; auto.
+          generalize (BasicStep.basic_step_acts_set_ne BSTEP).
+          unfold AddJF.jf_delta. basic_solver 5. }
+        rewrite <- seq_eqv_inter_rr. 
+        rewrite rtE.
+        rewrite seqA, seq_union_l, seq_id_l.
+        rewrite seq_union_r, inter_union_r, dom_union.
+        apply set_subset_union_l; split.
+        { rewrite ES.cf_same_tid. rewrite jfe_alt; eauto.
+          basic_solver. }
+        rewrite ct_end, <- seqA.
+        erewrite union_seq_compl_sym_trans_rr.
+
+
+        eq_eqv_inter_rr.
+        rewrite 
+          rewrite <- dom_rel_eqv_dom_rel.
+          
+          arewrite ()
+        
+              rewrite ctE.
         assert (CC_IN_HB : cc G ⊆ hb G).
-       { unfold cc. rewrite inclusion_inter_l2.
+        { unfold cc. rewrite inclusion_inter_l2.
         arewrite (ES.jfe G ⊆ ES.jf G).
         rewrite sb_in_hb, IH.
         generalize (hb_trans G). ins.
@@ -428,6 +544,7 @@ Proof.
        admit. } admit. } admit. }
  (*
       
+        rewrite inclusion_inter_l2.
       apply inclusion_union_l.
       { rewrite step_ccE; eauto; [|red; auto].
         
@@ -441,7 +558,7 @@ Proof.
         
       erewrite dom_rel_helper with (r := cc G' ⨾ ⦗eq v⦘);
         [|apply set_subset_refl]. 
-      erewrite codom_rel_helper with (r := cc G' ⨾ ⦗eq v⦘) at 2;
+ A     erewrite codom_rel_helper with (r := cc G' ⨾ ⦗eq v⦘) at 2;
         [|apply set_subset_refl].
       rewrite DOM_CC_E_IN_A.
       arewrite (codom_rel (cc G' ⨾ ⦗eq v⦘) ⊆₁ A).
