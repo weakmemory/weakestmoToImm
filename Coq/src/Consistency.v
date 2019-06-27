@@ -620,6 +620,11 @@ Proof.
   specialize (coh ESC) as hb_eco_irr. apply irreflexive_inclusion with (r' :=  hb ⨾ (eco m)^?).  { basic_solver. }
     eauto with hahn.                                                                           
 Qed.
+
+Lemma hb_acyclic : acyclic hb.
+Proof.
+  apply (trans_irr_acyclic hb_irr hb_trans).
+Qed.
   
 Lemma cont_sb_dom_rmw k s
       (INK : K (k, s)) :
