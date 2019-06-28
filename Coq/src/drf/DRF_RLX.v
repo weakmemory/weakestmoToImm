@@ -599,6 +599,8 @@ Proof.
   { eapply update_step_W; eauto. basic_solver. }
   assert (w'W' : is_w (lab G') w'). 
   { eapply update_step_W; eauto. basic_solver. }
+  assert (w'E' : (E G') w').
+  { eapply update_step_E; eauto. basic_solver. }
   assert (WE_JF' : jf G' w e).
   { apply JF'. apply inclusion_union_r2. basic_solver. }
   assert (ACTS_MON : E G ⊆₁ E G').
@@ -613,19 +615,71 @@ Proof.
       apply r_step. apply rf_in_eco.
       apply ES.jf_in_rf; eauto. } 
   exfalso.
-  assert (HB_CLOS_PREFIX : dom_rel(hb G' ⨾ ⦗hb_pref2 G' w' w⦘) ⊆₁ hb_pref2 G' w' w).
+  assert (PREF_HB_BWCL : dom_rel(hb G' ⨾ ⦗hb_pref2 G' w' w⦘) ⊆₁ hb_pref2 G' w' w).
   { unfold hb_pref2.
     rewrite dom_rel_eqv_dom_rel.
     rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans G')).      
     basic_solver 10. }
   specialize (step_hb_dom BSTEP STEP_ WF_G) as HB_DOM.
-  assert (JF_CLOS_PREFIX : dom_rel(jf G' ⨾ ⦗hb_pref2 G' w' w⦘) ⊆₁ hb_pref2 G' w' w).
+  assert (PREF_JF_BWCL : dom_rel(jf G' ⨾ ⦗hb_pref2 G' w' w⦘) ⊆₁ hb_pref2 G' w' w).
   { unfold hb_pref2.
     rewrite dom_rel_eqv_dom_rel.
     rewrite JF', IH.
     type_solver 9. }
-  admit. 
 
+  assert (EW'_RMW : (ES.rmw G') e w').
+  { cdes BSTEP. cdes BSTEP_.
+    unfold BasicStep.rmw_delta in RMW'.
+    apply RMW'. basic_solver. }
+  assert (EW'_HB : (hb G') e w').
+  { apply ES.rmw_in_sb, sb_in_hb in EW'_RMW; auto. }
+  assert (PREF_EXEC : program_execution P G' (hb_pref2 G' w' w)).
+  { red. splits; auto. constructor. 
+    { apply hb_pref2_inE; eauto. }
+      { rewrite hb_pref2_alt.
+        specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_G).
+        specialize (init_in_hb_pref WF_G').
+        basic_solver 10. }
+      { rewrite sb_in_hb. apply PREF_HB_BWCL. }
+      { rewrite sw_in_hb. apply PREF_HB_BWCL. }
+      { rewrite hb_pref2_alt.
+        apply fwcl_hom; apply hb_pref_rmw_fwcl; auto.
+        all: rewrite ES.rmwD; auto; type_solver. }
+      { apply jf_bwcl_rf_compl; auto.
+        apply hb_pref2_inE; auto. }
+      { admit. }
+      apply ncf_hb_jf_bwcl_vis; auto.
+      apply hb_pref2_inE; auto.
+      admit. }    
+
+    assert (PREF_RC11 : Race.rc11_consistent_x G' (hb_pref2 G' w' w)).
+    { unfold Race.rc11_consistent_x. admit. }
+    
+    specialize (RACE_FREE G' (hb_pref2 G' w' w) PREF_EXEC PREF_RC11).
+    
+    assert (RACE_W : Race.race G' (hb_pref2 G' w' w) w).
+    { unfold Race.race. unfold dom_rel. exists e.
+      unfolder. splits.
+      1, 2: unfold hb_pref2; basic_solver 10.
+      apply or_not_and. left. apply or_not_and. left. apply and_not_or. auto. }
+
+    assert (RACE_E : Race.race G' (hb_pref2 G' w' w) e).
+    { unfold Race.race. unfold dom_rel. exists w.
+      unfolder. splits.
+      1, 2: unfold hb_pref2; basic_solver 10. 
+      apply or_not_and. left. apply or_not_and. left. apply and_not_or. split.
+      { unfolder in WE_NHB. intuition. }
+      intro HH. auto. apply ES.cf_sym in HH. auto. }
+    specialize (RACE_FREE w RACE_W) as QW.
+    specialize (RACE_FREE e RACE_E) as QE.
+    destruct QE as [|wREL]; destruct QW as [eACQ|].
+    1, 2, 4: type_solver.
+    unfold Race.RLX_race_free in RACE_FREE.
+    unfolder in WE_NHB.
+    apply WE_NHB. right. left.
+    apply ra_jf_in_hb; auto.
+    apply proj1 in eACQ. apply proj1 in wREL.
+    basic_solver.
 Admitted.
 
 Lemma rf_in_jf (S : ES.t) (X : eventid -> Prop)
