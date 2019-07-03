@@ -631,36 +631,37 @@ Proof.
     specialize ES.same_tid_trans.
     basic_solver. }
   rewrite minus_inter_compl.
-  unfolder. ins. intro.
-  desf; unfold "~" in H2; apply H2.
+  unfolder. intros r w HH. intro SBEQ.
+  desf; unfold "~" in HH1; apply HH1;
+  rename HH into RMW, HH0 into TID; clear HH1.
   { right. right.
     apply ES.rmw_in_sb; eauto. }
-  { apply ES.sb_imm_split_l in H0; auto.
-    unfold seq in H0. desf. 
-    assert (foo : ES.same_tid S z z0).
-    { apply immediate_in in H0.
-      eapply ES.same_tid_trans with (y := x).
-      { apply ES.rmwt in H; basic_solver. }
-      assert (Eninit S x).
-      { apply (dom_l (ES.rmwEninit WF)) in H.
-        unfolder in H.
+  { apply ES.sb_imm_split_l in SBEQ; auto.
+    unfold seq in SBEQ. desf. 
+    assert (TID_ZZ0 : ES.same_tid S z z0).
+    { apply immediate_in in SBEQ.
+      eapply ES.same_tid_trans with (y := r).
+      { apply ES.rmwt in RMW; basic_solver. }
+      assert (NINIT_R : Eninit S r).
+      { apply (dom_l (ES.rmwEninit WF)) in RMW.
+        unfolder in RMW.
         basic_solver. }
       specialize ES.sb_tid.
       basic_solver 5. }
-    assert (bar : (ES.icf S)^? z z0).
+    assert (ICF : (ES.icf S)^? z z0).
     { apply ES.imm_tsb_imm_sb_in_icf; auto.
-      apply ES.rmwi in H; auto.
+      apply ES.rmwi in RMW; auto.
       basic_solver. }
-    unfolder in bar. desf.
-    { unfolder in H3; basic_solver. }
+    unfolder in ICF. desf.
+    { unfolder in SBEQ0; basic_solver. }
     specialize (icf_R S CONS) as ICF_DOM.
     assert (R S z).
     { unfolder in ICF_DOM. basic_solver. }
-    apply (dom_r (ES.rmwD WF)) in H. 
-    unfolder in H.
+    apply (dom_r (ES.rmwD WF)) in RMW. 
+    unfolder in RMW.
     type_solver. }
   right. right.
-  apply ES.rmw_in_sb in H; auto.
+  apply ES.rmw_in_sb in RMW; auto.
   specialize (ES.sb_trans).
   basic_solver.
 Qed.
