@@ -817,7 +817,8 @@ Section SimRelLemmas.
            { by unfold init. }
            apply wf_thread_state_init. }
       { ins. red in INK.
-        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+        rewrite prog_g_es_init_alt in *.
+        unfold ES.init, prog_init_K, ES.cont_thread in *.
         simpls.
         apply in_map_iff in INK. desf. }
       { ins. apply prog_g_es_init_K in INK. desf.
@@ -833,7 +834,8 @@ Section SimRelLemmas.
              erewrite steps_same_eindex; eauto.
              { simpls. }
              apply wf_thread_state_init. }
-           unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+           rewrite prog_g_es_init_alt in *.
+           unfold ES.init, prog_init_K, ES.cont_thread,
            ES.cont_set in *. simpls.
            apply in_map_iff in INK.
            destruct INK as [[tid [lprog BB]] [INK REP]].
@@ -862,7 +864,8 @@ Section SimRelLemmas.
            red in WW. desf. }
       2: { ins.
            apply eps_steps_in_steps.
-           unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+           rewrite prog_g_es_init_alt in *.
+           unfold ES.init, prog_init_K, ES.cont_thread,
            ES.cont_set in *.
            simpls.
            apply in_map_iff in INK.
@@ -921,7 +924,7 @@ Section SimRelLemmas.
       basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
-    { unfold prog_g_es_init, ES.init. basic_solver. }
+    { rewrite prog_g_es_init_alt. unfold ES.init. basic_solver. }
     unfold release.
     arewrite (is_rel (ES.lab (prog_g_es_init prog G)) ⊆₁ ∅).
     2: basic_solver 20.

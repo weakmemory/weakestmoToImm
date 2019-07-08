@@ -466,10 +466,12 @@ Section SimRelEventToActionLemmas.
   Lemma simrel_e2a_init :
     simrel_e2a (prog_g_es_init prog G) G sc.
   Proof.
+    rewrite prog_g_es_init_alt.
     assert (GEinit ⊆₁
             e2a (prog_g_es_init prog G) □₁ SEinit (prog_g_es_init prog G))
       as AINIT.
-    { unfold e2a, prog_g_es_init, is_init,
+    { rewrite prog_g_es_init_alt.
+      unfold e2a, is_init,
         ES.acts_init_set, ES.init, ES.acts_set.
       simpls. desf.
       unfolder. ins. desf.
@@ -494,22 +496,27 @@ Section SimRelEventToActionLemmas.
       rewrite in_map_iff. eexists.
       splits; eauto. desf. }
 
+    rewrite prog_g_es_init_alt in AINIT.
     constructor; auto.
-    3-7: by unfold prog_g_es_init, ES.init; simpls; basic_solver.
+    3-7: by unfold ES.init; simpls; basic_solver.
     3: { simpls. basic_solver. }
     2: { red. intros.
+         rewrite <- prog_g_es_init_alt.
          arewrite ((Slab (prog_g_es_init prog G)) e = 
                    (Glab ∘ e2a (prog_g_es_init prog G)) e).
          2: by red; desf.
-         apply prog_g_es_init_same_lab; auto. }
+         apply prog_g_es_init_same_lab; auto.
+         rewrite prog_g_es_init_alt. auto. }
     unfold e2a, Events.loc.
     intros x [y [AA BB]].
     set (CC:=AA).
+    rewrite <- prog_g_es_init_alt in *.
     apply prog_g_es_init_act_in in CC.
     destruct CC as [l CC].
     assert (Slab (prog_g_es_init prog G) y =
             init_write l) as LAB.
-    { unfold prog_g_es_init, ES.init. simpls.
+    { rewrite prog_g_es_init_alt.
+      unfold ES.init. simpls.
       apply l2f_in; desf.
       apply indexed_list_fst_nodup. }
     unfold init_write in *. desf. simpls.
