@@ -27,6 +27,7 @@ Notation "'jf' S" := S.(ES.jf) (at level 10).
 Notation "'rf' S" := S.(ES.rf) (at level 10).
 Notation "'co' S" := S.(ES.co) (at level 10).
 Notation "'cf' S" := S.(ES.cf) (at level 10).
+Notation "'icf' S" := S.(ES.icf) (at level 10).
 
 Notation "'jfe' S" := S.(ES.jfe) (at level 10).
 Notation "'rfe' S" := S.(ES.rfe) (at level 10).
@@ -64,7 +65,10 @@ Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
 Notation "'Val_' S" := (fun v e => val S e = v) (at level 1).
 
 Definition sb_delta S k e e' : relation eventid := 
-  ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'.
+  ES.cont_sb_dom S k × eq e ∪ ES.cont_sb_dom S k × eq_opt e' ∪ eq e × eq_opt e'.
+
+Definition imm_sb_delta S k e e' : relation eventid := 
+  ES.cont_last S k × eq e ∪ eq e × eq_opt e'. 
 
 Definition rmw_delta e e' : relation eventid := 
   eq e × eq_opt e'.
@@ -72,7 +76,10 @@ Definition rmw_delta e e' : relation eventid :=
 Definition cf_delta S k e e' : relation eventid := 
   (ES.cont_cf_dom S k × eq e)^⋈ ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
 
-Hint Unfold sb_delta rmw_delta cf_delta : ESStepDb.
+Definition icf_delta S k e : relation eventid := 
+  (codom_rel (⦗ES.cont_last S k⦘ ⨾ immediate (sb S) ⨾ ⦗Tid_ S (ES.cont_thread S k)⦘) × eq e)^⋈.
+
+Hint Unfold sb_delta imm_sb_delta rmw_delta cf_delta icf_delta : ESStepDb.
 
 Definition basic_step_
            (lang : Language.t)
@@ -580,21 +587,16 @@ Hint Rewrite
 (** ** basic_step : `sb` propreties *)
 (******************************************************************************)
 
-Lemma basic_step_nupd_sb lang k k' st st' e S S' 
-      (BSTEP_ : basic_step_ lang k k' st st' e None S S') :
-  sb S' ≡ sb S ∪ ES.cont_sb_dom S k × eq e.  
-Proof.                                       
-  cdes BSTEP_.
-  autounfold with ESStepDb in *.  
-  rewrite cross_false_r in SB'. 
-  rewrite union_false_r in SB'.
-  apply SB'.
-Qed.
-
 Lemma basic_step_sb_delta_dom lang k k' st st' e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF: ES.Wf S) :
   dom_rel (sb_delta S k e e') ⊆₁ E S ∪₁ eq e.
+Proof. cdes BSTEP_. step_solver. Qed.
+
+Lemma basic_step_sb_delta_codom lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF: ES.Wf S) :
+  codom_rel (sb_delta S k e e') ⊆₁ eq e ∪₁ eq_opt e'.
 Proof. cdes BSTEP_. step_solver. Qed.
 
 Lemma basic_step_sb_deltaE lang k k' st st' e e' S S'
@@ -604,6 +606,62 @@ Lemma basic_step_sb_deltaE lang k k' st st' e e' S S'
 Proof. 
   cdes BSTEP_.
   split; [|done]. step_solver.
+Qed.
+
+Lemma basic_step_sb_delta_seq_sb_delta lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF: ES.Wf S) :
+  sb_delta S k e e' ⨾ sb_delta S k e e' ≡ ES.cont_sb_dom S k × eq_opt e'.
+Proof. 
+  cdes BSTEP_.
+  unfold sb_delta.
+  rewrite <- cross_union_l.
+  rewrite !seq_union_l, !seq_union_r.
+  arewrite_false (
+    ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e') ⨾ 
+    ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    eq e × eq_opt e' ⨾ ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    eq e × eq_opt e' ⨾ eq e × eq_opt e'
+  ).
+  { step_solver. }
+  relsf.
+  rewrite cross_union_l, seq_union_l.
+  arewrite_false (
+    ES.cont_sb_dom S k × eq_opt e' ⨾ eq e × eq_opt e'
+  ).
+  { step_solver. }
+  basic_solver 10.
+Qed.
+
+Lemma basic_step_sb_seq_sb_delta lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF: ES.Wf S) :
+  sb S ⨾ sb_delta S k e e' ≡ 
+     sb S ⨾ ES.cont_sb_dom S k × eq e ∪ sb S ⨾ ES.cont_sb_dom S k × eq_opt e'.
+Proof. 
+  cdes BSTEP_.
+  unfold sb_delta.
+  rewrite !seq_union_r.
+  arewrite_false (sb S ⨾ eq e × eq_opt e').
+  { step_solver. }
+  basic_solver 10.
+Qed.
+
+Lemma basic_step_nupd_sb lang k k' st st' e S S' 
+      (BSTEP_ : basic_step_ lang k k' st st' e None S S') :
+  sb S' ≡ sb S ∪ ES.cont_sb_dom S k × eq e.  
+Proof.                                       
+  cdes BSTEP_.
+  autounfold with ESStepDb in *.  
+  rewrite !cross_false_r in SB'. 
+  rewrite !union_false_r in SB'.
+  apply SB'.
 Qed.
 
 Lemma basic_step_sbE e e' S S' 
@@ -640,7 +698,7 @@ Qed.
 Lemma basic_step_sbe' lang k k' st st' e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
-  sb S' ⨾ ⦗eq_opt e'⦘ ≡ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'. 
+  sb S' ⨾ ⦗eq_opt e'⦘ ≡ ES.cont_sb_dom S k × eq_opt e' ∪ eq e × eq_opt e'. 
 Proof. 
   cdes BSTEP_.
   rewrite SB'.
@@ -652,7 +710,7 @@ Proof.
   { step_solver. }
   arewrite (eq e ∩₁ eq_opt e' ≡₁ ∅).
   { split; [|done]. step_solver. }
-  relsf.
+  relsf. 
 Qed.
 
 Lemma basic_step_sb_mon e e' S S' 
@@ -661,6 +719,96 @@ Lemma basic_step_sb_mon e e' S S'
 Proof.
   cdes BSTEP; cdes BSTEP_.
   rewrite SB'; basic_solver. 
+Qed.
+
+Lemma basic_step_imm_sb lang k k' st st' e e' S S' 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  immediate (sb S') ≡ immediate (sb S) ∪ imm_sb_delta S k e e'.
+Proof. 
+  cdes BSTEP_.
+  rewrite SB'.
+  rewrite !immediateE. 
+  rewrite !minus_union_l.
+  rewrite !seq_union_l, !seq_union_r.
+  rewrite !minus_union_r. 
+  
+  rewrite !minus_disjoint
+    with (r  := sb S) 
+         (r' := sb S ⨾ sb_delta S k e e').
+  2 : { split; [|done]. step_solver. }
+
+  rewrite !minus_disjoint
+    with (r  := sb S) 
+         (r' := sb_delta S k e e' ⨾ sb_delta S k e e').
+  2 : { split; [|done]. step_solver. }
+
+  rewrite !minus_disjoint
+    with (r  := sb_delta S k e e') 
+         (r' := sb S ⨾ sb S).
+  2 : { split; [|done]. step_solver. }
+
+  
+  arewrite_false (sb_delta S k e e' ⨾ sb S).
+  { step_solver. }
+
+  apply union_more.
+  { basic_solver 10. }
+  rewrite basic_step_sb_delta_seq_sb_delta; eauto.
+  erewrite basic_step_sb_seq_sb_delta; eauto.
+  rewrite minus_union_r.
+  rewrite minus_false_r.
+  rewrite !interA.
+  rewrite !inter_absorb_l
+    with (r' := sb_delta S k e e').
+  2,3 : basic_solver.
+  rewrite <- !minus_union_r.
+  unfold sb_delta.
+  rewrite !minus_union_l.
+  rewrite !minus_union_r.
+  
+  rewrite !minus_disjoint
+    with (r  := ES.cont_sb_dom S k × eq e) 
+         (r' := sb S ⨾ ES.cont_sb_dom S k × eq_opt e').
+  2 : { split; [|done]. step_solver. }
+  rewrite !minus_disjoint
+    with (r  := ES.cont_sb_dom S k × eq e) 
+         (r' := ES.cont_sb_dom S k × eq_opt e').
+  2 : { split; [|done]. step_solver. }
+  rewrite !minus_disjoint
+    with (r  := eq e × eq_opt e') 
+         (r' := sb S ⨾ ES.cont_sb_dom S k × eq e).
+  2 : { split; [|done]. step_solver. }
+  rewrite !minus_disjoint
+    with (r  := eq e × eq_opt e') 
+         (r' := sb S ⨾ ES.cont_sb_dom S k × eq_opt e').
+  2 : { split; [|done]. step_solver. }
+  rewrite !minus_disjoint
+    with (r  := eq e × eq_opt e') 
+         (r' := ES.cont_sb_dom S k × eq_opt e').
+  2 : { split; [|done]. step_solver. }
+    
+  arewrite_false (
+    ES.cont_sb_dom S k × eq_opt e' \ ES.cont_sb_dom S k × eq_opt e'
+  ).
+  { basic_solver. }
+  relsf.
+  rewrite !inter_absorb_r.
+  2 : basic_solver.
+
+  unfold imm_sb_delta.
+  apply union_more; auto.
+  rewrite ES.cont_last_alt; auto.
+  rewrite seq_eqv_r.
+  split.
+  { intros x y [[kSB EQy] nSB].
+    unfolder; splits; auto.
+    intros SB. apply nSB.
+    basic_solver. }
+  intros x y [[kSB nSB] EQy].
+  unfolder; splits; auto.
+  intros SB. apply nSB.
+  basic_solver.
 Qed.
 
 Lemma basic_step_imm_sb_e a lang k k' st st' e e' S S'
@@ -672,28 +820,11 @@ Proof.
   cdes BSTEP_.
   assert (basic_step e e' S S') as BSTEP. 
   { econstructor; eauto. }
-  eapply immediate_more.
-  { apply SB'. }
-  autounfold with ESStepDb in *.  
-  split. 
-  { unfold ES.cont_sb_dom. basic_solver 10. }
-  ins. unfold union in R2. desf.
-  3 : unfolder in R2; step_solver. 
-  { apply ES.sbE in R2; auto. 
-    unfolder in R2. step_solver. }
-  unfold cross_rel in R2. desc.
-  assert (E S c) as Ec.
-  { eapply ES.cont_sb_domE; eauto. }
-  unfold ES.cont_sb_dom in *. 
-  unfold union in R1. desf.
-  { unfolder in R2. desf.
-    { eapply ES.sb_irr; eauto. }
-    eapply ES.sb_irr, ES.sb_trans; eauto. }
-  { unfolder in R1. desc. subst.
-    eapply basic_step_acts_set_ne; eauto. }
-  unfolder in R1. desc. subst. 
-  destruct e'; auto; subst.
-  eapply basic_step_acts_set_ne'; eauto. 
+  eapply basic_step_imm_sb; eauto.
+  unfold imm_sb_delta, ES.cont_sb_dom.
+  subst k.
+  right. left.
+  split; auto; split.
 Qed.
 
 Lemma basic_step_imm_sb_e' lang k k' st st' e e' S S'
@@ -704,29 +835,9 @@ Proof.
   cdes BSTEP_.
   assert (basic_step e (Some e') S S') as BSTEP. 
   { econstructor; eauto. }
-  eapply immediate_more.
-  { apply SB'. }
-  autounfold with ESStepDb in *.  
-  split. 
-  { unfold ES.cont_sb_dom. basic_solver 10. }
-  ins. unfold union in R2. desf.
-  { apply ES.sbE in R2; auto. 
-    unfolder in R2. unfold ES.acts_set in R2. omega. } 
-  { unfolder in R2. omega. }
-  unfold eq_opt, opt_ext in *.
-  unfold union in R1. desf.
-  { apply ES.sbE in R1; auto. 
-    unfolder in R1. unfold ES.acts_set in R1. omega. }
-  { destruct R1 as [KSB _].
-    eapply ES.cont_sb_domE in KSB; eauto. 
-    unfolder in KSB. unfold ES.acts_set in KSB. omega. } 
-  unfold set_union, cross_rel in R1. desf.
-  { eapply ES.cont_sb_domE in R1; eauto. 
-    unfolder in R1. unfold ES.acts_set in R1. omega. }  
-  unfold set_union, cross_rel in R2. desf.
-  { eapply ES.cont_sb_domE in R2; eauto. 
-    unfolder in R2. unfold ES.acts_set in R2. omega. }   
-  omega.
+  eapply basic_step_imm_sb; eauto.
+  unfold imm_sb_delta.
+  basic_solver.
 Qed.
 
 (******************************************************************************)
@@ -776,7 +887,6 @@ Proof.
       { eapply ES.acts_ninit_set_incl. } 
       erewrite <- basic_step_same_tid_restr; eauto. }
     rewrite SB'.
-    rewrite cross_union_r.
     rewrite <- !unionA.
     rewrite !crs_union.
     rewrite !compl_union.
@@ -817,7 +927,6 @@ Proof.
 
     rewrite <- !csE.
     rewrite SB'. 
-    rewrite cross_union_r.
     rewrite <- !unionA.
     rewrite !crs_union.
     rewrite !crs_cs.
@@ -1077,6 +1186,132 @@ Proof.
   all : try by (rewrite ?XinE; step_solver).
   all : unfolder; ins; desf.
   all : eapply nCFkX; unfolder; splits; eauto. 
+Qed.
+
+(******************************************************************************)
+(** ** basic_step : `icf` properties *)
+(******************************************************************************)
+
+Lemma basic_step_icf lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S')
+      (wfE: ES.Wf S) :
+  icf S' ≡ icf S ∪ icf_delta S k e.
+Proof.
+  assert (basic_step e e' S S') as BSTEP.
+  { unfold basic_step. do 5 eexists. eauto. }
+  cdes BSTEP_.
+  unfold ES.icf.
+  erewrite basic_step_cf; eauto.
+  rewrite inter_union_l.
+  apply union_more.
+
+  { rewrite <- immediate_transp.
+    erewrite basic_step_imm_sb; eauto.
+    rewrite transp_union, immediate_transp.
+    rewrite !seq_union_r, !seq_union_l.
+    rewrite !inter_union_r.
+    
+    arewrite_false (
+      cf S ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ immediate (sb S))
+    ).
+    { step_solver. }
+    arewrite_false (
+      cf S ∩ (immediate (sb S)⁻¹ ⨾ imm_sb_delta S k e e')
+    ).
+    { step_solver. }
+    arewrite_false (
+      cf S ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ imm_sb_delta S k e e')
+    ).
+    { step_solver. }
+    basic_solver 10. }
+  
+  unfold cf_delta.
+  rewrite <- immediate_transp.
+  erewrite basic_step_imm_sb; eauto.
+  rewrite transp_union, immediate_transp.
+  rewrite !seq_union_r, !seq_union_l.
+  rewrite !inter_union_l, !inter_union_r.
+  
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq e)^⋈ ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq e) ^⋈ ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e')^⋈ ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e') ^⋈ ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e') ^⋈ ∩ (immediate (sb S)⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq_opt e') ^⋈ ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  relsf.
+
+  rewrite !csE.
+  rewrite !inter_union_l.
+  arewrite_false (
+    ES.cont_cf_dom S k × eq e ∩ ((imm_sb_delta S k e e')⁻¹ ⨾ immediate (sb S))
+  ).
+  { step_solver. }
+  arewrite_false (
+    (ES.cont_cf_dom S k × eq e)⁻¹ ∩ (immediate (sb S)⁻¹ ⨾ imm_sb_delta S k e e')
+  ).
+  { step_solver. }
+  relsf.
+  
+  unfold icf_delta.
+  rewrite csE, transp_cross.
+  rewrite unionC. apply union_more.
+  { unfold imm_sb_delta.
+    rewrite seq_union_r, inter_union_r.
+    arewrite_false (immediate (sb S)⁻¹ ⨾ eq e × eq_opt e').
+    { step_solver. } 
+    rewrite inter_false_r, union_false_r.
+    split. 
+    { unfolder. ins. desf.
+      splits; auto.
+      eexists; splits; eauto. 
+      eapply ES.cont_cf_tid; eauto. }
+    rewrite <- immediate_transp.
+    unfolder. ins. desf.
+    splits; auto.
+    { unfold ES.cont_last, ES.cont_cf_dom in *.
+      destruct k. 
+      { split; auto.
+        apply ES.sbE in H1; auto.
+        generalize H1. basic_solver. }
+      right. basic_solver 10. }
+    exists x0; splits; eauto. }
+  unfold imm_sb_delta.
+  rewrite transp_union, !seq_union_l, inter_union_r.
+  arewrite_false ((eq e × eq_opt e')⁻¹ ⨾ immediate (sb S)).
+  { step_solver. } 
+  rewrite inter_false_r, union_false_r.
+  split. 
+  { unfolder. ins. desf.
+    splits; auto.
+    eexists; splits; eauto. 
+    eapply ES.cont_cf_tid; eauto. }
+  unfolder. ins. desf.
+  splits; auto.
+  { unfold ES.cont_last, ES.cont_cf_dom in *.
+    destruct k. 
+    { split; auto.
+      apply ES.sbE in H1; auto.
+      generalize H1. basic_solver. }
+    right. basic_solver 10. }
+  exists x0; splits; eauto. 
 Qed.
 
 (******************************************************************************)

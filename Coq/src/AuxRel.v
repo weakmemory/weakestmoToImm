@@ -117,6 +117,9 @@ Proof. basic_solver. Qed.
 Lemma union_sym : symmetric r -> symmetric r' -> symmetric (r ∪ r').
 Proof. basic_solver. Qed.
 
+Lemma inter_sym : symmetric r -> symmetric r' -> symmetric (r ∩ r').
+Proof. basic_solver. Qed.
+
 Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
 Proof. basic_solver. Qed.
 
@@ -864,6 +867,10 @@ Proof. basic_solver. Qed.
 
 Lemma immediate_inter : 
   (immediate r) ∩ r' ⊆ immediate (r ∩ r').
+Proof. basic_solver. Qed.
+
+Lemma immediate_transp :
+  (immediate r)⁻¹ ≡ immediate (r⁻¹).
 Proof. basic_solver. Qed.
 
 Lemma trans_prcl_immediate_seqr_split x y
