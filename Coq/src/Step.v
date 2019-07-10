@@ -33,6 +33,7 @@ Notation "'rmw' S" := S.(ES.rmw) (at level 10).
 Notation "'ew' S" := S.(ES.ew) (at level 10).
 Notation "'jf' S" := S.(ES.jf) (at level 10).
 Notation "'rf' S" := S.(ES.rf) (at level 10).
+Notation "'fr' S" := S.(ES.fr) (at level 10).
 Notation "'co' S" := S.(ES.co) (at level 10).
 Notation "'cf' S" := S.(ES.cf) (at level 10).
 
@@ -313,7 +314,8 @@ Lemma update_step_F e e' S S'
       (USTEP: update_step e (Some e') S S') 
       (wfE: ES.Wf S) :
   E S' ∩₁ F S' ≡₁ E S ∩₁ F S.
-Proof. cdes USTEP; cdes AJF; cdes ACO. step_type_solver. Qed.  
+Proof. cdes USTEP; cdes AJF; cdes ACO. 
+step_type_solver. Qed.  
 
 Lemma update_step_acq e e' S S'
       (BSTEP : basic_step e (Some e') S S')
@@ -659,13 +661,69 @@ Qed.
 (** ** Step properties *)
 (******************************************************************************)
 
+Lemma step_jf_mon e e' S S'
+      (STEP : step_ e e' S S') :
+  jf S ⊆ jf S'.
+Proof. 
+  unfold_step_ STEP;
+    try cdes AJF;
+    rewrite JF';
+    basic_solver.
+Qed.
+
 Lemma step_ew_mon e e' S S'
       (STEP : step_ e e' S S') :
   ew S ⊆ ew S'.
 Proof. 
   unfold_step_ STEP;
-  desf; try cdes AEW; 
-  generalize EW'; basic_solver.
+    try cdes AEW;
+    rewrite EW';
+    basic_solver.
+Qed.  
+
+Lemma step_co_mon e e' S S'
+      (STEP : step_ e e' S S') :
+  co S ⊆ co S'.
+Proof. 
+  unfold_step_ STEP;
+    try cdes ACO;
+    rewrite CO';
+    basic_solver.
+Qed.
+
+Lemma step_rf_mon e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (STEP : step_ e e' S S') 
+      (wfE: ES.Wf S) :
+  rf S ⊆ rf S'.
+Proof. 
+  unfold ES.rf.
+  intros x y [[z [EW JF]] nCF].
+  split.
+  { exists z. split.
+    { eapply step_ew_mon; eauto. }
+    eapply step_jf_mon; eauto. }
+  intros CF. apply nCF.
+  eapply basic_step_cf_restr
+    with (S' := S'); eauto.
+  red; splits; auto.
+  { apply ES.ewE in EW; auto.
+    generalize EW. basic_solver. }
+  apply ES.jfE in JF; auto.
+  generalize JF. basic_solver.
+Qed.
+
+Lemma step_fr_mon e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (STEP : step_ e e' S S') 
+      (wfE: ES.Wf S) :
+  fr S ⊆ fr S'.
+Proof. 
+  unfold ES.fr.
+  apply seq_mori.
+  { apply transp_mori.
+    eapply step_rf_mon; eauto. }
+  eapply step_co_mon; eauto.
 Qed.  
 
 Lemma step_ccE e e' S S'
@@ -808,7 +866,20 @@ Proof.
     arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto. 
     step_solver. }
   (* ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
-  { admit. }
+  { intros x [Xx Rx'].
+    assert (R S x) as Rx.
+    { eapply basic_step_r_in_r; eauto.
+      split; auto.
+      eapply Execution.ex_inE; eauto. }
+    edestruct Execution.ex_rf_compl 
+      as [y XRF]; eauto.
+    { split; eauto. }
+    apply seq_eqv_l in XRF.
+    destruct XRF as [Xy RF].
+    exists y. 
+    apply seq_eqv_l. 
+    split; auto.
+    eapply step_rf_mon; eauto. }
   (* ex_ncf : ES.cf_free S X *)
   { red. 
     rewrite <- set_interK with (s := X).
@@ -822,6 +893,6 @@ Proof.
   etransitivity.
   { eapply Execution.ex_vis; eauto. }
   eapply step_vis_mon; eauto. 
-Admitted.
+Qed.
 
 End Step.
