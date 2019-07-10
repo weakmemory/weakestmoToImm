@@ -235,10 +235,7 @@ Section SimRelCertBasicStep.
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
     repeat autounfold with ESStepDb.
-    arewrite (
-        ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ≡
-                       ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e') ∪ eq e × eq_opt e'
-      ) by basic_solver.
+    rewrite <- cross_union_l.
     relsf. splits.
     { intros x [y [z [[EQxy | HB] [certD _]]]].
       { basic_solver. }
@@ -263,10 +260,7 @@ Section SimRelCertBasicStep.
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
     repeat autounfold with ESStepDb.
-    arewrite (
-        ES.cont_sb_dom S k × eq e ∪ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ≡
-                       ES.cont_sb_dom S k × (eq e ∪₁ eq_opt e') ∪ eq e × eq_opt e'
-      ) by basic_solver.
+    rewrite <- cross_union_l.
     relsf. splits.
     { rewrite <- seqA.
       intros x [y [z [HA HB]]].

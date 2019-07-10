@@ -392,26 +392,7 @@ Proof.
   do 3 rewrite ct_begin, rtE.
   rewrite !seq_union_r, !seq_id_r.
   rewrite <- !seqA.
-  arewrite 
-    ((sb_delta S k e e')
-     ⨾ (sb_delta S k e e') ≡ 
-     ES.cont_sb_dom S k × eq_opt e'). 
-  { unfold sb_delta.
-    rewrite !seq_union_l. 
-    arewrite_false 
-      ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'
-      ⨾ (ES.cont_sb_dom S k × eq e ∪ 
-                        (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e')). 
-    { unfold eq_opt, opt_ext in *. step_solver. }
-    rewrite cross_union_r. rewrite !seq_union_r.
-    arewrite_false 
-      (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq_opt e').
-    { step_solver. }
-    arewrite_false
-      (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq e).
-    { step_solver. }
-    basic_solver 10. }
-  rewrite <- seqA.
+  rewrite basic_step_sb_delta_seq_sb_delta; eauto.
   arewrite_false 
     ((ES.cont_sb_dom S k × eq_opt e') ⨾ (sb_delta S k e e')).
   { step_solver. }

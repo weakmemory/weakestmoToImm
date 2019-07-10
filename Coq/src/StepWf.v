@@ -1096,9 +1096,9 @@ Proof.
     rewrite ES.cont_sb_domE; eauto.
     arewrite (sb S ⊆ E S × E S).
     { rewrite WF.(ES.sbE) at 1. basic_solver. }
-    sin_rewrite EES.
-    sin_rewrite EIES.
-    sin_rewrite EIES'.
+    sin_rewrite !EES.
+    sin_rewrite !EIES.
+    sin_rewrite !EIES'.
     basic_solver. }
   { rewrite basic_step_acts_init_set; eauto.
     rewrite basic_step_acts_ninit_set; eauto.
@@ -1140,7 +1140,6 @@ Proof.
     { unfolder. ins. desf. eapply basic_step_tid_e; eauto. }
     arewrite (eq_opt e' ⊆₁ fun x => tid S' x = ES.cont_thread S k).
     { unfolder. ins. desf. eapply basic_step_tid_e'; eauto. }
-    rewrite cross_union_r.
     rewrite !seq_union_r, <- !cross_inter_l.
     arewrite (Eninit S' ∩₁ ES.cont_sb_dom S k ⊆₁
                      fun x => tid S' x = ES.cont_thread S k).
@@ -1206,12 +1205,12 @@ Proof.
       { rewrite (dom_r WF.(ES.sbE)), !seqA.
         unfolder. ins. desf. }
       unfold sb_delta.
-      rewrite seq_union_l.
+      rewrite !seq_union_l.
       rewrite <- !cross_inter_r.
       arewrite (eq_opt e' ∩₁ eq (ES.next_act S) ⊆₁ ∅).
       { unfolder. ins. desf. simpls. omega. }
       relsf.
-      2: { intros HH. eapply HH. eauto. }
+      2 : { intros HH. eapply HH. edone. }
       eapply is_total_mori.
       { reflexivity. }
       { rewrite SB'. unionR left. reflexivity. }
@@ -1231,15 +1230,16 @@ Proof.
     assert (eq e0 ∩₁ eq (ES.next_act S) ⊆₁ ∅) as DD.
     { red in EE. desf. unfolder. ins. desf. simpls. omega. }
     rewrite set_interC. 
-    rewrite !DD.
     relsf.
     2: { intros HH. eapply HH. split; eauto. }
     rewrite SB'.
     red. ins.
     destruct IWa as [IWa|IWa];
-      destruct IWb as [IWb|IWb].
+    destruct IWb as [IWb|IWb].
     { assert (sb S a b \/ sb S b a) as RR.
-      { apply CC; auto. }
+      { unfolder in IWa.
+        unfolder in IWb.
+        apply CC; auto; desf. }
       generalize RR. basic_solver. }
     3: by inv IWa; inv IWb.
     all: unfold sb_delta.
@@ -1290,7 +1290,7 @@ Proof.
         { apply EE. }
         cdes BSTEP_.
         apply SB'. right.
-        red. left. red. split; auto.
+        red. left. left. red. split; auto.
         red. red. 
         eexists. apply seq_eqv_r. split; eauto. }
       red. destruct EE as [_ EE]. rewrite EE.
@@ -1373,14 +1373,15 @@ Proof.
       apply seq_eqv_r. split.
       2: { red. intros AA. red in AA. simpls. omega. }
       red. right. red. split.
-      { by right. }
+      { done. }
         by red. }
     ins.
     destruct R1 as [R1|R1]; destruct_seq R1 as [A1 B1];
       destruct R2 as [R2|R2]; destruct_seq R2 as [A2 B2]; desf.
+    destruct A1 as [A1|A1]; desf.
     destruct A2 as [A2|A2]; desf.
-    red in R1. destruct R1 as [R1|R1]; red in R1; simpls; desf.
-    2: omega.
+    red in R1. destruct R1 as [[R1|R1]|R1]; red in R1; simpls; desf.
+    2,3: omega.
     eapply ES.cont_sb_domE in R1; eauto. }
   { split; [|basic_solver].
     red in TT. desf; cdes TT; desf.

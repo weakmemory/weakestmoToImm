@@ -331,8 +331,7 @@ Proof.
       { step_solver. }
       relsf.
       apply seq_more; auto.
-      unfold sb_delta. 
-      rewrite cross_union_r. relsf.
+      unfold sb_delta. relsf.
       arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq e). 
       { step_solver. }
       arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq_opt e'). 
@@ -364,8 +363,7 @@ Proof.
     rewrite id_union. relsf. 
     arewrite_false (sw_delta S S' k e e' ⨾ ⦗E S⦘).
     { unfold sw_delta. step_solver. }
-    unfold sb_delta. 
-    rewrite cross_union_r. relsf.
+    unfold sb_delta. relsf.
     arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq e).
     { step_solver. }
     arewrite_false (⦗eq e⦘ ⨾ ES.cont_sb_dom S k × eq_opt e').
@@ -432,8 +430,10 @@ Proof.
   relsf.
   apply union_more; auto.
   autounfold with ESStepDb.
-  rewrite inter_union_r.
-  arewrite_false (singl_rel w e ∩ (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e').
+  rewrite !inter_union_r.
+  arewrite_false (singl_rel w e ∩ ES.cont_sb_dom S k × eq_opt e').
+  { step_solver. }
+  arewrite_false (singl_rel w e ∩ eq e × eq_opt e').
   { step_solver. }
   basic_solver 10.
 Qed.
@@ -459,8 +459,10 @@ Proof.
   autounfold with ESStepDb.
   rewrite !minus_union_r.
   erewrite minus_disjoint 
-    with (r := singl_rel w e) (r' := (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e').
-  2 : { split; [|done]. step_solver. }
+    with (r := singl_rel w e) (r' := ES.cont_sb_dom S k × eq_opt e').
+  erewrite minus_disjoint 
+    with (r := singl_rel w e) (r' := eq e × eq_opt e').
+  2,3 : split; [|done]; step_solver. 
   rewrite minus_inter_compl.
   rewrite !interC with (r1 := singl_rel w e).
   rewrite !interA, !interK.
@@ -555,38 +557,44 @@ Proof.
     ((sb_delta S k e e' ∪ singl_rel w e)
      ⨾ (sb_delta S k e e' ∪ singl_rel w e) ≡ 
      ES.cont_sb_dom S k × eq_opt e' ∪ eq w × eq_opt e'). 
-  { unfold sb_delta.
+  { unfold sb_delta at 1.
     rewrite !seq_union_l. 
+    relsf.
     arewrite_false 
-      ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'
-      ⨾ (ES.cont_sb_dom S k × eq e ∪ 
-                        (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ∪ singl_rel w e)). 
-    { arewrite (singl_rel w e ⊆ E S × eq e).
-      { basic_solver. }
-      step_solver. }
-    rewrite cross_union_r. rewrite !seq_union_r.
+      (ES.cont_sb_dom S k × eq e ⨾ singl_rel w e).
+    { step_solver. }
     arewrite_false 
-      (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq_opt e').
+      (ES.cont_sb_dom S k × eq_opt e' ⨾ sb_delta S k e e').
+    { step_solver. }
+    arewrite_false 
+      (ES.cont_sb_dom S k × eq_opt e' ⨾ singl_rel w e).
+    { step_solver. }
+    arewrite_false 
+      (eq e × eq_opt e' ⨾ sb_delta S k e e').
     { step_solver. }
     arewrite_false
-     (ES.cont_sb_dom S k × eq e ⨾ singl_rel w e).
-    { arewrite (singl_rel w e ⊆ E S × eq e).
-      { basic_solver. }
-      step_solver. }
+      (eq e × eq_opt e' ⨾ singl_rel w e).
+    { step_solver. }
+    arewrite_false
+      (singl_rel w e ⨾ singl_rel w e).
+    { step_solver. }
+    relsf.
+    apply union_more.
+    { unfold sb_delta. relsf.
+      arewrite_false
+        (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq e).
+      { step_solver. }
+      arewrite_false
+        (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq_opt e').
+      { step_solver. }
+      basic_solver 10. }
+    unfold sb_delta. relsf.
     arewrite_false
       (singl_rel w e ⨾ ES.cont_sb_dom S k × eq e).
     { step_solver. }
     arewrite_false
       (singl_rel w e ⨾ ES.cont_sb_dom S k × eq_opt e').
     { step_solver. }
-    arewrite_false
-      (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq e).
-    { step_solver. }
-    arewrite_false
-      (singl_rel w e ⨾ singl_rel w e).
-    { arewrite (singl_rel w e ⊆ E S × eq e).
-      { basic_solver. }
-      step_solver. }
     basic_solver 10. }
   rewrite <- seqA.
   arewrite_false 
@@ -684,7 +692,6 @@ Proof.
   apply inter_rel_more; auto.  
   do 2 (apply seq_more; auto).  
   autounfold with ESStepDb. 
-  rewrite cross_union_r.
   relsf. rewrite !seqA.
   arewrite_false (singl_rel w e ⨾ ES.cont_sb_dom S k × eq e).
   { arewrite (singl_rel w e ⊆ E S × eq e).
@@ -844,7 +851,7 @@ Proof.
   arewrite_false (sb_delta S k e e' ⨾ ⦗F S'⦘).
   { unfold sb_delta.
     clear -nF' rR'.
-    rewrite seq_union_l, <- !cross_inter_r.
+    rewrite !seq_union_l, <- !cross_inter_r.
     arewrite (eq e ∩₁ F S' ⊆₁ ∅).
     { type_solver. }
     rewrite nF'.
@@ -919,7 +926,7 @@ Proof.
   rewrite basic_step_hb_delta_dom; eauto.
   rewrite hbE; auto.
   basic_solver.
-Qed. 
+Qed.
 
 Lemma add_jf_hbE w e e' S S' 
       (BSTEP : basic_step e e' S S') 

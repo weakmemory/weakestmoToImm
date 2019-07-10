@@ -831,7 +831,7 @@ Section SimRelCertStep.
     assert (e2a S' □ ES.cont_sb_dom S k × eq e ⊆
             Gsb ⨾ ⦗ eq (e2a S' e) ⦘) as HHSB.
     { arewrite (ES.cont_sb_dom S k × eq e ⊆ (ES.sb S') ⨾ ⦗eq e⦘).
-      { rewrite SB'. unfold sb_delta. basic_solver. }
+      { rewrite SB'. unfold sb_delta. basic_solver 10. }
       rewrite collect_rel_seqi, collect_rel_eqv.
       rewrite e2a_sb; eauto.
       3: by apply SRCC.
@@ -846,6 +846,8 @@ Section SimRelCertStep.
     rewrite collect_rel_union.
     unionL.
     2: { unfold sb_delta.
+         rewrite unionA.
+         rewrite <- cross_union_r.
          rewrite !seq_union_l, !seq_union_r.
          arewrite ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗SF S'⦘ ⊆ ∅₂).
          { unfold eq_opt.
@@ -860,6 +862,7 @@ Section SimRelCertStep.
            | H : ineps_step _ _ _ _ |- _ => cdes H
            end.
            cdes STEP0. inv ISTEP0; inv LABELS. }
+         
          relsf.
          arewrite (Sjf S' ⨾ ES.cont_sb_dom S k × eq e ⊆
                    Sjf S' ⨾ ⦗ES.cont_sb_dom S k⦘ ⨾
@@ -1126,8 +1129,8 @@ Section SimRelCertStep.
       { apply WFS.(ES.sbE) in AA.
         destruct_seq AA as [PP QQ].
         desf. }
-      { left. by destruct AA. }
-      destruct AA as [[|AA] QQ]; auto. }
+      { left. unfolder in AA. destruct AA; by desc. }
+      right. by destruct AA. }
     { assert (SE S x) as EX.
       { eapply kE_inE; eauto. }
       eapply cov_in_ex; eauto.
@@ -1145,10 +1148,10 @@ Section SimRelCertStep.
     { apply WFS.(ES.sbE) in AA.
       destruct_seq AA as [PP QQ].
       desf. }
-    { destruct AA as [AA]; subst.
-      eapply kE_inE in AA; eauto. desf. }
-    destruct AA as [[AA|AA] QQ].
-    { eapply kE_inE in AA; eauto. desf. }
+    { unfolder in AA.
+      destruct AA as [AA|AA]; subst; desc; auto;
+      eapply kE_inE in AA; eauto; desf. }
+    destruct AA as [AA QQ].
     exfalso.
     red in QQ. desf.
     assert (C (e2a S y)) as CY.
@@ -1169,8 +1172,8 @@ Section SimRelCertStep.
       { rewrite TID'. unfold upd_opt. by rewrite upds. }
       symmetry. by apply ES.ew_tid. }
     assert (Ssb S' y q) as SBYQ.
-    { apply SB'. right. red. right.
-      unfold eq_opt. split; auto. by left. }
+    { apply SB'. right. red. left. right.
+      unfold eq_opt. split; auto. }
     match goal with
     | [ H: (Sew S') q y |- _] => rename H into EWQY
     end.

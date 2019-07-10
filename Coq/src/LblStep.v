@@ -680,7 +680,7 @@ Lemma ilbl_step_nrmw_None thread lbl lbl' st st'
                 (ThreadEvent thread (1 + eindex st))) :
   lbl' = None.
 Proof.
-  edestruct lbl_step_cases with (state0:=st) (state':=st')
+  edestruct ilbl_step_cases with (state0:=st) (state':=st')
     as [l [l']]; eauto. desf.
   1-4: by apply app_eq_unit in LBLS; desf; destruct lbl'; simpls; inv LBLS.
   exfalso. apply NRMW. apply GRMW. basic_solver.

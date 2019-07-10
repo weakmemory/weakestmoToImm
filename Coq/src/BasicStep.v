@@ -1418,7 +1418,7 @@ Proof.
   rewrite SB'.
   apply irreflexive_union. split.
   { apply WF. }
-  unfold sb_delta. rewrite cross_union_r.
+  unfold sb_delta. 
   repeat (apply irreflexive_union; split).
   3: { unfolder. ins; desf. simpls. omega. }
   all: unfolder; intros x [HH]; repeat (simpls; desf).
@@ -1442,12 +1442,10 @@ Proof.
     eexists. apply seq_eqv_r. split; eauto. }
   unfold sb_delta.
   rewrite !seq_union_r.
-  apply union_mori.
-  { apply AA. }
-  rewrite !cross_union_r, !seq_union_r.
-  unionR left. unionL.
-  { apply AA. }
-  cdes BSTEP_. step_solver.
+  arewrite_false (sb S ⨾ eq e × eq_opt e').
+  { cdes BSTEP_. step_solver. }
+  rewrite union_false_r.
+  rewrite !AA. basic_solver.
 Qed.
 
 Lemma basic_step_sb_delta_transitive e e' S S' k k' lang st st'
@@ -1471,7 +1469,6 @@ Proof.
     2: { cdes BSTEP_. eauto. }
     cdes BSTEP_. step_solver. }
   unfold sb_delta.
-  rewrite cross_union_r, !seq_union_l.
   assert (forall ee, eq_opt e' ee -> eq e ee -> False) as XX.
   2: { generalize XX. basic_solver. }
   intros ee AA BB; subst.
@@ -1575,14 +1572,14 @@ Proof.
 
   assert ((tid S') z = ES.cont_thread S k) as TT.
   { rewrite TID'.
-    do 2 red in SBX. desf.
-    { red in SBX; desf.
-      unfold upd_opt; desf; simpls; desf.
-      2: by rewrite upds.
-        by rewrite updo; [rewrite upds|desf]. }
-    unfold upd_opt. 
-    red in SBX; desf. red in SBX0; desf.
+    unfold sb_delta in SBX.
+    unfolder in SBX. desf.
+    { unfold upd_opt; desf; simpls; desf.
+      { rewrite updo; [|omega].
+        by rewrite upds. }
       by rewrite upds. }
+    unfold upd_opt. 
+    by rewrite upds. }
   assert (ES.cont_thread S k <> tid_init) as TNI.
   { intros XX. eapply WF.(ES.init_tid_K); eauto. }
   rewrite <- TT in TNI.
@@ -1677,7 +1674,9 @@ Proof.
     rewrite !seq_union_l.
     arewrite_false (sb S ⨾ ⦗eq e⦘).
     { step_solver. }
-    arewrite_false ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⨾ ⦗eq e⦘).
+    arewrite_false (ES.cont_sb_dom S k × eq_opt e' ⨾ ⦗eq e⦘).
+    { step_solver. }
+    arewrite_false (eq e × eq_opt e' ⨾ ⦗eq e⦘).
     { step_solver. }
     basic_solver 10. }
   unfold ES.cont_sb_dom. subst. 
