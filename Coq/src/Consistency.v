@@ -120,7 +120,7 @@ Record es_consistent {m} :=
     (*                jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾ *)
     (*                (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew))); *)
     icf_R : dom_rel icf ⊆₁ R;
-    icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew^?);
+    icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew);
   }.
 
 Record good_restriction (A : eventid -> Prop) := 

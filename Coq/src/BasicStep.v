@@ -77,7 +77,7 @@ Definition cf_delta S k e e' : relation eventid :=
   (ES.cont_cf_dom S k × eq e)^⋈ ∪ (ES.cont_cf_dom S k × eq_opt e')^⋈.
 
 Definition icf_delta S k e : relation eventid := 
-  (codom_rel (⦗ES.cont_last S k⦘ ⨾ immediate (sb S) ⨾ ⦗Tid_ S (ES.cont_thread S k)⦘) × eq e)^⋈.
+  (ES.cont_icf_dom S k × eq e)^⋈.
 
 Hint Unfold sb_delta imm_sb_delta rmw_delta cf_delta icf_delta : ESStepDb.
 
@@ -1270,7 +1270,7 @@ Proof.
   { step_solver. }
   relsf.
   
-  unfold icf_delta.
+  unfold icf_delta, ES.cont_icf_dom.
   rewrite csE, transp_cross.
   rewrite unionC. apply union_more.
   { unfold imm_sb_delta.

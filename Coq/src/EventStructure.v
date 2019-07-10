@@ -123,6 +123,9 @@ Definition cont_cf_dom S c :=
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
 
+Definition cont_icf_dom S c := 
+  codom_rel (⦗cont_last S c⦘ ⨾ immediate (sb S) ⨾ ⦗fun x => tid S x = cont_thread S c⦘).
+
 Definition cont_adjacent S k k' e e' := 
   ⟪ kREP' : k' = CEvent (opt_ext e e') ⟫ /\ 
   ⟪ kEQTID : ES.cont_thread S k = ES.cont_thread S k' ⟫ /\
