@@ -169,6 +169,43 @@ Proof.
   generalize ewsE. basic_solver.
 Qed.
 
+(******************************************************************************)
+(** ** ew lemmas *)
+(******************************************************************************)
+
+Lemma add_ew_mon ews w' e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (AEW : add_ew ews w' S S') 
+      (wf : ES.Wf S) 
+      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+  ew S ⊆ ew S'.
+Proof. 
+  cdes AEW. 
+  rewrite EW'. 
+  basic_solver. 
+Qed.
+
+Lemma add_ew_ewE ews w' e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (AEW : add_ew ews w' S S') 
+      (wf : ES.Wf S) 
+      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+  ⦗E S⦘ ⨾ ew S' ⨾ ⦗E S⦘ ≡ ew S. 
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes AEW. 
+  rewrite EW'. split. 
+  2 : rewrite ES.ewE; auto; basic_solver.  
+  relsf. 
+  arewrite_false 
+    (⦗E S⦘ ⨾ ew_delta ews w' ⨾ ⦗E S⦘).
+  2 : basic_solver. 
+  unfold ew_delta. 
+  rewrite csE. relsf. 
+  arewrite (eq w' ⊆₁ eq e ∪₁ eq_opt e').
+  { generalize wEE'. basic_solver. }
+  step_solver. 
+Qed.
+
 End AddEW.
 
 (* Section hides the tactics and hints, so we repeat it here.

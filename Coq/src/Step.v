@@ -36,6 +36,7 @@ Notation "'rf' S" := S.(ES.rf) (at level 10).
 Notation "'fr' S" := S.(ES.fr) (at level 10).
 Notation "'co' S" := S.(ES.co) (at level 10).
 Notation "'cf' S" := S.(ES.cf) (at level 10).
+Notation "'icf' S" := S.(ES.icf) (at level 10).
 
 Notation "'jfe' S" := S.(ES.jfe) (at level 10).
 Notation "'rfe' S" := S.(ES.rfe) (at level 10).
@@ -806,6 +807,78 @@ Proof.
   rewrite basic_step_hb_deltaE; eauto.
   rewrite hbE; auto. basic_solver 5.
 Qed. 
+
+Lemma step_icf_jf_irr lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (STEP : step_ e e' S S')
+      (wfE: ES.Wf S) :
+  irreflexive (jf S' ⨾ icf S' ⨾ (jf S')⁻¹ ⨾ ew S') <->
+    irreflexive (jf S ⨾ icf S ⨾ (jf S)⁻¹ ⨾ ew S) /\
+    dom_rel (jf S' ⨾ ⦗eq e⦘) ∩₁ dom_rel (ew S ⨾ jf S ⨾ ⦗ES.cont_icf_dom S k⦘) ⊆₁ ∅.
+Proof. 
+  cdes BSTEP_.
+  assert (basic_step e e' S S') as BSTEP.
+  { red. do 5 eexists. eauto. }
+  assert 
+    (jf S ⨾ icf S' ⨾ (jf S)⁻¹ ≡ jf S ⨾ icf S ⨾ (jf S)⁻¹)
+    as JF_ICF.
+  { admit. }
+  unfold_step_ STEP.
+  { rewrite JF', EW'.
+    seq_rewrite JF_ICF.
+    rewrite !seqA.
+    split; auto.
+    2 : ins; desf.
+    intros IRR.
+    split; auto.
+    step_solver. }
+  { erewrite add_jf_icf_jf_irr; eauto.
+    2 : rewrite EW'; by rewrite <- ES.ewE.
+    apply Morphisms_Prop.and_iff_morphism; auto.
+    cdes AJF. rewrite JF'.
+    rewrite seq_union_l.
+    arewrite_false (jf S ⨾ ⦗eq e⦘).
+    { step_solver. }
+    rewrite union_false_l.
+    unfold jf_delta.
+    split. 
+    { unfolder. intros HH. ins. desf.
+      apply HH. basic_solver 10. }
+    intros HA HB. eapply HA.
+    basic_solver 10. }
+  { rewrite JF'.
+    seq_rewrite JF_ICF.
+    rewrite !seqA.
+    split. 
+    { intros IRR. split.
+      2 : step_solver. 
+      erewrite add_ew_mon; eauto.
+      by left. }
+    intros [IRR _].
+    rewrite irreflexive_seqC.
+    rewrite !seqA.
+    rewrite ES.jfE; auto.
+    rewrite !transp_seq, !transp_eqv_rel. 
+    rewrite !seqA.
+    arewrite (⦗E S⦘ ⨾ ew S' ⨾ ⦗E S⦘ ≡ ew S).
+    { eapply add_ew_ewE; eauto. 
+        by left. }
+    generalize IRR. basic_solver 10. } 
+  erewrite add_jf_icf_jf_irr; eauto.
+  2 : eapply add_ew_ewE; eauto; basic_solver.  
+  apply Morphisms_Prop.and_iff_morphism; auto.
+  cdes AJF. rewrite JF'.
+  rewrite seq_union_l.
+  arewrite_false (jf S ⨾ ⦗eq e⦘).
+  { step_solver. }
+  rewrite union_false_l.
+  unfold jf_delta.
+  split. 
+  { unfolder. intros HH. ins. desf.
+    apply HH. basic_solver 10. }
+  intros HA HB. eapply HA.
+  basic_solver 10. 
+Admitted.
 
 (******************************************************************************)
 (** ** Step preserves executions lemma  *)
