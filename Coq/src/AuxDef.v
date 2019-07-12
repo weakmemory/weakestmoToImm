@@ -303,6 +303,15 @@ Proof.
   destruct b, b'; inversion H; intuition.
 Qed.
 
+Lemma opt_to_list_app_singl_singl (A : Type) (a a' : A) (b : option A) :
+  opt_to_list b ++ [a] = [a'] -> a = a' /\ b = None.
+Proof. 
+  unfold opt_to_list.
+  destruct b as [b|];
+    unfold app; intros EQ; 
+    by inversion EQ. 
+Qed.
+
 Lemma opt_to_list_app_singl_pair (A : Type) (a a' : A) (b : option A) (b' : A) :
   opt_to_list b ++ [a] = [b'; a'] -> a = a' /\ b = Some b'.
 Proof. 
