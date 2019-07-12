@@ -130,6 +130,7 @@ Definition cont_adjacent S k k' e e' :=
   ⟪ kREP' : k' = CEvent (opt_ext e e') ⟫ /\ 
   ⟪ kEQTID : ES.cont_thread S k = ES.cont_thread S k' ⟫ /\
   ⟪ nINITe : ES.acts_ninit_set S e ⟫ /\
+  ⟪ nRMWde : e' = None -> ~ dom_rel (rmw S) e ⟫ /\
   ⟪ RMWe : eq e × eq_opt e' ⊆ ES.rmw S ⟫ /\
   ⟪ kSBDOM : ES.cont_sb_dom S k ≡₁ dom_rel (ES.sb S ⨾ ⦗eq e⦘) ⟫.
 
@@ -314,7 +315,7 @@ Record Wf :=
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
 
     K_adj : forall lang st st' k k' e e' 
-                   (KK: K (k, existT _ lang st)) (KK': K (k', existT _ lang st'))
+                   (KK: K (k, existT _ lang st)) 
                    (ADJ : cont_adjacent S k k' e e'),
         exists lbl lbl', 
           ⟪ LBL  : lbl  = lab e ⟫ /\
@@ -1640,45 +1641,85 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma cont_adjacent_inK' WF st k k' e e'
+      (KK : K (k, st)) 
+      (ADJ : cont_adjacent S k k' e e') :
+  exists st', K (k', st').
+Proof. 
+  cdes ADJ.
+  rewrite kREP'.
+  eapply event_K; auto.
+  { unfold opt_ext. 
+    destruct e' as [e'|]; auto.
+    apply rmw_codom_ninit; auto.
+    eexists. apply RMWe.
+    basic_solver. }
+  unfold opt_ext, eq_opt in *.
+  unfolder in RMWe.
+  intros [x RMW].
+  destruct e' as [e'|].
+  { eapply rmw_codom_ndom with (x := e'); eauto.
+    all: basic_solver. }
+  apply nRMWde; auto. 
+  basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** cont_icf_dom properites *)
 (******************************************************************************)
 
-Lemma cont_icf_dom_cont_adjacent WF lang k st y
-      (KK : K (k, existT _ lang st)) 
-      (kICFy : cont_icf_dom S k y) :
-  exists k' e e', cont_adjacent S k k' e e'.
+Lemma cont_icf_domE WF k : 
+  cont_icf_dom S k ⊆₁ E. 
 Proof.
-  destruct kICFy as [z HA].
+  unfold cont_icf_dom.
+  rewrite sbE; auto. 
+  basic_solver.
+Qed.
+
+Lemma cont_icf_domEnint WF k : 
+  cont_icf_dom S k ⊆₁ Eninit. 
+Proof.
+  unfold cont_icf_dom.
+  rewrite sb_Einit_Eninit; auto.
+  basic_solver.
+Qed.
+
+Lemma cont_icf_dom_cont_adjacent WF lang k st e
+      (KK : K (k, existT _ lang st)) 
+      (kICFe : cont_icf_dom S k e) :
+  exists k' e', cont_adjacent S k k' e e'.
+Proof.
+  destruct kICFe as [x HA].
   apply seq_eqv_lr in HA.
-  destruct HA as [kSBLz [SBIMM TIDy]].
-  assert (Eninit y) as nINITy.
+  destruct HA as [kSBLx [SBIMM TIDe]].
+  assert (Eninit e) as nINITe.
   { eapply sb_codom_ninit; auto. 
     generalize SBIMM. basic_solver. }
   destruct 
-    (classic (exists y', rmw y y'))
-    as [[y' RMW] | nRMW].
+    (classic (exists e', rmw e e'))
+    as [[e' RMW] | nRMW].
   { edestruct event_K 
-      with (e := y') 
+      with (e := e') 
       as [st' KK']; auto.
     { apply rmw_codom_ninit; auto.
       basic_solver. }
     { eapply rmw_codom_ndom; auto.
       basic_solver. }
     red in KK'.
-    exists (CEvent y'), y, (Some y').
+    exists (CEvent e'), (Some e').
     constructor; splits; auto.
-    { rewrite <- TIDy.
+    { rewrite <- TIDe.
       unfold cont_thread.
       apply rmwt; auto. }
+    { basic_solver. }
     { basic_solver. }
     eapply cont_sb_dom_alt_imm; eauto.
     basic_solver 10. }
   edestruct event_K 
-    with (e := y) 
+    with (e := e) 
     as [st' KK']; auto.
   red in KK'.
-  exists (CEvent y), y, None.
+  exists (CEvent e), None.
   constructor; splits; auto.
   { basic_solver. }
   eapply cont_sb_dom_alt_imm; eauto.
