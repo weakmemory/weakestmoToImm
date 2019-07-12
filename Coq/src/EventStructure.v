@@ -564,6 +564,31 @@ Proof.
   apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
 Qed.
 
+(******************************************************************************)
+(** ** icf properties *)
+(******************************************************************************)
+
+Lemma icfE : icf ≡ ⦗E⦘ ⨾ icf ⨾ ⦗E⦘.
+Proof. unfold ES.icf. rewrite cfE. basic_solver 20. Qed.
+
+Lemma icfEninit : icf ≡ ⦗Eninit⦘ ⨾ icf ⨾ ⦗Eninit⦘.
+Proof. unfold ES.icf. rewrite cfEninit. basic_solver 20. Qed.
+
+Lemma icf_same_tid : icf ⊆ same_tid.
+Proof. unfold ES.icf. rewrite cf_same_tid. basic_solver. Qed.
+
+Lemma icfEinit_l : ⦗Einit⦘ ⨾ icf ≡ ∅₂.
+Proof. unfold ES.icf. generalize ncfEinit_l. basic_solver. Qed.
+
+Lemma icfEinit_r : icf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. unfold ES.icf. generalize ncfEinit_r. basic_solver. Qed.
+
+Lemma icfEinit : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. unfold ES.icf. generalize ncfEinit. basic_solver. Qed.
+
+Lemma icf_irr : irreflexive icf.
+Proof. unfold ES.icf. generalize cf_irr. basic_solver. Qed.
+
 Lemma icf_sym : symmetric icf.
 Proof. 
   unfold ES.icf.
