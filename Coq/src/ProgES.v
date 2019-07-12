@@ -265,12 +265,13 @@ Proof.
     apply RegMap.elements_complete in CK'0.
     simpls; desf. }
   { ins. by apply prog_g_es_init_ninit in EE. }
-  ins. exfalso.
-  red in inK.
-  unfold prog_g_es_init, ES.init in *. simpls.
-  unfold prog_init_K in *.
-  apply in_map_iff in inK. desf.
-Qed.
+  { ins. exfalso.
+    red in inK.
+    unfold prog_g_es_init, ES.init in *. simpls.
+    unfold prog_init_K in *.
+    apply in_map_iff in inK. desf. }
+  admit.
+Admitted.
 
 Lemma prog_g_es_init_same_lab prog G (WF : Wf G) :
   eq_dom (ES.acts_set (prog_g_es_init prog G))

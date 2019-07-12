@@ -299,15 +299,27 @@ Record Wf :=
       ~ (exists c k,
             ⟪ KK  : K (k, c) ⟫ /\
             ⟪ CTK : cont_thread S k = tid_init ⟫);
+
     rmw_K :
       ~ (exists c e,
             ⟪ KK  : K (CEvent e, c) ⟫ /\
             ⟪ RMW : dom_rel rmw e ⟫);
+
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
+
     event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
         exists c, ⟪ KC : K (CEvent e, c) ⟫;
+
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
+
+    K_adj : forall lang st st' k k' e e' 
+                   (KK: K (k, existT _ lang st)) (KK': K (k', existT _ lang st'))
+                   (ADJ : cont_adjacent S k k' e e'),
+        exists lbl lbl', 
+          ⟪ LBL  : lbl  = lab e ⟫ /\
+          ⟪ LBL' : lbl' = option_map lab e' ⟫ /\
+          ⟪ STEP : (Language.step lang) (opt_to_list lbl' ++ [lbl]) st st' ⟫ 
   }.
 
 Implicit Type WF : Wf.

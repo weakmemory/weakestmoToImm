@@ -1626,13 +1626,14 @@ Proof.
       right. red. red. simpls. }
     red in AA. desf. unfold opt_ext.
     eexists. unnw. constructor. eauto. }
-  ins. cdes BSTEP. cdes BSTEP_. desf.
-  red in inK. rewrite CONT' in inK.
-  inv inK.
-  2: { eapply basic_step_acts_ninit_set; eauto.
-       repeat left. eapply WF.(ES.K_inEninit); eauto. }
-  eapply basic_step_acts_ninit_set; eauto.
-  unfold opt_ext. basic_solver.
-Qed.
+  { ins. cdes BSTEP. cdes BSTEP_. desf.
+    red in inK. rewrite CONT' in inK.
+    inv inK.
+    2: { eapply basic_step_acts_ninit_set; eauto.
+         repeat left. eapply WF.(ES.K_inEninit); eauto. }
+    eapply basic_step_acts_ninit_set; eauto.
+    unfold opt_ext. basic_solver. }
+  admit.
+Admitted.
  
 End ESstepWf.
