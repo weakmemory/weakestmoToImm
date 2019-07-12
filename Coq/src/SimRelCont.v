@@ -380,4 +380,47 @@ Section SimRelContLemmas.
     erewrite basic_step_e2a_eq_dom; eauto. 
   Qed.
 
+  Lemma basic_step_cont_icf_dom_same_lab_u2v k k' e e' S'
+        (st st' : thread_st (ES.cont_thread S k))
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
+    Slab S □₁ ES.cont_icf_dom S k ⊆₁ same_label_u2v (Slab S' e).
+  Proof. 
+    cdes BSTEP_.
+    arewrite (Slab S' e = lbl).
+    { rewrite LAB'.
+      rewrite updo_opt, upds; auto.
+      destruct e' as [e'|]; auto.
+      unfold opt_ext in *. subst.
+      unfolder. omega. }
+    intros l [a [kICFx EQl]].
+    edestruct ES.cont_icf_dom_cont_adjacent
+      as [k'' [a' ADJ]]; eauto.
+
+    (* a piece of dark magic *)
+    edestruct ES.cont_adjacent_inK'
+      as [c KK'']; eauto. 
+    assert 
+      (exists st'', c = existT _ (thread_lts (ES.cont_thread S k)) st'')
+      as [st'' EQc].
+    { arewrite (thread_lts (ES.cont_thread S k) = projT1 c).
+      { cdes ADJ.
+        rewrite kEQTID.
+        symmetry.
+        eapply contlang; eauto.
+        erewrite <- sigT_eta. 
+        eapply KK''. }
+      exists (projT2 c). eapply sigT_eta. }
+    subst c.
+
+    edestruct ES.K_adj 
+      with (k := k) (k' := k'') (st' := st'')
+      as [ll [ll' [EQll [EQll' STEP']]]]; eauto.
+    red in EQll, EQll', STEP'.
+    rewrite <- EQl.
+    rewrite <- EQll.
+    eapply same_label_u2v_ilbl_step.
+    { eapply STEP. }
+    apply STEP'.
+  Qed.
+
 End SimRelContLemmas.
