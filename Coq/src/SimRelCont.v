@@ -133,6 +133,35 @@ Section SimRelCont.
             ⟪ SIMST : @sim_state G sim_normal C (ES.cont_thread S k) state ⟫;
     }.
 
+  Section SimRelContProps. 
+
+    Variable WF : ES.Wf S.
+    Variable SRK : simrel_cont.
+
+    Lemma simrel_cont_adjacent_inK' k k' e e'
+          (st : thread_st (ES.cont_thread S k))
+          (KK : K (k, existT _ (thread_lts (ES.cont_thread S k)) st)) 
+          (ADJ : ES.cont_adjacent S k k' e e') :
+      exists st', K (k', existT _ (thread_lts (ES.cont_thread S k)) st').
+    Proof. 
+      (* a piece of dark magic *)
+      edestruct ES.cont_adjacent_inK'
+        as [c KK'']; eauto. 
+      assert 
+        (exists st', c = existT _ (thread_lts (ES.cont_thread S k)) st')
+        as [st' EQc]; [|subst c; eauto].
+      arewrite (thread_lts (ES.cont_thread S k) = projT1 c).
+      2 : exists (projT2 c); eapply sigT_eta.
+      cdes ADJ.
+      rewrite kEQTID.
+      symmetry.
+      eapply contlang; eauto.
+      erewrite <- sigT_eta. 
+      eapply KK''.
+    Qed.
+
+  End SimRelContProps.
+
 End SimRelCont.
 
 Section SimRelContLemmas. 
@@ -395,23 +424,8 @@ Section SimRelContLemmas.
     intros l [a [kICFx EQl]].
     edestruct ES.cont_icf_dom_cont_adjacent
       as [k'' [a' ADJ]]; eauto.
-
-    (* a piece of dark magic *)
-    edestruct ES.cont_adjacent_inK'
-      as [c KK'']; eauto. 
-    assert 
-      (exists st'', c = existT _ (thread_lts (ES.cont_thread S k)) st'')
-      as [st'' EQc].
-    { arewrite (thread_lts (ES.cont_thread S k) = projT1 c).
-      { cdes ADJ.
-        rewrite kEQTID.
-        symmetry.
-        eapply contlang; eauto.
-        erewrite <- sigT_eta. 
-        eapply KK''. }
-      exists (projT2 c). eapply sigT_eta. }
-    subst c.
-
+    edestruct simrel_cont_adjacent_inK' 
+      as [st'' KK'']; eauto.
     edestruct ES.K_adj 
       with (k := k) (k' := k'') (st' := st'')
       as [ll [ll' [EQll [EQll' STEP']]]]; eauto.
