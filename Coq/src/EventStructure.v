@@ -389,6 +389,9 @@ Proof.
   apply inclusion_union_l; basic_solver. 
 Qed.
 
+Lemma sb_codom_ninit WF : codom_rel sb ⊆₁ Eninit. 
+Proof. rewrite <- sb_seq_Eninit_r; auto. basic_solver. Qed.  
+
 Lemma sb_clos_imm_split WF : sb ≡ (immediate sb)⁺.
 Proof.
   eapply ct_imm1.
@@ -776,6 +779,37 @@ Proof.
   rewrite <- WF.(sb_tid).
   rewrite WF.(rmw_in_sb).
   basic_solver.
+Qed.
+
+Lemma rmw_dom_ninit WF : dom_rel rmw ⊆₁ Eninit. 
+Proof. 
+  intros x [y RMW]. split.
+  { apply rmwE in RMW; auto.
+    generalize RMW. basic_solver. }
+  intros INITx.
+  apply acts_init_set_inW in INITx; auto.
+  assert (is_r lab x) as Rx.
+  { apply rmwD in RMW; auto.
+    generalize RMW. basic_solver. }
+  type_solver.
+Qed.
+
+Lemma rmw_codom_ninit WF : codom_rel rmw ⊆₁ Eninit. 
+Proof. 
+  rewrite rmw_in_sb; auto.
+  apply sb_codom_ninit; auto.
+Qed.
+
+Lemma rmw_codom_ndom WF : codom_rel rmw ⊆₁ set_compl (dom_rel rmw).
+Proof. 
+  intros y [x RMW] [z RMW'].
+  assert (is_w lab y) as Wy.
+  { apply rmwD in RMW; auto.
+    generalize RMW. basic_solver. }
+  assert (is_r lab y) as Ry.
+  { apply rmwD in RMW'; auto.
+    generalize RMW'. basic_solver. }
+  type_solver.
 Qed.
 
 (******************************************************************************)
@@ -1255,6 +1289,63 @@ Proof.
     by apply sb_cont_last_in_cont_sb_dom.
 Qed.
 
+Lemma cont_sb_dom_alt_imm WF lang k st e
+      (KK : K (k, existT _ lang st))   
+      (IMMSB : codom_rel (⦗cont_last S k⦘ ⨾ immediate sb) e) :
+  cont_sb_dom S k ≡₁ dom_rel (sb ⨾ ⦗eq e⦘).
+Proof.
+  unfold cont_sb_dom, cont_last in *.
+  assert (Eninit e) as nINITe.
+  { apply sb_codom_ninit; auto.
+    generalize IMMSB. basic_solver. }
+  destruct IMMSB as [y HH].
+  apply seq_eqv_l in HH.
+  destruct HH as [kSBy IMMSB].
+  destruct k eqn:Heq.
+  { split.
+    { rewrite sb_Einit_Eninit at 1; auto.
+      basic_solver 10. }
+    rewrite seq_eqv_r.
+    intros z' [z'' [SB EQz'']]. subst z''.
+    assert (E z') as Ez'.
+    { apply sbE in SB; auto.
+      generalize SB. basic_solver. }
+    apply acts_set_split in Ez'.
+    destruct Ez' as [INITz' | nINITz']; auto.
+    exfalso. eapply IMMSB; eauto.
+    apply sb_Einit_Eninit; auto.
+    basic_solver. }
+  subst eid. split.
+  { unfolder. ins. desf.
+    { eexists; splits; eauto.
+      apply IMMSB. }
+    exists e; split; eauto.
+    eapply sb_trans; eauto.
+    apply IMMSB. }
+  assert (E y) as Ey.
+  { eapply K_inEninit; eauto. } 
+  assert (Eninit y) as nINITy.
+  { eapply K_inEninit; eauto. }
+  rewrite sb_imm_split_r at 1; auto.
+  rewrite seqA.
+  rewrite !seq_eqv_r.
+  rewrite crE. relsf. split.
+  { intros x [y' [IMMSB' EQy']]. subst y'.
+    exists y; splits; auto.
+    left. symmetry.
+    eapply immediate_tsb_functional; auto.
+    { apply immediate_transp with (r := sb).
+      red. apply IMMSB. }
+  by apply immediate_transp with (r := sb). }
+  intros x [e' [y' [SB [IMMSB' EQy']]]]. subst e'.
+  exists y; split; auto; right.
+  arewrite (y = y'); auto.
+  eapply immediate_tsb_functional; auto.
+  { apply immediate_transp with (r := sb).
+    red. apply IMMSB. }
+  by apply immediate_transp with (r := sb).
+Qed.
+
 Lemma cont_last_alt WF k : 
   cont_last S k ≡₁ cont_sb_dom S k \₁ dom_rel (sb ⨾ ⦗cont_sb_dom S k⦘).
 Proof. 
@@ -1535,6 +1626,51 @@ Proof.
   erewrite cont_adjacent_sb_dom 
     with (k' := k'); eauto.
   basic_solver.
+Qed.
+
+(******************************************************************************)
+(** ** cont_icf_dom properites *)
+(******************************************************************************)
+
+Lemma cont_icf_dom_cont_adjacent WF lang k st y
+      (KK : K (k, existT _ lang st)) 
+      (kICFy : cont_icf_dom S k y) :
+  exists k' e e', cont_adjacent S k k' e e'.
+Proof.
+  destruct kICFy as [z HA].
+  apply seq_eqv_lr in HA.
+  destruct HA as [kSBLz [SBIMM TIDy]].
+  assert (Eninit y) as nINITy.
+  { eapply sb_codom_ninit; auto. 
+    generalize SBIMM. basic_solver. }
+  destruct 
+    (classic (exists y', rmw y y'))
+    as [[y' RMW] | nRMW].
+  { edestruct event_K 
+      with (e := y') 
+      as [st' KK']; auto.
+    { apply rmw_codom_ninit; auto.
+      basic_solver. }
+    { eapply rmw_codom_ndom; auto.
+      basic_solver. }
+    red in KK'.
+    exists (CEvent y'), y, (Some y').
+    constructor; splits; auto.
+    { rewrite <- TIDy.
+      unfold cont_thread.
+      apply rmwt; auto. }
+    { basic_solver. }
+    eapply cont_sb_dom_alt_imm; eauto.
+    basic_solver 10. }
+  edestruct event_K 
+    with (e := y) 
+    as [st' KK']; auto.
+  red in KK'.
+  exists (CEvent y), y, None.
+  constructor; splits; auto.
+  { basic_solver. }
+  eapply cont_sb_dom_alt_imm; eauto.
+  basic_solver 10.
 Qed.
 
 (******************************************************************************)
