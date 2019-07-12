@@ -969,10 +969,8 @@ Proof.
     (jf_delta w e ⨾ icf S' ⨾ (jf_delta w e)⁻¹).
   { rewrite basic_step_icf; eauto.
     unfold icf_delta. relsf. 
-    arewrite (ES.cont_icf_dom S k ⊆₁ E S).
-    { admit. }
-    arewrite (icf S ≡ ⦗E S⦘ ⨾ icf S ⨾ ⦗E S⦘).
-    { admit. }
+    rewrite ES.cont_icf_domE; auto.
+    rewrite ES.icfE; auto.
     step_solver. }
   rewrite union_false_r.
   arewrite (
@@ -983,7 +981,7 @@ Proof.
     rewrite transp_inv.
     erewrite transp_sym_equiv
       with (r := icf S').
-    2 : admit. 
+    2 : apply ES.icf_sym. 
     basic_solver. }
   rewrite unionC.
   rewrite <- csE.
@@ -992,9 +990,7 @@ Proof.
   relsf.
   arewrite_false 
     (jf S ⨾ icf S ⨾ (jf_delta w e)⁻¹).
-  { arewrite (icf S ≡ ⦗E S⦘ ⨾ icf S ⨾ ⦗E S⦘).
-    { admit. }
-    step_solver. }
+  { rewrite ES.icfE; auto. step_solver. }
   rewrite union_false_l.
   unfold icf_delta.
   rewrite csE. relsf.
@@ -1003,7 +999,7 @@ Proof.
   { step_solver. }
   unfold jf_delta.
   basic_solver 10.
-Admitted.
+Qed.
 
 Lemma add_jf_icf_jf_irr lang k k' st st' w e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 

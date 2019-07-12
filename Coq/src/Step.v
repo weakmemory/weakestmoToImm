@@ -822,7 +822,10 @@ Proof.
   assert 
     (jf S ⨾ icf S' ⨾ (jf S)⁻¹ ≡ jf S ⨾ icf S ⨾ (jf S)⁻¹)
     as JF_ICF.
-  { admit. }
+  { rewrite basic_step_icf; eauto. relsf.
+    arewrite_false (jf S ⨾ icf_delta S k e ⨾ (jf S)⁻¹).
+    2 : by rewrite union_false_r.
+    unfold icf_delta. step_solver. }
   unfold_step_ STEP.
   { rewrite JF', EW'.
     seq_rewrite JF_ICF.
@@ -878,7 +881,7 @@ Proof.
     apply HH. basic_solver 10. }
   intros HA HB. eapply HA.
   basic_solver 10. 
-Admitted.
+Qed.
 
 (******************************************************************************)
 (** ** Step preserves executions lemma  *)
