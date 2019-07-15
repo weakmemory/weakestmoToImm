@@ -713,11 +713,24 @@ Proof.
     desc; rewrite LABELS, LABELS0; by red.
 Qed.
 
-Lemma same_label_nR_istep thread la la' lb lb' state state' state''
+Lemma same_label_u2v_ilbl_step thread la la' lb lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') :
+  same_label_u2v la lb.
+Proof. 
+  unfold ilbl_step, ineps_step in *.
+  destruct STEP1 as [s1 [[_ ISTEP1] _]].
+  destruct STEP2 as [s2 [[_ ISTEP2] _]].
+  eapply same_label_u2v_istep; eauto.
+Qed.
+
+Lemma nR_istep thread la la' lb lb' state state' state''
       (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
       (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
       (nR : ~ is_r id la) :
-  la = lb.
+  ⟪ EQLab    : la = lb ⟫ /\
+  ⟪ LabNone  : la' = None ⟫ /\
+  ⟪ LabNone' : lb' = None ⟫.
 Proof. 
   destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
   destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
@@ -740,29 +753,45 @@ Proof.
     try (by exfalso; eapply app_cons_not_nil; eauto).
   all: rewrite EQii, II0 in II; inversion II; subst.
   all: apply opt_to_list_app_singl_singl in LABELS1.
-  all: desc; congruence.
+  all: desc; splits; congruence.
 Qed.
 
-Lemma same_label_u2v_ilbl_step thread la la' lb lb' state state' state''
+Lemma nR_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
-      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') :
-  same_label_u2v la lb.
-Proof. 
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  ⟪ EQLab    : la = lb ⟫ /\
+  ⟪ LabNone  : la' = None ⟫ /\
+  ⟪ LabNone' : lb' = None ⟫.
+Proof.
   unfold ilbl_step, ineps_step in *.
   destruct STEP1 as [s1 [[_ ISTEP1] _]].
   destruct STEP2 as [s2 [[_ ISTEP2] _]].
-  eapply same_label_u2v_istep; eauto.
+  eapply nR_istep; eauto.
 Qed.
 
+Lemma same_label_nR_istep thread la la' lb lb' state state' state''
+      (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  la = lb.
+Proof. eapply nR_istep; eauto. Qed.
+  
 Lemma same_label_nR_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
       (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
       (nR : ~ is_r id la) :
   la = lb.
-Proof. 
-  unfold ilbl_step, ineps_step in *.
-  destruct STEP1 as [s1 [[_ ISTEP1] _]].
-  destruct STEP2 as [s2 [[_ ISTEP2] _]].
-  eapply same_label_nR_istep; eauto.
-Qed.
+Proof. eapply nR_ilbl_step; eauto. Qed.
 
+Lemma unique_nR_ilbl_step thread la la' lb lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  state' = state''.
+Proof. 
+  eapply unique_ilbl_step; eauto.
+  edestruct nR_ilbl_step 
+    with (la := la) as [HA [HB HC]]; eauto.
+  red in HA, HB, HC. by subst.
+Qed.

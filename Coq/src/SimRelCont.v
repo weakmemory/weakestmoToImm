@@ -36,6 +36,12 @@ Section SimRelCont.
 
   Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
 
+  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
+  Notation "'SW'" := (fun a => is_true (is_w Slab a)).
+  Notation "'SF'" := (fun a => is_true (is_f Slab a)).
+  Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
+  Notation "'SAcq'" := (fun a => is_true (is_acq Slab a)).
+
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Scf'" := (S.(ES.cf)).
   Notation "'Srmw'" := (S.(ES.rmw)).
@@ -435,6 +441,36 @@ Section SimRelContLemmas.
     eapply same_label_u2v_ilbl_step.
     { eapply STEP. }
     apply STEP'.
+  Qed.
+
+  Lemma basic_step_cont_icf_dom_nR_same_lab k k' e e' S'
+        (st st' : thread_st (ES.cont_thread S k))
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
+    Slab S □₁ (ES.cont_icf_dom S k ∩₁ set_compl (is_r (Slab S))) ⊆₁ eq (Slab S' e).
+  Proof. 
+    cdes BSTEP_.
+    arewrite (Slab S' e = lbl).
+    { rewrite LAB'.
+      rewrite updo_opt, upds; auto.
+      destruct e' as [e'|]; auto.
+      unfold opt_ext in *. subst.
+      unfolder. omega. }
+    intros l [a [[kICFx nR] EQl]].
+    edestruct ES.cont_icf_dom_cont_adjacent
+      as [k'' [a' ADJ]]; eauto.
+    edestruct simrel_cont_adjacent_inK' 
+      as [st'' KK'']; eauto.
+    edestruct ES.K_adj 
+      with (k := k) (k' := k'') (st' := st'')
+      as [ll [ll' [EQll [EQll' STEP']]]]; eauto.
+    red in EQll, EQll', STEP'.
+    rewrite <- EQl.
+    rewrite <- EQll.
+    symmetry.
+    eapply same_label_nR_ilbl_step.
+    { eapply STEP'. }
+    { apply STEP. }
+    basic_solver.
   Qed.
 
 End SimRelContLemmas.
