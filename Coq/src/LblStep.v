@@ -724,6 +724,44 @@ Proof.
   eapply same_label_u2v_istep; eauto.
 Qed.
 
+Lemma same_label_fst_istep thread l la' lb' state state' state''
+      (STEP1 : istep thread (opt_to_list la' ++ [l]) state state')
+      (STEP2 : istep thread (opt_to_list lb' ++ [l]) state state'') :
+  la' = lb'.
+Proof. 
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
+  red in EQis1, EQis2. 
+  assert (instr1 = instr2) as EQii.
+  { congruence. }
+  inversion STEP1_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all: inversion STEP2_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all : rewrite EQii, II0 in II; inversion II; subst.
+  all: 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS; 
+    try apply opt_to_list_app_singl_pair 
+      in LABELS; 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS0;
+    try apply opt_to_list_app_singl_pair 
+      in LABELS0;
+    desc; congruence.
+Qed.
+
+Lemma same_label_fst_ilbl_step thread l la' lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [l]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [l]) state state'') :
+  la' = lb'.
+Proof. 
+  unfold ilbl_step, ineps_step in *.
+  destruct STEP1 as [s1 [[_ ISTEP1] _]].
+  destruct STEP2 as [s2 [[_ ISTEP2] _]].
+  eapply same_label_fst_istep; eauto.
+Qed.
+
 Lemma nR_istep thread la la' lb lb' state state' state''
       (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
       (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
@@ -783,6 +821,16 @@ Lemma same_label_nR_ilbl_step thread la la' lb lb' state state' state''
       (nR : ~ is_r id la) :
   la = lb.
 Proof. eapply nR_ilbl_step; eauto. Qed.
+
+Lemma unique_same_label_fst_ilbl_step thread l la' lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [l]) state state' )
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [l]) state state'') :
+  state' = state''.
+Proof. 
+  eapply unique_ilbl_step; eauto.
+  erewrite same_label_fst_ilbl_step 
+    with (la' := la'); eauto.
+Qed.
 
 Lemma unique_nR_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')

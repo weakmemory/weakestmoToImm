@@ -709,7 +709,7 @@ Section SimRelCertForwarding.
     red in EQl, EQl', EQl''.
 
     assert (st' = st''') as EQst.
-    { eapply unique_nR_ilbl_istep.
+    { eapply unique_nR_ilbl_step.
       { eapply STEP. }
       { eapply LSTEP. }
       unfold is_r, id in *. 
@@ -717,8 +717,7 @@ Section SimRelCertForwarding.
     subst st'''.
 
     constructor; splits; auto.
-    { congruence. }
-    { congruence. }
+    1-2: congruence.
     arewrite (eq z ⊆₁ set_compl (is_r (Slab S))).
     2 : rewrite ES.jfD; auto; basic_solver.
     intros z'' EQz''. subst z''. 
@@ -733,5 +732,147 @@ Section SimRelCertForwarding.
     destruct (Slab S z); try done.
     destruct (Slab S' e); done.
   Qed.
-  
+
+  (* TODO: move to more suitable place *)
+  Lemma same_label_u2v_same_val lbl lbl'  
+        (SAMEU2V : same_label_u2v lbl lbl')
+        (SAMEVAL : val id lbl = val id lbl') : 
+    lbl = lbl'.
+  Proof. 
+    unfold same_label_u2v, val, id in *.
+    destruct lbl; destruct lbl'; desf.
+  Qed.
+
+  Lemma simrel_cert_nforwarding_icf_jf lbl lbl' k k' e e' S S'
+        (st st' st'': thread_st (ktid S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')  
+        (nFRWD : ~ exists k' e e', forwarding S lbl lbl' k k' e e' st st') :
+    irreflexive (Sjf S' ⨾ Sicf S' ⨾ (Sjf S')⁻¹ ⨾ Sew S').
+  Proof. 
+    cdes CertSTEP. cdes BSTEP_.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (ES.Wf S') as WFS'.
+    { eapply simrel_cert_step_wf; eauto. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+    assert (simrel_e2a S G sc) as SRE2A.
+    { apply SRCC. } 
+    assert (step_ e e' S S') as STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+
+
+    (* some technicalities *)
+    assert (lbl0 = lbl) as EQl.
+    { rewrite LBL, LAB'.
+      rewrite updo_opt, upds; auto.
+      unfold opt_ext in *.
+      basic_solver. }
+    assert (lbl'0 = lbl') as EQl'.
+    { rewrite LBL', LAB'.
+      unfold option_map, opt_same_ctor in *.
+      destruct e' as [e'|].
+      { destruct lbl'0; [|done].
+        unfold upd_opt.
+          by rewrite upds. }
+      destruct lbl'0; done. }
+    subst lbl0 lbl'0.
+
+    eapply step_icf_jf_irr; eauto. split. 
+    { eapply icf_jf. apply SRCC. }
+
+    rewrite !seq_eqv_r.
+    intros x [[y [JF' EQy]] HH]. subst y.
+    destruct HH as [z [y [EW [JF kICFy]]]].
+    red.
+    
+    apply nFRWD.
+    edestruct cstate_cont
+      as [s [EQs KK]]; [apply SRCC|].
+    red in EQs, KK. subst s.
+    edestruct ES.cont_icf_dom_cont_adjacent 
+      with (S := S) (k := k) (e := z)
+      as [k''' [z' ADJ]]; eauto.
+    edestruct simrel_cont_adjacent_inK'
+      with (S := S) (k := k) (k' := k''')
+      as [st''' KK''']; eauto.
+    exists k''', z, z'.
+    edestruct ES.K_adj 
+      with (S := S) (k := k) (k' := k''') (st' := st''')
+      as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto.
+    red in EQll, EQll', LSTEP.
+
+    assert (lbl = ll) as EQLab.
+    { eapply same_label_u2v_same_val.
+      { eapply same_label_u2v_ilbl_step.
+        { apply STEP. }
+        apply LSTEP. }
+      arewrite (val id lbl = val (Slab S') e).
+      { basic_solver. }
+      arewrite (val id ll = val (Slab S) z).
+      { basic_solver. }
+      arewrite (val (Slab S') e = val (Slab S') x).
+      { erewrite <- ES.jfv; eauto. }
+      arewrite (val (Slab S') x = val (Slab S) x).
+      { unfold val. 
+        erewrite basic_step_lab_eq_dom; eauto.
+        apply ES.ewE in EW; auto.
+        generalize EW. basic_solver. }
+      erewrite ES.ewv. 
+      2-3: eauto.
+      erewrite ES.jfv; eauto. }
+
+    assert (lbl' = ll') as EQLab'.
+    { eapply same_label_fst_ilbl_step.
+      { eapply STEP. }
+      rewrite EQLab.
+      eapply LSTEP. }
+
+    assert (st' = st''') as EQst.
+    { eapply unique_ilbl_step.
+      { eapply STEP. }
+      rewrite EQLab, EQLab'.
+      apply LSTEP. }
+    subst st'''.
+
+    constructor; splits; auto.
+    1-2: congruence.
+    rewrite seq_eqv_r.
+    intros a b [a' [b' [[JF'' EQb'] [EQa EQb]]]].
+    subst a b b'.
+    assert (a' = y) as EQa'.
+    { eapply ES.jff with (S := S); eauto. }
+    subst a'.
+    arewrite (e2a S y = e2a S x).
+    { erewrite e2a_ew; eauto. basic_solver 10. }
+    arewrite (e2a S x = e2a S' x).
+    { symmetry. eapply basic_step_e2a_eq_dom; eauto. 
+      apply ES.ewE in EW; auto. 
+      generalize EW. basic_solver. }
+    arewrite (e2a S z = e2a S' e).
+    { admit. }
+    
+    assert (is_r (Slab S') e) as Re.
+    { apply ES.jfD in JF'; auto. 
+      generalize JF'. basic_solver. }
+    unfold_cert_step_ CertSTEP_.
+    1,3: try cdes AEW; type_solver. 
+    all: cdes AJF. 
+    all: arewrite (x = w); auto. 
+    all: apply JF'0 in JF'. 
+    all: unfold jf_delta, singl_rel in JF'.
+    all: destruct JF' as [JF'|JF'].
+    2,4: basic_solver.
+    all: exfalso; eapply basic_step_acts_set_ne; eauto.
+    all: apply ES.jfE in JF'; auto.  
+    all: generalize JF'; basic_solver.
+  Admitted.
+
 End SimRelCertForwarding.
