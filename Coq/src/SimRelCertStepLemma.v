@@ -31,8 +31,9 @@ Require Import SimRelAddJF.
 Require Import SimRelAddEW.
 Require Import SimRelAddCO.
 Require Import SimRelCertStep.
-Require Import ProgES.
+Require Import SimRelCertForwarding.
 Require Import SimRelCertStepCoh.
+Require Import ProgES.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -369,9 +370,14 @@ Section SimRelCertStepLemma.
     (* { edestruct cstate_cont; [apply SRCC|]. desf. } *)
 
     destruct (classic 
-      (exists k' e e', forwarding S l l' k k' e e' st st')
-    ) as [[k' [e [e' FRWD]]] | nFRWD].
-    { assert (ktid S k = ktid S k') as kEQTID.
+      (exists k' st' e e', forwarding G sc TC' S l l' k k' e e' st st')
+    ) as [[k' [st''' [e [e' FRWD]]]] | nFRWD].
+    { assert (st''' = st') as EQst.
+      { cdes FRWD.
+        eapply unique_ilbl_step; eauto.
+        by rewrite <- EQlbl. }
+      subst st'''.
+      assert (ktid S k = ktid S k') as kEQTID.
       { by apply FRWD. }
       exists k', S. splits; auto.
       eapply simrel_cert_forwarding; eauto. }
@@ -423,58 +429,6 @@ Section SimRelCertStepLemma.
       as CONTDOMEQ.
     { eapply basic_step_e2a_set_collect_eq_dom; eauto.
       eapply kE_inE; eauto. }
-
-    assert (dom_rel (Sicf S') ⊆₁ SR S') as ICF_R.
-    { erewrite basic_step_icf; eauto.
-      rewrite dom_union. unionL.
-      { arewrite (dom_rel (Sicf S) ⊆₁ SE S ∩₁ SR S).
-        { apply set_subset_inter_r. split.
-          { admit. }
-          eapply icf_R; apply SRCC. }
-        (* TODO: introduce lemma *)
-        intros x [Ex Rx].
-        unfold is_r.
-        erewrite basic_step_lab_eq_dom; eauto. }
-      unfold icf_delta.
-      destruct 
-        (classic (is_r (Slab S') e))
-        as [Re|nRe].
-      { rewrite csE, dom_union. unionL.
-        2 : basic_solver. 
-        rewrite dom_cross.
-        2 : { intros HH. eapply HH. edone. } 
-        admit. }
-      intros x [y HH].
-      exfalso. 
-      apply nFRWD.
-      edestruct cstate_cont
-        as [s [EQs KK]]; [apply SRCC|].
-      red in EQs, KK. subst s.
-      assert (exists z, ES.cont_icf_dom S k z) 
-        as [z kICFz].
-      { generalize HH. basic_solver. }
-      edestruct ES.cont_icf_dom_cont_adjacent 
-        with (S := S) (k := k) (y := z)
-        as [k'' [a [a' ADJ]]]; eauto.
-      exists k'', a, a'.
-      edestruct ES.K_adj 
-        with (S := S) (k := k) (k' := k'')
-        as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto.
-      { admit. }
-      red in EQll, EQll', LSTEP.
-      assert (ll = l) as HLL.
-      { admit. } 
-      assert (ll' = l') as HLL'.
-      { admit. } 
-      constructor; splits; auto.
-      { congruence. }
-      { congruence. }
-      { admit. }
-      { by rewrite <- EQlbl. }
-      arewrite (eq a ⊆₁ set_compl (is_r (Slab S))).
-      2 : rewrite ES.jfD; auto; basic_solver.
-      intros x' EQx' Ra. subst x'. 
-      admit. }
 
     exists k', S'. splits.
     { eapply basic_step_cont_thread_k; eauto. }
