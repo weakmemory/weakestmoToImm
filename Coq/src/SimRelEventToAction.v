@@ -593,6 +593,51 @@ Section SimRelEventToActionLemmas.
     all : subst k; eauto. 
   Qed.
 
+  Lemma basic_step_e2a_cont_icf_dom k k' e e' S'
+        (st st' : thread_st (ES.cont_thread S k))
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
+    e2a S □₁ ES.cont_icf_dom S k ⊆₁ eq (e2a S' e).
+  Proof.
+    cdes BSTEP_.
+    intros x' [x [kICFx EQx']]. subst x'.
+    erewrite basic_step_e2a_e.
+    2 : apply BSTEP_.
+    symmetry. 
+    erewrite e2a_ninit.
+    2 : eapply ES.cont_icf_domEnint; eauto.
+    unfold ES.cont_icf_dom in kICFx.
+    destruct kICFx as [y HH].
+    apply seq_eqv_lr in HH.
+    destruct HH as [kLASTy [SBIMM TIDx]].
+    rewrite TIDx.
+    arewrite (ES.seqn S x = eindex st); auto.
+    unfold ES.cont_last, ES.cont_thread in *.
+    destruct k. 
+    { erewrite continit; eauto.
+      (* TODO: make a lemma *)
+      unfold ES.seqn.
+      arewrite_false (Ssb S ∩ ES.same_tid S ⨾ ⦗eq x⦘).
+      2 : by rewrite dom_empty, countNatP_empty. 
+      rewrite seq_eqv_r.
+      intros z z' [[SB STID] EQz'].
+      subst z'.
+      eapply SBIMM; eauto.
+      eapply ES.sb_init; auto. 
+      split; auto.
+      split.
+      { apply ES.sbE in SB; auto.
+        generalize SB. basic_solver. }
+      intros [_ INITz].
+      eapply ES.init_tid_K; eauto.
+      do 2 eexists; splits; eauto.
+      unfold ES.cont_thread.
+      congruence. }
+    subst eid.
+    erewrite ES.seqn_immsb; eauto.
+    2 : by symmetry. 
+    symmetry. eapply contseqn; eauto. 
+  Qed.
+
   Lemma basic_step_cert_dom_ne k k' e e' S' 
         (st st' : thread_st (ktid S k))
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
