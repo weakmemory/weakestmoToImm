@@ -618,7 +618,7 @@ Section SimRelCertForwarding.
         (LBL' : lbl' = option_map (Slab S') e')
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
-        (nFRWD : ~ exists k' e e', forwarding S lbl lbl' k k' e e' st st') :
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
     dom_rel (Sicf S') ⊆₁ SR S'.
   Proof.
     cdes CertSTEP. cdes BSTEP_.
@@ -691,10 +691,10 @@ Section SimRelCertForwarding.
     edestruct ES.cont_icf_dom_cont_adjacent 
       with (S := S) (k := k) (e := z)
       as [k''' [z' ADJ]]; eauto.
-    exists k''', z, z'.
     edestruct simrel_cont_adjacent_inK'
       with (S := S) (k := k) (k' := k''')
       as [st''' KK''']; eauto.
+    exists k''', st''', z, z'.
     edestruct ES.K_adj 
       with (S := S) (k := k) (k' := k''') (st' := st''')
       as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto.
@@ -750,7 +750,7 @@ Section SimRelCertForwarding.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')  
-        (nFRWD : ~ exists k' e e', forwarding S lbl lbl' k k' e e' st st') :
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
     irreflexive (Sjf S' ⨾ Sicf S' ⨾ (Sjf S')⁻¹ ⨾ Sew S').
   Proof. 
     cdes CertSTEP. cdes BSTEP_.
@@ -803,7 +803,7 @@ Section SimRelCertForwarding.
     edestruct simrel_cont_adjacent_inK'
       with (S := S) (k := k) (k' := k''')
       as [st''' KK''']; eauto.
-    exists k''', z, z'.
+    exists k''', st''', z, z'.
     edestruct ES.K_adj 
       with (S := S) (k := k) (k' := k''') (st' := st''')
       as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto.
@@ -857,7 +857,9 @@ Section SimRelCertForwarding.
       apply ES.ewE in EW; auto. 
       generalize EW. basic_solver. }
     arewrite (e2a S z = e2a S' e).
-    { admit. }
+    { erewrite basic_step_e2a_cont_icf_dom
+        with (S := S) (e := e); eauto.
+      basic_solver. }
     
     assert (is_r (Slab S') e) as Re.
     { apply ES.jfD in JF'; auto. 
@@ -873,6 +875,6 @@ Section SimRelCertForwarding.
     all: exfalso; eapply basic_step_acts_set_ne; eauto.
     all: apply ES.jfE in JF'; auto.  
     all: generalize JF'; basic_solver.
-  Admitted.
+  Qed.
 
 End SimRelCertForwarding.

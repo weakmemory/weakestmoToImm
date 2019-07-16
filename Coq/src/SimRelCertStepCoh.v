@@ -32,6 +32,7 @@ Require Import SimRelAddJF.
 Require Import SimRelAddEW.
 Require Import SimRelAddCO.
 Require Import SimRelCertStep.
+Require Import SimRelCertForwarding.
 Require Import ProgES.
 
 Set Implicit Arguments.
@@ -659,11 +660,14 @@ Section SimRelCertStepCoh.
     eapply urr_hb. basic_solver.
   Qed.
 
-  Lemma simrel_cert_step_consistent k k' e e' S S'
+  Lemma simrel_cert_step_consistent lbl lbl' k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
+        (nFRWD : ~ exists k' st' e e', forwarding G sc TC' S lbl lbl' k k' e e' st st') :
     @es_consistent S' Weakestmo. 
   Proof. 
     cdes CertSTEP; cdes BSTEP_.
@@ -678,7 +682,8 @@ Section SimRelCertStepCoh.
     { eapply simrel_cert_step_jf_necf; eauto. }
     { eapply simrel_cert_step_jfe_vis; eauto. }
     { eapply simrel_cert_step_coh; eauto. }
-    { admit. }
-    admit. 
-  Admitted.
+    { eapply simrel_cert_nforwarding_icf_R; eauto. }
+    eapply simrel_cert_nforwarding_icf_jf; eauto. 
+  Qed.
+
 End SimRelCertStepCoh.
