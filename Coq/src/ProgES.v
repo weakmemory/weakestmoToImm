@@ -273,6 +273,11 @@ Lemma prog_l_es_init_init locs prog :
   ES.acts_init_set (prog_l_es_init prog locs).
 Proof. unfold ES.acts_init_set. simpls. basic_solver. Qed.
 
+Lemma prog_es_init_init prog :
+  ES.acts_set (prog_es_init prog) ≡₁
+  ES.acts_init_set (prog_es_init prog).
+Proof. apply prog_l_es_init_init. Qed.
+
 Lemma prog_g_es_init_init G prog :
   ES.acts_set (prog_g_es_init prog G) ≡₁
   ES.acts_init_set (prog_g_es_init prog G).
@@ -466,3 +471,47 @@ Lemma prog_g_es_init_lab prog G e :
   exists l,
   << ELAB : ES.lab (prog_g_es_init prog G) e = init_write l >>.
 Proof. apply prog_l_es_init_lab. Qed.
+
+
+Lemma traverse_map_indexed_list {A B} (f : A -> B) l :
+  indexed_list (map f l) =
+  map (fun p : nat * A => let (a, b) := p in (a, f b))
+      (indexed_list l).
+Proof.
+  unfold indexed_list in *.
+  remember 0 as n. clear Heqn.
+  generalize dependent n.
+  induction l; simpls.
+  congruence.
+Qed.
+  
+Lemma prog_l_es_init_init_loc prog locs l
+      (L_IN : In l locs) :
+  ES.init_loc (prog_l_es_init prog locs) l.
+Proof.
+  apply in_undup_iff in L_IN.
+  specialize (indexed_list_in_exists l (undup locs) L_IN) as [e Foo].
+  exists e. splits.
+  { apply prog_l_es_init_init. 
+    unfold prog_l_es_init, ES.init.
+    unfold ES.acts_set, ES.next_act. rewrite length_map.
+    apply indexed_list_range. eauto. }
+  unfold prog_l_es_init, ES.init. simpl. 
+  unfold Events.loc.
+  arewrite ((list_to_fun
+               Nat.eq_dec
+               (Afence Orlx)
+               (indexed_list (map init_write (undup locs)))) e =
+            init_write l); [|done].
+  apply l2f_in.
+  { apply indexed_list_fst_nodup. }
+  rewrite traverse_map_indexed_list.
+  eapply in_map with
+      (f := (fun p : nat * location => let (a, b) := p in (a, init_write b))) in Foo.
+  auto.
+Qed.    
+
+Lemma prog_es_init_init_loc prog l
+      (L_IN : In l (prog_locs (stable_prog_to_prog prog))) :
+  ES.init_loc (prog_es_init prog) l.
+Proof. by apply prog_l_es_init_init_loc. Qed.
