@@ -224,11 +224,10 @@ Section SimRelCertStep.
     red in BSTEP_;
     unfold_cert_step_ H.
 
-  Lemma simrel_cert_basic_step k lbl lbl' lbls S jf_ ew_ co_
+  Lemma simrel_cert_basic_step k lbl lbl' S jf_ ew_ co_
         (st st' st'' : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
-        (ILBL_STEP : ilbl_step (ktid S k) lbls st st') 
-        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl]) :
+        (ILBL_STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st') :
     exists k' e e' S',
       ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S' ⟫ /\
       ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
@@ -246,7 +245,7 @@ Section SimRelCertStep.
 
     set (ILBL_STEP' := ILBL_STEP).
     eapply ilbl_step_cases in ILBL_STEP'; auto. 
-    subst lbls. desc.
+    desc.
     eapply opt_to_list_app_singl in LBLS. 
     desf.
 
@@ -272,13 +271,12 @@ Section SimRelCertStep.
     by rewrite upds.
   Qed.
 
-  Lemma simrel_cert_basic_step_cert_rf k lbl lbl' lbls S is_ex ord ll vv
+  Lemma simrel_cert_basic_step_cert_rf k lbl lbl' S is_ex ord ll vv
         (st st' st'' : thread_st (ktid S k))
         (LBL_LD : lbl = Aload is_ex ord ll vv)
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
-        (ILBL_STEP : ilbl_step (ktid S k) lbls st st') 
-        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
-        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl]) :
+        (ILBL_STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st') 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     exists w,
       ⟪ CertEx : certX S k w ⟫ /\
       ⟪ CertRF : (cert_rf G sc TC' (ktid S k)) 
@@ -308,7 +306,7 @@ Section SimRelCertStep.
       unfold is_r.
       erewrite steps_preserve_lab.
       { edestruct ilbl_step_cases as [la [lb [LBLS HH]]]; eauto.
-      subst lbls. apply opt_to_list_app_singl in LBLS.
+      apply opt_to_list_app_singl in LBLS.
       desc. subst la lb.
       destruct HH as [HA | HB].
       { destruct HA as [_ [_ [LAB _]]].
@@ -339,13 +337,14 @@ Section SimRelCertStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
         (ILBL_STEP : ilbl_step (ktid S k) [lbl] st st') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    exists k' e e' S', 
-      ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S' ⟫ /\
-      ⟪ CertFSTEP  : cert_fence_step e e' S S' ⟫.
+    exists k' e S', 
+      ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e None S S' ⟫ /\
+      ⟪ CertFSTEP  : cert_fence_step e None S S' ⟫ /\
+      ⟪ LBL : lbl = S'.(ES.lab) e ⟫.
   Proof. 
     desf.
     edestruct simrel_cert_basic_step as [k' [e [e' [S' HH]]]]; eauto.
-    { erewrite opt_to_list_none. done. }    
+    { erewrite opt_to_list_none. edone. }    
     desf. cdes BSTEP_.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor. eauto. }
@@ -355,8 +354,8 @@ Section SimRelCertStep.
     assert (SF S' e) as SFe.
     { unfold is_f. by rewrite <- LBL. }
     assert (e' = None) as e'None.
-    { step_solver. }
-    desf; do 5 eexists; splits; eauto.
+    { step_solver. } 
+    desf; do 3 eexists; splits; eauto.
     econstructor; splits; eauto.
   Qed.
 
@@ -366,9 +365,10 @@ Section SimRelCertStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
         (ILBL_STEP : ilbl_step (ktid S k) [lbl] st st') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    exists k' e e' S', 
-      ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S' ⟫ /\
-      ⟪ CertLdSTEP  : cert_load_step k e e' S S' ⟫. 
+    exists k' e S', 
+      ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e None S S' ⟫ /\
+      ⟪ CertLdSTEP  : cert_load_step k e None S S' ⟫ /\
+      ⟪ LBL : lbl = S'.(ES.lab) e ⟫. 
   Proof. 
     assert (ES.Wf S) as WF.
     { apply SRCC. }
@@ -376,7 +376,7 @@ Section SimRelCertStep.
       as [w HA]; eauto 10.
     { erewrite opt_to_list_none. done. } 
     edestruct simrel_cert_basic_step as [k' [e [e' [S' HB]]]]; eauto.
-    { erewrite opt_to_list_none. done. }    
+    { erewrite opt_to_list_none. edone. }    
     desf. cdes BSTEP_.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor. eauto. }
@@ -387,7 +387,7 @@ Section SimRelCertStep.
     { unfold is_r. by rewrite <- LBL. }
     assert (e' = None) as e'None.
     { step_solver. }
-    desf; do 5 eexists; splits; eauto.
+    desf; do 3 eexists; splits; eauto.
     desc. exists w. 
     splits; eauto.
     econstructor; splits; eauto.
@@ -403,15 +403,16 @@ Section SimRelCertStep.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
         (ILBL_STEP : ilbl_step (ktid S k) [lbl] st st') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    exists k' e e' S', 
-      ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S' ⟫ /\
-      ⟪ CertStSTEP  : cert_store_step k e e' S S' ⟫.
+    exists k' e S', 
+      ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e None S S' ⟫ /\
+      ⟪ CertStSTEP  : cert_store_step k e None S S' ⟫ /\
+      ⟪ LBL : lbl = S'.(ES.lab) e ⟫.
   Proof. 
     desf.
     assert (ES.Wf S) as WF.
     { apply SRCC. }
     edestruct simrel_cert_basic_step as [k' [e [e' [S' HH]]]]; eauto.
-    { erewrite opt_to_list_none. done. }    
+    { erewrite opt_to_list_none. edone. }    
     desf. cdes BSTEP_.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor. eauto. }
@@ -422,7 +423,7 @@ Section SimRelCertStep.
     { unfold is_w. by rewrite <- LBL. }
     assert (e' = None) as e'None.
     { step_solver. }
-    desf; do 5 eexists; splits; eauto.
+    desf; do 3 eexists; splits; eauto.
     econstructor; splits; eauto.
     all : econstructor; splits; eauto.   
     { unfold ew_delta, sim_ews. 
@@ -431,20 +432,21 @@ Section SimRelCertStep.
     unfold co_delta.
     unfold sim_ews, sim_ws.
     erewrite basic_step_e2a_e with (e := ES.next_act S); 
-        eauto; try apply SRCC.
+      eauto; try apply SRCC.
   Qed.
 
-  Lemma simrel_cert_update_step k lbl lbl' lbls S is_ex ordr ordw ll vvr xmod vvw
+  Lemma simrel_cert_update_step k lbl lbl' S is_ex ordr ordw ll vvr xmod vvw
         (st st' st'' : thread_st (ktid S k))
         (LBL_LD : lbl = Aload is_ex ordr ll vvr) 
         (LBL_ST : lbl' = Some (Astore xmod ordw ll vvw))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
-        (ILBL_STEP : ilbl_step (ktid S k) lbls st st') 
-        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')
-        (LBLS_EQ : lbls = opt_to_list lbl' ++ [lbl]) :
+        (ILBL_STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st') 
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     exists k' e e' S', 
       ⟪ BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S' ⟫ /\
-      ⟪ CertUpdSTEP  : cert_update_step k e e' S S' ⟫. 
+      ⟪ CertUpdSTEP  : cert_update_step k e e' S S' ⟫ /\
+      ⟪ LBL : lbl = S'.(ES.lab) e ⟫ /\
+      ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫.
   Proof. 
     assert (ES.Wf S) as WF.
     { apply SRCC. }
@@ -480,6 +482,7 @@ Section SimRelCertStep.
       2 : { eapply cert_ex_inE; eauto. } 
       erewrite basic_step_e2a_e
         with (S' := S'); eauto; try apply SRCC. }
+    3 : { unfold option_map. by rewrite LBL''. }
     all : econstructor; splits; eauto.   
     { unfold ew_delta, sim_ews. 
       erewrite basic_step_e2a_e' with (e' := 1 + ES.next_act S); 
@@ -490,22 +493,27 @@ Section SimRelCertStep.
       eauto; try apply SRCC.
   Qed.
 
-  Lemma simrel_cert_step k lbls S
+  Lemma simrel_cert_step k lbl lbl' S
         (st st' st'' : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
-        (ILBL_STEP : ilbl_step (ktid S k) lbls st st') 
+        (ILBL_STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-    exists k' e e' S', ⟪ CertSTEP : cert_step k k' st st' e e' S S' ⟫. 
+    exists k' e e' S', 
+      ⟪ LBL  : lbl  = S'.(ES.lab) e ⟫ /\
+      ⟪ LBL' : lbl' = option_map S'.(ES.lab) e' ⟫ /\
+      ⟪ CertSTEP : cert_step k k' st st' e e' S S' ⟫. 
   Proof. 
-    edestruct ilbl_step_cases as [lbl [lbl' HH]]; eauto.
+    edestruct ilbl_step_cases as [l [l' HH]]; eauto.
     { apply SRCC. edestruct cstate_cont; [apply SRCC|]. desf. }
-    desf.
+    all: desc; apply opt_to_list_app_singl in LBLS; desf.
     1-4: rewrite opt_to_list_none in ILBL_STEP.
     1,2: edestruct simrel_cert_load_step; eauto.
     3: edestruct simrel_cert_store_step; eauto.
     4: edestruct simrel_cert_fence_step; eauto.
     5: edestruct simrel_cert_update_step; eauto.
-    all: by desf; unfold cert_step, cert_step_; eauto 20.
+    all: desf; unfold cert_step, cert_step_. 
+    all: do 4 eexists; splits; eauto.
+    all: by unfold option_map.
   Qed.
   
   Lemma simrel_cert_step_step_ k k' e e' S S'
