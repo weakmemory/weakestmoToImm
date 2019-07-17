@@ -1346,7 +1346,7 @@ Proof.
   eapply ES.K_inEninit; eauto.
 Qed.
 
-Lemma basic_step_cont_thread_k lang k k' st st' e e' S S'
+Lemma basic_step_cont_thread' lang k k' st st' e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') :
   ES.cont_thread S' k' = ES.cont_thread S k. 
 Proof. 
@@ -1358,6 +1358,55 @@ Proof.
     erewrite basic_step_tid_e'; eauto. } 
   unfold ES.cont_thread at 1.
   erewrite basic_step_tid_e; eauto.
+Qed.
+
+Lemma basic_step_cont_sb_dom lang k st e e' S S' 
+      (BSTEP : basic_step e e' S S') 
+      (WF : ES.Wf S)
+      (KK : K S (k, existT _ lang st)) :
+  ES.cont_sb_dom S' k ≡₁ ES.cont_sb_dom S k.
+Proof. 
+  unfold ES.cont_sb_dom.
+  destruct k.
+  { erewrite basic_step_acts_init_set; eauto. }
+  cdes BSTEP; cdes BSTEP_.
+  rewrite !crE. relsf.
+  apply set_union_Propere; auto.
+  rewrite SB'. 
+  rewrite seq_union_l.
+  rewrite dom_union.
+  arewrite_false (sb_delta S k e e' ⨾ ⦗eq eid⦘).
+  2 : basic_solver.
+  arewrite (eq eid ⊆₁ E S).
+  2 : step_solver.
+  arewrite (eq eid ⊆₁ dom_rel ((sb S)^? ⨾ ⦗eq eid⦘)).
+  { basic_solver. }
+  fold (ES.cont_sb_dom S (CEvent eid)).
+  eapply ES.cont_sb_domE; eauto.
+Qed.
+
+Lemma basic_step_cont_sb_dom' lang k k' st st' e e' S S' 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  ES.cont_sb_dom S' k' ≡₁ ES.cont_sb_dom S k ∪₁ eq e ∪₁ eq_opt e'.
+Proof.
+  cdes BSTEP_.
+  unfold ES.cont_sb_dom at 1. 
+  subst k'. rewrite SB'. 
+  unfold opt_ext, eq_opt in *.
+  destruct e' as [e'|].
+  { unfold sb_delta. 
+    rewrite crE. relsf.
+    arewrite_false (sb S ⨾ ⦗eq e'⦘). 
+    { step_solver. }
+    arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗eq e'⦘). 
+    { step_solver. }    
+    basic_solver 10. }
+  unfold sb_delta. 
+  rewrite crE. relsf.
+  arewrite_false (sb S ⨾ ⦗eq e⦘). 
+  { step_solver. }
+  basic_solver 10. 
 Qed.
 
 Lemma basic_step_cont_set lang k k' st st' e e' S S' 
@@ -1381,28 +1430,130 @@ Proof.
   by unfold opt_ext.
 Qed.  
 
-Lemma basic_step_cont_sb_dom lang k k' st st' e e' S S' 
+Lemma basic_step_cont_adjacent lang k k' kk kk' st st' c e e' a a' S S' 
+      (WF : ES.Wf S) 
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
-      (WF : ES.Wf S) :
-  ES.cont_sb_dom S' k' ≡₁ ES.cont_sb_dom S k ∪₁ eq e ∪₁ eq_opt e'.
-Proof.
+      (KK : K S (kk, c))
+      (ADJ : ES.cont_adjacent S' kk kk' a a') :
+  ⟪ AJD_OLD : ES.cont_adjacent S kk kk' a a' ⟫ \/ (
+    ⟪ EQkk  : kk  = k  ⟫ /\
+    ⟪ EQkk' : kk' = k' ⟫ /\
+    ⟪ EQa   : a   = e ⟫ /\
+    ⟪ EQa'  : a'  = e' ⟫
+  ).
+Proof. 
   cdes BSTEP_.
-  unfold ES.cont_sb_dom at 1. 
-  subst k'. rewrite SB'. 
-  unfold opt_ext, eq_opt in *.
-  destruct e' as [e'|].
-  { unfold sb_delta. 
-    rewrite crE. relsf.
-    arewrite_false (sb S ⨾ ⦗eq e'⦘). 
-    { step_solver. }
-    arewrite_false (ES.cont_sb_dom S k × eq e ⨾ ⦗eq e'⦘). 
-    { step_solver. }    
-    basic_solver 10. }
-  unfold sb_delta. 
-  rewrite crE. relsf.
-  arewrite_false (sb S ⨾ ⦗eq e⦘). 
-  { step_solver. }
-  basic_solver 10. 
+  assert (basic_step e e' S S') as BSTEP.
+  { red. eauto 20. }
+  assert 
+    (exists lang' kkst, c = existT _ lang' kkst)
+    as [lang' [kkst EQc]]; [|subst c]. 
+  { exists (projT1 c), (projT2 c). eapply sigT_eta. }
+  
+  unfold ES.cont_adjacent in ADJ. desc.
+  erewrite basic_step_cont_sb_dom in kSBDOM; eauto.  
+  erewrite basic_step_cont_thread in kEQTID; eauto.
+  eapply basic_step_acts_ninit_set in nINITe; eauto.
+  
+  destruct nINITe as [[nINITa | EQe] | EQe'].
+  { left. red.
+    assert (eq a ⊆₁ E S) as Ea.
+    { generalize nINITa. 
+      unfold ES.acts_ninit_set.
+      basic_solver. }
+    assert (eq a × eq_opt a' ⊆ rmw S) as RMWe'.
+    { destruct a' as [a'|].
+      2 : basic_solver.
+      unfold eq_opt in *. 
+      assert (rmw S' a a') as RMW.
+      { generalize RMWe. basic_solver. }
+      apply RMW' in RMW.
+      destruct RMW as [RMW|RMW].
+      { apply ES.rmwE in RMW; auto.
+        generalize RMW. basic_solver. }
+      exfalso. 
+      eapply basic_step_acts_set_ne; eauto.
+      unfold rmw_delta in RMW.
+      unfolder in RMW. desc.
+      subst a. apply nINITa. }
+    assert (eq_opt a' ⊆₁ Eninit S) as ENINITa'.
+    { unfold eq_opt in *.
+      destruct a' as [a'|].
+      2 : basic_solver. 
+      intros x EQx. subst x.
+      assert (rmw S a a') as RMW.
+      { generalize RMWe'. basic_solver. }
+      eapply ES.rmw_codom_ninit; eauto.
+      basic_solver. }
+    edestruct ES.event_K 
+      with (e := opt_ext a a') as [c' KK']; eauto.
+    { generalize nINITa, ENINITa'. basic_solver. }
+    { unfold eq_opt, opt_ext in *.
+      destruct a' as [a'|].
+      { eapply ES.rmw_codom_ndom; eauto. 
+        generalize RMWe'. basic_solver. }
+      intros HH. unfolder in HH. desc. 
+      apply nRMWde; auto.
+      eexists. apply RMW'. basic_solver. }
+    red in KK'.
+    assert 
+      (exists lang'' kkst', c' = existT _ lang'' kkst')
+      as [lang'' [kkst' EQc']]; [|subst c']. 
+    { exists (projT1 c'), (projT2 c'). eapply sigT_eta. }
+    constructor; splits; auto.
+    { erewrite <- basic_step_cont_thread
+        with (k := kk'); eauto.
+      subst kk'. apply KK'. }
+    { intros EQa' [b RMW].
+      eapply nRMWde; auto.
+      exists b. apply RMW'.
+      basic_solver. }
+    rewrite kSBDOM.
+    rewrite SB'. relsf.
+    arewrite_false (sb_delta S k e e' ⨾ ⦗eq a⦘).
+    { rewrite Ea. step_solver. }
+    basic_solver. }
+
+  { right. subst a.
+    assert (a' = e') as EQa'.
+    { destruct a' as [a'|].
+      { assert (rmw S' e a') as RMW.
+        { apply RMWe. basic_solver. }
+        apply RMW' in RMW.
+        unfold rmw_delta in RMW.
+        destruct RMW as [RMW|RMW].
+        2 : generalize RMW; basic_solver.
+        exfalso. 
+        eapply basic_step_acts_set_ne; eauto.
+        apply ES.rmwE in RMW; auto.
+        generalize RMW. basic_solver. }
+      destruct e' as [e'|]; auto.
+      exfalso. apply nRMWde; auto.
+      eexists. apply RMW'.
+      unfold rmw_delta. basic_solver. }
+    subst a'.
+    splits; auto; try congruence.
+    eapply ES.same_sb_dom_same_k; eauto.
+    { rewrite kEQTID.
+      erewrite <- basic_step_cont_thread' 
+        with (k := k) (k' := k'); eauto.
+      by subst k' kk'. }
+    rewrite kSBDOM.
+    rewrite basic_step_sbe; eauto.
+    basic_solver. }
+
+  exfalso.
+  unfold eq_opt, opt_ext in *.
+  destruct e' as [e'|]; auto.
+  eapply basic_step_acts_set_ne; eauto.
+  assert (eq a ≡₁ eq_opt (Some e')) as HH.
+  { basic_solver. }
+  eapply ES.cont_sb_domE 
+    with (k := kk); eauto.
+  rewrite HH in kSBDOM.
+  rewrite basic_step_sbe' in kSBDOM; eauto.
+  apply kSBDOM.
+  basic_solver. 
 Qed.
 
 (******************************************************************************)
