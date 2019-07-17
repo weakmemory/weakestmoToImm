@@ -63,6 +63,14 @@ Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
     shift + countNatP p n
   end.
 
+Fixpoint nat_filter (p : nat -> Prop) (n : nat) : list nat :=
+  match n with
+  | 0 => nil
+  | S n => if excluded_middle_informative (p n)
+          then n :: nat_filter p n                               
+          else nat_filter p n
+  end.
+                               
 Fixpoint indexed_list_helper {A} (i : nat) (l : list A) :
   list (nat * A) :=
   match l with
