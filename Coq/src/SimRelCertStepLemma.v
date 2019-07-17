@@ -163,9 +163,9 @@ Section SimRelCertStepLemma.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
     (* TODO: make a lemma `cont_sb_mon` *)
-    erewrite basic_step_cont_sb_dom; eauto.
+    erewrite basic_step_cont_sb_dom'; eauto.
     unionR left -> left.
-    erewrite basic_step_cont_thread_k; eauto.
+    erewrite basic_step_cont_thread'; eauto.
     erewrite simrel_cert_basic_step_ex_tid; eauto.
     erewrite basic_step_e2a_set_map_inter_old
       with (S := S); eauto.
@@ -189,7 +189,7 @@ Section SimRelCertStepLemma.
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
-    erewrite basic_step_cont_sb_dom; eauto.
+    erewrite basic_step_cont_sb_dom'; eauto.
     rewrite set_unionA.
     rewrite set_inter_union_r.
     unionL.
@@ -226,7 +226,7 @@ Section SimRelCertStepLemma.
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
-    erewrite basic_step_cont_sb_dom; eauto.
+    erewrite basic_step_cont_sb_dom'; eauto.
     erewrite basic_step_acts_init_set; eauto.
     rewrite set_unionA.
     rewrite set_minus_union_l.
@@ -256,9 +256,9 @@ Section SimRelCertStepLemma.
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
-    erewrite basic_step_cont_sb_dom; eauto.
+    erewrite basic_step_cont_sb_dom'; eauto.
     rewrite !id_union. rewrite !seq_union_r, !collect_rel_union.
-    erewrite basic_step_cont_thread_k; eauto.
+    erewrite basic_step_cont_thread'; eauto.
     unionL.
     { erewrite <- jf_in_cert_rf; eauto.
       arewrite (⦗kE S k⦘ ⊆ ⦗SE S⦘ ⨾ ⦗kE S k⦘).
@@ -307,7 +307,7 @@ Section SimRelCertStepLemma.
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
 
-    erewrite basic_step_cont_sb_dom; eauto.
+    erewrite basic_step_cont_sb_dom'; eauto.
     rewrite !set_collect_union.
     rewrite !set_inter_union_r.
     rewrite !id_union.
@@ -431,15 +431,15 @@ Section SimRelCertStepLemma.
       eapply kE_inE; eauto. }
 
     exists k', S'. splits.
-    { eapply basic_step_cont_thread_k; eauto. }
+    { eapply basic_step_cont_thread'; eauto. }
     { apply r_step. red.
       do 2 eexists; splits; eauto.
       eapply simrel_cert_step_consistent; eauto. }
     constructor; auto.
     (* tr_step : isim_trav_step G sc (ktid S k') TC TC' *)
-    { erewrite basic_step_cont_thread_k; eauto. apply SRCC. }
+    { erewrite basic_step_cont_thread'; eauto. apply SRCC. }
     (* cert : cert_graph G sc TC TC' (ktid S k') state'' *)
-    { erewrite basic_step_cont_thread_k; eauto. apply SRCC. }
+    { erewrite basic_step_cont_thread'; eauto. apply SRCC. }
     (* cstate : simrel_cstate *)
     { eapply simrel_cert_basic_step_cstate; eauto. } 
     (* ex_ktid_cov : X ∩₁ STid' ktid' ∩₁ e2a' ⋄₁ C ⊆₁ kE' *)
@@ -465,14 +465,14 @@ Section SimRelCertStepLemma.
 
     assert (e2a S ⋄₁ C' ∩₁ ES.cont_sb_dom S k ⊆₁ e2a S' ⋄₁ C' ∩₁ ES.cont_sb_dom S' k')
       as CSBDIN.
-    { erewrite basic_step_cont_sb_dom with (S:=S) (S':=S'); eauto.
+    { erewrite basic_step_cont_sb_dom' with (S:=S) (S':=S'); eauto.
       unfolder. ins. desc. splits; auto.
       erewrite basic_step_e2a_eq_dom; eauto.
       eapply kE_inE; eauto. }
 
     assert (C' ∩₁ e2a S  □₁ ES.cont_sb_dom S  k  ⊆₁
             C' ∩₁ e2a S' □₁ ES.cont_sb_dom S' k') as CSBDINE.
-    { erewrite basic_step_cont_sb_dom with (S:=S) (S':=S'); eauto.
+    { erewrite basic_step_cont_sb_dom' with (S:=S) (S':=S'); eauto.
       rewrite <- CONTDOMEQ. basic_solver 10. }
 
     ins.
@@ -501,7 +501,7 @@ Section SimRelCertStepLemma.
         eapply basic_step_acts_set_ne; eauto.
         eapply kE_inE; eauto.
         assert (ES.cont_sb_dom S' k' e) as BB.
-        { eapply basic_step_cont_sb_dom; eauto. basic_solver. }
+        { eapply basic_step_cont_sb_dom'; eauto. basic_solver. }
         apply INC. split; auto. }
       eapply sim_state_set_eq; eauto.
       red. by rewrite KT. }
@@ -515,7 +515,7 @@ Section SimRelCertStepLemma.
       cdes BSTEP_. apply RMW'. unfold rmw_delta, eq_opt. basic_solver. }
     destruct (classic (C' (e2a S' e))) as [EE|NEE].
     2: { exfalso. apply NINC.
-         rewrite basic_step_cont_sb_dom; eauto.
+         rewrite basic_step_cont_sb_dom'; eauto.
          rewrite set_unionA.
          rewrite set_inter_union_r.
          unionL.

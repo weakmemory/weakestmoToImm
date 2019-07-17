@@ -175,10 +175,10 @@ Section SimRelCertBasicStep.
     { econstructor. eauto. }
     simpl. do 2 rewrite set_unionA.
     apply set_union_Propere.
-    { erewrite basic_step_cont_thread_k; eauto.
+    { erewrite basic_step_cont_thread'; eauto.
       eapply simrel_cert_basic_step_ex_ntid; eauto. }
     rewrite <- set_unionA.
-    eapply basic_step_cont_sb_dom; eauto.
+    eapply basic_step_cont_sb_dom'; eauto.
   Qed.
 
   Lemma simrel_cert_basic_step_cstate k k' e e' S S'
@@ -195,7 +195,7 @@ Section SimRelCertBasicStep.
     (* cstate_q_cont : Kstate (k', st'); *)
     { red. exists st'. split; auto. 
       eapply basic_step_cont_set; eauto.
-      erewrite basic_step_cont_thread_k with (S' := S'); eauto.
+      erewrite basic_step_cont_thread' with (S' := S'); eauto.
       subst. basic_solver. }
     (* cstate_reachable : (step (ES.cont_thread S' k'))＊ st' st'' *)
     arewrite (ES.cont_thread S' k' = ES.cont_thread S k); [|done].

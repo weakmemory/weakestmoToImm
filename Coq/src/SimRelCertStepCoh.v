@@ -471,7 +471,7 @@ Section SimRelCertStepCoh.
       erewrite sim_add_jf_jf_delta_in_cert_rf; eauto.
       rewrite cert_rf_in_vf. 
       sin_rewrite vf_sb_in_vf.
-      erewrite <- basic_step_cont_thread_k; eauto.
+      erewrite <- basic_step_cont_thread'; eauto.
       unfold cert_rf; basic_solver 10. }
 
     arewrite ((Sjfi S')^? ⨾ Ssb S' ⊆ Ssb S').

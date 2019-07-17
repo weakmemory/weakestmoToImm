@@ -292,7 +292,7 @@ Section SimRelContLemmas.
           by eapply SRK in HA. }
       inversion HB.
       rewrite <- KCE.
-      erewrite basic_step_cont_thread_k with (k' := k').
+      erewrite basic_step_cont_thread' with (k' := k').
       all : eauto. }
 
     (* contwf *)
@@ -356,7 +356,7 @@ Section SimRelContLemmas.
            eapply contreach; eauto. }
       assert (k0 = k') as YY by inv INK; rewrite YY in *.
       assert (ES.cont_thread S' k' = ES.cont_thread S k) as BB.
-      { eapply basic_step_cont_thread_k; eauto. }
+      { eapply basic_step_cont_thread'; eauto. }
       rewrite BB in *.
       assert (state = st'); subst.
       { apply pair_inj in INK. destruct INK as [AA INK]; subst.

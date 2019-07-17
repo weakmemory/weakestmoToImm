@@ -691,7 +691,7 @@ Section SimRelEventToActionLemmas.
     assert (basic_step e e' S S') as BSTEP. 
     { econstructor. eauto. }
     unfold cert_dom. 
-    erewrite basic_step_cont_thread_k; eauto. 
+    erewrite basic_step_cont_thread'; eauto. 
     rewrite !set_unionA.
     do 2 (eapply set_union_Propere; auto). 
     edestruct ilbl_step_cases as [l [l' HH]].

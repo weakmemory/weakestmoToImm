@@ -317,7 +317,7 @@ Section SimRelAddJF.
     Proof. 
       cdes SAJF.
       autounfold with ESStepDb.
-      erewrite basic_step_cont_thread_k; eauto.
+      erewrite basic_step_cont_thread'; eauto.
       basic_solver 10.
     Qed.
 
@@ -334,13 +334,13 @@ Section SimRelAddJF.
       assert (basic_step e e' S S') as BSTEP.
       { econstructor. eauto. }
       rewrite JF'.
-      erewrite basic_step_cont_sb_dom; eauto.
+      erewrite basic_step_cont_sb_dom'; eauto.
       rewrite !id_union, !seq_union_r, 
               !seq_union_l, !collect_rel_union.
       unionL.
       all: try by step_solver. 
       { erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
-        { erewrite basic_step_cont_thread_k; eauto. apply SRCC. }
+        { erewrite basic_step_cont_thread'; eauto. apply SRCC. }
         rewrite ES.jfE; auto.
         basic_solver. }
       rewrite collect_rel_seqi.
