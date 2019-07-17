@@ -99,53 +99,6 @@ Definition X2G :=
   ⟪ GRF   : Grf  ≡  e2a S □ restr_rel X Srf ⟫ /\
   ⟪ GCO   : Gco  ≡  e2a S □ restr_rel X Sco ⟫.
 
-
-Definition upd_with_list_fun {A B} (f : A -> B) (g : A -> B) (l : list A) :=
-  fold_left (fun f x => upd f x (g x)) l f. 
-
-Lemma upd_with_list_fun_unfold {A B} (f : A -> B) g x xs:
-  upd_with_list_fun f g (x :: xs) = upd_with_list_fun (upd f x (g x)) g xs.
-Proof.
-  basic_solver.
-Qed. 
-  
-Lemma upd_with_list_fun_not_in {A B} (f : A -> B) g l a
-      (N_IN : ~ In a l) :
-  upd_with_list_fun f g l a = f a.
-Proof.
-  remember f as f'.
-  assert (HH : f a = f' a) by congruence.
-  rewrite <- HH. clear Heqf'.
-  generalize dependent f'.
-  generalize dependent f.
-  generalize dependent l.
-  induction l; auto.
-  intuition.
-  rewrite upd_with_list_fun_unfold.
-  apply H.
-  rewrite HH.
-  symmetry.
-  apply updo.
-  basic_solver.
-Qed.
-  
-Lemma upd_with_list_fun_in {A B} (f : A -> B) g l a
-      (NO_DUP : NoDup l)
-      (IN : In a l) :
-  upd_with_list_fun f g l a = g a. 
-Proof.
-  generalize dependent f.
-  generalize dependent l.
-  induction l; [done|].
-  intuition.
-  apply NoDup_cons_iff in NO_DUP. desf.
-  rewrite upd_with_list_fun_unfold.
-  cdes IN. desf.
-  { rewrite upd_with_list_fun_not_in; auto.
-    apply upds. }
-  apply IHl; auto.
-Qed.
-
 Definition a2e : actid -> eventid :=
   let e_list := eventid_list S X in
   let a_list := map (e2a S) e_list in
