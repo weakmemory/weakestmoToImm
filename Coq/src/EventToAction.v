@@ -15,12 +15,8 @@ Local Open Scope program_scope.
 
 Section EventToAction.
 
-  Variable prog : Prog.t.
-  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
-
   Variable S : ES.t.
   Variable G : execution.
-  Variable GPROG : program_execution prog G.
   
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -120,15 +116,17 @@ Section EventToAction.
     subst. apply e2a_tid.
   Qed.
 
+  Notation "'Tid' t" := (fun x => Gtid x = t) (at level 1).
   Lemma e2a_Einit 
-        (EE : e2a □₁ SE ⊆₁ GE) :
+        (EE : e2a □₁ SE ⊆₁ GE)
+        (INIT : GE ∩₁ Tid tid_init ⊆₁ is_init) :
     e2a □₁ SEinit ⊆₁ GEinit.
   Proof.
     red. unfolder.
     intros e [e' [[Ee TIDe] E2A]].
     assert (GE e) as GEe by (apply EE; basic_solver). 
     split; auto.
-    eapply tid_initi; eauto. 
+    apply INIT.
     red; split; auto.
     subst e. by erewrite <- e2a_tid. 
   Qed.
@@ -167,7 +165,8 @@ Section EventToAction.
 
   Lemma e2a_ext_sb 
         (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S) :
+        (WF : ES.Wf S)
+        (INIT : GE ∩₁ Tid tid_init ⊆₁ is_init) :
     e2a □ Ssb ⊆ ext_sb.
   Proof.
     rewrite WF.(ES.sb_Einit_Eninit). 
@@ -193,7 +192,8 @@ Section EventToAction.
 
   Lemma e2a_sb 
         (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S) : 
+        (WF : ES.Wf S) 
+        (INIT : GE ∩₁ Tid tid_init ⊆₁ is_init) :
     e2a □ Ssb ⊆ Gsb.
   Proof.
     rewrite ES.sbE; [|by apply WF].
