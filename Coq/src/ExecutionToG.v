@@ -230,5 +230,116 @@ Definition X2G_fun (S : ES.t) (X : eventid -> Prop) : execution :=
      co :=  fun e1 e2 => S.(ES.co) (a2e S X e1) (a2e S X e2)
   |}.
 
+Lemma l2f_codom {A B} (l : list (A * B)) a def DEC :
+  In (a, list_to_fun DEC def l a) l \/
+  list_to_fun DEC def l a = def.
+Proof.
+  generalize dependent l.
+  induction l; auto.
+  destruct a0.
+  simpls.
+  destruct (DEC a0 a); basic_solver.
+Qed.
+
+Lemma a2e_dom S X 
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X):
+  S.(ES.acts_set) ∘ a2e S X ≡₁ e2a S □₁ X.
+Proof.
+  split.
+  { intros a IN_S.
+    apply ES.E_alt in IN_S.
+    rewrite first_nat_list_In_alt in IN_S.
+    unfold a2e in IN_S.
+    simpls.
+    unfold a2e in IN_S.
+    destruct (l2f_codom
+                (combine
+                   (map (e2a S) (eventid_list S X))
+                   (eventid_list S X))
+                a
+                (ES.next_act S)
+                (fun x y : actid => excluded_middle_informative (x = y)))
+      as [HH|]; [|omega].
+    apply in_combine_l in HH.
+    apply in_map_iff in HH. desf.
+    apply in_filterP_iff in HH0. desf.
+    basic_solver. }
+  intros a IN_IM.
+  destruct IN_IM as [e [Xe HH]].
+  rewrite <- HH.
+  eapply Execution.ex_inE in Xe as Ee; eauto.
+  specialize (a2e_e2a S X WF EXEC e Xe) as F.
+  unfold "∘" in *.
+  by rewrite F.
+Qed. 
+
+Lemma X2G_rel_transfer S X r
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (rE : r ≡ ⦗ES.acts_set S⦘ ⨾ r ⨾ ⦗ES.acts_set S⦘) :
+  (fun e1 e2 => r (a2e S X e1) (a2e S X e2)) ≡ e2a S □ restr_rel X r.
+Proof.
+  unfold "□", "≡", "⊆". split.
+  { intros a1 a2 HH.
+    assert (IM : forall r, S.(ES.acts_set) (a2e S X r) -> (e2a S □₁ X) r).
+    { by apply a2e_dom. }
+    assert (IM_a1 : (e2a S □₁ X) a1).
+    2: assert (IM_a2 : (e2a S □₁ X) a2).
+    1, 2: apply IM; apply rE in HH; auto.
+    1, 2: by unfolder in *; basic_solver.
+    unfold "□₁" in IM_a1. desf. exists y.
+    unfold "□₁" in IM_a2. desf. exists y0.
+    unfold restr_rel.
+    splits; auto. 
+    arewrite (y = a2e S X (e2a S y)).
+    2: arewrite (y0 = a2e S X (e2a S y0)).
+    1, 2: by symmetry; apply a2e_e2a.
+    auto. }
+  intros a1 a2 [e1 [e2 [[RMW [Xe1 Xe2]] [eq1 eq2]]]].
+  rewrite <- eq1, <- eq2.
+  arewrite (a2e S X (e2a S e1) = e1) by apply a2e_e2a.
+  arewrite (a2e S X (e2a S e2) = e2) by apply a2e_e2a.
+Qed.
+    
+
+Lemma X2G_fun_X2G S X
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X) :
+  X2G S X (X2G_fun S X).
+Proof.
+  red. splits. 
+  { unfold acts_set. simpls. 
+    unfold eventid_list.
+    unfolder. splits; intros x HH.
+    { apply in_map_iff in HH.
+      destruct HH as [y [e2a_y_x IN_y]]. exists y.
+      apply in_filterP_iff in IN_y.
+      basic_solver. }
+    apply in_map_iff.
+    destruct HH as [y [Xy e2a_y_x]]. exists y.
+    rewrite in_filterP_iff.
+    splits; auto.
+    apply ES.E_alt.
+    destruct EXEC. auto. }
+  { simpls. 
+    unfold eq_dom. ins.
+    rewrite Combinators.compose_assoc.
+    unfold "∘" at 1. by rewrite a2e_e2a. }
+  { admit. }
+  all: apply X2G_rel_transfer; auto.
+  { by apply ES.rmwE. }
+  { by apply ES.rfE. }
+  by apply ES.coE. 
+  
+  
+    
+    
+
+
+
+  
+
+
 
 
