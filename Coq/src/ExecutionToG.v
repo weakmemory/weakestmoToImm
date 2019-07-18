@@ -13,7 +13,7 @@ Require Import Omega.
 
 Local Open Scope program_scope.
 
-Section ExecutionToG.
+Section ActionToEvent.
 
 Lemma nodup_first_nat_list : forall n : nat, NoDup (first_nat_list n).
 Proof.
@@ -154,62 +154,80 @@ Lemma a2e_e2a
 Proof.
   red. ins.
   unfold id, "∘".
-  unfold a2e.
   apply l2f_in.
   { arewrite (forall {A B} (l : list (A * B)), map fst l = fst (split l)).
-    { ins. specialize (split_as_map l). ins. rewrite H. auto. }
-    rewrite combine_split_l.
-    2: { rewrite map_length. auto. }
+    { ins. specialize (split_as_map l). intro HH. by rewrite HH. }
+    rewrite combine_split_l; [|by rewrite map_length].
     apply Injective_map_NoDup_dom with (P := X).
-    { destruct EXEC. apply e2a_inj; auto. }  
+    { destruct EXEC. by apply e2a_inj. }  
     { apply ForallE. intros y HH. apply in_filterP_iff in HH. desf. }
     apply nodup_filterP, nodup_first_nat_list. }
   assert (X_IN : In x (eventid_list S X)).
   { apply in_filterP_iff. split; auto.
     destruct EXEC. rewrite ES.E_alt in ex_inE.
     basic_solver. }
-  eapply In_nth in X_IN.
-  desf.
-  assert (HH : (e2a S x, x) =
-               (nth n
-                    (combine
-                       (map (e2a S) (eventid_list S X))
-                       (eventid_list S X))
+  eapply In_nth in X_IN. desf.
+  arewrite ((e2a S x, x) =
+               (nth n (combine
+                         (map (e2a S) (eventid_list S X))
+                         (eventid_list S X))
                     (e2a S x, x))).
   { rewrite combine_nth; [|by rewrite map_length].
     by rewrite map_nth, X_IN0. }
-  rewrite HH. eapply nth_In. rewrite length_combine.
-  rewrite map_length. 
+  eapply nth_In.
+  rewrite length_combine, map_length.
   apply Nat.min_glb_iff.
   omega. 
 Qed. 
-  
-  
-Lemma e2a_lab_pred p (x2g : X2G) :
-   e2a S □₁ (X ∩₁ (p ∘ Slab)) ⊆₁ p ∘ Glab .
+
+Lemma e2a_a2e
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X) :
+      eq_dom (e2a S □₁ X) (e2a S ∘ a2e) id.
 Proof.
+  unfold acts_set.
+  red. intros a Ga.
+  unfold id, "∘".
+  unfold "□₁" in Ga.
+  desf.
+  arewrite (a2e (e2a S y) = y) by apply a2e_e2a.
+Qed.
+  
+Lemma e2a_lab_pred p (WF : ES.Wf S) (x2g : X2G) :
+   e2a S □₁ (X ∩₁ (p ∘ Slab)) ≡₁ GE ∩₁ (p ∘ Glab).
+Proof.
+  split.
+  { cdes x2g. clear x2g.
+    unfolder. unfold "∘".
+    intros x HH. desf.
+    arewrite (Glab (e2a S y) = Slab y); auto.
+    { specialize (GLAB y HH).
+      basic_solver . }
+    split; auto.
+    apply GACTS. basic_solver. }
   cdes x2g. clear x2g.
   unfolder. unfold "∘".
-  intros x HH. desf.
-  arewrite (Glab (e2a S y) = Slab y); auto.
-  specialize (GLAB y HH).
-  basic_solver.
+  intros x [GEx px].
+  apply GACTS in GEx.
+  unfold "□₁" in GEx. desf.
+  exists y. splits; auto.
+  by arewrite (Slab y = Glab (e2a S y)).
 Qed.
     
-    
-End ExecutionToG.
+End ActionToEvent.
 
+Section ExecutionToGraph.
 
 Definition X2G_fun (S : ES.t) (X : eventid -> Prop) : execution :=
-  {| acts := map (e2a S) (nat_filter X (ES.next_act S));
-     lab := fun x => Afence Orlx;
-     rmw := fun x y => False;
+  {| acts := map (e2a S) (eventid_list S X);
+     lab := S.(ES.lab) ∘ (a2e S X);
+     rmw :=  fun e1 e2 => S.(ES.rmw) (a2e S X e1) (a2e S X e2);
      data := fun x y => False;
      addr := fun x y => False;
      ctrl := fun x y => False;
      rmw_dep := fun x y => False;
-     rf := fun x y => False;
-     co := fun x y => False
+     rf :=  fun e1 e2 => S.(ES.rf) (a2e S X e1) (a2e S X e2);
+     co :=  fun e1 e2 => S.(ES.co) (a2e S X e1) (a2e S X e2)
   |}.
 
 
