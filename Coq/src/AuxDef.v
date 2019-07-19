@@ -62,14 +62,6 @@ Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
     in
     shift + countNatP p n
   end.
-
-Fixpoint nat_filter (p : nat -> Prop) (n : nat) : list nat :=
-  match n with
-  | 0 => nil
-  | S n => if excluded_middle_informative (p n)
-          then n :: nat_filter p n                               
-          else nat_filter p n
-  end.
                                
 Fixpoint indexed_list_helper {A} (i : nat) (l : list A) :
   list (nat * A) :=
@@ -147,6 +139,16 @@ Proof.
   exfalso. eapply NIN. eauto.
 Qed.
 
+Lemma l2f_codom {A B} (l : list (A * B)) a def DEC :
+  In (a, list_to_fun DEC def l a) l \/
+  list_to_fun DEC def l a = def.
+Proof.
+  generalize dependent l.
+  induction l; auto.
+  destruct a0.
+  simpls.
+  destruct (DEC a0 a); basic_solver.
+Qed.
 
 Lemma indexed_list_helper_in_to_range {A} a (l : list A) m n
       (IN : In (n, a) (indexed_list_helper m l)) :
@@ -473,4 +475,54 @@ Proof.
   split; intros HH; desf.
   { specialize_full IHn; auto. }
   inversion HH; auto.
+Qed.
+
+Lemma nodup_first_nat_list : forall n : nat, NoDup (first_nat_list n).
+Proof.
+  induction n.
+  { apply NoDup_nil. }
+  apply NoDup_cons; auto.
+  rewrite first_nat_list_In_alt.
+  omega. 
+Qed.
+
+Lemma split_as_map {A B} (l : list (A * B)) :
+  split l = (map fst l, map snd l).
+Proof.
+  generalize dependent l.
+  induction l; [done|].
+  simpls.
+  rewrite IHl.
+  basic_solver.
+Qed.
+
+Lemma combine_split_l {A B} (lA : list A) (lB : list B)
+      (LEQ : length lA <= length lB) :
+  fst (split (combine lA lB)) = lA.
+Proof.
+  generalize dependent lB.
+  generalize dependent lA.
+  induction lA; [done|].
+  intros.
+  destruct lB.
+  { simpls. omega. }
+  simpls. desf.
+  arewrite (l = lA); auto.
+  rewrite <- (IHlA lB); [|omega].
+  unfold fst. basic_solver.
+Qed.
+
+Lemma Injective_map_NoDup_dom {A B} (P : A -> Prop) (f : A -> B) (l : list A)
+      (IJ : inj_dom P f)
+      (PL : Forall P l)
+      (NO_DUP: NoDup l) :
+  NoDup (map f l).
+Proof.
+  generalize dependent NO_DUP.
+  induction 1 as [|x l SX N IH]; simpls;
+    constructor; apply Forall_cons in PL; desf; auto.
+  rewrite in_map_iff. intros (y & E & Y). apply IJ in E.
+  { now subst. }
+  { eapply Forall_forall; eauto. }
+  auto.
 Qed.

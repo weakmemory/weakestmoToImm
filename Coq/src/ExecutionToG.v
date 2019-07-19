@@ -13,24 +13,13 @@ Require Import Omega.
 
 Local Open Scope program_scope.
 
-Section ActionToEvent.
-
-Lemma nodup_first_nat_list : forall n : nat, NoDup (first_nat_list n).
-Proof.
-  induction n.
-  { apply NoDup_nil. }
-  apply NoDup_cons; auto.
-  rewrite first_nat_list_In_alt.
-  omega. 
-Qed.
-  
-Definition eventid_list S (X : eventid -> Prop) :=
-  filterP X (first_nat_list (ES.next_act S)).
+Section ExecutionToGraph. 
   
 Variable S : ES.t.
 Variable X : eventid -> Prop.
 Variable G : execution.
   
+
 Notation "'GE'" := G.(acts_set).
 Notation "'GEinit'" := (is_init ∩₁ GE).
 Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
@@ -99,53 +88,27 @@ Definition X2G :=
   ⟪ GRF   : Grf  ≡  e2a S □ restr_rel X Srf ⟫ /\
   ⟪ GCO   : Gco  ≡  e2a S □ restr_rel X Sco ⟫.
 
+Definition eventid_list :=
+  filterP X (first_nat_list (ES.next_act S)).
+
 Definition a2e : actid -> eventid :=
-  let e_list := eventid_list S X in
+  let e_list := eventid_list in
   let a_list := map (e2a S) e_list in
   list_to_fun (fun x y => excluded_middle_informative (x = y)) 
               (ES.next_act S)
               (combine a_list e_list).
 
-Lemma split_as_map {A B} (l : list (A * B)) :
-  split l = (map fst l, map snd l).
-Proof.
-  generalize dependent l.
-  induction l; [done|].
-  simpls.
-  rewrite IHl.
-  basic_solver.
-Qed.
-
-Lemma combine_split_l {A B} (lA : list A) (lB : list B)
-      (LEQ : length lA <= length lB) :
-  fst (split (combine lA lB)) = lA.
-Proof.
-  generalize dependent lB.
-  generalize dependent lA.
-  induction lA; [done|].
-  intros.
-  destruct lB.
-  { simpls. omega. }
-  simpls. desf.
-  arewrite (l = lA); auto.
-  rewrite <- (IHlA lB); [|omega].
-  unfold fst. basic_solver.
-Qed.
-
-Lemma Injective_map_NoDup_dom {A B} (P : A -> Prop) (f : A -> B) (l : list A)
-      (IJ : inj_dom P f)
-      (PL : Forall P l)
-      (NO_DUP: NoDup l) :
-  NoDup (map f l).
-Proof.
-  generalize dependent NO_DUP.
-  induction 1 as [|x l SX N IH]; simpls;
-    constructor; apply Forall_cons in PL; desf; auto.
-  rewrite in_map_iff. intros (y & E & Y). apply IJ in E.
-  { now subst. }
-  { eapply Forall_forall; eauto. }
-  auto.
-Qed.
+Definition x2g : execution :=
+  {| acts := map (e2a S) eventid_list;
+     lab := Slab ∘ a2e;
+     rmw := a2e ⋄ Srmw;
+     data := fun x y => False;
+     addr := fun x y => False;
+     ctrl := fun x y => False;
+     rmw_dep := fun x y => False;
+     rf :=  a2e ⋄ Srf;
+     co :=  a2e ⋄ Sco 
+  |}.
 
 Lemma a2e_e2a
       (WF : ES.Wf S)
@@ -162,16 +125,15 @@ Proof.
     { destruct EXEC. by apply e2a_inj. }  
     { apply ForallE. intros y HH. apply in_filterP_iff in HH. desf. }
     apply nodup_filterP, nodup_first_nat_list. }
-  assert (X_IN : In x (eventid_list S X)).
+  assert (X_IN : In x eventid_list).
   { apply in_filterP_iff. split; auto.
     destruct EXEC. rewrite ES.E_alt in ex_inE.
     basic_solver. }
   eapply In_nth in X_IN. desf.
   arewrite ((e2a S x, x) =
-               (nth n (combine
-                         (map (e2a S) (eventid_list S X))
-                         (eventid_list S X))
-                    (e2a S x, x))).
+            (nth n
+                 (combine (map (e2a S) eventid_list) eventid_list)
+                 (e2a S x, x))).
   { rewrite combine_nth; [|by rewrite map_length].
     by rewrite map_nth, X_IN0. }
   eapply nth_In.
@@ -192,59 +154,11 @@ Proof.
   desf.
   arewrite (a2e (e2a S y) = y) by apply a2e_e2a.
 Qed.
-  
-Lemma e2a_lab_pred p (WF : ES.Wf S) (x2g : X2G) :
-   e2a S □₁ (X ∩₁ (p ∘ Slab)) ≡₁ GE ∩₁ (p ∘ Glab).
-Proof.
-  split.
-  { cdes x2g. clear x2g.
-    unfolder. unfold "∘".
-    intros x HH. desf.
-    arewrite (Glab (e2a S y) = Slab y); auto.
-    { specialize (GLAB y HH).
-      basic_solver . }
-    split; auto.
-    apply GACTS. basic_solver. }
-  cdes x2g. clear x2g.
-  unfolder. unfold "∘".
-  intros x [GEx px].
-  apply GACTS in GEx.
-  unfold "□₁" in GEx. desf.
-  exists y. splits; auto.
-  by arewrite (Slab y = Glab (e2a S y)).
-Qed.
-    
-End ActionToEvent.
 
-Section ExecutionToGraph.
-
-Definition X2G_fun (S : ES.t) (X : eventid -> Prop) : execution :=
-  {| acts := map (e2a S) (eventid_list S X);
-     lab := S.(ES.lab) ∘ (a2e S X);
-     rmw :=  fun e1 e2 => S.(ES.rmw) (a2e S X e1) (a2e S X e2);
-     data := fun x y => False;
-     addr := fun x y => False;
-     ctrl := fun x y => False;
-     rmw_dep := fun x y => False;
-     rf :=  fun e1 e2 => S.(ES.rf) (a2e S X e1) (a2e S X e2);
-     co :=  fun e1 e2 => S.(ES.co) (a2e S X e1) (a2e S X e2)
-  |}.
-
-Lemma l2f_codom {A B} (l : list (A * B)) a def DEC :
-  In (a, list_to_fun DEC def l a) l \/
-  list_to_fun DEC def l a = def.
-Proof.
-  generalize dependent l.
-  induction l; auto.
-  destruct a0.
-  simpls.
-  destruct (DEC a0 a); basic_solver.
-Qed.
-
-Lemma a2e_dom S X 
+Lemma a2e_dom 
       (WF : ES.Wf S)
       (EXEC : Execution.t S X):
-  S.(ES.acts_set) ∘ a2e S X ≡₁ e2a S □₁ X.
+  a2e ⋄₁ SE ≡₁ e2a S □₁ X.
 Proof.
   split.
   { intros a IN_S.
@@ -254,10 +168,7 @@ Proof.
     simpls.
     unfold a2e in IN_S.
     destruct (l2f_codom
-                (combine
-                   (map (e2a S) (eventid_list S X))
-                   (eventid_list S X))
-                a
+                (combine (map (e2a S) eventid_list) eventid_list) a
                 (ES.next_act S)
                 (fun x y : actid => excluded_middle_informative (x = y)))
       as [HH|]; [|omega].
@@ -269,16 +180,14 @@ Proof.
   destruct IN_IM as [e [Xe HH]].
   rewrite <- HH.
   eapply Execution.ex_inE in Xe as Ee; eauto.
-  specialize (a2e_e2a S X WF EXEC e Xe) as F.
-  unfold "∘" in *.
-  by rewrite F.
+  unfolder.
+  arewrite (a2e (e2a S e) = e) by apply a2e_e2a.
 Qed. 
 
-
-Lemma X2G_acts_transfer S X
+Lemma X2G_acts_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) :
-  acts_set (X2G_fun S X) ≡₁ e2a S □₁ X.
+  acts_set x2g ≡₁ e2a S □₁ X.
 Proof.
   unfold acts_set. simpls. 
   unfold eventid_list.
@@ -295,43 +204,37 @@ Proof.
   destruct EXEC. auto.
 Qed.
 
-Lemma X2G_rel_transfer S X r
+Lemma X2G_rel_transfer r
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
-      (rE : r ≡ ⦗ES.acts_set S⦘ ⨾ r ⨾ ⦗ES.acts_set S⦘) :
-  (fun e1 e2 => r (a2e S X e1) (a2e S X e2)) ≡ e2a S □ restr_rel X r.
+      (rE : r ≡ ⦗SE⦘ ⨾ r ⨾ ⦗SE⦘) :
+  a2e ⋄ r ≡ e2a S □ restr_rel X r.
 Proof.
   unfold "□", "≡", "⊆". split.
   { intros a1 a2 HH.
-    assert (IM : forall r, S.(ES.acts_set) (a2e S X r) -> (e2a S □₁ X) r).
-    { by apply a2e_dom. }
     assert (IM_a1 : (e2a S □₁ X) a1).
-    2: assert (IM_a2 : (e2a S □₁ X) a2).
-    1, 2: apply IM; apply rE in HH; auto.
+    2: assert (IM_a2 : (e2a S □₁ X) a2). 
+    1, 2: eapply a2e_dom; apply rE in HH; auto.
     1, 2: by unfolder in *; basic_solver.
     unfold "□₁" in IM_a1. desf. exists y.
     unfold "□₁" in IM_a2. desf. exists y0.
     unfold restr_rel.
     splits; auto. 
-    arewrite (y = a2e S X (e2a S y)).
-    2: arewrite (y0 = a2e S X (e2a S y0)).
+    arewrite (y = a2e (e2a S y)).
+    2: arewrite (y0 = a2e (e2a S y0)).
     1, 2: by symmetry; apply a2e_e2a.
     auto. }
   intros a1 a2 [e1 [e2 [[RMW [Xe1 Xe2]] [eq1 eq2]]]].
   rewrite <- eq1, <- eq2.
-  arewrite (a2e S X (e2a S e1) = e1) by apply a2e_e2a.
-  arewrite (a2e S X (e2a S e2) = e2) by apply a2e_e2a.
+  unfolder.
+  arewrite (a2e (e2a S e1) = e1) by apply a2e_e2a.
+  arewrite (a2e (e2a S e2) = e2) by apply a2e_e2a.
 Qed.
 
-Lemma collect_rel_restr {A B} (s : A -> Prop) (r : relation A) (f : A -> B) :
-  f □ restr_rel s r ⊆ restr_rel (f □₁ s) (f □ r).
-Proof.
-  basic_solver 10.
-Qed.
-
-Lemma X2G_sb_transfer (S : ES.t) (X : eventid -> Prop)
-      (WF : ES.Wf S) (EXEC : Execution.t S X) :
-  sb (X2G_fun S X) ≡ e2a S □ restr_rel X (ES.sb S).
+Lemma X2G_sb_transfer 
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X) :
+  sb x2g ≡ e2a S □ restr_rel X (Ssb).
 Proof.
   unfold sb.
   rewrite X2G_acts_transfer; auto.
@@ -341,8 +244,8 @@ Proof.
     intros a1 a2 [ESB [[e1 [Xe1 eq2]] [e2 [Xe2 eq1]]]]. 
     exists e1, e2. splits; auto.
     unfold e2a in eq1, eq2. 
-    destruct (excluded_middle_informative (ES.tid S e1 = tid_init));
-      destruct (excluded_middle_informative (ES.tid S e2 = tid_init)).
+    destruct (excluded_middle_informative (Stid e1 = tid_init));
+      destruct (excluded_middle_informative (Stid e2 = tid_init)).
     1, 3:  basic_solver.
     { apply ES.sb_init; auto.
       eapply Execution.ex_inE in Xe1; eauto.
@@ -367,30 +270,51 @@ Proof.
   by rewrite e2a_ext_sb.
 Qed.
 
-Lemma X2G_fun_X2G S X
+Lemma e2a_lab_pred p (WF : ES.Wf S) (x2g : X2G) :
+   e2a S □₁ (X ∩₁ (p ∘ Slab)) ≡₁ GE ∩₁ (p ∘ Glab).
+Proof.
+  split.
+  { cdes x2g. clear x2g.
+    unfolder. unfold "∘".
+    intros x HH. desf.
+    arewrite (Glab (e2a S y) = Slab y); auto.
+    { specialize (GLAB y HH).
+      basic_solver . }
+    split; auto.
+    apply GACTS. basic_solver. }
+  cdes x2g. clear x2g.
+  unfolder. unfold "∘".
+  intros x [GEx px].
+  apply GACTS in GEx.
+  unfold "□₁" in GEx. desf.
+  exists y. splits; auto.
+  by arewrite (Slab y = Glab (e2a S y)).
+Qed.
+
+End ExecutionToGraph. 
+
+Lemma x2g_X2G S X
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) :
-  X2G S X (X2G_fun S X).
+  X2G S X (x2g S X).
 Proof.
   red. splits.
   { by apply X2G_acts_transfer. }
-  { simpls. 
+  { simpls.
+    unfolder.
     unfold eq_dom. ins.
     rewrite Combinators.compose_assoc.
     unfold "∘" at 1. by rewrite a2e_e2a. }
-  by apply X2G_sb_transfer.
+  { by apply X2G_sb_transfer. }
   all: apply X2G_rel_transfer; auto.
   { by apply ES.rmwE. }
   { by apply ES.rfE. }
   by apply ES.coE. 
-Qed.  
-  
-    
-    
+Qed.
 
 
 
-  
+
 
 
 
