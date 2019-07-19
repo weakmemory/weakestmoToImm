@@ -270,7 +270,9 @@ Proof.
   by rewrite e2a_ext_sb.
 Qed.
 
-Lemma e2a_lab_pred p (WF : ES.Wf S) (x2g : X2G) :
+Lemma e2a_lab_pred p
+      (WF : ES.Wf S)
+      (x2g : X2G) :
    e2a S □₁ (X ∩₁ (p ∘ Slab)) ≡₁ GE ∩₁ (p ∘ Glab).
 Proof.
   split.
@@ -290,6 +292,48 @@ Proof.
   exists y. splits; auto.
   by arewrite (Slab y = Glab (e2a S y)).
 Qed.
+
+Lemma X2G_R
+      (WF : ES.Wf S)
+      (X2G : X2G) :
+  GE ∩₁ GR ≡₁ e2a S □₁ (X ∩₁ SR).
+Proof.
+  Definition is_r_lab lab :=
+    match lab with
+    | Aload _ _ _ _ => True
+    | _ => False
+    end.
+  specialize (e2a_lab_pred is_r_lab WF X2G).
+  arewrite (is_r_lab ∘ Slab ≡₁ SR).
+  2: arewrite (is_r_lab ∘ Glab ≡₁ GR).
+  1, 2: unfold compose, is_r_lab, is_r;
+    basic_solver. by symmetry.
+Qed.
+
+Lemma X2G_complete
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G):
+  Execution.complete G.
+Proof.
+  red.
+  rewrite <- set_interK with (s := GE), set_interA.
+  cdes X2G.
+  rewrite GACTS at 1.
+  rewrite GRF.
+  rewrite X2G_R; auto.
+  rewrite <- set_collect_inter_inj.
+  2 : { arewrite ((X ∪₁ X ∩₁ SR) ≡₁ X) by basic_solver.
+        destruct EXEC. apply e2a_inj; basic_solver. }
+  rewrite <- set_interA, set_interK.
+  rewrite <- set_collect_codom.
+  apply set_subset_collect.
+  rewrite restr_relE.
+  destruct EXEC.
+  rewrite <- set_interK with (s := X) at 1.
+  rewrite set_interA, ex_rf_compl.
+  basic_solver.
+Qed.  
 
 End ExecutionToGraph. 
 
@@ -311,7 +355,6 @@ Proof.
   { by apply ES.rfE. }
   by apply ES.coE. 
 Qed.
-
 
 
 
