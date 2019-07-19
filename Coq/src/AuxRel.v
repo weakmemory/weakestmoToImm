@@ -241,12 +241,31 @@ Qed.
    For example, if `f` is constant and `a <> b`, then
    `f □₁ (eq a ∩₁ eq b) ≡₁ ∅` and `f □₁ eq a ∩₁ f □₁ eq b ≡₁ f □₁ eq a`.
  *)
-Lemma set_collect_inter (f g : A -> B) : 
+Lemma set_collect_inter (f : A -> B) : 
   f □₁ (s ∩₁ s') ⊆₁ f □₁ s ∩₁ f □₁ s'.
 Proof. basic_solver. Qed.
 
+Lemma set_collect_inter_inj (f : A -> B)
+      (INJ : inj_dom (s ∪₁ s') f) :
+  f □₁ (s ∩₁ s') ≡₁ f □₁ s ∩₁ f □₁ s'.
+Proof.
+  split; [by apply set_collect_inter|].
+  intros b [[a [sa eq1]] [a' [s'a' eq2]]].
+  assert (a = a').
+  { apply INJ; basic_solver. }
+  basic_solver.
+Qed.
+
 Lemma set_collect_dom (f : A -> B) : 
   f □₁ dom_rel r ≡₁ dom_rel (f □ r).
+Proof.
+  unfolder.
+  split; intros x HH; desf; eauto.
+  repeat eexists. eauto.
+Qed.
+
+Lemma set_collect_codom (f : A -> B) : 
+  f □₁ codom_rel r ≡₁ codom_rel (f □ r).
 Proof.
   unfolder.
   split; intros x HH; desf; eauto.
