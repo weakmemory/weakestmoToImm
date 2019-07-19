@@ -328,16 +328,45 @@ Lemma collect_rel_restr {A B} (s : A -> Prop) (r : relation A) (f : A -> B) :
 Proof.
   basic_solver 10.
 Qed.
-(*
+
+Lemma X2G_sb_transfer (S : ES.t) (X : eventid -> Prop)
+      (WF : ES.Wf S) (EXEC : Execution.t S X) :
+  sb (X2G_fun S X) ≡ e2a S □ restr_rel X (ES.sb S).
+Proof.
+  unfold sb.
+  rewrite X2G_acts_transfer; auto.
   split.
-  { unfolder. intros. desf.
-    splits; eauto. }
-  { unfolder. intros. desf.
-    exists y1, y0.
-    splits; auto.
-    admit. }
-    Admitted.
-*)
+  { rewrite <- restr_eqv_def.
+    unfolder. 
+    intros a1 a2 [ESB [[e1 [Xe1 eq2]] [e2 [Xe2 eq1]]]]. 
+    exists e1, e2. splits; auto.
+    unfold e2a in eq1, eq2. 
+    destruct (excluded_middle_informative (ES.tid S e1 = tid_init));
+      destruct (excluded_middle_informative (ES.tid S e2 = tid_init)).
+    1, 3:  basic_solver.
+    { apply ES.sb_init; auto.
+      eapply Execution.ex_inE in Xe1; eauto.
+      eapply Execution.ex_inE in Xe2; eauto.
+      unfold ES.acts_ninit_set, ES.acts_init_set.
+      unfolder. intuition. }
+    unfold ext_sb in ESB. subst.
+    destruct ESB as [SAME_TID LT].
+    eapply Execution.ex_inE in Xe1 as Ee1; eauto.
+    specialize (ES.seqn_lt_cont_cf_dom WF) as HH.
+    specialize (HH e1 e2 Ee1 SAME_TID LT). 
+    simpls.
+    destruct HH as [HH | HH].
+    { exfalso.
+      destruct EXEC.
+      eapply ex_ncf with (x := e2) (y := e1).
+      unfolder in HH. basic_solver. }
+    unfolder in HH.
+    basic_solver. }
+  rewrite restr_relE.
+  rewrite !collect_rel_seqi, collect_rel_eqv.
+  by rewrite e2a_ext_sb.
+Qed.
+
 Lemma X2G_fun_X2G S X
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) :
@@ -349,40 +378,12 @@ Proof.
     unfold eq_dom. ins.
     rewrite Combinators.compose_assoc.
     unfold "∘" at 1. by rewrite a2e_e2a. }
-  { unfold sb.
-    rewrite X2G_acts_transfer; auto.
-    rewrite <- restr_eqv_def.
-    unfolder. split.
-    { intros a1 a2 [ESB [[e1 [Xe1 eq2]] [e2 [Xe2 eq1]]]]. 
-      exists e1, e2. splits; auto.
-      unfold e2a in eq1, eq2. 
-      destruct (excluded_middle_informative (ES.tid S e1 = tid_init));
-        destruct (excluded_middle_informative (ES.tid S e2 = tid_init)).
-      1, 3:  basic_solver.
-      { apply ES.sb_init; auto.
-        eapply Execution.ex_inE in Xe1; eauto.
-        eapply Execution.ex_inE in Xe2; eauto.
-        unfold ES.acts_ninit_set, ES.acts_init_set.
-        unfolder. intuition. }
-      unfold ext_sb in ESB. subst.
-      destruct ESB as [SAME_TID LT].
-      eapply Execution.ex_inE in Xe1 as Ee1; eauto.
-      specialize (ES.seqn_lt_cont_cf_dom WF) as HH.
-      specialize (HH e1 e2 Ee1 SAME_TID LT). 
-      simpls.
-      destruct HH as [HH | HH].
-      { exfalso.
-        destruct EXEC.
-        eapply ex_ncf with (x := e2) (y := e1).
-        unfolder in HH. basic_solver. }
-      unfolder in HH.
-      basic_solver. }
-    admit. }
+  by apply X2G_sb_transfer.
   all: apply X2G_rel_transfer; auto.
   { by apply ES.rmwE. }
   { by apply ES.rfE. }
   by apply ES.coE. 
-Admitted.  
+Qed.  
   
     
     
