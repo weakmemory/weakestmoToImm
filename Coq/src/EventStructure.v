@@ -921,6 +921,21 @@ Proof.
   basic_solver. 
 Qed.
 
+Lemma trf_funcional_in_cf_free X WF
+      (NCF : cf_free S X) :
+  functional (restr_rel X rf⁻¹).
+Proof.
+  intros y x z rf_xy rf_zy. 
+  destruct rf_xy as [rf_xy [Xy Xx]].
+  destruct rf_zy as [rf_zy [_ Xz]].
+  assert (EW : ew x z).
+  { apply rf_trf_in_ew; basic_solver. }
+  apply ewc in EW; auto.
+  destruct EW; auto.
+  unfold cf_free in NCF. unfolder in NCF.
+  exfalso. eapply NCF. eauto.
+Qed.
+  
 (******************************************************************************)
 (** ** fr properties *)
 (******************************************************************************)
@@ -1574,3 +1589,4 @@ Qed.
 
 End EventStructure.
 End ES.
+
