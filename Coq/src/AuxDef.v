@@ -1,6 +1,6 @@
 Require Import Setoid Omega.
 From hahn Require Import Hahn.
-From imm Require Import Events.
+From imm Require Import Events AuxRel.
 Require Import AuxRel.
 
 Tactic Notation "destruct_seq" constr(x)
@@ -525,4 +525,20 @@ Proof.
   { now subst. }
   { eapply Forall_forall; eauto. }
   auto.
+Qed.
+
+Lemma codom_rel_helper {A} (r : relation A) d
+      (IN : codom_rel r ⊆₁ d) :
+  r ≡ r ⨾ ⦗d⦘.
+Proof.
+unfolder in *; basic_solver.
+Qed.
+
+Lemma map_rel_restr_eq_dom {A B} (f g : A -> B) s r (EQ : eq_dom s f g) :
+  restr_rel s (f ⋄ r) ≡ restr_rel s (g ⋄ r).
+Proof. 
+  unfolder.
+  split.
+  { ins. desf. rewrite <- !EQ; auto. }
+  ins. desf. rewrite !EQ; auto.
 Qed.

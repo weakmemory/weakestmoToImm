@@ -131,12 +131,6 @@ Proof.
   basic_solver 20.
 Qed.
 
-Lemma codom_rel_helper {A} (r : relation A) d (IN:  codom_rel r ⊆₁ d) : r ≡ r ⨾ ⦗d⦘.
-Proof.
-unfolder in *; basic_solver.
-Qed.
-
-
 Lemma ct_imm_split_l {A} (r : relation A)
       (IRR: irreflexive r)
       (TANS: transitive r)
@@ -879,8 +873,9 @@ Proof.
       apply hb_pref2_ncf; auto. }
      
     assert (PREF_RC11 : Race.rc11_consistent_x G' (hb_pref2 G' e w)).
-    { admit. }
-    
+    {  admit. }
+                                                            
+
     specialize (RACE_FREE G' (hb_pref2 G' e w) PREF_EXEC PREF_RC11).
     
     assert (RACE_W : Race.race G' (hb_pref2 G' e w) w).
@@ -972,7 +967,7 @@ Proof.
     eapply hb_pref2_rmw_ncf; eauto. }
     
     assert (PREF_RC11 : Race.rc11_consistent_x G' (hb_pref2 G' w' w)).
-    { admit. }
+    { red. admit. }
     
     specialize (RACE_FREE G' (hb_pref2 G' w' w) PREF_EXEC PREF_RC11).
     
