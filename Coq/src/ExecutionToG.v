@@ -31,6 +31,7 @@ Notation "'Gtid'" := (Events.tid).
 
 Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
 Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
+Notation "'GLoc_' l" := (fun x => Gloc x = l) (at level 1).
 
 Notation "'GR'" := (fun a => is_true (is_r Glab a)).
 Notation "'GW'" := (fun a => is_true (is_w Glab a)).
@@ -58,6 +59,7 @@ Notation "'Sloc'" := (loc S.(ES.lab)).
 Notation "'K'" := S.(ES.cont_set).
 
 Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
+Notation "'SLoc_' l" := (fun x => Sloc x = l) (at level 1).
 
 Notation "'SR'" := (fun a => is_true (is_r Slab a)).
 Notation "'SW'" := (fun a => is_true (is_w Slab a)).
@@ -294,14 +296,29 @@ Proof.
   by arewrite (Slab y = Glab (e2a S y)).
 Qed.
 
+Lemma X2G_lab {B}
+      (p : forall {A}, (A -> label) -> A -> B)
+      (p_lab : label -> B)
+      (EQ : forall {A} (sup : A -> label), p sup = p_lab ∘ sup) 
+      (WF : ES.Wf S)
+      (X2G : X2G) :
+  eq_dom X (p Slab) (p Glab ∘ e2a S).
+Proof.
+  cdes X2G.
+  rewrite !EQ.
+  unfolder. unfold "∘".
+  intros.
+  by rewrite GLAB.
+Qed.
+
 Lemma X2G_lab_set_transfer
-      (p : forall {A}, (A -> label) -> A -> bool)
-      (p_lab : label -> bool)
+      (p : forall {A}, (A -> label) -> A -> Prop)
+      (p_lab : label -> Prop)
       (EQ : forall {A} (sup : A -> label) a, (p sup a) = (p_lab (sup a)))
       (WF : ES.Wf S)
       (X2G : X2G) :
- e2a S □₁ (X ∩₁ (fun a => is_true (p Slab a))) ≡₁
- GE ∩₁(fun a => is_true (p Glab a)).
+ e2a S □₁ (X ∩₁ (fun a => p Slab a)) ≡₁
+ GE ∩₁ (fun a => p Glab a).
 Proof.
   cdes X2G. 
   unfolder. unfold "∘".
@@ -360,7 +377,8 @@ Proof.
   set (f := fun x => match x with
                   | Aload _ _ _ _ => true
                   | _ => false end).
-  erewrite X2G_lab_set_transfer with (p_lab := f) ; eauto.
+  erewrite X2G_lab_set_transfer
+    with (p := is_r) (p_lab := f); eauto.
 Qed.
 
 Lemma X2G_W
@@ -371,7 +389,21 @@ Proof.
   set (f := fun x => match x with
                   | Astore _ _ _ _ => true
                   | _ => false end).
-  erewrite X2G_lab_set_transfer with (p_lab := f) ; eauto.
+  erewrite X2G_lab_set_transfer
+    with (p := is_w) (p_lab := f); eauto.
+Qed.
+
+Lemma X2G_loc_ loc
+      (WF : ES.Wf S)
+      (X2G : X2G) :
+  GE ∩₁ GLoc_ loc ≡₁ e2a S □₁ (X ∩₁ SLoc_ loc).
+Proof.
+  set (f := fun x => match x with
+                  | Aload _ _ l _ | Astore _ _ l _ => Some l = loc
+                  | Afence _ => None = loc end).
+  erewrite X2G_lab_set_transfer
+    with (p := fun A s x => Events.loc s x = loc) (p_lab := f); eauto.
+  ins.  unfold Events.loc. desf.
 Qed.
 
 Lemma move_codom r :
@@ -462,11 +494,45 @@ Lemma X2G_acyclic_psc
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
-      (X2G : X2G):
+      (X2G : X2G) :
   acyclic (imm_s.psc_f G ∪ imm_s.psc_base G).
 Proof.
 Admitted.
 
+
+Lemma X2G_same_loc r
+      (WF : ES.Wf S)
+      (X2G : X2G)
+      (SL :  r ⊆ same_loc Slab) :
+  Move r ⊆ same_loc Glab.
+Proof.
+  cdes X2G.
+  rewrite SL. 
+  set (loc_l := fun (l : label) =>
+                  match l with
+                  | Aload _ _ l _ | Astore _ _ l _ => Some l
+                  | Afence _ => None
+                  end).
+  set (f := fun (l1 : label) (l2 : label) => loc_l l1 = loc_l l2).
+  erewrite X2G_lab_rel_transfer with (p_lab := f); eauto.
+  basic_solver.
+Qed. 
+
+Lemma X2G_E r dom codom 
+      (IN_DOM : dom_rel r ⊆₁ dom)
+      (IN_CODOM : codom_rel r ⊆₁ codom)
+      (X2G : X2G) :
+  Move r ≡ ⦗e2a S □₁ (X ∩₁ dom)⦘ ⨾ Move r ⨾ ⦗e2a S □₁ (X ∩₁ codom)⦘. 
+Proof.
+  eapply dom_codom_rel_helper; eauto. 
+  { rewrite move_dom. by rewrite IN_DOM. }
+  rewrite move_codom. by rewrite IN_CODOM.
+Qed.
+
+Lemma is_total_restr' {A} dom (r : relation A) : 
+  is_total dom (restr_rel dom r) -> is_total dom r.
+Proof. apply  is_total_mori; basic_solver. Qed.
+  
 End ExecutionToGraph. 
 
 Lemma x2g_X2G {S X}
@@ -521,16 +587,86 @@ Proof.
   apply INJ in FIb2; basic_solver.
 Qed.
 
+Lemma transp_collect_rel {A B} (f : A -> B) r :
+  f □ r⁻¹ ≡  (f □ r)⁻¹.
+Proof. basic_solver 10. Qed.
+
+Lemma transp_restr_rel {A} X (r : relation A) :
+  restr_rel X r⁻¹ ≡ (restr_rel X r)⁻¹.
+Proof. basic_solver. Qed.
+
+Lemma functional_collect_rel_inj {A B} X (f : A -> B) r
+      (INJ : inj_dom X f) :
+  functional (f □ (restr_rel X r)) <-> functional (restr_rel X r). 
+Proof.
+  split; [basic_solver 15|].
+  unfolder.
+  intros P b1 b2 b3 [a1 [a2 [pr1 [eq1 eq2]]]]
+         [a1' [a2' [pr1' [eq1' eq2']]]].
+  subst.
+  assert (a2 = a2'); [|congruence].
+  assert (a1 = a1'); [|by eapply P; eauto; desf].
+  apply INJ; desf.
+Qed.
+
+Lemma transitive_collect_rel_inj {A B} X (f : A -> B) r
+      (INJ : inj_dom X f) :
+  transitive (f □ restr_rel X r) <-> transitive (restr_rel X r).
+Proof. 
+  split.
+  { unfolder.
+    intros HH a1 a2 a3 R12 R23.
+    specialize (HH (f a1) (f a2) (f a3)).
+    destruct HH as [a1' HH]. 
+    { exists a1, a2. desf. }
+    { exists a2, a3. desf. }
+    destruct HH as [a3' HH].
+    assert (a1 = a1'); [apply INJ; by desf|].
+    assert (a3 = a3'); [apply INJ; by desf|].
+    basic_solver. }
+  unfolder. 
+  intros HH b1 b2 b3 [a1 [a2 P]] [a2' [a3 PP]].
+  assert (a2' = a2); [apply INJ; by desf|].
+  exists a1, a3.
+  split; [|by desf].
+  eapply HH with (y := a2); basic_solver.
+Qed.
+
+Lemma total_collect_rel {A B} X (f : A -> B) r :
+  is_total X r -> is_total (f □₁ X) (f □ r).
+Proof.
+  unfolder.
+  intros HH b1 [a1 P1] b2 [a2 P2] NEQ.
+  desf.
+  assert (a1 <> a2) as NEQ' by congruence.
+  specialize (HH a1 P1 a2 P2 NEQ').
+  desf.
+  { left. eauto. }
+  right. eauto.
+Qed.
+
+Lemma collect_rel_irr_inj {A B} X r (f : A -> B)
+      (INJ : inj_dom X f) :
+  irreflexive (f □ (restr_rel X r)) <-> irreflexive (restr_rel X r).
+Proof.
+  split; [by apply collect_rel_irr|].
+  unfolder. ins. desf. rename H2 into EQ.
+  apply INJ in EQ; eauto.
+  basic_solver.
+Qed.
+
 Lemma x2g_wf {S X}
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) : 
   Wf (x2g S X).
 Proof.
   specialize (x2g_X2G WF EXEC) as X2G.
+  cdes X2G.
+  assert (INJ : inj_dom X (e2a S)).
+  { destruct EXEC. by apply e2a_inj. }
   constructor.
   all: try basic_solver.
-  { cdes X2G.
-    intros a1 a2 P.
+  { intros a1 a2 P.
     destruct P as [Ga1 [Ga2 [NEQ [SAME_TID NINIT_a1]]]].
     apply GACTS in Ga1.
     apply GACTS in Ga2. 
@@ -565,52 +701,108 @@ Proof.
     arewrite (0 = ES.seqn S e2); auto.
     eapply Execution.ex_inE in Ga2; eauto.
       by rewrite ES.seqn_init. }
-  { cdes X2G. 
-    rewrite GRMW.
-    rewrite <- dom_rel_helper, <- codom_rel_helper; auto.
-    { rewrite move_codom.
-      rewrite ES.rmwD, !codom_seq, codom_eqv; auto.
-      rewrite <- X2G_W; eauto.
-      basic_solver. }
-    rewrite dom_seq.
-    rewrite move_dom.
-    rewrite ES.rmwD, !dom_seq, dom_eqv; auto.
-    admit. }
-  { cdes X2G.
-    rewrite GRMW.
-    rewrite ES.rmwl; auto.
-
-    set (loc_l := fun (l : label) =>
-                    match l with
-                    | Aload _ _ l _ | Astore _ _ l _ => Some l
-                    | Afence _ => None
-                    end).
-    set (f := fun (l1 : label) (l2 : label) => loc_l l1 = loc_l l2).
-    erewrite X2G_lab_rel_transfer with (p_lab := f); eauto.
-    basic_solver. }
-  { cdes X2G.
-    rewrite GRMW.
+  { admit. }
+  { rewrite GRMW.
+    apply X2G_same_loc; auto.
+    by apply ES.rmwl. }
+  { rewrite GRMW.
     rewrite ES.rmwi; auto.
     rewrite immediate_restr.
-    rewrite immediate_collect_inj.
-    2: { destruct EXEC. by apply e2a_inj. }
-      by rewrite <- GSB. }
-  { cdes X2G.
-    rewrite GACTS, GRF.
-    rewrite <- dom_rel_helper, <- codom_rel_helper; basic_solver. }
-  { cdes X2G.
-    rewrite GRF.
-    rewrite <- dom_rel_helper, <- codom_rel_helper; auto.
-    { rewrite move_codom.
-      rewrite ES.rfD, !codom_seq, codom_eqv; auto.
-      rewrite <- X2G_R; eauto. basic_solver. }
-    rewrite dom_seq.
-    rewrite move_dom.
-    rewrite ES.rfD, !dom_seq, dom_eqv; auto.
+    rewrite immediate_collect_inj; auto.
+    by rewrite <- GSB. }
+  { rewrite GACTS, GRF.
+    apply dom_codom_rel_helper; basic_solver. }
+  { rewrite GRF.
+    rewrite <- dom_codom_rel_helper; auto.
+    { rewrite move_dom.
+      rewrite ES.rfD, !dom_seq, dom_eqv; auto.
+      rewrite <- X2G_W; eauto. basic_solver. }
+    rewrite move_codom.
+    rewrite ES.rfD, !codom_seq, codom_eqv; auto.
+    rewrite <- X2G_R; eauto. basic_solver. }
+  { rewrite GRF.
+    apply X2G_same_loc; auto.
+    by apply ES.rfl. }
+  { rewrite GRF.
+    unfolder. intros a1 a2 RF.
+    desf. 
+    set (f := fun l => match l with
+                    | Aload _ _ _ v | Astore _ _ _ v => Some v
+                    | Afence _ => None
+                    end).
+    specialize (X2G_lab S X (x2g S X) val f) as e.
+    unfold "∘" in e.
+    erewrite <- !e; eauto.
+    by apply ES.rfv. }
+  { rewrite GRF.
+    rewrite <- transp_collect_rel.
+    rewrite <- transp_restr_rel.
+    apply functional_collect_rel_inj; auto.
+    destruct EXEC.
+    by apply ES.trf_funcional_in_cf_free. }
+  { rewrite GACTS, GCO.
+    apply dom_codom_rel_helper; basic_solver. }
+  { rewrite GCO.
+    rewrite <- dom_codom_rel_helper; auto.
+    { rewrite move_dom.
+      rewrite ES.coD, !dom_seq, dom_eqv; auto.
+      rewrite <- X2G_W; eauto. basic_solver. }
+    rewrite move_codom.
+    rewrite ES.coD, !codom_seq, codom_eqv; auto.
     rewrite <- X2G_W; eauto. basic_solver. }
-    
-    
+  { rewrite GCO.
+    apply X2G_same_loc; auto.
+    by apply ES.col. }
+  { rewrite GCO.
+    rewrite transitive_collect_rel_inj; auto.
+    apply transitive_restr.
+    by apply ES.co_trans. }
+  { intro.
+    rewrite set_interC with (s := acts_set _).  
+    rewrite <- set_interK with (s := acts_set (x2g S X)).
+    rewrite !set_interA.
+    rewrite X2G_loc_; eauto.
+    rewrite <- !set_interA.
+    rewrite set_interC with (s' := acts_set (x2g S X)).
+    rewrite X2G_W; eauto.
+
+    rewrite GCO.
+    rewrite <- !set_collect_inter_inj; [|basic_solver].
+    apply total_collect_rel.
+    rewrite <- !set_interA.
+    rewrite set_interC with (s' := X).
+    rewrite <- set_interA, set_interK.
+    eapply is_total_mori with
+        (x0 := restr_rel (X ∩₁ (fun a : eventid => is_w (ES.lab S) a)
+                            ∩₁ (fun x : eventid => loc (ES.lab S) x = ol)) (ES.co S)).
+    { apply set_subset_refl2. }
+    { basic_solver. } 
+    apply is_total_restr.
+    by apply Execution.co_total. }
+  { rewrite GCO.
+    rewrite collect_rel_irr_inj; auto.
+    specialize ES.co_irr. basic_solver. }
+  { intros l [a [Ea LOC]].
+    apply GACTS in Ea.
+    destruct Ea as [e [Xe EQ]].
+    assert (LOC' : loc (ES.lab S) e = Some l).
+    { rewrite <- EQ in LOC.    
+      unfold "∘" in GLAB.
+      rewrite <- LOC.
+      unfold loc.
+      erewrite GLAB; eauto. }
+    eapply Execution.ex_inE in Xe as Ee; eauto.
+    specialize (ES.initL WF Ee LOC') as INIT_l.
+    subst.
+    apply GACTS.
+    cdes INIT_l.
+    exists a.
+    eapply Execution.init_in_ex in EINA as Xa; eauto.  
+    split; auto.
+    unfold ES.acts_init_set in EINA. 
+    unfolder in EINA.
+    unfold e2a. rewrite LOCA. desf. }
+  intro.
+  unfold x2g. simpl.
+  
 Admitted.
-
-
-
