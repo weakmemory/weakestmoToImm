@@ -530,9 +530,13 @@ Qed.
 Lemma codom_rel_helper {A} (r : relation A) d
       (IN : codom_rel r ⊆₁ d) :
   r ≡ r ⨾ ⦗d⦘.
-Proof.
-unfolder in *; basic_solver.
-Qed.
+Proof. unfolder in *. basic_solver. Qed.
+
+Lemma dom_codom_rel_helper {A} (r : relation A) dom codom 
+      (IN_DOM : dom_rel r ⊆₁ dom)
+      (IN_CODOM : codom_rel r ⊆₁ codom):
+  r ≡ ⦗dom⦘ ⨾ r ⨾ ⦗codom⦘.
+Proof. unfolder in *. basic_solver 7. Qed.
 
 Lemma map_rel_restr_eq_dom {A B} (f g : A -> B) s r (EQ : eq_dom s f g) :
   restr_rel s (f ⋄ r) ≡ restr_rel s (g ⋄ r).
