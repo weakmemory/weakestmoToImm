@@ -107,6 +107,39 @@ Proof.
   apply ex_sw_prcl; auto. basic_solver 10. 
 Qed.
 
-End Execution.
 
+Section ExecutionRels.
+
+  Variable X : eventid -> Prop.
+  Variable EXEC : t X.
+
+  Definition ex_Einit := Einit.
+  Definition ex_Eninit := Eninit ∩₁ X.
+
+  Definition ex_rmw := restr_rel X rmw.
+  Definition ex_sb := restr_rel X sb.
+  Definition ex_jf := restr_rel X jf.
+  Definition ex_co := restr_rel X co.
+  Definition ex_ew := restr_rel X ew.
+
+  Definition ex_same_tid := restr_rel X same_tid.
+  Definition ex_cf := ⦗ex_Eninit⦘ ⨾ (ex_same_tid \ ex_sb⁼) ⨾ ⦗ex_Eninit⦘.
+  Definition ex_rf := ex_ew ⨾ ex_jf \ ex_cf.
+  Definition ex_fr := ex_rf⁻¹ ⨾ ex_co.
+  Definition ex_rs := ⦗X ∩₁ W⦘ ⨾ (ex_sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (ex_jf ⨾ ex_rmw)＊.
+  Definition ex_release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ ex_sb)^? ⨾ ex_rs.
+  Definition ex_sw := ex_release ⨾ ex_jf ⨾ (ex_sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
+  Definition ex_hb := (ex_sb ∪ ex_sw)⁺.
+
+  Definition ex_jfe := ex_jf \ ex_sb.
+  Definition ex_rfe := ex_rf \ ex_sb.
+  Definition ex_coe := ex_co \ ex_sb.
+
+  Definition ex_jfi := ex_jf ∩ ex_sb.
+  Definition ex_rfi := ex_rf ∩ ex_sb.
+  Definition ex_coi := ex_co ∩ ex_sb.
+
+End ExecutionRels.
+
+End Execution.
 End Execution.
