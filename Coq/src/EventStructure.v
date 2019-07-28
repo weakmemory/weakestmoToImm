@@ -315,7 +315,8 @@ Record Wf :=
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
 
     K_adj : forall lang st st' k k' e e' 
-                   (KK: K (k, existT _ lang st)) 
+                   (KK : K (k , existT _ lang st )) 
+                   (KK': K (k', existT _ lang st')) 
                    (ADJ : cont_adjacent S k k' e e'),
         exists lbl lbl', 
           ⟪ LBL  : lbl  = lab e ⟫ /\

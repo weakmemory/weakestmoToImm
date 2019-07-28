@@ -1633,7 +1633,7 @@ Proof.
          repeat left. eapply WF.(ES.K_inEninit); eauto. }
     eapply basic_step_acts_ninit_set; eauto.
     unfold opt_ext. basic_solver. }
-  admit.
-Admitted.
+  { eapply basic_step_K_adj; eauto. }
+Qed.
  
 End ESstepWf.

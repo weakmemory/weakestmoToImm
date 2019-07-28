@@ -1428,7 +1428,7 @@ Proof.
   cdes BSTEP_.
   erewrite basic_step_cont_set; eauto. 
   by unfold opt_ext.
-Qed.  
+Qed.
 
 Lemma basic_step_cont_adjacent lang k k' kk kk' st st' c e e' a a' S S' 
       (WF : ES.Wf S) 
@@ -1554,6 +1554,274 @@ Proof.
   rewrite basic_step_sbe' in kSBDOM; eauto.
   apply kSBDOM.
   basic_solver. 
+Qed.
+
+Lemma basic_step_K_adj e e' S S' 
+      (WF : ES.Wf S) 
+      (BSTEP : basic_step e e' S S') :
+  forall lang st st' k k' a a' 
+         (KK  : K S' (k,  existT Language.state lang st )) 
+         (KK' : K S' (k', existT Language.state lang st')) 
+         (ADJ : ES.cont_adjacent S' k k' a a'),
+  exists lbl lbl', 
+    ⟪ LBL  : lbl  = (lab S') a ⟫ /\
+    ⟪ LBL' : lbl' = option_map (lab S') a' ⟫ /\
+    ⟪ STEP : (Language.step lang) (opt_to_list lbl' ++ [lbl]) st st' ⟫.
+Proof.
+  ins. cdes BSTEP.
+  eapply basic_step_cont_set in KK. 
+  2 : { cdes BSTEP; eauto. }
+  eapply basic_step_cont_set in KK'. 
+  2 : { cdes BSTEP; eauto. }
+  destruct KK  as [KK  | KK ];
+  destruct KK' as [KK' | KK'].
+
+  { edestruct basic_step_cont_adjacent
+      with (kk := k) as [ADJ_OLD | ADJ_NEW]; eauto.
+    { red in ADJ_OLD.
+      arewrite (lab S' a = lab S a).
+      { eapply basic_step_lab_eq_dom; eauto. 
+        eapply ES.cont_adjacent_ninit_e; eauto. }
+      arewrite (option_map (lab S') a' = option_map (lab S) a').
+      { destruct a' as [a'|]; auto.
+        unfold option_map.
+        erewrite basic_step_lab_eq_dom; eauto.
+        eapply ES.cont_adjacent_ninit_e'; eauto. }
+      eapply ES.K_adj; eauto. }
+    desc. subst k0 k'0 a a'.
+    cdes BSTEP_.
+    exfalso. subst k'.
+    eapply ES.K_inEninit in KK'; auto.
+    unfold opt_ext in *.
+    destruct e' as [e'|].
+    { eapply basic_step_acts_set_ne'; eauto. apply KK'. }
+    eapply basic_step_acts_set_ne; eauto. apply KK'. }
+
+  { inversion KK' as [[EQk' EQlang EQc]].
+    subst lang0.
+    edestruct basic_step_cont_adjacent
+      with (kk := k) as [ADJ_OLD | ADJ_NEW]; eauto.
+    { red in ADJ_OLD. exfalso.
+      set (ADJ_OLD' := ADJ_OLD).
+      cdes ADJ_OLD'.
+      unfold opt_ext in *.
+      destruct e' as [e'|];
+      destruct a' as [a'|].
+      { eapply basic_step_acts_set_ne'; eauto. 
+        arewrite (e' = a') by congruence.
+        eapply ES.cont_adjacent_ninit_e'; eauto. }
+      { eapply basic_step_acts_set_ne'; eauto. 
+        arewrite (e' = a) by congruence.
+        eapply ES.cont_adjacent_ninit_e; eauto. }
+      { eapply basic_step_acts_set_ne; eauto. 
+        arewrite (e = a') by congruence.
+        eapply ES.cont_adjacent_ninit_e'; eauto. }
+      eapply basic_step_acts_set_ne; eauto. 
+      arewrite (e = a) by congruence.
+      eapply ES.cont_adjacent_ninit_e; eauto. }
+    desc. subst k0 k'0 a a'.
+    cdes BSTEP_.
+    set (c1 := (k, existT Language.state lang st )).
+    set (c2 := (k, existT Language.state lang st0)).
+    assert (fst c1 = fst c2) as HH by done.
+    eapply ES.unique_K in HH; eauto.
+    subst c1 c2. simpl in HH.
+    assert (st0 = st) as STEQ.
+    { eapply inj_pair2; eauto. }
+    assert (st'0 = st') as EQST'.
+    { eapply inj_pair2; eauto. }
+    subst st0 st'0.
+    exists lbl, lbl'.
+    splits; auto.
+    { rewrite LAB'.
+      rewrite updo_opt, upds; auto.
+      unfold eq_opt, opt_ext in *.
+      basic_solver. }
+    rewrite LAB'.
+    unfold option_map, opt_same_ctor, upd_opt in *. 
+    destruct e' as [e'|]; auto;
+    destruct lbl'; intuition. 
+      by rewrite upds. }
+
+  { cdes ADJ. exfalso.
+    inversion KK as [[EQk EQlang EQc]].
+    eapply basic_step_acts_ninit_set in nINITe; eauto.
+    destruct nINITe as [[nINITe | EQe] | EQe'].
+    { 
+      assert (ES.cont_sb_dom S' k ⊆₁ E S) 
+        as kSBE.
+      { rewrite kSBDOM.
+        arewrite (sb S' ⨾ ⦗eq a⦘ ≡ sb S ⨾ ⦗eq a⦘).
+        { split. 
+          { rewrite <- seq_eqvK at 1.
+            arewrite (eq a ⊆₁ E S) at 1.
+            { unfold ES.acts_ninit_set in nINITe.
+              generalize nINITe. basic_solver. }
+            seq_rewrite basic_step_sbE; eauto.
+            basic_solver. } 
+          erewrite basic_step_sb_mon; eauto.
+          basic_solver. }
+        rewrite ES.sbE; auto.
+        basic_solver. }
+      unfold ES.cont_sb_dom, opt_ext in *.
+      destruct k; [congruence|].
+      inversion EQk. subst eid.
+      destruct e' as [e'|].
+      { eapply basic_step_acts_set_ne'; eauto.
+        generalize kSBE. basic_solver 10. }
+      eapply basic_step_acts_set_ne; eauto.
+      generalize kSBE. basic_solver 10. }      
+    { subst a.
+      assert (a' = e') as EQa'.
+      { destruct a' as [a'|]; auto.
+        { assert (rmw S' e a') as RMW.
+          { apply RMWe. basic_solver. }
+          destruct e' as [e'|]; auto.
+          { cdes BSTEP_.
+            apply RMW' in RMW.
+            destruct RMW as [RMW|RMW].
+            { exfalso. 
+              eapply basic_step_acts_set_ne; eauto.
+              apply ES.rmwE in RMW; auto.
+              generalize RMW. basic_solver. }
+            unfold rmw_delta in RMW.
+            generalize RMW. basic_solver. }
+          cdes BSTEP_.
+          unfold rmw_delta, eq_opt in RMW'.
+          rewrite cross_false_r, union_false_r 
+            in RMW'.
+          apply RMW' in RMW.
+          exfalso. 
+          eapply basic_step_acts_set_ne; eauto.
+          unfold rmw_delta in RMW.
+          apply ES.rmwE in RMW; auto.
+          generalize RMW. basic_solver. }
+        destruct e' as [e'|]; auto.
+        exfalso. 
+        apply nRMWde; auto.
+        cdes BSTEP_.
+        eexists. apply RMW'.
+        unfold rmw_delta. basic_solver. }
+      subst a'.
+      destruct k; [congruence|].
+      inversion EQk. subst eid.
+      erewrite basic_step_sbe in kSBDOM; eauto.
+      rewrite dom_cross in kSBDOM.
+      2 : { intros HH. eapply HH. edone. }
+      unfold ES.cont_sb_dom in kSBDOM at 1.
+      rewrite crE, seq_union_l, seq_id_l in kSBDOM.
+      unfold opt_ext in kSBDOM.
+      destruct e' as [e'|].
+      { eapply basic_step_acts_set_ne'; eauto.
+        eapply ES.cont_sb_domE with (k:=k0); eauto.
+        { cdes BSTEP_. apply CONT. }
+        apply kSBDOM. basic_solver. }
+      eapply basic_step_acts_set_ne; eauto.
+      eapply ES.cont_sb_domE with (k:=k0); eauto.
+      { cdes BSTEP_. apply CONT. }
+      apply kSBDOM. basic_solver. }
+    unfold eq_opt in EQe'.
+    destruct e' as [e'|]; auto.
+    subst a.
+    unfold eq_opt, opt_ext in *.
+    destruct a' as [a'|]; auto.
+    { assert (rmw S' e' a') as RMW.
+      { apply RMWe. basic_solver. }
+      cdes BSTEP_.
+      apply RMW' in RMW.
+      destruct RMW as [RMW|RMW].
+      { eapply basic_step_acts_set_ne'; eauto.
+        apply ES.rmwE in RMW; auto.
+        generalize RMW. basic_solver. } 
+      unfold rmw_delta in RMW.
+      assert (e = e') as EQee'.
+      { generalize RMW. basic_solver. }
+      unfold opt_ext in EEQ. omega. }
+    subst k.
+    unfold ES.cont_sb_dom in kSBDOM.
+    assert (eq e' ≡₁ eq_opt (Some e')) as HH.
+    { basic_solver. }
+    rewrite crE, seq_union_l, seq_id_l in kSBDOM.
+    rewrite dom_union, dom_eqv in kSBDOM.
+    rewrite HH in kSBDOM at 2 3. 
+    erewrite !basic_step_sbe' in kSBDOM; eauto.
+    rewrite !dom_union, !dom_cross in kSBDOM.
+    2,3 : intros HE; eapply HE; edone. 
+    assert ((ES.cont_sb_dom S k0 ∪₁ eq e) e') as 
+      HE'.
+    { generalize kSBDOM. basic_solver. }
+    destruct HE' as [kSBe' | EQee'].
+    { eapply basic_step_acts_set_ne'; eauto.
+      eapply ES.cont_sb_domE with (k:=k0); eauto.
+      cdes BSTEP_. apply CONT. }
+    cdes BSTEP_. unfold opt_ext in EEQ. omega. }
+  
+  inversion KK  as [[EQk  EQlang  EQc ]].
+  inversion KK' as [[EQk' EQlang' EQc']].
+  cdes ADJ.
+  eapply basic_step_acts_ninit_set 
+    in nINITe; eauto.
+  destruct nINITe as [[nINITa | EQae] | EQae'].
+  { exfalso.
+    destruct kSBDOM as [kSBDOM _].
+    assert (dom_rel (sb S' ⨾ ⦗eq a⦘) ⊆₁ E S) as HSB.
+    { arewrite (eq a ⊆₁ E S). 
+      { generalize nINITa.
+        unfold ES.acts_ninit_set.
+        basic_solver. }
+      erewrite basic_step_sbE; eauto. 
+      rewrite ES.sbE; auto.
+      basic_solver. }
+    rewrite HSB in kSBDOM.
+    unfold ES.cont_sb_dom in kSBDOM.
+    destruct k; [congruence|].
+    inversion EQk. subst eid.
+    unfold opt_ext in kSBDOM.
+    destruct e' as [e'|].
+    { eapply basic_step_acts_set_ne'; eauto.
+      apply kSBDOM. basic_solver 10. }
+    eapply basic_step_acts_set_ne; eauto.
+    apply kSBDOM. basic_solver 10. }
+  { subst a. exfalso.
+    unfold ES.cont_sb_dom in kSBDOM.
+    destruct k; [congruence|].
+    inversion EQk as [EQeid].
+    unfold opt_ext in EQeid.
+    erewrite basic_step_sbe in kSBDOM; eauto.
+    rewrite dom_cross in kSBDOM.
+    2 : { intros HH. eapply HH. edone. }
+    destruct kSBDOM as [kSBDOM _].
+    erewrite ES.cont_sb_domE in kSBDOM; eauto.
+    2 : { cdes BSTEP_. apply CONT. }
+    destruct e' as [e'|]; subst eid.
+    { eapply basic_step_acts_set_ne'; eauto.
+      generalize kSBDOM. basic_solver 10. }
+    eapply basic_step_acts_set_ne; eauto.
+    generalize kSBDOM. basic_solver 10. }
+  unfold eq_opt in EQae'.
+  destruct e' as [e'|]; try done.
+  subst a. exfalso.
+  unfold ES.cont_sb_dom in kSBDOM.
+  destruct k; [congruence|].
+  inversion EQk as [EQeid].
+  unfold opt_ext in EQeid.
+  subst eid.
+  destruct kSBDOM as [kSBDOM _].
+  assert (eq e' ≡₁ eq_opt (Some e')) as HA. 
+  { basic_solver. }
+  rewrite HA in kSBDOM at 2.
+  erewrite basic_step_sbe' in kSBDOM; eauto.
+  rewrite dom_union, !dom_cross in kSBDOM.
+  2,3: intros HH; eapply HH; edone.
+  assert ((ES.cont_sb_dom S k0 ∪₁ eq e) e') as HE.
+  { generalize kSBDOM. basic_solver 10. }
+  destruct HE as [kEe' | EQe'].
+  { eapply basic_step_acts_set_ne'; eauto.
+    eapply ES.cont_sb_domE; eauto.
+    cdes BSTEP_. apply CONT. }
+  cdes BSTEP_.
+  unfold opt_ext in *.
+  omega.
 Qed.
 
 (******************************************************************************)
