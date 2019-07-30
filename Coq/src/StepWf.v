@@ -1324,14 +1324,15 @@ Proof.
     rewrite RMW'. unionL.
     { rewrite WF.(ES.rmwD), WF.(ES.rmwE), !seqA.
       rewrite <- id_inter, <- !seqA, <- id_inter.
-      rewrite set_interC, <- basic_step_r_eq_r; eauto.
+      rewrite set_interC, <- basic_step_r_ex_eq_r_ex; eauto.
       rewrite <- basic_step_w_eq_w; eauto.
       basic_solver. }
     unfold rmw_delta.
     intros x y [AA BB]. red in BB. desf.
     red in TT. desf; cdes TT; desf; auto.
     cdes ACO. cdes AJF.
-    red. eauto. }
+    red. split; auto.
+    admit. }
   { cdes BSTEP. cdes BSTEP_.
     rewrite RMW'. unionL.
     { rewrite WF.(ES.rmwE). unfolder. ins. desf.
@@ -1634,6 +1635,6 @@ Proof.
     eapply basic_step_acts_ninit_set; eauto.
     unfold opt_ext. basic_solver. }
   { eapply basic_step_K_adj; eauto. }
-Qed.
+Admitted.
  
 End ESstepWf.

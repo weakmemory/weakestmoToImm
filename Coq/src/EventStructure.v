@@ -255,7 +255,7 @@ Record Wf :=
 
     seqn_after_null : E ⊆₁ codom_rel (⦗ fun x => seqn x = 0 ⦘ ⨾ (sb^? ∩ same_tid));
 
-    rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
+    rmwD : rmw ≡ ⦗R_ex⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
 
@@ -821,17 +821,7 @@ Proof.
 Qed.
 
 Lemma rmw_dom_ninit WF : dom_rel rmw ⊆₁ Eninit. 
-Proof. 
-  intros x [y RMW]. split.
-  { apply rmwE in RMW; auto.
-    generalize RMW. basic_solver. }
-  intros INITx.
-  apply acts_init_set_inW in INITx; auto.
-  assert (is_r lab x) as Rx.
-  { apply rmwD in RMW; auto.
-    generalize RMW. basic_solver. }
-  type_solver.
-Qed.
+Proof. rewrite rmwEninit; auto. basic_solver. Qed.
 
 Lemma rmw_codom_ninit WF : codom_rel rmw ⊆₁ Eninit. 
 Proof. 
@@ -842,13 +832,9 @@ Qed.
 Lemma rmw_codom_ndom WF : codom_rel rmw ⊆₁ set_compl (dom_rel rmw).
 Proof. 
   intros y [x RMW] [z RMW'].
-  assert (is_w lab y) as Wy.
-  { apply rmwD in RMW; auto.
-    generalize RMW. basic_solver. }
-  assert (is_r lab y) as Ry.
-  { apply rmwD in RMW'; auto.
-    generalize RMW'. basic_solver. }
-  type_solver.
+  apply WF.(rmwD) in RMW.
+  apply WF.(rmwD) in RMW'.
+  unfolder in *. type_solver.
 Qed.
 
 (******************************************************************************)

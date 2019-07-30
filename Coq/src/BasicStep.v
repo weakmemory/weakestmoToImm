@@ -37,6 +37,7 @@ Notation "'rfi' S" := S.(ES.rfi) (at level 10).
 Notation "'coi' S" := S.(ES.coi) (at level 10).
 
 Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+Notation "'R_ex' S" := (fun a => is_true (R_ex S.(ES.lab) a)) (at level 10).
 Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
@@ -436,7 +437,7 @@ Qed.
 (*******************************************************)
 
 Hint Unfold eq_dom Events.loc Events.val Events.mod Events.xmod 
-     is_r is_w is_f is_acq is_rel is_rlx is_acqrel R_ex
+     is_r is_w is_f is_acq is_rel is_rlx is_acqrel Events.R_ex
      is_only_pln is_sc is_ra is_xacq
      same_lab_u2v_dom same_label_u2v :
   same_lab_unfoldDb.
@@ -512,6 +513,11 @@ Proof. split; basic_step_same_lab S S'. Qed.
 Lemma basic_step_r_eq_r e e' S S'
       (BSTEP : basic_step e e' S S') :
   E S ∩₁ R S' ≡₁ E S ∩₁ R S.
+Proof. split; basic_step_same_lab S S'. Qed.
+
+Lemma basic_step_r_ex_eq_r_ex e e' S S'
+      (BSTEP : basic_step e e' S S') :
+  E S ∩₁ R_ex S' ≡₁ E S ∩₁ R_ex S.
 Proof. split; basic_step_same_lab S S'. Qed.
 
 Lemma basic_step_w_eq_w e e' S S'
