@@ -124,20 +124,71 @@ Section ExecutionRels.
 
   Definition ex_same_tid := restr_rel X same_tid.
   Definition ex_cf := ⦗ex_Eninit⦘ ⨾ (ex_same_tid \ ex_sb⁼) ⨾ ⦗ex_Eninit⦘.
-  Definition ex_rf := ex_ew ⨾ ex_jf \ ex_cf.
+  Definition ex_rf := restr_rel X rf.
   Definition ex_fr := ex_rf⁻¹ ⨾ ex_co.
-  Definition ex_rs := ⦗X ∩₁ W⦘ ⨾ (ex_sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (ex_jf ⨾ ex_rmw)＊.
+  Definition ex_rs := ⦗X ∩₁ W⦘ ⨾ (ex_sb ∩ same_loc)^? ⨾ ⦗W⦘ ⨾ (ex_rf ⨾ ex_rmw)＊.
   Definition ex_release := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ ex_sb)^? ⨾ ex_rs.
-  Definition ex_sw := ex_release ⨾ ex_jf ⨾ (ex_sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
+  Definition ex_sw := ex_release ⨾ ex_rf ⨾ (ex_sb ⨾ ⦗F⦘)^? ⨾ ⦗Acq⦘.
   Definition ex_hb := (ex_sb ∪ ex_sw)⁺.
 
-  Definition ex_jfe := ex_jf \ ex_sb.
   Definition ex_rfe := ex_rf \ ex_sb.
   Definition ex_coe := ex_co \ ex_sb.
 
-  Definition ex_jfi := ex_jf ∩ ex_sb.
   Definition ex_rfi := ex_rf ∩ ex_sb.
   Definition ex_coi := ex_co ∩ ex_sb.
+
+
+ 
+  Lemma ex_rs_alt :
+    ex_rs ≡ restr_rel X S.(rs).
+  Proof.
+  Admitted.
+  
+
+  Lemma rs_prcl : 
+   dom_rel (rs S ⨾ ⦗X⦘) ⊆₁ X.
+  Proof.
+    unfold rs.
+  Admitted.
+  
+  Lemma ex_release_alt :
+    ex_release ≡ restr_rel X S.(release).
+  Proof.
+    unfold ex_release.
+    unfold Consistency.release.
+    rewrite <- !seqA.
+    rewrite <- seq_restr_prcl; [|by apply rs_prcl].
+    apply seq_more; [|by apply ex_rs_alt]. 
+    rewrite <- seq_restr_prcl.
+  Admitted.
+
+  Lemma ex_sw_alt :
+    ex_sw ≡ restr_rel X sw.
+  Proof.
+    unfold ex_sw.
+    unfold Consistency.sw.
+  Admitted.
+  
+  Lemma ex_hb_alt :
+    ex_hb ≡ restr_rel X hb.
+  Proof.
+    unfold ex_hb.
+    unfold Consistency.hb.
+    unfold ex_sb.
+    rewrite ex_sw_alt.
+    rewrite union_restr.
+    split; [by apply restr_ct|].
+    apply ct_ind_right with (P := fun r => restr_rel X r).
+    { red. splits.
+      { red. red. basic_solver. }
+      basic_solver 10. }
+    apply ct_step.
+    intros r HH.
+    erewrite <- seq_restr_prcl.
+    { rewrite HH. apply ct_unit. } 
+    arewrite (sb ∪ sw ⊆ hb).
+      by apply hb_prcl.
+  Qed.
 
 End ExecutionRels.
 
