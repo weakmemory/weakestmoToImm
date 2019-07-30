@@ -422,6 +422,65 @@ Section SimRelCertForwarding.
     generalize RMW. type_solver. 
   Qed.
 
+  Lemma simrel_cert_forwarding_ex_cont_iss_e lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    X ∩₁ e2a S ⋄₁ (eq (e2a S e) ∩₁ I) ⊆₁ eq e.
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as SCONS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    cdes FRWD.
+    intros x [Xx [EQx Ix]].
+    assert (SE S e) as Ee.
+    { eapply ES.cont_adjacent_ninit_e; eauto. }
+    assert (SW S e) as We.
+    { eapply same_lab_u2v_dom_is_w.
+      { eapply e2a_lab. apply SRCC. }
+      split; auto.
+      unfold is_w, compose.
+      fold (is_w Glab (e2a S e)).
+      eapply issuedW.
+      { apply SRCC. }
+      congruence. }
+    edestruct e2a_eq_in_cf
+      with (x := x) (y := e) as [EQ | CF]; eauto.
+    { eapply Execution.ex_inE; eauto. }
+    assert (SR S e) as Re.
+    2 : exfalso; type_solver. 
+    eapply icf_R; eauto. 
+    exists x. 
+    apply ES.icf_sym.
+    split; auto.
+    cdes ADJ.
+    unfold ES.cont_sb_dom in kSBDOM.
+    destruct k.
+    { admit. }
+    unfolder. exists eid. splits.
+    { admit. }
+    { admit. }
+    { unfolder in kSBDOM.
+      destruct kSBDOM as [HA HB].
+      edestruct HA.
+      { exists eid; eauto. }
+      basic_solver. }
+    intros c SB SB'.
+    destruct kSBDOM as [HA HB].
+    edestruct HB as [c' HH].
+    { exists e. basic_solver. }
+    apply seq_eqv_r in HH. 
+    desc. subst c'.
+    destruct HH as [EQ | SB''].
+    { subst. eapply ES.sb_irr; eauto. }
+    eapply ES.sb_irr, ES.sb_trans; eauto. 
+  Qed.
+  
+
   Lemma simrel_cert_forwarding_ex_cont_iss lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -431,13 +490,14 @@ Section SimRelCertForwarding.
   Proof. 
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as SCONS.
+    { apply SRCC. }
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
     assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
       as SRCONT.
     { apply SRCC. }
-    assert (ES.cont_adjacent S k k' e e') as ADJ.
-    { apply FRWD. }
+    cdes FRWD.
     erewrite ES.cont_adjacent_sb_dom; eauto.
     edestruct ilbl_step_acts_set as [a [a' HH]].
     { eapply wf_cont_state; eauto. }
@@ -447,21 +507,16 @@ Section SimRelCertForwarding.
     rewrite ACTS.
     rewrite !set_inter_union_l, !set_map_union.
     rewrite !set_inter_union_r, !id_union, 
-    !seq_union_r, !dom_union.
+            !seq_union_r, !dom_union.
     apply set_union_Proper;
       [apply set_union_Proper|].
     { apply SRCC. }
-    { intros x [Xx [EQx Ix]].
-      assert (x = e) as EQe.
-      { edestruct e2a_eq_in_cf
-          with (x := x) (y := e) as [EQ | CF]; eauto.
-        { eapply Execution.ex_inE; eauto. }
-        { eapply ES.cont_adjacent_ninit_e; eauto. }
-        { rewrite <- EQx.
-          erewrite forwarding_e2a_e; eauto. }
-        exfalso. 
-        admit. }
-      admit. }
+    { 
+
+    { eapply ES.ew_eqvW with (ws := eq e); auto.
+      intros ee HH. subst ee.
+      split; auto. }
+
     admit. 
   Admitted.
 
