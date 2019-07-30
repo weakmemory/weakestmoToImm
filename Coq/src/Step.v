@@ -46,6 +46,7 @@ Notation "'rfi' S" := S.(ES.rfi) (at level 10).
 Notation "'coi' S" := S.(ES.coi) (at level 10).
 
 Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+Notation "'R_ex' S" := (fun a => is_true (R_ex S.(ES.lab) a)) (at level 10).
 Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
@@ -108,6 +109,7 @@ Definition update_step
   exists w ews ws w',
     ⟪ SLOC : same_loc S' e w' ⟫ /\
     ⟪ UPD : e' = Some w' ⟫ /\
+    ⟪ REX : R_ex S' e ⟫ /\
     ⟪ AJF : add_jf w e S S' ⟫ /\
     ⟪ AEW : add_ew ews w' S S' ⟫ /\
     ⟪ ACO : add_co ews ws w' S S' ⟫.

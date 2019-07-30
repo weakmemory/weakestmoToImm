@@ -1331,8 +1331,7 @@ Proof.
     intros x y [AA BB]. red in BB. desf.
     red in TT. desf; cdes TT; desf; auto.
     cdes ACO. cdes AJF.
-    red. split; auto.
-    admit. }
+    red. split; auto. }
   { cdes BSTEP. cdes BSTEP_.
     rewrite RMW'. unionL.
     { rewrite WF.(ES.rmwE). unfolder. ins. desf.
@@ -1635,6 +1634,6 @@ Proof.
     eapply basic_step_acts_ninit_set; eauto.
     unfold opt_ext. basic_solver. }
   { eapply basic_step_K_adj; eauto. }
-Admitted.
+Qed.
  
 End ESstepWf.

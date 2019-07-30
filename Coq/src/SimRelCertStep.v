@@ -73,6 +73,7 @@ Section SimRelCertStep.
   Notation "'Seco' S" := (Consistency.eco S Weakestmo) (at level 10).
 
   Notation "'SR' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+  Notation "'SR_ex' S" := (fun a => is_true (R_ex S.(ES.lab) a)) (at level 10).
   Notation "'SW' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
   Notation "'SF' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
@@ -185,6 +186,7 @@ Section SimRelCertStep.
     exists w w',
       ⟪ SLOC : same_loc (Slab S') e w' ⟫ /\
       ⟪ ESOME : e' = Some w' ⟫ /\ 
+      ⟪ REX : SR_ex S' e ⟫ /\
       ⟪ AJF : sim_add_jf G sc TC' X k w e S S' ⟫ /\ 
       ⟪ AEW : sim_add_ew TC X w' S S' ⟫ /\
       ⟪ ACO : sim_add_co G TC X k w' S S' ⟫.
@@ -477,6 +479,11 @@ Section SimRelCertStep.
     splits; eauto.
     { red. unfold Events.loc.
         by rewrite <- LBL, <- LBL''. }
+    { unfold Events.R_ex. rewrite <- LBL.
+      simpls.
+      eapply ilbl_step_cases in ILBL_STEP. 
+      2: by apply SRCC.
+      desf. simpls. inv LBLS. }
     { econstructor; splits; eauto.
       erewrite basic_step_e2a_eq_dom; eauto. 
       2 : { eapply cert_ex_inE; eauto. } 
