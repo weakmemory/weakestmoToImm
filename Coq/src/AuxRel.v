@@ -154,6 +154,17 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma codom_rel_helper 
+      (IN : codom_rel r ⊆₁ s) :
+  r ≡ r ⨾ ⦗s⦘.
+Proof. unfolder in *. basic_solver. Qed.
+
+Lemma dom_codom_rel_helper 
+      (IN_DOM : dom_rel r ⊆₁ s)
+      (IN_CODOM : codom_rel r ⊆₁ s'):
+  r ≡ ⦗s⦘ ⨾ r ⨾ ⦗s'⦘.
+Proof. unfolder in *. basic_solver 7. Qed.
+
 (******************************************************************************)
 (** ** cross_rel properties *)
 (******************************************************************************)
@@ -761,6 +772,20 @@ Proof.
   by rewrite Hrestr at 1.
 Qed.
 
+Lemma seq_restr :
+  restr_rel s r ⨾ restr_rel s r' ⊆ restr_rel s (r ⨾ r'). 
+Proof. basic_solver. Qed.
+
+Lemma seq_restr_prcl 
+      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
+  restr_rel s r ⨾ restr_rel s r' ≡ restr_rel s (r ⨾ r'). 
+Proof.
+  split; [by apply seq_restr|].
+  rewrite !restr_relE, !seqA.
+  rewrite (dom_rel_helper PRCL).
+  basic_solver 10.
+Qed.
+
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
 Proof. 
@@ -933,6 +958,16 @@ Qed.
 
 End Props.
 
+Lemma seq_restr_fwcl {A} {s} {r r' : relation A}
+      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+  restr_rel s r ⨾ restr_rel s r' ≡ restr_rel s (r ⨾ r'). 
+Proof.
+  split; [by apply seq_restr|].
+  rewrite !restr_relE, seqA, <- seqA.
+  rewrite (codom_rel_helper FWCL).
+  basic_solver 10.
+Qed.
+
 Require Import Setoid.
 
 Add Parametric Morphism A : (@symmetric A) with signature
@@ -1060,3 +1095,5 @@ Proof. red; unfolder; splits; ins; desf; split; eauto. Qed.
 Add Parametric Morphism A : (@set_minus A) with signature 
   set_subset ==> set_subset --> set_subset as set_minus_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
+
+
