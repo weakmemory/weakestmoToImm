@@ -436,7 +436,11 @@ Section SimRelCertForwarding.
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
     cdes FRWD.
-    intros x [Xx [EQx Ix]].
+    edestruct ES.cont_adjacent_cont_last_sb_imm
+      as [x HH]; eauto.
+    apply seq_eqv_l in HH.
+    destruct HH as [kLAST SBIMM].
+    intros y [Xy [EQy Iy]].
     assert (SE S e) as Ee.
     { eapply ES.cont_adjacent_ninit_e; eauto. }
     assert (SW S e) as We.
@@ -449,37 +453,48 @@ Section SimRelCertForwarding.
       { apply SRCC. }
       congruence. }
     edestruct e2a_eq_in_cf
-      with (x := x) (y := e) as [EQ | CF]; eauto.
+      with (x := y) (y := e) as [EQ | CF]; eauto.
     { eapply Execution.ex_inE; eauto. }
     assert (SR S e) as Re.
     2 : exfalso; type_solver. 
     eapply icf_R; eauto. 
-    exists x. 
+    exists y. 
     apply ES.icf_sym.
     split; auto.
-    cdes ADJ.
-    unfold ES.cont_sb_dom in kSBDOM.
-    destruct k.
+    exists x. 
+    split; auto.
+    apply immediate_transp 
+      with (r := Ssb S); red.
+    assert (X x) as Xx.
     { admit. }
-    unfolder. exists eid. splits.
+    assert (ES.seqn S e = ES.seqn S y)
+      as SEQNEQ.
+    { erewrite !e2a_ninit in EQy.
+      { by inversion EQy. }
+      { apply ES.cfEninit in CF.
+        generalize CF. basic_solver. }
+      apply ES.cfEninit in CF.
+      generalize CF. basic_solver. }
+    split.
     { admit. }
-    { admit. }
-    { unfolder in kSBDOM.
-      destruct kSBDOM as [HA HB].
-      edestruct HA.
-      { exists eid; eauto. }
-      basic_solver. }
-    intros c SB SB'.
-    destruct kSBDOM as [HA HB].
-    edestruct HB as [c' HH].
-    { exists e. basic_solver. }
-    apply seq_eqv_r in HH. 
-    desc. subst c'.
-    destruct HH as [EQ | SB''].
-    { subst. eapply ES.sb_irr; eauto. }
-    eapply ES.sb_irr, ES.sb_trans; eauto. 
-  Qed.
-  
+    intros z SB SB'.
+    destruct k. 
+    { unfold ES.cont_last in kLAST.
+      assert (ES.seqn S e = 0) as SEQNe.
+      { eapply ES.seqn_immsb_init; eauto. }
+      assert (0 < ES.seqn S y) 
+        as SEQNy; try omega.
+      (* TODO: make a lemma *)
+      apply ES.sb_imm_split_r in SB'; eauto.
+      destruct SB' as [z' [SB'' SBIMM']].
+      erewrite ES.seqn_immsb; eauto; try omega.
+      eapply ES.sb_tid; auto.
+      apply seq_eqv_l. 
+      split; [|apply SBIMM'].
+      split. 
+      { admit. }
+      admit. 
+  Admitted.
 
   Lemma simrel_cert_forwarding_ex_cont_iss lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
@@ -511,11 +526,11 @@ Section SimRelCertForwarding.
     apply set_union_Proper;
       [apply set_union_Proper|].
     { apply SRCC. }
-    { 
+    { admit. }
 
-    { eapply ES.ew_eqvW with (ws := eq e); auto.
-      intros ee HH. subst ee.
-      split; auto. }
+    (* { eapply ES.ew_eqvW with (ws := eq e); auto. *)
+    (*   intros ee HH. subst ee. *)
+    (*   split; auto. } *)
 
     admit. 
   Admitted.
