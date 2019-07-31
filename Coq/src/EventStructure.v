@@ -1658,6 +1658,39 @@ Proof.
   unfold ES.cont_thread, opt_ext in *; auto.
 Qed.
 
+Lemma cont_adjacent_cont_last_sb_imm WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e e') :
+  codom_rel (⦗cont_last S k⦘ ⨾ immediate sb) e.
+Proof. 
+  edestruct exists_cont_last
+    with (k := k) as [x kLAST]; eauto.
+  exists x.
+  apply seq_eqv_l.
+  split; auto.
+  cdes ADJ. split.
+  { destruct kSBDOM as [kSBDOM _].
+    eapply cont_last_in_cont_sb 
+      in kLAST; auto.
+    specialize (kSBDOM x kLAST).
+    generalize kSBDOM. basic_solver. }
+  intros y SB SB'.
+  eapply cont_last_alt; eauto.
+  exists y. 
+  apply seq_eqv_r.
+  split; auto.
+  apply kSBDOM.
+  basic_solver 10.
+Qed.
+
+Lemma cont_adjacent_sb_imm WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e e') :
+  eq e × eq_opt e' ⊆ immediate sb.
+Proof. 
+  cdes ADJ.
+  rewrite RMWe.
+  by apply rmwi. 
+Qed.
+
 Lemma cont_adjacent_sb_dom WF k k' e e'
       (ADJ : cont_adjacent S k k' e e') :
   ES.cont_sb_dom S k' ≡₁ ES.cont_sb_dom S k ∪₁ eq e ∪₁ eq_opt e'.
@@ -1818,7 +1851,7 @@ Proof.
     eapply sb_irr; eauto. }
   { red; unfolder; eauto 10. }
   apply sbE, seq_eqv_lr in SB; desf. 
-Qed.  
+Qed.
 
 Lemma seqn_sb_alt WF x y (STID : same_tid x y) (SB : sb x y) : 
   seqn x < seqn y. 
@@ -1833,6 +1866,36 @@ Proof.
   arewrite (eq y ⊆₁ Einit) by (intros x HH; desf).
   rewrite <- lib.AuxRel.seq_eqv_inter_lr. 
   rewrite sb_ninit; auto. rels.
+Qed.
+
+Lemma seqn_immsb_init WF x y 
+      (INITx : Einit x)
+      (IMMSB : immediate sb x y) :
+  seqn y = 0.
+Proof. 
+  unfold seqn.
+  arewrite 
+    (dom_rel (sb ∩ same_tid ⨾ ⦗eq y⦘) ≡₁ ∅).
+  { split; try done.
+    rewrite seq_eqv_r.
+    intros z [z' [[SB STID] EQb]].
+    subst z'. red.
+    eapply IMMSB; eauto.
+    apply sb_init; auto.
+    split; auto.
+    split.
+    { apply sbE in SB; auto.
+      generalize SB. basic_solver. }
+    intros [_ TIDz].
+    assert (Eninit y) as nINITy.
+    { apply sb_codom_ninit; auto.
+      eexists. apply IMMSB. }
+    apply nINITy. 
+    split; auto.
+    { apply sbE in SB; auto.
+      generalize SB. basic_solver. }
+    congruence. }
+  by rewrite countNatP_empty.
 Qed.
 
 Lemma seqn_immsb WF x y 
