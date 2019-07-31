@@ -189,8 +189,34 @@ Lemma prog_g_es_init_init G prog :
   ES.acts_set (prog_g_es_init prog G) ≡₁
   ES.acts_init_set (prog_g_es_init prog G).
 Proof. unfold ES.acts_init_set. simpls. basic_solver. Qed.
+
+(* TODO : move to a more suitable place  *)
+Lemma length_nempty {A : Type} (l : list A) (nEmpty : l <> []) : 
+  0 < length l. 
+Proof. 
+  unfold length.
+  destruct l.
+  { intuition. }
+  apply Nat.lt_0_succ.
+Qed.
+
+Lemma prog_g_es_init_nempty G prog 
+      (nInitProg : ~ IdentMap.In tid_init prog) 
+      (nLocsEmpty : g_locs G <> []) :
+  ~ ES.acts_init_set (prog_g_es_init prog G) ≡₁ ∅.
+Proof. 
+  intros HH. eapply HH.
+  apply prog_g_es_init_init.
+  unfold ES.acts_set.
+  unfold prog_g_es_init, ES.init.
+  simpls.
+  erewrite map_length.
+  by eapply length_nempty. 
+Qed.  
   
-Lemma prog_g_es_init_wf G prog (nInitProg : ~ IdentMap.In tid_init prog) :
+Lemma prog_g_es_init_wf G prog 
+      (nInitProg : ~ IdentMap.In tid_init prog) 
+      (nLocsEmpty : g_locs G <> []) :
   ES.Wf (prog_g_es_init prog G).
 Proof.
   assert
@@ -220,6 +246,7 @@ Proof.
       2: by apply indexed_list_fst_nodup.
       desf. }
     eapply indexed_list_snd_nodup; eauto. }
+  { apply prog_g_es_init_nempty; eauto. }
   { red. basic_solver. }
   { unfolder. ins. eexists.
     splits; eauto.

@@ -1187,7 +1187,7 @@ Qed.
 (** ** cont_sb properites *)
 (******************************************************************************)
 
-Lemma exists_cont_sb_dom k lang st WF (KK : K (k, existT _ lang st)) : 
+Lemma exists_cont_sb_dom WF k : 
   exists e, cont_sb_dom S k e. 
 Proof. 
   unfold cont_sb_dom.
@@ -1333,7 +1333,7 @@ Qed.
 (** ** cont_last properites *)
 (******************************************************************************)
 
-Lemma exists_cont_last k lang st WF (KK : K (k, existT _ lang st)) : 
+Lemma exists_cont_last WF k : 
   exists e, cont_last S k e. 
 Proof. 
   unfold cont_last.
@@ -1449,7 +1449,7 @@ Proof.
   intros HH. desf.
   eapply sb_irr; eauto.
   eapply sb_trans; eauto.
-Qed.  
+Qed.    
 
 (******************************************************************************)
 (** ** cont_cf properites *)

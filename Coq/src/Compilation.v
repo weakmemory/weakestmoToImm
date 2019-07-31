@@ -202,6 +202,7 @@ Section Compilation.
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc)
+        (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
@@ -225,6 +226,7 @@ Section Compilation.
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc)
+        (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
     exists S X,
