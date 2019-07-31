@@ -136,14 +136,13 @@ Section ExecutionRels.
 
   Definition ex_rfi := ex_rf ∩ ex_sb.
   Definition ex_coi := ex_co ∩ ex_sb.
-
-
  
   Lemma ex_rs_alt :
     ex_rs ≡ restr_rel X S.(rs).
   Proof.
+    unfold rs.
+    unfold ex_rs.
   Admitted.
-  
 
   Lemma rs_prcl : 
    dom_rel (rs S ⨾ ⦗X⦘) ⊆₁ X.

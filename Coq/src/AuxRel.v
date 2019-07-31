@@ -1097,3 +1097,116 @@ Add Parametric Morphism A : (@set_minus A) with signature
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 
+
+Lemma immediate_restr {A} (r : relation A) (s : A -> Prop) :
+      restr_rel s (immediate r) ⊆ immediate (restr_rel s r).
+Proof. basic_solver. Qed. 
+
+Lemma immediate_collect {A B} (r : relation A) (f : A -> B) : 
+  immediate (f □ r) ⊆ f □ (immediate r).
+Proof. basic_solver 15. Qed. 
+  
+Lemma immediate_collect_inj {A B} (r : relation A) (f : A -> B) s
+      (INJ : inj_dom s f) :
+      f □ (immediate (restr_rel s r)) ≡ immediate (f □ (restr_rel s r)).
+Proof.
+  split; [|by apply immediate_collect].
+  split; rename x into b1, y into b2, H into FIb12.
+  { destruct FIb12 as [a1 [a2 [IRa12 [eq1 eq2]]]].
+    exists a1, a2.
+    splits; auto. by apply immediate_in. }
+  intros b3 Fb13 Fb32.
+  destruct Fb13 as [a1 [a3 [ra13 [eq11 eq33]]]].
+  destruct Fb32 as [a3' [a2 [ra32 [eq33' eq22]]]].
+  assert (a3 = a3').
+  { cdes ra32. cdes ra13.
+    apply INJ; basic_solver. }
+  subst.
+  cdes FIb12.
+  cdes FIb0.
+  apply FIb4 with (c := a3').
+  { unfolder in FIb3. unfolder in ra13.
+    apply INJ in FIb1; basic_solver. }
+  unfolder in FIb3. unfolder in ra32.
+  apply INJ in FIb2; basic_solver.
+Qed.
+
+Lemma transp_collect_rel {A B} (f : A -> B) r :
+  f □ r⁻¹ ≡  (f □ r)⁻¹.
+Proof. basic_solver 10. Qed.
+
+Lemma transp_restr_rel {A} X (r : relation A) :
+  restr_rel X r⁻¹ ≡ (restr_rel X r)⁻¹.
+Proof. basic_solver. Qed.
+
+Lemma functional_collect_rel_inj {A B} X (f : A -> B) r
+      (INJ : inj_dom X f) :
+  functional (f □ (restr_rel X r)) <-> functional (restr_rel X r). 
+Proof.
+  split; [basic_solver 15|].
+  unfolder.
+  intros P b1 b2 b3 [a1 [a2 [pr1 [eq1 eq2]]]]
+         [a1' [a2' [pr1' [eq1' eq2']]]].
+  subst.
+  assert (a2 = a2'); [|congruence].
+  assert (a1 = a1'); [|by eapply P; eauto; desf].
+  apply INJ; desf.
+Qed.
+
+Lemma transitive_collect_rel_inj {A B} X (f : A -> B) r
+      (INJ : inj_dom X f) :
+  transitive (f □ restr_rel X r) <-> transitive (restr_rel X r).
+Proof. 
+  split.
+  { unfolder.
+    intros HH a1 a2 a3 R12 R23.
+    specialize (HH (f a1) (f a2) (f a3)).
+    destruct HH as [a1' HH]. 
+    { exists a1, a2. desf. }
+    { exists a2, a3. desf. }
+    destruct HH as [a3' HH].
+    assert (a1 = a1'); [apply INJ; by desf|].
+    assert (a3 = a3'); [apply INJ; by desf|].
+    basic_solver. }
+  unfolder. 
+  intros HH b1 b2 b3 [a1 [a2 P]] [a2' [a3 PP]].
+  assert (a2' = a2); [apply INJ; by desf|].
+  exists a1, a3.
+  split; [|by desf].
+  eapply HH with (y := a2); basic_solver.
+Qed.
+
+Lemma total_collect_rel {A B} X (f : A -> B) r :
+  is_total X r -> is_total (f □₁ X) (f □ r).
+Proof.
+  unfolder.
+  intros HH b1 [a1 P1] b2 [a2 P2] NEQ.
+  desf.
+  assert (a1 <> a2) as NEQ' by congruence.
+  specialize (HH a1 P1 a2 P2 NEQ').
+  desf.
+  { left. eauto. }
+  right. eauto.
+Qed.
+
+Lemma collect_rel_irr_inj {A B} X r (f : A -> B)
+      (INJ : inj_dom X f) :
+  irreflexive (f □ (restr_rel X r)) <-> irreflexive (restr_rel X r).
+Proof.
+  split; [by apply collect_rel_irr|].
+  unfolder. ins. desf. rename H2 into EQ.
+  apply INJ in EQ; eauto.
+  basic_solver.
+Qed.
+
+Lemma collect_rel_ct_inj {A B} X (f : A -> B) (rr : relation A)
+      (INJ : inj_dom X f) : 
+  f □ (restr_rel X rr)⁺ ≡ (f □ (restr_rel X rr))⁺.
+Proof.
+  split; [by apply collect_rel_ct|].
+  apply inclusion_t_ind_right.
+  { by rewrite <- ct_step. }  
+  rewrite <- collect_rel_seq.
+  2: { rewrite restr_ct. basic_solver. } 
+  by rewrite ct_unit.
+Qed.
