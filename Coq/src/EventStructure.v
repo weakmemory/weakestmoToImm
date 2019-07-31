@@ -59,8 +59,23 @@ Definition cf (S : t) :=
   ⦗ S.(acts_ninit_set) ⦘ ⨾ (S.(same_tid) \ (S.(sb)⁼)) ⨾ ⦗ S.(acts_ninit_set) ⦘.
 
 (* immediate conflict *)
-
 Definition icf (S : t) :=
+  (* In the case of event structure with the empty set 
+   * of initial events this definition is incorrect. 
+   * In order to check that, consider two 
+   * conflicting `first` events in some thread --- 
+   * they are not in the immediate conflict 
+   * according to this definition.
+   * However we found the alternative definition 
+   * (as given in the paper) hard to work with.
+   * Thus the (temproary) solution is to keep this definition
+   * and add the constraint `~ Einit ≡₁ ∅` to the Well-formdness predicate.
+   * Techinacally, there are event structures with empty set of initial events.
+   * Their corresponding programs should consist of `fences` only.
+   * However, in this case these event structures are trivial 
+   * in the sense that their only behaviour is that
+   * consisting of the set of initial writes (which is empty).
+   *)
   cf S ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S)).
   (* cf S \ ((sb S) ⁻¹ ⨾ (cf S) ∪ (cf S) ⨾ (sb S)). *)
 
@@ -240,6 +255,8 @@ Record Wf :=
     init_lab : forall e (INIT : Einit e),
       exists l, lab e = init_write l ;
     init_uniq : inj_dom Einit loc ;
+    (* see the comment about `icf` above *)
+    init_nempty : ~ Einit ≡₁ ∅ ; 
     
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
@@ -350,6 +367,16 @@ Qed.
 
 Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
 Proof. unfold ES.acts_ninit_set. basic_solver. Qed.
+
+Lemma exists_acts_init WF : exists e, Einit e. 
+Proof. 
+  destruct (classic (exists e, Einit e)); auto.
+  exfalso. apply init_nempty; auto.
+  split; [|done].
+  intros e INITe.
+  red. apply H.
+  eauto.
+Qed.
 
 Lemma Tid_compl_NTid t : Tid_ t ∪₁ NTid_ t ≡₁ ⊤₁. 
 Proof. 
@@ -1145,17 +1172,6 @@ Qed.
 (** ** co properites *)
 (******************************************************************************)
 
-(* Lemma co_total WF ol ww  *)
-(*       (WS : ww ⊆₁ E ∩₁ W ∩₁ Loc_ ol)  *)
-(*       (nCF : cf_free S ww) : *)
-(*   is_total ww co. *)
-(* Proof.  *)
-(*   red. ins.  *)
-(*   eapply co_connex; auto. *)
-(*   generalize nCF. unfold cf_free. *)
-(*   basic_solver 10. *)
-(* Qed. *)
-
 (******************************************************************************)
 (** ** continuation properites *)
 (******************************************************************************)
@@ -1165,6 +1181,19 @@ Proof.
   apply K_inEninit in KK; auto.  
   unfold ES.acts_ninit_set, set_minus in KK.
   desf.
+Qed.
+
+(******************************************************************************)
+(** ** cont_sb properites *)
+(******************************************************************************)
+
+Lemma exists_cont_sb_dom k lang st WF (KK : K (k, existT _ lang st)) : 
+  exists e, cont_sb_dom S k e. 
+Proof. 
+  unfold cont_sb_dom.
+  destruct k.
+  { apply exists_acts_init; eauto. }
+  exists eid. basic_solver 10.
 Qed.
 
 Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : 
@@ -1300,6 +1329,19 @@ Proof.
   generalize HH. basic_solver.
 Qed.
 
+(******************************************************************************)
+(** ** cont_last properites *)
+(******************************************************************************)
+
+Lemma exists_cont_last k lang st WF (KK : K (k, existT _ lang st)) : 
+  exists e, cont_last S k e. 
+Proof. 
+  unfold cont_last.
+  destruct k.
+  { eapply exists_acts_init; eauto. }
+  exists eid; eauto.
+Qed.
+
 Lemma cont_last_in_cont_sb WF k : 
   cont_last S k ⊆₁ cont_sb_dom S k. 
 Proof. 
@@ -1408,6 +1450,10 @@ Proof.
   eapply sb_irr; eauto.
   eapply sb_trans; eauto.
 Qed.  
+
+(******************************************************************************)
+(** ** cont_cf properites *)
+(******************************************************************************)
 
 Lemma cont_cf_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ E.
