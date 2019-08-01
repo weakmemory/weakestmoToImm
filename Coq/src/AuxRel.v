@@ -381,6 +381,22 @@ Lemma collect_rel_interi (f : A -> B) :
   f □ (r ∩ r') ⊆ (f □ r) ∩ (f □ r').
 Proof. basic_solver 10. Qed.
 
+Lemma collect_rel_inter (f : A -> B) 
+      (INJ_dom : inj_dom (dom_rel r ∪₁ dom_rel r') f)  
+      (INJ_codom : inj_dom (codom_rel r ∪₁ codom_rel r') f) :  
+  f □ (r ∩ r') ≡ (f □ r) ∩ (f □ r').
+Proof.
+  split; [by apply collect_rel_interi|].
+  unfolder.
+  intros b1 b2 [[a1 [a2 HH]] [a1' [a2' HH']]].
+  assert (EQ1 : a1 = a1').
+  { apply INJ_dom; basic_solver. }
+  assert (EQ2 : a2 = a2').
+  { apply INJ_codom; basic_solver. }
+  exists a1, a2. 
+  basic_solver.
+Qed.
+
 Lemma collect_rel_seqi (f : A -> B) : 
   f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
 Proof. basic_solver 30. Qed.
@@ -1210,3 +1226,4 @@ Proof.
   2: { rewrite restr_ct. basic_solver. } 
   by rewrite ct_unit.
 Qed.
+
