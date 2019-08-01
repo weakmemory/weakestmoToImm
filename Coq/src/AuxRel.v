@@ -1227,3 +1227,14 @@ Proof.
   by rewrite ct_unit.
 Qed.
 
+Lemma dwt_imm_f {A} {r : relation A}
+      (TOTAL : downward_total r) :
+  functional (immediate r⁻¹).
+Proof.
+  unfold downward_total in TOTAL.
+  unfolder. 
+  intros a1 a2 a3 [R21 HH21] [R31 HH31].
+  specialize (TOTAL a2 a3 a1 R21 R31).
+  destruct TOTAL as [HH|HH]; auto.
+  destruct HH; exfalso; eauto.
+Qed.
