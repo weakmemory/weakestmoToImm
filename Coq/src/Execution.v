@@ -136,7 +136,9 @@ Section ExecutionRels.
 
   Definition ex_rfi := ex_rf ∩ ex_sb.
   Definition ex_coi := ex_co ∩ ex_sb.
- 
+
+  Definition ex_eco := (ex_rf ∪ ex_co ∪ ex_fr)⁺.
+
   Lemma ex_rs_alt :
     ex_rs ≡ restr_rel X S.(rs).
   Proof.
@@ -188,6 +190,15 @@ Section ExecutionRels.
     arewrite (sb ∪ sw ⊆ hb).
       by apply hb_prcl.
   Qed.
+
+  Lemma ex_fr_alt :
+    ex_fr ≡ restr_rel X fr.
+  Admitted.
+
+  Lemma ex_eco_alt :
+    ex_eco ≡ restr_rel X (eco S Weakestmo).
+  Admitted.
+  
 
 End ExecutionRels.
 

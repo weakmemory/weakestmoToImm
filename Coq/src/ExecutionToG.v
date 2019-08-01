@@ -43,6 +43,7 @@ Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
 Notation "'Gsb'" := (Execution.sb G).
 Notation "'Grmw'" := (Execution.rmw G).
 Notation "'Grf'" := (Execution.rf G).
+Notation "'Gfr'" := (Execution.fr G).
 Notation "'Gco'" := (Execution.co G).
 Notation "'Geco'" := (Execution_eco.eco G).
 
@@ -75,6 +76,7 @@ Notation "'Sjf'" := (S.(ES.jf)).
 Notation "'Sjfi'" := (S.(ES.jfi)).
 Notation "'Sjfe'" := (S.(ES.jfe)).
 Notation "'Srf'" := (S.(ES.rf)).
+Notation "'Sfr'" := (S.(ES.fr)).
 Notation "'Srfi'" := (S.(ES.rfi)).
 Notation "'Srfe'" := (S.(ES.rfe)).
 Notation "'Sco'" := (S.(ES.co)).
@@ -690,7 +692,6 @@ Qed.
 
 Lemma X2G_rs_transfer
       (WF : ES.Wf S)
-      (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
       (WF_G : Wf G) : 
@@ -764,7 +765,6 @@ Qed.
   
 Lemma X2G_release_transfer
       (WF : ES.Wf S)
-      (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
       (X2G : X2G) 
       (WF_G : Wf G) : 
@@ -811,7 +811,6 @@ Qed.
 
 Lemma X2G_sw_transfer
       (WF : ES.Wf S)
-      (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
       (WF_G : Wf G) : 
@@ -861,11 +860,10 @@ Qed.
   
 Lemma X2G_hb_transfer
       (WF : ES.Wf S)
-      (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
       (WF_G : Wf G) : 
-  e2a S □ restr_rel X (Shb) ≡ Ghb.
+  Move Shb ≡ Ghb.
 Proof.
   rewrite <- Execution.ex_hb_alt; auto.
   unfold Execution.ex_hb.
@@ -881,16 +879,44 @@ Proof.
   rewrite collect_rel_union.
   by rewrite X2G_sw_transfer.
 Qed.
-  
-Lemma X2G_eco_transfer
+
+Lemma X2G_fr_transfer 
       (WF : ES.Wf S)
-      (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
       (X2G : X2G):
-  e2a S □ restr_rel X (Seco) ≡ Geco.
+  Move Sfr ≡ Gfr.
 Proof.
+  rewrite <- Execution.ex_fr_alt; auto.
+  unfold Execution.ex_fr.
+  unfold fr.
+  unfold Execution.ex_rf.
+  unfold Execution.ex_co.
+  rewrite collect_rel_seq. 
+  2 : { destruct EXEC; specialize e2a_inj; basic_solver. }
+  apply seq_more; [| by cdes X2G; rewrite GCO].
+  rewrite transp_collect_rel.
+  by cdes X2G; rewrite GRF.
+Qed.
 
-Admitted.
+Lemma X2G_eco_transfer
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G)
+      (WF_G : Wf G) : 
+  Move Seco ≡ Geco.
+Proof.
+  rewrite <- Execution.ex_eco_alt; auto.
+  unfold Execution.ex_eco.
+  rewrite WF_G.(Execution_eco.eco_alt3).
+  unfold Execution.ex_co.
+  unfold Execution.ex_rf.
+  rewrite Execution.ex_fr_alt; auto.
+  rewrite !union_restr.
+  rewrite collect_rel_ct_inj; [| destruct EXEC; by apply e2a_inj].
+  rewrite <- !union_restr, !collect_rel_union.
+  cdes X2G.
+  by rewrite GCO, GRF, X2G_fr_transfer.
+Qed.
 
 Lemma X2G_cohernce
       (WF : ES.Wf S)
