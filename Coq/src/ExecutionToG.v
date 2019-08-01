@@ -437,14 +437,12 @@ Proof.
   ins.  unfold Events.loc. desf.
 Qed.
 
-Lemma X2G_same_loc r
+Lemma X2G_same_loc
       (WF : ES.Wf S)
-      (X2G : X2G)
-      (SL :  r ⊆ same_loc Slab) :
-  Move r ⊆ same_loc Glab.
+      (X2G : X2G) :
+   Move (same_loc Slab) ≡ restr_rel GE (same_loc Glab).
 Proof.
   cdes X2G.
-  rewrite SL. 
   set (loc_l := fun (l : label) =>
                   match l with
                   | Aload _ _ l _ | Astore _ _ l _ => Some l
@@ -452,7 +450,6 @@ Proof.
                   end).
   set (f := fun (l1 : label) (l2 : label) => loc_l l1 = loc_l l2).
   erewrite X2G_lab_rel_transfer with (p_lab := f); eauto.
-  basic_solver.
 Qed. 
   
 Lemma move_codom r :
@@ -608,13 +605,63 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma codom_ct {A} (r : relation A) :
+      codom_rel r⁺ ≡₁ codom_rel r.
+Proof.
+  split; [| basic_solver].
+  rewrite ct_end.
+  basic_solver.
+Qed.
+
+Lemma ct_seq_eqv_l {A} {dom} (r : relation A) :
+  (⦗dom⦘ ⨾ r)⁺ ≡ ⦗dom⦘ ⨾ (⦗dom⦘ ⨾ r)⁺.
+Proof.
+  apply dom_rel_helper.
+  rewrite dom_ct.
+  basic_solver.
+Qed.
+
+Lemma ct_seq_eqv_r {A} {dom} (r : relation A) :
+  (r ⨾ ⦗dom⦘)⁺ ≡  (r ⨾ ⦗dom⦘)⁺ ⨾ ⦗dom⦘.
+Proof.
+  apply codom_rel_helper.
+  rewrite codom_ct.
+  basic_solver.
+Qed.
+
+Lemma rsE_alt 
+      (WF_G : Wf G) : 
+  Grs ⨾ ⦗GE⦘ ≡ ⦗GW ∩₁ GE⦘ ⨾ (Gsb ∩ same_loc Glab)^? ⨾ ⦗GW ∩₁ GE⦘ ⨾ (Grf ⨾ Grmw)＊.
+Proof.
+  unfold imm_s_hb.rs.
+  rewrite !seqA.
+  arewrite ((Grf ⨾ Grmw)＊ ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ (Grf ⨾ Grmw)＊).
+  { rewrite rtE.
+    rewrite !seq_union_l, !seq_union_r.
+    apply union_more; [basic_solver|].
+    rewrite (dom_l WF_G.(wf_rfE)), !seqA. 
+    rewrite ct_seq_eqv_l at 1.
+    rewrite (dom_r WF_G.(wf_rmwE)), <- !seqA. 
+    rewrite ct_seq_eqv_r at 2.
+      by rewrite seqA. }
+  arewrite (⦗GW⦘ ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ ⦗GW ∩₁ GE⦘).
+  { basic_solver. }
+  arewrite ((Gsb ∩ same_loc Glab)^? ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ (Gsb ∩ same_loc Glab)^?). 
+  { rewrite crE.
+    rewrite !seq_union_l, !seq_union_r.
+    apply union_more; [basic_solver|].
+    rewrite wf_sbE.
+    basic_solver. }
+  rewrite <- seqA, <- id_inter. done.
+Qed.
+
 Lemma X2G_rs_transfer
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
       (WF_G : Wf G) : 
-  Move Srs ≡ Grs.
+  Move Srs ≡ Grs ⨾ ⦗GE⦘.
 Proof.
   rewrite <- Execution.ex_rs_alt; auto.
   unfold Execution.ex_rs.
@@ -625,28 +672,54 @@ Proof.
                       ≡
             ⦗X ∩₁ SW⦘ ⨾ (restr_rel X Ssb ∩ same_loc Slab)^? ⨾ ⦗X ∩₁ SW⦘).
   { basic_solver 10. }
-  
-  unfold imm_s_hb.rs.
+  rewrite WF_G.(rsE_alt).
   
   rewrite collect_rel_seq.
   2 : { destruct EXEC; specialize e2a_inj; basic_solver 40. }
   apply seq_more.
-  admit.
-  rewrite <- seq_eqvK with (dom := X ∩₁ SW).
-  rewrite !seqA.
+  { rewrite collect_rel_eqv.
+    rewrite <- X2G_W; auto.
+    basic_solver. }
+  arewrite (⦗X ∩₁ SW⦘ ≡ ⦗X⦘ ⨾ ⦗X ∩₁ SW⦘).
+  { basic_solver. }
+  arewrite (⦗GW ∩₁ GE⦘ ≡ ⦗GE⦘ ⨾ ⦗GW ∩₁ GE⦘).
+  { basic_solver. }
   rewrite <- seqA.
   rewrite collect_rel_seq.
   2 : { destruct EXEC; specialize e2a_inj; basic_solver. }
-  arewrite (⦗X ∩₁ SW⦘ ≡ restr_rel X ⦗SW⦘) at 1; [basic_solver|].
+  rewrite <- seqA with (r2 := ⦗GE⦘).
   apply seq_more.
-  admit.
+  { rewrite !crE.
+    rewrite !seq_union_l.
+    rewrite collect_rel_union.
+    apply union_more.
+    { cdes X2G. rewrite !seq_id_l.
+      rewrite collect_rel_eqv. by rewrite GACTS. }
+    rewrite <- restr_inter_absorb_r, <- restr_inter.
+    rewrite restr_relE, !seqA, seq_eqvK.
+    rewrite <- restr_relE.
+    rewrite restr_inter, collect_rel_inter.
+    2, 3: destruct EXEC; specialize e2a_inj; basic_solver.
+    rewrite (dom_l G.(wf_sbE)).
+    rewrite seq_eqv_inter_ll.
+    rewrite seqA, <- restr_relE.
+    rewrite restr_inter.
+    rewrite restr_relE with (r := Gsb).
+    rewrite <- G.(wf_sbE).
+    apply inter_rel_more.
+    { cdes X2G. by rewrite GSB. } 
+    by apply X2G_same_loc. }
   rewrite !rtE, !seq_union_r, !seq_id_r, collect_rel_union.
   apply union_more.
-  admit.
+  { rewrite collect_rel_eqv.
+    rewrite <- X2G_W; auto.
+    basic_solver. }
   rewrite collect_rel_seq. 
   2 : { rewrite dom_ct. destruct EXEC; specialize e2a_inj; basic_solver. }
   apply seq_more.
-  admit.
+  { rewrite collect_rel_eqv.
+    rewrite <- X2G_W; auto.
+    basic_solver. }
   rewrite seq_restr_prcl ; [|rewrite ES.rmw_in_sb; by destruct EXEC].
   rewrite collect_rel_ct_inj; [|destruct EXEC; by apply e2a_inj].
   rewrite <- seq_restr_prcl ; [|rewrite ES.rmw_in_sb; by destruct EXEC].
@@ -655,9 +728,8 @@ Proof.
   2 : { destruct EXEC; specialize e2a_inj; basic_solver. }
   cdes X2G.
   by rewrite GRF, GRMW.
+Qed.
   
-Admitted.
-
 Lemma X2G_release_transfer
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
@@ -867,8 +939,10 @@ Proof.
       by rewrite ES.seqn_init. }
   { admit. }
   { rewrite GRMW.
-    apply X2G_same_loc; auto.
-    by apply ES.rmwl. }
+    etransitivity.
+    { rewrite ES.rmwl; auto.
+      apply X2G_same_loc; eauto. }
+    apply inclusion_restr. }
   { rewrite GRMW.
     rewrite ES.rmwi; auto.
     rewrite immediate_restr.
@@ -885,8 +959,10 @@ Proof.
     rewrite ES.rfD, !codom_seq, codom_eqv; auto.
     rewrite <- X2G_R; eauto. basic_solver. }
   { rewrite GRF.
-    apply X2G_same_loc; auto.
-    by apply ES.rfl. }
+    etransitivity.
+    { rewrite ES.rfl; auto.
+      apply X2G_same_loc; eauto. }
+    apply inclusion_restr. }
   { rewrite GRF.
     unfolder. intros a1 a2 RF.
     desf. 
@@ -915,8 +991,10 @@ Proof.
     rewrite ES.coD, !codom_seq, codom_eqv; auto.
     rewrite <- X2G_W; eauto. basic_solver. }
   { rewrite GCO.
-    apply X2G_same_loc; auto.
-    by apply ES.col. }
+    etransitivity.
+    { rewrite ES.col; auto.
+      apply X2G_same_loc; eauto. }
+    apply inclusion_restr. }
   { rewrite GCO.
     rewrite transitive_collect_rel_inj; auto.
     apply transitive_restr.
