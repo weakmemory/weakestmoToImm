@@ -690,8 +690,20 @@ Section SimRelStep.
         eexists. splits; eauto. by rewrite e2a_tid. }
       etransitivity.
       2: by eapply rmw_cov_in_kE; eauto.
-      (* TODO: for Evgenii *)
-      admit. }
+      erewrite e2a_kE; 
+        try apply SRCC; try apply KK.
+      rewrite set_inter_union_r, id_union, seq_union_r.
+      apply inclusion_union_r2_search. 
+      rewrite !seq_eqv_r.
+      intros x y [RMW [Cy TIDy]].
+      unfolder; splits; auto.
+      assert (cert_dom G TC (ktid S k) st y) 
+        as CertDy.
+      { eapply cert_dom_cov_sb_iss; eauto. by left. }
+      eapply cert_dom_alt in CertDy.
+      2 : eapply cstate_covered; apply SRCC. 
+      destruct CertDy as [[_ NTIDy] | BB]; auto.
+      intuition. }
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
     { rewrite set_inter_union_l, id_union. relsf.
       apply inclusion_union_l. 
