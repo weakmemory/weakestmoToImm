@@ -366,21 +366,18 @@ Section SimRelCertStepLemma.
     edestruct ilbl_step_lbls as [l [l' EQlbl]]; eauto.
     { eapply wf_cont_state; eauto. }
     
-    (* assert (K S (k , existT _ _ st )) as Kk. *)
-    (* { edestruct cstate_cont; [apply SRCC|]. desf. } *)
-
-    destruct (classic 
-      (exists k' st' e e', forwarding G sc TC' S l l' k k' e e' st st')
-    ) as [[k' [st''' [e [e' FRWD]]]] | nFRWD].
-    { assert (st''' = st') as EQst.
-      { cdes FRWD.
-        eapply unique_ilbl_step; eauto.
-        by rewrite <- EQlbl. }
-      subst st'''.
-      assert (ktid S k = ktid S k') as kEQTID.
-      { by apply FRWD. }
-      exists k', S. splits; auto.
-      eapply simrel_cert_forwarding; eauto. }
+    (* destruct (classic  *)
+    (*   (exists k' st' e e', forwarding G sc TC' S l l' k k' e e' st st') *)
+    (* ) as [[k' [st''' [e [e' FRWD]]]] | nFRWD]. *)
+    (* { assert (st''' = st') as EQst. *)
+    (*   { cdes FRWD. *)
+    (*     eapply unique_ilbl_step; eauto. *)
+    (*     by rewrite <- EQlbl. } *)
+    (*   subst st'''. *)
+    (*   assert (ktid S k = ktid S k') as kEQTID. *)
+    (*   { by apply FRWD. } *)
+    (*   exists k', S. splits; auto. *)
+    (*   eapply simrel_cert_forwarding; eauto. } *)
 
     subst lbl.
     edestruct simrel_cert_step as [k' HH]; eauto. 

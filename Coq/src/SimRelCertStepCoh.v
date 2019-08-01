@@ -666,8 +666,8 @@ Section SimRelCertStepCoh.
         (LBL' : lbl' = option_map (Slab S') e')
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
-        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
-        (nFRWD : ~ exists k' st' e e', forwarding G sc TC' S lbl lbl' k k' e e' st st') :
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+        (* (nFRWD : ~ exists k' st' e e', forwarding G sc TC' S lbl lbl' k k' e e' st st') : *)
     @es_consistent S' Weakestmo. 
   Proof. 
     cdes CertSTEP; cdes BSTEP_.
@@ -681,9 +681,9 @@ Section SimRelCertStepCoh.
       eapply simrel_cert_step_thb_cf_hb_irr; eauto. }
     { eapply simrel_cert_step_jf_necf; eauto. }
     { eapply simrel_cert_step_jfe_vis; eauto. }
-    { eapply simrel_cert_step_coh; eauto. }
-    { eapply simrel_cert_nforwarding_icf_R; eauto. }
-    eapply simrel_cert_nforwarding_icf_jf; eauto. 
+    eapply simrel_cert_step_coh; eauto. 
+    (* { eapply simrel_cert_nforwarding_icf_R; eauto. } *)
+    (* eapply simrel_cert_nforwarding_icf_jf; eauto.  *)
   Qed.
 
 End SimRelCertStepCoh.
