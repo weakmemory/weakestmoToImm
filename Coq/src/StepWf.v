@@ -1089,6 +1089,8 @@ Proof.
       eauto.
     2: by apply SY.
     eapply WF; auto. }
+  { erewrite basic_step_acts_init_set; eauto.
+    apply WF. }
   { apply dom_helper_3.
     cdes BSTEP. cdes BSTEP_.
     rewrite SB'.

@@ -144,7 +144,7 @@ Section SimRel.
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
       
       jf_cov_in_rf  : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
-      e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco;
+      e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;
 
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
@@ -228,6 +228,14 @@ Section SimRel.
     (******************************************************************************)
     (** ** X properties  *)
     (******************************************************************************)
+
+    Lemma cov_in_ex : 
+      C ⊆₁ e2a □₁ X. 
+    Proof. rewrite ex_cov_iss; auto. basic_solver 10. Qed.
+
+    Lemma iss_in_ex : 
+      I ⊆₁ e2a □₁ X. 
+    Proof. rewrite ex_cov_iss; auto. basic_solver 10. Qed.
 
     Lemma ex_iss_inW : 
       X ∩₁ e2a ⋄₁ I ⊆₁ SW.
@@ -618,7 +626,51 @@ Section SimRel.
 
     Lemma rf_cov_in_ex : 
       Grf ⨾ ⦗ C ⦘ ⊆ e2a □ Srf ⨾ ⦗ X ⦘.
-    Proof. admit. Admitted.
+    Proof. 
+      assert (Wf G) as WFG.
+      { apply SRC_. }
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (tc_coherent G sc TC) as TCCOH.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      rewrite !seq_eqv_r.
+      intros x y [GRF Cy].
+      set (Cy' := Cy).
+      apply cov_in_ex in Cy'.
+      destruct Cy' as [y' [Xy EQy]].
+      assert (SR y') as Ry'.
+      { eapply same_lab_u2v_dom_is_r.
+        { eapply e2a_lab; eauto. apply SRC_. }
+        split; auto.
+        { eapply Execution.ex_inE; eauto. }
+        unfold compose, is_r.
+        apply wf_rfD in GRF; auto.
+        generalize GRF. basic_solver. }
+      edestruct Execution.ex_rf_compl 
+        as [x' HH]; eauto.
+      { basic_solver. }
+      apply seq_eqv_l in HH.
+      destruct HH as [Xx' SRF].
+      exists x', y'.
+      splits; auto.
+      unfold ES.rf in SRF.
+      destruct SRF as [[z' [EW JF]] nCF].
+      assert (Grf (e2a x') (e2a y'))
+        as GRF'.
+      { arewrite (e2a x' = e2a z').
+        { eapply e2a_ew.
+          { apply SRC_. }
+          basic_solver 10. }
+        eapply jf_cov_in_rf; auto.
+        do 2 eexists; splits; eauto.
+        apply seq_eqv_r. 
+        unfolder; splits; auto.
+        congruence. }
+      eapply wf_rff; eauto.
+      red. congruence.
+    Qed.
 
     Lemma iss_rf_cov_in_ex : 
       ⦗I⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srf ⨾ ⦗X⦘.

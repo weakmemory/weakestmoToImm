@@ -114,6 +114,7 @@ Section SimRelInit.
         (PExec : program_execution (stable_prog_to_prog prog) G)
         (WF : Execution.Wf G)
         (CONS : imm_consistent G sc)
+        (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall tid m n (LT : m < n) (NE : GE (ThreadEvent tid n)),
             GE (ThreadEvent tid m)) : 
     let Sinit := prog_g_es_init prog G in
