@@ -307,7 +307,7 @@ Lemma prog_g_es_init_same_lab prog G (WF : Wf G) :
 Proof.
   red. ins.
   unfold compose.
-  apply prog_g_es_init_act_in in SX. desf.
+  apply prog_g_es_init_act_in in DX. desf.
 
   unfold prog_g_es_init, e2a, ES.init, ES.acts_set in *; simpls; desf.
   unfold Events.loc.

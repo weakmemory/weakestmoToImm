@@ -114,7 +114,7 @@ Proof.
   arewrite ((sb S' ∩ same_loc S')^? ⨾ ⦗E S⦘ ≡ ⦗E S⦘ ⨾ (sb S ∩ same_loc S)^?).
   { rewrite !crE. relsf.
     apply union_more; auto.
-    rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+    rewrite <- seq_eqv_inter_lr.
     rewrite basic_step_sbE; eauto.
     rewrite ES.sbE at 1; auto.
     rewrite <- restr_relE, <- restr_inter_absorb_r.
@@ -715,7 +715,7 @@ Proof.
   rewrite add_jf_cc; eauto.
   rewrite seq_union_l.
   rewrite interC.
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  rewrite <- seq_eqv_inter_lr.
   rewrite !seqA, seq_union_l.
   rewrite !seqA.
   arewrite_false 

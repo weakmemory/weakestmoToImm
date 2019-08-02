@@ -686,7 +686,7 @@ Lemma same_thread_cf_free WF X (CFF : cf_free S X) :
   ⦗Eninit ∩₁ X⦘ ⨾ same_tid ⨾ ⦗Eninit ∩₁ X⦘ ≡ ⦗Eninit ∩₁ X⦘ ⨾ sb⁼ ⨾ ⦗Eninit ∩₁ X⦘.
 Proof.
   rewrite set_interC with (s := Eninit) at 1 3.
-  rewrite !AuxRel.id_inter, !seqA.
+  rewrite !id_inter, !seqA.
   rewrite <- !seqA with (r1 := ⦗Eninit⦘).
   rewrite <- !seqA with (r3 := ⦗X⦘).
   rewrite !seqA with (r1 := ⦗Eninit⦘).
@@ -1850,8 +1850,7 @@ Proof.
   2: { rels. apply countNatP_empty. }
   split; [|basic_solver].
   arewrite (eq y ⊆₁ Einit) by (intros x HH; desf).
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr. 
-  rewrite sb_ninit; auto. rels.
+  generalize WF.(sb_ninit). basic_solver.
 Qed.
 
 Lemma seqn_immsb_init WF x y 

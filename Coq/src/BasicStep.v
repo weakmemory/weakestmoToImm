@@ -257,9 +257,9 @@ Proof.
   rewrite TID', LAB'. unnw. unfold eq_dom.
   splits; ins; desf.
   all: unfold upd_opt.
-  all: assert (x <> ES.next_act S) as HH by (red in SX; omega).
+  all: assert (x <> ES.next_act S) as HH by (red in DX; omega).
   all: unfold opt_ext in *.
-  all: desf; rewrite updo; auto; [|red in SX; omega].
+  all: desf; rewrite updo; auto; [|red in DX; omega].
   all: rewrite updo; auto.
 Qed.
 
@@ -948,7 +948,7 @@ Proof.
     { etransitivity.
 
       { rewrite !minus_union_r.
-        rewrite !seq_eqv_inter_lr.
+        rewrite !seq_eqv_inter.
 
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ ⦗⊤₁⦘) ⨾ ⦗eq e⦘ ≡ 
@@ -978,7 +978,7 @@ Proof.
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ (eq e × eq_opt e')^⋈) ⨾ ⦗eq e⦘ ≡
            ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e⦘).           
-        { rewrite csE, transp_cross, minus_union_r, seq_eqv_inter_lr. 
+        { rewrite csE, transp_cross, minus_union_r, seq_eqv_inter. 
           arewrite 
             (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ eq e × eq_opt e') ⨾ ⦗eq e⦘ ≡ 
              ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e⦘).
@@ -995,7 +995,7 @@ Proof.
 
         rewrite interK, interA, interK, interC, <- interA, interK.
         erewrite inter_absorb_l; eauto. 
-        rewrite <- AuxRel.seq_eqv_minus_lr, <- AuxRel.seq_eqv_minus_ll.
+        rewrite <- seq_eqv_minus_lr, <- seq_eqv_minus_ll.
         basic_solver. }
 
       rewrite <- seq_eqv_minus_lr.
@@ -1046,7 +1046,7 @@ Proof.
     etransitivity.
 
       { rewrite !minus_union_r.
-        rewrite !seq_eqv_inter_lr.
+        rewrite !seq_eqv_inter.
 
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ ⦗⊤₁⦘) ⨾ ⦗eq e'⦘ ≡ 
@@ -1075,7 +1075,7 @@ Proof.
         arewrite 
           (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ (eq e × eq e')^⋈) ⨾ ⦗eq e'⦘ ≡
            ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e'⦘).           
-        { rewrite csE, transp_cross, minus_union_r, seq_eqv_inter_lr. 
+        { rewrite csE, transp_cross, minus_union_r, seq_eqv_inter. 
           arewrite 
             (⦗Eninit S⦘ ⨾ (ES.same_tid S' \ eq e' × eq e) ⨾ ⦗eq e'⦘ ≡ 
              ⦗Eninit S⦘ ⨾ (ES.same_tid S') ⨾ ⦗eq e'⦘).
@@ -1092,7 +1092,7 @@ Proof.
 
         rewrite interK, interK, interC, <- interA, interK. 
         erewrite inter_absorb_l; eauto. 
-        rewrite <- AuxRel.seq_eqv_minus_lr, <- AuxRel.seq_eqv_minus_ll.
+        rewrite <- seq_eqv_minus_lr, <- seq_eqv_minus_ll.
         basic_solver. }
 
       rewrite <- seq_eqv_minus_lr.
@@ -1926,9 +1926,9 @@ Lemma basic_step_sb_same_thread' e e' S S'
   sb S ∩ ES.same_tid S' ≡ sb S ∩ ES.same_tid S.
 Proof.
   rewrite WF.(ES.sbE) at 1.
-  rewrite seq_eqv_inter_ll, lib.AuxRel.seq_eqv_inter_lr.
+  rewrite seq_eqv_inter_ll. rewrite seq_eqv_inter_lr.
+  rewrite seq_eqv_inter.
   rewrite interC.
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr, <- seq_eqv_inter_ll.
   rewrite <- restr_relE.
   rewrite basic_step_same_tid_restr; eauto.
   rewrite restr_relE. rewrite WF.(ES.sbE) at 2.
@@ -2055,7 +2055,7 @@ Proof.
   cdes BSTEP; cdes BSTEP_.
   red. intros x. ins.
   unfold ES.seqn.
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  rewrite <- seq_eqv_inter_lr.
   arewrite (sb S' ⨾ ⦗eq x⦘ ≡ sb S ⨾ ⦗eq x⦘). 
   { red. split. 
     { rewrite <- seq_eqvK, <- seqA. 
@@ -2064,7 +2064,7 @@ Proof.
       rewrite <- seqA, basic_step_sbE; eauto.
       basic_solver. }
     rewrite SB'. basic_solver. }
-  rewrite lib.AuxRel.seq_eqv_inter_lr.
+  rewrite seq_eqv_inter_lr.
   rewrite ES.sbE at 1; auto.
   rewrite <- restr_relE, <- restr_inter_absorb_r. 
   rewrite basic_step_same_tid_restr; eauto.
@@ -2093,7 +2093,7 @@ Proof.
   arewrite (sb S' ∩ ES.same_tid S' ⨾ ⦗eq e⦘ ≡ ∅₂); 
     [|by rewrite dom_empty; apply countNatP_empty].
   split; [|done]. 
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  rewrite <- seq_eqv_inter_lr.
   arewrite (sb S' ⨾ ⦗eq e⦘ ≡ ES.cont_sb_dom S k × eq e). 
   { rewrite SB'. 
     rewrite !seq_union_l.

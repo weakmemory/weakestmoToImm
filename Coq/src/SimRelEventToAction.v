@@ -803,12 +803,12 @@ Section SimRelEventToActionLemmas.
     { erewrite set_collect_eq_dom; [eapply SRE2A|].
       eapply basic_step_e2a_eq_dom; eauto. } 
     { rewrite set_collect_eq.
-      apply eq_predicate. 
+      apply set_subset_eq. 
       eapply basic_step_e2a_GE_e; eauto. }
     destruct e' as [e'|]; [|basic_solver]. 
     unfold eq_opt. 
     rewrite set_collect_eq.
-    apply eq_predicate. 
+    apply set_subset_eq. 
     eapply basic_step_e2a_GE_e'; eauto. 
   Qed.
 

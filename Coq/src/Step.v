@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel. 
+From imm Require Import Events. 
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -465,7 +465,7 @@ Proof.
   rewrite step_same_jf_cc; eauto.
   rewrite seq_union_l.
   rewrite interC.
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  rewrite <- seq_eqv_inter_lr.
   rewrite !seqA.
   arewrite_false 
     (sb_delta S k e e' ⨾ ⦗E S⦘).

@@ -568,12 +568,12 @@ Section SimRelCertStep.
     { erewrite set_collect_eq_dom; [eapply SRCC|].
       eapply basic_step_e2a_eq_dom; eauto. } 
     { rewrite set_collect_eq.
-      apply eq_predicate. 
+      apply set_subset_eq. 
       eapply basic_step_e2a_GE_e with (S:=S); eauto; try apply SRCC. }
     destruct e' as [e'|]; [|basic_solver]. 
     unfold eq_opt. 
     rewrite set_collect_eq.
-    apply eq_predicate. 
+    apply set_subset_eq.
     eapply basic_step_e2a_GE_e' with (S:=S); eauto; apply SRCC.
   Qed.
   

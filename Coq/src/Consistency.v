@@ -356,7 +356,7 @@ Lemma ccW : cc ≡ ⦗W⦘ ⨾ cc.
 Proof. 
   unfold cc. 
   rewrite interC.
-  rewrite <- AuxRel.seq_eqv_inter_ll.
+  rewrite <- seq_eqv_inter_ll.
   rewrite <- !seqA.
   erewrite <- dom_l with (d := W) (r := jfe).
   2 : by eapply ES.jfeD.
