@@ -337,13 +337,51 @@ Section SimRelCertStepLemma.
         basic_solver. }
       unfold_cert_step_ CertSTEP_;
         try by (try cdes AJF; type_solver).
-      
-      
+      eapply sim_add_ew_ex_issw; eauto.
+      { basic_solver. }
+      unfolder. 
+      arewrite (e2a S' x = e2a S x).
+      { eapply basic_step_e2a_eq_dom; eauto. 
+        eapply Execution.ex_inE; eauto. }
+      splits; auto.
+      exists e; splits; eauto.
+      erewrite basic_step_e2a_e; eauto.
+      congruence. }
 
-        ex_cov_iss_cert_lab
-        simrel_cert_step_kE_lab
-
-    
+    intros x [Xx [EQx Ix]].
+    unfold eq_opt in EQx.
+    destruct a' as [a'|]; [|intuition].
+    destruct lbl'; [|exfalso; congruence].
+    destruct e' as [e'|].
+    2 : by unfold opt_same_ctor in *.
+    inversion EQa' as [EQa''].
+    assert (SW S' e') as Wx.
+    { unfold is_w.
+      erewrite basic_step_e2a_certlab_e'; eauto.
+      2 : apply SRCC.
+      erewrite basic_step_e2a_e'; eauto. 
+      rewrite Nat.add_1_l.
+      rewrite <- EQa'', EQx. 
+      fold (compose (certLab G st'') (e2a S) x).
+      erewrite <- ex_cov_iss_cert_lab; eauto.
+      2 : basic_solver.
+      eapply ex_iss_inW.
+      { apply SRCC. }
+      basic_solver. }
+    unfold_cert_step_ CertSTEP_;
+      try by (try cdes AJF; type_solver).
+    eapply sim_add_ew_ex_issw; eauto.
+    { basic_solver. }
+    { basic_solver. }
+    unfolder. 
+    arewrite (e2a S' x = e2a S x).
+    { eapply basic_step_e2a_eq_dom; eauto. 
+      eapply Execution.ex_inE; eauto. }
+    splits; auto.
+    exists e'; splits; eauto.
+    erewrite basic_step_e2a_e'; eauto.
+    congruence.
+  Qed.
 
   Lemma simrel_cert_step_rmw_cov_in_kE k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
@@ -505,7 +543,9 @@ Section SimRelCertStepLemma.
     { eapply simrel_cert_step_kE_lab; eauto. } 
     (* jf_in_cert_rf : e2a' □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
     { eapply simrel_cert_step_jf_in_cert_rf; eauto. }
-    { admit. }
+    (* ex_cont_iss : X ∩₁ e2a' ⋄₁ (contE' ∩₁ I) ⊆₁ dom_rel (Sew' ⨾ ⦗ kE' ⦘) ; *)
+    { eapply simrel_cert_step_ex_cont_iss; eauto. }
+    (* kE_iss : kE' ∩₁ e2a' ⋄₁ I ⊆₁ dom_rel (Sew' ⨾ ⦗ X ⦘) ; *)
     { admit. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a' □₁ kE'⦘ ⊆ e2a' □ Srmw' ⨾ ⦗ kE' ⦘ *)
     { eapply simrel_cert_step_rmw_cov_in_kE; eauto. }
