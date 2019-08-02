@@ -450,6 +450,7 @@ Section SimRelCertStepLemma.
     (* jf_in_cert_rf : e2a' □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
     { eapply simrel_cert_step_jf_in_cert_rf; eauto. }
     { admit. }
+    { admit. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a' □₁ kE'⦘ ⊆ e2a' □ Srmw' ⨾ ⦗ kE' ⦘ *)
     { eapply simrel_cert_step_rmw_cov_in_kE; eauto. }
 
