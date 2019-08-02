@@ -182,37 +182,6 @@ Proof.
   rewrite dom_seq, dom_eqv, ES.E_alt.
   eauto.
 Qed.
-
-Lemma imm_clos_trans {A} (r : relation A) :
-  immediate r⁺ ⊆ immediate r.
-Proof.
-  split.
-  { assert (immediate r⁺ ⊆ r); eauto.
-    rewrite immediateE.
-    rewrite ct_begin at 1. rewrite rt_begin, seq_union_r, minus_union_l.
-    rewrite seq_id_r. apply inclusion_union_l; eauto with hahn.
-    erewrite inclusion_minus_mon with (r' := r ⨾ r ⨾ r＊) (s' := r ⨾ r ⨾ r＊); [|done|].
-    { rewrite minus_absorb; done. }
-    rewrite ct_begin at 1. rewrite ct_end, seqA.  apply seq_mori; eauto with hahn.
-    rewrite <- seqA, rt_rt.
-    rewrite <- ct_begin, ct_end.
-    eauto with hahn. }
-  intros. apply ct_step in R1. apply ct_step in R2.
-  inversion H. eauto.
-Qed.
-
-Lemma imm_union {A} (r1 r2 : relation A):
-  immediate (r1 ∪ r2) ⊆ immediate r1 ∪ immediate r2.
-Proof.
-  basic_solver 10.
-Qed.
-
-Lemma seq_eqv_imm {A} (d : A -> Prop) (r : relation A):
-  ⦗d⦘ ⨾ immediate r ⊆ immediate (⦗d⦘ ⨾ r).
-Proof.
-  basic_solver.
-Qed.
-
 Lemma r_hb_in_imm_sb_hb S
       (WF : ES.Wf S)
       (CONS : es_consistent S (m := Weakestmo)):
@@ -239,38 +208,6 @@ Proof.
   rewrite immediate_in, (dom_r (swD S WF)). type_solver. 
 Qed.
   
-Lemma dom_eqv_tr_codom {A} (r : relation A):
-  dom_rel r ≡₁ codom_rel r⁻¹.
-Proof.
-  basic_solver.
-Qed.
-
-Lemma tr_dom_eqv_codom {A} (r : relation A):
-  dom_rel r⁻¹ ≡₁ codom_rel r.
-Proof.
-  basic_solver.
-Qed.
-
-Lemma codom_rel_eqv_dom_rel {A} (r r' : relation A):
-  codom_rel (⦗dom_rel r⦘ ⨾ r') ≡₁ codom_rel (r⁻¹ ⨾ r').
-Proof.
-  basic_solver.
-Qed.
-
-Lemma dom_in_seq_with_tr {A} (r: relation A):
-  ⦗dom_rel r⦘ ⊆ r ⨾ r⁻¹. 
-Proof.
-  basic_solver.
-Qed.
-
-
-Lemma dom_ct {A} (r : relation A) :
-  dom_rel r⁺ ≡₁ dom_rel r.
-Proof.
-  rewrite ct_begin.
-  basic_solver 7.
-Qed.
-
 Lemma t_rmw_hb_in_hb S
       (WF : ES.Wf S)
       (CONS : es_consistent S (m := Weakestmo)):
@@ -556,7 +493,7 @@ Lemma hb_pref2_ncf (S : ES.t)
   ES.cf_free S (hb_pref2 S e w).
 Proof.
   unfold hb_pref2.
-  red. rewrite dom_in_seq_with_tr, !seqA.
+  red. rewrite eqv_dom_in_seq_tr, !seqA.
   arewrite (((hb S)^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘))⁻¹ ⨾
              cf S ⨾
              (hb S)^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘) ⊆ ∅₂); [|basic_solver].
