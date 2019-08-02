@@ -322,8 +322,7 @@ Lemma X2G_lab_set_transfer
       (EQ : forall {A} (sup : A -> label) a, (p sup a) = (p_lab (sup a)))
       (WF : ES.Wf S)
       (X2G : X2G) :
- e2a S □₁ (X ∩₁ (fun a => p Slab a)) ≡₁
- GE ∩₁ (fun a => p Glab a).
+  e2a S □₁ (X ∩₁ (fun a => p Slab a)) ≡₁ GE ∩₁ (fun a => p Glab a).
 Proof.
   cdes X2G. 
   unfolder. unfold "∘".
@@ -350,8 +349,7 @@ Lemma X2G_lab_rel_transfer
       (EQ : forall {A} (sup : A -> label) a b, (p sup a b) = (p_lab (sup a) (sup b)))
       (WF : ES.Wf S)
       (X2G : X2G) :
-  Move (fun a b => p Slab a b) ≡
-       restr_rel GE (fun a b => p Glab a b).
+  Move (fun a b => p Slab a b) ≡ restr_rel GE (fun a b => p Glab a b).
 Proof.
   cdes X2G.
   unfolder.
@@ -602,51 +600,6 @@ Proof.
   apply union_more; [done | by apply seq_move].
 Qed.
 
-Lemma rs_prcl
-      (WF : ES.Wf S)
-      (CONS : es_consistent (m := Weakestmo) S)
-      (EXEC : Execution.t S X) : 
-  dom_rel (Srs ⨾ ⦗X⦘) ⊆₁ X.
-Proof.
-  unfold Consistency.rs.
-Admitted.
-
-Lemma restr_eqv {A} (s a : A -> Prop) :
-  restr_rel s ⦗a⦘ ≡ ⦗s ∩₁ a⦘.
-Proof. basic_solver. Qed.
-  
-Lemma dom_ct {A} (r : relation A) :
-      dom_rel r⁺ ≡₁ dom_rel r.
-Proof.
-  split; [| basic_solver].
-  rewrite ct_begin.
-  basic_solver.
-Qed.
-
-Lemma codom_ct {A} (r : relation A) :
-      codom_rel r⁺ ≡₁ codom_rel r.
-Proof.
-  split; [| basic_solver].
-  rewrite ct_end.
-  basic_solver.
-Qed.
-
-Lemma ct_seq_eqv_l {A} {dom} (r : relation A) :
-  (⦗dom⦘ ⨾ r)⁺ ≡ ⦗dom⦘ ⨾ (⦗dom⦘ ⨾ r)⁺.
-Proof.
-  apply dom_rel_helper.
-  rewrite dom_ct.
-  basic_solver.
-Qed.
-
-Lemma ct_seq_eqv_r {A} {dom} (r : relation A) :
-  (r ⨾ ⦗dom⦘)⁺ ≡  (r ⨾ ⦗dom⦘)⁺ ⨾ ⦗dom⦘.
-Proof.
-  apply codom_rel_helper.
-  rewrite codom_ct.
-  basic_solver.
-Qed.
-
 Lemma rsE_alt 
       (WF_G : Wf G) : 
   Grs ⨾ ⦗GE⦘ ≡ ⦗GW ∩₁ GE⦘ ⨾ (Gsb ∩ same_loc Glab)^? ⨾ ⦗GW ∩₁ GE⦘ ⨾ (Grf ⨾ Grmw)＊.
@@ -693,15 +646,14 @@ Qed.
 Lemma X2G_rs_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :  
   Move Srs ≡ Grs ⨾ ⦗GE⦘.
 Proof.
   rewrite <- Execution.ex_rs_alt; auto.
-  unfold Execution.ex_rs.
-  unfold Execution.ex_sb.
-  unfold Execution.ex_rf.
-  unfold Execution.ex_rmw.
+  unfold Execution.ex_rs, Execution.ex_sb.
+  unfold Execution.ex_rf, Execution.ex_rmw.
   arewrite (⦗X ∩₁ SW⦘ ⨾ (restr_rel X Ssb ∩ same_loc Slab)^? ⨾ ⦗SW⦘
                       ≡
             ⦗X ∩₁ SW⦘ ⨾ (restr_rel X Ssb ∩ same_loc Slab)^? ⨾ ⦗X ∩₁ SW⦘).
@@ -766,6 +718,7 @@ Qed.
 Lemma X2G_release_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G) 
       (WF_G : Wf G) : 
   Move Srelease ≡ Grelease ⨾ ⦗GE⦘.
@@ -812,6 +765,7 @@ Qed.
 Lemma X2G_sw_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
       (WF_G : Wf G) : 
   Move Ssw ≡ Gsw.
@@ -862,6 +816,7 @@ Lemma X2G_hb_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (WF_G : Wf G) : 
   Move Shb ≡ Ghb.
 Proof.
@@ -898,30 +853,50 @@ Proof.
   by cdes X2G; rewrite GRF.
 Qed.
 
-Lemma X2G_eco_transfer
+(*
+Lemma X2G_co_rf_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
       (WF_G : Wf G) : 
-  Move Seco ≡ Geco.
+  Move (Sco ⨾ Srf) ≡ Geco ⨾ Grf. 
+Admitted.
+*)
+
+Lemma X2G_eco_transfer
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
+      (X2G : X2G)
+      (WF_G : Wf G) : 
+  Move Seco ≡ Geco. 
 Proof.
   rewrite <- Execution.ex_eco_alt; auto.
-  unfold Execution.ex_eco.
-  rewrite WF_G.(Execution_eco.eco_alt3).
-  unfold Execution.ex_co.
-  unfold Execution.ex_rf.
+  unfold Execution.ex_eco, Execution_eco.eco.
+  unfold Execution.ex_co, Execution.ex_rf.
   rewrite Execution.ex_fr_alt; auto.
-  rewrite !union_restr.
-  rewrite collect_rel_ct_inj; [| destruct EXEC; by apply e2a_inj].
-  rewrite <- !union_restr, !collect_rel_union.
+  rewrite !collect_rel_union.
   cdes X2G.
-  by rewrite GCO, GRF, X2G_fr_transfer.
+  repeat apply union_more.
+  { by rewrite GRF. }
+  { rewrite !crE, !seq_union_r, !seq_id_r.
+    rewrite collect_rel_union. 
+    apply union_more; [by rewrite GCO |].
+    rewrite collect_rel_seq; [by rewrite GCO, GRF|].
+    destruct EXEC; specialize e2a_inj; basic_solver. } 
+  rewrite !crE, !seq_union_r, !seq_id_r.
+  rewrite collect_rel_union. 
+  rewrite <- X2G_fr_transfer; auto.
+  apply union_more; [done |].
+  rewrite collect_rel_seq; [by rewrite GRF|].
+  destruct EXEC; specialize e2a_inj; basic_solver. 
 Qed.
 
 Lemma X2G_cohernce
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G :  X2G)
       (WF_G : Wf G) : 
   imm_s_hb.coherence G.
@@ -930,8 +905,7 @@ Proof.
   rewrite <- X2G_hb_transfer; auto.
   rewrite <- X2G_eco_transfer; auto.
   cdes X2G.
-  destruct CONS.
-  destruct EXEC.
+  destruct CONS, EXEC.
   rewrite crE, seq_union_r, seq_id_r, irreflexive_union in coh.
   rewrite crE, seq_union_r, seq_id_r.
   rewrite irreflexive_union.
@@ -950,7 +924,6 @@ Lemma X2G_acyclic_psc
       (X2G : X2G) :
   acyclic (imm_s.psc_f G ∪ imm_s.psc_base G).
 Proof.
-
 Admitted.
 
 End ExecutionToGraph. 
@@ -1062,7 +1035,8 @@ Proof.
     rewrite <- transp_restr_rel.
     apply functional_collect_rel_inj; auto.
     destruct EXEC.
-    by apply ES.trf_funcional_in_cf_free. }
+    rewrite transp_restr_rel.
+    by apply Execution.ex_rff. }
   { rewrite GACTS, GCO.
     apply dom_codom_rel_helper; basic_solver. }
   { rewrite GCO.
@@ -1129,5 +1103,4 @@ Proof.
     unfold e2a. rewrite LOCA. desf. }
   intro.
   unfold x2g. simpl.
-  
 Admitted.
