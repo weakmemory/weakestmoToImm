@@ -702,7 +702,7 @@ Section SimRelCert.
       apply seq_eqv_lr. eauto.
     Qed.
 
-  Lemma ew_ex_cert_dom_iss_in_cert_ex_iss :
+  Lemma ew_ex_cert_dom_iss_cert_ex_iss :
     dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I)⦘) ≡₁ 
     dom_rel (Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘).
   Proof. 
