@@ -628,8 +628,6 @@ Proof.
         (new_val:=new_val)
         (new_rfi:=new_rfi)
         (MOD:=E0 \₁ D) as [pre_cert_state]; eauto.
-    { (* TODO: Currently, RMWs has to be strong ones. *)
-      admit. }
     { rewrite CACTS. apply NEW_RFIE. }
     { split; [|basic_solver].
       rewrite NEW_RFIE at 1.
@@ -886,7 +884,7 @@ Proof.
     all: eapply cert_rf_hb_sc_hb_irr; eauto.
     all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
     all: repeat (eexists; split; eauto).
-Admitted.
+Qed.
 
 (******************************************************************************)
 (** ** ilbl_step lemmas *)
