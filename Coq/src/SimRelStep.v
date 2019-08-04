@@ -222,8 +222,7 @@ Section SimRelStep.
     { eapply kstate_instrs; eauto. } 
 
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
-    1,2,3,4: by apply SRC.
-    { eapply contwf; try apply SRC. desf. }
+    1,2,3: by apply SRC.
     { rewrite <- UU. 
       unfold stable_prog_to_prog in *.
       rewrite Basic.IdentMap.Facts.map_o in AA.
