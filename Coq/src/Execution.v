@@ -346,25 +346,35 @@ Section ExecutionRels.
     basic_solver 20.
   Qed.
     
+  Lemma ex_hb_alt_r 
+        (WF : ES.Wf S)
+        (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
+    ex_hb ≡ hb ⨾ ⦗X⦘.
+  Proof.
+    assert (SB_SW_PRCL : dom_rel ((sb ∪ sw) ⨾ ⦗X⦘) ⊆₁ X).
+    { rewrite seq_union_l.
+      rewrite (dom_rel_helper (ex_sb_prcl X EXEC)).
+      rewrite dom_rel_helper with (r := sw ⨾ ⦗X⦘). 
+      2: by apply sw_prcl.
+      basic_solver. }
+    unfold ex_hb, Consistency.hb, ex_sb.
+    rewrite ex_sw_alt; auto.
+    rewrite union_restr.
+    rewrite <- (restr_ct_prcl SB_SW_PRCL).
+    apply prcl_ct in SB_SW_PRCL. 
+    rewrite (dom_rel_helper (SB_SW_PRCL)). 
+    apply restr_relE.
+  Qed.
+
   Lemma ex_hb_alt 
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_hb ≡ restr_rel X hb.
   Proof.
-    unfold ex_hb, Consistency.hb, ex_sb.
-    rewrite ex_sw_alt; auto.
-    rewrite union_restr.
-    split; [by apply restr_ct|].
-    apply ct_ind_right with (P := fun r => restr_rel X r).
-    { red. splits.
-      { red. red. basic_solver. }
-      basic_solver 10. }
-    apply ct_step.
-    intros r HH.
-    erewrite <- seq_restr_prcl.
-    { rewrite HH. apply ct_unit. } 
-    arewrite (sb ∪ sw ⊆ hb).
-    apply hb_prcl. done.
+    rewrite ex_hb_alt_r; auto.
+    rewrite dom_rel_helper with (r := hb ⨾ ⦗X⦘).
+    2: { by apply hb_prcl. }
+    by rewrite restr_relE.
   Qed.
     
   Lemma ex_fr_alt
@@ -414,9 +424,7 @@ Section ExecutionRels.
         (WF : ES.Wf S) : 
     ex_eco ≡ restr_rel X (eco S Weakestmo).
   Proof.
-    unfold ex_eco.
-    unfold ex_rf.
-    unfold ex_co.
+    unfold ex_eco, ex_rf, ex_co.
     rewrite (eco_alt S WF).
     rewrite !restr_union.
     repeat apply union_more; [done | |].
