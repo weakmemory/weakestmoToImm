@@ -1383,14 +1383,23 @@ Proof.
   eapply HH; eauto.
 Qed.
 
+Lemma prcl_cr {A s} {r : relation A} 
+      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
+  dom_rel (r^? ⨾ ⦗s⦘) ⊆₁ s.
+Proof.
+  rewrite crE.
+  rewrite seq_union_l, dom_union, seq_id_l.
+  eapply set_subset_union_l. 
+  split; auto. basic_solver.
+Qed.
+
 Lemma prcl_rt {A s} {r : relation A} 
       (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
   dom_rel (r＊ ⨾ ⦗s⦘) ⊆₁ s.
 Proof.
   apply eqv_rel_mori'.
   apply rt_ind_right with (P := fun x => ⦗dom_rel (x ⨾ ⦗s⦘)⦘).
-  { unfold good_ctx, Morphisms.Proper, Morphisms.respectful.
-    basic_solver 30. }
+  { red. splits; [red; red|]; basic_solver 10. }
   { basic_solver. }
   intros r' PRCL'.
   apply eqv_rel_mori' in PRCL'.
@@ -1400,16 +1409,45 @@ Proof.
   by rewrite <- seqA, dom_seq.
 Qed.
 
+Lemma prcl_ct {A s} {r : relation A} 
+      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
+  dom_rel (r⁺ ⨾ ⦗s⦘) ⊆₁ s.
+Proof.
+  rewrite ct_end, seqA.
+  rewrite <- dom_rel_eqv_dom_rel, PRCL.
+  by apply prcl_rt.
+Qed.
+
+Lemma fwcl_cr {A s} {r : relation A} 
+      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+  codom_rel (⦗s⦘ ⨾ r^?) ⊆₁ s.
+Proof.
+  rewrite <- tr_dom_eqv_codom in FWCL. 
+  rewrite <- tr_dom_eqv_codom. 
+  rewrite transp_seq, transp_eqv_rel in *.
+  rewrite transp_cr in *. by apply prcl_cr.
+Qed.
+
 Lemma fwcl_rt {A s} {r : relation A} 
       (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
   codom_rel (⦗s⦘ ⨾ r＊) ⊆₁ s.
 Proof.
   rewrite <- tr_dom_eqv_codom in FWCL. 
   rewrite <- tr_dom_eqv_codom. 
-  rewrite transp_seq, transp_eqv_rel, transp_rt in *. 
-  by apply prcl_rt.
+  rewrite transp_seq, transp_eqv_rel in *.
+  rewrite transp_rt in *. by apply prcl_rt.
 Qed.
   
+Lemma fwcl_ct {A s} {r : relation A} 
+      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+  codom_rel (⦗s⦘ ⨾ r⁺) ⊆₁ s.
+Proof.
+  rewrite <- tr_dom_eqv_codom in FWCL. 
+  rewrite <- tr_dom_eqv_codom. 
+  rewrite transp_seq, transp_eqv_rel in *.
+  rewrite transp_ct in *. by apply prcl_ct.
+Qed.
+
 Lemma prcl_fwcl_swap {A s} {r : relation A}   
       (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s)
       (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
@@ -1446,7 +1484,6 @@ Proof.
   basic_solver.
 Qed.
 
-
 Lemma restr_cr_prcl_l {A s} (r : relation A)
       (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
   restr_rel s r^? ≡ ⦗s⦘ ⨾ (restr_rel s r)^?.
@@ -1463,14 +1500,4 @@ Proof.
   rewrite !crE.
   rewrite restr_union, seq_union_l.
   apply union_more; basic_solver.
-Qed.
-
-Lemma prcl_cr {A s} {r : relation A} 
-      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
-  dom_rel (r^? ⨾ ⦗s⦘) ⊆₁ s.
-Proof.
-  rewrite crE.
-  rewrite seq_union_l, dom_union, seq_id_l.
-  eapply set_subset_union_l. 
-  split; auto. basic_solver.
 Qed.
