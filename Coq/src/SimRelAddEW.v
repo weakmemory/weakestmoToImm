@@ -692,6 +692,56 @@ Section SimRelAddEW.
       eapply Execution.ex_inE; eauto. 
     Qed.
 
+    Lemma sim_add_ew_issw_ew_ex w' k k' e e' S S' 
+          (st st' st'' : thread_st (ktid S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
+          (SAEW : sim_add_ew w' S S') 
+          (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      eq w' ∩₁ e2a S' ⋄₁ I ⊆₁ dom_rel (Sew S' ⨾ ⦗ X ⦘).
+    Proof. 
+      cdes BSTEP_; cdes SAEW.
+      assert (basic_step e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      rewrite EW'. 
+      unfold ew_delta.
+      rewrite csE. 
+      rewrite !seq_union_l, !dom_union.
+      rewrite transp_cross.
+      rewrite <- !cross_inter_r. 
+      do 3 (apply set_subset_union_r; right).
+      intros x [EQx Ix]. 
+      subst x. red in Ix.
+      assert ((C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘)) (e2a S' w')) as HH.
+      { basic_solver 10. }
+      eapply ex_cov_iss in HH; [|apply SRCC].
+      destruct HH as [x [Xx EQE2Ax]].
+      apply dom_cross; auto.
+      intros [HH _]. eapply HH.
+      split; eauto.
+      assert (e2a S' x = e2a S x) as EQE2Ax'.
+      { eapply basic_step_e2a_eq_dom; eauto.
+        eapply Execution.ex_inE; eauto. }
+      unfold sim_ews; splits; auto.
+      { eapply sim_add_ew_ex_issw_nrel; eauto.
+        unfolder; splits; eauto; try congruence.
+        exists w'; splits; auto; congruence. }
+      eapply ES.ew_eqvW; auto.
+      { rewrite <- set_interK with (s := X).
+        rewrite set_interA.
+        rewrite Execution.ex_inE 
+          with (X := X) at 1; eauto.
+        rewrite ex_iss_inW; auto.
+        apply SRCC. }
+      split; auto.
+      red. congruence.
+    Qed.
+    
   End SimRelAddEWProps. 
 
 End SimRelAddEW.
