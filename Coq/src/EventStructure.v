@@ -729,6 +729,14 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma rmwf WF : functional rmw⁻¹.
+Proof.
+  arewrite (rmw ⊆ immediate sb ∩ same_tid).
+  { apply (inclusion_inter_r WF.(rmwi) WF.(rmwt)). }
+  rewrite immediate_inter.
+  by apply dwt_imm_f, sb_prcl.
+Qed.
+
 (******************************************************************************)
 (** ** ew properties *)
 (******************************************************************************)
