@@ -527,25 +527,8 @@ Lemma X2G_rmw_atomicity
       (X2G : X2G):
   rmw_atomicity G.
 Proof.
+  unfold rmw_atomicity.
 Admitted.
-
-(*
-Lemma seq_move_prcl {r1 r2}
-      (PRCL : dom_rel (r2 ⨾ ⦗X⦘) ⊆₁ X) :
-  Move (r1 ⨾ r2) ⊆ Move r1 ⨾ Move r2.
-Proof.
-  rewrite <- seq_restr_prcl; auto.
-  apply collect_rel_seqi.
-Qed.
-
-Lemma seq_move_fwcl {r1 r2}
-      (FWCL : codom_rel (⦗X⦘ ⨾ r1) ⊆₁ X) :
-  Move (r1 ⨾ r2) ⊆ Move r1 ⨾ Move r2.
-Proof.
-  rewrite <- seq_restr_fwcl; auto.
-  apply collect_rel_seqi.
-Qed.
-*)
   
 Lemma seq_move r r'
       (WF : ES.Wf S)
@@ -853,16 +836,6 @@ Proof.
   by cdes X2G; rewrite GRF.
 Qed.
 
-(*
-Lemma X2G_co_rf_transfer
-      (WF : ES.Wf S)
-      (EXEC : Execution.t S X)
-      (X2G : X2G)
-      (WF_G : Wf G) : 
-  Move (Sco ⨾ Srf) ≡ Geco ⨾ Grf. 
-Admitted.
-*)
-
 Lemma X2G_eco_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
@@ -907,8 +880,7 @@ Proof.
   cdes X2G.
   destruct CONS, EXEC.
   rewrite crE, seq_union_r, seq_id_r, irreflexive_union in coh.
-  rewrite crE, seq_union_r, seq_id_r.
-  rewrite irreflexive_union.
+  rewrite crE, seq_union_r, seq_id_r, irreflexive_union.
   rewrite <- collect_rel_seq;
     [rewrite seq_restr | specialize e2a_inj; basic_solver].
   split.
@@ -924,6 +896,9 @@ Lemma X2G_acyclic_psc
       (X2G : X2G) :
   acyclic (imm_s.psc_f G ∪ imm_s.psc_base G).
 Proof.
+  unfold imm_s.psc_f.
+  unfold imm_s.psc_base.
+  unfold imm_s.scb.
 Admitted.
 
 End ExecutionToGraph. 
