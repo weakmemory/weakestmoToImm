@@ -112,15 +112,10 @@ Record es_consistent {m} :=
   { ecf_irf : irreflexive ecf;
     jf_necf : jf ∩ ecf ≡ ∅₂; 
     jfe_vis : dom_rel jfe ⊆₁ vis;
-    (* jf_not_cf : jf ∩ cf ≡ ∅₂; *)
-    (* hb_jf_not_cf  : (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂; *)
     coh : irreflexive (hb ⨾ (eco m)^?);
-    (* jfpo_irr : *)
-    (*   irreflexive (jfe ⨾ (sb ∪ jf)＊ ⨾ sb ⨾ *)
-    (*                jfe⁻¹ ⨾ ((sb ∪ jf)＊)⁻¹ ⨾ *)
-    (*                (cf \ (ew ⨾ sb⁼ ∪ sb⁼ ⨾ ew))); *)
-    icf_R : dom_rel icf ⊆₁ R;
-    icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew);
+
+    (* icf_R : dom_rel icf ⊆₁ R; *)
+    (* icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew); *)
   }.
 
 Record good_restriction (A : eventid -> Prop) := 
@@ -644,28 +639,29 @@ Section ConsistentProps.
     destruct (classic (z = x)) as [|XZNEQ]; subst.
     { destruct SB; desf. }
     exfalso.
-    assert (icf x z) as CF.
-    2: { apply WF.(ES.rmwD) in H0.
-         assert (R x) as RX.
-         { eapply icf_R; eauto. eexists. eauto. }
-         destruct_seq H0 as [RR WW].
-         type_solver. }
-    set (SBIX := H0).
-    apply WF.(ES.rmwi) in SBIX.
-    apply WF.(ES.rmwEninit) in H0.
-    destruct_seq H0 as [EZ EX].
-    edestruct WF.(ES.imm_tsb_imm_sb_in_icf).
-    { split.
-      { exists z0. splits.
-        { apply SBI. }
-        apply SBIX. }
-      red.
-      erewrite <- WF.(ES.sb_tid) with (x:=z0).
-      { by apply WF.(ES.rmwt). }
-      apply seq_eqv_l. split; auto. apply SBI. }
-    { desf. }
-      by apply ES.icf_sym.
-  Qed.
+    admit. 
+    (* assert (icf x z) as CF. *)
+    (* 2: { apply WF.(ES.rmwD) in H0. *)
+    (*      assert (R x) as RX. *)
+    (*      { eapply icf_R; eauto. eexists. eauto. } *)
+    (*      destruct_seq H0 as [RR WW]. *)
+    (*      type_solver. } *)
+    (* set (SBIX := H0). *)
+    (* apply WF.(ES.rmwi) in SBIX. *)
+    (* apply WF.(ES.rmwEninit) in H0. *)
+    (* destruct_seq H0 as [EZ EX]. *)
+    (* edestruct WF.(ES.imm_tsb_imm_sb_in_icf). *)
+    (* { split. *)
+    (*   { exists z0. splits. *)
+    (*     { apply SBI. } *)
+    (*     apply SBIX. } *)
+    (*   red. *)
+    (*   erewrite <- WF.(ES.sb_tid) with (x:=z0). *)
+    (*   { by apply WF.(ES.rmwt). } *)
+    (*   apply seq_eqv_l. split; auto. apply SBI. } *)
+    (* { desf. } *)
+    (*   by apply ES.icf_sym. *)
+  Admitted.
 
   Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
   Proof. 

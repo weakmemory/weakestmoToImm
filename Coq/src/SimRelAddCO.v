@@ -609,38 +609,10 @@ Section SimRelAddCO.
         { apply ES.ewm in EW; auto.
           destruct EW as [EQx | [RLX _]];
             auto; subst x.
-          intros RELy. 
-          assert (SEninit S y) as nINITy.
-          { apply ES.acts_set_split in Ey.
-            destruct Ey as [INITy | nINITy]; auto.
-            edestruct ES.init_lab as [l LAB]; eauto.
-            unfold init_write in LAB.
-            unfold is_rel, mode_le, Events.mod in RELy.
-            exfalso. by rewrite LAB in *. }
-          erewrite e2a_ninit with (e := y) in EQ; auto.
-          assert (Stid S y = ES.cont_thread S k) as TIDy.
-          { unfolder in wEE'. desf.
-            { erewrite basic_step_e2a_e in EQ; eauto.
-                by inversion EQ. }
-            erewrite basic_step_e2a_e' in EQ; eauto.
-              by inversion EQ. }
-          assert (kE S k y) as kSBy.
-          { eapply ex_ktid_cov; eauto.
-            unfolder; splits; auto. 
-            eapply ex_w_rel_iss_in_cov; eauto.
-            unfolder; splits; auto.
-            apply ES.coD in COz; auto.
-            generalize COz. basic_solver. }
-          simpl in kSBy.
-          assert (ES.seqn S y < eindex st) as SEQNle.
-          { eapply e2a_kE_eindex; eauto.
-            unfolder; eexists; splits; eauto.
-            apply nINITy. }
-          unfolder in wEE'. desf.
-          { erewrite basic_step_e2a_e in EQ; eauto. 
-            inversion EQ. omega. }
-          erewrite basic_step_e2a_e' in EQ; eauto.
-          inversion EQ. omega. }
+          eapply sim_add_ew_ex_issw_nrel; eauto.  
+          unfolder; splits; try eexists; splits; eauto. 
+          { symmetry. erewrite basic_step_e2a_eq_dom; eauto. }
+          erewrite basic_step_e2a_eq_dom; eauto. }
         { rewrite EQ.
           eapply e2a_ew; eauto.
           basic_solver 10. }
