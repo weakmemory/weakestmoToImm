@@ -691,7 +691,7 @@ Section SimRelCertStepLemma.
       eapply dom_sb_covered; eauto.
       exists (e2a S' e). apply seq_eqv_r. split; auto.
       eapply e2a_sb; eauto; try apply SRCC.
-      { admit. }
+      { apply SRE2A. }
       unfolder. do 2 eexists. splits; eauto. 
       apply SB'. right. unfold sb_delta.
       basic_solver. }
@@ -806,7 +806,9 @@ Section SimRelCertStepLemma.
            eapply TEH. eapply steps_preserve_E; eauto. }
          
          assert (C' (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIC'.
-         { admit. }
+         { apply CALT. red. exists e.
+           split; auto.
+           eapply basic_step_e2a_e; eauto. }
 
          assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
          { eapply wf_thread_state_lbl_step with (state0:=st); eauto. }
