@@ -442,7 +442,7 @@ Section SimRelAddCO.
       eapply sim_wsE; eauto. 
     Qed.
 
-    Lemma basic_step_e2a_codom_sim_ws_co_in_co w' k k' e e' S S' 
+    Lemma basic_step_e2a_ws_compl_in_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
           (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
@@ -553,7 +553,7 @@ Section SimRelAddCO.
             eapply basic_step_e2a_eq_dom; eauto.
             generalize HH. basic_solver. }
       rewrite sim_ws_e2a_co.
-      erewrite basic_step_e2a_codom_sim_ws_co_in_co; eauto.
+      erewrite basic_step_e2a_ws_compl_in_co; eauto.
       basic_solver.
     Qed.
 
@@ -685,12 +685,7 @@ Section SimRelAddCO.
       basic_solver.
     Qed.
 
-
-
-
-
-
-    Lemma sim_add_co_e2a_co_new_issw w' k k' e e' S S' 
+    Lemma sim_add_co_e2a_co_issw w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
           (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
@@ -698,7 +693,7 @@ Section SimRelAddCO.
           (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
-      e2a S' □ (Sco S' ⨾ ⦗eq w' ∩₁ e2a S' ⋄₁ (I' \₁ I)⦘) ⊆ Gco.
+      e2a S' □ (Sco S' ⨾ ⦗eq w' ∩₁ e2a S' ⋄₁ I'⦘) ⊆ Gco.
     Proof. 
       cdes BSTEP_; cdes SAEW; cdes SACO.
       assert (basic_step e e' S S') as BSTEP.
@@ -727,6 +722,115 @@ Section SimRelAddCO.
       eapply eq_dom_mori; eauto.
       { apply sim_wsE. }
       eapply basic_step_e2a_eq_dom; eauto.
+    Qed.
+
+    Lemma sim_add_co_e2a_co_kE_issw w' k k' e e' S S' 
+          (st st' st'' : thread_st (ktid S k))
+          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
+          (SAEW : sim_add_ew TC X w' S S') 
+          (SACO : sim_add_co k w' S S') 
+          (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
+          (wEE' : (eq e ∪₁ eq_opt e') w') :
+      e2a S' □ (Sco S' ⨾ ⦗kE S k ∩₁ e2a S' ⋄₁ I'⦘) ⊆ Gco.
+    Proof. 
+      cdes BSTEP_; cdes SAEW; cdes SACO.
+      assert (basic_step e e' S S') as BSTEP.
+      { econstructor. eauto. }
+      assert (ES.Wf S) as WFS.
+      { apply SRCC. }
+      assert (Wf G) as WFG.
+      { apply SRCC. }
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRCC. }
+      assert (simrel_ prog S G sc TC X) as SR_.
+      { apply SRCC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRCC. }
+      assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+        as SRCONT.
+      { apply SRCC. }
+
+      erewrite basic_step_e2a_set_map_inter_old; eauto.
+      2 : eapply kE_inE; eauto.
+      rewrite CO'.
+      unfold co_delta.
+      rewrite !seq_union_l, !collect_rel_union.
+      unionL.
+      { rewrite ES.coE; auto.
+        rewrite !seqA, seq_eqvC.
+        arewrite 
+          (⦗SE S⦘ ⨾ Sco S ⨾ ⦗ES.cont_sb_dom S k ∩₁ e2a S ⋄₁ I'⦘ ⨾ ⦗SE S⦘ ≡
+           restr_rel (SE S) (Sco S ⨾ ⦗ES.cont_sb_dom S k ∩₁ e2a S ⋄₁ I'⦘)).
+        { basic_solver 20. }
+        rewrite collect_rel_restr_eq_dom.
+        2 : eapply basic_step_e2a_eq_dom; eauto.
+        rewrite inclusion_restr. apply SRCC. }
+      { generalize wEE'. step_solver. }
+
+      rewrite <- cross_inter_r.
+      intros x' y' [x [y [HH [EQx' EQy']]]].
+      destruct HH as [EQx [WSC [kSBy Iy]]].
+      subst x' y' x.
+      assert (SE S y) as Ey.
+      { eapply kE_inE; eauto. }
+      assert (SW S y) as Wy.
+      { eapply cert_ex_iss_inW; eauto. basic_solver. }
+      assert (e2a S' y = e2a S y) as EQE2Ay. 
+      { eapply basic_step_e2a_eq_dom; eauto. }
+      assert (Gco^? (e2a S' w') (e2a S' y)) as CO.
+      { eapply basic_step_e2a_ws_compl_in_co; eauto. basic_solver. }
+      destruct CO as [EQ|CO]; auto.
+      
+      exfalso.
+      unfold e2a in EQ.
+      destruct 
+        (excluded_middle_informative ((Stid S') w' = tid_init))
+      as [TIDw'|nTIDw'].
+      { exfalso. 
+        destruct wEE' as [EQw'|EQw'].
+        { eapply basic_step_acts_ninit_set_e; eauto. 
+          basic_solver. }
+        unfold eq_opt in *.
+        destruct e' as [e'|]; [|intuition].
+        eapply basic_step_acts_ninit_set_e'; eauto. 
+        basic_solver. }
+      destruct
+        (excluded_middle_informative ((Stid S') y = tid_init))
+        as [TIDy|nTIDy].
+      { congruence. }
+      inversion EQ as [[EQTID EQSEQN]].
+      symmetry in EQSEQN.
+      erewrite basic_step_seqn_eq_dom 
+        in EQSEQN; eauto.
+      assert (~ SEinit S y) as nINITy.
+      { intros [_ TIDy].
+        apply nTIDy.
+        erewrite basic_step_tid_eq_dom; eauto. }
+      assert ((ES.seqn S □₁ (ES.cont_sb_dom S k \₁ SEinit S)) (ES.seqn S y)) 
+        as HH.
+      { basic_solver. }
+      eapply e2a_kE_eindex in HH; eauto.
+      unfold ES.cont_sb_dom in kSBy.
+      destruct k.
+      { by unfold ES.cont_sb_dom in kSBy. }
+      destruct wEE' as [EQw'|EQw'].
+      { erewrite basic_step_seqn_kevent 
+          with (S' := S') in EQSEQN. 
+        2-4: subst; eauto.      
+        erewrite <- contseqn in EQSEQN; eauto.
+        omega. }
+      unfold eq_opt in *.
+      destruct e' as [e'|]; [|intuition].
+      subst w'.
+      symmetry in EQSEQN.
+      erewrite basic_step_seqn_e' 
+        in EQSEQN; eauto.
+      erewrite basic_step_seqn_kevent 
+        with (S' := S') in EQSEQN. 
+      2-4: subst; eauto.      
+      erewrite <- contseqn in EQSEQN; eauto.
+      omega. 
     Qed.
 
   End SimRelAddCOProps. 

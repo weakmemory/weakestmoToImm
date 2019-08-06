@@ -171,7 +171,7 @@ Section SimRelCert.
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ;
 
-      e2a_co_kE_new_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ (I' \₁ I)⦘) ⊆ Gco ; 
+      e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco ; 
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
 
@@ -833,46 +833,20 @@ Section SimRelCert.
     { apply SRCC. }
     assert (simrel_ prog S G sc TC X) as SR_.
     { apply SRCC. }
-    rewrite set_union_minus with (s := I') (s' := I).
-    2 : eapply sim_trav_step_issued_le; eexists; apply SRCC.
-    rewrite set_map_union, set_inter_union_r, 
-            id_union, !seq_union_r, collect_rel_union.
+    rewrite set_inter_union_l, id_union, seq_union_r,
+            collect_rel_union.
     unionL.
-    { rewrite set_inter_union_l, id_union, 
-              seq_union_r, collect_rel_union.
-      unionL; [|by apply e2a_co_kE_new_iss].
-      rewrite seq_eqv_r.
+    { rewrite seq_eqv_r.
       intros x' y' [x [y [HH [EQx' EQy']]]].
-      destruct HH as [CO [[Xy nTIDy] IIy]].
+      destruct HH as [CO [[Xy nTIDy] Iy]].
+      red in Iy.
+      eapply isim_trav_step_new_issued_tid in Iy.
+      2-3: apply SRCC.
+      destruct Iy as [[Iy _]|[Iy TIDy]].
+      { eapply e2a_co_iss; eauto. basic_solver 10. }
       exfalso. apply nTIDy.
-      erewrite e2a_tid.
-      eapply isim_trav_step_new_issued_only_tid; 
-        eauto; apply SRCC. }
-    rewrite seq_eqv_r.
-    intros x' y' [x [y [[CO CertXy] [EQx' EQy']]]].
-    subst x' y'.
-    assert (dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I)⦘) y) 
-      as [z HH].
-    { eapply ew_ex_cert_dom_iss_cert_ex_iss; eauto. 
-      eapply ES.ew_eqvW; auto.
-      rewrite sim_trav_step_issued_le.
-      2 : eexists; apply SRCC.
-      intros z [CertXz Iz].
-      split; auto.
-      { by eapply cert_ex_inE. }
-      eapply cert_ex_iss_inW; eauto.
-      split; auto. }
-    apply seq_eqv_r in HH.
-    destruct HH as [EW [Xz [_ Iz]]].
-    arewrite (e2a y = e2a z).
-    { eapply e2a_ew; eauto.
-      do 2 eexists; splits; eauto. }
-    eapply e2a_co_iss; eauto.
-    do 2 eexists; splits; eauto.
-    apply seq_eqv_r.
-    unfolder; splits; auto.
-    apply ES.co_ew_in_co; auto.
-    basic_solver. 
+      by erewrite e2a_tid. }
+    by eapply e2a_co_kE_iss. 
   Qed.
       
     (* Lemma ex_iss_cert_ex : *)
