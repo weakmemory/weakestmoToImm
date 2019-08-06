@@ -285,7 +285,9 @@ Proof.
   split; [|basic_solver 12].
   unfold rs.
   rewrite rtE; relsf; unionL.
-  { rewrite (ES.sbE WF); basic_solver 21. }
+  { apply inclusion_union_r1_search.
+    rewrite (ES.sbE WF).
+    basic_solver 21. }
   unionR right.
   rewrite (dom_r (ES.rmwE WF)) at 1.
   rewrite <- !seqA.

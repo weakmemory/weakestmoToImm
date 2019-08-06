@@ -1,6 +1,5 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
-From imm Require Import AuxRel.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.

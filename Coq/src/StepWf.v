@@ -1,6 +1,6 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel. 
+From imm Require Import Events. 
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.

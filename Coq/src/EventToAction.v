@@ -2,7 +2,7 @@ Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
-     CombRelations AuxRel.
+     CombRelations.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.

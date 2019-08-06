@@ -1,7 +1,7 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import AuxRel
+From imm Require Import 
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
@@ -298,7 +298,7 @@ Qed.
 Lemma isim_trav_step_new_e_tid_alt thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   covered TC' ∪₁ issued TC' ≡₁ 
-  (C ∪₁ I) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
+    (C ∪₁ I) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
 Proof. 
   assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
   rewrite isim_trav_step_new_e_tid at 1; eauto.
@@ -313,7 +313,7 @@ Qed.
 Lemma isim_trav_step_new_covered_tid thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   covered TC' ≡₁ 
-  C ∩₁ NTid thread ∪₁ covered TC' ∩₁ Tid thread.
+    C ∩₁ NTid thread ∪₁ covered TC' ∩₁ Tid thread.
 Proof. 
   assert (C ⊆₁ C ∩₁ NTid thread ∪₁ C ∩₁ Tid thread) as BB.
   { apply ntid_tid_set_inter. }
@@ -331,7 +331,7 @@ Qed.
 Lemma isim_trav_step_new_issued_tid thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   issued TC' ≡₁ 
-  I ∩₁ NTid thread ∪₁ issued TC' ∩₁ Tid thread.
+    I ∩₁ NTid thread ∪₁ issued TC' ∩₁ Tid thread.
 Proof. 
   assert (I ⊆₁ I ∩₁ NTid thread ∪₁ I ∩₁ Tid thread) as BB.
   { apply ntid_tid_set_inter. }

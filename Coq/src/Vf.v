@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events Execution Execution_eco imm_hb imm AuxRel.
+From imm Require Import Events Execution Execution_eco imm_hb imm.
 
 Set Implicit Arguments.
 

@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig TraversalConfigAlt
-     imm_common imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
+     imm_common imm_s imm_s_hb CertExecution1 CertExecution2
      CombRelations Execution_eco.
 Require Import AuxRel.
 Require Import AuxDef.

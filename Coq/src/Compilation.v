@@ -3,8 +3,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel
-     PromiseToimm_s.
+     CombRelations SimTraversal SimulationRel PromiseToimm_s.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import ImmProperties.
