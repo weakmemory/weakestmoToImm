@@ -741,7 +741,7 @@ Section SimRelStep.
       erewrite cert_rf_D_rf; try done. 
       1,2: apply SRCC.
       eapply tccoh'; eauto. }
-    (*  e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
+    (*  e2a_co_iss : e2a □ (Sco ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
     { rewrite set_union_minus with (s := I') (s' := I).
       2 : eapply sim_trav_step_issued_le; eexists; apply SRCC.
       rewrite set_map_union, set_inter_union_r, 
@@ -749,21 +749,29 @@ Section SimRelStep.
       unionL.
       { admit. }
       rewrite seq_eqv_r.
-      intros x' y' [x [y [HH [EQx' EQy']]]].
-      destruct HH as [z [CO [EW CertXy]]].
+      intros x' y' [x [y [[CO CertXy] [EQx' EQy']]]].
       subst x' y'.
-      eapply e2a_co_ew_iss; eauto.
-      assert (dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) z) 
-        as [z' HH].
-      { eapply ew_ex_iss_cert_ex_iss; eauto. basic_solver 10. }
+      assert (dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) y) 
+        as [z HH].
+      { eapply ew_ex_iss_cert_ex_iss; eauto. 
+        eapply ES.ew_eqvW; auto.
+        intros z [Hz Iz].
+        destruct Hz as [[Xz _] | kEz]; split.
+        { eapply Execution.ex_inE; eauto. }
+        { eapply ex_iss_inW; eauto.
+          split; auto. }
+        all: admit. }
       apply seq_eqv_r in HH.
-      destruct HH as [EW' [Xz' Iz']].
-      arewrite (e2a S y = e2a S z').
+      destruct HH as [EW [Xz Iz]].
+      arewrite (e2a S y = e2a S z).
       { eapply e2a_ew; eauto.
-        do 2 eexists; splits; eauto. 
-        eapply e2a_ew; eauto.
-        basic_solver 10. }
-      basic_solver 10. }
+        do 2 eexists; splits; eauto. }
+      eapply e2a_co_iss; eauto.
+      do 2 eexists; splits; eauto.
+      apply seq_eqv_r.
+      unfolder; splits; auto.
+      apply ES.co_ew_in_co; auto.
+      basic_solver. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply jfe_ex_iss; eauto. }

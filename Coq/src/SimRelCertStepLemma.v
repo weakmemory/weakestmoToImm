@@ -606,6 +606,7 @@ Section SimRelCertStepLemma.
     { eapply simrel_cert_step_ex_cont_iss; eauto. }
     (* kE_iss : kE' ∩₁ e2a' ⋄₁ I ⊆₁ dom_rel (Sew' ⨾ ⦗ X ⦘) ; *)
     { eapply simrel_cert_step_kE_iss; eauto. }
+    (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ (I' \₁ I)⦘) ⊆ Gco ;  *)
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a' □₁ kE'⦘ ⊆ e2a' □ Srmw' ⨾ ⦗ kE' ⦘ *)
     { eapply simrel_cert_step_rmw_cov_in_kE; eauto. }
 
