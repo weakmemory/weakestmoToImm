@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel. 
+From imm Require Import Events. 
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -11,6 +11,12 @@ Require Import AddEW.
 Require Import AddCO.
 
 Set Implicit Arguments.
+
+(* Open a section here to hide the notations inside it.
+ * TODO: invent a better solution, 
+ *       perhaps it is better to get rid of notation here at all. 
+ *)
+Section Step.
 
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
@@ -30,6 +36,7 @@ Notation "'rf' S" := S.(ES.rf) (at level 10).
 Notation "'fr' S" := S.(ES.fr) (at level 10).
 Notation "'co' S" := S.(ES.co) (at level 10).
 Notation "'cf' S" := S.(ES.cf) (at level 10).
+Notation "'icf' S" := S.(ES.icf) (at level 10).
 
 Notation "'jfe' S" := S.(ES.jfe) (at level 10).
 Notation "'rfe' S" := S.(ES.rfe) (at level 10).
@@ -39,6 +46,7 @@ Notation "'rfi' S" := S.(ES.rfi) (at level 10).
 Notation "'coi' S" := S.(ES.coi) (at level 10).
 
 Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+Notation "'R_ex' S" := (fun a => is_true (R_ex S.(ES.lab) a)) (at level 10).
 Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
@@ -53,9 +61,9 @@ Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-(* Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10). *)
-(* Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10). *)
-(* Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10). *)
+Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10).
+Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
+Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
@@ -101,6 +109,7 @@ Definition update_step
   exists w ews ws w',
     ⟪ SLOC : same_loc S' e w' ⟫ /\
     ⟪ UPD : e' = Some w' ⟫ /\
+    ⟪ REX : R_ex S' e ⟫ /\
     ⟪ AJF : add_jf w e S S' ⟫ /\
     ⟪ AEW : add_ew ews w' S S' ⟫ /\
     ⟪ ACO : add_co ews ws w' S S' ⟫.
@@ -388,26 +397,7 @@ Proof.
   do 3 rewrite ct_begin, rtE.
   rewrite !seq_union_r, !seq_id_r.
   rewrite <- !seqA.
-  arewrite 
-    ((sb_delta S k e e')
-     ⨾ (sb_delta S k e e') ≡ 
-     ES.cont_sb_dom S k × eq_opt e'). 
-  { unfold sb_delta.
-    rewrite !seq_union_l. 
-    arewrite_false 
-      ((ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e'
-      ⨾ (ES.cont_sb_dom S k × eq e ∪ 
-                        (ES.cont_sb_dom S k ∪₁ eq e) × eq_opt e')). 
-    { unfold eq_opt, opt_ext in *. step_solver. }
-    rewrite cross_union_r. rewrite !seq_union_r.
-    arewrite_false 
-      (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq_opt e').
-    { step_solver. }
-    arewrite_false
-      (ES.cont_sb_dom S k × eq e ⨾ ES.cont_sb_dom S k × eq e).
-    { step_solver. }
-    basic_solver 10. }
-  rewrite <- seqA.
+  rewrite basic_step_sb_delta_seq_sb_delta; eauto.
   arewrite_false 
     ((ES.cont_sb_dom S k × eq_opt e') ⨾ (sb_delta S k e e')).
   { step_solver. }
@@ -475,7 +465,7 @@ Proof.
   rewrite step_same_jf_cc; eauto.
   rewrite seq_union_l.
   rewrite interC.
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr.
+  rewrite <- seq_eqv_inter_lr.
   rewrite !seqA.
   arewrite_false 
     (sb_delta S k e e' ⨾ ⦗E S⦘).
@@ -854,9 +844,109 @@ Proof.
   eapply step_nupd_hb_dom; eauto.
 Qed.
 
+Lemma step_icf_jf_irr lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (STEP : step_ e e' S S')
+      (wfE: ES.Wf S) :
+  irreflexive (jf S' ⨾ icf S' ⨾ (jf S')⁻¹ ⨾ ew S') <->
+    irreflexive (jf S ⨾ icf S ⨾ (jf S)⁻¹ ⨾ ew S) /\
+    dom_rel (jf S' ⨾ ⦗eq e⦘) ∩₁ dom_rel (ew S ⨾ jf S ⨾ ⦗ES.cont_icf_dom S k⦘) ⊆₁ ∅.
+Proof. 
+  cdes BSTEP_.
+  assert (basic_step e e' S S') as BSTEP.
+  { red. do 5 eexists. eauto. }
+  assert 
+    (jf S ⨾ icf S' ⨾ (jf S)⁻¹ ≡ jf S ⨾ icf S ⨾ (jf S)⁻¹)
+    as JF_ICF.
+  { rewrite basic_step_icf; eauto. relsf.
+    arewrite_false (jf S ⨾ icf_delta S k e ⨾ (jf S)⁻¹).
+    2 : by rewrite union_false_r.
+    unfold icf_delta. step_solver. }
+  unfold_step_ STEP.
+  { rewrite JF', EW'.
+    seq_rewrite JF_ICF.
+    rewrite !seqA.
+    split; auto.
+    2 : ins; desf.
+    intros IRR.
+    split; auto.
+    step_solver. }
+  { erewrite add_jf_icf_jf_irr; eauto.
+    2 : rewrite EW'; by rewrite <- ES.ewE.
+    apply Morphisms_Prop.and_iff_morphism; auto.
+    cdes AJF. rewrite JF'.
+    rewrite seq_union_l.
+    arewrite_false (jf S ⨾ ⦗eq e⦘).
+    { step_solver. }
+    rewrite union_false_l.
+    unfold jf_delta.
+    split. 
+    { unfolder. intros HH. ins. desf.
+      apply HH. basic_solver 10. }
+    intros HA HB. eapply HA.
+    basic_solver 10. }
+  { rewrite JF'.
+    seq_rewrite JF_ICF.
+    rewrite !seqA.
+    split. 
+    { intros IRR. split.
+      2 : step_solver. 
+      erewrite add_ew_mon; eauto.
+      by left. }
+    intros [IRR _].
+    rewrite irreflexive_seqC.
+    rewrite !seqA.
+    rewrite ES.jfE; auto.
+    rewrite !transp_seq, !transp_eqv_rel. 
+    rewrite !seqA.
+    arewrite (⦗E S⦘ ⨾ ew S' ⨾ ⦗E S⦘ ≡ ew S).
+    { eapply add_ew_ewE; eauto. 
+        by left. }
+    generalize IRR. basic_solver 10. } 
+  erewrite add_jf_icf_jf_irr; eauto.
+  2 : eapply add_ew_ewE; eauto; basic_solver.  
+  apply Morphisms_Prop.and_iff_morphism; auto.
+  cdes AJF. rewrite JF'.
+  rewrite seq_union_l.
+  arewrite_false (jf S ⨾ ⦗eq e⦘).
+  { step_solver. }
+  rewrite union_false_l.
+  unfold jf_delta.
+  split. 
+  { unfolder. intros HH. ins. desf.
+    apply HH. basic_solver 10. }
+  intros HA HB. eapply HA.
+  basic_solver 10. 
+Qed.
+
 (******************************************************************************)
 (** ** Step preserves executions lemma  *)
 (******************************************************************************)
+
+Lemma step_preserves_old_sw X e e' S S' 
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X) 
+      (BSTEP : basic_step e e' S S')
+      (STEP : step_ e e' S S') :
+  dom_rel (sw S' ⨾ ⦗X⦘) ⊆₁ X.
+Proof.
+  cdes BSTEP; cdes BSTEP_.
+  arewrite (sw S' ≡ sw S ∪ sw_delta S S' k e e').
+  { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
+    { cdes FSTEP. erewrite step_same_jf_sw; eauto.
+      eapply basic_step_nupd_rmw; subst; eauto. }
+    { cdes LSTEP. erewrite add_jf_sw; eauto.
+      subst. basic_solver. }
+    { cdes SSTEP. erewrite step_same_jf_sw; eauto.
+      eapply basic_step_nupd_rmw; subst; eauto. }
+    cdes USTEP. erewrite add_jf_sw; eauto.
+    cdes AEW. type_solver. }
+  relsf. splits.
+  { apply EXEC. }
+  arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto.
+  erewrite basic_step_sw_deltaE; eauto. 
+  basic_solver.
+Qed.
 
 Lemma step_preserves_execution X e e' S S' 
       (WF : ES.Wf S)
@@ -880,22 +970,7 @@ Proof.
     erewrite basic_step_sb_deltaE; eauto. 
     basic_solver. }
   (* ex_sw_prcl : dom_rel (sw S ⨾ ⦗X⦘) ⊆₁ X *)
-  { (* TODO: add a corresponding lemma  *)
-    arewrite (sw S' ≡ sw S ∪ sw_delta S S' k e e').
-    { destruct STEP as [FSTEP | [LSTEP | [SSTEP | USTEP]]].
-      { cdes FSTEP. erewrite step_same_jf_sw; eauto.
-        eapply basic_step_nupd_rmw; subst; eauto. }
-      { cdes LSTEP. erewrite add_jf_sw; eauto.
-        subst. basic_solver. }
-      { cdes SSTEP. erewrite step_same_jf_sw; eauto.
-        eapply basic_step_nupd_rmw; subst; eauto. }
-      cdes USTEP. erewrite add_jf_sw; eauto.
-      cdes AEW. type_solver. }
-    relsf. splits.
-    { apply EXEC. }
-    arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto.
-    erewrite basic_step_sw_deltaE; eauto. 
-    basic_solver. }
+  { eapply step_preserves_old_sw; eauto. }
   (* ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw S) ⊆₁ X *)
   { rewrite RMW'. unfold rmw_delta.
     relsf. splits.
@@ -903,7 +978,20 @@ Proof.
     arewrite (X ⊆₁ E S) by apply Execution.ex_inE; auto. 
     step_solver. }
   (* ex_rf_compl : X ∩₁ R S ⊆₁ codom_rel (⦗X⦘ ⨾ rf S); *)
-  { admit. }
+  { intros x [Xx Rx'].
+    assert (R S x) as Rx.
+    { eapply basic_step_r_in_r; eauto.
+      split; auto.
+      eapply Execution.ex_inE; eauto. }
+    edestruct Execution.ex_rf_compl 
+      as [y XRF]; eauto.
+    { split; eauto. }
+    apply seq_eqv_l in XRF.
+    destruct XRF as [Xy RF].
+    exists y. 
+    apply seq_eqv_l. 
+    split; auto.
+    eapply step_rf_mon; eauto. }
   (* ex_ncf : ES.cf_free S X *)
   { red. 
     rewrite <- set_interK with (s := X).
@@ -917,5 +1005,6 @@ Proof.
   etransitivity.
   { eapply Execution.ex_vis; eauto. }
   eapply step_vis_mon; eauto. 
-Admitted.
+Qed.
 
+End Step.

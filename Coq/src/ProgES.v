@@ -1,7 +1,7 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import Events Prog Execution ProgToExecution AuxRel.
+From imm Require Import Events Prog Execution ProgToExecution.
 Require Import AuxDef.
 Require Import AuxRel.
 Require Import EventStructure.
@@ -283,8 +283,42 @@ Lemma prog_g_es_init_init G prog :
   ES.acts_init_set (prog_g_es_init prog G).
 Proof. apply prog_l_es_init_init. Qed.
 
-Lemma prog_l_es_init_wf locs prog (nInitProg : ~ IdentMap.In tid_init prog):
+(* TODO : move to a more suitable place  *)
+Lemma length_nempty {A : Type} (l : list A) (nEmpty : l <> []) : 
+  0 < length l. 
+Proof. 
+  unfold length.
+  destruct l.
+  { intuition. }
+  apply Nat.lt_0_succ.
+Qed.
+
+Lemma prog_l_es_init_nempty locs prog  
+      (nInitProg : ~ IdentMap.In tid_init prog) 
+      (nLocsEmpty : locs <> []) :
+  ~ ES.acts_init_set (prog_l_es_init prog locs) ≡₁ ∅.
+Proof. 
+  intros HH. eapply HH.
+  apply prog_l_es_init_init.
+  unfold ES.acts_set.
+  unfold prog_l_es_init, ES.init.
+  simpls.
+  erewrite map_length.
+  eapply length_nempty. 
+  by apply undup_nonnil.
+Qed.  
+
+Lemma prog_g_es_init_nempty G prog 
+      (nInitProg : ~ IdentMap.In tid_init prog) 
+      (nLocsEmpty : g_locs G <> []) :
+  ~ ES.acts_init_set (prog_g_es_init prog G) ≡₁ ∅.
+Proof. by apply prog_l_es_init_nempty. Qed.  
+
+Lemma prog_l_es_init_wf locs prog
+      (nInitProg : ~ IdentMap.In tid_init prog)
+      (nLocsEmpty : locs <> []) :
   ES.Wf (prog_l_es_init prog locs).
+Proof.
   assert
     (NoDup (map init_write (undup locs)))
     as NNDD.
@@ -312,6 +346,7 @@ Lemma prog_l_es_init_wf locs prog (nInitProg : ~ IdentMap.In tid_init prog):
       2: by apply indexed_list_fst_nodup.
       desf. }
     eapply indexed_list_snd_nodup; eauto. }
+  { apply prog_l_es_init_nempty; eauto. }
   { red. basic_solver. }
   { unfolder. ins. eexists.
     splits; eauto.
@@ -357,18 +392,23 @@ Lemma prog_l_es_init_wf locs prog (nInitProg : ~ IdentMap.In tid_init prog):
     apply RegMap.elements_complete in CK'0.
     simpls; desf. }
   { ins. by apply prog_l_es_init_ninit in EE. }
-  ins. exfalso.
-  red in inK.
-  unfold prog_l_es_init, ES.init in *. simpls.
-  unfold prog_init_K in *.
-  apply in_map_iff in inK. desf.
-Qed. 
+  { ins. exfalso.
+    red in inK.
+    unfold prog_g_es_init, ES.init in *. simpls.
+    unfold prog_init_K in *.
+    apply in_map_iff in inK. desf. }
+  admit.
+Admitted.
 
-Lemma prog_g_es_init_wf G prog (nInitProg : ~ IdentMap.In tid_init prog) :
+Lemma prog_g_es_init_wf G prog
+      (nInitProg : ~ IdentMap.In tid_init prog)
+      (nLocsEmpty : g_locs G <> []) :
   ES.Wf (prog_g_es_init prog G).
 Proof. by apply prog_l_es_init_wf. Qed.
 
-Lemma prog_es_init_wf prog (nInitProg : ~ IdentMap.In tid_init prog) :
+Lemma prog_es_init_wf prog
+      (nInitProg : ~ IdentMap.In tid_init prog)
+      (nLocsEmpty : prog_locs (stable_prog_to_prog prog) <> []) :
   ES.Wf (prog_es_init prog).
 Proof. by apply prog_l_es_init_wf. Qed.
 
@@ -381,7 +421,8 @@ Proof.
   arewrite (undup (g_locs G) = g_locs G).
   { unfold g_locs. rewrite undup_nodup; auto. }
   unfold compose.
-  apply prog_g_es_init_act_in in SX. desf.
+
+  apply prog_g_es_init_act_in in DX. desf.
   rewrite prog_g_es_init_alt.
   unfold e2a, ES.init, ES.acts_set in *; simpls; desf.
   unfold Events.loc.
@@ -472,7 +513,7 @@ Lemma prog_g_es_init_lab prog G e :
   << ELAB : ES.lab (prog_g_es_init prog G) e = init_write l >>.
 Proof. apply prog_l_es_init_lab. Qed.
 
-
+(* TODO : move to a more suitable place  *)
 Lemma traverse_map_indexed_list {A B} (f : A -> B) l :
   indexed_list (map f l) =
   map (fun p : nat * A => let (a, b) := p in (a, f b))
@@ -510,6 +551,11 @@ Proof.
       (f := (fun p : nat * location => let (a, b) := p in (a, init_write b))) in Foo.
   auto.
 Qed.    
+
+Lemma prog_g_init_init_loc prog G l
+      (L_IN : In l (g_locs G)) :
+  ES.init_loc (prog_g_es_init prog G) l.
+Proof. by apply prog_l_es_init_init_loc. Qed.
 
 Lemma prog_es_init_init_loc prog l
       (L_IN : In l (prog_locs (stable_prog_to_prog prog))) :

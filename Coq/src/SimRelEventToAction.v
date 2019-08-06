@@ -4,7 +4,7 @@ From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel.
+     CombRelations SimTraversal SimulationRel.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -124,9 +124,9 @@ Section SimRelEventToAction.
 
       e2a_rmw : e2a □ Srmw ⊆ Grmw;
       e2a_ew  : e2a □ Sew  ⊆ eq;
-      e2a_co  : e2a □ Sco  ⊆ Gco;
+      e2a_co  : e2a □ Sco  ⊆ Gco^?;
 
-      e2a_jf  : e2a □ Sjf  ⊆ Gfurr;
+      e2a_jf  : e2a □ Sjf ⊆ Gfurr;
       e2a_jfrmw : e2a □ (Sjf ⨾ Srmw) ⊆ Grf ⨾ Grmw;
       e2a_jfacq : e2a □ Sjf ⨾ (Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘ ⊆
                   Grf ⨾ (Gsb ⨾ ⦗GF⦘)^? ⨾ ⦗GAcq⦘
@@ -147,8 +147,7 @@ Section SimRelEventToAction.
       e2a □₁ SEinit ≡₁ GEinit.
     Proof. 
       split. 
-      { eapply e2a_Einit; eauto.
-        apply stable_prog_to_prog_no_init; auto. }
+      { eapply e2a_Einit; eauto. }
       unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set. 
       unfolder. intros a [INITa GEa].
       edestruct e2a_GEinit as [e [[INITe SEe] gEQ]].
@@ -164,10 +163,6 @@ Section SimRelEventToAction.
       unfolder. intros x INITx. splits.
       { apply INITx. }
       { eapply e2a_Einit; eauto. 
-        (* TODO: make a lemma *)
-        { intros PROG_INIT. apply PROG_NINIT.
-          unfold stable_prog_to_prog in PROG_INIT.
-          eapply IdentMap.map_2; eauto. }
         basic_solver. }
       eapply e2a_GE; eauto.
       generalize INITx. 
@@ -240,14 +235,13 @@ Section SimRelEventToAction.
       rewrite <- !restr_relE.
       rewrite <- restr_inter_absorb_r.
       rewrite <- restr_inter_absorb_r 
-        with (r':=same_loc S).
+        with (r':=same_loc Slab).
       rewrite collect_rel_cr.
       rewrite collect_rel_interi. 
       apply clos_refl_mori, inter_rel_mori. 
       2: by eapply e2a_same_loc; eauto.
       rewrite !restr_relE, <- wf_sbE, <- ES.sbE; auto.
       eapply e2a_sb; eauto.
-      apply stable_prog_to_prog_no_init; auto.
     Qed.
 
     Lemma e2a_release : e2a □ Srelease ⊆ Grelease.
@@ -259,7 +253,6 @@ Section SimRelEventToAction.
       rewrite e2a_Rel, e2a_rs, e2a_sb, e2a_F.
       { unfold imm_s_hb.release. basic_solver 10. }
       all: eauto.
-      apply stable_prog_to_prog_no_init; auto.
     Qed.
 
     Lemma e2a_hb : e2a □ Shb ⊆ Ghb.
@@ -269,15 +262,14 @@ Section SimRelEventToAction.
       apply clos_trans_mori.
       rewrite collect_rel_union.
       apply union_mori.
-      { eapply e2a_sb; eauto.
-        apply stable_prog_to_prog_no_init; auto. }
+      { eapply e2a_sb; eauto. }
       unfold Consistency.sw.
       rewrite collect_rel_seqi.
       rewrite e2a_release. by rewrite e2a_jfacq.
     Qed.
 
     Lemma e2a_kEninit k (st : thread_st (ktid k))
-          (INK : K S (k, thread_cont_st (ktid k) st)) :
+          (INK : K (k, thread_cont_st (ktid k) st)) :
       e2a □₁ (kE k \₁ SEinit) ≡₁ acts_set st.(ProgToExecution.G).
     Proof. 
       assert (wf_thread_state (ktid k) st) as WFT.
@@ -344,7 +336,7 @@ Section SimRelEventToAction.
     Qed.
 
     Lemma e2a_kE k (st : thread_st (ktid k))
-          (INK : K S (k, thread_cont_st (ktid k) st)) :
+          (INK : K (k, thread_cont_st (ktid k) st)) :
       e2a □₁ kE k ≡₁ GEinit ∪₁ acts_set st.(ProgToExecution.G).
     Proof.
       assert (wf_thread_state (ktid k) st) as WFT.
@@ -357,6 +349,25 @@ Section SimRelEventToAction.
       apply set_union_Propere.
       { apply e2a_same_Einit; auto. }
       by apply e2a_kEninit.
+    Qed.
+
+    Lemma e2a_kE_eindex k (st : thread_st (ktid k))
+          (INK : K (k, thread_cont_st (ktid k) st)) :
+      ES.seqn S □₁ (kE k \₁ SEinit) ⊆₁ fun n => n < eindex st.
+    Proof. 
+      unfolder.
+      intros n [x [[kSBx nINITx] SEQNx]].
+      unfold ES.cont_sb_dom in kSBx.
+      subst n. destruct k.
+      { by exfalso. }
+      erewrite contseqn; eauto.
+      unfolder in kSBx. desf.
+      apply ES.seqn_sb_alt in kSBx; auto.
+      apply ES.sb_tid; auto.
+      apply seq_eqv_l. 
+      do 2 (split; auto).
+      apply ES.sbE in kSBx; auto.
+      generalize kSBx. basic_solver.
     Qed.
 
   End SimRelEventToActionProps. 
@@ -584,6 +595,51 @@ Section SimRelEventToActionLemmas.
     all : subst k; eauto. 
   Qed.
 
+  Lemma basic_step_e2a_cont_icf_dom k k' e e' S'
+        (st st' : thread_st (ES.cont_thread S k))
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
+    e2a S □₁ ES.cont_icf_dom S k ⊆₁ eq (e2a S' e).
+  Proof.
+    cdes BSTEP_.
+    intros x' [x [kICFx EQx']]. subst x'.
+    erewrite basic_step_e2a_e.
+    2 : apply BSTEP_.
+    symmetry. 
+    erewrite e2a_ninit.
+    2 : eapply ES.cont_icf_domEnint; eauto.
+    unfold ES.cont_icf_dom in kICFx.
+    destruct kICFx as [y HH].
+    apply seq_eqv_lr in HH.
+    destruct HH as [kLASTy [SBIMM TIDx]].
+    rewrite TIDx.
+    arewrite (ES.seqn S x = eindex st); auto.
+    unfold ES.cont_last, ES.cont_thread in *.
+    destruct k. 
+    { erewrite continit; eauto.
+      (* TODO: make a lemma *)
+      unfold ES.seqn.
+      arewrite_false (Ssb S ∩ ES.same_tid S ⨾ ⦗eq x⦘).
+      2 : by rewrite dom_empty, countNatP_empty. 
+      rewrite seq_eqv_r.
+      intros z z' [[SB STID] EQz'].
+      subst z'.
+      eapply SBIMM; eauto.
+      eapply ES.sb_init; auto. 
+      split; auto.
+      split.
+      { apply ES.sbE in SB; auto.
+        generalize SB. basic_solver. }
+      intros [_ INITz].
+      eapply ES.init_tid_K; eauto.
+      do 2 eexists; splits; eauto.
+      unfold ES.cont_thread.
+      congruence. }
+    subst eid.
+    erewrite ES.seqn_immsb; eauto.
+    2 : by symmetry. 
+    symmetry. eapply contseqn; eauto. 
+  Qed.
+
   Lemma basic_step_cert_dom_ne k k' e e' S' 
         (st st' : thread_st (ktid S k))
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
@@ -637,10 +693,10 @@ Section SimRelEventToActionLemmas.
     assert (basic_step e e' S S') as BSTEP. 
     { econstructor. eauto. }
     unfold cert_dom. 
-    erewrite basic_step_cont_thread_k; eauto. 
+    erewrite basic_step_cont_thread'; eauto. 
     rewrite !set_unionA.
     do 2 (eapply set_union_Propere; auto). 
-    edestruct lbl_step_cases as [l [l' HH]].
+    edestruct ilbl_step_cases as [l [l' HH]].
     { eapply SRK. eauto. }
     { apply STEP. }
     destruct HH as [LBLS HH].
@@ -749,12 +805,12 @@ Section SimRelEventToActionLemmas.
     { erewrite set_collect_eq_dom; [eapply SRE2A|].
       eapply basic_step_e2a_eq_dom; eauto. } 
     { rewrite set_collect_eq.
-      apply eq_predicate. 
+      apply set_subset_eq. 
       eapply basic_step_e2a_GE_e; eauto. }
     destruct e' as [e'|]; [|basic_solver]. 
     unfold eq_opt. 
     rewrite set_collect_eq.
-    apply eq_predicate. 
+    apply set_subset_eq. 
     eapply basic_step_e2a_GE_e'; eauto. 
   Qed.
 
@@ -779,31 +835,18 @@ Section SimRelEventToActionLemmas.
       { rewrite updo; [|omega].
           by rewrite upds. }
         by rewrite upds. }
-    edestruct lbl_step_cases as [l [l' HH]]. 
-    { eapply SRK; eauto. }
-    { eapply STEP. }
-    destruct HH as [AA BB].
-    apply opt_to_list_app_singl in AA.
-    destruct AA as [LA LB].
-    subst l l'.
-    erewrite steps_preserve_lab.    
-    { erewrite basic_step_e2a_e.
-      2-5 : eauto; apply SRCC.
-      destruct BB as [BB | BB].
-      { destruct BB as [_ [ACTS [LAB _]]]. 
-        rewrite LAB. by rewrite upds. }
-      destruct BB as [_ [ACTS [LAB HH]]].
-      desf. rewrite LAB.
-      unfold upd_opt.
-      rewrite updo. 
-      { rewrite upds. basic_solver. }
-      red. intros HH. inversion HH. omega. }
+    erewrite steps_preserve_lab; eauto.
+    { erewrite basic_step_e2a_e; eauto.
+      eapply ilbl_step_eindex_lbl; eauto.
+      { eapply SRK; eauto. }
+      apply STEP. }
     { by rewrite GTIDe. }
     { apply lbl_steps_in_steps. 
       by rewrite GTIDe. }    
-    erewrite basic_step_e2a_e.
-    2-5 : eauto; apply SRCC.
-    desf; apply ACTS; basic_solver.    
+    erewrite basic_step_e2a_e; eauto.
+    eapply acts_clos; auto.
+    eapply ilbl_step_eindex_lt.
+    apply STEP.
   Qed.
 
   Lemma basic_step_e2a_lab_e' TC' k k' e e' S' 
@@ -826,27 +869,22 @@ Section SimRelEventToActionLemmas.
     arewrite ((Slab S') e' = lbl').
     { rewrite LAB'. unfold upd_opt, opt_ext in *.
       by rewrite upds. }
-    edestruct lbl_step_cases as [l [l' HH]]. 
-    { eapply SRK; eauto. }
-    { eapply STEP. }
-    destruct HH as [AA BB].
-    apply opt_to_list_app_singl in AA.
-    destruct AA as [LA LB].
-    subst l l'.
-    destruct BB as [BB | BB]; [desf|].
-    erewrite steps_preserve_lab.    
-    { erewrite basic_step_e2a_e'.
-        2-5 : eauto; apply SRCC.
-        destruct BB as [_ [ACTS [LAB HH]]].
-        desf. rewrite LAB.
-        unfold upd_opt.
-        by rewrite upds. }
+    erewrite steps_preserve_lab; eauto.
+    { erewrite basic_step_e2a_e'; eauto.
+      eapply ilbl_step_eindex_lbl'; eauto.
+      { eapply SRK; eauto. }
+      apply STEP. }
     { by rewrite GTIDe. }
     { apply lbl_steps_in_steps. 
       by rewrite GTIDe. }    
     erewrite basic_step_e2a_e'.
     2-5 : eauto; apply SRCC.
-    desf; apply ACTS; basic_solver.    
+    eapply acts_clos; auto.
+    erewrite ilbl_step_eindex_shift 
+      with (st' := st').
+    2 : eapply STEP.
+    unfold opt_to_list, app, length.
+    omega.
   Qed.
 
   Lemma basic_step_e2a_certlab_e TC' k k' e e' S' 

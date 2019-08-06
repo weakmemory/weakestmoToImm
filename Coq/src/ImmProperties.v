@@ -1,12 +1,12 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
-From imm Require Import AuxRel
+From imm Require Import 
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
      TraversalConfig Traversal TraversalConfigAlt SimTraversal SimTraversalProperties
-     CertExecution2.
+     CertExecution2 SimulationRel.
 Require Import AuxRel.
 Require Import AuxDef.
 
@@ -37,6 +37,24 @@ Notation "'E'" := G.(acts_set).
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
 Notation "'NTid' t" := (fun x => tid x <> t) (at level 1).
+
+Lemma sim_state_set_tid_eq mode thread s s' state
+      (EQ : s ∩₁ Tid thread ≡₁ s' ∩₁ Tid thread):
+  @sim_state G mode s thread state <->
+  @sim_state G mode s' thread state.
+Proof.
+  split; intros AA. 
+  all: red; splits; [|by apply AA].
+  all: ins; split; intros BB.
+  1,3: by apply AA; apply EQ.
+  all: by apply EQ; split; auto; apply AA.
+Qed.
+
+Lemma sim_state_set_eq mode thread s s' state
+      (EQ : s ≡₁ s'):
+  @sim_state G mode s thread state <->
+  @sim_state G mode s' thread state.
+Proof. apply sim_state_set_tid_eq. by rewrite EQ. Qed.
 
 Lemma is_init_tid : 
   is_init ⊆₁ Tid tid_init. 
@@ -280,7 +298,7 @@ Qed.
 Lemma isim_trav_step_new_e_tid_alt thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   covered TC' ∪₁ issued TC' ≡₁ 
-  (C ∪₁ I) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
+    (C ∪₁ I) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
 Proof. 
   assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
   rewrite isim_trav_step_new_e_tid at 1; eauto.
@@ -295,7 +313,7 @@ Qed.
 Lemma isim_trav_step_new_covered_tid thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   covered TC' ≡₁ 
-  C ∩₁ NTid thread ∪₁ covered TC' ∩₁ Tid thread.
+    C ∩₁ NTid thread ∪₁ covered TC' ∩₁ Tid thread.
 Proof. 
   assert (C ⊆₁ C ∩₁ NTid thread ∪₁ C ∩₁ Tid thread) as BB.
   { apply ntid_tid_set_inter. }
@@ -313,7 +331,7 @@ Qed.
 Lemma isim_trav_step_new_issued_tid thread TC' 
       (ITV : isim_trav_step G sc thread TC TC') : 
   issued TC' ≡₁ 
-  I ∩₁ NTid thread ∪₁ issued TC' ∩₁ Tid thread.
+    I ∩₁ NTid thread ∪₁ issued TC' ∩₁ Tid thread.
 Proof. 
   assert (I ⊆₁ I ∩₁ NTid thread ∪₁ I ∩₁ Tid thread) as BB.
   { apply ntid_tid_set_inter. }
@@ -584,13 +602,20 @@ Qed.
 Lemma initninit_in_ext_sb : is_init × (set_compl is_init) ⊆ ext_sb.
 Proof. unfold ext_sb. basic_solver. Qed.
 
+Lemma istep_eindex_shift thread st st' lbl
+      (STEP : ProgToExecution.istep thread lbl st st') :
+  eindex st' = eindex st + length lbl.
+Proof.
+  cdes STEP. inv ISTEP0. 
+  all: simpls; omega.
+Qed.
+
 Lemma eindex_step_mon thread st st'
       (STEP : ProgToExecution.step thread st st') :
   eindex st <= eindex st'.
 Proof.
-  cdes STEP. cdes STEP0.
-  inv ISTEP0.
-  all: rewrite UINDEX; omega.
+  cdes STEP.
+  rewrite (istep_eindex_shift STEP0). omega.
 Qed.
 
 Lemma eindex_steps_mon thread st st'
@@ -628,6 +653,41 @@ Proof.
   all: apply clos_rtn1_rt in STEPS.
   all: apply eindex_steps_mon in STEPS.
   all: omega.
+Qed.
+
+Lemma sb_release_rmw_in_fwbob
+      (SPL  : Execution_eco.sc_per_loc G)
+      (COMP : complete G) :
+  sb^? ∩ release ⨾ sb ∩ Events.same_loc lab ⨾ rmw ⊆ fwbob G.
+Proof.
+  rewrite (dom_r WF.(wf_rmwD)).
+  rewrite WF.(rmw_in_sb_loc).
+  sin_rewrite rewrite_trans.
+  2: by apply sb_same_loc_trans.
+  rewrite (dom_l WF.(wf_releaseD)).
+  arewrite (sb^? ∩ (⦗(F ∪₁ W) ∩₁ Rel⦘ ⨾ release) ⊆
+            ⦗(F ∪₁ W) ∩₁ Rel⦘ ⨾ (sb^? ∩ release)).
+  { basic_solver. }
+  rewrite set_inter_union_l.
+  rewrite id_union, seq_union_l.
+  unionL.
+  { unfold fwbob.
+    unionR right. 
+    arewrite (sb^? ∩ release ⨾ sb ∩ Events.same_loc lab ⊆ sb).
+    { generalize (@sb_trans G). basic_solver. }
+    mode_solver. }
+  unfold imm_s_hb.release.
+  arewrite (⦗W ∩₁ Rel⦘ ⨾ sb^? ∩ (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^? ⨾ rs G) ⊆
+            ⦗W ∩₁ Rel⦘ ⨾ sb^? ∩ (⦗Rel⦘ ⨾ rs G)).
+  { type_solver 10. }
+  rewrite rs_in_co; auto.
+  rewrite WF.(wf_col).
+  arewrite (sb^? ∩ (⦗Rel⦘ ⨾ ⦗W⦘ ⨾ (Events.same_loc lab)^?) ⊆
+               (sb ∩ Events.same_loc lab)^?).
+  { basic_solver. }
+  sin_rewrite rewrite_trans_seq_cr_l.
+  2: by apply sb_same_loc_trans.
+  unfold fwbob. eauto with hahn.
 Qed.
 
 End Properties.

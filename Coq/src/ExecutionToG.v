@@ -1,7 +1,7 @@
 Require Import Program.Basics.
 
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel Prog Execution.
+From imm Require Import Events Prog Execution.
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Execution.
@@ -249,7 +249,7 @@ Proof.
   unfold sb.
   rewrite X2G_acts_transfer; auto.
   split.
-  { rewrite <- restr_eqv_def.
+  { rewrite <- restr_relE.
     unfolder. 
     intros a1 a2 [ESB [[e1 [Xe1 eq2]] [e2 [Xe2 eq1]]]]. 
     exists e1, e2. splits; auto.

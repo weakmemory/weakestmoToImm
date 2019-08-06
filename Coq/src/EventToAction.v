@@ -2,7 +2,7 @@ Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
-     CombRelations AuxRel.
+     CombRelations.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -16,6 +16,7 @@ Local Open Scope program_scope.
 Section EventToAction.
 
   Variable S : ES.t.
+  Hypothesis WF : ES.Wf S.
   Variable G : execution.
   
   Notation "'SE'" := S.(ES.acts_set).
@@ -66,7 +67,7 @@ Section EventToAction.
       [auto | congruence]. 
   Qed.
 
-  Lemma e2a_init_loc (WF : ES.Wf S) e (EINITe : SEinit e) : 
+  Lemma e2a_init_loc e (EINITe : SEinit e) : 
     exists l, 
       ⟪ SLOC : Sloc e = Some l⟫ /\
       ⟪ E2Ai : e2a e = InitEvent l⟫. 
@@ -160,8 +161,7 @@ Section EventToAction.
   (******************************************************************************)
 
   Lemma e2a_ext_sb_restr (X : eventid -> Prop)
-        (XE : X ⊆₁ SE) 
-        (WF : ES.Wf S):
+        (XE : X ⊆₁ SE): 
     e2a □ restr_rel X Ssb ⊆ ext_sb.
   Proof.
     rewrite WF.(ES.sb_Einit_Eninit). 
@@ -184,8 +184,7 @@ Section EventToAction.
     by apply ES.seqn_sb_alt.
   Qed.
 
-  Lemma e2a_ext_sb 
-        (WF : ES.Wf S):
+  Lemma e2a_ext_sb :
     e2a □ Ssb ⊆ ext_sb.
   Proof.
     rewrite <- e2a_ext_sb_restr; eauto.
@@ -194,8 +193,7 @@ Section EventToAction.
   Qed.
     
   Lemma e2a_sb 
-        (EE : e2a □₁ SE ⊆₁ GE) 
-        (WF : ES.Wf S):
+        (EE : e2a □₁ SE ⊆₁ GE) :
     e2a □ Ssb ⊆ Gsb.
   Proof.
     rewrite WF.(ES.sbE).
@@ -204,17 +202,62 @@ Section EventToAction.
   Qed.
 
   (******************************************************************************)
-  (** ** e2a is injective on non-conflicting events *)
+  (** ** e2a cf properties *)
   (******************************************************************************)
 
-  (* Lemma e2a_ncf_eq (WF : ES.Wf S) x y (nCF : ~ Scf x y) (EQ : e2a x = e2a y) :  *)
-  (*   x = y. *)
-  (* Proof.  *)
+  Lemma e2a_eq_in_cf x y (Ex : SE x) (Ey : SE y) :
+    e2a x = e2a y -> x = y \/ Scf x y. 
+  Proof. 
+    intros EQ.
+    apply ES.acts_set_split in Ex.
+    destruct Ex as [INITx | nINITx].
+    { edestruct e2a_init_loc as [l HH]; 
+        eauto; desc.
+      assert (SEinit y) as INITy.
+      { destruct (e2a y) as [l' | HH] eqn:Heqy; 
+          [|congruence].
+        unfold e2a in Heqy.
+        destruct 
+          (excluded_middle_informative (Stid y = tid_init)); 
+          [|congruence].
+        unfold ES.acts_init_set.
+        basic_solver. }
+      edestruct e2a_init_loc as [l' HH]; 
+        eauto; desc.
+      left. eapply WF.(ES.init_uniq); auto. 
+      congruence. }
+    erewrite e2a_ninit in EQ; auto.
+    assert (SEninit y) as nINITy.
+    { destruct (e2a y) as [l' | HH] eqn:Heqy; 
+        [congruence|].
+      unfold e2a in Heqy.
+      destruct 
+        (excluded_middle_informative (Stid y = tid_init)); 
+        [congruence|].
+      unfold ES.acts_ninit_set, ES.acts_init_set.
+      split; auto.
+      intros [_ INIT]; auto. }
+    erewrite e2a_ninit in EQ; auto.
+    inversion EQ as [[TIDeq SEQNeq]].
+    destruct (classic (x = y)) as [EQxy | nEQxy].
+    { basic_solver. }
+    right.
+    edestruct ES.same_thread_alt 
+      with (x := x) (y := y) as [SB | CF]; eauto. 
+    { apply nINITx. }
+    exfalso.
+    destruct SB as [EQ' | [SB | tSB]]; auto.
+    { apply ES.seqn_sb_alt in SB; auto. omega. }
+    unfold transp in tSB.
+    apply ES.seqn_sb_alt in tSB; auto; [omega|]. 
+    red. congruence.
+  Qed.
 
-  Lemma e2a_inj (WF : ES.Wf S) X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
+  Lemma e2a_inj X (XinSE : X ⊆₁ SE) (CFF : ES.cf_free S X) : 
     inj_dom X e2a. 
   Proof. 
     unfolder. ins. 
+
     destruct 
       (excluded_middle_informative (Stid x = tid_init), 
        excluded_middle_informative (Stid y = tid_init)) 
@@ -225,10 +268,10 @@ Section EventToAction.
       assert (SEinit y) as EINITy. 
       { unfold ES.acts_init_set, set_inter.
         split; auto. }
-      edestruct e2a_init_loc as [lx [SLOCx GEx]]; 
-        [auto | apply EINITx |].
-      edestruct e2a_init_loc as [ly [SLOCy GEy]]; 
-        [auto | apply EINITy |].
+      edestruct e2a_init_loc as [lx [SLOCx GEx]]; auto. 
+      { apply EINITx. }
+      edestruct e2a_init_loc as [ly [SLOCy GEy]]; auto. 
+      { apply EINITy. }
       eapply WF.(ES.init_uniq); auto; congruence. }
     all: unfold e2a in *; desf.
     eapply ES.seqn_inj. 
@@ -251,12 +294,46 @@ Section EventToAction.
     red. intros [_ HH]. auto. 
   Qed.
 
-  Lemma e2a_inj_init (WF : ES.Wf S) : 
+  Lemma e2a_inj_init : 
     inj_dom SEinit e2a. 
   Proof. 
     eapply e2a_inj; auto.
     { unfold ES.acts_init_set. basic_solver. }
     apply ES.ncfEinit.
+  Qed.
+
+  Lemma e2a_cont_sb_dom_inj k a b lang (st : Language.state lang)
+        (KE : K (k, existT Language.state lang st))
+        (ACTS : e2a □₁ SE ⊆₁ acts_set G)
+        (AIN : ES.cont_sb_dom S k a)
+        (BIN : ES.cont_sb_dom S k b)
+        (EQ  : e2a a = e2a b) :
+    a = b.
+  Proof.
+    assert (SE a) as EA.
+    { eapply ES.cont_sb_domE; eauto. }
+    assert (SE b) as EB.
+    { eapply ES.cont_sb_domE; eauto. }
+    red in AIN. red in BIN. desf.
+    { eapply e2a_inj_init; eauto. }
+    assert (a = b \/ (Ssb a b \/ Ssb b a)) as AA.
+    2: { destruct AA as [|AA]; auto.
+         exfalso. desf.
+         all: eapply sb_irr with (G:=G); eapply e2a_sb; eauto.
+         1,2: by red; eauto. }
+    destruct (classic (SEinit a)) as [AINIT|ANINIT].
+    { destruct (classic (SEinit b)) as [BINIT|BNINIT].
+      { left. eapply e2a_inj_init; eauto. }
+      right. left. apply WF.(ES.sb_Einit_Eninit). left.
+      repeat (split; auto). }
+    destruct (classic (SEinit b)) as [BINIT|BNINIT].
+    { right. right. apply WF.(ES.sb_Einit_Eninit). left.
+      repeat (split; auto). }
+    destruct (classic (a = b)) as [|NEQ]; [by left|right].
+    unfolder in AIN. unfolder in BIN. desf; auto.
+    eapply WF.(ES.sb_tot); auto.
+    { eapply ES.K_inEninit; eauto. }
+    all: unfolder; splits; eauto.
   Qed.
 
 End EventToAction.
@@ -322,6 +399,26 @@ Section EventToActionLemmas.
     assert (ES.seqn S' x = ES.seqn S x) as DD.
     { eapply basic_step_seqn_eq_dom; eauto. }
     congruence.
+  Qed.
+
+  Lemma basic_step_e2a_set_collect_eq_dom e e' S' s
+        (BSTEP : basic_step e e' S S') 
+        (inE : s ⊆₁ SE S) :
+    e2a S' □₁ s ≡₁ e2a S □₁ s.
+  Proof. 
+    eapply set_collect_eq_dom.
+    rewrite inE.
+    eapply basic_step_e2a_eq_dom; eauto.
+  Qed.
+
+  Lemma basic_step_e2a_collect_rel_eq_dom e e' S' r
+        (BSTEP : basic_step e e' S S') 
+        (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘) :
+    e2a S' □ r ≡ e2a S □ r.
+  Proof. 
+    rewrite restrE, <- restr_relE. 
+    eapply collect_rel_restr_eq_dom.
+    eapply basic_step_e2a_eq_dom; eauto.
   Qed.
 
   Lemma basic_step_e2a_set_map_inter_old e e' S' s s'

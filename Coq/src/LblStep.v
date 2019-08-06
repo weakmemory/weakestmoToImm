@@ -22,6 +22,22 @@ Proof.
   all: desf.
 Qed.
 
+Lemma unique_ineps_step thread lbl state state' state''
+      (STEP1 : istep thread lbl state state')
+      (STEP2 : istep thread lbl state state'') :
+  state' = state''.
+Proof.
+  cdes STEP1.
+  cdes STEP2.
+  rewrite <- ISTEP in ISTEP1. inv ISTEP1.
+  inv ISTEP0.
+  all: inv ISTEP2.
+  all: destruct state'.
+  all: destruct state''.
+  all: simpls.
+  all: desf.
+Qed.
+
 Definition stable_state :=
   set_compl
     (dom_rel (fun x y => exists thread, istep thread [] x y)).
@@ -127,9 +143,9 @@ Qed.
 
 Lemma steps_to_eps_steps_steps thread state state' state''
       (STBL : stable_state state'')
-      (EPS_STEPS : (istep thread [])^* state state')
-      (    STEPS : (step thread)^*     state state'') :
-  (step thread)^* state' state''.
+      (EPS_STEPS : (istep thread [])＊ state state')
+      (    STEPS : (step thread)＊     state state'') :
+  (step thread)＊ state' state''.
 Proof.
   apply clos_rt_rt1n in EPS_STEPS.
   induction EPS_STEPS; auto.
@@ -282,11 +298,154 @@ Proof. unfold step. basic_solver. Qed.
 Lemma eps_steps_in_steps thread : (istep thread [])＊ ⊆ (step thread)＊.
 Proof. by rewrite eps_step_in_step. Qed.
 
+Lemma no_step_from_terminal thread : ⦗ is_terminal ⦘ ⨾ (step thread) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  unfolder. intros x y [TERM STEP]. red in TERM.
+  assert (nth_error (instrs x) (pc x) <> None) as NN.
+  { cdes STEP. cdes STEP0. by inv ISTEP0; rewrite <- ISTEP. }
+  apply nth_error_Some in NN. omega.
+Qed.
+
+Lemma no_lbl_step_from_terminal thread : ⦗ is_terminal ⦘ ⨾ (lbl_step thread) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  rewrite lbl_step_in_steps. rewrite ct_begin, <- seqA.
+  rewrite no_step_from_terminal. basic_solver.
+Qed.
+
+Lemma stable_state_no_eps_step thread : ⦗stable_state⦘ ⨾ (istep thread []) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  unfolder. intros x y [ST STEP].
+  apply ST. do 2 eexists. eauto.
+Qed.
+
+Lemma stable_state_eps_steps_refl thread :
+  ⦗stable_state⦘ ⨾ (istep thread [])＊ ≡ ⦗stable_state⦘.
+Proof.
+  rewrite rtE, ct_begin, seq_union_r, seq_id_r.
+  rewrite <- seqA. rewrite stable_state_no_eps_step.
+  basic_solver.
+Qed.
+
+Lemma unique_eps_steps_to_stable thread st st' st''
+      (STEP1 : ((istep thread [])＊ ⨾ ⦗stable_state⦘) st st')
+      (STEP2 : ((istep thread [])＊ ⨾ ⦗stable_state⦘) st st'') :
+  st'' = st'.
+Proof.
+  destruct_seq_r STEP1 as ST1.
+  destruct_seq_r STEP2 as ST2.
+  apply clos_rt_rt1n in STEP1.
+  induction STEP1.
+  { symmetry. eapply stable_state_eps_steps_refl.
+    apply seq_eqv_l. split; eauto. }
+  apply IHSTEP1.
+  specialize (IHSTEP1 ST1); auto.
+  apply clos_rt_rt1n in STEP2.
+  destruct STEP2 as [|w].
+  { exfalso.
+    apply ST2. do 2 eexists. eauto. }
+  assert (w = y); subst.
+  2: by apply clos_rt1n_rt.
+  eapply unique_eps_step; eauto.
+Qed.
+
+Lemma unique_ilbl_step thread lbl state state' state''
+      (STEP1 : ilbl_step thread lbl state state')
+      (STEP2 : ilbl_step thread lbl state state'') :
+  state' = state''.
+Proof.
+  cdes STEP1.
+  cdes STEP2.
+  destruct STEP0 as [st0 [ST01 ST02]].
+  destruct STEP3 as [st1 [ST11 ST12]].
+  assert (st0 = st1); subst.
+  { cdes ST01. cdes ST11. eapply unique_ineps_step; eauto. }
+  eapply unique_eps_steps_to_stable; eauto.
+Qed.
+
+(* TODO: replace w/ something standard or move to AuxDef.v. *)
+Lemma app_eq {A B} (f f' : A -> B) (EQ : f = f') (a : A) :
+  f a = f' a.
+Proof. by rewrite EQ. Qed.
+
+Lemma unique_lbl_istep_same_G thread lbl lbl' state state' state''
+      (STEP1 : istep thread lbl  state state')
+      (STEP2 : istep thread lbl' state state'')
+      (GEQ   : ProgToExecution.G state' = ProgToExecution.G state'') :
+  lbl = lbl'.
+Proof.
+  cdes STEP1. cdes STEP2.
+  inv ISTEP0.
+  all: inv ISTEP2; rewrite <- ISTEP in ISTEP1; inv ISTEP1.
+  3,4: by exfalso;
+    unfold add, add_rmw in *;
+    rewrite <- GEQ in UG0; rewrite UG in UG0; inv UG0;
+      clear -H1; induction (acts (G state)); inv H1.
+  all: assert (val = val0); desf;
+    rewrite <- GEQ in UG0; rewrite UG in UG0; inv UG0;
+    pose proof (app_eq _ _ H0 (ThreadEvent thread (eindex state))) as AA.
+  1,2: by rewrite !upds in *; inv AA.
+  rewrite updo in *; [rewrite upds in *|].
+  2: { intros BB. inv BB. omega. }
+  rewrite updo in *; [rewrite upds in *|].
+  2: { intros BB. inv BB. omega. }
+  inv AA.
+Qed.
+
+Lemma unique_lbl_istep thread lbl lbl' state state'
+      (STEP1 : istep thread lbl  state state')
+      (STEP2 : istep thread lbl' state state') :
+  lbl = lbl'.
+Proof. eapply unique_lbl_istep_same_G; eauto. Qed.
+
+Lemma unique_lbl_ilbl_step thread lbl lbl' state state'
+      (STEP1 : ilbl_step thread lbl  state state')
+      (STEP2 : ilbl_step thread lbl' state state') :
+  lbl = lbl'.
+Proof.
+  cdes STEP1.
+  cdes STEP2.
+  destruct STEP0 as [st0 [ST01 ST02]]. cdes ST01.
+  destruct STEP3 as [st1 [ST11 ST12]]. cdes ST11.
+  destruct_seq_r ST02 as STBL.
+  destruct_seq_r ST12 as STBL'.
+  eapply unique_lbl_istep_same_G; eauto.
+  erewrite <- eps_steps_same_G with (state':=state'); eauto.
+  eapply eps_steps_same_G; eauto.
+Qed.
+
+Lemma wf_thread_state_ilbl_step thread lbls state state'
+      (WTS  : wf_thread_state thread state)
+      (STEP : ilbl_step thread lbls state state') :
+  wf_thread_state thread state'.
+Proof.
+  eapply wf_thread_state_steps; eauto.
+  apply rtE. right. eapply ilbl_step_in_steps; eauto.
+Qed.
+
+Lemma wf_thread_state_lbl_step thread state state'
+      (WTS  : wf_thread_state thread state)
+      (STEP : lbl_step thread state state') :
+  wf_thread_state thread state'.
+Proof. cdes STEP. eapply wf_thread_state_ilbl_step; eauto. Qed.
+
+Lemma wf_thread_state_lbl_steps thread state state'
+      (WTS  : wf_thread_state thread state)
+      (STEPS : (lbl_step thread)＊ state state') :
+  wf_thread_state thread state'.
+Proof.
+  apply clos_rt_rt1n in STEPS.
+  induction STEPS; auto.
+  apply IHSTEPS. eapply wf_thread_state_lbl_step; eauto.
+Qed.
+
 (****************************
 ** Destruction of lbl_step **
 *****************************)
 
-Lemma lbl_step_cases thread lbls state state'
+Lemma ilbl_step_cases thread lbls state state'
       (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread lbls state state') :
   exists lbl lbl',
@@ -367,29 +526,320 @@ Proof.
 
 Qed.
 
-Lemma ineps_step_eindex_lt thread st st' lbl (STEP : ineps_step thread lbl st st') :
-  eindex st < eindex st'.
+Lemma ilbl_step_acts_set thread lbl lbl' state state'
+      (WFT : wf_thread_state thread state)
+      (ILBL_STEP : ilbl_step thread (opt_to_list lbl' ++ [lbl]) state state') :
+  exists e e',
+    ⟪ REPe  : e = ThreadEvent thread state.(eindex) ⟫ /\
+    ⟪ REPe' : match lbl' with
+              | None   => e' = None
+              | Some _ => e' = Some (ThreadEvent thread (1 + state.(eindex)))
+              end ⟫ /\
+    ⟪ ACTS : acts_set state'.(G) ≡₁ acts_set state.(G) ∪₁ eq e ∪₁ eq_opt e'⟫.
 Proof.
-  cdes STEP. cdes STEP1.
-  inv ISTEP0; rewrite UINDEX; omega.
+  unfold eq_opt.
+  edestruct ilbl_step_cases as [l [l' [LBLS HH]]]; eauto. 
+  apply opt_to_list_app_singl in LBLS. desc. subst l l'.
+  destruct HH as [HA | HB].
+  { destruct HA as [_ [ACTS [_ [LBL' _]]]].
+    red in ACTS, LBL'. subst lbl'.
+    do 2 eexists; splits; eauto.
+    generalize ACTS. basic_solver. }
+  destruct HB as [_ [ACTS [_ [LBL' _]]]].
+  desc. subst lbl'.
+  do 2 eexists; splits; eauto.
 Qed.
 
-Lemma ilbl_step_eindex_lt thread st st' lbl (STEP : ilbl_step thread lbl st st') :
-  eindex st < eindex st'.
+Lemma ilbl_step_lbls thread lbls state state'
+      (WFT : wf_thread_state thread state)
+      (ILBL_STEP : ilbl_step thread lbls state state') :
+  exists lbl lbl', lbls = opt_to_list lbl' ++ [lbl].
+Proof. 
+  edestruct ilbl_step_cases as [lbl [lbl' [LBLS _]]]; eauto. 
+Qed.
+
+Lemma ineps_step_eindex_shift thread lbl st st'
+      (STEP : ineps_step thread lbl st st') :
+  eindex st' = eindex st + length lbl.
+Proof.
+  cdes STEP. erewrite istep_eindex_shift with (st':=st'); eauto.
+Qed.
+
+Lemma eps_step_eindex_same thread st st'
+      (STEP : istep thread [] st st') :
+  eindex st' = eindex st.
+Proof. erewrite istep_eindex_shift; eauto. simpls. omega. Qed.
+
+Lemma eps_steps_eindex_same thread st st'
+      (STEP : (istep thread [])＊ st st') :
+  eindex st' = eindex st.
+Proof.
+  induction STEP; auto.
+  2: by intuition.
+  erewrite eps_step_eindex_same; eauto.
+Qed.
+
+Lemma ilbl_step_eindex_shift thread lbl st st'
+      (STEP : ilbl_step thread lbl st st') :
+  eindex st' = eindex st + length lbl.
 Proof.
   cdes STEP.
   destruct STEP0 as [st'' [ST ST']].
   destruct_seq_r ST' as BB.
-  assert (eindex st'' <= eindex st') as AA.
-  { eapply eindex_steps_mon. apply eps_steps_in_steps. eauto. }
-  assert (eindex st < eindex st'') as CC.
-  2: omega.
-  eapply ineps_step_eindex_lt; eauto.
+  arewrite (eindex st' = eindex st'').
+  { eapply eps_steps_eindex_same. eauto. }
+  eapply ineps_step_eindex_shift; eauto.
 Qed.
 
-Lemma lbl_step_eindex_lt thread st st' (STEP : lbl_step thread st st') :
+Lemma ineps_step_eindex_lt thread st st' lbl
+      (STEP : ineps_step thread lbl st st') :
+  eindex st < eindex st'.
+Proof.
+  erewrite ineps_step_eindex_shift with (st':=st'); eauto.
+  cdes STEP. destruct lbl; simpls. omega.
+Qed.
+
+Lemma ilbl_step_eindex_lt thread st st' lbl
+      (STEP : ilbl_step thread lbl st st') :
+  eindex st < eindex st'.
+Proof.
+  erewrite ilbl_step_eindex_shift with (st':=st'); eauto.
+  apply ilbl_step_alt in STEP. desf.
+  destruct lbl; simpls. omega.
+Qed.
+
+Lemma lbl_step_eindex_lt thread st st'
+      (STEP : lbl_step thread st st') :
   eindex st < eindex st'.
 Proof.
   cdes STEP.
   eapply ilbl_step_eindex_lt; eauto.
+Qed.
+
+Lemma istep_eindex_lbl thread lbl lbl' st st'
+      (WTS : wf_thread_state thread st)
+      (STEP: istep thread (opt_to_list lbl' ++ [lbl]) st st') :
+  lbl = lab (ProgToExecution.G st') (ThreadEvent thread (eindex st)).
+Proof.
+  cdes STEP. inv ISTEP0.
+  1-2: by destruct lbl'; simpls.
+
+  1-4: apply app_eq_unit in LABELS; desf.
+  1-4: by rewrite UG; unfold add in *; simpls; rewrite upds.
+
+  all: apply app_eq_unit2 in LABELS; desf.
+  all: rewrite UG; unfold add_rmw in *; simpls.
+  all: rewrite updo; [|intros BB; inv BB; omega].
+  all: by rewrite upds.
+Qed.
+
+Lemma istep_eindex_lbl' thread lbl lbl' st st'
+      (WTS : wf_thread_state thread st)
+      (STEP: istep thread (opt_to_list (Some lbl') ++ [lbl]) st st') :
+  lbl' = lab (ProgToExecution.G st') (ThreadEvent thread (1 + eindex st)).
+Proof.
+  assert (eindex st + 1 = 1 + eindex st) 
+    as HH by omega.
+  cdes STEP; inv ISTEP0;
+    apply opt_to_list_app_singl_pair in LABELS; desf;
+    rewrite UG; unfold add_rmw in *; simpls;
+    by rewrite HH, upds.
+Qed.
+
+Lemma ilbl_step_eindex_lbl thread lbl lbl' st st'
+      (WTS : wf_thread_state thread st)
+      (STEP: ilbl_step thread (opt_to_list lbl' ++ [lbl]) st st') :
+  lbl = lab (ProgToExecution.G st') (ThreadEvent thread (eindex st)).
+Proof.
+  edestruct ilbl_step_cases with (state0:=st) (state':=st')
+    as [l [l']]; eauto. desf.
+  all: rewrite GLAB.
+  1-4: by rewrite upds; apply app_inj_tail in LBLS; desf.
+  unfold upd_opt. rewrite updo.
+  2: intros BB; inv BB; omega.
+  apply app_inj_tail in LBLS; desf. by rewrite upds.
+Qed.
+
+Lemma ilbl_step_eindex_lbl' thread lbl lbl' st st'
+      (WTS : wf_thread_state thread st)
+      (STEP: ilbl_step thread (opt_to_list (Some lbl') ++ [lbl]) st st') :
+  lbl' = lab (ProgToExecution.G st') (ThreadEvent thread (1 + eindex st)).
+Proof.
+  edestruct ilbl_step_cases with (state0:=st) (state':=st')
+    as [l [l']]; eauto. desf.
+  all: rewrite GLAB.
+  by rewrite upd_opt_some, upds.
+Qed.
+
+Lemma ilbl_step_nrmw_None thread lbl lbl' st st'
+      (WTS : wf_thread_state thread st)
+      (STEP : ilbl_step
+                thread 
+                (opt_to_list lbl' ++ [lbl]) st st')
+      (NRMW : ~ rmw (ProgToExecution.G st') (ThreadEvent thread (eindex st))
+                (ThreadEvent thread (1 + eindex st))) :
+  lbl' = None.
+Proof.
+  edestruct ilbl_step_cases with (state0:=st) (state':=st')
+    as [l [l']]; eauto. desf.
+  1-4: by apply app_eq_unit in LBLS; desf; destruct lbl'; simpls; inv LBLS.
+  exfalso. apply NRMW. apply GRMW. basic_solver.
+Qed.
+
+Lemma same_label_u2v_istep thread la la' lb lb' state state' state''
+      (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') :
+  same_label_u2v la lb.
+Proof. 
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
+  red in EQis1, EQis2. 
+  assert (instr1 = instr2) as EQii.
+  { congruence. }
+  inversion STEP1_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all: inversion STEP2_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all : rewrite EQii, II0 in II; inversion II; subst.
+  all: 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS; 
+    try apply opt_to_list_app_singl_pair 
+      in LABELS; 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS0;
+    try apply opt_to_list_app_singl_pair 
+      in LABELS0;
+    desc; rewrite LABELS, LABELS0; by red.
+Qed.
+
+Lemma same_label_u2v_ilbl_step thread la la' lb lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') :
+  same_label_u2v la lb.
+Proof. 
+  unfold ilbl_step, ineps_step in *.
+  destruct STEP1 as [s1 [[_ ISTEP1] _]].
+  destruct STEP2 as [s2 [[_ ISTEP2] _]].
+  eapply same_label_u2v_istep; eauto.
+Qed.
+
+Lemma same_label_fst_istep thread l la' lb' state state' state''
+      (STEP1 : istep thread (opt_to_list la' ++ [l]) state state')
+      (STEP2 : istep thread (opt_to_list lb' ++ [l]) state state'') :
+  la' = lb'.
+Proof. 
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
+  red in EQis1, EQis2. 
+  assert (instr1 = instr2) as EQii.
+  { congruence. }
+  inversion STEP1_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all: inversion STEP2_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all : rewrite EQii, II0 in II; inversion II; subst.
+  all: 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS; 
+    try apply opt_to_list_app_singl_pair 
+      in LABELS; 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS0;
+    try apply opt_to_list_app_singl_pair 
+      in LABELS0;
+    desc; congruence.
+Qed.
+
+Lemma same_label_fst_ilbl_step thread l la' lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [l]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [l]) state state'') :
+  la' = lb'.
+Proof. 
+  unfold ilbl_step, ineps_step in *.
+  destruct STEP1 as [s1 [[_ ISTEP1] _]].
+  destruct STEP2 as [s2 [[_ ISTEP2] _]].
+  eapply same_label_fst_istep; eauto.
+Qed.
+
+Lemma nR_istep thread la la' lb lb' state state' state''
+      (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  ⟪ EQLab    : la = lb ⟫ /\
+  ⟪ LabNone  : la' = None ⟫ /\
+  ⟪ LabNone' : lb' = None ⟫.
+Proof. 
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
+  red in EQis1, EQis2. 
+  assert (instr1 = instr2) as EQii.
+  { congruence. }
+  unfold is_r, id in nR.
+  inversion STEP1_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all: 
+    try apply opt_to_list_app_singl_singl 
+      in LABELS; 
+    try apply opt_to_list_app_singl_pair 
+      in LABELS;
+    desc.
+  all: try by (
+    exfalso; apply nR; by rewrite LABELS
+  ).
+  all: inversion STEP2_;
+    try (by exfalso; eapply app_cons_not_nil; eauto).
+  all: rewrite EQii, II0 in II; inversion II; subst.
+  all: apply opt_to_list_app_singl_singl in LABELS1.
+  all: desc; splits; congruence.
+Qed.
+
+Lemma nR_ilbl_step thread la la' lb lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  ⟪ EQLab    : la = lb ⟫ /\
+  ⟪ LabNone  : la' = None ⟫ /\
+  ⟪ LabNone' : lb' = None ⟫.
+Proof.
+  unfold ilbl_step, ineps_step in *.
+  destruct STEP1 as [s1 [[_ ISTEP1] _]].
+  destruct STEP2 as [s2 [[_ ISTEP2] _]].
+  eapply nR_istep; eauto.
+Qed.
+
+Lemma same_label_nR_istep thread la la' lb lb' state state' state''
+      (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  la = lb.
+Proof. eapply nR_istep; eauto. Qed.
+  
+Lemma same_label_nR_ilbl_step thread la la' lb lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  la = lb.
+Proof. eapply nR_ilbl_step; eauto. Qed.
+
+Lemma unique_same_label_fst_ilbl_step thread l la' lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [l]) state state' )
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [l]) state state'') :
+  state' = state''.
+Proof. 
+  eapply unique_ilbl_step; eauto.
+  erewrite same_label_fst_ilbl_step 
+    with (la' := la'); eauto.
+Qed.
+
+Lemma unique_nR_ilbl_step thread la la' lb lb' state state' state''
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (nR : ~ is_r id la) :
+  state' = state''.
+Proof. 
+  eapply unique_ilbl_step; eauto.
+  edestruct nR_ilbl_step 
+    with (la := la) as [HA [HB HC]]; eauto.
+  red in HA, HB, HC. by subst.
 Qed.

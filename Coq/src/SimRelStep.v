@@ -6,7 +6,7 @@ From imm Require Import Events Execution
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
-     SubExecution CombRelations AuxRel.
+     SubExecution CombRelations.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -27,6 +27,7 @@ Require Import SimRelCert.
 Require Import SimRelCertBasicStep.
 Require Import SimRelCertStep.
 Require Import SimRelCertStepCoh.
+Require Import SimRelCertStepLemma.
 Require Import ProgES.
 
 Set Implicit Arguments.
@@ -82,8 +83,8 @@ Section SimRelStep.
 
   Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
-  Notation "'Stid_' S" := (fun t x => Stid S x = t) (at level 1).
-  Notation "'SNTid_' S" := (fun t x => Stid S x <> t) (at level 1).
+  Notation "'STid' S" := (fun t x => Stid S x = t) (at level 1).
+  Notation "'SNTid' S" := (fun t x => Stid S x <> t) (at level 1).
 
   Notation "'GE'" := G.(acts_set).
   Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -141,98 +142,56 @@ Section SimRelStep.
   Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
 
-  Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
+  Notation "'certX' S" := (fun k => (X ∩₁ SNTid S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
-  Definition cont_pc S X k thread := 
-    (<< KREP : k = CInit thread >> /\
-     << CEMP : C ∩₁ GTid thread ≡₁ ∅ >>) 
-    \/
-    (exists e,
-        << KREP : k = CEvent e >> /\
-        << Xe   : X e >> /\
-        << EPC  : pc G TC thread (e2a S e) >> 
-    ).
+  (* Definition cont_pc S X k thread :=  *)
+  (*   (⟪ KREP : k = CInit thread ⟫ /\ *)
+  (*    ⟪ CEMP : C ∩₁ GTid thread ≡₁ ∅ ⟫)  *)
+  (*   \/ *)
+  (*   (exists e, *)
+  (*       ⟪ KREP : k = CEvent e ⟫ /\ *)
+  (*       ⟪ Xe   : X e ⟫ /\ *)
+  (*       ⟪ EPC  : pc G TC thread (e2a S e) ⟫  *)
+  (*   ). *)
 
   Lemma simrel_cert_cont_pc S thread 
         (NINITT : thread <> tid_init)
-        (SRC : simrel prog S G sc TC X) 
-        (TC_STEP : isim_trav_step G sc thread TC TC') : 
+        (SRC : simrel prog S G sc TC X)
+        (TC_STEP : isim_trav_step G sc thread TC TC') :
     exists k (state : Language.state (thread_lts thread)),
       ⟪ THK : thread = ES.cont_thread S k ⟫ /\
       ⟪ INK : K S (k, thread_cont_st thread state) ⟫ /\
       ⟪ EST : state.(ProgToExecution.G).(acts_set) ≡₁
                   C ∩₁ GTid thread ⟫ /\
-      ⟪ kPC : cont_pc S X k thread ⟫.
+      ⟪ INX : ES.cont_sb_dom S k ≡₁
+              SEinit S ∪₁
+              X ∩₁ STid S (ES.cont_thread S k) ∩₁ e2a S ⋄₁ C ⟫ /\
+      ⟪ SIMST : @sim_state G sim_normal C (ES.cont_thread S k) state ⟫.
   Proof. 
     cdes SRC.
     assert (ES.Wf S) as WFS by apply SRC.
     assert (Wf G) as WF by apply SRC.
     assert (simrel_graph G TC) as SG by apply SRC.
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT by apply SRC.
     pose proof TC_STEP as HH. 
     eapply trstep_thread_prog in HH; try apply SRC.
     apply Basic.IdentMap.Facts.in_find_iff in HH.
     destruct (Basic.IdentMap.find thread (stable_prog_to_prog prog))
       as [lprog|] eqn:AA; desf.
-    destruct (classic (exists x, (C ∩₁ GTid thread) x)) as [[x [CX TX]]|NN].
-    2: { exists (CInit thread).
-         edestruct contrun as [st]; try apply SRC; eauto. 
-         desf.
-         eexists. splits; eauto.
-         2: { left. eexists. splits; eauto.
-              generalize NN. basic_solver. }
-         etransitivity.
-         { eapply steps_empty_same_E; eauto. }
-         arewrite (C ∩₁ GTid thread ≡₁ ∅).
-         { generalize NN. basic_solver. }
-         simpls. }
-    edestruct exists_pc as [xpc XPC]; eauto; try apply SRC.
-    assert ((e2a S □₁ X) xpc) as EE.
-    { eapply ex_cov_iss; eauto. left. apply XPC. }
-    red in EE. desf.
-    assert (Gtid x = Stid S y) as TT.
-    { rewrite e2a_tid. red in XPC. generalize XPC. basic_solver. }
-    rewrite TT in XPC.
-    edestruct ES.event_K with (e:=y) as [c INKC]; try apply SRC.
-    { split.
-      { eapply Execution.ex_inE; eauto. apply SRC. }
-      intros [CC BB].
-      rewrite <- TT in BB. desf. }
-    { intros [z RMW].
-      apply XPC. exists (e2a S z).
-      assert (Grmw (e2a S y) (e2a S z)) as GRMW.
-      { eapply e2a_rmw; try apply SRC.
-        red. eauto. }
-      apply seq_eqv_r. split.
-      { apply rmw_in_sb; auto. }
-      erewrite <- rmwclos. 
-      { apply XPC. }
-      all: eauto. }
-    destruct c as [lang state].
-    set (BB := INKC).
-    eapply contlang in BB; try apply SRC.
-    desf.
-    exists (CEvent y). exists state.
-    splits; eauto.
-    { arewrite (Gtid x = ES.cont_thread S (CEvent y)). eauto. }
-    2: { right. eexists. split; eauto. by rewrite TT. }
-    (* TODO: generalize to a lemma *)
-    set (WFTS:=INKC).
-    eapply contwf in WFTS; try apply SRC.
-    simpls. rewrite <- TT in WFTS.
-    set (SS:=INKC).
-    eapply contpc in SS; eauto.
-    2: by apply SRC.
-    split.
-    { intros e CC.
-      set (DD:=CC).
-      eapply acts_rep in DD; eauto. desf.
-      split; auto.
-      cdes SS. rewrite TT. by apply PCOV. }
-    intros e [CC ET].
-    destruct e; simpls; desf.
-    { by rewrite ET in NINITT. }
-    cdes SS. rewrite TT in CC. apply PCOV in CC.
-    apply acts_clos; auto.
+
+    edestruct contsimstate as [k BB]; eauto. desf.
+    do 2 eexists. splits; eauto.
+    
+    assert (wf_thread_state (ES.cont_thread S k) state) as WT.
+    { eapply contwf; eauto. }
+
+    split; unfolder.
+    { intros x BB. eapply acts_rep in BB; eauto. desf. simpls.
+      splits; auto. by apply SIMST. }
+    intros x [BB CC].
+    destruct x; simpls; desf.
+    { exfalso. apply NINITT. desf. }
+    apply SIMST in BB. by apply acts_clos.
   Qed.
   
   Lemma simrel_cert_graph_start thread S 
@@ -241,7 +200,7 @@ Section SimRelStep.
         (TC_STEP : isim_trav_step G sc thread TC TC') : 
     exists k st st',
       ⟪ kTID : thread = ktid S k ⟫ /\
-      ⟪ XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Stid_ S (ktid S k)) ⟫ /\
+      ⟪ XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ktid S k)) ⟫ /\
       ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
       ⟪ CERT_ST : simrel_cstate S k st st' ⟫.
   Proof.
@@ -250,6 +209,7 @@ Section SimRelStep.
     assert (Wf G) as WF by apply SRC.
     assert (Execution.t S X) as EXEC by apply SRC.
     assert (simrel_e2a S G sc) as SRE2A by apply SRC.
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT by apply SRC.
 
     pose proof TC_STEP as HH.
     eapply trstep_thread_prog in HH; try apply SRC.
@@ -257,123 +217,48 @@ Section SimRelStep.
     destruct (Basic.IdentMap.find thread (stable_prog_to_prog prog))
       as [lprog|] eqn:AA; desf.
 
-    pose proof simrel_cert_cont_pc as CONTPC.
-    specialize (CONTPC S thread NINITT SRC TC_STEP).
-    desc. unfold cont_pc in kPC.
+    edestruct simrel_cert_cont_pc as [k CONTPC]; eauto. desf.
     assert (lprog = instrs state) as UU.
-    { rewrite THK in *. eapply kstate_instrs; eauto; try apply SRC. }
+    { eapply kstate_instrs; eauto. } 
 
     edestruct cert_graph_start with (state0:=state) as [state']; eauto.
-    1,2,3,4: by apply SRC.
-    { rewrite THK. eapply contwf; try apply SRC. desf. }
+    1,2,3: by apply SRC.
     { rewrite <- UU. 
       unfold stable_prog_to_prog in *.
       rewrite Basic.IdentMap.Facts.map_o in AA.
       unfold option_map in *. clear UU. desf.
       destruct s. simpls. }
-    { rewrite <- UU.
-      rewrite THK in *.
-      eapply contreach; eauto. apply SRC. }
-    { desf.
-      2: { eapply contpc; eauto. apply SRC. }
-      rewrite KREP in INK.
-      eapply continitstate; simpls; eauto; try apply SRC.
-      simpls. apply CEMP. }
+    { rewrite <- UU. eapply contreach; eauto.  }
     { rewrite EST. basic_solver. }
     all: try by apply SRC.
     desc.
     do 3 eexists.
     splits; eauto.
     2: { constructor; eauto.
-         { red. eexists. splits; eauto.
-           rewrite <- THK. eauto. }
-         rewrite <- THK.
+         { red. eexists. splits; eauto. }
          apply steps_stable_lbl_steps.
          apply seq_eqv_l. split.
-         { eapply contstable; try apply SRC; eauto.
-           rewrite <- THK. eauto. }
+         { eapply contstable; try apply SRC; eauto. }
          apply seq_eqv_r. by split. }
 
-    split. 
-    { rewrite !set_subset_inter_r; splits.
-      { unfold ES.cont_sb_dom. 
-        desf; simpls. 
-        { eapply Execution.init_in_ex; eauto. }
-        arewrite (eq e ⊆₁ X).
-        { basic_solver. }
-        rewrite crE. 
-        relsf; splits; auto.
-        by apply Execution.ex_sb_prcl. }
-      { unfold ES.cont_sb_dom. 
-        desf; simpls. 
-        { eapply init_in_map_cov; eauto. }
-        arewrite (eq e ⊆₁ e2a S ⋄₁ C).
-        { unfolder. ins. desf. apply EPC. }
-        rewrite crE. 
-        relsf; splits; auto.
-        eapply sb_cov; eauto. }
-      eapply ES.cont_sb_tid; eauto. }
-    rewrite set_inter_union_r. unionL.
-    { apply set_subset_inter_l. right.
-      eapply ES.cont_sb_dom_Einit; eauto. }
-    unfold ES.cont_sb_dom. 
-    desf; simpls. 
-    { unfolder. ins. desf.
-      exfalso. eapply CEMP.
-      split; eauto.
-      by erewrite e2a_tid. }
-    rewrite crE. relsf.
-    unfolder. ins. desf. 
-    assert (~ cf S x e) as nCF.
-    { intros CF. 
-      eapply Execution.ex_ncf; eauto.
-      basic_solver. }
-    assert (SEninit S e) as nINITe.
-    { eapply ES.K_inEninit; eauto. }
-    edestruct ES.same_thread_alt as [SB | CF]; 
-      eauto; try done.
-    { eapply Execution.ex_inE; eauto. }
-    unfolder in SB. desf; eauto.
-    exfalso. 
-    assert (Gsb (e2a S x) (e2a S e)) as GSB.
-    { edestruct tid_sb as [GSB | [INITx INITe]].
-      { apply seq_eqv_lr. splits.
-        { eapply e2a_GE; eauto.
-          unfolder. eexists. splits; eauto.
-          eapply Execution.ex_inE; eauto. }
-        { red. rewrite <- !e2a_tid; eauto. }
-        eapply e2a_GE; eauto.
-        unfolder. eexists. splits; eauto.
-        eapply Execution.ex_inE; eauto. }
-      { unfolder in GSB. desf; auto.
-        { exfalso. eapply ES.sb_irr; eauto.
-          assert (e = x) as EQ.
-          { eapply e2a_inj with (X := X); eauto.
-            { eapply Execution.ex_inE; eauto. }
-            eapply Execution.ex_ncf; eauto. }
-          subst x. eauto. }
-        exfalso. 
-        apply EPC.
-        basic_solver 10. }
-      exfalso. 
-      eapply e2a_Eninit; eauto.
-      { apply SRE2A. }
-      basic_solver. }
-    eapply sb_irr. 
-    eapply sb_trans; eauto.
-    eapply e2a_sb; try apply SRC. 
-    (* TODO: make a lemma *)
-    { intros PROG_INIT. apply SRC_.(noinitprog).
-      unfold stable_prog_to_prog in PROG_INIT.
-      eapply IdentMap.map_2; eauto. }
-    basic_solver 10. 
+    rewrite INX. split.
+    2: basic_solver.
+    unionL.
+    2: basic_solver.
+    arewrite (SEinit S ⊆₁ X ∩₁ SEinit S).
+    { apply set_subset_inter_r. split; [|done].
+      eapply Execution.init_in_ex. apply SRC. }
+    arewrite (SEinit S ⊆₁ e2a S ⋄₁ C ∩₁ SEinit S).
+    { apply set_subset_inter_r. split; [|done].
+      eapply init_in_map_cov; eauto. }
+    basic_solver.
   Qed.
-  
+
   Lemma simrel_cert_start k S 
         (st st' : thread_st (ktid S k))
         (SRC : simrel prog S G sc TC X) 
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC') 
-        (XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Stid_ S (ktid S k)))
+        (XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ktid S k)))
         (CERTG : cert_graph G sc TC TC' (ktid S k) st')
         (CERT_ST : simrel_cstate S k st st') :
     simrel_cert prog S G sc TC TC' X k st st'.
@@ -384,6 +269,13 @@ Section SimRelStep.
     { eapply sim_trav_step_coherence; try apply SRC.
       red. eauto. }
     assert (Wf G) as WFG by apply SRC.
+
+    pose proof TC_ISTEP as TT.
+    eapply trstep_thread_prog in TT; try apply SRC.
+    apply Basic.IdentMap.Facts.in_find_iff in TT.
+    destruct (Basic.IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog prog))
+      as [lprog|] eqn:TTN; desf.
+
     constructor; auto.
     (* ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE *)
     { generalize XkTIDCOV. basic_solver 10. }
@@ -416,15 +308,14 @@ Section SimRelStep.
     { rewrite XkTIDCOV.
       rewrite <- seq_eqvK.
       rewrite <- seqA, collect_rel_seqi.
-      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Tid_ S (ES.cont_thread S k)) ⊆₁
+      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ⊆₁
                 X ∩₁ e2a S ⋄₁ C) at 1 by basic_solver.
       rewrite jf_cov_in_rf; [|by apply SRC].
       rewrite collect_rel_eqv.
-      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Tid_ S (ES.cont_thread S k)) ≡₁
-                X ∩₁ (SEinit S ∪₁ Tid_ S (ES.cont_thread S k)) ∩₁ e2a S ⋄₁ C). 
+      arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ≡₁
+                X ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ∩₁ e2a S ⋄₁ C). 
       { basic_solver. }
       rewrite set_collect_inter.
-      2: ins; repeat constructor. 
       rewrite set_inter_union_r. 
       rewrite set_collect_union.
       relsf. rewrite id_union. 
@@ -435,8 +326,8 @@ Section SimRelStep.
         rewrite wf_rfD; try apply SRC.
         type_solver. }
       rewrite collect_map_in_set. 
-      arewrite (X ∩₁ Tid_ S (ES.cont_thread S k) ⊆₁
-                Tid_ S (ES.cont_thread S k)) by basic_solver.
+      arewrite (X ∩₁ STid S (ES.cont_thread S k) ⊆₁
+                STid S (ES.cont_thread S k)) by basic_solver.
       rewrite e2a_Tid.
       arewrite (C ⊆₁ C').
       { eapply sim_trav_step_covered_le.
@@ -444,7 +335,7 @@ Section SimRelStep.
       by apply rf_C_in_cert_rf; try apply SRC. }
     (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ; *)
     { arewrite (X ∩₁ e2a S ⋄₁ (acts_set (ProgToExecution.G st) ∩₁ I) ⊆₁ 
-                  X ∩₁ SW S ∩₁ Stid_ S (ktid S k) ∩₁ e2a S ⋄₁ C).
+                  X ∩₁ SW S ∩₁ STid S (ktid S k) ∩₁ e2a S ⋄₁ C).
       { edestruct cstate_cont as [sta HH]; 
           eauto; desf.
         rewrite <- e2a_kEninit; try apply SRC; eauto.
@@ -460,59 +351,102 @@ Section SimRelStep.
       apply ES.ew_refl; [apply SRC|].
       unfolder; splits; auto.
       eapply Execution.ex_inE; eauto. }
+    (* kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ; *)
+    { rewrite seq_eqv_r.
+      intros x [kEx Ix].
+      assert (X x) as Xx.
+      { by apply XkTIDCOV. }
+      exists x; splits; auto.
+      apply ES.ew_refl; auto.
+      red; splits; auto; split.
+      { eapply Execution.ex_inE; eauto. }
+      eapply ex_iss_inW.
+      { apply SRC. }
+      split; auto. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ; *)
-    rewrite XkTIDCOV at 1.
-    unfolder. ins. desf.
-    { exfalso.
+    { rewrite XkTIDCOV at 1.
+      unfolder. ins. desf.
+      { exfalso.
+        match goal with
+        | H : Grmw ?x ?y |- _ => rename H into RMW
+        end.
+        apply WFG.(rmw_in_sb) in RMW.
+        apply no_sb_to_init in RMW.
+        destruct_seq_r RMW as AA.
+        match goal with
+        | H : SEinit S ?z |- _ => rename H into IN
+        end.
+        apply e2a_init in IN. rewrite IN in *.
+        desf. }
+      edestruct rmw_cov_in_ex as [x' [y' [RMW']]]; try apply SRC.
+      { apply seq_eqv_r. splits; eauto. }
+      desf.
+      destruct_seq_r RMW' as XY.
+      exists x'. exists y'. splits; eauto.
+      apply XkTIDCOV.
       match goal with
-      | H : Grmw ?x ?y |- _ => rename H into RMW
+      | H : e2a S ?y' = e2a S ?y |- _ => rename H into EQ 
       end.
-      apply WFG.(rmw_in_sb) in RMW.
-      apply no_sb_to_init in RMW.
-      destruct_seq_r RMW as AA.
-      match goal with
-      | H : SEinit S ?z |- _ => rename H into IN
-      end.
-      apply e2a_init in IN. rewrite IN in *.
-      desf. }
-    edestruct rmw_cov_in_ex as [x' [y' [RMW']]]; try apply SRC.
-    { apply seq_eqv_r. splits; eauto. }
+      unfolder. splits; auto.
+      { by rewrite EQ. }
+      right. erewrite e2a_tid.
+      rewrite EQ. by erewrite <- e2a_tid. }
+    inv CERT_ST.
+    cdes cstate_cont; desf.
+    assert (C ⊆₁ C') as AA.
+    { eapply sim_trav_step_covered_le. red; eauto. }
+
+    assert (ES.cont_sb_dom S k ⊆₁ e2a S ⋄₁ C) as SBDC.
+    { rewrite XkTIDCOV. basic_solver. }
+    assert (ES.cont_sb_dom S k ⊆₁ e2a S ⋄₁ C') as SBDC'.
+    { by rewrite <- AA. }
+
+    edestruct contsimstate as [kC]; try apply SRC; eauto.
     desf.
-    destruct_seq_r RMW' as XY.
-    exists x'. exists y'. splits; eauto.
-    apply XkTIDCOV.
-    match goal with
-    | H : e2a S ?y' = e2a S ?y |- _ => rename H into EQ 
-    end.
-    unfolder. splits; auto.
-    { by rewrite EQ. }
-    right. erewrite e2a_tid.
-    rewrite EQ. by erewrite <- e2a_tid.
+    assert (kC = k); subst.
+    { assert (ES.cont_sb_dom S kC ≡₁ ES.cont_sb_dom S k) as EQSBD.
+      2: { eapply ES.same_sb_dom_same_k; eauto. }
+      rewrite INX. rewrite XkTIDCOV.
+      split; unfolder; ins; desf; splits; eauto.
+      { eapply Execution.init_in_ex; eauto. }
+      { eapply init_in_map_cov; eauto. apply SRC. }
+      { rewrite THK. eauto. }
+      right. splits; eauto. by rewrite <- THK. }
+
+    exists k. exists st0. splits; eauto.
+    { split; [|basic_solver].
+      apply set_subset_inter_r. by split. }
+    assert (st0 = state); subst.
+    { pose proof (ES.unique_K WF _ _ KK INK eq_refl) as HH. simpls.
+      inv HH. }
+
+    apply sim_state_set_tid_eq with (s':=C); auto.
+    split.
+    { unfolder. ins. desf. split; auto. by apply SBDC. }
+    rewrite XkTIDCOV.
+    unfolder. ins. desf. splits; auto.
+    assert ((e2a S □₁ X) x) as UU.
+    { eapply ex_cov_iss.
+      { apply SRC. }
+      basic_solver. }
+    red in UU. desf.
+    eexists. splits; eauto.
+    right. by rewrite e2a_tid.
   Qed.
 
-  Lemma ew_ex_iss_in_cert_ex_iss k S 
+  Lemma ew_ex_iss_cert_ex_iss k S 
         (st : thread_st (ktid S k))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st) :  
-    dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) ⊆₁ 
+    dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) ≡₁ 
     dom_rel (Sew S ⨾ ⦗certX S k ∩₁ e2a S ⋄₁ I⦘).
   Proof. 
     assert (ES.Wf S) as WFS by apply SRCC.      
     assert (Execution.t S X) as EXEC by apply SRCC.
-    rewrite !seq_eqv_r. 
-    intros x [y [EW [Xy Iy]]].
-    assert (Stid S x = Stid S y) as STID.
-    { apply ES.ew_tid; auto. }
-    edestruct ex_iss_cert_ex
-      as [z HH]; eauto.
-    { unfolder; splits; eauto.
-      eapply ex_in_certD; eauto.
-      basic_solver. }
-    apply seq_eqv_r in HH. 
-    destruct HH as [EW' [CERTXz Iz]].
-    eexists.
-    unfold set_inter. splits.
-    2,3: eauto.
-    eapply ES.ew_trans; eauto. 
+    erewrite <- ew_ex_cert_dom_iss_cert_ex_iss; eauto.
+    split; [|basic_solver].
+    rewrite <- ex_in_certD; eauto.
+    unfolder; ins; desf.
+    eexists; splits; eauto.
   Qed.
 
   Lemma cert_ex_rf_compl k S 
@@ -557,9 +491,11 @@ Section SimRelStep.
     edestruct rfe_ex_iss
       as [z HH]; eauto.
     { eexists; eauto. }
-    edestruct ew_ex_iss_in_cert_ex_iss
-      as [z' HH']; eauto.
+    assert (dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) y)
+      as HH'.
     { basic_solver. }
+    eapply ew_ex_iss_cert_ex_iss in HH'; eauto.
+    destruct HH' as [z' HH']; eauto.
     apply seq_eqv_r in HH'.
     destruct HH' as [EW [CERTXz' Iz']].
     exists z'.
@@ -593,7 +529,7 @@ Section SimRelStep.
     assert 
       ((dom_rel (Sew S ⨾ ⦗certX S k ∩₁ e2a S ⋄₁ I⦘)) y)
       as EWCERTX.
-    { eapply ew_ex_iss_in_cert_ex_iss; eauto.
+    { eapply ew_ex_iss_cert_ex_iss; eauto.
       eapply jfe_ex_iss; eauto.
       apply dom_cc_jfe.
       basic_solver. }
@@ -634,6 +570,11 @@ Section SimRelStep.
     { apply SRCC. }
     assert (simrel_ prog S G sc TC X) as SR_.
     { apply SRCC. }
+    assert (simrel_e2a S G sc) as SRE2A.
+    { apply SRCC. }
+    assert (C ⊆₁ C') as ICC.
+    { eapply sim_trav_step_covered_le. eexists. apply SRCC. }
+
     edestruct cstate_cont as [stx [EQ KK]]; 
       [apply SRCC|].
     red in EQ, KK. subst stx.
@@ -674,18 +615,67 @@ Section SimRelStep.
       eapply simrel_cert_vis; eauto. }
     (* sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC' *)
     { econstructor; try apply SRCC.
-      2: { ins.
-           assert (sim_trav_step G sc TC TC') as STEP.
-           { eexists. apply SRCC. }
-           assert (C ∩₁ GTid thread ⊆₁ ∅) as CEMPOLD.
-           { erewrite sim_trav_step_covered_le; eauto. }
-           eapply continitstate in CEMPOLD; eauto.
-           2: by apply SRCC.
-           cdes CEMPOLD. red. splits; eauto.
-           ins. split; intros AA.
-           2: { eapply sim_trav_step_covered_le; eauto. by apply PCOV. }
-           exfalso. eapply CEMP. split; eauto. }
-      admit. }
+      ins.
+      destruct (classic (thread = ES.cont_thread S k)) as [|TNEQ]; subst.
+      { edestruct contsimstate_kE as [kC]; eauto; desf.
+        exists kC. eexists. splits; eauto.
+        { rewrite INX.
+          split; unfolder; ins; desf; splits; auto.
+          { match goal with
+            | H : ES.cont_sb_dom S k x |- _ => pose proof H as AA
+            end.
+            eapply ES.cont_sb_tid in AA; eauto.
+            unfolder in AA; desf; eauto.
+            right. splits; auto. by rewrite THK. }
+          { apply ICC. eapply init_in_map_cov; eauto. }
+          { eapply SEinit_in_kE; eauto. }
+          rewrite THK in *. desf. }
+        eapply sim_state_set_tid_eq; [|by eauto].
+        split; [|basic_solver].
+        unfolder. ins. desf. splits; eauto.
+        rewrite THK in *.
+        assert (acts_set (ProgToExecution.G st) x) as BB.
+        { eapply dcertE.
+          { apply SRCC. }
+          red. split; auto. by left. }
+        eapply e2a_kEninit in BB; eauto; try apply SRCC.
+        unfolder in BB. desf. eexists. splits; eauto. }
+      edestruct contsimstate as [kC].
+      { apply SRCC. }
+      { eauto. }
+      desf.
+      exists kC. eexists. splits; eauto.
+      { rewrite !set_interA.
+        arewrite ((STid S (ES.cont_thread S kC)) ∩₁ e2a S ⋄₁ C' ≡₁
+                  (STid S (ES.cont_thread S kC)) ∩₁ e2a S ⋄₁ C).
+        { split.
+          2: by rewrite ICC.
+          rewrite isim_trav_step_new_covered_tid; try apply SRCC.
+          unfolder. ins. desf. 
+          exfalso.
+          apply TNEQ.
+          match goal with 
+          | H : Gtid (e2a S x) = ES.cont_thread S k |- _ => rewrite <- H
+          end.
+            by rewrite <- e2a_tid. }
+        rewrite INX.
+        split; unfolder; ins; desf; eauto 10.
+        match goal with
+        | H : ES.cont_sb_dom S k x |- _ => rename H into AA
+        end.
+        eapply ES.cont_sb_tid in AA; eauto.
+        unfolder in AA; desf; eauto.
+        exfalso.
+        apply TNEQ. by rewrite <- AA. }
+      eapply sim_state_set_tid_eq with (s':=C); auto.
+      rewrite isim_trav_step_new_covered_tid; try apply SRCC.
+      split; unfolder; ins; desf.
+      2: by splits; eauto.
+      exfalso. apply TNEQ.
+      match goal with 
+      | H : Gtid x = ES.cont_thread S k |- _ => rewrite <- H
+      end.
+      done. }
     (* ex_cov_iss : e2a □₁ certX ≡₁ C' ∪₁ dom_rel (Gsb^? ⨾ ⦗ I' ⦘) *)
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. }
@@ -704,8 +694,20 @@ Section SimRelStep.
         eexists. splits; eauto. by rewrite e2a_tid. }
       etransitivity.
       2: by eapply rmw_cov_in_kE; eauto.
-      (* TODO: for Evgenii *)
-      admit. }
+      erewrite e2a_kE; 
+        try apply SRCC; try apply KK.
+      rewrite set_inter_union_r, id_union, seq_union_r.
+      apply inclusion_union_r2_search. 
+      rewrite !seq_eqv_r.
+      intros x y [RMW [Cy TIDy]].
+      unfolder; splits; auto.
+      assert (cert_dom G TC (ktid S k) st y) 
+        as CertDy.
+      { eapply cert_dom_cov_sb_iss; eauto. by left. }
+      eapply cert_dom_alt in CertDy.
+      2 : eapply cstate_covered; apply SRCC. 
+      destruct CertDy as [[_ NTIDy] | BB]; auto.
+      intuition. }
     (* jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗certX ∩₁ e2a ⋄₁ C'⦘) ⊆ Grf *)
     { rewrite set_inter_union_l, id_union. relsf.
       apply inclusion_union_l. 
@@ -738,16 +740,39 @@ Section SimRelStep.
       erewrite cert_rf_D_rf; try done. 
       1,2: apply SRCC.
       eapply tccoh'; eauto. }
+    (*  e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
+    { rewrite set_union_minus with (s := I') (s' := I).
+      2 : eapply sim_trav_step_issued_le; eexists; apply SRCC.
+      rewrite set_map_union, set_inter_union_r, 
+              id_union, !seq_union_r, collect_rel_union.
+      unionL.
+      { admit. }
+      rewrite seq_eqv_r.
+      intros x' y' [x [y [HH [EQx' EQy']]]].
+      destruct HH as [z [CO [EW CertXy]]].
+      subst x' y'.
+      eapply e2a_co_ew_iss; eauto.
+      assert (dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) z) 
+        as [z' HH].
+      { eapply ew_ex_iss_cert_ex_iss; eauto. basic_solver 10. }
+      apply seq_eqv_r in HH.
+      destruct HH as [EW' [Xz' Iz']].
+      arewrite (e2a S y = e2a S z').
+      { eapply e2a_ew; eauto.
+        do 2 eexists; splits; eauto. 
+        eapply e2a_ew; eauto.
+        basic_solver 10. }
+      basic_solver 10. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply jfe_ex_iss; eauto. }
-      rewrite ew_ex_iss_in_cert_ex_iss; eauto.
+      rewrite ew_ex_iss_cert_ex_iss; eauto.
       erewrite sim_trav_step_issued_le; eauto. 
       eexists; apply SRCC. }
     (* ew_ex_iss : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply ew_ex_iss; eauto. }
-      rewrite ew_ex_iss_in_cert_ex_iss; eauto.
+      rewrite ew_ex_iss_cert_ex_iss; eauto.
       erewrite sim_trav_step_issued_le; eauto. 
       eexists; apply SRCC. }
     (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ certX *)
@@ -760,7 +785,7 @@ Section SimRelStep.
         (st st''' : thread_st (ktid S k))
         (SRC : simrel prog S G sc TC X)
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC')
-        (XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ Stid_ S (ktid S k)))
+        (XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ktid S k)))
         (CERTG : cert_graph G sc TC TC' (ktid S k) st''')
         (CERT_ST : simrel_cstate S k st st''') 
         (LBL_STEPS : (lbl_step (ktid S k))＊ st st''') :

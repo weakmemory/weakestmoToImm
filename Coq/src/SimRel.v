@@ -4,7 +4,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel.
+     CombRelations SimTraversal SimulationRel.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import ImmProperties.
@@ -143,12 +143,13 @@ Section SimRel.
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
       
-      jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
+      jf_cov_in_rf  : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
+      e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;
 
-      jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
-      ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ;
+      jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
+      ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
 
-      rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ X ;
+      rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆₁ X ;
     }.
 
   Definition simrel := 
@@ -190,7 +191,7 @@ Section SimRel.
       red. split; [split|]; auto.
       intros [e HH]. destruct_seq_r HH as CE.
       assert (exists p, e = ThreadEvent thread p /\
-                        << LT : index < p >>); desf.
+                        ⟪ LT : index < p ⟫); desf.
       { red in HH. destruct_seq HH as [AA BB].
         red in HH. desf; desf. eauto. }
       apply NMCOV.
@@ -228,6 +229,14 @@ Section SimRel.
     (** ** X properties  *)
     (******************************************************************************)
 
+    Lemma cov_in_ex : 
+      C ⊆₁ e2a □₁ X. 
+    Proof. rewrite ex_cov_iss; auto. basic_solver 10. Qed.
+
+    Lemma iss_in_ex : 
+      I ⊆₁ e2a □₁ X. 
+    Proof. rewrite ex_cov_iss; auto. basic_solver 10. Qed.
+
     Lemma ex_iss_inW : 
       X ∩₁ e2a ⋄₁ I ⊆₁ SW.
     Proof.
@@ -239,6 +248,49 @@ Section SimRel.
         eapply issuedW; eauto.
         apply SRC_. }
       basic_solver.
+    Qed.
+
+    Lemma ex_w_cov_in_iss : 
+      X ∩₁ SW ∩₁ e2a ⋄₁ C ⊆₁ X ∩₁ e2a ⋄₁ I.
+    Proof. 
+      unfolder.
+      intros x [[Xx Wx] Cx].
+      split; auto.
+      eapply w_covered_issued.
+      { apply SRC_. }
+      split; auto.
+      eapply e2a_W; try apply SRC_.
+      unfolder; eexists; splits; eauto.
+      eapply Execution.ex_inE; eauto.
+      apply SRC_.
+    Qed.
+
+    Lemma ex_w_rel_iss_in_cov : 
+      X ∩₁ SW ∩₁ SRel ∩₁ e2a ⋄₁ I ⊆₁ X ∩₁ e2a ⋄₁ C.
+    Proof. 
+      unfolder.
+      intros x [[[Xx Wx] RELx] Ix].
+      splits; auto.
+      apply irelcov; [apply SRC_|].
+      assert (SE x) as Ex.
+      { eapply Execution.ex_inE; eauto. 
+        apply SRC_. }
+      unfolder; splits; auto.
+      { unfold is_w.
+        fold (compose Glab e2a x).
+        fold (is_w (Glab ∘ e2a) x).
+        eapply same_lab_u2v_dom_is_w.
+        { apply same_lab_u2v_dom_comm. 
+          eapply e2a_lab. apply SRC_. }
+        done. }
+      unfold is_rel, Events.mod.
+      fold (compose Glab e2a x).
+      fold (Events.mod (Glab ∘ e2a) x).
+      fold (is_rel (Glab ∘ e2a) x).
+      eapply same_lab_u2v_dom_is_rel.
+      { apply same_lab_u2v_dom_comm. 
+        eapply e2a_lab. apply SRC_. }
+      done.
     Qed.
 
     (******************************************************************************)
@@ -254,8 +306,7 @@ Section SimRel.
       eapply dom_sb_covered; [apply SRC_|].
       unfolder; do 2 eexists; splits; eauto.
       eapply e2a_sb; try apply SRC_.
-      2: basic_solver 10.
-      apply stable_prog_to_prog_no_init; apply SRC_.
+      basic_solver 10.
     Qed.
 
     Lemma sb_ex_cov :
@@ -266,6 +317,39 @@ Section SimRel.
       split.
       { eapply Execution.ex_sb_prcl; [apply SRC_|]. basic_solver 10. }
       eapply sb_cov. basic_solver 10.
+    Qed.
+
+    Lemma jf_ex_cov : 
+      dom_rel (Sjf ⨾ ⦗ X ∩₁ e2a ⋄₁ C ⦘) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘). 
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      rewrite !seq_eqv_r. unfolder.
+      intros x [y [JF [Xy Cy]]].
+      edestruct Execution.ex_rf_compl 
+        as [z HH]; eauto.
+      { apply ES.jfD in JF; auto.
+        generalize JF. basic_solver. }
+      apply seq_eqv_l in HH.
+      destruct HH as [Xz RF].
+      assert (Sew x z) as EW.
+      { apply ES.rf_trf_in_ew; auto.
+        unfolder; eexists; splits; eauto.
+        by apply ES.jf_in_rf. }
+      exists z; splits; auto.
+      eapply dom_rf_covered; 
+        try apply SRC_.
+      eexists. 
+      apply seq_eqv_r.
+      splits; eauto.
+      arewrite (e2a z = e2a x).
+      { symmetry. 
+        eapply e2a_ew; try apply SRC_. 
+        basic_solver 10. }
+      eapply jf_cov_in_rf; auto.
+      basic_solver 10.
     Qed.
     
     Lemma rfe_ex_iss :
@@ -355,6 +439,80 @@ Section SimRel.
       eexists; eauto.
     Qed.
 
+    Lemma e2a_co_ncf : 
+      e2a □ (Sco \ Scf) ⊆ Gco.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRC_. }
+      intros x' y' [x [y [[CO nCF] [EQx' EQy']]]].
+      subst x' y'.
+      edestruct e2a_co as [EQ | CO']; eauto. 
+      { basic_solver 10. }
+      exfalso. 
+      assert (SE x /\ SE y) as HH.
+      { apply ES.coE in CO; auto.
+        generalize CO. basic_solver. }
+      destruct HH as [Ex Ey].
+      eapply e2a_eq_in_cf in EQ; auto.
+      destruct EQ as [EQ | CF]; auto.
+      subst y. eapply ES.co_irr; eauto.
+    Qed.
+
+    Lemma e2a_co_iss : 
+      e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      unfolder. ins. desf.
+      eapply e2a_co_ew_iss; auto.
+      unfolder; do 2 eexists; splits; eauto. 
+      eexists; splits; eauto.
+      apply ES.ew_refl; auto.
+      unfolder; splits; auto.
+      { eapply Execution.ex_inE; eauto. }
+      apply ex_iss_inW.
+      split; done.
+    Qed.
+
+    Lemma e2a_co_jf_cov : 
+      e2a □ Sco ⨾ Sjf^? ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ⊆ Gco ⨾ (Grf ⨾ ⦗C⦘)^?.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      rewrite crE. relsf. unionL.
+      { arewrite (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ≡ 
+                  Sco ⨾ ⦗X ∩₁ SW ∩₁ e2a ⋄₁ C⦘).
+        { rewrite ES.coD; auto. basic_solver. }
+        rewrite ex_w_cov_in_iss.
+        rewrite e2a_co_iss.
+        basic_solver. }
+      rewrite !seq_eqv_r. unfolder.
+      intros x' y' [x [y [HH [EQx' EQy']]]].
+      destruct HH as [z [CO [JF [Xy Cy]]]].
+      subst x' y'.
+      edestruct jf_ex_cov as [z' HH].
+      { basic_solver 10. }
+      apply seq_eqv_r in HH.
+      destruct HH as [EW [Xz' Iz']].
+      exists (e2a z'). splits.
+      { eapply e2a_co_ew_iss; auto. basic_solver 10. }
+      right; splits; auto.
+      arewrite (e2a z' = e2a z).
+      { symmetry.
+        eapply e2a_ew; try apply SRC_.
+        basic_solver 10. }
+      eapply jf_cov_in_rf; auto.
+      basic_solver 10.
+    Qed.
+
     (******************************************************************************)
     (** ** `G.rr ⊆ e2a □ S.rr` properties  *)
     (******************************************************************************)
@@ -390,9 +548,9 @@ Section SimRel.
         apply seq_eqv_r in SB.
         destruct SB as [SB nINITy].
         apply nINITy. 
-        eapply e2a_Einit.
-        apply stable_prog_to_prog_no_init.
-        1-3: apply SRC_.
+        rewrite <- EQy.
+        unfold EventToAction.e2a.
+        destruct EINITy.
         basic_solver. }
       set (HH := SB).
       apply sb_tid_init in HH.
@@ -413,8 +571,7 @@ Section SimRel.
         { exfalso. eapply sb_irr; eauto. }
         { exfalso. eapply sb_irr, sb_trans; eauto. 
           eapply e2a_sb.
-          apply stable_prog_to_prog_no_init.
-          1-4 : apply SRC_.
+          1-2 : apply SRC_.
           basic_solver 10. }
         exfalso. eapply Execution.ex_ncf; eauto.
         apply seq_eqv_lr. splits; [|apply CF|]; eauto. }
@@ -467,7 +624,51 @@ Section SimRel.
 
     Lemma rf_cov_in_ex : 
       Grf ⨾ ⦗ C ⦘ ⊆ e2a □ Srf ⨾ ⦗ X ⦘.
-    Proof. admit. Admitted.
+    Proof. 
+      assert (Wf G) as WFG.
+      { apply SRC_. }
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      assert (tc_coherent G sc TC) as TCCOH.
+      { apply SRC_. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC_. }
+      rewrite !seq_eqv_r.
+      intros x y [GRF Cy].
+      set (Cy' := Cy).
+      apply cov_in_ex in Cy'.
+      destruct Cy' as [y' [Xy EQy]].
+      assert (SR y') as Ry'.
+      { eapply same_lab_u2v_dom_is_r.
+        { eapply e2a_lab; eauto. apply SRC_. }
+        split; auto.
+        { eapply Execution.ex_inE; eauto. }
+        unfold compose, is_r.
+        apply wf_rfD in GRF; auto.
+        generalize GRF. basic_solver. }
+      edestruct Execution.ex_rf_compl 
+        as [x' HH]; eauto.
+      { basic_solver. }
+      apply seq_eqv_l in HH.
+      destruct HH as [Xx' SRF].
+      exists x', y'.
+      splits; auto.
+      unfold ES.rf in SRF.
+      destruct SRF as [[z' [EW JF]] nCF].
+      assert (Grf (e2a x') (e2a y'))
+        as GRF'.
+      { arewrite (e2a x' = e2a z').
+        { eapply e2a_ew.
+          { apply SRC_. }
+          basic_solver 10. }
+        eapply jf_cov_in_rf; auto.
+        do 2 eexists; splits; eauto.
+        apply seq_eqv_r. 
+        unfolder; splits; auto.
+        congruence. }
+      eapply wf_rff; eauto.
+      red. congruence.
+    Qed.
 
     Lemma iss_rf_cov_in_ex : 
       ⦗I⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srf ⨾ ⦗X⦘.
@@ -560,8 +761,18 @@ Section SimRel.
       { done. }
       exfalso. eapply co_irr; eauto.
       eapply co_trans; eauto.
-      eapply e2a_co; [apply SRC_|].
-      basic_solver 10. 
+      assert ((e2a □ Sco) y x) as E2ACO.
+      { basic_solver 10. }
+      eapply e2a_co in E2ACO.
+      2 : apply SRC_.
+      destruct E2ACO as [EQ | GCO']; auto.
+      exfalso.
+      assert (x' = y') as EQ'.
+      { eapply e2a_inj with (X := X); 
+          eauto; try apply EXEC.
+        congruence. }
+      rewrite EQ' in *.
+      eapply ES.co_irr; eauto.
     Qed.
 
     (******************************************************************************)
@@ -679,259 +890,3 @@ Section SimRel.
   End SimRelCommonProps.
 
 End SimRel.
-
-Section SimRelLemmas.
-
-  Variable prog : stable_prog_type.
-  Variable S : ES.t.
-  Variable G : execution.
-  Variable sc : relation actid.
-  Variable TC : trav_config.
-  Variable X : actid -> eventid.
-
-  Notation "'SE'" := S.(ES.acts_set).
-  Notation "'SEinit'" := S.(ES.acts_init_set).
-  Notation "'SEninit'" := S.(ES.acts_ninit_set).
-  Notation "'Stid'" := (S.(ES.tid)).
-  Notation "'Slab'" := (S.(ES.lab)).
-  Notation "'Sloc'" := (loc S.(ES.lab)).
-  Notation "'K'" := S.(ES.cont_set).
-
-  Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
-
-  Notation "'SR'" := (fun a => is_true (is_r Slab a)).
-  Notation "'SW'" := (fun a => is_true (is_w Slab a)).
-  Notation "'SF'" := (fun a => is_true (is_f Slab a)).
-  Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
-
-  Notation "'Ssb'" := (S.(ES.sb)).
-  Notation "'Scf'" := (S.(ES.cf)).
-  Notation "'Srmw'" := (S.(ES.rmw)).
-  Notation "'Sjf'" := (S.(ES.jf)).
-  Notation "'Sjfi'" := (S.(ES.jfi)).
-  Notation "'Sjfe'" := (S.(ES.jfe)).
-  Notation "'Srf'" := (S.(ES.rf)).
-  Notation "'Srfi'" := (S.(ES.rfi)).
-  Notation "'Srfe'" := (S.(ES.rfe)).
-  Notation "'Sco'" := (S.(ES.co)).
-  Notation "'Sew'" := (S.(ES.ew)).
-
-  Notation "'Srs'" := (S.(Consistency.rs)).
-  Notation "'Srelease'" := (S.(Consistency.release)).
-  Notation "'Ssw'" := (S.(Consistency.sw)).
-  Notation "'Shb'" := (S.(Consistency.hb)).
-
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
-
-  Notation "'thread_st' tid" := 
-    (Language.state (thread_lts tid)) (at level 10, only parsing).
-
-  Notation "'thread_init_st' tid" := 
-    (Language.init (thread_lts tid)) (at level 10, only parsing).
-  
-  Notation "'thread_cont_st' tid" :=
-    (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
-
-  Notation "'GE'" := G.(acts_set).
-  Notation "'GEinit'" := (is_init ∩₁ GE).
-  Notation "'GEninit'" := ((set_compl is_init) ∩₁ GE).
-
-  Notation "'Glab'" := (Execution.lab G).
-  Notation "'Gloc'" := (Events.loc (lab G)).
-  Notation "'Gtid'" := (Events.tid).
-
-  Notation "'GTid' t" := (fun x => Gtid x = t) (at level 1).
-  Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
-
-  Notation "'GR'" := (fun a => is_true (is_r Glab a)).
-  Notation "'GW'" := (fun a => is_true (is_w Glab a)).
-  Notation "'GF'" := (fun a => is_true (is_f Glab a)).
-
-  Notation "'GRel'" := (fun a => is_true (is_rel Glab a)).
-  Notation "'GAcq'" := (fun a => is_true (is_acq Glab a)).
-
-  Notation "'Gsb'" := (Execution.sb G).
-  Notation "'Grmw'" := (Execution.rmw G).
-  Notation "'Grf'" := (Execution.rf G).
-  Notation "'Gco'" := (Execution.co G).
-
-  Notation "'Grs'" := (imm_s_hb.rs G).
-  Notation "'Grelease'" := (imm_s_hb.release G).
-  Notation "'Gsw'" := (imm_s_hb.sw G).
-  Notation "'Ghb'" := (imm_s_hb.hb G).
-  
-  Notation "'Gfurr'" := (furr G sc).
-
-  Notation "'C'"  := (covered TC).
-  Notation "'I'"  := (issued TC).
-
-  Notation "'Gfurr'" := (furr G sc).
-
-  Lemma simrel_init 
-        (nInitProg : ~ IdentMap.In tid_init prog)
-        (PExec : program_execution (stable_prog_to_prog prog) G)
-        (WF : Execution.Wf G)
-        (CONS : imm_consistent G sc)
-        (GCLOS : forall tid m n (LT : m < n) (NE : GE (ThreadEvent tid n)),
-            GE (ThreadEvent tid m)) : 
-    let Sinit := prog_g_es_init prog G in
-    simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
-  Proof.
-    clear S TC X.
-    assert (simrel_e2a (prog_g_es_init prog G) G sc) as HH.
-    { by apply simrel_e2a_init. }
-    simpls.
-    red. splits.
-    2: by apply prog_g_es_init_consistent.
-    constructor; auto.
-    { apply prog_g_es_init_wf; auto. }
-    { apply init_trav_coherent; auto. }
-    { constructor; eauto.
-      2: basic_solver. 
-      simpls. ins.
-      split.
-      { apply rmw_from_non_init in RMW; auto.
-        generalize RMW. basic_solver. }
-      apply WF.(rmw_in_sb) in RMW.
-      apply no_sb_to_init in RMW.
-      generalize RMW. basic_solver. }
-    { constructor.
-      all: unfold ES.cf_free, vis, cc, ES.acts_init_set.
-      all: autorewrite with prog_g_es_init_db; auto.
-      all: try basic_solver.
-      { rewrite prog_g_es_init_w at 1. type_solver. }
-      unfolder. ins. splits; auto.
-      unfold cc.
-      ins. desf.
-      exfalso.
-      eapply prog_g_es_init_cf; eauto. }
-    { constructor.
-      all: try by (ins;
-                   match goal with
-                   | H : ES.cont_set _ _ |- _ => 
-                     apply prog_g_es_init_K in H; desf
-                   end).
-      5: { ins. apply prog_g_es_init_K in INKi; desf.
-           erewrite steps_same_eindex; eauto.
-           { by unfold init. }
-           apply wf_thread_state_init. }
-      { ins. red in INK.
-        rewrite prog_g_es_init_alt in *.
-        unfold ES.init, prog_init_K, ES.cont_thread in *.
-        simpls.
-        apply in_map_iff in INK. desf. }
-      { ins. apply prog_g_es_init_K in INK. desf.
-        eapply wf_thread_state_steps.
-        2: { simpls. apply eps_steps_in_steps. eauto. }
-        apply wf_thread_state_init. }
-      3: { ins. red. splits.
-           { ins. split; intros BB; exfalso.
-             { eapply CEMP. split; eauto. }
-             assert (eindex state = 0); [|omega].
-             apply prog_g_es_init_K in INK.
-             desf.
-             erewrite steps_same_eindex; eauto.
-             { simpls. }
-             apply wf_thread_state_init. }
-           rewrite prog_g_es_init_alt in *.
-           unfold ES.init, prog_init_K, ES.cont_thread,
-           ES.cont_set in *. simpls.
-           apply in_map_iff in INK.
-           destruct INK as [[tid [lprog BB]] [INK REP]].
-           apply pair_inj in INK. destruct INK as [AA INK].
-           assert (tid = thread) as TT by inv AA.
-           rewrite TT in *.
-           inv INK. desf.
-           apply RegMap.elements_complete in REP.
-           cdes PExec.
-           edestruct (PExec1 thread lprog) as [pe [CC DD]].
-           { unfold stable_prog_to_prog.
-             rewrite IdentMap.Facts.map_o. unfold option_map.
-             desf. }
-           cdes CC.
-           exists s.
-           red. splits.
-           2,3: by desf.
-           eapply steps_to_eps_steps_steps; eauto.
-           { by apply terminal_stable. }
-           simpls.
-           pose (WW :=
-                   @proj2_sig 
-                     _ _ 
-                     (get_stable thread (init lprog) BB
-                                 (rt_refl state (step thread) (init lprog)))).
-           red in WW. desf. }
-      2: { ins.
-           apply eps_steps_in_steps.
-           rewrite prog_g_es_init_alt in *.
-           unfold ES.init, prog_init_K, ES.cont_thread,
-           ES.cont_set in *.
-           simpls.
-           apply in_map_iff in INK.
-           destruct INK as [xst [INK REP]].
-           apply pair_inj in INK. destruct INK as [AA INK].
-           rewrite <- AA in *.
-           inv INK.
-           destruct xst as [thread [xprog BB]]. simpls.
-           assert (xprog = lprog); subst.
-           { clear -REP INPROG.
-             apply IdentMap.elements_complete in REP.
-             unfold stable_prog_to_prog in *.
-             rewrite IdentMap.Facts.map_o in INPROG.
-             unfold option_map in *. desf. }
-           pose (AA :=
-                   @proj2_sig 
-                     _ _ 
-                     (get_stable thread (init lprog) BB
-                                 (rt_refl state (step thread) (init lprog)))).
-           red in AA. desf. }
-      ins. 
-      assert (exists xst,
-                 IdentMap.find thread prog = Some xst /\
-                 lprog = projT1 xst) as [xst [XST]];
-        subst.
-      { unfold stable_prog_to_prog in *.
-        rewrite IdentMap.Facts.map_o in INPROG.
-        unfold option_map in *. desf.
-        eauto. }
-      unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
-      ES.cont_set in *.
-      simpls.
-      eexists. splits.
-      { apply in_map_iff.
-        exists (thread, xst). splits. simpls.
-          by apply IdentMap.elements_correct. }
-      destruct xst as [lprog BB]. simpls.
-      pose (AA :=
-              @proj2_sig 
-                _ _ 
-                (get_stable thread (init lprog) BB
-                            (rt_refl state (step thread) (init lprog)))).
-      red in AA. desf. }
-    { simpls.
-      arewrite (GEinit ∪₁ dom_rel (Gsb^? ⨾ ⦗GEinit⦘) ≡₁ GEinit).
-      { rewrite (no_sb_to_init G). basic_solver. }
-      split.
-      2: { rewrite prog_g_es_init_init. apply HH. }
-      apply set_subset_inter_r. splits.
-      2: by apply HH.
-      unfold e2a. unfolder. ins. desf. }
-    { eapply eq_dom_mori; eauto.
-      2: by apply prog_g_es_init_same_lab.
-      red. basic_solver. }
-    { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
-      basic_solver. }
-    { unfold prog_g_es_init, ES.init. basic_solver. }
-    { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
-    { rewrite prog_g_es_init_alt. unfold ES.init. basic_solver. }
-    unfold release.
-    arewrite (is_rel (ES.lab (prog_g_es_init prog G)) ⊆₁ ∅).
-    2: basic_solver 20.
-    unfolder. ins.
-    pose proof (prog_g_es_init_lab prog G x) as AA.
-    unfold prog_g_es_init, ES.init, is_rel, Events.mod, mode_le in *. simpls.
-    desf.
-  Qed.
-
-End SimRelLemmas.

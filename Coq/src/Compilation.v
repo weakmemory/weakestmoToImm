@@ -3,8 +3,7 @@ From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel AuxRel
-     PromiseToimm_s.
+     CombRelations SimTraversal SimulationRel PromiseToimm_s.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import ImmProperties.
@@ -16,6 +15,7 @@ Require Import EventToAction.
 Require Import SimRelCont.
 Require Import SimRelEventToAction.
 Require Import SimRel.
+Require Import SimRelInit.
 Require Import SimRelStep.
 Require Import ProgES.
 
@@ -113,14 +113,19 @@ Section Compilation.
           (COVinG : GE ⊆₁ C) :
       simrel_extracted.
     Proof. 
-      assert (simrel_ prog S G sc TC X) as SRC_.
-      { apply SRC. }
       assert (ES.Wf S) as SWF.
       { apply SRC. }
       assert (Wf G) as GWF.
       { apply SRC. }
       assert (tc_coherent G sc TC) as TCCOH.
       { apply SRC. }
+      assert (Execution.t S X) as EXEC.
+      { apply SRC. }
+      assert (simrel_ prog S G sc TC X) as SRC_.
+      { apply SRC. }
+      assert (simrel_e2a S G sc) as SRE2A.
+      { apply SRC. }
+
       assert (GE ≡₁ C) as COVG.
       { split; auto. eapply coveredE; eauto. }
       assert (GE ≡₁ C ∪₁ I) as COVISSG.
@@ -145,9 +150,13 @@ Section Compilation.
         apply set_subset_inter_r. split.
         { eapply issuedE; eauto. }
         eapply issuedW; eauto. }
+
       constructor; splits.
+      3-6: split.
+
       { rewrite DCOV. symmetry. 
-        eapply ex_cov_iss; apply SRC. }
+        eapply ex_cov_iss; eauto. }
+
       { eapply eq_dom_more; 
           [| | | eapply ex_cov_iss_lab; eauto].
         all : auto.
@@ -155,40 +164,64 @@ Section Compilation.
         erewrite <- ex_cov_iss; eauto.
         erewrite set_inter_absorb_r; auto.
         apply set_in_map_collect. }
-      { split.
-        { arewrite (Gsb ≡ ⦗C⦘ ⨾ Gsb ⨾ ⦗C⦘).
-          { rewrite wf_sbE at 1; auto. by rewrite COVG. }
-          rewrite <- restr_cross, restr_relE.
-          eapply sb_restr_cov_in_ex; eauto. }
-        rewrite collect_rel_interi.
+
+      { arewrite (Gsb ≡ ⦗C⦘ ⨾ Gsb ⨾ ⦗C⦘).
+        { rewrite wf_sbE at 1; auto. by rewrite COVG. }
+        rewrite <- restr_cross, restr_relE.
+        eapply sb_restr_cov_in_ex; eauto. }
+
+      { rewrite collect_rel_interi.
         erewrite e2a_sb; try apply SRC. 
-        { basic_solver. }
-        apply stable_prog_to_prog_no_init; apply SRC. }
-      { split. 
-        { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
-          { rewrite wf_rmwE at 1; auto. by rewrite COVG. }
-          rewrite <- restr_cross, restr_relE.
-          eapply rmw_restr_cov_in_ex; eauto. }
-        rewrite collect_rel_interi.
+        basic_solver. }
+
+      { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
+        { rewrite wf_rmwE at 1; auto. by rewrite COVG. }
+        rewrite <- restr_cross, restr_relE.
+        eapply rmw_restr_cov_in_ex; eauto. }
+
+      { rewrite collect_rel_interi.
         erewrite e2a_rmw; try apply SRC. 
         basic_solver. }
-      { split. 
-        { arewrite (Grf ≡ ⦗GE ∩₁ GW⦘ ⨾ Grf ⨾ ⦗GE⦘).
-          { rewrite wf_rfE, wf_rfD; auto. basic_solver. }
-          rewrite ISSG, COVG.
-          rewrite <- restr_cross, restr_relE.
-          eapply iss_rf_cov_in_ex; eauto. }
-        admit. }
-      split. 
+
+      { arewrite (Grf ≡ ⦗GE ∩₁ GW⦘ ⨾ Grf ⨾ ⦗GE⦘).
+        { rewrite wf_rfE, wf_rfD; auto. basic_solver. }
+        rewrite ISSG, COVG.
+        rewrite <- restr_cross, restr_relE.
+        eapply iss_rf_cov_in_ex; eauto. }
+
+      { intros x' y' [x [y [[RF [Xx Xy]] [EQx' EQy']]]].
+        unfolder. ins. desf.
+        eapply jf_cov_in_rf; eauto.
+        unfold ES.rf in RF.
+        destruct RF as [[z [EW JF]] nCF].
+        exists z, y.
+        splits; auto.
+        { apply seq_eqv_r.
+          unfolder; splits; auto.
+          apply COVG.
+          eapply e2a_GE.
+          { apply SRC. }
+          eexists; splits; eauto.
+          eapply Execution.ex_inE; eauto. }
+        symmetry. 
+        eapply e2a_ew; eauto.
+        basic_solver 10. }
+
       { arewrite (Gco ≡ ⦗GE ∩₁ GW⦘ ⨾ Gco ⨾ ⦗GE ∩₁ GW⦘).
         { rewrite wf_coE, wf_coD at 1; auto. basic_solver. }
         rewrite ISSG.
         rewrite <- restr_cross, restr_relE.
         eapply co_restr_iss_in_ex; eauto. }
-      rewrite collect_rel_interi.
-      erewrite e2a_co; try apply SRC. 
-      basic_solver.
-    Admitted.
+
+      unfolder. ins. desf.
+      eapply e2a_co_ncf; eauto.
+      unfolder; do 2 eexists; splits; eauto. 
+      intros CF.
+      eapply Execution.ex_ncf.
+      { apply SRC. }
+      apply seq_eqv_lr; eauto.
+
+    Qed.
 
   End Extraction.
 
@@ -197,6 +230,7 @@ Section Compilation.
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc)
+        (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
@@ -220,6 +254,7 @@ Section Compilation.
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc)
+        (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
     exists S X,

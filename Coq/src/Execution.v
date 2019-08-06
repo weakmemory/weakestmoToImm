@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel.
+From imm Require Import Events.
 (* TODO : get rid of dependency on Step, move corresponding lemmas to Step.v *)
 Require Import AuxDef.
 Require Import AuxRel.
@@ -80,6 +80,34 @@ Record t (X : eventid -> Prop) :=
 
        ex_vis : X ⊆₁ vis S ;
      }.
+
+Lemma sb_total (WF : ES.Wf S) X (exec : t X) :
+  X × X ∩ same_tid ⊆ Einit × Einit ∪ sb⁼. 
+Proof. 
+  intros x y [[Xx Xy] STID].
+  assert (E x) as Ex.
+  { eapply ex_inE; eauto. }
+  assert (E y) as Ey.
+  { eapply ex_inE; eauto. }
+  apply ES.acts_set_split in Ex.
+  apply ES.acts_set_split in Ey.
+  destruct Ex as [INITx | nINITx];
+  destruct Ey as [INITy | nINITy].
+  { basic_solver. }
+  { right. right. left.
+    apply ES.sb_init; auto. 
+    basic_solver. }
+  { right. right. right.
+    apply ES.sb_init; auto. 
+    basic_solver. }
+  right.
+  edestruct ES.same_thread_alt 
+    as [SB | CF]; eauto.
+  { apply nINITx. }
+  exfalso. 
+  eapply ex_ncf; eauto.
+  apply seq_eqv_lr; eauto.
+Qed.
 
 Lemma co_total (WF : ES.Wf S) X (exec : t X) : 
   forall ol, is_total (X ∩₁ W ∩₁ Loc_ ol) co. 

@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig TraversalConfigAlt
-     imm_common imm_s imm_s_hb CertExecution1 CertExecution2 AuxRel
+     imm_common imm_s imm_s_hb CertExecution1 CertExecution2
      CombRelations Execution_eco.
 Require Import AuxRel.
 Require Import AuxDef.
@@ -106,9 +106,32 @@ Proof.
   basic_solver 20.
 Qed.
 
+Lemma sb_in_vf : ⦗ W ⦘ ⨾ sb ⊆ vf.
+Proof. 
+  unfold vf.
+  rewrite wf_sbE.
+  rewrite sb_in_hb at 1.
+  basic_solver 20.
+Qed.
+
+Lemma vf_sb_in_vf : vf ⨾ sb ⊆ vf.
+Proof. 
+  unfold vf.
+  rewrite seq_union_l, !seqA.
+  apply union_mori.
+  { do 4 (apply seq_mori; [done|]).
+    rewrite wf_sbE.
+    rewrite sb_in_hb.
+    generalize hb_trans.
+    basic_solver. }
+  do 2 (apply seq_mori; [done|]).
+  generalize sb_trans.
+  basic_solver.
+Qed.
+
 Lemma cert_rf_in_vf : cert_rf ⊆ vf.
 Proof. unfold cert_rf. basic_solver. Qed.
-  
+
 Lemma cert_rfE : cert_rf ≡ ⦗E⦘ ⨾ cert_rf ⨾ ⦗E⦘.
 Proof.
   cdes COH.
@@ -391,7 +414,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_sb_F_Acq_in_rf :
-  cert_rf ⨾ sb ;; <|F|> ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb.
+  cert_rf ⨾ sb ⨾ ⦗F⦘ ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ⨾ sb.
 Proof.
   rewrite (dom_r cert_rfD), !seqA.
   rewrite (dom_r cert_rfE), !seqA.
@@ -436,7 +459,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_F_Acq_in_rf :
-  cert_rf ⨾ (sb ;; <|F|>)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ;; sb^?.
+  cert_rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ⨾ sb^?.
 Proof.
   rewrite !crE, !seq_union_l, !seq_union_r, !seq_id_l, !seq_id_r, !seqA.
   apply union_mori.   

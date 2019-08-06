@@ -6,7 +6,7 @@ From imm Require Import Events Execution
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_common imm_s imm_s_hb SimulationRel
      CertExecution2 CertExecutionMain
-     SubExecution CombRelations AuxRel.
+     SubExecution CombRelations.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import LblStep.
@@ -628,8 +628,6 @@ Proof.
         (new_val:=new_val)
         (new_rfi:=new_rfi)
         (MOD:=E0 \₁ D) as [pre_cert_state]; eauto.
-    { (* TODO: Currently, RMWs has to be strong ones. *)
-      admit. }
     { rewrite CACTS. apply NEW_RFIE. }
     { split; [|basic_solver].
       rewrite NEW_RFIE at 1.
@@ -886,7 +884,7 @@ Proof.
     all: eapply cert_rf_hb_sc_hb_irr; eauto.
     all: assert (hb b a) as HB by (apply imm_s_hb.sb_in_hb; auto).
     all: repeat (eexists; split; eauto).
-Admitted.
+Qed.
 
 (******************************************************************************)
 (** ** ilbl_step lemmas *)
@@ -903,7 +901,7 @@ Proof.
   eapply dcertE; [apply CG|].
   eapply preserve_event.
   { eapply lbl_steps_in_steps; eauto. }
-  edestruct lbl_step_cases as [l [l' HH]]; eauto. 
+  edestruct ilbl_step_cases as [l [l' HH]]; eauto. 
   desf; apply ACTS; basic_solver.
 Qed.
 
@@ -920,7 +918,7 @@ Proof.
   eapply dcertE; [apply CG|].
   eapply preserve_event.
   { eapply lbl_steps_in_steps; eauto. }
-  edestruct lbl_step_cases as [l [l' HH]]; eauto. 
+  edestruct ilbl_step_cases as [l [l' HH]]; eauto. 
   desf. 
   1-4 : apply opt_to_list_app_singl in LBLS; intuition.
   desf; apply ACTS; basic_solver.

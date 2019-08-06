@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel Prog ProgToExecutionProperties RC11.
+From imm Require Import Events Prog ProgToExecutionProperties RC11.
 From promising Require Import Basic.
 Require Import AuxDef.
 Require Import AuxRel.
@@ -15,6 +15,38 @@ Set Implicit Arguments.
 
 Module DRF.
   
+Notation "'E' S" := S.(ES.acts_set) (at level 10).
+Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
+Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
+
+Notation "'tid' S" := S.(ES.tid) (at level 10).
+Notation "'lab' S" := S.(ES.lab) (at level 10).
+Notation "'mod' S" := (Events.mod S.(ES.lab)) (at level 10).
+Notation "'loc' S" := (Events.loc S.(ES.lab)) (at level 10).
+Notation "'val' S" := (Events.val S.(ES.lab)) (at level 10).
+
+Notation "'sb' S" := S.(ES.sb) (at level 10).
+Notation "'rmw' S" := S.(ES.rmw) (at level 10).
+Notation "'ew' S" := S.(ES.ew) (at level 10).
+Notation "'jf' S" := S.(ES.jf) (at level 10).
+Notation "'rf' S" := S.(ES.rf) (at level 10).
+Notation "'co' S" := S.(ES.co) (at level 10).
+Notation "'cf' S" := S.(ES.cf) (at level 10).
+
+Notation "'jfe' S" := S.(ES.jfe) (at level 10).
+Notation "'rfe' S" := S.(ES.rfe) (at level 10).
+Notation "'coe' S" := S.(ES.coe) (at level 10).
+Notation "'jfi' S" := S.(ES.jfi) (at level 10).
+Notation "'rfi' S" := S.(ES.rfi) (at level 10).
+Notation "'coi' S" := S.(ES.coi) (at level 10).
+
+Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
+Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
+Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
+  
+Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
+Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
+
 Definition program_execution P S X :=
   ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
   ⟪ EXEC : Execution.t S X ⟫.
@@ -30,11 +62,11 @@ Proof.
   specialize (BasicStep.basic_step_acts_init_set BSTEP WF) as EINIT.
   unfolder. splits; unfold ES.init_loc; ins; desf.
   { exists a. splits; [by apply EINIT|].
-    arewrite ((loc S') a = (loc S) a); [|done].
+    arewrite (loc S' a = loc S a); [|done].
     apply (BasicStep.basic_step_loc_eq_dom BSTEP).
     apply ES.acts_set_split. basic_solver. }
   exists a. splits; [by apply EINIT|].
-  arewrite ((loc S) a = (loc S') a); [|done].
+  arewrite (loc S a = loc S' a); [|done].
   rewrite (BasicStep.basic_step_loc_eq_dom BSTEP); auto.
   apply EINIT in EINA.
   apply ES.acts_set_split. basic_solver.
@@ -52,6 +84,8 @@ Notation "'thread_cont_st' t" :=
 Notation "'thread_st' t" := 
   (Language.state (thread_lts t)) (at level 10, only parsing).
 
+Notation "'K' S" := (ES.cont_set S) (at level 1).
+(*
 Lemma wf_es P
       (nInitProg : ~ IdentMap.In tid_init P)
       (S : ES.t)
@@ -72,7 +106,7 @@ Lemma wf_es P
   ⟪ WF : ES.Wf S ⟫.
 Proof.
   eapply clos_refl_trans_ind_left with (z := S); eauto.
-  { splits; [| done | | by apply prog_es_init_wf].
+  { splits; [| done | | admit].
     { ins. unfold ES.cont_thread.
       unfold prog_es_init, prog_l_es_init, ES.init, ES.cont_set, ES.cont, prog_init_K in INK.
       apply in_map_iff in INK. desf. }
@@ -91,7 +125,7 @@ Proof.
     { erewrite BasicStep.basic_step_cont_thread; eauto. }
     cdes BSTEP_; desf.
     apply LTS in CONT; subst.
-    erewrite <- BasicStep.basic_step_cont_thread_k; eauto. }
+    erewrite <- BasicStep.basic_step_cont_thread; eauto. }
   assert (INIT_LOC': ES.init_loc S' ≡₁ ES.init_loc (prog_es_init P)).
   { cdes STEP.
     erewrite <- basic_step_init_loc; eauto. }
@@ -116,6 +150,7 @@ Proof.
   unfold LblStep.ineps_step in STEP0.
   unfold ProgToExecution.istep in STEP0.
 Admitted.
+ *)
 
 Lemma ra_jf_in_hb S (WF : ES.Wf S) :
   ⦗Rel S⦘ ⨾ S.(ES.jf) ⨾ ⦗Acq S⦘ ⊆ S.(hb). 
@@ -130,6 +165,7 @@ Proof.
   unfold release, rs.
   basic_solver 20.
 Qed.
+
 
 Lemma ct_imm_split_l {A} (r : relation A)
       (IRR: irreflexive r)
@@ -182,6 +218,7 @@ Proof.
   rewrite dom_seq, dom_eqv, ES.E_alt.
   eauto.
 Qed.
+
 Lemma r_hb_in_imm_sb_hb S
       (WF : ES.Wf S)
       (CONS : es_consistent S (m := Weakestmo)):
@@ -207,13 +244,22 @@ Proof.
   apply inclusion_union_l; [basic_solver|].
   rewrite immediate_in, (dom_r (swD S WF)). type_solver. 
 Qed.
-  
+
+(* This lemma was removed from the project during the working on the DRF theorem. 
+   However, the proof relies on it.*)
+Lemma icf_R {S}
+      (WF : ES.Wf S)
+      (CONS : es_consistent S (m := Weakestmo)) :
+  ES.icf S ≡ ⦗R S⦘ ⨾ ES.icf S ⨾ ⦗R S⦘.
+Admitted.
+
 Lemma t_rmw_hb_in_hb S
       (WF : ES.Wf S)
-      (CONS : es_consistent S (m := Weakestmo)):
+      (CONS : es_consistent S (m := Weakestmo)) :
   S.(ES.rmw)⁻¹ ⨾ S.(hb) ⊆ S.(hb)^?.
 Proof.
   rewrite WF.(ES.rmwD).
+  rewrite R_ex_in_R.
   rewrite (dom_l WF.(ES.rmwEninit)).
   repeat rewrite transp_seq.
   rewrite ES.rmwi; eauto.
@@ -235,11 +281,9 @@ Proof.
   rewrite HahnEquational.inter_trans; [| apply ES.same_tid_trans].
   rewrite ES.imm_tsb_imm_sb_in_icf; auto.
   arewrite (⦗W S⦘ ⨾ (ES.icf S)^? ≡ ⦗W S⦘).
-  { erewrite  (dom_rel_helper (icf_R S CONS)). type_solver. }
+  { rewrite (icf_R WF CONS). type_solver. }
   basic_solver.
 Qed.
-
-
 
 Lemma jfe_in_jf (S : ES.t)
       (WF : ES.Wf S):
@@ -555,8 +599,7 @@ Proof.
   unfold vis; splits; constructor;
   rename x into v, H into vA; auto.   
   arewrite (cc S ⨾ ⦗eq v⦘ ⊆ ∅₂); [|done].
-  apply eq_predicate in vA.
-  rewrite vA.
+  arewrite (eq v ⊆₁ A); [basic_solver|]. 
   rewrite (dom_rel_helper (hb_jf_bwcl_cc_bwcl WF CONS JF_BWCL HB_BWCL)). 
   unfold cc. rewrite inclusion_inter_l1.  
   auto. 
@@ -666,9 +709,9 @@ Proof.
       basic_solver. }
     unfolder in ICF. desf.
     { unfolder in SBEQ0; basic_solver. }
-    specialize (icf_R S CONS) as ICF_DOM.
+    specialize (icf_R WF CONS) as ICF_DOM.
     assert (R S z).
-    { unfolder in ICF_DOM. basic_solver. }
+    { apply ICF_DOM in ICF. unfolder in ICF. basic_solver. }
     apply (dom_r (ES.rmwD WF)) in RMW. 
     unfolder in RMW.
     type_solver. }
@@ -742,9 +785,9 @@ Proof.
   assert (STEPS_G' : (step Weakestmo)＊ (prog_es_init P) G').
   { eapply transitive_rt; eauto. apply rt_step. auto. }
   assert (WF_G : ES.Wf G).
-  { eapply wf_es; eauto. }
+  { admit. }
   assert (WF_G' : ES.Wf G').
-  { eapply wf_es; eauto. } 
+  { admit. } 
   generalize (hb_trans G'). intro HB_TRANS.    
   inversion_clear STEP as [e [e' HH]]. desf.
   assert (HB_MON: G.(hb) ⊆ G'.(hb)).
@@ -828,6 +871,7 @@ Proof.
       apply or_not_and. left. apply or_not_and. left. apply and_not_or. split.
       { unfolder in WE_NHB. intuition. }
       intro HH. auto. apply ES.cf_sym in HH. auto. }
+    
     specialize (RACE_FREE w RACE_W) as QW.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].

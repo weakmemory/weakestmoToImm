@@ -1,6 +1,7 @@
 Require Import Setoid Omega.
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel.
+From imm Require Import Events.
+
 Require Import AuxRel.
 
 Tactic Notation "destruct_seq" constr(x)
@@ -111,9 +112,9 @@ Lemma l2f_v {A B} (l : list (A * B)) a def
       (DEC : forall x y : A, {x = y} + {x <> y})
       (NDP : NoDup (map fst l)) :
   (exists b,
-      << BIN : In (a, b) l >>) \/
-  ((~ exists b, << BIN : In (a, b) l >>) /\
-   << VV  : list_to_fun DEC def l a = def >>).
+      ⟪ BIN : In (a, b) l ⟫) \/
+  ((~ exists b, ⟪ BIN : In (a, b) l ⟫) /\
+   ⟪ VV  : list_to_fun DEC def l a = def ⟫).
 Proof.
   induction l. 
   { right. splits; eauto.
@@ -311,6 +312,24 @@ Lemma opt_to_list_app_singl (A : Type) (a a' : A) (b b' : option A) :
 Proof. 
   unfold opt_to_list, app. ins.
   destruct b, b'; inversion H; intuition.
+Qed.
+
+Lemma opt_to_list_app_singl_singl (A : Type) (a a' : A) (b : option A) :
+  opt_to_list b ++ [a] = [a'] -> a = a' /\ b = None.
+Proof. 
+  unfold opt_to_list.
+  destruct b as [b|];
+    unfold app; intros EQ; 
+    by inversion EQ. 
+Qed.
+
+Lemma opt_to_list_app_singl_pair (A : Type) (a a' : A) (b : option A) (b' : A) :
+  opt_to_list b ++ [a] = [b'; a'] -> a = a' /\ b = Some b'.
+Proof. 
+  unfold opt_to_list.
+  destruct b as [b|];
+    unfold app; intros EQ; 
+    by inversion EQ. 
 Qed.
 
 Lemma upd_opt_none_l (A B : Type) (f : A -> B) b : upd_opt f None b = f. 
@@ -534,4 +553,15 @@ Proof.
   split.
   { ins. desf. rewrite <- !EQ; auto. }
   ins. desf. rewrite !EQ; auto.
+Qed.
+
+Lemma app_eq_unit2 {A} (x y : list A) (a b : A)
+      (EQ : x ++ y = [a; b]) :
+  x = [] /\ y = [a; b] \/
+  x = [a] /\ y = [b] \/
+  x = [a; b] /\ y = [].
+Proof.
+  destruct x; simpls; eauto.
+  inv EQ.
+  apply app_eq_unit in H0. desf; eauto.
 Qed.

@@ -59,9 +59,25 @@ Definition cf (S : t) :=
   ⦗ S.(acts_ninit_set) ⦘ ⨾ (S.(same_tid) \ (S.(sb)⁼)) ⨾ ⦗ S.(acts_ninit_set) ⦘.
 
 (* immediate conflict *)
-
 Definition icf (S : t) :=
-  cf S \ ((sb S) ⁻¹ ⨾ (cf S) ∪ (cf S) ⨾ (sb S)).
+  (* In the case of event structure with the empty set 
+   * of initial events this definition is incorrect. 
+   * In order to check that, consider two 
+   * conflicting `first` events in some thread --- 
+   * they are not in the immediate conflict 
+   * according to this definition.
+   * However we found the alternative definition 
+   * (as given in the paper) hard to work with.
+   * Thus the (temproary) solution is to keep this definition
+   * and add the constraint `~ Einit ≡₁ ∅` to the Well-formdness predicate.
+   * Techinacally, there are event structures with empty set of initial events.
+   * Their corresponding programs should consist of `fences` only.
+   * However, in this case these event structures are trivial 
+   * in the sense that their only behaviour is that
+   * consisting of the set of initial writes (which is empty).
+   *)
+  cf S ∩ (immediate (sb S)⁻¹ ⨾ immediate (sb S)).
+  (* cf S \ ((sb S) ⁻¹ ⨾ (cf S) ∪ (cf S) ⨾ (sb S)). *)
 
 Definition cf_free (S : t) X := ⦗ X ⦘ ⨾ cf S ⨾ ⦗ X ⦘ ⊆ ∅₂. 
 
@@ -98,6 +114,12 @@ Definition cont_lab S (cont : cont_label) : option label :=
   | CEvent e => Some (S.(ES.lab) e)
   end.
 
+Definition cont_last S k :=
+  match k with
+  | CInit  i => ES.acts_init_set S
+  | CEvent e => eq e
+  end.
+
 Definition cont_sb_dom S c :=
   match c with
   | CInit  _ => S.(ES.acts_init_set)
@@ -115,6 +137,17 @@ Definition cont_cf_dom S c :=
   | CInit  i => ES.acts_set S ∩₁ (fun x => S.(tid) x = i) 
   | CEvent e => dom_rel (cf S ⨾ ⦗ eq e ⦘) ∪₁ codom_rel (⦗ eq e ⦘ ⨾ sb S)
   end.
+
+Definition cont_icf_dom S c := 
+  codom_rel (⦗cont_last S c⦘ ⨾ immediate (sb S) ⨾ ⦗fun x => tid S x = cont_thread S c⦘).
+
+Definition cont_adjacent S k k' e e' := 
+  ⟪ kREP' : k' = CEvent (opt_ext e e') ⟫ /\ 
+  ⟪ kEQTID : ES.cont_thread S k = ES.cont_thread S k' ⟫ /\
+  ⟪ nINITe : ES.acts_ninit_set S e ⟫ /\
+  ⟪ nRMWde : e' = None -> ~ dom_rel (rmw S) e ⟫ /\
+  ⟪ RMWe : eq e × eq_opt e' ⊆ ES.rmw S ⟫ /\
+  ⟪ kSBDOM : ES.cont_sb_dom S k ≡₁ dom_rel (ES.sb S ⨾ ⦗eq e⦘) ⟫.
 
 (* An initial event structure. *)
 Definition init loc_list conts :=
@@ -222,6 +255,8 @@ Record Wf :=
     init_lab : forall e (INIT : Einit e),
       exists l, lab e = init_write l ;
     init_uniq : inj_dom Einit loc ;
+    (* see the comment about `icf` above *)
+    init_nempty : ~ Einit ≡₁ ∅ ; 
     
     sbE : sb ≡ ⦗E⦘ ⨾ sb ⨾ ⦗E⦘ ;
     sb_init : Einit × Eninit ⊆ sb;
@@ -237,7 +272,7 @@ Record Wf :=
 
     seqn_after_null : E ⊆₁ codom_rel (⦗ fun x => seqn x = 0 ⦘ ⨾ (sb^? ∩ same_tid));
 
-    rmwD : rmw ≡ ⦗R⦘ ⨾ rmw ⨾ ⦗W⦘ ;
+    rmwD : rmw ≡ ⦗R_ex⦘ ⨾ rmw ⨾ ⦗W⦘ ;
     rmwl : rmw ⊆ same_loc ;
     rmwi : rmw ⊆ immediate sb ;
 
@@ -264,7 +299,7 @@ Record Wf :=
 
     ewE : ew ≡ ⦗E⦘ ⨾ ew ⨾ ⦗E⦘ ;
     ewD : ew ≡ ⦗W⦘ ⨾ ew ⨾ ⦗W⦘ ;
-    ewm : ew ⊆ (ORlx × ORlx)^? ;
+    ewm : ew ⊆ (set_compl Rel × set_compl Rel)^? ;
     ewl : ew ⊆ same_loc ;
     ewv : ew ⊆ same_val ;
     ewc : ew ⊆ cf^? ; 
@@ -282,15 +317,28 @@ Record Wf :=
       ~ (exists c k,
             ⟪ KK  : K (k, c) ⟫ /\
             ⟪ CTK : cont_thread S k = tid_init ⟫);
+
     rmw_K :
       ~ (exists c e,
             ⟪ KK  : K (CEvent e, c) ⟫ /\
             ⟪ RMW : dom_rel rmw e ⟫);
+
     unique_K : forall c c' (CK : K c) (CK' : K c') (FF : fst c = fst c'),
         snd c = snd c';
+
     event_K  : forall e (EE: Eninit e) (NRMW : ~ dom_rel rmw e),
         exists c, ⟪ KC : K (CEvent e, c) ⟫;
+
     K_inEninit : forall e c (inK: K (CEvent e, c)), Eninit e;
+
+    K_adj : forall lang st st' k k' e e' 
+                   (KK : K (k , existT _ lang st )) 
+                   (KK': K (k', existT _ lang st')) 
+                   (ADJ : cont_adjacent S k k' e e'),
+        exists lbl lbl', 
+          ⟪ LBL  : lbl  = lab e ⟫ /\
+          ⟪ LBL' : lbl' = option_map lab e' ⟫ /\
+          ⟪ STEP : (Language.step lang) (opt_to_list lbl' ++ [lbl]) st st' ⟫ 
   }.
 
 Implicit Type WF : Wf.
@@ -298,6 +346,9 @@ Implicit Type WF : Wf.
 (******************************************************************************)
 (** ** acts_set properties *)
 (******************************************************************************)
+
+Lemma E_alt : E ≡₁ fun x => List.In x (first_nat_list S.(next_act)).
+Proof. red; split; red; apply first_nat_list_In_alt. Qed.
 
 Lemma acts_set_split : E ≡₁ Einit ∪₁ Eninit.
 Proof.
@@ -316,6 +367,16 @@ Qed.
 
 Lemma acts_ninit_set_incl : Eninit ⊆₁ E. 
 Proof. unfold ES.acts_ninit_set. basic_solver. Qed.
+
+Lemma exists_acts_init WF : exists e, Einit e. 
+Proof. 
+  destruct (classic (exists e, Einit e)); auto.
+  exfalso. apply init_nempty; auto.
+  split; [|done].
+  intros e INITe.
+  red. apply H.
+  eauto.
+Qed.
 
 Lemma Tid_compl_NTid t : Tid_ t ∪₁ NTid_ t ≡₁ ⊤₁. 
 Proof. 
@@ -367,6 +428,41 @@ Proof.
   { basic_solver. }
   rewrite sb_Einit_Eninit; auto.
   apply inclusion_union_l; basic_solver. 
+Qed.
+
+Lemma sb_codom_ninit WF : codom_rel sb ⊆₁ Eninit. 
+Proof. rewrite <- sb_seq_Eninit_r; auto. basic_solver. Qed.  
+
+Lemma sb_clos_imm_split WF : sb ≡ (immediate sb)⁺.
+Proof.
+  eapply ct_imm1.
+  { apply WF.(sb_irr). }
+  { apply WF.(sb_trans). }
+  rewrite (dom_l WF.(sbE)).
+  rewrite dom_seq, dom_eqv, E_alt.
+  reflexivity.
+Qed.
+
+Lemma sb_imm_split_r WF : sb ≡ sb^? ⨾ immediate sb.
+Proof.
+  split.
+  2: { generalize WF.(sb_trans). basic_solver. }
+  rewrite sb_clos_imm_split at 1; auto.
+  rewrite ct_end.
+  apply seq_mori; [|done].
+  rewrite immediate_in.
+  apply rt_of_trans. by apply sb_trans.
+Qed.
+
+Lemma sb_imm_split_l WF : sb ≡ immediate sb ⨾ sb^?.
+Proof.
+  split.
+  2: { generalize WF.(sb_trans). basic_solver. }
+  rewrite sb_clos_imm_split at 1; auto.
+  rewrite ct_begin.
+  apply seq_mori; [done|].
+  rewrite immediate_in.
+  apply rt_of_trans. by apply sb_trans.
 Qed.
 
 Lemma Tid_sb_prcl WF t : 
@@ -427,6 +523,36 @@ Proof.
   generalize SB. basic_solver.
 Qed.
 
+Lemma immediate_tsb_functional WF x y z 
+      (nINITy  : Eninit y)
+      (IMMtSB  : immediate (sb)⁻¹ x y)
+      (IMMtSB' : immediate (sb)⁻¹ x z) : 
+  y = z.
+Proof. 
+  destruct IMMtSB  as [SB  nSB ].
+  destruct IMMtSB' as [SB' nSB'].
+  unfold transp in *.
+  assert (Eninit z) as nINITz.
+  { red. split.
+    { apply sbE in SB'; auto.
+      generalize SB'. basic_solver. }
+    intros INITz.
+    eapply (nSB' y); auto.
+    apply sb_init; auto.
+    basic_solver. }
+  edestruct sb_prcl 
+    as [EQ | HH]; eauto.
+  { split; eauto.
+    eapply sb_tid; auto.
+    basic_solver. }
+  { split; eauto.
+    eapply sb_tid; auto.
+    basic_solver. }
+  destruct HH as [[HH _] | [HH _]].
+  { exfalso. eapply nSB; eauto. }
+  exfalso. eapply (nSB' y); auto.
+Qed.
+
 (******************************************************************************)
 (** ** cf properties *)
 (******************************************************************************)
@@ -466,15 +592,44 @@ Proof.
   apply minus_sym; [by apply same_tid_sym | by apply crs_sym].
 Qed.
 
+(******************************************************************************)
+(** ** icf properties *)
+(******************************************************************************)
+
+Lemma icfE : icf ≡ ⦗E⦘ ⨾ icf ⨾ ⦗E⦘.
+Proof. unfold ES.icf. rewrite cfE. basic_solver 20. Qed.
+
+Lemma icfEninit : icf ≡ ⦗Eninit⦘ ⨾ icf ⨾ ⦗Eninit⦘.
+Proof. unfold ES.icf. rewrite cfEninit. basic_solver 20. Qed.
+
+Lemma icf_same_tid : icf ⊆ same_tid.
+Proof. unfold ES.icf. rewrite cf_same_tid. basic_solver. Qed.
+
+Lemma icfEinit_l : ⦗Einit⦘ ⨾ icf ≡ ∅₂.
+Proof. unfold ES.icf. generalize ncfEinit_l. basic_solver. Qed.
+
+Lemma icfEinit_r : icf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. unfold ES.icf. generalize ncfEinit_r. basic_solver. Qed.
+
+Lemma icfEinit : ⦗Einit⦘ ⨾ cf ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof. unfold ES.icf. generalize ncfEinit. basic_solver. Qed.
+
+Lemma icf_irr : irreflexive icf.
+Proof. unfold ES.icf. generalize cf_irr. basic_solver. Qed.
+
 Lemma icf_sym : symmetric icf.
 Proof. 
-  assert (symmetric cf) as AA by apply cf_sym.
-  apply minus_sym; auto.
-  apply sym_transp_equiv.
-  rewrite transp_union, !transp_seq, transp_inv.
-  rewrite (transp_sym_equiv AA).
-  rewrite unionC.
-  done.
+  unfold ES.icf.
+  apply inter_sym.
+  { apply cf_sym. }
+  intros x y [z [IMMSB IMMSB']].
+  exists z. split.
+  { apply immediate_transp 
+      with (r := sb). 
+    apply IMMSB'. }
+  apply immediate_transp 
+      with (r := sb) in IMMSB. 
+  apply IMMSB.
 Qed.
 
 (******************************************************************************)
@@ -531,7 +686,7 @@ Lemma same_thread_cf_free WF X (CFF : cf_free S X) :
   ⦗Eninit ∩₁ X⦘ ⨾ same_tid ⨾ ⦗Eninit ∩₁ X⦘ ≡ ⦗Eninit ∩₁ X⦘ ⨾ sb⁼ ⨾ ⦗Eninit ∩₁ X⦘.
 Proof.
   rewrite set_interC with (s := Eninit) at 1 3.
-  rewrite !AuxRel.id_inter, !seqA.
+  rewrite !id_inter, !seqA.
   rewrite <- !seqA with (r1 := ⦗Eninit⦘).
   rewrite <- !seqA with (r3 := ⦗X⦘).
   rewrite !seqA with (r1 := ⦗Eninit⦘).
@@ -617,7 +772,7 @@ Proof.
 Qed.
 
 Lemma imm_tsb_imm_sb_in_cf WF :
-  ((immediate sb)⁻¹ ;; immediate sb) ∩ same_tid ⊆ cf^?.
+  ((immediate sb)⁻¹ ⨾ immediate sb) ∩ same_tid ⊆ cf^?.
 Proof.
   unfolder. ins. desf.
   destruct (classic (x = y)) as [|NEQ]; [by left|right].
@@ -636,56 +791,19 @@ Proof.
 Qed.
 
 Lemma imm_tsb_imm_sb_in_icf WF :
-  ((immediate sb)⁻¹ ;; immediate sb) ∩ same_tid ⊆ icf^?.
+  ((immediate sb)⁻¹ ⨾ immediate sb) ∩ same_tid ⊆ icf^?.
 Proof.
-  unfolder. ins. desf.
+  intros x y [[z [tIMMSB IMMSB]] STID].
   assert (cf^? x y) as CF.
-  { apply WF.(imm_tsb_imm_sb_in_cf). basic_solver 10. }
-  destruct CF as [|CF]; auto.
+  { apply WF.(imm_tsb_imm_sb_in_cf). 
+    basic_solver 10. }
+  red. destruct CF as [|CF]; auto.
   right.
-  apply WF.(sb_seq_Eninit_r) in H . destruct_seq_r H  as NINX.
-  apply WF.(sb_seq_Eninit_r) in H1. destruct_seq_r H1 as NINY.
+  unfold ES.icf. 
   split; auto.
-  intros [[r [SB CF']]|[r [CF' SB]]].
-  { red in SB.
-    apply WF.(sbE) in SB.
-    destruct_seq SB as [ER EX].
-    destruct (classic (Einit r)) as [INR|NINR].
-    { eapply WF.(n_sb_cf). split; [|apply CF'].
-      apply WF.(sb_Einit_Eninit). by left. }
-    destruct (classic (r = z)) as [|NEQ]; subst.
-    { eapply WF.(n_sb_cf). by splits; [|apply CF']. }
-    destruct (classic (Einit z)) as [INZ|NINZ].
-    { apply H3 with (c:=r); auto.
-      apply WF.(sb_Einit_Eninit). by left. }
-    eapply sb_tot in NEQ; eauto.
-    2,3: red; splits; auto; basic_solver 10.
-    desf.
-    2: by apply H3 with (c:=r).
-    eapply WF.(n_sb_cf). split; [|apply CF'].
-    apply rewrite_trans.
-    { apply WF.(sb_trans). }
-    eexists. splits; eauto. }
-  apply cf_sym in CF'.
-  red in SB.
-  apply WF.(sbE) in SB.
-  destruct_seq SB as [ER EY].
-  destruct (classic (Einit r)) as [INR|NINR].
-  { eapply WF.(n_sb_cf). split; [|apply CF'].
-    apply WF.(sb_Einit_Eninit). by left. }
-  destruct (classic (r = z)) as [|NEQ]; subst.
-  { eapply WF.(n_sb_cf). by splits; [|apply CF']. }
-  destruct (classic (Einit z)) as [INZ|NINZ].
-  { apply H2 with (c:=r); auto.
-    apply WF.(sb_Einit_Eninit). by left. }
-  eapply sb_tot in NEQ; eauto.
-  2,3: red; splits; auto; basic_solver 10.
-  desf.
-  2: by apply H2 with (c:=r).
-  eapply WF.(n_sb_cf). split; [|apply CF'].
-  apply rewrite_trans.
-  { apply WF.(sb_trans). }
-  eexists. splits; eauto.
+  exists z; splits; auto.
+  by apply immediate_transp
+    with (r := sb).
 Qed.
 
 (******************************************************************************)
@@ -741,34 +859,21 @@ Qed.
 (** ** ew properties *)
 (******************************************************************************)
 
-Lemma ew_tid WF : ew ⊆ same_tid.
+Lemma rmw_dom_ninit WF : dom_rel rmw ⊆₁ Eninit. 
+Proof. rewrite rmwEninit; auto. basic_solver. Qed.
+
+Lemma rmw_codom_ninit WF : codom_rel rmw ⊆₁ Eninit. 
 Proof. 
-  rewrite ewc; auto.
-  unfold ES.same_tid, ES.cf.
-  basic_solver 10.
+  rewrite rmw_in_sb; auto.
+  apply sb_codom_ninit; auto.
 Qed.
 
-Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
+Lemma rmw_codom_ndom WF : codom_rel rmw ⊆₁ set_compl (dom_rel rmw).
 Proof. 
-  intros x WW. 
-  exists x, x. 
-  unfolder; splits; eauto.
-  eapply ew_refl; auto.
-  apply inEW in WW.
-  generalize WW. 
-  basic_solver 10.
-Qed.
-
-Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
-Proof. 
-  intros x y RR. 
-  eexists x. 
-  splits; auto.
-  eapply ew_refl; auto.
-  specialize (domEW x).
-  assert ((E ∩₁ W) x) as EWx.
-  { apply domEW. basic_solver. }
-  generalize EWx. basic_solver 10.
+  intros y [x RMW] [z RMW'].
+  apply WF.(rmwD) in RMW.
+  apply WF.(rmwD) in RMW'.
+  unfolder in *. type_solver.
 Qed.
 
 (******************************************************************************)
@@ -839,6 +944,63 @@ Proof.
   split; eauto.
 Qed.
 
+Lemma jfi_in_sb WF : jfi ⊆ sb.
+Proof. unfold ES.jfi. basic_solver. Qed.
+
+(******************************************************************************)
+(** ** ew properties *)
+(******************************************************************************)
+
+Lemma ew_tid WF : ew ⊆ same_tid.
+Proof. 
+  rewrite ewc; auto.
+  unfold ES.same_tid, ES.cf.
+  basic_solver 10.
+Qed.  
+
+Lemma ew_eqvW WF ws (inEW : ws ⊆₁ E ∩₁ W) : ws ⊆₁ dom_rel (ew ⨾ ⦗ws⦘).
+Proof. 
+  intros x WW. 
+  exists x, x. 
+  unfolder; splits; eauto.
+  eapply ew_refl; auto.
+  apply inEW in WW.
+  generalize WW. 
+  basic_solver 10.
+Qed.
+
+Lemma ew_domW WF r (domEW : dom_rel r ⊆₁ E ∩₁ W) : r ⊆ ew ⨾ r.
+Proof. 
+  intros x y RR. 
+  eexists x. 
+  splits; auto.
+  eapply ew_refl; auto.
+  specialize (domEW x).
+  assert ((E ∩₁ W) x) as EWx.
+  { apply domEW. basic_solver. }
+  generalize EWx. basic_solver 10.
+Qed.
+
+(******************************************************************************)
+(** ** ew/co properties *)
+(******************************************************************************)
+
+Lemma ew_co_eq_co WF : ew ⨾ co ≡ co.
+Proof.
+  split; [apply ew_co_in_co|]; auto.
+  rewrite <- ew_refl; auto.
+  rewrite coE, coD; auto.
+  basic_solver.
+Qed.
+
+Lemma co_ew_eq_co WF : co ⨾ ew ≡ co.
+Proof. 
+  split; [apply co_ew_in_co|]; auto.
+  rewrite <- ew_refl; auto.
+  rewrite coE, coD; auto.
+  basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** rf properties *)
 (******************************************************************************)
@@ -891,17 +1053,20 @@ Qed.
 Lemma rf_complete WF : E ∩₁ R ⊆₁ codom_rel rf.
 Proof. rewrite <- jf_in_rf; apply WF. Qed.  
 
+Lemma jf_tjf_in_top WF : jf ⨾ jf⁻¹ ⊆ ⦗⊤₁⦘.
+Proof.
+  arewrite (jf ≡ ((jf)⁻¹)⁻¹).
+  rewrite <- functional_alt.
+  apply WF.
+Qed.
+
 Lemma rf_trf_in_ew WF : rf ⨾ rf⁻¹ ⊆ ew. 
 Proof. 
   unfold ES.rf.
   rewrite transp_minus, transp_seq.
   rewrite !inclusion_minus_rel.
   rewrite !seqA.
-  arewrite (jf ⨾ jf⁻¹ ⊆ ⦗⊤₁⦘).
-  { (* TODO : introduce corresponding lemma *)
-    arewrite (jf ≡ ((jf)⁻¹)⁻¹).
-    rewrite <- functional_alt.
-    apply WF. }
+  sin_rewrite WF.(jf_tjf_in_top).
   rewrite transp_sym_equiv.
   { rewrite seq_id_l. 
     rewrite transitiveI.
@@ -962,9 +1127,22 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma fr_alt WF : fr ≡ jf⁻¹ ⨾ co.
+Proof. 
+  unfold ES.fr. split.
+  2 : by rewrite jf_in_rf. 
+  unfold ES.rf.
+  rewrite inclusion_minus_rel.
+  rewrite transp_seq.
+  rewrite transp_sym_equiv
+    with (r := ew).
+  2 : apply WF.
+  rewrite seqA.
+  by rewrite ew_co_in_co. 
+Qed.
 
 (******************************************************************************)
-(** ** rf/fr properties *)
+(** ** rf/fr/co properties *)
 (******************************************************************************)
 
 Lemma rffr_in_co WF : rf ⨾ fr ⊆ co.
@@ -983,20 +1161,29 @@ Proof.
   eapply WF.(co_trans); eauto.
 Qed.
 
+Lemma co_rf_alt WF : co ⨾ rf ≡ co ⨾ jf.
+Proof. 
+  unfold ES.rf. 
+  unfolder; split; ins; desf.
+  { eexists; splits; [|eauto].
+    eapply co_ew_in_co; eauto.
+    basic_solver. }
+  eexists; splits; eauto.
+  { eexists; splits; eauto.
+    eapply ew_refl; auto.
+    unfolder; splits; auto.
+    { apply coE in H; auto. 
+      generalize H. basic_solver. }
+    apply coD in H; auto. 
+    generalize H. basic_solver. }
+  intros CF.
+  eapply jf_ncf; eauto.
+  basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** co properites *)
 (******************************************************************************)
-
-(* Lemma co_total WF ol ww  *)
-(*       (WS : ww ⊆₁ E ∩₁ W ∩₁ Loc_ ol)  *)
-(*       (nCF : cf_free S ww) : *)
-(*   is_total ww co. *)
-(* Proof.  *)
-(*   red. ins.  *)
-(*   eapply co_connex; auto. *)
-(*   generalize nCF. unfold cf_free. *)
-(*   basic_solver 10. *)
-(* Qed. *)
 
 (******************************************************************************)
 (** ** continuation properites *)
@@ -1007,6 +1194,19 @@ Proof.
   apply K_inEninit in KK; auto.  
   unfold ES.acts_ninit_set, set_minus in KK.
   desf.
+Qed.
+
+(******************************************************************************)
+(** ** cont_sb properites *)
+(******************************************************************************)
+
+Lemma exists_cont_sb_dom WF k : 
+  exists e, cont_sb_dom S k e. 
+Proof. 
+  unfold cont_sb_dom.
+  destruct k.
+  { apply exists_acts_init; eauto. }
+  exists eid. basic_solver 10.
 Qed.
 
 Lemma cont_sb_domE k lang st WF (KK : K (k, existT _ lang st)) : 
@@ -1141,6 +1341,132 @@ Proof.
   { basic_solver. }
   generalize HH. basic_solver.
 Qed.
+
+(******************************************************************************)
+(** ** cont_last properites *)
+(******************************************************************************)
+
+Lemma exists_cont_last WF k : 
+  exists e, cont_last S k e. 
+Proof. 
+  unfold cont_last.
+  destruct k.
+  { eapply exists_acts_init; eauto. }
+  exists eid; eauto.
+Qed.
+
+Lemma cont_last_in_cont_sb WF k : 
+  cont_last S k ⊆₁ cont_sb_dom S k. 
+Proof. 
+  unfold cont_sb_dom, cont_last.
+  destruct k as [|e]; auto.
+  basic_solver.
+Qed.
+
+Lemma sb_cont_last_in_cont_sb_dom WF k : 
+  dom_rel (sb ⨾ ⦗cont_last S k⦘) ⊆₁ cont_sb_dom S k. 
+Proof. 
+  unfold cont_sb_dom, cont_last.
+  destruct k as [|e].
+  { rewrite sb_ninit; auto. basic_solver. }
+  basic_solver.
+Qed.
+
+Lemma cont_sb_dom_alt WF k : 
+  cont_sb_dom S k ≡₁ dom_rel ((sb)^? ⨾ ⦗cont_last S k⦘). 
+Proof. 
+  split. 
+  { unfold cont_sb_dom, cont_last.
+    destruct k; basic_solver. }
+  rewrite crE. relsf. split.
+  { by apply cont_last_in_cont_sb. }
+    by apply sb_cont_last_in_cont_sb_dom.
+Qed.
+
+Lemma cont_sb_dom_alt_imm WF lang k st e
+      (KK : K (k, existT _ lang st))   
+      (IMMSB : codom_rel (⦗cont_last S k⦘ ⨾ immediate sb) e) :
+  cont_sb_dom S k ≡₁ dom_rel (sb ⨾ ⦗eq e⦘).
+Proof.
+  unfold cont_sb_dom, cont_last in *.
+  assert (Eninit e) as nINITe.
+  { apply sb_codom_ninit; auto.
+    generalize IMMSB. basic_solver. }
+  destruct IMMSB as [y HH].
+  apply seq_eqv_l in HH.
+  destruct HH as [kSBy IMMSB].
+  destruct k eqn:Heq.
+  { split.
+    { rewrite sb_Einit_Eninit at 1; auto.
+      basic_solver 10. }
+    rewrite seq_eqv_r.
+    intros z' [z'' [SB EQz'']]. subst z''.
+    assert (E z') as Ez'.
+    { apply sbE in SB; auto.
+      generalize SB. basic_solver. }
+    apply acts_set_split in Ez'.
+    destruct Ez' as [INITz' | nINITz']; auto.
+    exfalso. eapply IMMSB; eauto.
+    apply sb_Einit_Eninit; auto.
+    basic_solver. }
+  subst eid. split.
+  { unfolder. ins. desf.
+    { eexists; splits; eauto.
+      apply IMMSB. }
+    exists e; split; eauto.
+    eapply sb_trans; eauto.
+    apply IMMSB. }
+  assert (E y) as Ey.
+  { eapply K_inEninit; eauto. } 
+  assert (Eninit y) as nINITy.
+  { eapply K_inEninit; eauto. }
+  rewrite sb_imm_split_r at 1; auto.
+  rewrite seqA.
+  rewrite !seq_eqv_r.
+  rewrite crE. relsf. split.
+  { intros x [y' [IMMSB' EQy']]. subst y'.
+    exists y; splits; auto.
+    left. symmetry.
+    eapply immediate_tsb_functional; auto.
+    { apply immediate_transp with (r := sb).
+      red. apply IMMSB. }
+  by apply immediate_transp with (r := sb). }
+  intros x [e' [y' [SB [IMMSB' EQy']]]]. subst e'.
+  exists y; split; auto; right.
+  arewrite (y = y'); auto.
+  eapply immediate_tsb_functional; auto.
+  { apply immediate_transp with (r := sb).
+    red. apply IMMSB. }
+  by apply immediate_transp with (r := sb).
+Qed.
+
+Lemma cont_last_alt WF k : 
+  cont_last S k ≡₁ cont_sb_dom S k \₁ dom_rel (sb ⨾ ⦗cont_sb_dom S k⦘).
+Proof. 
+  unfold cont_sb_dom, cont_last.
+  destruct k.
+  { rewrite sb_ninit; auto. 
+    rewrite dom_empty. 
+    basic_solver. }
+  rewrite crE, seq_union_l, seq_id_l. 
+  rewrite dom_union, !dom_eqv.
+  rewrite id_union, seq_union_r, dom_union.
+  rewrite !set_minus_union_l, !set_minus_union_r.
+  rewrite set_minusK. relsf. 
+  split; [|basic_solver].
+  rewrite seq_eqv_r. unfolder.
+  intros x EQx. subst x.
+  splits; auto.
+  { intros HH. desf.
+    eapply sb_irr; eauto. }
+  intros HH. desf.
+  eapply sb_irr; eauto.
+  eapply sb_trans; eauto.
+Qed.    
+
+(******************************************************************************)
+(** ** cont_cf properites *)
+(******************************************************************************)
 
 Lemma cont_cf_domE k lang st WF (KK : K (k, existT _ lang st)) : 
   cont_cf_dom S k ⊆₁ E.
@@ -1299,6 +1625,226 @@ Proof.
 Qed.
 
 (******************************************************************************)
+(** ** cont_adjacent properites *)
+(******************************************************************************)
+
+Lemma cont_adjacent_rmw WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e (Some e')) :
+  rmw e e'.
+Proof. 
+  unfold cont_adjacent in ADJ; desc. 
+  apply RMWe. basic_solver.
+Qed.
+
+Lemma cont_adjacent_ninit_e WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e e') :
+  Eninit e.
+Proof. by unfold cont_adjacent in ADJ; desc. Qed.
+
+Lemma cont_adjacent_ninit_e' WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e (Some e')) :
+  Eninit e'.
+Proof. 
+  pose proof (cont_adjacent_rmw WF ADJ) as RMW.
+  apply rmwEninit in RMW; auto.
+  generalize RMW. basic_solver. 
+Qed.
+
+Lemma cont_adjacent_tid_e WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e e') :
+  tid e = ES.cont_thread S k.
+Proof. 
+  unfold cont_adjacent in ADJ; desc.
+  rewrite kEQTID. subst k'.
+  unfold ES.cont_thread, opt_ext in *.
+  destruct e' as [e'|]; auto.
+  apply rmwt; auto.
+  apply RMWe. basic_solver. 
+Qed.
+
+Lemma cont_adjacent_tid_e' WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e (Some e')) :
+  tid e' = ES.cont_thread S k.
+Proof. 
+  unfold cont_adjacent in ADJ; desc.
+  rewrite kEQTID. subst k'.
+  unfold ES.cont_thread, opt_ext in *; auto.
+Qed.
+
+Lemma cont_adjacent_cont_last_sb_imm WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e e') :
+  codom_rel (⦗cont_last S k⦘ ⨾ immediate sb) e.
+Proof. 
+  edestruct exists_cont_last
+    with (k := k) as [x kLAST]; eauto.
+  exists x.
+  apply seq_eqv_l.
+  split; auto.
+  cdes ADJ. split.
+  { destruct kSBDOM as [kSBDOM _].
+    eapply cont_last_in_cont_sb 
+      in kLAST; auto.
+    specialize (kSBDOM x kLAST).
+    generalize kSBDOM. basic_solver. }
+  intros y SB SB'.
+  eapply cont_last_alt; eauto.
+  exists y. 
+  apply seq_eqv_r.
+  split; auto.
+  apply kSBDOM.
+  basic_solver 10.
+Qed.
+
+Lemma cont_adjacent_sb_imm WF k k' e e' 
+      (ADJ : cont_adjacent S k k' e e') :
+  eq e × eq_opt e' ⊆ immediate sb.
+Proof. 
+  cdes ADJ.
+  rewrite RMWe.
+  by apply rmwi. 
+Qed.
+
+Lemma cont_adjacent_sb_dom WF k k' e e'
+      (ADJ : cont_adjacent S k k' e e') :
+  ES.cont_sb_dom S k' ≡₁ ES.cont_sb_dom S k ∪₁ eq e ∪₁ eq_opt e'.
+Proof. 
+  red in ADJ. desc. subst k'.
+  unfold ES.cont_sb_dom at 1.
+  unfold opt_ext, eq_opt in *.
+  destruct e' as [e'|].
+
+  { assert (rmw e e') as RMW.
+    { generalize RMWe. basic_solver. }
+    rewrite crE. relsf.
+    rewrite set_unionC.
+    apply set_union_Propere; auto.
+    arewrite (dom_rel (sb ⨾ ⦗eq e'⦘) ≡₁ 
+                      dom_rel (sb^? ⨾ ⦗eq e⦘)).
+    { split.
+      { rewrite sb_imm_split_r at 1; auto. 
+        rewrite !seqA, !seq_eqv_r.
+        intros x [y [z [SB [IMMSB EQy]]]].
+        subst y. exists z. 
+        splits; auto.
+        eapply immediate_tsb_functional; eauto.
+        { apply immediate_transp with (r := sb). red.
+          eapply rmwi; eauto. }
+        apply immediate_transp with (r := sb). by red. }
+      rewrite crE. relsf. 
+      rewrite !seq_eqv_r. splits.
+      { unfolder. ins. desf.
+        eexists; splits; eauto.
+        apply rmw_in_sb; auto. }
+      unfolder. ins. desf.
+      exists e'; splits; eauto.
+      eapply sb_trans; eauto.
+      apply rmw_in_sb; auto. }
+    rewrite crE. relsf.
+    rewrite set_unionC.
+    apply set_union_Propere; auto.
+      by rewrite kSBDOM. }
+
+  rewrite crE. relsf.
+  rewrite set_unionC.
+  apply set_union_Propere; auto.
+    by rewrite kSBDOM.
+Qed.
+
+Lemma cont_adjacent_sb_dom_mon WF k k' e e'
+      (ADJ : cont_adjacent S k k' e e') :
+  ES.cont_sb_dom S k ⊆₁ ES.cont_sb_dom S k'.
+Proof. 
+  erewrite cont_adjacent_sb_dom 
+    with (k' := k'); eauto.
+  basic_solver.
+Qed.
+
+Lemma cont_adjacent_inK' WF st k k' e e'
+      (KK : K (k, st)) 
+      (ADJ : cont_adjacent S k k' e e') :
+  exists st', K (k', st').
+Proof. 
+  cdes ADJ.
+  rewrite kREP'.
+  eapply event_K; auto.
+  { unfold opt_ext. 
+    destruct e' as [e'|]; auto.
+    apply rmw_codom_ninit; auto.
+    eexists. apply RMWe.
+    basic_solver. }
+  unfold opt_ext, eq_opt in *.
+  unfolder in RMWe.
+  intros [x RMW].
+  destruct e' as [e'|].
+  { eapply rmw_codom_ndom with (x := e'); eauto.
+    all: basic_solver. }
+  apply nRMWde; auto. 
+  basic_solver.
+Qed.
+
+(******************************************************************************)
+(** ** cont_icf_dom properites *)
+(******************************************************************************)
+
+Lemma cont_icf_domE WF k : 
+  cont_icf_dom S k ⊆₁ E. 
+Proof.
+  unfold cont_icf_dom.
+  rewrite sbE; auto. 
+  basic_solver.
+Qed.
+
+Lemma cont_icf_domEnint WF k : 
+  cont_icf_dom S k ⊆₁ Eninit. 
+Proof.
+  unfold cont_icf_dom.
+  rewrite sb_Einit_Eninit; auto.
+  basic_solver.
+Qed.
+
+Lemma cont_icf_dom_cont_adjacent WF lang k st e
+      (KK : K (k, existT _ lang st)) 
+      (kICFe : cont_icf_dom S k e) :
+  exists k' e', cont_adjacent S k k' e e'.
+Proof.
+  destruct kICFe as [x HA].
+  apply seq_eqv_lr in HA.
+  destruct HA as [kSBLx [SBIMM TIDe]].
+  assert (Eninit e) as nINITe.
+  { eapply sb_codom_ninit; auto. 
+    generalize SBIMM. basic_solver. }
+  destruct 
+    (classic (exists e', rmw e e'))
+    as [[e' RMW] | nRMW].
+  { edestruct event_K 
+      with (e := e') 
+      as [st' KK']; auto.
+    { apply rmw_codom_ninit; auto.
+      basic_solver. }
+    { eapply rmw_codom_ndom; auto.
+      basic_solver. }
+    red in KK'.
+    exists (CEvent e'), (Some e').
+    constructor; splits; auto.
+    { rewrite <- TIDe.
+      unfold cont_thread.
+      apply rmwt; auto. }
+    { basic_solver. }
+    { basic_solver. }
+    eapply cont_sb_dom_alt_imm; eauto.
+    basic_solver 10. }
+  edestruct event_K 
+    with (e := e) 
+    as [st' KK']; auto.
+  red in KK'.
+  exists (CEvent e), None.
+  constructor; splits; auto.
+  { basic_solver. }
+  eapply cont_sb_dom_alt_imm; eauto.
+  basic_solver 10.
+Qed.
+
+(******************************************************************************)
 (** ** seqn properites *)
 (******************************************************************************)
 
@@ -1318,7 +1864,7 @@ Proof.
     eapply sb_irr; eauto. }
   { red; unfolder; eauto 10. }
   apply sbE, seq_eqv_lr in SB; desf. 
-Qed.  
+Qed.
 
 Lemma seqn_sb_alt WF x y (STID : same_tid x y) (SB : sb x y) : 
   seqn x < seqn y. 
@@ -1331,8 +1877,37 @@ Proof.
   2: { rels. apply countNatP_empty. }
   split; [|basic_solver].
   arewrite (eq y ⊆₁ Einit) by (intros x HH; desf).
-  rewrite <- lib.AuxRel.seq_eqv_inter_lr. 
-  rewrite sb_ninit; auto. rels.
+  generalize WF.(sb_ninit). basic_solver.
+Qed.
+
+Lemma seqn_immsb_init WF x y 
+      (INITx : Einit x)
+      (IMMSB : immediate sb x y) :
+  seqn y = 0.
+Proof. 
+  unfold seqn.
+  arewrite 
+    (dom_rel (sb ∩ same_tid ⨾ ⦗eq y⦘) ≡₁ ∅).
+  { split; try done.
+    rewrite seq_eqv_r.
+    intros z [z' [[SB STID] EQb]].
+    subst z'. red.
+    eapply IMMSB; eauto.
+    apply sb_init; auto.
+    split; auto.
+    split.
+    { apply sbE in SB; auto.
+      generalize SB. basic_solver. }
+    intros [_ TIDz].
+    assert (Eninit y) as nINITy.
+    { apply sb_codom_ninit; auto.
+      eexists. apply IMMSB. }
+    apply nINITy. 
+    split; auto.
+    { apply sbE in SB; auto.
+      generalize SB. basic_solver. }
+    congruence. }
+  by rewrite countNatP_empty.
 Qed.
 
 Lemma seqn_immsb WF x y 
@@ -1375,9 +1950,6 @@ Proof.
   eapply seqn_sb_alt; eauto.
 Qed.
 
-Lemma E_alt : E ≡₁ fun x => List.In x (first_nat_list S.(next_act)).
-Proof. red; split; red; apply first_nat_list_In_alt. Qed.
-
 Lemma sb_well_founded WF : well_founded sb.
 Proof.
   apply fsupp_well_founded.
@@ -1396,38 +1968,6 @@ Proof.
   red. ins.
   eexists. intros. apply E_alt.
   apply WF.(sbE) in REL. by destruct_seq REL as [YY XX].
-Qed.
-
-Lemma sb_clos_imm_split WF : sb ≡ (immediate sb)⁺.
-Proof.
-  eapply ct_imm1.
-  { apply WF.(sb_irr). }
-  { apply WF.(sb_trans). }
-  rewrite (dom_l WF.(sbE)).
-  rewrite dom_seq, dom_eqv, E_alt.
-  reflexivity.
-Qed.
-
-Lemma sb_imm_split_r WF : sb ≡ sb^? ⨾ immediate sb.
-Proof.
-  split.
-  2: { generalize WF.(sb_trans). basic_solver. }
-  rewrite sb_clos_imm_split at 1; auto.
-  rewrite ct_end.
-  apply seq_mori; [|done].
-  rewrite immediate_in.
-  apply rt_of_trans. by apply sb_trans.
-Qed.
-
-Lemma sb_imm_split_l WF : sb ≡ immediate sb ⨾ sb^?.
-Proof.
-  split.
-  2: { generalize WF.(sb_trans). basic_solver. }
-  rewrite sb_clos_imm_split at 1; auto.
-  rewrite ct_begin.
-  apply seq_mori; [done|].
-  rewrite immediate_in.
-  apply rt_of_trans. by apply sb_trans.
 Qed.
 
 Lemma seqn_after_null_imm WF y (EE : Eninit y) :
@@ -1593,6 +2133,30 @@ Proof.
   { omega. }
   apply seqn_sb_alt in SB; auto.
   omega.
+Qed.
+
+Lemma same_sb_dom_same_k k k' lst lst' WF
+      (INK   : ES.cont_set S (k, lst))
+      (INK'  : ES.cont_set S (k', lst'))
+      (TEQ   : ES.cont_thread S k = ES.cont_thread S k')
+      (SBDEQ : ES.cont_sb_dom S k ≡₁ ES.cont_sb_dom S k') :
+  k = k'.
+Proof.
+  destruct k; simpls.
+  all: destruct k'; simpls; desf.
+
+  1,2: exfalso.
+  1,2: eapply WF.(K_inEninit); eauto.
+  1,2: apply SBDEQ; basic_solver 10.
+  
+  assert (dom_rel (sb^? ⨾ ⦗eq eid⦘) eid0) as AA.
+  { apply SBDEQ. basic_solver 10. }
+  assert (dom_rel (sb^? ⨾ ⦗eq eid0⦘) eid) as BB.
+  { apply SBDEQ. basic_solver 10. }
+  unfolder in AA. unfolder in BB. desf.
+  exfalso.
+  eapply WF.(sb_irr).
+  eapply WF.(sb_trans); eauto.
 Qed.
 
 End EventStructure.

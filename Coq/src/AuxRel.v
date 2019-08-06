@@ -1,6 +1,5 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
-From imm Require Import AuxRel.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -49,8 +48,8 @@ Notation "a ⁼" := (clos_refl_sym a) (at level 1, format "a ⁼").
 Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
 Notation "f ⋄₁ s"  := (set_map f s) (at level 39).
 Notation "f □₁ s" := (set_collect f s) (at level 39).
-Notation "f □ r"  := (collect_rel f r) (at level 45).
 Notation "f ⋄ r"  := (map_rel f r) (at level 45).
+Notation "f □ r"  := (collect_rel f r) (at level 45).
 
 Hint Unfold 
      clos_sym clos_refl_sym 
@@ -117,6 +116,9 @@ Proof. basic_solver. Qed.
 Lemma union_sym : symmetric r -> symmetric r' -> symmetric (r ∪ r').
 Proof. basic_solver. Qed.
 
+Lemma inter_sym : symmetric r -> symmetric r' -> symmetric (r ∩ r').
+Proof. basic_solver. Qed.
+
 Lemma minus_sym : symmetric r -> symmetric r' -> symmetric (r \ r').
 Proof. basic_solver. Qed.
 
@@ -154,9 +156,9 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma codom_rel_helper 
-      (IN : codom_rel r ⊆₁ s) :
-  r ≡ r ⨾ ⦗s⦘.
+Lemma codom_rel_helper (rr : relation A) 
+      (IN : codom_rel rr ⊆₁ s) :
+  rr ≡ rr ⨾ ⦗s⦘.
 Proof. unfolder in *. basic_solver. Qed.
 
 Lemma dom_codom_rel_helper 
@@ -164,6 +166,67 @@ Lemma dom_codom_rel_helper
       (IN_CODOM : codom_rel r ⊆₁ s'):
   r ≡ ⦗s⦘ ⨾ r ⨾ ⦗s'⦘.
 Proof. unfolder in *. basic_solver 7. Qed.
+
+Lemma functional_codom_inclusion (rr rr' : relation A) 
+      (INCL : rr ⊆ rr') 
+      (CODOM_INCL : codom_rel rr' ⊆₁ codom_rel rr)
+      (FUNC : functional rr'⁻¹) :
+  rr ≡ rr'.
+Proof.
+  split; auto.
+  intros a1 a2 R'12.
+  specialize (CODOM_INCL a2).
+  destruct CODOM_INCL as [a3 R32]; [basic_solver|].  
+  apply INCL in R32 as R'32.
+  by arewrite (a1 = a3). 
+Qed.
+
+Lemma functional_dom_inclusion 
+      (INCL : r ⊆ r') 
+      (CODOM_INCL : dom_rel r' ⊆₁ dom_rel r)
+      (FUNC : functional r') :
+  r ≡ r'.
+Proof.
+  apply same_relation_transpE.
+  apply inclusion_transpE in INCL.
+  apply functional_codom_inclusion; auto. 
+Qed.
+
+Lemma dom_eqv_tr_codom :  
+  dom_rel r ≡₁ codom_rel r⁻¹.
+Proof. basic_solver. Qed.
+
+Lemma tr_dom_eqv_codom : 
+  dom_rel r⁻¹ ≡₁ codom_rel r.
+Proof. basic_solver. Qed.
+
+Lemma codom_rel_eqv_dom_rel : 
+  codom_rel (⦗dom_rel r⦘ ⨾ r') ≡₁ codom_rel (r⁻¹ ⨾ r').
+Proof. basic_solver. Qed.
+
+Lemma eqv_dom_in_seq_tr : 
+  ⦗dom_rel r⦘ ⊆ r ⨾ r⁻¹. 
+Proof. basic_solver. Qed.
+
+Lemma eqv_codom_in_seq_tr : 
+  ⦗codom_rel r⦘ ⊆ r⁻¹ ⨾ r. 
+Proof. basic_solver. Qed.
+
+Lemma dom_ct (rr : relation A) : 
+  dom_rel rr⁺ ≡₁ dom_rel rr.
+Proof.
+  rewrite ct_begin.
+  basic_solver 7.
+Qed.
+
+Lemma codom_ct (rr : relation A) : 
+      codom_rel rr⁺ ≡₁ codom_rel rr.
+Proof.
+  split.
+  { rewrite ct_end.
+    basic_solver. }
+  by rewrite <- ct_step.
+Qed.
 
 (******************************************************************************)
 (** ** cross_rel properties *)
@@ -236,6 +299,10 @@ Qed.
 (******************************************************************************)
 (** ** set_collect properties *)
 (******************************************************************************)
+
+Lemma transp_collect_rel (f : A -> B) :
+  f □ r⁻¹ ≡  (f □ r)⁻¹.
+Proof. basic_solver 10. Qed.
 
 Lemma set_collect_eq_dom (f g : A -> B) (EQ : eq_dom s f g) :
   f □₁ s ≡₁ g □₁ s.
@@ -368,6 +435,10 @@ Lemma collect_rel_singl (f : A -> B) x y :
   f □ singl_rel x y ≡ singl_rel (f x) (f y).
 Proof. basic_solver 42. Qed.
 
+Lemma collect_rel_transp (f : A -> B) : 
+  f □ r⁻¹ ≡ (f □ r)⁻¹.
+Proof. basic_solver 42. Qed.
+
 Lemma collect_rel_eqv (f : A -> B) : 
   f □ ⦗ s ⦘ ≡ ⦗ f □₁ s ⦘.
 Proof.
@@ -397,13 +468,13 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma collect_rel_seqi (f : A -> B) : 
-  f □ (r ⨾ r') ⊆ (f □ r) ⨾ (f □ r').
+Lemma collect_rel_seqi (rr rr' : relation A) (f : A -> B) : 
+  f □ (rr ⨾ rr') ⊆ (f □ rr) ⨾ (f □ rr').
 Proof. basic_solver 30. Qed.
 
-Lemma collect_rel_seq (f : A -> B)
-      (INJ : inj_dom (codom_rel r ∪₁ dom_rel r') f) : 
-  f □ (r ⨾ r') ≡ (f □ r) ⨾ (f □ r').
+Lemma collect_rel_seq (rr rr' : relation A) (f : A -> B)
+      (INJ : inj_dom (codom_rel rr ∪₁ dom_rel rr') f) : 
+  f □ (rr ⨾ rr') ≡ (f □ rr) ⨾ (f □ rr').
 Proof.
   split; 
     [by apply collect_rel_seqi|].
@@ -438,8 +509,8 @@ Proof.
              <- collect_rel_cr.
 Qed.
 
-Lemma collect_rel_irr (f : A -> B) (Irr : irreflexive (f □ r)): 
-  irreflexive r.
+Lemma collect_rel_irr (rr : relation A) (f : A -> B) (Irr : irreflexive (f □ rr)): 
+  irreflexive rr.
 Proof. generalize Irr. basic_solver 10. Qed.
 
 Lemma collect_rel_acyclic (f : A -> B) (ACYC : acyclic (f □ r)): 
@@ -505,6 +576,83 @@ Proof.
   4: do 2 eexists; splits; eauto; desf.
   1,2,4: by exfalso; eapply DOM; split; [eexists|]; eauto.
   all: exfalso; eapply CODOM; split; [eexists|]; eauto.
+Qed.
+
+Lemma functional_collect_rel_inj (f : A -> B)
+      (INJ : inj_dom s f) :
+  functional (f □ (restr_rel s r)) <-> functional (restr_rel s r). 
+Proof.
+  split; [basic_solver 15|].
+  unfolder.
+  intros P b1 b2 b3 [a1 [a2 [pr1 [eq1 eq2]]]]
+         [a1' [a2' [pr1' [eq1' eq2']]]].
+  subst.
+  assert (a2 = a2'); [|congruence].
+  assert (a1 = a1'); [|by eapply P; eauto; desf].
+  apply INJ; desf.
+Qed.
+
+Lemma transitive_collect_rel_inj (f : A -> B)
+      (INJ : inj_dom s f) :
+  transitive (f □ restr_rel s r) <-> transitive (restr_rel s r).
+Proof. 
+  split.
+  { unfolder.
+    intros HH a1 a2 a3 R12 R23.
+    specialize (HH (f a1) (f a2) (f a3)).
+    destruct HH as [a1' HH]. 
+    { exists a1, a2. desf. }
+    { exists a2, a3. desf. }
+    destruct HH as [a3' HH].
+    assert (a1 = a1'); [apply INJ; by desf|].
+    assert (a3 = a3'); [apply INJ; by desf|].
+    basic_solver. }
+  unfolder. 
+  intros HH b1 b2 b3 [a1 [a2 P]] [a2' [a3 PP]].
+  assert (a2' = a2); [apply INJ; by desf|].
+  exists a1, a3.
+  split; [|by desf].
+  eapply HH with (y := a2); basic_solver.
+Qed.
+
+Lemma total_collect_rel (f : A -> B) :
+  is_total s r -> is_total (f □₁ s) (f □ r).
+Proof.
+  unfolder.
+  intros HH b1 [a1 P1] b2 [a2 P2] NEQ.
+  desf.
+  assert (a1 <> a2) as NEQ' by congruence.
+  specialize (HH a1 P1 a2 P2 NEQ').
+  desf.
+  { left. eauto. }
+  right. eauto.
+Qed.
+
+Lemma collect_rel_irr_inj (f : A -> B)
+      (INJ : inj_dom s f) :
+  irreflexive (f □ (restr_rel s r)) <-> irreflexive (restr_rel s r).
+Proof.
+  split; [by apply collect_rel_irr|].
+  unfolder. ins. desf. rename H2 into EQ.
+  apply INJ in EQ; eauto.
+  basic_solver.
+Qed.
+
+Lemma collect_rel_ct_inj (f : A -> B) (rr : relation A)
+      (INJ : inj_dom s f) : 
+  f □ (restr_rel s rr)⁺ ≡ (f □ (restr_rel s rr))⁺.
+Proof.
+  split; [by apply collect_rel_ct|].
+  apply inclusion_t_ind_right.
+  { by rewrite <- ct_step. }  
+  rewrite <- collect_rel_seq.
+  { by rewrite ct_unit. }
+  intros x y Hx Hy.
+  destruct Hx as [[z  Hx]|[z  Hx]];
+    destruct Hy as [[z' Hy]|[z' Hy]].
+  all: try apply restr_ct in Hx.
+  all: try apply restr_ct in Hy.
+  all: unfolder in *; basic_solver.
 Qed.
 
 (******************************************************************************)
@@ -600,6 +748,136 @@ Proof.
 Qed.
 
 (******************************************************************************)
+(** ** restr_rel properties *)
+(******************************************************************************)
+
+Lemma restr_set_subset 
+      (SUBS : s' ⊆₁ s) 
+      (EQ   : restr_rel s r ≡ restr_rel s r') :
+  restr_rel s' r ≡ restr_rel s' r'.
+Proof. 
+  unfolder in *.
+  destruct EQ as [INCL INCR].
+  splits; ins; splits; desf;
+    [ apply (INCL x y) | apply (INCR x y) ]; 
+    auto.
+Qed.
+
+Lemma restr_set_union :
+  restr_rel (s ∪₁ s') r ≡
+    restr_rel s r ∪ restr_rel s' r ∪
+    ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ∪ ⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘.
+Proof.
+  unfolder.
+    by splits; ins; desf; splits; eauto; left; left; [left|right].
+Qed.
+
+Lemma restr_set_inter :
+  restr_rel (s ∩₁ s') r ≡ restr_rel s r ∩ restr_rel s' r.
+Proof.
+  unfolder.
+  splits; ins; desf. 
+Qed.
+
+Lemma restr_inter_absorb_l :
+  restr_rel s r ∩ restr_rel s r' ≡ r ∩ restr_rel s r'.
+Proof. basic_solver. Qed.
+
+Lemma restr_inter_absorb_r :
+  restr_rel s r ∩ restr_rel s r' ≡ restr_rel s r ∩ r'.
+Proof. basic_solver. Qed.
+
+Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
+  forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
+Proof. basic_solver. Qed.
+
+Lemma restr_clos_trans : (restr_rel s r)⁺ ⊆ restr_rel s r⁺.
+Proof.
+  unfold inclusion, restr_rel; ins. 
+  induction H; desf; splits; eauto using t_step, t_trans. 
+Qed.
+
+Lemma restr_clos_trans_eq (Hrestr : r ≡ restr_rel s r) : 
+  clos_trans (r) ≡ restr_rel s (clos_trans (r)).
+Proof. 
+  split; [|basic_solver].
+  rewrite <- restr_clos_trans. 
+  by rewrite Hrestr at 1.
+Qed.
+
+Lemma seq_restr (rr rr' : relation A) :
+  restr_rel s rr ⨾ restr_rel s rr' ⊆ restr_rel s (rr ⨾ rr'). 
+Proof. basic_solver. Qed.
+
+Lemma seq_restr_prcl 
+      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
+  restr_rel s r ⨾ restr_rel s r' ≡ restr_rel s (r ⨾ r'). 
+Proof.
+  split; [by apply seq_restr|].
+  rewrite !restr_relE, !seqA.
+  rewrite (dom_rel_helper PRCL).
+  basic_solver 10.
+Qed.
+
+Lemma seq_restr_prcl_cr_r 
+      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
+  restr_rel s r ⨾ (restr_rel s r')^? ≡ restr_rel s (r ⨾ r'^?). 
+Proof.
+  rewrite !crE, !seq_union_r, !seq_id_r.
+  rewrite restr_union.
+  apply union_more; [done | by apply seq_restr_prcl].
+Qed.
+  
+Lemma seq_restr_prcl_cr_l 
+      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
+  (restr_rel s r)^? ⨾ restr_rel s r' ≡ restr_rel s (r^? ⨾ r'). 
+Proof.
+  rewrite !crE, !seq_union_l, !seq_id_l.
+  rewrite restr_union.
+  apply union_more; [done | by apply seq_restr_prcl].
+Qed.
+
+Lemma seq_restr_fwcl {rr rr' : relation A}
+      (FWCL : codom_rel (⦗s⦘ ⨾ rr) ⊆₁ s) :
+  restr_rel s rr ⨾ restr_rel s rr' ≡ restr_rel s (rr ⨾ rr'). 
+Proof.
+  split; [by apply seq_restr|].
+  rewrite !restr_relE, !seqA.
+  seq_rewrite (codom_rel_helper FWCL).
+  basic_solver 10.
+Qed.
+
+Lemma seq_restr_fwcl_cr_r 
+      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+  restr_rel s r ⨾ (restr_rel s r')^? ≡ restr_rel s (r ⨾ r'^?). 
+Proof.
+  rewrite !crE, !seq_union_r, !seq_id_r.
+  rewrite restr_union.
+  apply union_more; [done | by apply seq_restr_fwcl].
+Qed.
+  
+Lemma seq_restr_fwcl_cr_l 
+      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+  (restr_rel s r)^? ⨾ restr_rel s r' ≡ restr_rel s (r^? ⨾ r'). 
+Proof.
+  rewrite !crE, !seq_union_l, !seq_id_l.
+  rewrite restr_union.
+  apply union_more; [done | by apply seq_restr_fwcl].
+Qed.
+
+Lemma immediate_restr :  
+      restr_rel s (immediate r) ⊆ immediate (restr_rel s r).
+Proof. basic_solver. Qed. 
+
+Lemma transp_restr_rel :  
+  restr_rel s r⁻¹ ≡ (restr_rel s r)⁻¹.
+Proof. basic_solver. Qed.
+
+Lemma restr_eqv :
+  restr_rel s ⦗s'⦘ ≡ ⦗s ∩₁ s'⦘.
+Proof. basic_solver. Qed.
+
+(******************************************************************************)
 (** ** TODO : structure other properties *)
 (******************************************************************************)
 
@@ -693,7 +971,7 @@ Proof.
   rewrite !compl_top_minus; by apply minus_union_r.
 Qed.
 
-Lemma seq_eqv_inter_lr : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
+Lemma seq_eqv_inter : ⦗s⦘ ⨾ (r ∩ r') ⨾ ⦗s'⦘ ≡ (⦗s⦘ ⨾ r ⨾ ⦗s'⦘) ∩ (⦗s⦘ ⨾ r' ⨾ ⦗s'⦘).
 Proof. 
   rewrite !seq_eqv_lr. 
   unfold inter_rel.
@@ -721,52 +999,6 @@ Lemma set_minus_remove_l (IN : s ⊆₁ s') :
   s \₁ s'' ⊆₁ s'.
 Proof. generalize IN. basic_solver. Qed.
 
-Lemma restr_set_subset 
-      (SUBS : s' ⊆₁ s) 
-      (EQ   : restr_rel s r ≡ restr_rel s r') :
-  restr_rel s' r ≡ restr_rel s' r'.
-Proof. 
-  unfolder in *.
-  destruct EQ as [INCL INCR].
-  splits; ins; splits; desf;
-    [ apply (INCL x y) | apply (INCR x y) ]; 
-    auto.
-Qed.
-
-Lemma restr_set_union :
-  restr_rel (s ∪₁ s') r ≡
-    restr_rel s r ∪ restr_rel s' r ∪
-    ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ∪ ⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘.
-Proof.
-  unfolder.
-    by splits; ins; desf; splits; eauto; left; left; [left|right].
-Qed.
-
-Lemma restr_set_inter :
-  restr_rel (s ∩₁ s') r ≡ restr_rel s r ∩ restr_rel s' r.
-Proof.
-  unfolder.
-  splits; ins; desf. 
-Qed.
-
-Lemma restr_inter_absorb_l :
-  restr_rel s r ∩ restr_rel s r' ≡ r ∩ restr_rel s r'.
-Proof. basic_solver. Qed.
-
-Lemma restr_inter_absorb_r :
-  restr_rel s r ∩ restr_rel s r' ≡ restr_rel s r ∩ r'.
-Proof. basic_solver. Qed.
-
-Lemma restr_irrefl_eq (IRRFLX: irreflexive r):
-  forall x:A, (restr_rel (eq x) r) ≡ ∅₂.
-Proof. basic_solver. Qed.
-
-Lemma restr_clos_trans : (restr_rel s r)⁺ ⊆ restr_rel s r⁺.
-Proof.
-  unfold inclusion, restr_rel; ins. 
-  induction H; desf; splits; eauto using t_step, t_trans. 
-Qed.
-
 Lemma rt_dom_ri (HH : r ⊆ ⦗ s ⦘ ⨾ r) : r＊ ⨾ ⦗ s ⦘ ⊆ (r ⨾ ⦗ s ⦘)＊.
 Proof.
   rewrite rtE at 1.
@@ -779,46 +1011,6 @@ Proof.
   rewrite inclusion_t_rt.
   basic_solver.
 Qed. 
-
-Lemma restr_clos_trans_eq (Hrestr : r ≡ restr_rel s r) : 
-  clos_trans (r) ≡ restr_rel s (clos_trans (r)).
-Proof. 
-  split; [|basic_solver].
-  rewrite <- restr_clos_trans. 
-  by rewrite Hrestr at 1.
-Qed.
-
-Lemma seq_restr :
-  restr_rel s r ⨾ restr_rel s r' ⊆ restr_rel s (r ⨾ r'). 
-Proof. basic_solver. Qed.
-
-Lemma seq_restr_prcl 
-      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
-  restr_rel s r ⨾ restr_rel s r' ≡ restr_rel s (r ⨾ r'). 
-Proof.
-  split; [by apply seq_restr|].
-  rewrite !restr_relE, !seqA.
-  rewrite (dom_rel_helper PRCL).
-  basic_solver 10.
-Qed.
-
-Lemma seq_restr_prcl_cr_r 
-      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
-  restr_rel s r ⨾ (restr_rel s r')^? ≡ restr_rel s (r ⨾ r'^?). 
-Proof.
-  rewrite !crE, !seq_union_r, !seq_id_r.
-  rewrite restr_union.
-  apply union_more; [done | by apply seq_restr_prcl].
-Qed.
-  
-Lemma seq_restr_prcl_cr_l 
-      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
-  (restr_rel s r)^? ⨾ restr_rel s r' ≡ restr_rel s (r^? ⨾ r'). 
-Proof.
-  rewrite !crE, !seq_union_l, !seq_id_l.
-  rewrite restr_union.
-  apply union_more; [done | by apply seq_restr_prcl].
-Qed.
 
 Lemma clos_refl_trans_union_ext (Hrr : r ⨾ r ≡ ∅₂) (Hrr' : r ⨾ r' ≡ ∅₂) : 
   (r ∪ r')＊ ≡ r'＊ ⨾ r^?.
@@ -933,11 +1125,74 @@ Proof.
   intuition.
 Qed.
 
-Lemma immediate_in : immediate r ⊆ r. 
+Lemma immediate_in (rr : relation A) :
+  immediate rr ⊆ rr. 
 Proof. basic_solver. Qed.
 
 Lemma immediate_inter : 
   (immediate r) ∩ r' ⊆ immediate (r ∩ r').
+Proof. basic_solver. Qed.
+
+Lemma immediate_transp :
+  (immediate r)⁻¹ ≡ immediate (r⁻¹).
+Proof. basic_solver. Qed.
+
+Lemma immediate_collect (rr : relation A) (f : A -> B) : 
+  immediate (f □ rr) ⊆ f □ (immediate rr).
+Proof. basic_solver 15. Qed. 
+  
+Lemma immediate_collect_inj (f : A -> B)
+      (INJ : inj_dom s f) :
+      f □ (immediate (restr_rel s r)) ≡ immediate (f □ (restr_rel s r)).
+Proof.
+  split; [|by apply immediate_collect].
+  split; rename x into b1, y into b2, H into FIb12.
+  { destruct FIb12 as [a1 [a2 [IRa12 [eq1 eq2]]]].
+    exists a1, a2.
+    splits; auto. by apply immediate_in. }
+  intros b3 Fb13 Fb32.
+  destruct Fb13 as [a1 [a3 [ra13 [eq11 eq33]]]].
+  destruct Fb32 as [a3' [a2 [ra32 [eq33' eq22]]]].
+  assert (a3 = a3').
+  { cdes ra32. cdes ra13.
+    apply INJ; basic_solver. }
+  subst.
+  cdes FIb12.
+  cdes FIb0.
+  apply FIb4 with (c := a3').
+  { unfolder in FIb3. unfolder in ra13.
+    apply INJ in FIb1; basic_solver. }
+  unfolder in FIb3. unfolder in ra32.
+  apply INJ in FIb2; basic_solver.
+Qed.
+
+Lemma dwt_imm_f 
+      (TOTAL : downward_total r) :
+  functional (immediate r)⁻¹.
+Proof.
+  unfold downward_total in TOTAL.
+  unfolder. 
+  intros a1 a2 a3 [R21 HH21] [R31 HH31].
+  specialize (TOTAL a2 a3 a1 R21 R31).
+  destruct TOTAL as [HH|HH]; auto.
+  destruct HH; exfalso; eauto.
+Qed.
+
+Lemma imm_clos_trans : 
+  immediate r⁺ ⊆ immediate r.
+Proof.
+  unfold "⊆". intros a1 a2 HH.
+  apply immediate_clos_trans_elim in HH.
+  specialize ct_step.
+  basic_solver.
+Qed.
+
+Lemma imm_union :  
+  immediate (r ∪ r') ⊆ immediate r ∪ immediate r'.
+Proof. basic_solver 10. Qed.
+
+Lemma seq_eqv_imm :  
+  ⦗s⦘ ⨾ immediate r ⊆ immediate (⦗s⦘ ⨾ r).
 Proof. basic_solver. Qed.
 
 Lemma trans_prcl_immediate_seqr_split x y
@@ -988,6 +1243,22 @@ Proof.
   split.
   { apply set_equiv_exp. }
   intros HH. by split; red; ins; apply HH.
+Qed.
+
+Lemma ct_seq_eqv_l :
+  (⦗s⦘ ⨾ r)⁺ ≡ ⦗s⦘ ⨾ (⦗s⦘ ⨾ r)⁺.
+Proof.
+  apply dom_rel_helper.
+  rewrite dom_ct.
+  basic_solver.
+Qed.
+
+Lemma ct_seq_eqv_r :
+  (r ⨾ ⦗s⦘)⁺ ≡  (r ⨾ ⦗s⦘)⁺ ⨾ ⦗s⦘.
+Proof.
+  apply codom_rel_helper.
+  rewrite codom_ct.
+  basic_solver.
 Qed.
 
 End Props.
@@ -1119,262 +1390,10 @@ Proof. red; unfolder; splits; ins; desf; split; eauto. Qed.
 Add Parametric Morphism A : (@set_minus A) with signature 
   set_subset ==> set_subset --> set_subset as set_minus_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
-
-
-Lemma seq_restr_fwcl {A s} {r r' : relation A}
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
-  restr_rel s r ⨾ restr_rel s r' ≡ restr_rel s (r ⨾ r'). 
-Proof.
-  split; [by apply seq_restr|].
-  rewrite !restr_relE, seqA, <- seqA.
-  rewrite (codom_rel_helper FWCL).
-  basic_solver 10.
-Qed.
-
-Lemma seq_restr_fwcl_cr_r {A s} {r r' : relation A}
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
-  restr_rel s r ⨾ (restr_rel s r')^? ≡ restr_rel s (r ⨾ r'^?). 
-Proof.
-  rewrite !crE, !seq_union_r, !seq_id_r.
-  rewrite restr_union.
-  apply union_more; [done | by apply seq_restr_fwcl].
-Qed.
   
-Lemma seq_restr_fwcl_cr_l {A s} {r r' : relation A}
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
-  (restr_rel s r)^? ⨾ restr_rel s r' ≡ restr_rel s (r^? ⨾ r'). 
-Proof.
-  rewrite !crE, !seq_union_l, !seq_id_l.
-  rewrite restr_union.
-  apply union_more; [done | by apply seq_restr_fwcl].
-Qed.
-
-Lemma immediate_restr {A} (r : relation A) (s : A -> Prop) :
-      restr_rel s (immediate r) ⊆ immediate (restr_rel s r).
-Proof. basic_solver. Qed. 
-
-Lemma immediate_collect {A B} (r : relation A) (f : A -> B) : 
-  immediate (f □ r) ⊆ f □ (immediate r).
-Proof. basic_solver 15. Qed. 
-  
-Lemma immediate_collect_inj {A B} (r : relation A) (f : A -> B) s
-      (INJ : inj_dom s f) :
-      f □ (immediate (restr_rel s r)) ≡ immediate (f □ (restr_rel s r)).
-Proof.
-  split; [|by apply immediate_collect].
-  split; rename x into b1, y into b2, H into FIb12.
-  { destruct FIb12 as [a1 [a2 [IRa12 [eq1 eq2]]]].
-    exists a1, a2.
-    splits; auto. by apply immediate_in. }
-  intros b3 Fb13 Fb32.
-  destruct Fb13 as [a1 [a3 [ra13 [eq11 eq33]]]].
-  destruct Fb32 as [a3' [a2 [ra32 [eq33' eq22]]]].
-  assert (a3 = a3').
-  { cdes ra32. cdes ra13.
-    apply INJ; basic_solver. }
-  subst.
-  cdes FIb12.
-  cdes FIb0.
-  apply FIb4 with (c := a3').
-  { unfolder in FIb3. unfolder in ra13.
-    apply INJ in FIb1; basic_solver. }
-  unfolder in FIb3. unfolder in ra32.
-  apply INJ in FIb2; basic_solver.
-Qed.
-
-Lemma transp_collect_rel {A B} (f : A -> B) r :
-  f □ r⁻¹ ≡  (f □ r)⁻¹.
-Proof. basic_solver 10. Qed.
-
-Lemma transp_restr_rel {A} X (r : relation A) :
-  restr_rel X r⁻¹ ≡ (restr_rel X r)⁻¹.
-Proof. basic_solver. Qed.
-
-Lemma functional_collect_rel_inj {A B} X (f : A -> B) r
-      (INJ : inj_dom X f) :
-  functional (f □ (restr_rel X r)) <-> functional (restr_rel X r). 
-Proof.
-  split; [basic_solver 15|].
-  unfolder.
-  intros P b1 b2 b3 [a1 [a2 [pr1 [eq1 eq2]]]]
-         [a1' [a2' [pr1' [eq1' eq2']]]].
-  subst.
-  assert (a2 = a2'); [|congruence].
-  assert (a1 = a1'); [|by eapply P; eauto; desf].
-  apply INJ; desf.
-Qed.
-
-Lemma transitive_collect_rel_inj {A B} X (f : A -> B) r
-      (INJ : inj_dom X f) :
-  transitive (f □ restr_rel X r) <-> transitive (restr_rel X r).
-Proof. 
-  split.
-  { unfolder.
-    intros HH a1 a2 a3 R12 R23.
-    specialize (HH (f a1) (f a2) (f a3)).
-    destruct HH as [a1' HH]. 
-    { exists a1, a2. desf. }
-    { exists a2, a3. desf. }
-    destruct HH as [a3' HH].
-    assert (a1 = a1'); [apply INJ; by desf|].
-    assert (a3 = a3'); [apply INJ; by desf|].
-    basic_solver. }
-  unfolder. 
-  intros HH b1 b2 b3 [a1 [a2 P]] [a2' [a3 PP]].
-  assert (a2' = a2); [apply INJ; by desf|].
-  exists a1, a3.
-  split; [|by desf].
-  eapply HH with (y := a2); basic_solver.
-Qed.
-
-Lemma total_collect_rel {A B} X (f : A -> B) r :
-  is_total X r -> is_total (f □₁ X) (f □ r).
-Proof.
-  unfolder.
-  intros HH b1 [a1 P1] b2 [a2 P2] NEQ.
-  desf.
-  assert (a1 <> a2) as NEQ' by congruence.
-  specialize (HH a1 P1 a2 P2 NEQ').
-  desf.
-  { left. eauto. }
-  right. eauto.
-Qed.
-
-Lemma collect_rel_irr_inj {A B} X r (f : A -> B)
-      (INJ : inj_dom X f) :
-  irreflexive (f □ (restr_rel X r)) <-> irreflexive (restr_rel X r).
-Proof.
-  split; [by apply collect_rel_irr|].
-  unfolder. ins. desf. rename H2 into EQ.
-  apply INJ in EQ; eauto.
-  basic_solver.
-Qed.
-
-Lemma collect_rel_ct_inj {A B} X (f : A -> B) (rr : relation A)
-      (INJ : inj_dom X f) : 
-  f □ (restr_rel X rr)⁺ ≡ (f □ (restr_rel X rr))⁺.
-Proof.
-  split; [by apply collect_rel_ct|].
-  apply inclusion_t_ind_right.
-  { by rewrite <- ct_step. }  
-  rewrite <- collect_rel_seq.
-  2: { rewrite restr_ct. basic_solver. } 
-  by rewrite ct_unit.
-Qed.
-
-Lemma dwt_imm_f {A} {r : relation A}
-      (TOTAL : downward_total r) :
-  functional (immediate r)⁻¹.
-Proof.
-  unfold downward_total in TOTAL.
-  unfolder. 
-  intros a1 a2 a3 [R21 HH21] [R31 HH31].
-  specialize (TOTAL a2 a3 a1 R21 R31).
-  destruct TOTAL as [HH|HH]; auto.
-  destruct HH; exfalso; eauto.
-Qed.
-
-Lemma imm_clos_trans {A} (r : relation A) :
-  immediate r⁺ ⊆ immediate r.
-Proof.
-  unfold "⊆". intros a1 a2 HH.
-  apply immediate_clos_trans_elim in HH.
-  specialize ct_step.
-  basic_solver.
-Qed.
-
-Lemma imm_union {A} (r1 r2 : relation A):
-  immediate (r1 ∪ r2) ⊆ immediate r1 ∪ immediate r2.
-Proof. basic_solver 10. Qed.
-
-Lemma seq_eqv_imm {A} (d : A -> Prop) (r : relation A):
-  ⦗d⦘ ⨾ immediate r ⊆ immediate (⦗d⦘ ⨾ r).
-Proof. basic_solver. Qed.
-
-Lemma immediate_transp {A} (r : relation A) :
-  immediate r⁻¹ ≡ (immediate r)⁻¹.
-Proof. basic_solver. Qed.
-
-Lemma functional_codom_inclusion {A} {r r' : relation A}
-      (INCL : r ⊆ r') 
-      (CODOM_INCL : codom_rel r' ⊆₁ codom_rel r)
-      (FUNC : functional r'⁻¹) :
-  r ≡ r'.
-Proof.
-  split; auto.
-  intros a1 a2 R'12.
-  specialize (CODOM_INCL a2).
-  destruct CODOM_INCL as [a3 R32]; [basic_solver|].  
-  apply INCL in R32 as R'32.
-  by arewrite (a1 = a3). 
-Qed.
-
-Lemma functional_dom_inclusion {A} {r r' : relation A}
-      (INCL : r ⊆ r') 
-      (CODOM_INCL : dom_rel r' ⊆₁ dom_rel r)
-      (FUNC : functional r') :
-  r ≡ r'.
-Proof.
-  apply same_relation_transpE.
-  apply inclusion_transpE in INCL.
-  apply functional_codom_inclusion; auto. 
-Qed.
-
-Lemma dom_eqv_tr_codom {A} (r : relation A):
-  dom_rel r ≡₁ codom_rel r⁻¹.
-Proof. basic_solver. Qed.
-
-Lemma tr_dom_eqv_codom {A} (r : relation A):
-  dom_rel r⁻¹ ≡₁ codom_rel r.
-Proof. basic_solver. Qed.
-
-Lemma codom_rel_eqv_dom_rel {A} (r r' : relation A):
-  codom_rel (⦗dom_rel r⦘ ⨾ r') ≡₁ codom_rel (r⁻¹ ⨾ r').
-Proof. basic_solver. Qed.
-
-Lemma eqv_dom_in_seq_tr {A} (r: relation A):
-  ⦗dom_rel r⦘ ⊆ r ⨾ r⁻¹. 
-Proof. basic_solver. Qed.
-
-Lemma eqv_codom_in_seq_tr {A} (r: relation A):
-  ⦗codom_rel r⦘ ⊆ r⁻¹ ⨾ r. 
-Proof. basic_solver. Qed.
-
-Lemma restr_eqv {A} (s a : A -> Prop) :
-  restr_rel s ⦗a⦘ ≡ ⦗s ∩₁ a⦘.
-Proof. basic_solver. Qed.
-  
-Lemma dom_ct {A} (r : relation A) :
-  dom_rel r⁺ ≡₁ dom_rel r.
-Proof.
-  rewrite ct_begin.
-  basic_solver 7.
-Qed.
-
-Lemma codom_ct {A} (r : relation A) :
-      codom_rel r⁺ ≡₁ codom_rel r.
-Proof.
-  split.
-  { rewrite ct_end.
-    basic_solver. }
-  by rewrite <- ct_step.
-Qed.
-
-Lemma ct_seq_eqv_l {A} {dom} (r : relation A) :
-  (⦗dom⦘ ⨾ r)⁺ ≡ ⦗dom⦘ ⨾ (⦗dom⦘ ⨾ r)⁺.
-Proof.
-  apply dom_rel_helper.
-  rewrite dom_ct.
-  basic_solver.
-Qed.
-
-Lemma ct_seq_eqv_r {A} {dom} (r : relation A) :
-  (r ⨾ ⦗dom⦘)⁺ ≡  (r ⨾ ⦗dom⦘)⁺ ⨾ ⦗dom⦘.
-Proof.
-  apply codom_rel_helper.
-  rewrite codom_ct.
-  basic_solver.
-Qed.
+(******************************************************************************)
+(** ** prcl/fwcl properties *)
+(******************************************************************************)
 
 Lemma eqv_rel_mori' {A} (x y : A -> Prop) :
   ⦗x⦘ ⊆ ⦗y⦘ -> x ⊆₁ y.

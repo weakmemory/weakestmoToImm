@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events AuxRel. 
+From imm Require Import Events. 
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -7,6 +7,8 @@ Require Import Consistency.
 Require Import BasicStep.
 
 Set Implicit Arguments.
+
+Section AddEW.
 
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
@@ -49,9 +51,9 @@ Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Acqrel' S" := (fun a => is_true (is_acqrel S.(ES.lab) a)) (at level 10).
 Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-(* Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10). *)
-(* Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10). *)
-(* Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10). *)
+Notation "'same_mod' S" := (same_mod S.(ES.lab)) (at level 10).
+Notation "'same_loc' S" := (same_loc S.(ES.lab)) (at level 10).
+Notation "'same_val' S" := (same_val S.(ES.lab)) (at level 10).
 
 Notation "'K' S" := (S.(ES.cont_set)) (at level 10).
 
@@ -70,10 +72,10 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ wW' : W S' w' ⟫ /\
   ⟪ ewsE : ews ⊆₁ E S ⟫ /\
   ⟪ ewsW : ews ⊆₁ W S ⟫ /\
-  ⟪ ewsRLX : ews ⊆₁ ORlx S ⟫ /\
-  ⟪ ewsMOD : ews ⊆₁ same_mod S' w' ⟫ /\
-  ⟪ ewsLOC : ews ⊆₁ same_loc S' w' ⟫ /\
-  ⟪ ewsVAL : ews ⊆₁ same_val S' w' ⟫ /\
+  ⟪ ewsnREL : ews ⊆₁ set_compl (Rel S) ⟫ /\
+  ⟪ ewsMOD  : ews ⊆₁ same_mod S' w' ⟫ /\
+  ⟪ ewsLOC  : ews ⊆₁ same_loc S' w' ⟫ /\
+  ⟪ ewsVAL  : ews ⊆₁ same_val S' w' ⟫ /\
   ⟪ ewsCF : ews ⊆₁ cf S' w' ⟫ /\
   ⟪ ewsEW : ews × ews ⊆ ew S ⟫ /\
   ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\
@@ -167,3 +169,47 @@ Proof.
   generalize ewsE. basic_solver.
 Qed.
 
+(******************************************************************************)
+(** ** ew lemmas *)
+(******************************************************************************)
+
+Lemma add_ew_mon ews w' e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (AEW : add_ew ews w' S S') 
+      (wf : ES.Wf S) 
+      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+  ew S ⊆ ew S'.
+Proof. 
+  cdes AEW. 
+  rewrite EW'. 
+  basic_solver. 
+Qed.
+
+Lemma add_ew_ewE ews w' e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (AEW : add_ew ews w' S S') 
+      (wf : ES.Wf S) 
+      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+  ⦗E S⦘ ⨾ ew S' ⨾ ⦗E S⦘ ≡ ew S. 
+Proof. 
+  cdes BSTEP; cdes BSTEP_; cdes AEW. 
+  rewrite EW'. split. 
+  2 : rewrite ES.ewE; auto; basic_solver.  
+  relsf. 
+  arewrite_false 
+    (⦗E S⦘ ⨾ ew_delta ews w' ⨾ ⦗E S⦘).
+  2 : basic_solver. 
+  unfold ew_delta. 
+  rewrite csE. relsf. 
+  arewrite (eq w' ⊆₁ eq e ∪₁ eq_opt e').
+  { generalize wEE'. basic_solver. }
+  step_solver. 
+Qed.
+
+End AddEW.
+
+(* Section hides the tactics and hints, so we repeat it here.
+ * TODO: invent a better solution, 
+ *       perhaps it is better to get rid of notation here at all. 
+ *)
+Hint Unfold ew_delta : ESStepDb.
