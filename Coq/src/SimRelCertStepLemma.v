@@ -442,6 +442,36 @@ Section SimRelCertStepLemma.
     all: basic_solver.
   Qed.
 
+  Lemma simrel_cert_step_e2a_co_kE_iss k k' e e' S S' 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    e2a S' □ (Sco S' ⨾ ⦗kE S' k' ∩₁ e2a S' ⋄₁ I'⦘) ⊆ Gco.
+  Proof. 
+    cdes CertSTEP. cdes BSTEP_. 
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (tc_coherent G sc TC ) as TCCOH.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC by apply SRCC.
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT.
+    { apply SRCC. }
+    assert (cert_graph G sc TC TC' (ktid S k) st'') as CERTG.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+
+    erewrite basic_step_cont_sb_dom'; eauto.
+    rewrite !set_inter_union_l, !id_union, 
+            !seq_union_r, !collect_rel_union.
+    unionL.
+    { erewrite basic_step_e2a_set_map_inter_old; eauto.
+      2 : eapply kE_inE; eauto.
+      
+      
+    kE S' k' ∩₁ e2a S' ⋄₁ I ⊆₁ dom_rel (Sew S' ⨾ ⦗ X ⦘).
+
+
   Lemma simrel_cert_step_rmw_cov_in_kE k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
@@ -607,6 +637,7 @@ Section SimRelCertStepLemma.
     (* kE_iss : kE' ∩₁ e2a' ⋄₁ I ⊆₁ dom_rel (Sew' ⨾ ⦗ X ⦘) ; *)
     { eapply simrel_cert_step_kE_iss; eauto. }
     (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ (I' \₁ I)⦘) ⊆ Gco ;  *)
+    { 
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a' □₁ kE'⦘ ⊆ e2a' □ Srmw' ⨾ ⦗ kE' ⦘ *)
     { eapply simrel_cert_step_rmw_cov_in_kE; eauto. }
 
