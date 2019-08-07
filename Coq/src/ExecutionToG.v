@@ -112,7 +112,10 @@ Definition a2e : actid -> eventid :=
 
 Definition x2g : execution :=
   {| acts := map (e2a S) eventid_list;
-     lab := Slab ∘ a2e;
+     lab := fun a => match a with
+                  | InitEvent l => init_write l 
+                  | thread_event => Slab (a2e thread_event)
+                  end; (* to correspond wf_init_lab *)
      rmw := a2e ⋄ Srmw;
      data := fun x y => False;
      addr := fun x y => False;
@@ -924,11 +927,17 @@ Lemma x2g_X2G {S X}
 Proof.
   red. splits.
   { by apply X2G_acts_transfer. }
-  { simpls.
-    unfolder.
-    unfold eq_dom. ins.
-    rewrite Combinators.compose_assoc.
-    unfold "∘" at 1. by rewrite a2e_e2a. }
+  { unfold eq_dom. ins.
+    specialize (a2e_e2a S X WF EXEC x DX) as a2e_e2a. 
+    unfold "∘", e2a in *. 
+    destruct (excluded_middle_informative (ES.tid S x = tid_init))
+      as [INIT|NINIT].
+    { unfold e2a.
+      eapply Execution.ex_inE in DX; eauto.
+      assert (INIT_x : ES.acts_init_set S x) by basic_solver.
+      specialize (ES.init_lab WF INIT_x) as LAB_X. desf.
+      unfold loc. rewrite LAB_X. simpls. }
+    by rewrite a2e_e2a. }
   { by apply X2G_sb_transfer. }
   all: apply X2G_rel_transfer; auto.
   { by apply ES.rmwE. }
@@ -1097,6 +1106,4 @@ Proof.
     unfold ES.acts_init_set in EINA. 
     unfolder in EINA.
     unfold e2a. rewrite LOCA. desf. }
-  intro.
-  unfold x2g. simpl.
-Admitted.
+Qed.
