@@ -397,8 +397,20 @@ Proof.
     unfold prog_g_es_init, ES.init in *. simpls.
     unfold prog_init_K in *.
     apply in_map_iff in inK. desf. }
-  admit.
-Admitted.
+  ins. exfalso.
+  unfold ES.cont_adjacent 
+    in ADJ.
+  desc.
+  unfold ES.cont_set,
+         ES.cont,
+         prog_g_es_init,
+         prog_init_K
+    in KK'.
+  simpl in KK'.
+  apply in_map_iff in KK'.
+  destruct KK' as [HA [HB HC]].
+  inversion HB. congruence.
+Qed.
 
 Lemma prog_g_es_init_wf G prog
       (nInitProg : ~ IdentMap.In tid_init prog)

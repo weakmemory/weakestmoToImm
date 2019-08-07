@@ -143,8 +143,8 @@ Section SimRel.
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
       
-      jf_cov_in_rf  : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
-      e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;
+      jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
+      e2a_co_iss   : e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;
 
       jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
@@ -391,6 +391,16 @@ Section SimRel.
       generalize HH. basic_solver.
     Qed.
 
+    Lemma e2a_co_ew_iss : 
+      e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco.
+    Proof. 
+      assert (ES.Wf S) as WFS.
+      { apply SRC_. }
+      rewrite <- seqA.
+      rewrite ES.co_ew_in_co; auto.
+      eapply e2a_co_iss; eauto.
+    Qed.
+
     (******************************************************************************)
     (** ** `e2a □ S.rr ⊆ G.rr`  properties  *)
     (******************************************************************************)
@@ -462,23 +472,23 @@ Section SimRel.
       subst y. eapply ES.co_irr; eauto.
     Qed.
 
-    Lemma e2a_co_iss : 
-      e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco.
-    Proof. 
-      assert (ES.Wf S) as WFS.
-      { apply SRC_. }
-      assert (Execution.t S X) as EXEC.
-      { apply SRC_. }
-      unfolder. ins. desf.
-      eapply e2a_co_ew_iss; auto.
-      unfolder; do 2 eexists; splits; eauto. 
-      eexists; splits; eauto.
-      apply ES.ew_refl; auto.
-      unfolder; splits; auto.
-      { eapply Execution.ex_inE; eauto. }
-      apply ex_iss_inW.
-      split; done.
-    Qed.
+    (* Lemma e2a_co_iss :  *)
+    (*   e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco. *)
+    (* Proof.  *)
+    (*   assert (ES.Wf S) as WFS. *)
+    (*   { apply SRC_. } *)
+    (*   assert (Execution.t S X) as EXEC. *)
+    (*   { apply SRC_. } *)
+    (*   unfolder. ins. desf. *)
+    (*   eapply e2a_co_ew_iss; auto. *)
+    (*   unfolder; do 2 eexists; splits; eauto.  *)
+    (*   eexists; splits; eauto. *)
+    (*   apply ES.ew_refl; auto. *)
+    (*   unfolder; splits; auto. *)
+    (*   { eapply Execution.ex_inE; eauto. } *)
+    (*   apply ex_iss_inW. *)
+    (*   split; done. *)
+    (* Qed. *)
 
     Lemma e2a_co_jf_cov : 
       e2a □ Sco ⨾ Sjf^? ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ⊆ Gco ⨾ (Grf ⨾ ⦗C⦘)^?.
@@ -492,7 +502,7 @@ Section SimRel.
                   Sco ⨾ ⦗X ∩₁ SW ∩₁ e2a ⋄₁ C⦘).
         { rewrite ES.coD; auto. basic_solver. }
         rewrite ex_w_cov_in_iss.
-        rewrite e2a_co_iss.
+        rewrite e2a_co_iss; auto.
         basic_solver. }
       rewrite !seq_eqv_r. unfolder.
       intros x' y' [x [y [HH [EQx' EQy']]]].

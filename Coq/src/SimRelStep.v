@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
 From promising Require Import Basic.
 From imm Require Import Events Execution
@@ -265,10 +265,13 @@ Section SimRelStep.
   Proof. 
     assert (ES.Wf S) as WF by apply SRC.
     assert (Execution.t S X) as EXEC by apply SRC.
+    assert (tc_coherent G sc TC) as TCCOH by apply SRC.
     assert (tc_coherent G sc TC') as TCCOH'.
     { eapply sim_trav_step_coherence; try apply SRC.
       red. eauto. }
     assert (Wf G) as WFG by apply SRC.
+    assert (simrel_ prog S G sc TC X) as SR_.
+    { apply SRC. }
 
     pose proof TC_ISTEP as TT.
     eapply trstep_thread_prog in TT; try apply SRC.
@@ -363,6 +366,30 @@ Section SimRelStep.
       eapply ex_iss_inW.
       { apply SRC. }
       split; auto. }
+    (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco *)
+    { etransitivity; [|eapply e2a_co_iss; eauto].
+      arewrite 
+        (kE S k ∩₁ e2a S ⋄₁ I' ⊆₁ X ∩₁ e2a S ⋄₁ C).
+      { rewrite XkTIDCOV. basic_solver. }
+      arewrite 
+        (Sco S ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ Sco S ⨾ ⦗X ∩₁ SW S ∩₁ e2a S ⋄₁ C⦘).
+      { rewrite ES.coD; auto. basic_solver. }
+      apply collect_rel_mori; try done.
+      apply seq_mori; try done.
+      apply eqv_rel_mori; try done.
+      intros x [[Xx Wx] Cx].
+      split; auto.
+      red. red in Cx.
+      eapply w_covered_issued; eauto.
+      split; auto.
+      unfold is_w.
+      fold (compose Glab (e2a S) x).
+      fold (is_w (Glab ∘ e2a S) x).
+      eapply same_lab_u2v_dom_is_w.
+      { apply same_lab_u2v_dom_comm.
+        eapply e2a_lab; apply SRC. }
+      split; auto.
+      eapply Execution.ex_inE; eauto. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ; *)
     { rewrite XkTIDCOV at 1.
       unfolder. ins. desf.
@@ -409,7 +436,7 @@ Section SimRelStep.
       rewrite INX. rewrite XkTIDCOV.
       split; unfolder; ins; desf; splits; eauto.
       { eapply Execution.init_in_ex; eauto. }
-      { eapply init_in_map_cov; eauto. apply SRC. }
+      { eapply init_in_map_cov; eauto. }
       { rewrite THK. eauto. }
       right. splits; eauto. by rewrite <- THK. }
 
@@ -740,29 +767,8 @@ Section SimRelStep.
       erewrite cert_rf_D_rf; try done. 
       1,2: apply SRCC.
       eapply tccoh'; eauto. }
-    (*  e2a_co_ew_iss : e2a □ (Sco ⨾ Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
-    { rewrite set_union_minus with (s := I') (s' := I).
-      2 : eapply sim_trav_step_issued_le; eexists; apply SRCC.
-      rewrite set_map_union, set_inter_union_r, 
-              id_union, !seq_union_r, collect_rel_union.
-      unionL.
-      { admit. }
-      rewrite seq_eqv_r.
-      intros x' y' [x [y [HH [EQx' EQy']]]].
-      destruct HH as [z [CO [EW CertXy]]].
-      subst x' y'.
-      eapply e2a_co_ew_iss; eauto.
-      assert (dom_rel (Sew S ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘) z) 
-        as [z' HH].
-      { eapply ew_ex_iss_cert_ex_iss; eauto. basic_solver 10. }
-      apply seq_eqv_r in HH.
-      destruct HH as [EW' [Xz' Iz']].
-      arewrite (e2a S y = e2a S z').
-      { eapply e2a_ew; eauto.
-        do 2 eexists; splits; eauto. 
-        eapply e2a_ew; eauto.
-        basic_solver 10. }
-      basic_solver 10. }
+    (*  e2a_co_iss : e2a □ (Sco ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
+    { eapply e2a_co_cert_ex_iss; eauto. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.
       { eapply jfe_ex_iss; eauto. }
@@ -779,7 +785,7 @@ Section SimRelStep.
     intros x HH.
     eapply rel_ew_cert_ex; eauto.
     generalize HH. basic_solver 10.
-  Admitted.
+  Qed.
 
   Lemma simrel_step_helper k S
         (st st''' : thread_st (ktid S k))

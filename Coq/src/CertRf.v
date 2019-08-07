@@ -652,6 +652,51 @@ Proof.
   generalize (@sb_trans G) SBXY SBYZ. basic_solver. 
 Qed.
 
+Lemma E0_rmwsfcl (RMWCOV : forall r w, rmw r w -> C r <-> C w) :
+  ⦗E0⦘ ⨾ rmw ≡ ⦗E0⦘ ⨾ rmw ⨾ ⦗E0⦘.
+Proof.
+  split; [|basic_solver].
+  unfold CertRf.E0.
+  rewrite !id_inter.
+  rewrite seq_eqvC at 1 2. rewrite !seqA.
+  arewrite (⦗Tid_ thread⦘ ⨾ rmw ⊆ ⦗Tid_ thread⦘ ⨾ rmw ⨾ ⦗Tid_ thread⦘).
+  { arewrite (rmw ⊆ rmw ∩ same_tid) at 1.
+    2: basic_solver.
+    apply inclusion_inter_r; [done|]. apply WF.(wf_rmwt). }
+  rewrite !id_union. rewrite !seq_union_l, !seq_union_r.
+  unionL.
+  { repeat unionR left.
+    unfolder. ins. splits; desf.
+    match goal with
+    | H : rmw ?x ?y |- _ => eapply RMWCOV in H
+    end.
+    intuition. }
+  unionR right -> right.
+  rewrite WF.(wf_rmwD) at 1.
+  unfolder. ins. splits; desf.
+  1,3: exfalso;
+    match goal with
+    | H : I ?y |- _ => rename H into AA
+    end;
+    eapply issuedW in AA; eauto;
+      type_solver.
+  all: do 2 eexists.
+  { splits; eauto. }
+  splits; [| |by eauto].
+  2: done.
+  destruct (classic (y = y0)) as [|NEQ]; eauto.
+  right.
+  match goal with
+  | H : rmw ?x ?y |- _ => rename H into RMW 
+  end.
+  apply WF.(rmw_from_non_init) in RMW.
+  destruct_seq_l RMW as AA.
+  edestruct sb_semi_total_l with (x:=x); eauto.
+  { by apply rmw_in_sb. }
+  exfalso.
+  eapply wf_rmwi; eauto.
+Qed.
+
 End Properties.
 
 End CertRf.

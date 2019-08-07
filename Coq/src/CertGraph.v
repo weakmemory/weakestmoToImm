@@ -96,7 +96,7 @@ Section CertGraph.
       cuplab_cert : same_lab_u2v_dom certE certG.(lab) G.(lab);
       
       dcertE : certE ≡₁ E0;
-      dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ rmw ⨾ ⦗ certE ⦘;
+      dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ rmw;
       
       cert_rfv_clab : cert_rf ⊆ same_val certLab;
       cert_rfl_clab : cert_rf ⊆ same_loc certLab;
@@ -764,9 +764,9 @@ Proof.
       rewrite TEH.(tr_rmw), !seqA.
       rewrite seq_eqvC. seq_rewrite <- !id_inter.
       arewrite (E0 ∩₁ Tid_ thread ≡₁ E0).
-      2: done.
-      rewrite set_interC. unfold CertRf.E0. rewrite <- !set_interA. 
-        by rewrite set_interK. }
+      { rewrite set_interC. unfold CertRf.E0. rewrite <- !set_interA. 
+          by rewrite set_interK. }
+        by erewrite <- E0_rmwsfcl; eauto. }
     { intros w r RF. apply cert_rf_codomE0 in RF.
       destruct_seq_r RF as EER.
       assert (Tid_ thread r) as TRR by apply EER.
