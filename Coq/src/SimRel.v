@@ -548,9 +548,8 @@ Section SimRel.
         apply seq_eqv_r in SB.
         destruct SB as [SB nINITy].
         apply nINITy. 
-        rewrite <- EQy.
-        unfold EventToAction.e2a.
-        destruct EINITy.
+        eapply e2a_Einit.
+        1: apply SRC_.
         basic_solver. }
       set (HH := SB).
       apply sb_tid_init in HH.
@@ -850,8 +849,7 @@ Section SimRel.
         erewrite eqv_l_set_compl_eqv_l.
         2 : apply rel_in_ex_cov_rel_sb.
         unfold ES.jfi.
-        generalize WFS.(ES.sb_trans). basic_solver. }
-      intros x y HH.
+
       destruct_seq_l HH as DX. 
       exfalso. apply DX.
       destruct HH as [z [REL RFE]].
