@@ -678,6 +678,7 @@ Section SimRelCertForwarding.
     (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE' ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE' ⦘) *)
     { eapply simrel_cert_forwarding_ex_cont_iss; eauto. }
     { admit. }
+    { admit. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE'⦘ ⊆ e2a □ Srmw ⨾ ⦗kE'⦘ *)
     { eapply simrel_cert_forwarding_rmw_cov_in_kE; eauto. }
     admit.

@@ -170,6 +170,8 @@ Section SimRelCert.
 
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ;
+
+      e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco ; 
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
 
@@ -620,6 +622,20 @@ Section SimRelCert.
       unfold D. do 4 left. basic_solver.
     Qed.
 
+    Lemma cert_ex_iss_inW : 
+      certX ∩₁ e2a ⋄₁ I' ⊆₁ SW.
+    Proof.
+      intros x [CertXx Ix].
+      red in Ix.
+      unfold is_w.
+      erewrite cert_ex_cov_iss_lab; auto.
+      { unfold compose.
+        eapply issuedW; eauto.
+        apply tccoh'. }
+      split; auto.
+      basic_solver.
+    Qed.
+
     Lemma ex_ntid_sb_prcl : 
       dom_rel (Ssb ⨾ ⦗ X ∩₁ SNTid ktid ⦘) ⊆₁ SEinit ∪₁ X ∩₁ SNTid ktid.
     Proof. 
@@ -706,105 +722,132 @@ Section SimRelCert.
     dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I)⦘) ≡₁ 
     dom_rel (Sew ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘).
   Proof. 
-      assert (ES.Wf S) as WFS.
-      { apply SRCC. }
-      assert (Execution.t S X) as EXEC.
-      { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
-      { apply SRCC. }
-      rewrite cert_dom_alt.
-      2 : apply cstate_covered.
-      split.
-      
-      { rewrite !set_map_inter, 
-                !set_map_union,
-                !set_map_inter.
-        rewrite !set_inter_union_l, 
-                !set_inter_union_r.
-        rewrite id_union. relsf.
-        splits.
-        { rewrite !seq_eqv_r with (r := Sew).
-          intros x [y [EW [Xx [[_ nTIDx] Ix]]]].
-          exists y; splits; auto.
-          unfolder; left; splits; auto. 
-          intros TIDy. apply nTIDx.
-          erewrite <- e2a_tid; eauto. }
-        rewrite !seq_eqv_r with (r := Sew).
-        intros x [y [EW [Xx [CONTx Ix]]]].
-        edestruct ex_cont_iss
-          as [z HH]; eauto.
-        { unfolder; split; eauto. }
-        apply seq_eqv_r in HH.
-        destruct HH as [EW' kSB].
-        exists z; splits; auto.
-        { eapply ES.ew_trans; eauto. }
-        unfolder; right; splits; auto.
-        arewrite (e2a z = e2a y); auto.
-        symmetry. 
-        eapply e2a_ew; eauto.
-        { apply SRCC. }
-        basic_solver 10. }
-      
-      rewrite set_inter_union_l, id_union.
-      rewrite seq_union_r, dom_union.
-      unionL.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_ prog S G sc TC X) as SR_.
+    { apply SRCC. }
+    rewrite cert_dom_alt.
+    2 : apply cstate_covered.
+    split.
+    
+    { rewrite !set_map_inter, 
+      !set_map_union,
+      !set_map_inter.
+      rewrite !set_inter_union_l, 
+      !set_inter_union_r.
+      rewrite id_union. relsf.
+      splits.
       { rewrite !seq_eqv_r with (r := Sew).
-        intros x [y [EW [[Xx nTIDx] Ix]]].
+        intros x [y [EW [Xx [[_ nTIDx] Ix]]]].
         exists y; splits; auto.
-        split; auto.
-        split; auto.
-        left; split; auto.
-        { eapply ex_cov_iss; eauto. basic_solver. }
-        intros TIDx. apply nTIDx.
-        erewrite e2a_tid; eauto. }
+        unfolder; left; splits; auto. 
+        intros TIDy. apply nTIDx.
+        erewrite <- e2a_tid; eauto. }
       rewrite !seq_eqv_r with (r := Sew).
-      intros x [y [EW [kSBy Iy]]].
-      edestruct kE_iss
+      intros x [y [EW [Xx [CONTx Ix]]]].
+      edestruct ex_cont_iss
         as [z HH]; eauto.
       { unfolder; split; eauto. }
       apply seq_eqv_r in HH.
-      destruct HH as [EW' Xz].
+      destruct HH as [EW' kSB].
       exists z; splits; auto.
       { eapply ES.ew_trans; eauto. }
-      split; auto.
-      assert (e2a z = e2a y) as EQzy.
-      { symmetry. eapply e2a_ew; eauto.
-        { apply SRCC. }
-        basic_solver 10. }
-      red; split.
-      2 : red in Iy; congruence.
-      assert (SE z) as Ez.
-      { apply ES.ewE in EW'; auto.
-        generalize EW'. basic_solver. }
-      set (Ez' := Ez).
-      apply ES.acts_set_split in Ez'.
-      destruct Ez' as [INITz | nINITz].
-      { left; split; try left.
-        { eapply init_covered.
-          { apply SRCC. }
-          eapply e2a_same_Einit. 
-          1-4: apply SRCC.
-          basic_solver. }
-        intros TIDz.
-        eapply ktid_ninit.
-        destruct INITz as [_ INITz].
-        rewrite <- TIDz.
-        erewrite <- e2a_tid; eauto. }
-
-      right. 
-      edestruct cstate_cont as [st_ [stEQ KK]]; 
-        [apply SRCC|].
-      red in stEQ, KK. subst st_.
-      eapply e2a_kEninit; eauto.
+      unfolder; right; splits; auto.
+      arewrite (e2a z = e2a y); auto.
+      symmetry. 
+      eapply e2a_ew; eauto.
       { apply SRCC. }
-      exists y; splits; eauto.
+      basic_solver 10. }
+    
+    rewrite set_inter_union_l, id_union.
+    rewrite seq_union_r, dom_union.
+    unionL.
+    { rewrite !seq_eqv_r with (r := Sew).
+      intros x [y [EW [[Xx nTIDx] Ix]]].
+      exists y; splits; auto.
       split; auto.
-      intros INITy.
-      apply nINITz.
       split; auto.
-      erewrite <- ES.ew_tid; eauto.
-      by destruct INITy as [_ TIDy].
-    Qed.
+      left; split; auto.
+      { eapply ex_cov_iss; eauto. basic_solver. }
+      intros TIDx. apply nTIDx.
+      erewrite e2a_tid; eauto. }
+    rewrite !seq_eqv_r with (r := Sew).
+    intros x [y [EW [kSBy Iy]]].
+    edestruct kE_iss
+      as [z HH]; eauto.
+    { unfolder; split; eauto. }
+    apply seq_eqv_r in HH.
+    destruct HH as [EW' Xz].
+    exists z; splits; auto.
+    { eapply ES.ew_trans; eauto. }
+    split; auto.
+    assert (e2a z = e2a y) as EQzy.
+    { symmetry. eapply e2a_ew; eauto.
+      { apply SRCC. }
+      basic_solver 10. }
+    red; split.
+    2 : red in Iy; congruence.
+    assert (SE z) as Ez.
+    { apply ES.ewE in EW'; auto.
+      generalize EW'. basic_solver. }
+    set (Ez' := Ez).
+    apply ES.acts_set_split in Ez'.
+    destruct Ez' as [INITz | nINITz].
+    { left; split; try left.
+      { eapply init_covered.
+        { apply SRCC. }
+        eapply e2a_same_Einit. 
+        1-4: apply SRCC.
+        basic_solver. }
+      intros TIDz.
+      eapply ktid_ninit.
+      destruct INITz as [_ INITz].
+      rewrite <- TIDz.
+      erewrite <- e2a_tid; eauto. }
+
+    right. 
+    edestruct cstate_cont as [st_ [stEQ KK]]; 
+      [apply SRCC|].
+    red in stEQ, KK. subst st_.
+    eapply e2a_kEninit; eauto.
+    { apply SRCC. }
+    exists y; splits; eauto.
+    split; auto.
+    intros INITy.
+    apply nINITz.
+    split; auto.
+    erewrite <- ES.ew_tid; eauto.
+    by destruct INITy as [_ TIDy].
+  Qed.
+
+  Lemma e2a_co_cert_ex_iss :
+    e2a □ (Sco ⨾ ⦗certX ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco.
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_e2a S G sc) as SRE2A. 
+    { apply SRCC. }
+    assert (simrel_ prog S G sc TC X) as SR_.
+    { apply SRCC. }
+    rewrite set_inter_union_l, id_union, seq_union_r,
+            collect_rel_union.
+    unionL.
+    { rewrite seq_eqv_r.
+      intros x' y' [x [y [HH [EQx' EQy']]]].
+      destruct HH as [CO [[Xy nTIDy] Iy]].
+      red in Iy.
+      eapply isim_trav_step_new_issued_tid in Iy.
+      2-3: apply SRCC.
+      destruct Iy as [[Iy _]|[Iy TIDy]].
+      { eapply e2a_co_iss; eauto. basic_solver 10. }
+      exfalso. apply nTIDy.
+      by erewrite e2a_tid. }
+    by eapply e2a_co_kE_iss. 
+  Qed.
       
     (* Lemma ex_iss_cert_ex : *)
     (*   X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I) ⊆₁  *)
