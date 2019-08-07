@@ -138,7 +138,7 @@ Proof. basic_solver. Qed.
 Lemma codom_singl_rel (x y : A) : codom_rel (singl_rel x y) ≡₁ eq y. 
 Proof. basic_solver. Qed.
 
-Lemma dom_seq : dom_rel (r ⨾ r') ⊆₁ dom_rel r.
+Lemma dom_seq (rr rr' : relation A) : dom_rel (rr ⨾ rr') ⊆₁ dom_rel rr.
 Proof. basic_solver. Qed.
 
 Lemma dom_minus : dom_rel (r \ r') ⊆₁ dom_rel r. 
@@ -513,11 +513,11 @@ Lemma collect_rel_irr (rr : relation A) (f : A -> B) (Irr : irreflexive (f □ r
   irreflexive rr.
 Proof. generalize Irr. basic_solver 10. Qed.
 
-Lemma collect_rel_acyclic (f : A -> B) (ACYC : acyclic (f □ r)): 
-  acyclic r.
+Lemma collect_rel_acyclic (rr : relation A) (f : A -> B) (ACYC : acyclic (f □ rr)): 
+  acyclic rr.
 Proof.
   red. red.
-  assert (forall x y, r⁺ x y -> x <> y) as AA.
+  assert (forall x y, rr⁺ x y -> x <> y) as AA.
   2: { ins. eapply AA; eauto. }
   ins. induction H; intros BB; subst.
   { eapply ACYC. apply ct_step. red.
@@ -628,9 +628,9 @@ Proof.
   right. eauto.
 Qed.
 
-Lemma collect_rel_irr_inj (f : A -> B)
+Lemma collect_rel_irr_inj (rr : relation A) (f : A -> B)
       (INJ : inj_dom s f) :
-  irreflexive (f □ (restr_rel s r)) <-> irreflexive (restr_rel s r).
+  irreflexive (f □ (restr_rel s rr)) <-> irreflexive (restr_rel s rr).
 Proof.
   split; [by apply collect_rel_irr|].
   unfolder. ins. desf. rename H2 into EQ.
@@ -653,6 +653,21 @@ Proof.
   all: try apply restr_ct in Hx.
   all: try apply restr_ct in Hy.
   all: unfolder in *; basic_solver.
+Qed.
+
+Lemma collect_rel_acyclic_inj (f : A -> B)
+      (INJ : inj_dom s f) : 
+  acyclic (f □ restr_rel s r) <-> acyclic (restr_rel s r).
+Proof.
+  split; [by apply collect_rel_acyclic|].
+  unfold acyclic.
+  rewrite <- collect_rel_ct_inj; auto.
+  arewrite ((restr_rel s r)⁺ ≡ restr_rel s (restr_rel s r)⁺).
+  { rewrite codom_rel_helper, dom_rel_helper at 1.
+    1: by rewrite <- restr_relE. 
+    { rewrite dom_seq, dom_ct. basic_solver. }
+    rewrite codom_ct. basic_solver. }
+  by apply collect_rel_irr_inj.
 Qed.
 
 (******************************************************************************)
