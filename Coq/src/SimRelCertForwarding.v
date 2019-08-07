@@ -594,7 +594,7 @@ Section SimRelCertForwarding.
     apply seq_eqv_l. split; auto.
     eapply dcertRMW. 
     { apply SRCC. }
-    apply seq_eqv_lr. splits; auto.
+    apply seq_eqv_l. splits; auto.
     all: apply acts_clos; auto.
     all: omega.
   Qed.

@@ -728,6 +728,12 @@ Section SimRelCertStep.
       as E2ALAB.
     { eapply simrel_cert_step_e2a_lab; eauto. }
 
+    assert (GW ∩₁ GRel ∩₁ I' ⊆₁ C') as WRELIC.
+    { eapply sim_trav_step_rel_covered; eauto. apply SRCC. }
+
+    assert (forall r w, Grmw r w -> C' r <-> C' w) as RMWCOV.
+    { eapply sim_trav_step_rmw_covered; eauto; apply SRCC. }
+
     assert (e2a S' □ Srmw S' ⊆ Grmw) as E2ARMW.
     { unfold_cert_step_ CertSTEP_.
       1-3 :
@@ -744,8 +750,8 @@ Section SimRelCertStep.
         apply SRCC. }
       unfold eq_opt. subst e'.
       rewrite collect_rel_cross, !set_collect_eq.
-      etransitivity; [|eapply inclusion_restr].
-      rewrite restr_relE.
+      etransitivity.
+      2: by eapply inclusion_seq_eqv_l.
       erewrite <- dcertRMW; [|apply SRCC].
       etransitivity.
       2 : { eapply steps_preserve_rmw.
@@ -913,9 +919,7 @@ Section SimRelCertStep.
          rewrite <- BB.
          hahn_frame.
          etransitivity.
-         2: { apply cert_rf_sb_F_Acq_in_rf; eauto; try apply SRCC.
-              eapply sim_trav_step_rel_covered; eauto.
-              apply SRCC. }
+         2: { apply cert_rf_sb_F_Acq_in_rf; eauto; try apply SRCC. }
          basic_solver 10. }
 
     rewrite crE, !seq_union_l, !seq_union_r, !seq_id_l.

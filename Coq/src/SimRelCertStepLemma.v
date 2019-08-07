@@ -750,6 +750,12 @@ Section SimRelCertStepLemma.
     assert (wf_thread_state (ES.cont_thread S k) st) as WTS.
     { eapply wf_cont_state; eauto. }
 
+    assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
+    { eapply wf_thread_state_lbl_step; eauto. }
+
+    assert (wf_thread_state (ES.cont_thread S k) st'') as WTS''.
+    { eapply wf_thread_state_lbl_steps; eauto. }
+
     cdes SIMST.
     red. splits.
     2: { exists state'. red. splits.
@@ -774,10 +780,6 @@ Section SimRelCertStepLemma.
            (lbls = opt_to_list (option_map (Slab S') e') ++ [(Slab S') e]);
          desf.
 
-         (* cdes BSTEP_. *)
-         (* assert (lbl = opt_to_list lbl' ++ [lbl0]); subst. *)
-         (* { eapply unique_lbl_ilbl_step; eauto. } *)
-         
          assert (exists lbls0 lbls', lbls = opt_to_list lbls' ++ [lbls0]); desf.
          { clear -STEP''0.
            red in STEP''0.
@@ -788,7 +790,7 @@ Section SimRelCertStepLemma.
            all: eexists; eexists (Some _); simpls. }
 
          assert (wf_thread_state (ES.cont_thread S k) st''') as WTS'''.
-         { eapply wf_thread_state_lbl_step; eauto. }
+         { eapply wf_thread_state_lbl_step with (state0:=st); eauto. }
 
          assert (acts_set (ProgToExecution.G st''')
                           (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'''.
@@ -810,9 +812,6 @@ Section SimRelCertStepLemma.
            split; auto.
            eapply basic_step_e2a_e; eauto. }
 
-         assert (wf_thread_state (ES.cont_thread S k) st') as WTS'.
-         { eapply wf_thread_state_lbl_step with (state0:=st); eauto. }
-
          assert (acts_set (ProgToExecution.G st')
                           (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'.
          { eapply acts_clos; eauto. eapply lbl_step_eindex_lt; eauto. }
@@ -822,7 +821,9 @@ Section SimRelCertStepLemma.
 
          assert (acts_set (ProgToExecution.G st'')
                           (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST''.
-         { eapply steps_preserve_E; eauto. }
+         { eapply steps_preserve_E.
+           2: by eauto.
+           all: eauto. }
 
          arewrite (Slab S' e = Glab (ThreadEvent (ES.cont_thread S k) (eindex st))).
          { arewrite (Slab S' e =
@@ -871,17 +872,17 @@ Section SimRelCertStepLemma.
               symmetry.
               eapply ilbl_step_nrmw_None with (st:=st); eauto. }
 
-         assert (acts_set (ProgToExecution.G st'')
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST''.
-         { admit. }
-
          assert (Execution.rmw
                    (ProgToExecution.G st'')
                    (ThreadEvent (ES.cont_thread S k) (eindex st))
                    (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMW''.
          { eapply dcertRMW.
            { apply SRCC. }
-           apply seq_eqv_lr. splits; auto. }
+           apply seq_eqv_l. splits; auto. }
+
+         assert (acts_set (ProgToExecution.G st'')
+                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST''.
+         { eapply wft_rmwE in RMW''; eauto. by destruct_seq RMW'' as [AA BB]. }
 
          assert (Execution.rmw
                    (ProgToExecution.G st')
@@ -904,7 +905,7 @@ Section SimRelCertStepLemma.
                  Some (Glab (ThreadEvent (ES.cont_thread S k) (1 + eindex st)))); subst.
          { arewrite (lbls' =
                      Some (Execution.lab st'.(ProgToExecution.G)
-                                         (ThreadEvent (ES.cont_thread S k) (1 + eindex st)))).
+                           (ThreadEvent (ES.cont_thread S k) (1 + eindex st)))).
            { (* TODO: introduce a lemma. *) admit. }
            erewrite <- steps_preserve_lab; simpls; eauto.
            erewrite <- cslab with (G:=G) (state:=st'').
