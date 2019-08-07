@@ -34,6 +34,7 @@ Notation "'GNTid' t" := (fun x => Gtid x <> t) (at level 1).
 Notation "'GLoc_' l" := (fun x => Gloc x = l) (at level 1).
 
 Notation "'GR'" := (fun a => is_true (is_r Glab a)).
+Notation "'GR_ex'" := (fun a => is_true (R_ex Glab a)).
 Notation "'GW'" := (fun a => is_true (is_w Glab a)).
 Notation "'GF'" := (fun a => is_true (is_f Glab a)).
 
@@ -64,6 +65,7 @@ Notation "'STid' t" := (fun x => Stid x = t) (at level 1).
 Notation "'SLoc_' l" := (fun x => Sloc x = l) (at level 1).
 
 Notation "'SR'" := (fun a => is_true (is_r Slab a)).
+Notation "'SR_ex'" := (fun a => is_true (R_ex Slab a)).
 Notation "'SW'" := (fun a => is_true (is_w Slab a)).
 Notation "'SF'" := (fun a => is_true (is_f Slab a)).
 Notation "'SRel'" := (fun a => is_true (is_rel Slab a)).
@@ -382,6 +384,18 @@ Proof.
                   | _ => false end).
   erewrite X2G_lab_set_transfer
     with (p := is_r) (p_lab := f); eauto.
+Qed.
+
+Lemma X2G_R_ex
+      (WF : ES.Wf S)
+      (X2G : X2G) :
+  GE ∩₁ GR_ex ≡₁ e2a S □₁ (X ∩₁ SR_ex).
+Proof.
+  set (f := fun x => match x with
+                  | Aload r _ _ _ => r 
+                  | _ => false end).
+  erewrite X2G_lab_set_transfer
+    with (p := R_ex) (p_lab := f); eauto.
 Qed.
 
 Lemma X2G_W
@@ -968,7 +982,14 @@ Proof.
     arewrite (0 = ES.seqn S e2); auto.
     eapply Execution.ex_inE in Ga2; eauto.
       by rewrite ES.seqn_init. }
-  { admit. }
+  { rewrite GRMW.
+    rewrite <- dom_codom_rel_helper; auto.
+    { rewrite move_dom.
+      rewrite ES.rmwD, !dom_seq, dom_eqv; auto.
+      rewrite <- X2G_R_ex; eauto. basic_solver. }
+    rewrite move_codom.
+    rewrite ES.rmwD, !codom_seq, codom_eqv; auto.
+    rewrite <- X2G_W; eauto. basic_solver. }
   { rewrite GRMW.
     etransitivity.
     { rewrite ES.rmwl; auto.
