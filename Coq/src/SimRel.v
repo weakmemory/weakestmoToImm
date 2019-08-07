@@ -550,7 +550,7 @@ Section SimRel.
         apply nINITy. 
         eapply e2a_Einit.
         1: apply SRC_.
-        basic_solver.
+        basic_solver. }
       set (HH := SB).
       apply sb_tid_init in HH.
       destruct HH as [GTID | INITx].
