@@ -53,6 +53,10 @@ Notation "'Grelease'" := (imm_s_hb.release G).
 Notation "'Gsw'" := (imm_s_hb.sw G).
 Notation "'Ghb'" := (imm_s_hb.hb G).
 
+Notation "'Gpsc_f'" := (imm_s.psc_f G).
+Notation "'Gscb'" :=  (imm_s.scb G).
+Notation "'Gpsc_base'" := (imm_s.psc_base G).
+
 Notation "'SE'" := S.(ES.acts_set).
 Notation "'SEinit'" := S.(ES.acts_init_set).
 Notation "'SEninit'" := S.(ES.acts_ninit_set).
@@ -89,6 +93,10 @@ Notation "'Srs'" := (S.(Consistency.rs)).
 Notation "'Srelease'" := (S.(Consistency.release)).
 Notation "'Ssw'" := (S.(Consistency.sw)).
 Notation "'Shb'" := (S.(Consistency.hb)).
+
+Notation "'Spsc_f'" := (S.(Consistency.psc_f) Weakestmo).
+Notation "'Sscb'" := (S.(Consistency.scb)).
+Notation "'Spsc_base'" := (S.(Consistency.psc_base)).
 
 Notation "'Move' r" := (e2a S □ restr_rel X r) (at level 1).
 
@@ -906,6 +914,22 @@ Proof.
     | by apply irreflexive_restr; desf].
 Qed.
 
+Lemma X2G_psc_f_transfer
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G) :
+  Move Spsc_f ≡ Gpsc_f.
+Proof.
+Admitted.
+
+Lemma X2G_psc_base_transfer
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G) :
+  Move Spsc_base ≡ Gpsc_base.
+Proof.
+Admitted.
+
 Lemma X2G_acyclic_psc
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
@@ -913,10 +937,14 @@ Lemma X2G_acyclic_psc
       (X2G : X2G) :
   acyclic (imm_s.psc_f G ∪ imm_s.psc_base G).
 Proof.
-  unfold imm_s.psc_f.
-  unfold imm_s.psc_base.
-  unfold imm_s.scb.
-Admitted.
+  rewrite <- X2G_psc_f_transfer; auto.
+  rewrite <- X2G_psc_base_transfer; auto.
+  rewrite <- collect_rel_union, union_restr. 
+  apply collect_rel_acyclic_inj.
+  { destruct EXEC. by apply e2a_inj. }
+  apply acyclic_restr.
+  by destruct CONS.
+Qed.
 
 End ExecutionToGraph. 
 

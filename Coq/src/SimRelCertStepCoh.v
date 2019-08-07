@@ -678,9 +678,10 @@ Section SimRelCertStepCoh.
       eapply simrel_cert_step_thb_cf_hb_irr; eauto. }
     { eapply simrel_cert_step_jf_necf; eauto. }
     { eapply simrel_cert_step_jfe_vis; eauto. }
-    eapply simrel_cert_step_coh; eauto. 
+    { eapply simrel_cert_step_coh; eauto. }
+    admit.
     (* { eapply simrel_cert_nforwarding_icf_R; eauto. } *)
     (* eapply simrel_cert_nforwarding_icf_jf; eauto.  *)
-  Qed.
+  Admitted.
 
 End SimRelCertStepCoh.

@@ -159,6 +159,33 @@ Lemma prog_g_es_init_cf G prog :
   ES.cf (prog_g_es_init prog G) ≡ ∅₂.
 Proof. apply prog_l_es_init_cf. Qed.
 
+Lemma prog_l_es_init_psc_f locs prog : 
+  psc_f (prog_l_es_init prog locs) Weakestmo ≡ ∅₂. 
+Proof.
+  unfold psc_f. 
+  rewrite prog_l_es_init_hb.
+  basic_solver.
+Qed.
+
+Lemma prog_l_es_init_scb locs prog : 
+  scb (prog_l_es_init prog locs) ≡ ∅₂. 
+Proof.
+  unfold scb.
+  unfold ES.fr, ES.rf.
+  rewrite prog_l_es_init_sb.
+  rewrite prog_l_es_init_hb.
+  rewrite prog_l_es_init_jf.
+  basic_solver.
+Qed.
+
+Lemma prog_l_es_init_psc_base locs prog : 
+  psc_base (prog_l_es_init prog locs) ≡ ∅₂. 
+Proof.
+  unfold psc_base. 
+  rewrite prog_l_es_init_scb.
+  basic_solver.
+Qed.
+
 Hint Rewrite prog_g_es_init_ninit
      prog_g_es_init_sb
      prog_g_es_init_jf
@@ -173,6 +200,8 @@ Hint Rewrite prog_l_es_init_ninit
      prog_l_es_init_sw
      prog_l_es_init_hb
      prog_l_es_init_cf
+     prog_l_es_init_psc_f
+     prog_l_es_init_psc_base
   : prog_l_es_init_db.
 
 Lemma prog_l_es_init_consistent locs prog :
@@ -180,9 +209,9 @@ Lemma prog_l_es_init_consistent locs prog :
 Proof.
   constructor; unfold ecf, ES.jfe, ES.icf.
   all: autorewrite with prog_l_es_init_db; auto.
+  5: apply acyclic_disj.
   all: basic_solver.
 Qed.
-
 
 Lemma prog_g_es_init_consistent G prog :
   @es_consistent (prog_g_es_init prog G) Weakestmo.
