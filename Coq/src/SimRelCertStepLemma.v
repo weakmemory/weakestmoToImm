@@ -1009,38 +1009,54 @@ Section SimRelCertStepLemma.
          eapply C_in_D. erewrite <- basic_step_e2a_e' with (e':=e'); eauto.
          apply EECE. basic_solver. }
 
-    (* red. splits. *)
-    (* { intros index. split. *)
-    (*   { unfolder. intros [y [AA BB]]. *)
-    (*     eapply basic_step_cont_sb_dom in AA. desf. *)
-    (*     desf. *)
-    (*     match goal with *)
-    (*     | H : ES.cont_sb_dom S' k' y |- _ => rename H into SBD *)
-    (*     end. *)
-    (*     eapply basic_step_cont_sb_dom in SBD; eauto. *)
-    (*     unfolder in SBD. desf. *)
-    (*     { erewrite ilbl_step_eindex_shift; eauto. *)
-    (*       etransitivity. eapply SIMST. *)
-    (*       2: destruct lbl; simpls; omega. *)
-    (*       red. eexists. splits; eauto. *)
-    (*       rewrite <- CTS. erewrite <- basic_step_e2a_eq_dom; eauto. *)
-    (*       eapply kE_inE; eauto. } *)
-    (*     { match goal with *)
-    (*       | H : e2a S' y = _ |- _ => rename H into AA *)
-    (*       end. *)
-    (*       erewrite e2a_ninit in AA; eauto. *)
-    (*       inv AA. *)
+    assert (ES.seqn S' e = eindex st) as SEQNE.
+    { (* TODO: introduce a lemma *) admit. }
+    assert (match e' with
+            | None => True
+            | Some e' => ES.seqn S' e' = 1 + eindex st
+           end) as SEQNE'.
+    { (* TODO: introduce a lemma *) admit. }
 
-    (*   arewrite (eindex st' = *)
-    (*             match e' with *)
-    (*             | None => ES.seqn S' (ES.next_act S) *)
-    (*             | Some e' => ES.seqn S' e' *)
-    (*             end). *)
-    (*   { erewrite ilbl_step_eindex_shift; eauto. *)
-    (*     desf; simpls; desf. *)
-    (*     all: admit. } *)
-        
-
+    assert (eindex st' =
+            match e' with
+            | None => 1 + eindex st
+            | Some e' => 2 + eindex st
+            end) as EINST.
+    { apply ilbl_step_cases in ILBL_STEP; auto. desf. }
+    rewrite EINST.
+    
+    rewrite CTS.
+    split.
+    { unfolder. intros [y [AA BB]].
+      eapply basic_step_cont_sb_dom' with (S:=S) in AA; eauto.
+      destruct AA as [[AA|AA]|AA].
+      3: { red in AA. desf.
+           erewrite basic_step_e2a_e' with (S0:=S) in BB; eauto.
+           inv BB; desf; omega. }
+      2: { subst; erewrite basic_step_e2a_e with (S:=S) in BB; eauto.
+           inv BB; desf; omega. }
+      etransitivity.
+      { eapply PCOV. red. exists y. splits; auto. rewrite <- BB.
+        symmetry. eapply basic_step_e2a_eq_dom; eauto.
+        eapply ES.cont_sb_domE; eauto. }
+      desf; omega. }
+    intros AA.
+    assert (index < eindex st \/ index = eindex st \/ index = 1 + eindex st) as [II|[II|II]].
+    { desf; omega. }
+    { apply PCOV in II. red in II. desc.
+      exists y. split.
+      { eapply basic_step_cont_sb_dom'; eauto. basic_solver. }
+      rewrite <- II0.
+      eapply basic_step_e2a_eq_dom; eauto.
+      eapply ES.cont_sb_domE; eauto. }
+    { exists e. splits; auto. rewrite II.
+      eapply basic_step_e2a_e; eauto. }
+    destruct e' as [e'|].
+    2: omega.
+    exists e'. splits.
+    { apply SBDE'. by red. }
+    rewrite II.
+    eapply basic_step_e2a_e'; eauto.
   Admitted.
 
 End SimRelCertStepLemma.
