@@ -1,7 +1,7 @@
 Require Import Program.Basics.
 
 From hahn Require Import Hahn.
-From imm Require Import Events Prog Execution.
+From imm Require Import Events Prog Execution RC11.
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Execution.
@@ -1087,6 +1087,41 @@ Proof.
   by destruct CONS.
 Qed.
 
+Lemma X2G_acyclic_sb_rf
+      (WF : ES.Wf S)
+      (CONS : es_consistent (m := Weakestmo) S)
+      (EXEC : Execution.t S X)
+      (ACYCLIC : acyclic (restr_rel X (Ssb ∪ Srf)))
+      (X2G : X2G)
+      (WF_G : Wf G) : 
+  acyclic (Gsb ∪ Grf).
+Proof.
+  cdes X2G.
+  rewrite GSB, GRF.
+  rewrite <- collect_rel_union, union_restr. 
+  apply collect_rel_acyclic_inj.
+  { destruct EXEC. by apply e2a_inj. }
+  done.
+Qed.
+
+Lemma X2G_rc11_consistent
+      (WF : ES.Wf S)
+      (CONS : es_consistent (m := Weakestmo) S)
+      (EXEC : Execution.t S X)
+      (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
+      (ACYCLIC : acyclic (restr_rel X (Ssb ∪ Srf)))
+      (X2G : X2G)
+      (WF_G : Wf G) : 
+  rc11_consistent G.
+Proof.
+  red. splits. 
+  { by apply X2G_complete. }
+  { by apply X2G_cohernce. }
+  { by apply X2G_rmw_atomicity. }
+  { by apply X2G_acyclic_psc. }
+  by apply X2G_acyclic_sb_rf.
+Qed.
+
 End ExecutionToGraph. 
 
 Lemma x2g_X2G {S X}
@@ -1276,3 +1311,33 @@ Proof.
     unfolder in EINA.
     unfold e2a. rewrite LOCA. desf. }
 Qed.
+
+Lemma jf_in_hb_rc11_consistent {S X}
+      (WF : ES.Wf S)
+      (CONS : es_consistent (m := Weakestmo) S)
+      (EXEC : Execution.t S X)
+      (JF_IN_HB : (ES.jf S) ⨾ ⦗X⦘ ⊆ (hb S)) : 
+  rc11_consistent (x2g S X).
+Proof.
+  assert (JF_PRCL : dom_rel (ES.jf S ⨾ ⦗X⦘) ⊆₁ X).
+  { rewrite <- seq_eqvK. sin_rewrite JF_IN_HB.
+    by apply Execution.hb_prcl. } 
+  eapply X2G_rc11_consistent; eauto.
+  { rewrite restr_relE.
+    rewrite sb_in_hb.
+    rewrite seq_union_l, seq_union_r.
+    rewrite <- restr_relE with (r := ES.rf S). 
+    fold (Execution.ex_rf S X).
+    rewrite (Execution.ex_rf_restr_jf); auto.
+    rewrite restr_relE, JF_IN_HB.
+    arewrite (⦗X⦘ ⨾ hb S ⨾ ⦗X⦘ ∪ ⦗X⦘ ⨾ hb S ⊆ hb S).
+    { basic_solver. }
+    eapply hb_acyclic; eauto. }
+  { by apply x2g_X2G. }
+    by apply x2g_wf.
+Qed.
+    
+
+  
+
+  
