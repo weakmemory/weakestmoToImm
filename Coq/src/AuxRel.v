@@ -670,6 +670,28 @@ Proof.
   by apply collect_rel_irr_inj.
 Qed.
 
+Lemma collect_rel_minus (f : A -> B) :
+  f □ r \ f □ r' ⊆ f □ (r \ r').
+Proof. basic_solver 15. Qed.
+
+(* TODO : the INJ requirement could be weaker *)
+Lemma collect_rel_minus_inj (f : A -> B)
+      (INJ_DOM : inj_dom (dom_rel r ∪₁ dom_rel r') f)
+      (INJ_CODOM : inj_dom (codom_rel r ∪₁ codom_rel r') f) : 
+  f □ (r \ r') ≡ f □ r \ f □ r'.
+Proof.
+  split; [|by apply collect_rel_minus].
+  intros b1 b2 [a1 [a2 [[R NR'] HH]]].
+  split; [by exists a1, a2|]. 
+  intros [a1' [a2' HH']].
+  apply NR'.
+  arewrite (a1 = a1').
+  { apply INJ_DOM ; basic_solver. }
+  arewrite (a2 = a2').
+  { apply INJ_CODOM ; basic_solver. }
+  desf.
+Qed.
+
 (******************************************************************************)
 (** ** set_map properties *)
 (******************************************************************************)
@@ -981,6 +1003,15 @@ Proof.
   unfold not; basic_solver.
 Qed.
 
+Lemma minus_inter_absorb : 
+  r ∩ r'' \ r' ∩ r'' ≡ r ∩ r'' \ r'.
+Proof.
+  split; [basic_solver|].
+  unfolder. ins. splits. 
+  1,2: by desf. 
+  intro. desf. 
+Qed.
+
 Lemma compl_union : compl_rel (r ∪ r')  ≡ compl_rel r ∩ compl_rel r'.
 Proof. 
   rewrite !compl_top_minus; by apply minus_union_r.
@@ -1275,6 +1306,10 @@ Proof.
   rewrite codom_ct.
   basic_solver.
 Qed.
+
+Lemma restr_id :  
+  restr_rel s ⦗(fun _ : A => True)⦘ ≡ ⦗s⦘.
+Proof. basic_solver. Qed.
 
 End Props.
 
