@@ -1311,6 +1311,17 @@ Lemma restr_id :
   restr_rel s ⦗(fun _ : A => True)⦘ ≡ ⦗s⦘.
 Proof. basic_solver. Qed.
 
+Lemma trans_singl_rel (a1 a2 : A) :
+  transitive (singl_rel a1 a2).
+Proof. basic_solver. Qed.
+
+Lemma ct_singl_rel (a1 a2 : A) :
+  (singl_rel a1 a2)⁺ ≡ singl_rel a1 a2.
+Proof.
+  split; [|by apply ct_step].
+  apply ct_of_trans, trans_singl_rel.
+Qed.
+
 End Props.
 
 Require Import Setoid.
