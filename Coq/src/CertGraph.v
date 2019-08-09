@@ -4,7 +4,7 @@ From promising Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
-     imm_common imm_s imm_s_hb SimulationRel
+     imm_common imm_s imm_s_hb SimState PromiseLTS
      CertExecution2
      SubExecution CombRelations.
 Require Import AuxRel.
@@ -484,7 +484,7 @@ Hint Resolve isim_trav_step_coherence.
 (******************************************************************************)
 
 Lemma cert_graph_start 
-      (state : Language.Language.state (Promise.thread_lts thread))
+      (state : Language.Language.state (PromiseLTS.thread_lts thread))
       (NINITT : thread <> tid_init)
       (GPC : wf_thread_state thread state)
       (PROGST : stable_lprog (instrs state))
@@ -894,7 +894,7 @@ Qed.
 (******************************************************************************)
 
 Lemma ilbl_step_E0_eindex lbls
-        (st st' st'' : Language.Language.state (Promise.thread_lts thread))
+        (st st' st'' : Language.Language.state (PromiseLTS.thread_lts thread))
         (WFT : wf_thread_state thread st) 
         (CG : cert_graph G sc TC TC' thread st'')
         (ILBL_STEP : ilbl_step thread lbls st st')
@@ -909,7 +909,7 @@ Proof.
 Qed.
 
 Lemma ilbl_step_E0_eindex' lbls lbl lbl'
-        (st st' st'' : Language.Language.state (Promise.thread_lts thread))
+        (st st' st'' : Language.Language.state (PromiseLTS.thread_lts thread))
         (WFT : wf_thread_state thread st) 
         (CG : cert_graph G sc TC TC' thread st'')
         (ILBL_STEP : ilbl_step thread lbls st st')

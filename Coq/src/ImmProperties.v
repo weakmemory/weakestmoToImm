@@ -5,8 +5,9 @@ From imm Require Import
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
+     SimState
      TraversalConfig Traversal TraversalConfigAlt SimTraversal SimTraversalProperties
-     CertExecution2 SimulationRel.
+     CertExecution2.
 Require Import AuxRel.
 Require Import AuxDef.
 

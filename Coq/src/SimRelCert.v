@@ -2,8 +2,9 @@ Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CertExecution2 CertExecutionMain
-     CombRelations SimTraversal SimTraversalProperties SimulationRel.
+     SimState
+     CertExecution2
+     CombRelations SimTraversal SimTraversalProperties.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.

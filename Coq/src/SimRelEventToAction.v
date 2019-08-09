@@ -4,7 +4,7 @@ From promising Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal SimulationRel.
+     CombRelations SimTraversal.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
