@@ -86,6 +86,30 @@ Notation "'thread_st' t" :=
   (Language.state (thread_lts t)) (at level 10, only parsing).
 
 Notation "'K' S" := (ES.cont_set S) (at level 1).
+
+Lemma steps_es_wf P
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (S : ES.t)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  ES.Wf S.
+Proof.
+Admitted.
+
+Lemma steps_es_consistent P
+      (S : ES.t)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  @es_consistent S Weakestmo.
+Proof.
+  apply rtE in STEPS.
+  unfolder in STEPS. desf.
+  { apply prog_es_init_consistent. } 
+  assert (HH :  codom_rel (step Weakestmo) S).
+  { apply codom_ct.
+    basic_solver. }
+  cdes HH.
+  unfold step in HH0. desf.
+Qed.
+
 (*
 Lemma wf_es P
       (nInitProg : ~ IdentMap.In tid_init P)
@@ -333,14 +357,6 @@ Proof.
   { apply same_rel_Symmetric. eapply compl_rel_invol; eauto. }
   apply union_seq_compl_sym_trans_rr; eauto.
 Qed.
-
-Lemma union_seq_cf_same_tid_r (S : ES.t) (m : model)
-      (CONS : es_consistent S (m := m))
-      (WF : ES.Wf S)
-      (r1 r2 : relation eventid)
-      (SAME_TID : r2 ⊆ compl_rel (ES.same_tid S))
-  : S.(ES.cf) ∩ (r1 ⨾ r2) ≡ S.(ES.cf) ∩ r1 ⨾ r2.
-Admitted.
     
 Lemma trans_prcl_immediate_seqr {A} (r : relation A) (x y : A)
       (TRANS : transitive r)
@@ -786,9 +802,8 @@ Proof.
   assert (STEPS_G' : (step Weakestmo)＊ (prog_es_init P) G').
   { eapply transitive_rt; eauto. apply rt_step. auto. }
   assert (WF_G : ES.Wf G).
-  { admit. }
-  assert (WF_G' : ES.Wf G').
-  { admit. } 
+  2: assert (WF_G' : ES.Wf G').
+  1, 2: eby eapply steps_es_wf.
   generalize (hb_trans G'). intro HB_TRANS.    
   inversion_clear STEP as [e [e' HH]]. desf.
   assert (HB_MON: G.(hb) ⊆ G'.(hb)).
@@ -1049,16 +1064,15 @@ Proof.
     apply ra_jf_in_hb; auto.
     apply proj1 in eACQ. apply proj1 in wREL.
     basic_solver.
-Admitted.
-
-End DRF.
+Qed.
 
 Lemma rf_in_jf (S : ES.t) (X : eventid -> Prop)
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (JF_IN_HB : S.(ES.jf) ⊆ S.(hb)):
-  ⦗X⦘ ⨾ S.(ES.rf) ⨾ ⦗X⦘ ⊆ S.(ES.jf).
+  restr_rel X S.(ES.rf) ⊆ S.(ES.jf). 
 Proof.
+  rewrite restr_relE.
   unfolder; intros x y HH. 
   destruct HH as [xX [xyRF yX]].
   unfold ES.rf in xyRF; unfolder in xyRF. 
@@ -1079,13 +1093,32 @@ Lemma po_rf_acyclic (S : ES.t) (X : eventid -> Prop)
       (CONS : es_consistent S (m := Weakestmo))
       (EXEC : Execution.t S X)
       (JF_IN_HB : S.(ES.jf) ⊆ S.(hb)):
-  acyclic (⦗X⦘ ⨾ S.(ES.sb) ⨾ ⦗X⦘ ∪ ⦗X⦘ ⨾ S.(ES.rf) ⨾ ⦗X⦘).
+  acyclic (restr_rel X (S.(ES.sb) ∪ S.(ES.rf))).
 Proof.
   rewrite sb_in_hb.
-  rewrite (rf_in_jf WF EXEC JF_IN_HB), JF_IN_HB.
-  specialize (hb_acyclic S Weakestmo CONS) as HB_ACYCLIC.
-  rewrite <- restr_relE, inclusion_restr.
-  relsf.
+  rewrite <- union_restr, (rf_in_jf WF EXEC JF_IN_HB).
+  rewrite JF_IN_HB, inclusion_restr, unionK. 
+  eby eapply hb_acyclic. 
+Qed.
+
+Lemma DRF_RLX S X 
+      (RACE_FREE : RLX_race_free_program P)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
+      (EXEC : Execution.t S X) :
+  Race.rc11_consistent_x S X.
+Proof.
+  assert (WF : ES.Wf S).
+  { eby eapply steps_es_wf. } 
+  assert (CONS : @es_consistent S Weakestmo).
+  { eby eapply steps_es_consistent. } 
+  red. exists (x2g S X). splits.
+  { by apply x2g_X2G. } 
+  apply x2g_rc11_consistent; auto.
+  { rewrite jf_in_hb; auto.
+    by apply Execution.hb_prcl. }
+  apply po_rf_acyclic; auto.
+  by apply jf_in_hb.
 Qed.
   
+End DRF.
 End DRF.
