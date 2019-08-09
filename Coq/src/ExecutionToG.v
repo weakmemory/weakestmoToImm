@@ -1312,32 +1312,15 @@ Proof.
     unfold e2a. rewrite LOCA. desf. }
 Qed.
 
-Lemma jf_in_hb_rc11_consistent {S X}
+Lemma x2g_rc11_consistent {S X}
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : Execution.t S X)
-      (JF_IN_HB : (ES.jf S) ⨾ ⦗X⦘ ⊆ (hb S)) : 
+      (JF_PRCL : dom_rel (ES.jf S ⨾ ⦗X⦘) ⊆₁ X)
+      (ACYCLIC : acyclic (restr_rel X (ES.sb S ∪ ES.rf S))) :
   rc11_consistent (x2g S X).
 Proof.
-  assert (JF_PRCL : dom_rel (ES.jf S ⨾ ⦗X⦘) ⊆₁ X).
-  { rewrite <- seq_eqvK. sin_rewrite JF_IN_HB.
-    by apply Execution.hb_prcl. } 
   eapply X2G_rc11_consistent; eauto.
-  { rewrite restr_relE.
-    rewrite sb_in_hb.
-    rewrite seq_union_l, seq_union_r.
-    rewrite <- restr_relE with (r := ES.rf S). 
-    fold (Execution.ex_rf S X).
-    rewrite (Execution.ex_rf_restr_jf); auto.
-    rewrite restr_relE, JF_IN_HB.
-    arewrite (⦗X⦘ ⨾ hb S ⨾ ⦗X⦘ ∪ ⦗X⦘ ⨾ hb S ⊆ hb S).
-    { basic_solver. }
-    eapply hb_acyclic; eauto. }
   { by apply x2g_X2G. }
     by apply x2g_wf.
 Qed.
-    
-
-  
-
-  
