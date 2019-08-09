@@ -217,6 +217,10 @@ Lemma prog_g_es_init_consistent G prog :
   @es_consistent (prog_g_es_init prog G) Weakestmo.
 Proof. apply prog_l_es_init_consistent. Qed.
 
+Lemma prog_es_init_consistent prog :
+  @es_consistent (prog_es_init prog) Weakestmo.
+Proof. apply prog_l_es_init_consistent. Qed.
+
 Lemma prog_l_es_init_act_in prog locs 
       e (ACT : ES.acts_set (prog_l_es_init prog locs) e) :
   exists l,
