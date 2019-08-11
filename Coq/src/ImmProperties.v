@@ -1,6 +1,6 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
+From PromisingLib Require Import Basic.
 From imm Require Import 
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties

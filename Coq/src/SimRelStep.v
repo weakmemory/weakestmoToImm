@@ -1,6 +1,6 @@
 Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
+From PromisingLib Require Import Basic.
 From imm Require Import Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness

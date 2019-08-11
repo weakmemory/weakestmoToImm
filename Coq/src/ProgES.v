@@ -1,6 +1,6 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
+From PromisingLib Require Import Basic.
 From imm Require Import Events Prog Execution ProgToExecution.
 Require Import AuxDef.
 Require Import AuxRel.

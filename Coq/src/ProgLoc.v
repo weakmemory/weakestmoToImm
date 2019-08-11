@@ -1,7 +1,7 @@
 Require Import PArith.BinPos.
 From hahn Require Import Hahn.
 From imm Require Import Events Prog.
-From promising Require Import Basic.
+From PromisingLib Require Import Basic.
 
 Set Implicit Arguments.
 

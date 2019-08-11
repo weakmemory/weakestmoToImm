@@ -1,6 +1,6 @@
 Require Import Program.Basics.
 From hahn Require Import Hahn.
-From promising Require Import Basic.
+From PromisingLib Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal TraversalCounting.
