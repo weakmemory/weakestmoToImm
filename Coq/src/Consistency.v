@@ -105,8 +105,14 @@ Definition eco (m : model) : relation eventid :=
 
 (* sc order *)
 
-Definition psc (m : model) : relation eventid :=
-  ⦗ Sc ⦘ ⨾ hb ⨾ eco m ⨾ hb ⨾ ⦗ Sc ⦘.
+Definition psc_f (m : model) : relation eventid :=
+  ⦗F ∩₁ Sc⦘ ⨾ hb ⨾ (eco m ⨾ hb)^? ⨾ ⦗F ∩₁ Sc⦘.
+
+Definition scb :=
+  sb ∪ (sb \ same_loc) ⨾ hb ⨾ (sb \ same_loc) ∪ hb ∩ same_loc ∪ co ∪ fr.
+
+Definition psc_base :=
+  ⦗Sc⦘ ⨾ (⦗F⦘ ⨾ hb)^? ⨾ scb ⨾ (hb ⨾ ⦗F⦘)^? ⨾ ⦗Sc⦘.
 
 Record es_consistent {m} :=
   { ecf_irf : irreflexive ecf;
@@ -116,6 +122,7 @@ Record es_consistent {m} :=
 
     (* icf_R : dom_rel icf ⊆₁ R; *)
     (* icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew); *)
+    ncf_sc : acyclic (psc_f m ∪ psc_base)
   }.
 
 Record good_restriction (A : eventid -> Prop) := 
@@ -618,6 +625,19 @@ Section ConsistentProps.
 
   Variable ESC : @es_consistent m.
 
+  Lemma hb_irr : irreflexive hb.
+  Proof.
+    specialize (coh ESC) as hb_eco_irr.
+    apply irreflexive_inclusion with (r' :=  hb ⨾ (eco m)^?).
+    { basic_solver. }
+    eauto with hahn.                                                                           
+  Qed.
+
+  Lemma hb_acyclic : acyclic hb.
+  Proof.
+    apply (trans_irr_acyclic hb_irr hb_trans).
+  Qed.
+  
   Lemma cont_sb_dom_rmw k s
         (INK : K (k, s)) :
     codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.

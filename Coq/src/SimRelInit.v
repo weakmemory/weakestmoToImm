@@ -159,7 +159,8 @@ Section SimRelInit.
            { by unfold init. }
            apply wf_thread_state_init. }
       { ins. red in INK.
-        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread in *.
+        rewrite prog_g_es_init_alt in *.
+        unfold ES.init, prog_init_K, ES.cont_thread in *.
         simpls.
         apply in_map_iff in INK. desf. }
       { ins. apply prog_g_es_init_K in INK. desf.
@@ -299,7 +300,7 @@ Section SimRelInit.
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
-    { unfold prog_g_es_init, ES.init. basic_solver. }
+    { rewrite prog_g_es_init_alt. unfold ES.init. basic_solver. }
     unfold release.
     arewrite (is_rel (ES.lab (prog_g_es_init prog G)) ⊆₁ ∅).
     2: basic_solver 20.

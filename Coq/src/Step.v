@@ -797,6 +797,20 @@ Proof.
   basic_solver.
 Qed. 
 
+Lemma step_nupd_hb_dom e S S'
+      (BSTEP : basic_step e None S S') 
+      (STEP : step_ e None S S')
+      (wfE: ES.Wf S) :
+  dom_rel (hb S') ⊆₁ E S. 
+Proof.
+  cdes BSTEP.
+  cdes BSTEP_. 
+  rewrite step_hb; eauto.
+  rewrite dom_union, set_subset_union_l. split.
+  { rewrite hbE; auto. basic_solver. }
+  cdes BSTEP_. step_solver.
+Qed.
+
 Lemma step_hbE e e' S S' 
       (BSTEP : basic_step e e' S S') 
       (STEP : step_ e e' S S')
@@ -809,6 +823,26 @@ Proof.
   rewrite basic_step_hb_deltaE; eauto.
   rewrite hbE; auto. basic_solver 5.
 Qed. 
+
+Lemma step_hb_mon e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (STEP : step_ e e' S S')
+      (wfE: ES.Wf S) :
+  hb S ⊆ hb S'.
+Proof.
+  rewrite <- step_hbE; eauto with hahn.
+  basic_solver.
+Qed.
+
+Lemma step_nupd_sb_dom e S S'
+      (BSTEP : basic_step e None S S') 
+      (STEP : step_ e None S S')
+      (wfE: ES.Wf S) :
+  dom_rel (sb S') ⊆₁ E S. 
+Proof.
+  rewrite sb_in_hb.
+  eapply step_nupd_hb_dom; eauto.
+Qed.
 
 Lemma step_icf_jf_irr lang k k' st st' e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 

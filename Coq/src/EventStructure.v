@@ -847,6 +847,18 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma rmwf WF : functional rmw⁻¹.
+Proof.
+  arewrite (rmw ⊆ immediate sb ∩ same_tid).
+  { apply (inclusion_inter_r WF.(rmwi) WF.(rmwt)). }
+  rewrite immediate_inter.
+  by apply dwt_imm_f, sb_prcl.
+Qed.
+
+(******************************************************************************)
+(** ** ew properties *)
+(******************************************************************************)
+
 Lemma rmw_dom_ninit WF : dom_rel rmw ⊆₁ Eninit. 
 Proof. rewrite rmwEninit; auto. basic_solver. Qed.
 
@@ -1082,6 +1094,21 @@ Proof.
   basic_solver. 
 Qed.
 
+Lemma ncf_rff X WF
+      (NCF : cf_free S X) :
+  functional ((restr_rel X rf)⁻¹).
+Proof.
+  intros y x z rf_xy rf_zy. 
+  destruct rf_xy as [rf_xy [Xy Xx]].
+  destruct rf_zy as [rf_zy [Xz _]].
+  assert (EW : ew x z).
+  { apply rf_trf_in_ew; basic_solver. }
+  apply ewc in EW; auto.
+  destruct EW; auto.
+  unfold cf_free in NCF. unfolder in NCF.
+  exfalso. eapply NCF. eauto.
+Qed.
+  
 (******************************************************************************)
 (** ** fr properties *)
 (******************************************************************************)
@@ -2134,3 +2161,4 @@ Qed.
 
 End EventStructure.
 End ES.
+

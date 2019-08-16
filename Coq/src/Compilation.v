@@ -172,8 +172,7 @@ Section Compilation.
 
       { rewrite collect_rel_interi.
         erewrite e2a_sb; try apply SRC. 
-        { basic_solver. }
-        apply stable_prog_to_prog_no_init; apply SRC. }
+        basic_solver. }
 
       { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
         { rewrite wf_rmwE at 1; auto. by rewrite COVG. }

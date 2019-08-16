@@ -306,8 +306,7 @@ Section SimRel.
       eapply dom_sb_covered; [apply SRC_|].
       unfolder; do 2 eexists; splits; eauto.
       eapply e2a_sb; try apply SRC_.
-      2: basic_solver 10.
-      apply stable_prog_to_prog_no_init; apply SRC_.
+      basic_solver 10.
     Qed.
 
     Lemma sb_ex_cov :
@@ -560,8 +559,7 @@ Section SimRel.
         destruct SB as [SB nINITy].
         apply nINITy. 
         eapply e2a_Einit.
-        apply stable_prog_to_prog_no_init.
-        1-3: apply SRC_.
+        1: apply SRC_.
         basic_solver. }
       set (HH := SB).
       apply sb_tid_init in HH.
@@ -582,8 +580,7 @@ Section SimRel.
         { exfalso. eapply sb_irr; eauto. }
         { exfalso. eapply sb_irr, sb_trans; eauto. 
           eapply e2a_sb.
-          apply stable_prog_to_prog_no_init.
-          1-4 : apply SRC_.
+          1-2 : apply SRC_.
           basic_solver 10. }
         exfalso. eapply Execution.ex_ncf; eauto.
         apply seq_eqv_lr. splits; [|apply CF|]; eauto. }

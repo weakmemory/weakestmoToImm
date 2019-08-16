@@ -378,8 +378,7 @@ Section SimRelCertStepCoh.
 
     assert (e2a S' □ Ssb S' ⊆ Gsb) as SBN.
     { eapply e2a_sb; eauto; try apply SRCC.
-      2: by eapply e2a_GE; eauto.
-      apply stable_prog_to_prog_no_init; apply SRCC. }
+      by eapply e2a_GE; eauto. }
     
     assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
     { eapply e2a_hb; eauto; try apply SRCC.
@@ -504,7 +503,6 @@ Section SimRelCertStepCoh.
       apply ES.coD in CO; auto.
       generalize CO. basic_solver. }
     eapply e2a_sb; eauto; try apply SR_.
-    { apply stable_prog_to_prog_no_init. apply SRCC. }
     basic_solver 10.
   Qed.
 
@@ -548,8 +546,7 @@ Section SimRelCertStepCoh.
 
     assert (e2a S' □ Ssb S' ⊆ Gsb) as SBN.
     { eapply e2a_sb; eauto; try apply SRCC.
-      2: by eapply e2a_GE; eauto.
-      apply stable_prog_to_prog_no_init; apply SRCC. }
+      by eapply e2a_GE; eauto. }
     
     assert (e2a S' □ Shb S' ⊆ Ghb) as HBN.
     { eapply e2a_hb; eauto; try apply SRCC.
@@ -644,7 +641,7 @@ Section SimRelCertStepCoh.
        Ghb ∪ Ghb ⨾ Gfurr ∪ Ghb ⨾ Gco ∪ Ghb ⨾ Gco ⨾ Gfurr).
     { basic_solver 10. }
     rewrite !irreflexive_union. splits.
-    { apply hb_irr; eauto. }
+    { apply imm_s_hb.hb_irr; eauto. }
     { intros x [y [HB VF]].
       unfold furr in VF. desc.
       eapply urr_hb_irr; try apply SRCC.
@@ -681,9 +678,10 @@ Section SimRelCertStepCoh.
       eapply simrel_cert_step_thb_cf_hb_irr; eauto. }
     { eapply simrel_cert_step_jf_necf; eauto. }
     { eapply simrel_cert_step_jfe_vis; eauto. }
-    eapply simrel_cert_step_coh; eauto. 
+    { eapply simrel_cert_step_coh; eauto. }
+    admit.
     (* { eapply simrel_cert_nforwarding_icf_R; eauto. } *)
     (* eapply simrel_cert_nforwarding_icf_jf; eauto.  *)
-  Qed.
+  Admitted.
 
 End SimRelCertStepCoh.

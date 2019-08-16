@@ -15,13 +15,9 @@ Local Open Scope program_scope.
 
 Section EventToAction.
 
-  Variable prog : Prog.t.
-  Variable PROG_NINIT : ~ (IdentMap.In tid_init prog).
-
   Variable S : ES.t.
   Hypothesis WF : ES.Wf S.
   Variable G : execution.
-  Hypothesis GPROG : program_execution prog G.
   
   Notation "'SE'" := S.(ES.acts_set).
   Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -122,16 +118,14 @@ Section EventToAction.
   Qed.
 
   Lemma e2a_Einit 
-        (EE : e2a □₁ SE ⊆₁ GE) :
+        (EE : e2a □₁ SE ⊆₁ GE):
     e2a □₁ SEinit ⊆₁ GEinit.
   Proof.
     red. unfolder.
     intros e [e' [[Ee TIDe] E2A]].
-    assert (GE e) as GEe by (apply EE; basic_solver). 
-    split; auto.
-    eapply tid_initi; eauto. 
-    red; split; auto.
-    subst e. by erewrite <- e2a_tid. 
+    split; [|by apply EE; basic_solver].
+    unfold e2a in E2A.
+    desf.
   Qed.
 
   Lemma e2a_Eninit 
@@ -166,34 +160,43 @@ Section EventToAction.
   (** ** e2a sb properties *)
   (******************************************************************************)
 
-  Lemma e2a_ext_sb (EE : e2a □₁ SE ⊆₁ GE) :
-    e2a □ Ssb ⊆ ext_sb.
+  Lemma e2a_ext_sb_restr (X : eventid -> Prop)
+        (XE : X ⊆₁ SE): 
+    e2a □ restr_rel X Ssb ⊆ ext_sb.
   Proof.
     rewrite WF.(ES.sb_Einit_Eninit). 
-    rewrite <- WF.(ES.sb_seq_Eninit_l).
-    relsf. unionL.
-    { rewrite e2a_Einit, e2a_Eninit; auto.
-      etransitivity; [|by apply initninit_in_ext_sb].
-      basic_solver. }
-    unfold e2a.
-    rewrite collect_rel_if_else.
-    2,3 : 
-      rewrite WF.(ES.sb_seq_Eninit_l);
-      unfold ES.acts_ninit_set, ES.acts_init_set, ES.acts_set; 
-      basic_solver.
-    intros x y HH. red in HH. desf. red.
-    assert (Stid x' = Stid y') as TT.
-    { apply WF.(ES.sb_tid). generalize HH. basic_solver. }
-    rewrite TT.
-    splits; auto.
-    eapply ES.seqn_sb_alt; auto.
-    apply seq_eqv_l in HH; desf. 
+    unfolder.
+    intros a1 a2 [e1 [e2 HH]].
+    destruct HH as [[SSB [Xe1 Xe2]] [EQ1 EQ2]].
+    unfold e2a in EQ1, EQ2. 
+    destruct (excluded_middle_informative (ES.tid S e1 = tid_init));
+      destruct (excluded_middle_informative (ES.tid S e2 = tid_init)).
+    1, 3:
+      unfold ES.acts_ninit_set, ES.acts_init_set in *;
+      unfolder in *; desf; basic_solver.
+    { subst. basic_solver. }
+    subst. simpls.
+    desf.
+    { exfalso. apply n, SSB. }
+    assert (SAME_TID : ES.same_tid S e1 e2).
+    { apply WF.(ES.sb_tid). basic_solver. }
+    split; auto.
+    by apply ES.seqn_sb_alt.
   Qed.
 
-  Lemma e2a_sb (EE : e2a □₁ SE ⊆₁ GE) :
+  Lemma e2a_ext_sb :
+    e2a □ Ssb ⊆ ext_sb.
+  Proof.
+    rewrite <- e2a_ext_sb_restr; eauto.
+    rewrite WF.(ES.sbE) at 1.
+    by rewrite restr_relE.
+  Qed.
+    
+  Lemma e2a_sb 
+        (EE : e2a □₁ SE ⊆₁ GE) :
     e2a □ Ssb ⊆ Gsb.
   Proof.
-    rewrite ES.sbE; [|by apply WF].
+    rewrite WF.(ES.sbE).
     unfold Execution.sb.
       by rewrite !collect_rel_seqi, collect_rel_eqv, e2a_ext_sb, EE.
   Qed.

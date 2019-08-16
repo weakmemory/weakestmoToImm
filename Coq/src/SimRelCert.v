@@ -424,7 +424,6 @@ Section SimRelCert.
       2-4: by eapply SRCC.
       apply set_collect_mori; auto. 
       by apply SEinit_in_kE.
-      apply SRCC.
     Qed.
 
     Lemma cert_ex_inE : 
@@ -575,7 +574,7 @@ Section SimRelCert.
       intros INITx.
       assert (GEinit (e2a x)) as GINITx.
       { eapply e2a_same_Einit.
-        1-4: by apply SRCC.
+        1-2: by apply SRCC.
         basic_solver. }
       edestruct acts_rep.
       { apply wf_cont_state. }
@@ -800,7 +799,7 @@ Section SimRelCert.
       { eapply init_covered.
         { apply SRCC. }
         eapply e2a_same_Einit. 
-        1-4: apply SRCC.
+        1-2: apply SRCC.
         basic_solver. }
       intros TIDz.
       eapply ktid_ninit.

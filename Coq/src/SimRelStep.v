@@ -319,7 +319,6 @@ Section SimRelStep.
                 X ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ∩₁ e2a S ⋄₁ C). 
       { basic_solver. }
       rewrite set_collect_inter.
-      2: ins; repeat constructor. 
       rewrite set_inter_union_r. 
       rewrite set_collect_union.
       relsf. rewrite id_union. 

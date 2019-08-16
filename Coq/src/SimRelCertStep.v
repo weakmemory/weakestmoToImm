@@ -855,8 +855,6 @@ Section SimRelCertStep.
       { rewrite SB'. unfold sb_delta. basic_solver 10. }
       rewrite collect_rel_seqi, collect_rel_eqv.
       rewrite e2a_sb; eauto.
-      3: by apply SRCC.
-      2: { apply stable_prog_to_prog_no_init. apply SRCC. }
       basic_solver. }
     assert (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S) as JFES.
     { eapply simrel_cert_step_jf_E; eauto. }
@@ -1089,8 +1087,6 @@ Section SimRelCertStep.
     rewrite e2a_W; eauto.
     rewrite e2a_same_loc; eauto.
     rewrite e2a_sb; eauto; try apply SRCC.
-    2: { apply stable_prog_to_prog_no_init.
-         apply SRCC. }
     unfold fwbob. mode_solver 40.
   Qed.
 
