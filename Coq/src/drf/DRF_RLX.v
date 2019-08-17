@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Prog ProgToExecutionProperties RC11.
-From promising Require Import Basic.
+From PromisingLib Require Import Basic.
 Require Import AuxDef.
 Require Import AuxRel.
 Require Import EventStructure.
