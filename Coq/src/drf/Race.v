@@ -68,6 +68,32 @@ Definition sc_consistent_x (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
     ⟪ sc : sc_consistent G ⟫.
 
+Lemma sc_in_rel :
+  Sc ⊆₁ Rel.
+Proof.
+  unfold is_sc, is_rel.
+  basic_solver.
+Qed.
+
+Lemma sc_in_acq :
+  Sc ⊆₁ Acq.
+Proof.
+  unfold is_sc, is_acq.
+  basic_solver.
+Qed.
+
+Lemma RArf_RLXrf X
+      (RArf : RA_race_free X) :
+  RLX_race_free X.
+Proof.
+  unfold RA_race_free in RArf.
+  unfold RLX_race_free.
+  arewrite (race X ⊆₁ Sc ∩₁ (R ∪₁ W)).
+  { specialize race_rw. basic_solver. }
+  rewrite <- sc_in_rel, <- sc_in_acq.
+  basic_solver.
+Qed.
+
 End Race.
 
 Definition program_execution P S X :=
@@ -79,3 +105,8 @@ Definition RC11_RLX_race_free_program P :=
 
 Definition SC_RA_race_free_program P :=
   (forall S X, program_execution P S X -> sc_consistent_x S X -> RA_race_free S X).
+
+
+
+
+
