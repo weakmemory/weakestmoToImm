@@ -14,8 +14,8 @@ Require Import ExecutionToG.
 
 Set Implicit Arguments.
 
-Module DRF.
-  
+Module DRF_WEAKESTMO_RLX.
+
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
 Notation "'Eninit' S" := S.(ES.acts_ninit_set) (at level 10).
@@ -44,17 +44,34 @@ Notation "'coi' S" := S.(ES.coi) (at level 10).
 Notation "'R' S" := (fun a => is_true (is_r S.(ES.lab) a)) (at level 10).
 Notation "'W' S" := (fun a => is_true (is_w S.(ES.lab) a)) (at level 10).
 Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
-  
+
 Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 
-Definition program_execution P S X :=
-  ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
-  ⟪ EXEC : Execution.t S X ⟫.
+Lemma steps_es_wf P
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (S : ES.t)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  ES.Wf S.
+Proof.
+Admitted.
 
-Definition RLX_race_free_program P :=
-  (forall S X, program_execution P S X -> Race.rc11_consistent_x S X -> Race.RLX_race_free S X).
+Lemma steps_es_consistent P
+      (S : ES.t)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  @es_consistent S Weakestmo.
+Proof.
+  apply rtE in STEPS.
+  unfolder in STEPS. desf.
+  { apply prog_es_init_consistent. }
+  assert (HH :  codom_rel (step Weakestmo) S).
+  { apply codom_ct.
+    basic_solver. }
+  cdes HH.
+  unfold step in HH0. desf.
+Qed.
 
+(*
 Lemma basic_step_init_loc e e' S S'
       (BSTEP : BasicStep.basic_step e e' S S')
       (WF : ES.Wf S) :
@@ -73,7 +90,7 @@ Proof.
   apply ES.acts_set_split. basic_solver.
 Qed.
 
-Notation "'thread_syntax' t"  := 
+Notation "'thread_syntax' t"  :=
   (Language.syntax (thread_lts t)) (at level 10, only parsing).  
 
 Notation "'thread_init_st' t" := 
@@ -87,30 +104,6 @@ Notation "'thread_st' t" :=
 
 Notation "'K' S" := (ES.cont_set S) (at level 1).
 
-Lemma steps_es_wf P
-      (nInitProg : ~ IdentMap.In tid_init P)
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  ES.Wf S.
-Proof.
-Admitted.
-
-Lemma steps_es_consistent P
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  @es_consistent S Weakestmo.
-Proof.
-  apply rtE in STEPS.
-  unfolder in STEPS. desf.
-  { apply prog_es_init_consistent. } 
-  assert (HH :  codom_rel (step Weakestmo) S).
-  { apply codom_ct.
-    basic_solver. }
-  cdes HH.
-  unfold step in HH0. desf.
-Qed.
-
-(*
 Lemma wf_es P
       (nInitProg : ~ IdentMap.In tid_init P)
       (S : ES.t)
@@ -178,7 +171,7 @@ Admitted.
  *)
 
 Lemma ra_jf_in_hb S (WF : ES.Wf S) :
-  ⦗Rel S⦘ ⨾ S.(ES.jf) ⨾ ⦗Acq S⦘ ⊆ S.(hb). 
+  ⦗Rel S⦘ ⨾ S.(ES.jf) ⨾ ⦗Acq S⦘ ⊆ S.(hb).
 Proof.
   rewrite <- sw_in_hb.
   unfold sw.
@@ -190,7 +183,6 @@ Proof.
   unfold release, rs.
   basic_solver 20.
 Qed.
-
 
 Lemma ct_imm_split_l {A} (r : relation A)
       (IRR: irreflexive r)
@@ -789,8 +781,8 @@ Section DRF.
 Variable  P : IdentMap.t {linstr : list Instr.t & LblStep.stable_lprog linstr}.
 Variable (nInitProg : ~ IdentMap.In tid_init P).
 
-Lemma jf_in_hb 
-      (RACE_FREE : RLX_race_free_program P)
+Lemma jf_in_hb
+      (RACE_FREE : RC11_RLX_race_free_program P)
       (S : ES.t)
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
   S.(ES.jf) ⊆ S.(hb).
@@ -867,7 +859,7 @@ Proof.
       { apply hb_pref2_inE; eauto. }
       apply ncf_hb_jf_bwcl_vis; auto.
       apply hb_pref2_ncf; auto. }
-    assert (PREF_RC11 : Race.rc11_consistent_x G' (hb_pref2 G' e w)).
+    assert (PREF_RC11 : rc11_consistent_x G' (hb_pref2 G' e w)).
     { red. exists (x2g G' (hb_pref2 G' e w)). splits.
       { apply x2g_X2G; auto. by cdes PREF_EXEC. } 
       apply x2g_rc11_consistent; auto.
@@ -899,14 +891,14 @@ Proof.
       { intro. apply WE_NHB. basic_solver. }
       basic_solver. }
     specialize (RACE_FREE G' (hb_pref2 G' e w) PREF_EXEC PREF_RC11).
-    assert (RACE_W : Race.race G' (hb_pref2 G' e w) w).
-    { unfold Race.race. unfold dom_rel. exists e.
+    assert (RACE_W : race G' (hb_pref2 G' e w) w).
+    { unfold race. unfold dom_rel. exists e.
       unfolder. splits.
       1, 2: unfold hb_pref2; basic_solver 10.
       apply or_not_and. left. apply or_not_and. left. apply and_not_or. auto. }
 
-    assert (RACE_E : Race.race G' (hb_pref2 G' e w) e).
-    { unfold Race.race. unfold dom_rel. exists w.
+    assert (RACE_E : race G' (hb_pref2 G' e w) e).
+    { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
       1, 2: unfold hb_pref2; basic_solver 10. 
       apply or_not_and. left. apply or_not_and. left. apply and_not_or. split.
@@ -917,7 +909,7 @@ Proof.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].
     1, 2, 4: type_solver.
-    unfold Race.RLX_race_free in RACE_FREE.
+    unfold RLX_race_free in RACE_FREE.
     unfolder in WE_NHB.
     apply WE_NHB. right. left.
     apply ra_jf_in_hb; auto.
@@ -988,7 +980,7 @@ Proof.
     apply hb_pref2_inE; auto.
     eapply hb_pref2_rmw_ncf; eauto. }
 
-  assert (PREF_RC11 : Race.rc11_consistent_x G' (hb_pref2 G' w' w)).
+  assert (PREF_RC11 : rc11_consistent_x G' (hb_pref2 G' w' w)).
   { red. exists (x2g G' (hb_pref2 G' w' w)). splits.
     { apply x2g_X2G; auto. by cdes PREF_EXEC. } 
     apply x2g_rc11_consistent; auto.
@@ -1041,14 +1033,14 @@ Proof.
       eby rewrite HH in EW'_RMW. }
     basic_solver. }
     specialize (RACE_FREE G' (hb_pref2 G' w' w) PREF_EXEC PREF_RC11).
-    assert (RACE_W : Race.race G' (hb_pref2 G' w' w) w).
-    { unfold Race.race. unfold dom_rel. exists e.
+    assert (RACE_W : race G' (hb_pref2 G' w' w) w).
+    { unfold race. unfold dom_rel. exists e.
       unfolder. splits.
       1, 2: unfold hb_pref2; basic_solver 10.
       apply or_not_and. left. apply or_not_and. left. apply and_not_or. auto. }
 
-    assert (RACE_E : Race.race G' (hb_pref2 G' w' w) e).
-    { unfold Race.race. unfold dom_rel. exists w.
+    assert (RACE_E : race G' (hb_pref2 G' w' w) e).
+    { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
       1, 2: unfold hb_pref2; basic_solver 10. 
       apply or_not_and. left. apply or_not_and. left. apply and_not_or. split.
@@ -1058,7 +1050,7 @@ Proof.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].
     1, 2, 4: type_solver.
-    unfold Race.RLX_race_free in RACE_FREE.
+    unfold RLX_race_free in RACE_FREE.
     unfolder in WE_NHB.
     apply WE_NHB. right. left.
     apply ra_jf_in_hb; auto.
@@ -1101,14 +1093,14 @@ Proof.
   eby eapply hb_acyclic. 
 Qed.
 
-Lemma DRF_RLX S X 
-      (RACE_FREE : RLX_race_free_program P)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
-      (EXEC : Execution.t S X) :
-  Race.rc11_consistent_x S X.
+Theorem DRF_WEAKESTMO_RLX S X
+      (EXEC : program_execution P S X)
+      (RACE_FREE : RC11_RLX_race_free_program P) : 
+  rc11_consistent_x S X.
 Proof.
+  cdes EXEC.
   assert (WF : ES.Wf S).
-  { eby eapply steps_es_wf. } 
+  { eby eapply steps_es_wf. }
   assert (CONS : @es_consistent S Weakestmo).
   { eby eapply steps_es_consistent. } 
   red. exists (x2g S X). splits.
@@ -1119,6 +1111,6 @@ Proof.
   apply po_rf_acyclic; auto.
   by apply jf_in_hb.
 Qed.
-  
+
 End DRF.
-End DRF.
+End DRF_WEAKESTMO_RLX.
