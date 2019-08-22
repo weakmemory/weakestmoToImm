@@ -24,6 +24,7 @@ Notation "'same_loc'" := (same_loc lab).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
+Notation "'F'" := (fun a => is_true (is_f lab a)).
 
 Notation "'Rel'" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
@@ -32,7 +33,26 @@ Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 Definition one {A : Type} (X : A -> Prop) a b := X a \/ X b.
 
 Definition race (X : eventid -> Prop) :=
-  dom_rel ((X × X) \ (hb⁼ ∪ cf) ∩ same_loc ∩ one W). (* hb should be hbc11? *)
+  dom_rel (((X × X) \ (hb⁼ ∪ cf)) ∩ same_loc ∩ one W). (* hb should be hbc11? *)
+
+Lemma race_rw X :
+  race X ⊆₁ R ∪₁ W.
+Proof.
+  unfold race.
+  unfold Events.same_loc.
+  assert (HH : (R ∪₁ (W ∪₁ F)) \₁ F ⊆₁ R ∪₁ W) by basic_solver.
+  rewrite <- HH.
+  rewrite set_minus_inter_set_compl.
+  apply set_subset_inter_r. split.
+  { unfolder. ins.
+    apply lab_rwf. }
+  rewrite interA, inclusion_inter_l2.
+  intros x [y [EQ_LAB ONE]].
+  unfold set_compl, is_f.
+  unfold one, is_w in ONE.
+  unfold loc in EQ_LAB.
+  desf.
+Qed.
 
 Definition RLX_race_free (X : eventid -> Prop) :=
   race X ⊆₁ (Rel ∩₁ W) ∪₁ (Acq ∩₁ R).
