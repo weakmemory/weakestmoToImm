@@ -4,19 +4,6 @@ From imm Require Import Events.
 
 Require Import AuxRel.
 
-Tactic Notation "destruct_seq" constr(x)
-       "as" "[" ident(y) ident(z) "]" :=
-  apply seq_eqv_l in x; destruct x as [y x];
-  apply seq_eqv_r in x; destruct x as [x z].
-
-Tactic Notation "destruct_seq_l" constr(x)
-       "as" ident(y) :=
-  apply seq_eqv_l in x; destruct x as [y x].
-
-Tactic Notation "destruct_seq_r" constr(x)
-       "as" ident(y) :=
-  apply seq_eqv_r in x; destruct x as [x y].
-
 Export ListNotations.
 
 Lemma pair_inj {A B} (a c : A) (b d : B) (EQ: (a, b) = (c, d)) :
@@ -47,12 +34,6 @@ Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) :=
   | Some a, Some b => upd f a b
   | _, _ => f
   end.
-
-Definition same_mod {A} (lab : A -> label) : relation A :=
-  (fun x y => Events.mod lab x = Events.mod lab y).
-
-Definition same_val {A} (lab : A -> label) : relation A :=
-  (fun x y => Events.val lab x = Events.val lab y).
 
 Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
   match n with

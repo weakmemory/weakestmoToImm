@@ -1,6 +1,8 @@
 Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
-From imm Require Import Events Execution
+From imm Require Import
+     AuxDef 
+     Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_common imm_s imm_s_hb

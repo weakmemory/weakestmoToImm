@@ -1,6 +1,6 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
-From imm Require Import Events.
+From imm Require Import AuxDef Events.
 Require Import AuxDef.
 Require Import AuxRel.
 

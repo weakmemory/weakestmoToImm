@@ -1,5 +1,7 @@
 From hahn Require Import Hahn.
-From imm Require Import Events Execution TraversalConfig TraversalConfigAlt
+From imm Require Import
+     AuxDef
+     Events Execution TraversalConfig TraversalConfigAlt
      imm_common imm_s imm_s_hb CertExecution1 CertExecution2
      CombRelations Execution_eco.
 Require Import AuxRel.
@@ -550,7 +552,7 @@ Proof.
     { sin_rewrite sc_covered; eauto. basic_solver. }
     rewrite E0CI.
     rewrite sbCsbI_CsbI; eauto.
-    sin_rewrite (scCsbI_C WF COH TCCOH RELCOH).
+    sin_rewrite (scCsbI_C WF COH TCCOH).
     rewrite sb_in_hb. basic_solver. }
 
   assert (⦗set_compl I⦘ ⨾ ⦗W⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ hb ⨾ ⦗E0⦘ ⊆ sb) as BB.
