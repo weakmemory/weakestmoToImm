@@ -506,7 +506,7 @@ Proof.
                 rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
       2: { arewrite (rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘ ⊆
                      ⦗I⦘ ⨾ rfe G ⨾ ⦗dom_rel (imm_common.ppo G ⨾ ⦗I⦘)⦘).
-           { generalize (dom_rfe_ppo_issued TCCOH). basic_solver 20. }
+           { generalize (dom_rfe_ppo_issued WF TCCOH). basic_solver 20. }
            basic_solver. }
       erewrite set_subset_inter_l.
       2: right; reflexivity.
