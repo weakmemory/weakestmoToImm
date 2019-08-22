@@ -12,6 +12,10 @@ Require Import ProgES.
 Require Import StepWf.
 Require Import ExecutionToG.
 
+Require Import DRF_WEAKESTMO_RLX.
+Require Import DRF_RC11_SC.
+
+
 Set Implicit Arguments.
 
 Module DRF_WEAKESTMO_SC.
@@ -47,12 +51,20 @@ Notation "'F' S" := (fun a => is_true (is_f S.(ES.lab) a)) (at level 10).
 
 Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
+Notation "'Sc' S" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
+
 
 Theorem DRF_WEAKESTMO_SC P S X
-      (RA_RACE_FREE : SC_RA_race_free_program P)
-      (EXEC : program_execution P S X) :
+        (nInitProg : ~ IdentMap.In tid_init P)
+        (RA_RACE_FREE : SC_RA_race_free_program P)
+        (EXEC : program_execution P S X) :
   sc_consistent_x S X.
 Proof.
-Admitted.
+  eapply DRF_RC11_SC.DRF_RC11_SC; eauto.
+  eapply DRF_WEAKESTMO_RLX.DRF_WEAKESTMO_RLX; eauto.
+  red. intros S' X' EXEC' RC11.
+  apply RArf_RLXrf, RA_RACE_FREE; auto.
+  eby eapply DRF_RC11_SC.DRF_RC11_SC.
+Qed.
 
 End DRF_WEAKESTMO_SC.
