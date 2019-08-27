@@ -12,24 +12,27 @@ Require Import ProgES.
 Require Import StepWf.
 Require Import ExecutionToG.
 
-Require Import DRF_WEAKESTMO_RLX.
-Require Import DRF_RC11_SC.
+Require Import DRF_RLX.
 
 Set Implicit Arguments.
 
-Module DRF_WEAKESTMO_SC.
+Theorem drf_rc11_sc P S X
+      (RA_RACE_FREE : SC_RA_race_free_program P)
+      (EXEC : program_execution P S X)
+      (RC11 : rc11_consistent_x S X) :
+  sc_consistent_x S X.
+Proof.
+Admitted.
 
-Theorem DRF_WEAKESTMO_SC P S X
+Theorem drf_sc P S X
         (nInitProg : ~ IdentMap.In tid_init P)
         (RA_RACE_FREE : SC_RA_race_free_program P)
         (EXEC : program_execution P S X) :
   sc_consistent_x S X.
 Proof.
-  eapply DRF_RC11_SC.DRF_RC11_SC; eauto.
-  eapply DRF_WEAKESTMO_RLX.DRF_WEAKESTMO_RLX; eauto.
+  eapply drf_rc11_sc; eauto.
+  eapply drf_rlx; eauto.
   red. intros S' X' EXEC' RC11.
   apply RA_race_free_in_RLX_race_free, RA_RACE_FREE; auto.
-  eby eapply DRF_RC11_SC.DRF_RC11_SC.
+  eby eapply drf_rc11_sc.
 Qed.
-
-End DRF_WEAKESTMO_SC.

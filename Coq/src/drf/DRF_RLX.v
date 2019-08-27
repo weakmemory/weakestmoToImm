@@ -728,7 +728,7 @@ Proof.
   eby eapply hb_acyclic.
 Qed.
 
-Theorem DRF_WEAKESTMO_RLX S X
+Theorem drf_rlx S X
       (EXEC : program_execution P S X)
       (RACE_FREE : RC11_RLX_race_free_program P) :
   rc11_consistent_x S X.
@@ -746,5 +746,7 @@ Proof.
   apply po_rf_acyclic; auto.
   by apply jf_in_hb.
 Qed.
-
 End DRF.
+
+
+
