@@ -191,11 +191,6 @@ Proof.
   { apply C_in_D. eapply dom_sb_covered; eauto.
     eexists. apply seq_eqv_r. split; eauto. apply RFI. }
   { eapply issuedW in DR; eauto. type_solver. }
-  (* { red. do 3 left. right.  *)
-  (*   edestruct sb_tid_init as [AA|AA]; auto. *)
-  (*   { apply RFI. } *)
-  (*   { rewrite AA. apply DR. } *)
-  (*   destruct w; simpls. intros BB; desf. } *)
   { red. do 2 left. right.
     destruct DR as [z [v [[EE|EE] DR]]].
     { desf. generalize RFI DR. basic_solver 10. }
@@ -233,7 +228,6 @@ Proof.
   red in DR. unfold set_union in DR. desf.
   { intuition. }
   { eapply issuedW in DR; eauto. type_solver. }
-  (* { exfalso. by apply DR. } *)
   { red. apply I_in_D.
     destruct DR as [z [v [[EE|EE] DR]]].
     2: { apply wf_rfiD in EE; auto. destruct_seq EE as [WR RV].
@@ -617,7 +611,6 @@ Proof. generalize cert_rf_D_in_rf, rf_D_in_cert_rf. basic_solver 10. Qed.
 
 Lemma cert_rf_Acq_in_rf : cert_rf ⨾ ⦗ Acq ⦘ ⊆ rf.
 Proof.
-  (* rewrite cert_rf_codomE0. *)
   arewrite (cert_rf ⊆ cert_rf ⨾ ⦗ E ∩₁ R ⦘).
   { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
     basic_solver. }
@@ -625,8 +618,6 @@ Proof.
   rewrite rfi_union_rfe at 1.
   rewrite codom_union, id_union, !seq_union_l, !seq_union_r.
   unfold Execution.rfi.
-  (* rewrite cert_rf_codomt at 2. *)
-  (* rewrite !seqA. *)
   rewrite <- !id_inter.
   arewrite (codom_rel rfe ∩₁ Acq ⊆₁ D).
   { unfold D.
@@ -796,6 +787,24 @@ Proof.
   by destruct_seq CertRF as [AA BB].
 Qed.
 
+Lemma cert_rf_ntid_iss_sb thread (NINITT : thread <> tid_init) :
+  cert_rf ⨾ ⦗ Tid_ thread ⦘ ⊆ 
+    ⦗ NTid_ thread ∩₁ I ⦘ ⨾ cert_rf ∪ sb ∩ same_tid.
+Proof.
+  rewrite <- seq_id_l 
+    with (r := cert_rf) at 1.
+  rewrite <- tid_set_dec with (thread := thread).
+  rewrite set_unionC, id_union, !seq_union_l, !seqA.
+  apply union_mori.
+  { rewrite cert_rf_iss_sb at 1. 
+    unfold same_tid.
+    basic_solver 10. }
+  apply inclusion_inter_r.
+  { apply cert_rf_tid_in_sb; auto. }
+  unfold same_tid.
+  basic_solver.
+Qed.
+
 Lemma dom_cert_rfe : 
   dom_rel cert_rfe ⊆₁ I.
 Proof. 
@@ -803,68 +812,6 @@ Proof.
   rewrite cert_rf_iss_sb.
   basic_solver.
 Qed.
-
-(* Lemma cert_rf_ntid_sb : cert_rf ⊆ ⦗ NTid_ thread ⦘ ⨾ cert_rf ∪ sb. *)
-(* Proof. *)
-(*   arewrite (cert_rf ⊆ ⦗Tid_ thread ∪₁ NTid_ thread⦘ ⨾ cert_rf ⨾ ⦗Tid_ thread⦘). *)
-(*   { unfolder. intros x y HH. splits; auto. *)
-(*     { apply classic. } *)
-(*     generalize HH. unfold cert_rf, E0. unfolder. basic_solver. } *)
-(*   rewrite id_union, seq_union_l. *)
-(*   unionL; [|basic_solver]. *)
-(*   unionR right. *)
-(*   rewrite cert_rfD, !seqA. *)
-(*   unfolder. intros x y [[TX WX] [VF [RY TY]]]. *)
-(*   apply cert_rfE in VF. destruct_seq VF as [EX EY]. *)
-(*   assert (~ is_init y) as NIY.  *)
-(*   { intros HH. eapply init_w in HH; eauto. type_solver. } *)
-(*   destruct (classic (is_init x)) as [|NIX]. *)
-(*   { by apply init_ninit_sb. } *)
-(*   edestruct same_thread with (x:=x) (y:=y) as [[|SB]|SB]; eauto. *)
-(*   { by rewrite TX. } *)
-(*   { type_solver. } *)
-(*   exfalso. *)
-(*   eapply cert_rf_hb_irr. eexists; splits; eauto. *)
-(*     by apply sb_in_hb. *)
-(* Qed. *)
-
-(* Lemma cert_rfi_in_sb (NINITT : thread <> tid_init) :  *)
-(*   cert_rfi ⊆ sb. *)
-(* Proof.  *)
-(*   unfold cert_rfi. unfolder. intros x y [TX [RFXY TY]]. *)
-(*   red in RFXY. *)
-(*   (* destruct RFXY as [RFXY [EEY NDY]] *) *)
-(*   (* apply seq_eqv_r in RFXY. destruct RFXY as [RFXY [EEY NDY]]. *) *)
-(*   apply cert_rfE in RFXY; auto. destruct_seq RFXY as [EX EY]. *)
-(*   apply cert_rfD in RFXY. destruct_seq RFXY as [WX RY]. *)
-(*   edestruct same_thread with (x:=x) (y:=y) as [[|SBXY]|SBXY]; eauto. *)
-(*   { intros HH. *)
-(*     destruct x; simpls. *)
-(*     rewrite <- TX in *. desf. } *)
-(*   { by rewrite TX. } *)
-(*   { subst. exfalso. type_solver. } *)
-(*   exfalso. eapply cert_rf_hb_sc_hb_irr; eauto. *)
-(*   eexists. splits; eauto. *)
-(*   eexists. splits. *)
-(*   { eapply imm_s_hb.sb_in_hb; eauto. } *)
-(*     by left.  *)
-(* Qed. *)
-
-(* Lemma E0_sbprcl : doma (⦗Tid_ thread ⦘ ⨾ sb ⨾ ⦗E0⦘) E0. *)
-(* Proof.  *)
-(*   unfold E0. *)
-(*   red. intros x y SBXY. *)
-(*   destruct_seq SBXY as [TX TY].  *)
-(*   destruct TY as [TY EEY]. *)
-(*   split; auto. *)
-(*   destruct EEY as [COVY|ISSY]; [left|right]. *)
-(*   { eapply dom_sb_covered; eauto. *)
-(*     eexists. apply seq_eqv_r. eauto. } *)
-(*   destruct ISSY as [z ISSY]. *)
-(*   apply seq_eqv_r in ISSY. destruct ISSY as [SBYZ ISSZ]. *)
-(*   exists z. apply seq_eqv_r. split; auto. *)
-(*   generalize (@sb_trans G) SBXY SBYZ. basic_solver.  *)
-(* Qed. *)
 
 End Properties.
 

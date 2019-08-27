@@ -71,7 +71,6 @@ Section CertGraph.
   Notation "'I''"  := (issued TC').
 
   Notation "'E0'" := (Tid_ thread ∩₁ CI G TC').
-  (* Notation "'D'" := (D G TC' thread). *)
 
   Definition cert_dom st := 
     (C ∪₁ (dom_rel (sb^? ⨾ ⦗ I ⦘) ∩₁ NTid thread) ∪₁ acts_set st.(ProgToExecution.G)).  
@@ -99,8 +98,6 @@ Section CertGraph.
       dcertRMW : certRmw ≡ ⦗ certE ⦘ ⨾ rmw;
       
       cert_rfv_clab : cert_rf ⨾ ⦗ Tid_ thread ⦘ ⊆ same_val certLab;
-      cert_rfl_clab : cert_rf ⨾ ⦗ Tid_ thread ⦘ ⊆ same_loc certLab;
-      (* cert_rf_iss_sb : cert_rf ⊆ ⦗ I ⦘ ⨾ cert_rf ∪ sb; *)
     }.
 
   Section CertGraphProperties.
@@ -280,67 +277,68 @@ Section CertGraph.
     (******************************************************************************)
     (** ** cert_rf propeties *)
     (******************************************************************************)
+    
+    Lemma cert_rfl_clab (CERTG : cert_graph) : 
+      cert_rf ⊆ same_loc certLab.
+    Proof. 
+      erewrite same_lab_u2v_same_loc.
+      { eapply cert_rfl. }
+      apply cuplab; auto.
+    Qed.
 
-    (* Lemma cert_rf_w (SCG : cert_graph) :  *)
-    (*   cert_rf ≡ ⦗ W ⦘ ⨾ cert_rf. *)
-    (* Proof. rewrite cert_rfD; auto. basic_solver. Qed. *)
+    Lemma cert_rf_ntid_old_iss_sb 
+          (SCG : cert_graph)
+          (NINITT : thread <> tid_init)
+          (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) :
+      cert_rf ⨾ ⦗ Tid_ thread ⦘ ⊆ 
+        ⦗ NTid thread ∩₁ I ⦘ ⨾ cert_rf ∪ sb ∩ same_tid.
+    Proof.
+      assert (IRELCOV' : W ∩₁ Rel ∩₁ I' ⊆₁ C').
+      { eapply sim_trav_step_rel_covered; eauto; red; eauto. }
+      erewrite cert_rf_ntid_iss_sb; eauto.
+      rewrite isim_trav_step_new_issued_tid; eauto.
+      basic_solver.
+    Qed.
 
-    (* Lemma cert_rf_ntid_iss_sb  *)
-    (*       (SCG : cert_graph) *)
-    (*       (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C) : *)
-    (*   cert_rf ⊆ ⦗ NTid thread ∩₁ I ⦘ ⨾ cert_rf ∪ sb. *)
-    (* Proof. *)
-    (*   etransitivity. *)
-    (*   { apply cert_rf_ntid_sb; auto.  *)
-    (*     eapply sim_trav_step_rel_covered; eauto.  *)
-    (*     eexists; eauto. } *)
-    (*   sin_rewrite cert_rf_iss_sb; auto.  *)
-    (*   basic_solver 10. *)
-    (* Qed. *)
+    Lemma cert_rf_cert_dom st
+          (SCG : cert_graph)
+          (NINITT : thread <> tid_init)
+          (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C)
+          (WFST : wf_thread_state thread st) :
+      dom_rel (cert_rf ⨾ ⦗ eq (ThreadEvent thread st.(eindex)) ⦘) ⊆₁ cert_dom st.
+    Proof.
+      unfold cert_dom.
+      rewrite <- seq_eqvK.
+      arewrite 
+        (eq (ThreadEvent thread (eindex st)) ⊆₁ Tid_ thread)
+        at 1. 
+      { basic_solver. }
+      rewrite <- seq_eqvK 
+        with (dom := Tid thread). 
+      do 2 rewrite <- seqA.
+      erewrite cert_rf_ntid_old_iss_sb; eauto.
+      rewrite !seq_union_l, dom_union.
+      apply set_subset_union_l. split.
+      { basic_solver 10. }
 
-    (* Lemma cert_rf_cert_dom st *)
-    (*       (SCG : cert_graph) *)
-    (*       (IRELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C)  *)
-    (*       (NINITT : thread <> tid_init)  *)
-    (*       (WFST : wf_thread_state thread st) : *)
-    (*   dom_rel (cert_rf ⨾ ⦗ eq (ThreadEvent thread st.(eindex)) ⦘) ⊆₁ cert_dom st. *)
-    (* Proof.  *)
-    (*   unfold cert_dom.  *)
-    (*   (* rewrite cert_rf_codomt.  *) *)
-    (*   erewrite cert_rf_ntid_iss_sb; eauto. *)
-    (*   rewrite !seq_union_l, dom_union.  *)
-    (*   apply set_subset_union_l. split. *)
-    (*   { basic_solver 10. } *)
-    (*   rewrite sb_tid_init'. *)
-    (*   rewrite !seq_union_l, dom_union.  *)
-    (*   apply set_subset_union_l. split. *)
-    (*   { arewrite (sb ∩ same_tid ⨾ ⦗Tid thread⦘ ≡ ⦗Tid thread⦘ ⨾ sb).  *)
-    (*     { unfolder; splits; ins; splits; desf; auto.   *)
-    (*       { unfold same_tid.  *)
-    (*         edestruct sb_tid_init as [STID | INITx]; eauto.   *)
-    (*         exfalso. apply NINITT. *)
-    (*         by apply is_init_tid in INITx. } *)
-    (*       edestruct sb_tid_init as [STID | INITx]; eauto.   *)
-    (*       exfalso. apply NINITT. *)
-    (*       by apply is_init_tid in INITx. } *)
-    (*     intros x [y HH]. right.  *)
-    (*     apply seq_eqv_lr in HH.  *)
-    (*     destruct HH as [TIDx [SB EQy]]. *)
-    (*     destruct x; [intuition|].  *)
-    (*     unfold tid in TIDx. subst. *)
-    (*     apply acts_clos; auto.  *)
-    (*     unfold Execution.sb, ext_sb in SB. *)
-    (*     apply seq_eqv_lr in SB; desf. } *)
-    (*   rewrite !seqA, seq_eqv. *)
-    (*   intros x [y HH]. *)
-    (*   apply seq_eqv_lr in HH. *)
-    (*   destruct HH as [INITx [SB _]]. *)
-    (*   do 2 left.  *)
-    (*   eapply init_covered; eauto.  *)
-    (*   split; auto.  *)
-    (*   unfold Execution.sb in SB.  *)
-    (*   apply seq_eqv_lr in SB; desf.  *)
-    (* Qed. *)
+      arewrite (sb ∩ same_tid ⨾ ⦗Tid thread⦘ ≡ ⦗Tid thread⦘ ⨾ sb).
+      { unfolder; splits; ins; splits; desf; auto.
+        { unfold same_tid.
+          edestruct sb_tid_init as [STID | INITx]; eauto.
+          exfalso. apply NINITT.
+            by apply is_init_tid in INITx. }
+        edestruct sb_tid_init as [STID | INITx]; eauto.
+        exfalso. apply NINITT.
+          by apply is_init_tid in INITx. }
+      intros x [y HH]. right.
+      apply seq_eqv_lr in HH.
+      destruct HH as [TIDx [SB EQy]].
+      destruct x; [intuition|].
+      unfold tid in TIDx. subst.
+      apply acts_clos; auto.
+      unfold Execution.sb, ext_sb in SB.
+      apply seq_eqv_lr in SB; desf. 
+    Qed.
 
     (******************************************************************************)
     (** ** deps propeties *)
@@ -434,16 +432,6 @@ Section CertGraph.
         generalize dom_sb_covered. basic_solver 21. }
       { rewrite (data_in_ppo WF).
         basic_solver 12. }
-      (* { rewrite (data_in_sb WF). *)
-      (*   rewrite (dom_l (@wf_sbE G)) at 1. *)
-      (*   rewrite sb_tid_init' at 1; relsf; unionL; split. *)
-      (*   { unionR left -> left -> right. *)
-      (*     unfold same_tid. basic_solver. *)
-      (*     unfold same_tid; unfolder; ins; desf; eauto 20. } *)
-      (*   arewrite (⦗E⦘ ⨾ ⦗fun a : actid => is_init a⦘ ⊆ ⦗D G TC'⦘). *)
-      (*   generalize D_init; basic_solver. *)
-      (*   arewrite (dom_rel (⦗D⦘ ⨾ sb ⨾ ⦗E ∩₁ NTid thread⦘) ⊆₁ D) by basic_solver. *)
-      (*   unfold CertExecution2.D; basic_solver 12. } *)
       { rewrite dom_rel_eqv_dom_rel.
         rewrite crE at 1; relsf; unionL; splits.
         { rewrite (dom_r (wf_dataD WF)), (dom_l (@wf_ppoD G)). type_solver. }
@@ -754,19 +742,6 @@ Proof.
     splits; auto. 
     2 : { eapply transitive_rt; eauto. by apply eps_steps_in_steps. }
 
-    assert (same_lab_u2v (certLab G cert_state) (lab G)) as SU2V.
-    { intros e _. unfold certLab.
-      unfold restr_fun.
-      destruct (excluded_middle_informative
-                  (acts_set (ProgToExecution.G cert_state) e))
-               as [AA|AA].
-      2: { red. desf. }
-      rewrite SCC in *.
-      eapply same_label_u2v_trans.
-      { by apply SAME. }
-      rewrite LST2; [by red; desf|].
-      red. by rewrite RACTS. }
-
     assert (eq_dom (D G TC') (certLab G cert_state) (lab G))
       as CERTLABD.
     { intros e DE. unfold certLab.
@@ -781,15 +756,11 @@ Proof.
 
     constructor; auto.
     all: try rewrite SCC.
-    { red. ins.
-      eapply same_label_u2v_trans; eauto.
-      assert (tid e = thread) as BB.
-      { red in EE. rewrite <- RACTS in EE. by apply CACTS. }
-      assert (acts_set (ProgToExecution.G state'') e) as CC.
-      { by red; rewrite RACTS. }
-
-      assert (lab (ProgToExecution.G state'') e = G.(lab) e) as AA by (by apply LST2).
-      rewrite AA. red. desf. }
+    { intros e DD. 
+      eapply same_label_u2v_trans.
+      { by apply SAME. }
+      rewrite LST2; [by red; desf|].
+      red. by rewrite RACTS. }
     { unfold acts_set. by rewrite <- RACTS. }
     { rewrite <- RRMW, SS. rewrite ORMW, !CACTS.
       rewrite TEH.(tr_rmw), !seqA.
@@ -801,103 +772,100 @@ Proof.
       3 : eauto.
       all: eauto. }
 
-    { rewrite seq_eqv_r.
-      intros w r [RF TIDy]. 
-      apply cert_rf_codom in RF.
-      destruct_seq_r RF as EER.
-      (* assert (Tid thread r) as TRR by apply EER. *)
-      unfold same_val, val.
-      
-      destruct (classic (D G TC' r)) as [DR|NDR].
-      { rewrite CERTLABD with (x:=r); auto.
-        assert (rf w r) as RFWR.
-        { intros. eapply cert_rf_D_in_rf with (TC:=TC'); eauto.
-          apply seq_eqv_r. do 2 (split; eauto). }
-        assert (D G TC' w).
-        2: { rewrite CERTLABD; auto. apply wf_rfv; auto. }
-        eapply rf_DCI_in_D; eauto.
-        basic_solver 10. }
-      
-      unfold certLab at 2.
-      set (STE := EER). 
-      assert (E0 r) as E0r.
-      { basic_solver. }
-      apply CACTS in E0r.
-      unfold restr_fun.
-      destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) r))
-        as [VV|VV].
-      2: { exfalso. apply VV. rewrite SCC. red. by rewrite <- RACTS. }
+    rewrite seq_eqv_r.
+    intros w r [RF TIDy]. 
+    apply cert_rf_codom in RF.
+    destruct_seq_r RF as EER.
+    unfold same_val, val.
+    
+    destruct (classic (D G TC' r)) as [DR|NDR].
+    { rewrite CERTLABD with (x:=r); auto.
+      assert (rf w r) as RFWR.
+      { intros. eapply cert_rf_D_in_rf with (TC:=TC'); eauto.
+        apply seq_eqv_r. do 2 (split; eauto). }
+      assert (D G TC' w).
+      2: { rewrite CERTLABD; auto. apply wf_rfv; auto. }
+      eapply rf_DCI_in_D; eauto.
+      basic_solver 10. }
+    
+    unfold certLab at 2.
+    set (STE := EER). 
+    assert (E0 r) as E0r.
+    { basic_solver. }
+    apply CACTS in E0r.
+    unfold restr_fun.
+    destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) r))
+      as [VV|VV].
+    2: { exfalso. apply VV. rewrite SCC. red. by rewrite <- RACTS. }
+    rewrite SCC.
+
+    set (LL := RF).
+    apply cert_rfE in LL; auto. destruct_seq LL as [RE RW].
+    apply cert_rfD in LL; auto. destruct_seq LL as [RR WW].
+
+    assert (Tid thread w -> sb w r) as SBWR.
+    { intros TTW.
+      edestruct same_thread with (x:=r) (y:=w) as [[SB|SB]|SB]; eauto.
+      { intros II. eapply init_w in II; eauto.
+        clear -WW II. type_solver. }
+      { desf. }
+      { subst. clear -RR WW. type_solver. }
+      exfalso. eapply cert_rf_hb_irr; eauto.
+      eexists; split; eauto. by apply sb_in_hb. }
+
+    assert (Tid thread w -> acts_set (ProgToExecution.G cert_state) w) as PP.
+    { intros TT. set (AA := TT).
+      apply SBWR in AA. rewrite SCC. red. 
+      rewrite <- RACTS. apply CACTS.
+      eapply E0_sb_prcl; [|eauto|]; eauto.
+      basic_solver 10. }
+    
+    destruct (classic (codom_rel new_rfi r)) as [DD|DD].
+    { set (TT:=DD). destruct TT as [w' TT].
+      set (OO := TT). destruct_seq OO as [TTW TTR].
+      assert (w' = w); subst.
+      { destruct_seq_r OO as QQ. eapply cert_rff; eauto. }
+      unfold certLab. unfold restr_fun.
+      set (OO' := OO). destruct_seq_r OO' as OOK.
+      assert (tid w = tid r) as EQT by congruence.
+      specialize (PP EQT).
+      destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) w));
+        [|done].
       rewrite SCC.
+      symmetry. apply NEW_VAL1. red.
+      apply seq_eqv_l. split; auto.
+      apply seq_eqv_r. split; auto. }
+    
+    destruct (classic (Tid thread w)) as [TTW|NTTW].
+    { exfalso. apply DD. exists w.
+      apply seq_eqv_l. split; auto.
+      apply seq_eqv_r. split; auto.
+      apply seq_eqv_r. do 2 (split; auto). 
+      basic_solver. }
 
-      set (LL := RF).
-      apply cert_rfE in LL; auto. destruct_seq LL as [RE RW].
-      apply cert_rfD in LL; auto. destruct_seq LL as [RR WW].
-
-      assert (Tid thread w -> sb w r) as SBWR.
-      { intros TTW.
-        edestruct same_thread with (x:=r) (y:=w) as [[SB|SB]|SB]; eauto.
-        { intros II. eapply init_w in II; eauto.
-          clear -WW II. type_solver. }
-        { desf. }
-        { subst. clear -RR WW. type_solver. }
-        exfalso. eapply cert_rf_hb_irr; eauto.
-        eexists; split; eauto. by apply sb_in_hb. }
-
-      assert (Tid thread w -> acts_set (ProgToExecution.G cert_state) w) as PP.
-      { intros TT. set (AA := TT).
-        apply SBWR in AA. rewrite SCC. red. 
-        rewrite <- RACTS. apply CACTS.
-        eapply E0_sb_prcl; [|eauto|]; eauto.
-        basic_solver 10. }
-      
-      destruct (classic (codom_rel new_rfi r)) as [DD|DD].
-      { set (TT:=DD). destruct TT as [w' TT].
-        set (OO := TT). destruct_seq OO as [TTW TTR].
-        assert (w' = w); subst.
-        { destruct_seq_r OO as QQ. eapply cert_rff; eauto. }
-        unfold certLab. unfold restr_fun.
-        set (OO' := OO). destruct_seq_r OO' as OOK.
-        assert (tid w = tid r) as EQT by congruence.
-        specialize (PP EQT).
-        destruct (excluded_middle_informative (acts_set (ProgToExecution.G cert_state) w));
-          [|done].
-        rewrite SCC.
-        symmetry. apply NEW_VAL1. red.
-        apply seq_eqv_l. split; auto.
-        apply seq_eqv_r. split; auto. }
-      
-      destruct (classic (Tid thread w)) as [TTW|NTTW].
-      { exfalso. apply DD. exists w.
-        apply seq_eqv_l. split; auto.
-        apply seq_eqv_r. split; auto.
-        apply seq_eqv_r. do 2 (split; auto). 
-        basic_solver. }
-
-      rewrite CERTLABD.
-      2: { apply cert_rf_iss_sb in LL; auto.
-           destruct LL as [LL | [SB STID]]; 
-             auto; [|congruence].
-           destruct_seq_l LL as Iw.
+    rewrite CERTLABD.
+    2: { apply cert_rf_iss_sb in LL; auto.
+         destruct LL as [LL | [SB STID]]; 
+           auto; [|congruence].
+         destruct_seq_l LL as Iw.
            by apply I_in_D. }
-      
-      etransitivity.
-      2: { symmetry. apply NEW_VAL2; auto.
-           2: by split.
-           eapply same_lab_u2v_is_r; eauto. unfold is_r. by rewrite LST2. }
-      unfold new_val, get_val, val.
-      assert (new_value r = w) as FF.
-      2: { rewrite FF; desf. clear -Heq RR. type_solver. }
-      assert (new_rfe w r) as RFE.
-      { apply seq_eqv_l. split; auto.
-        apply seq_eqv_r. split; auto.
-        apply seq_eqv_r. repeat (split; auto). }
-      specialize (HH r). destruct HH as [HH|HH].
-      { eapply new_rfef; eauto. }
-      clear -HH RFE. red in HH. desf.
-      exfalso. apply HH0. rewrite HH.
-      eexists. eauto. }
-    erewrite same_lab_u2v_same_loc; eauto.
-    rewrite cert_rfl. basic_solver.
+    
+    etransitivity.
+    2: { symmetry. apply NEW_VAL2; auto.
+         2: by split.
+         eapply same_lab_u2v_is_r; eauto. unfold is_r. by rewrite LST2. }
+    unfold new_val, get_val, val.
+    assert (new_value r = w) as FF.
+    2: { rewrite FF; desf. clear -Heq RR. type_solver. }
+    assert (new_rfe w r) as RFE.
+    { apply seq_eqv_l. split; auto.
+      apply seq_eqv_r. split; auto.
+      apply seq_eqv_r. repeat (split; auto). }
+    specialize (HH r). destruct HH as [HH|HH].
+    { eapply new_rfef; eauto. }
+    clear -HH RFE. red in HH. desf.
+    exfalso. apply HH0. rewrite HH.
+    eexists. eauto. 
 Qed.
 
 (******************************************************************************)
