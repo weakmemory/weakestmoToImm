@@ -201,7 +201,7 @@ Section SimRelStep.
     exists k st st',
       ⟪ kTID : thread = ktid S k ⟫ /\
       ⟪ XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ktid S k)) ⟫ /\
-      ⟪ CERTG : cert_graph G sc TC TC' thread st' ⟫ /\
+      ⟪ CERTG : cert_graph G sc TC' thread st' ⟫ /\
       ⟪ CERT_ST : simrel_cstate S k st st' ⟫.
   Proof.
     cdes SRC.
@@ -259,7 +259,7 @@ Section SimRelStep.
         (SRC : simrel prog S G sc TC X) 
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC') 
         (XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ktid S k)))
-        (CERTG : cert_graph G sc TC TC' (ktid S k) st')
+        (CERTG : cert_graph G sc TC' (ktid S k) st')
         (CERT_ST : simrel_cstate S k st st') :
     simrel_cert prog S G sc TC TC' X k st st'.
   Proof. 
@@ -307,7 +307,7 @@ Section SimRelStep.
       eapply sim_trav_step_covered_le in Cx.
       2 : eexists; eauto.
       basic_solver. }
-    (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ktid *)
+    (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' *)
     { rewrite XkTIDCOV.
       rewrite <- seq_eqvK.
       rewrite <- seqA, collect_rel_seqi.
@@ -328,14 +328,19 @@ Section SimRelStep.
         rewrite e2a_W; try apply SRC.
         rewrite wf_rfD; try apply SRC.
         type_solver. }
-      rewrite collect_map_in_set. 
+      rewrite collect_map_in_set.
       arewrite (X ∩₁ STid S (ES.cont_thread S k) ⊆₁
                 STid S (ES.cont_thread S k)) by basic_solver.
       rewrite e2a_Tid.
+      rewrite set_interC.
+      rewrite id_inter.
       arewrite (C ⊆₁ C').
       { eapply sim_trav_step_covered_le.
         red. eauto. }
-      by apply rf_C_in_cert_rf; try apply SRC. }
+      rewrite <- seqA.
+      erewrite rf_C_in_cert_rf; 
+        eauto; try apply SRC.
+      basic_solver. }
     (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ; *)
     { arewrite (X ∩₁ e2a S ⋄₁ (acts_set (ProgToExecution.G st) ∩₁ I) ⊆₁ 
                   X ∩₁ SW S ∩₁ STid S (ktid S k) ∩₁ e2a S ⋄₁ C).
@@ -762,9 +767,12 @@ Section SimRelStep.
       rewrite jf_in_cert_rf; eauto.
       rewrite collect_rel_eqv. 
       rewrite collect_map_in_set.
-      arewrite (C' ⊆₁ D G TC' (ktid S k)).
-      { unfold D. basic_solver 10. }
-      erewrite cert_rf_D_rf; try done. 
+      rewrite set_interC.
+      rewrite id_inter. 
+      rewrite C_in_D; eauto.
+      rewrite <- seqA.
+      erewrite cert_rf_D_in_rf; try done. 
+      { basic_solver. }
       1,2: apply SRCC.
       eapply tccoh'; eauto. }
     (*  e2a_co_iss : e2a □ (Sco ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
@@ -792,7 +800,7 @@ Section SimRelStep.
         (SRC : simrel prog S G sc TC X)
         (TC_ISTEP : isim_trav_step G sc (ktid S k) TC TC')
         (XkTIDCOV : kE S k ≡₁ X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ktid S k)))
-        (CERTG : cert_graph G sc TC TC' (ktid S k) st''')
+        (CERTG : cert_graph G sc TC' (ktid S k) st''')
         (CERT_ST : simrel_cstate S k st st''') 
         (LBL_STEPS : (lbl_step (ktid S k))＊ st st''') :
     (fun st' => exists k' S',

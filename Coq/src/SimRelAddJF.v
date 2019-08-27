@@ -136,7 +136,7 @@ Section SimRelAddJF.
     ⟪ rE' : SE S' r' ⟫ /\
     ⟪ rR' : SR S' r' ⟫ /\
     ⟪ CertEx : certX S k w ⟫ /\
-    ⟪ CertRF : (cert_rf G sc TC' (ktid S k)) (e2a S' w) (e2a S' r') ⟫ /\
+    ⟪ CertRF : (cert_rf G sc TC') (e2a S' w) (e2a S' r') ⟫ /\
     ⟪ JF' : Sjf S' ≡ Sjf S ∪ jf_delta w r' ⟫.
 
   Section SimRelAddJFProps. 
@@ -209,9 +209,16 @@ Section SimRelAddJF.
       assert (e2a S' w = e2a S w) as e2aEQw.
       { eapply basic_step_e2a_eq_dom; eauto. }
       rewrite e2aEQw in *.
-      eapply cert_rf_ntid_iss_sb in CertRF.
-      2-6 : apply SRCC.
-      destruct CertRF as [Iss | SB].
+      assert 
+        ((cert_rf G sc TC' ⨾ ⦗ Tid_ (ktid S k) ⦘) (e2a S w) (e2a S' e))
+        as CertRFT.
+      { apply seq_eqv_r; splits; auto.
+        rewrite <- e2a_tid.
+        erewrite basic_step_tid_e; eauto. }
+      eapply cert_rf_ntid_old_iss_sb in CertRFT.
+      2-8 : try apply SRCC.
+      2 : eapply ktid_ninit; eauto.
+      destruct CertRFT as [Iss | [SB STID]].
       { unfolder. left. 
         unfolder in Iss. 
         unfolder in CertEx. 
@@ -227,15 +234,9 @@ Section SimRelAddJF.
         by rewrite <- e2a_tid. }
       right. 
       destruct CertEx as [[Xw NTIDw] | KSBw]; auto.
-      edestruct sb_tid_init as [STID | INITx]; eauto. 
-      { exfalso. apply NTIDw.
-        rewrite e2a_tid, STID, <- e2a_tid. 
-        erewrite basic_step_tid_e; eauto. }
-      eapply ES.cont_sb_dom_Einit; eauto.
-      eapply e2a_map_Einit.
-      unfolder; splits; auto.
-      apply wf_sbE in SB.
-      generalize SB. basic_solver.
+      exfalso. apply NTIDw. 
+      rewrite e2a_tid, STID, <- e2a_tid.
+      erewrite basic_step_tid_e; eauto.
     Qed.
 
     Lemma weaken_sim_add_jf w k k' e e' S S' 
@@ -278,7 +279,9 @@ Section SimRelAddJF.
         apply restr_relE, seq_eqv_lr in HH. 
         basic_solver. }
       { assert (AuxDef.same_val (certLab G st'') (e2a S' w) (e2a S' e)) as SAME_VAL.
-        { eapply cert_rfv_clab; eauto. apply SRCC. }
+        { eapply cert_rfv_clab; eauto. 
+          { apply SRCC. }
+          apply seq_eqv_r; splits; auto. }
         unfold AuxDef.same_val, Events.val in *.
         erewrite basic_step_e2a_certlab_e 
           with (e := e); eauto; try apply SRCC.
@@ -313,11 +316,10 @@ Section SimRelAddJF.
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-      e2a S' □ jf_delta w e ⊆ cert_rf G sc TC' (ktid S' k').
+      e2a S' □ jf_delta w e ⊆ cert_rf G sc TC'.
     Proof. 
       cdes SAJF.
       autounfold with ESStepDb.
-      erewrite basic_step_cont_thread'; eauto.
       basic_solver 10.
     Qed.
 
@@ -327,7 +329,7 @@ Section SimRelAddJF.
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
-      e2a S' □ Sjf S' ⨾ ⦗kE S' k'⦘ ⊆ cert_rf G sc TC' (ktid S' k').
+      e2a S' □ Sjf S' ⨾ ⦗kE S' k'⦘ ⊆ cert_rf G sc TC'.
     Proof. 
       cdes BSTEP_; cdes SAJF.
       assert (ES.Wf S) as WFS by apply SRCC.
@@ -339,13 +341,10 @@ Section SimRelAddJF.
               !seq_union_l, !collect_rel_union.
       unionL.
       all: try by step_solver. 
-      { erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
-        { erewrite basic_step_cont_thread'; eauto. apply SRCC. }
-        rewrite ES.jfE; auto.
-        basic_solver. }
-      rewrite collect_rel_seqi.
-      erewrite sim_add_jf_jf_delta_in_cert_rf; eauto.
-      basic_solver.
+      erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
+      { apply SRCC. }
+      rewrite ES.jfE; auto.
+      basic_solver. 
     Qed.
 
     Lemma sim_add_jf_e2a_jf_furr w k k' e e' S S' 

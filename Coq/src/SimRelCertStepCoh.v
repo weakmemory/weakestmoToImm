@@ -385,7 +385,7 @@ Section SimRelCertStepCoh.
       all: apply SRE2A. }
 
     assert 
-      (e2a S' □ jf_delta w e ⊆ cert_rf G sc TC' (ktid S k))
+      (e2a S' □ jf_delta w e ⊆ cert_rf G sc TC')
       as JFdN.
     { cdes SAJF. unfold jf_delta. basic_solver. }
 
@@ -406,7 +406,7 @@ Section SimRelCertStepCoh.
       erewrite sim_add_jf_jf_delta_in_cert_rf; eauto.
       rewrite HBN.
       rewrite (dom_r WFG.(wf_coD)), !seqA.
-      arewrite (⦗GW⦘ ⨾ (Grf ⨾ ⦗C⦘)^? ⨾ Ghb ⊆ vf G sc TC' (ktid S' k')).
+      arewrite (⦗GW⦘ ⨾ (Grf ⨾ ⦗C⦘)^? ⨾ Ghb ⊆ vf G sc TC').
       2: unfold cert_rf; basic_solver 42.
       unfold vf.
       unionR left.
@@ -468,9 +468,8 @@ Section SimRelCertStepCoh.
       rewrite collect_rel_transp.
       rewrite SBN.
       erewrite sim_add_jf_jf_delta_in_cert_rf; eauto.
-      rewrite cert_rf_in_vf. 
+      rewrite cert_rf_in_vf at 1. 
       sin_rewrite vf_sb_in_vf.
-      erewrite <- basic_step_cont_thread'; eauto.
       unfold cert_rf; basic_solver 10. }
 
     arewrite ((Sjfi S')^? ⨾ Ssb S' ⊆ Ssb S').
