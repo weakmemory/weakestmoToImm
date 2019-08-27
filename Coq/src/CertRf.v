@@ -10,7 +10,6 @@ Section CertRf.
 Variable G  : execution.
 Variable sc : relation actid.
 Variable TC : trav_config.
-Variable thread : thread_id.
 
 Notation "'C'"  := (covered TC).
 Notation "'I'"  := (issued TC).
@@ -60,20 +59,21 @@ Definition vf :=
   ⦗ W ⦘ ⨾ (rf ⨾ ⦗ C ⦘)^? ⨾ hb^? ⨾ sc^? ⨾ hb^? ⨾ ⦗ E ⦘ ∪
   rf ⨾ ⦗ D ⦘ ⨾ sb^?.
 
-(* Definition cert_rf := *)
-(*   vf ∩ same_loc lab ⨾ ⦗ E0 ∩₁ R ⦘ \ co ⨾ vf. *)
-
 Definition cert_rf :=
   vf ∩ same_loc lab ⨾ ⦗ CI ∩₁ R ⦘ \ co ⨾ vf.
 
-Definition cert_rfi := ⦗  Tid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
-Definition cert_rfe := ⦗ NTid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
+Definition cert_rfi := cert_rf ∩ sb.
+Definition cert_rfe := cert_rf \  sb.
 
 Section Properties.
 Variable WF  : Wf G.
 Variable COH : imm_consistent G sc.
 Variable TCCOH : tc_coherent G sc TC.
 Variable RELCOH : W ∩₁ Rel ∩₁ I ⊆₁ C.
+
+(******************************************************************************)
+(** ** CI propeties *)
+(******************************************************************************)
 
 Lemma CI_in_E : CI ⊆₁ E.
 Proof.
@@ -163,6 +163,10 @@ Proof.
   basic_solver.
 Qed.
 
+(******************************************************************************)
+(** ** D propeties *)
+(******************************************************************************)
+
 Lemma D_in_E : D ⊆₁ E.
 Proof. 
   unfold D.
@@ -170,6 +174,107 @@ Proof.
   rewrite (issuedE TCCOH) at 1.
   basic_solver 21. 
 Qed.
+
+Lemma C_in_D : C ⊆₁ D. 
+Proof. unfold D. by repeat left. Qed.
+
+Lemma I_in_D : I ⊆₁ D. 
+Proof. unfold D. do 3 left. by right. Qed.
+
+Lemma rfi_D_in_D :
+  dom_rel (rfi ⨾ ⦗ D ⦘) ⊆₁ D.
+Proof.
+  intros w [r RFI]. destruct_seq_r RFI as DR.
+  apply wf_rfiD in RFI; auto. destruct_seq RFI as [WW RR].
+  apply wf_rfiE in RFI; auto. destruct_seq RFI as [EW ER].
+  red in DR. unfold set_union in DR. desf.
+  { apply C_in_D. eapply dom_sb_covered; eauto.
+    eexists. apply seq_eqv_r. split; eauto. apply RFI. }
+  { eapply issuedW in DR; eauto. type_solver. }
+  (* { red. do 3 left. right.  *)
+  (*   edestruct sb_tid_init as [AA|AA]; auto. *)
+  (*   { apply RFI. } *)
+  (*   { rewrite AA. apply DR. } *)
+  (*   destruct w; simpls. intros BB; desf. } *)
+  { red. do 2 left. right.
+    destruct DR as [z [v [[EE|EE] DR]]].
+    { desf. generalize RFI DR. basic_solver 10. }
+    apply wf_rfiD in EE; auto. destruct_seq EE as [WR RV].
+    clear -RR WR. type_solver. }
+  { apply I_in_D. destruct DR as [v DR].
+    destruct_seq_l DR as IV.
+    assert (v = w); desf.
+    eapply wf_rff; eauto.
+    { apply DR. }
+    apply RFI. }
+  destruct DR as [v DR].
+  destruct_seq_r DR as IV.
+  assert (v = w); desf.
+  { eapply wf_rff; eauto.
+    { apply DR. }
+    apply RFI. }
+  unfold Execution.rfi, Execution.rfe in *.
+  generalize RFI DR. basic_solver.
+Qed.
+
+Lemma rfe_DCI_in_D :
+  dom_rel (rfe ⨾ ⦗ D ∩₁ CI ⦘) ⊆₁ D.
+Proof.
+  intros w [r RFE]. destruct_seq_r RFE as DR.
+  apply wf_rfeD in RFE; auto. destruct_seq RFE as [WW RR].
+  apply wf_rfeE in RFE; auto. destruct_seq RFE as [EW ER].
+  destruct DR as [DR CIr].
+  assert (C r -> D w) as UU.
+  { intros HH. apply I_in_D. eapply dom_rf_covered; eauto.
+    eexists. apply seq_eqv_r. split; eauto. apply RFE. }
+  destruct CIr as [EE0|EE0].
+  { intuition. }
+
+  red in DR. unfold set_union in DR. desf.
+  { intuition. }
+  { eapply issuedW in DR; eauto. type_solver. }
+  (* { exfalso. by apply DR. } *)
+  { red. apply I_in_D.
+    destruct DR as [z [v [[EE|EE] DR]]].
+    2: { apply wf_rfiD in EE; auto. destruct_seq EE as [WR RV].
+         clear -RR WR. type_solver. }
+    desf. eapply dom_rfe_ppo_issued; eauto.
+    do 2 eexists. eauto. }
+  { exfalso. destruct DR as [v DR].
+    destruct_seq_l DR as IV.
+    assert (v = w); desf.
+    eapply wf_rff; eauto.
+    { apply DR. }
+    { apply RFE. }
+    apply RFE. apply DR. }
+  destruct EE0 as [t EE0]. destruct_seq_r EE0 as IT.
+  destruct EE0 as [|EE0]; subst.
+  { eapply issuedW in IT; eauto. type_solver. }
+  apply I_in_D.
+  eapply dom_rfe_acq_sb_issued; eauto.
+  destruct DR as [v DR].
+  destruct_seq_r DR as IV.
+  assert (v = w); desf.
+  { eapply wf_rff; eauto.
+    { apply DR. }
+    apply RFE. }
+  generalize DR IV IT EE0. basic_solver 10.
+Qed.
+
+Lemma rf_DCI_in_D :
+  dom_rel (rf ⨾ ⦗ D ∩₁ CI ⦘) ⊆₁ D.
+Proof.
+  intros w [r RF]. destruct_seq_r RF as DR.
+  apply rfi_union_rfe in RF. destruct RF as [RF|RF].
+  { apply rfi_D_in_D; auto. eexists.
+    apply seq_eqv_r; split; eauto. apply DR. }
+  apply rfe_DCI_in_D; auto. eexists.
+  apply seq_eqv_r; split; eauto.
+Qed.
+
+(******************************************************************************)
+(** ** vf propeties *)
+(******************************************************************************)
 
 Lemma vfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
 Proof.
@@ -228,16 +333,17 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma cert_rf_in_vf : cert_rf ⊆ vf.
-Proof. unfold cert_rf. basic_solver. Qed.
+(******************************************************************************)
+(** ** cert_rf propeties *)
+(******************************************************************************)
 
 Lemma cert_rfE : cert_rf ≡ ⦗E⦘ ⨾ cert_rf ⨾ ⦗E⦘.
 Proof.
   cdes COH.
   apply dom_helper_3.
-  rewrite cert_rf_in_vf.
-  apply dom_helper_3.
-  apply vfE.
+  unfold cert_rf.
+  rewrite vfE.
+  basic_solver.
 Qed.
 
 Lemma cert_rfD : cert_rf ≡ ⦗W⦘ ⨾ cert_rf ⨾ ⦗R⦘.
@@ -367,7 +473,10 @@ Qed.
 (*   basic_solver 10. *)
 (* Qed. *)
 
-Lemma cert_rf_in_furr: cert_rf ⊆ furr.
+Lemma cert_rf_in_vf : cert_rf ⊆ vf.
+Proof. unfold cert_rf. basic_solver. Qed.
+
+Lemma cert_rf_in_furr : cert_rf ⊆ furr.
 Proof. rewrite cert_rf_in_vf. apply vf_in_furr. Qed.
 
 Lemma cert_rf_hb_sc_hb_irr: irreflexive (cert_rf ⨾ hb ⨾ (sc ⨾ hb)^?).
@@ -378,10 +487,30 @@ Proof.
 Qed.
 
 Lemma cert_rf_hb_irr: irreflexive (cert_rf ⨾ hb).
-Proof.
-  arewrite (cert_rf ⨾ hb ⊆ cert_rf ⨾ hb ⨾ (sc ⨾ hb)^?).
-  { rewrite crE. relsf. }
-  apply cert_rf_hb_sc_hb_irr.
+Proof. generalize cert_rf_hb_sc_hb_irr. basic_solver 10. Qed.
+
+Lemma cert_rf_tid_in_sb thread (NINITT : thread <> tid_init) : 
+  ⦗ Tid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘ ⊆ sb. 
+Proof. 
+  intros x y CertRF.
+  destruct_seq CertRF as [TIDx TIDy].
+  apply cert_rfE in CertRF; auto. destruct_seq CertRF as [EX EY].
+  apply cert_rfD in CertRF. destruct_seq CertRF as [WX RY].
+  edestruct same_thread 
+    with (x:=x) (y:=y) as [[|SB]|SB]; eauto.
+  { intros INITx.
+    assert (is_w lab y) 
+      as INITy; [|type_solver].
+    apply init_w; auto.
+    unfold tid, is_init in *.
+    destruct x, y; auto; congruence. }
+  { congruence. }
+  { type_solver. }
+  exfalso. eapply cert_rf_hb_sc_hb_irr; eauto.
+  eexists. splits; eauto.
+  eexists. splits.
+  { eapply imm_s_hb.sb_in_hb; eauto. }
+    by left.
 Qed.
 
 Lemma rf_D_in_vf : rf ⨾ ⦗D⦘ ⊆ vf.
@@ -665,6 +794,14 @@ Proof.
   split; auto.
   apply cert_rfE in CertRF.
   by destruct_seq CertRF as [AA BB].
+Qed.
+
+Lemma dom_cert_rfe : 
+  dom_rel cert_rfe ⊆₁ I.
+Proof. 
+  unfold cert_rfe.
+  rewrite cert_rf_iss_sb.
+  basic_solver.
 Qed.
 
 (* Lemma cert_rf_ntid_sb : cert_rf ⊆ ⦗ NTid_ thread ⦘ ⨾ cert_rf ∪ sb. *)
