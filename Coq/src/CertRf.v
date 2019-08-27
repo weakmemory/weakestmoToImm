@@ -48,7 +48,7 @@ Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 Notation "'furr'" := (furr G sc).
 
 (* TODO: make up a better name *)
-Definition E0 := (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)).
+Definition CI := (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)).
 
 Definition D := 
   C ∪₁ I ∪₁
@@ -64,7 +64,7 @@ Definition vf :=
 (*   vf ∩ same_loc lab ⨾ ⦗ E0 ∩₁ R ⦘ \ co ⨾ vf. *)
 
 Definition cert_rf :=
-  vf ∩ same_loc lab ⨾ ⦗ R ⦘ \ co ⨾ vf.
+  vf ∩ same_loc lab ⨾ ⦗ CI ∩₁ R ⦘ \ co ⨾ vf.
 
 Definition cert_rfi := ⦗  Tid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
 Definition cert_rfe := ⦗ NTid_ thread ⦘ ⨾ cert_rf ⨾ ⦗ Tid_ thread ⦘.
@@ -75,20 +75,100 @@ Variable COH : imm_consistent G sc.
 Variable TCCOH : tc_coherent G sc TC.
 Variable RELCOH : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
+Lemma CI_in_E : CI ⊆₁ E.
+Proof.
+  unfold CI.
+  rewrite coveredE, issuedE; try edone.
+  rewrite (dom_l (@wf_sbE G)).
+  basic_solver.
+Qed.
+
+Lemma CI_sb_prcl : 
+  dom_rel (sb ⨾ ⦗ CI ⦘) ⊆₁ CI. 
+Proof. 
+  unfold CI.
+  rewrite id_union. 
+  rewrite seq_union_r. 
+  rewrite dom_union.
+  apply set_union_Proper.
+  { eapply dom_sb_covered; eauto. }
+  rewrite !seq_eqv_r.
+  unfolder; ins; desf; splits; auto.
+  { do 2 eexists; splits; eauto. }
+  do 2 eexists; splits.
+  2-3: eauto.
+  right. eapply sb_trans; eauto.
+Qed.
+
+Lemma CI_rmw_fwcl (RMWCOV : forall r w, rmw r w -> C r <-> C w) :
+  ⦗CI⦘ ⨾ rmw ≡ ⦗CI⦘ ⨾ rmw ⨾ ⦗CI⦘.
+Proof.
+  split; [|basic_solver].
+  unfold CI.
+  rewrite !id_union. 
+  rewrite !seq_union_l, !seq_union_r.
+  unionL.
+  { repeat unionR left.
+    unfolder. ins. splits; desf.
+    match goal with
+    | H : rmw ?x ?y |- _ => eapply RMWCOV in H
+    end.
+    intuition. }
+  unionR right -> right.
+  rewrite WF.(wf_rmwD) at 1.
+  unfolder. ins. splits; desf.
+  1,3: exfalso;
+    match goal with
+    | H : I ?y |- _ => rename H into AA
+    end;
+    eapply issuedW in AA; eauto;
+      type_solver.
+  all: do 2 eexists.
+  { splits; eauto. }
+  splits; [| |by eauto].
+  2: done.
+  destruct (classic (y = y0)) as [|NEQ]; eauto.
+  right.
+  match goal with
+  | H : rmw ?x ?y |- _ => rename H into RMW 
+  end.
+  apply WF.(rmw_from_non_init) in RMW.
+  destruct_seq_l RMW as AA.
+  edestruct sb_semi_total_l with (x:=x); eauto.
+  { by apply rmw_in_sb. }
+  exfalso.
+  eapply wf_rmwi; eauto.
+Qed.
+
+Lemma CI_hb_prcl : 
+  dom_rel (hb ⨾ ⦗ CI ⦘) ⊆₁ CI. 
+Proof. 
+  unfold CI.
+  rewrite <- seq_eqvK. 
+  sin_rewrite hb_in_Chb_sb; eauto.
+  rewrite seq_union_l, dom_union.
+  unionL; [|apply CI_sb_prcl].
+  rewrite !seqA, !dom_seq. 
+  basic_solver. 
+Qed.
+
+Lemma sc_hb_CI_in_C :
+  dom_rel (sc ⨾ hb ⨾ ⦗CI⦘) ⊆₁ C.
+Proof. 
+  arewrite (hb ⨾ ⦗CI⦘ ⊆ ⦗CI⦘ ⨾ hb).
+  { generalize CI_hb_prcl. basic_solver. }
+  unfold CI.
+  rewrite <- seqA.
+  erewrite scCsbI_C; eauto.
+  basic_solver.
+Qed.
+
 Lemma D_in_E : D ⊆₁ E.
 Proof. 
   unfold D.
   rewrite (wf_ppoE WF), (wf_rfiE WF), (wf_rfeE WF), (coveredE TCCOH).
   rewrite (issuedE TCCOH) at 1.
   basic_solver 21. 
-Qed.
-
-Lemma E0_in_E : E0 ⊆₁ E.
-Proof.
-  unfold E0.
-  rewrite coveredE, issuedE; try edone.
-  rewrite (dom_l (@wf_sbE G)).
-  basic_solver.
 Qed.
 
 Lemma vfE : vf ≡ ⦗ E ⦘ ⨾ vf ⨾ ⦗ E ⦘.
@@ -170,8 +250,8 @@ Proof.
   basic_solver.
 Qed.
 
-(* Lemma cert_rf_codomE0 : cert_rf ≡ cert_rf ⨾ ⦗E0⦘. *)
-(* Proof. unfold cert_rf. basic_solver. Qed. *)
+Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗CI⦘.
+Proof. unfold cert_rf. basic_solver. Qed.
 
 (* Lemma cert_rf_codomt : cert_rf ≡ cert_rf ⨾ ⦗Tid_ thread⦘. *)
 (* Proof. *)
@@ -207,14 +287,14 @@ Proof.
   unfold cert_rf in *. desf; unfolder in *; basic_solver 40.
 Qed.
 
-Lemma cert_rf_complete : forall b (IN: (E0 ∩₁ R) b), exists a, cert_rf a b.
+Lemma cert_rf_complete : forall b (IN: (CI ∩₁ R) b), exists a, cert_rf a b.
 Proof.
   ins; unfolder in *; desc.
   assert (exists l, loc b = Some l); desc.
   { by generalize (is_r_loc lab); unfolder in *; basic_solver 12. }
 
   assert (E b) as UU.
-  { by apply E0_in_E. }
+  { by apply CI_in_E. }
 
   assert (E (InitEvent l)).
   { by apply WF; eauto. }
@@ -312,8 +392,7 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
-(* Lemma rf_vf_in_cert_rf : (rf ⨾ ⦗E0⦘) ∩ vf ⊆ cert_rf. *)
-Lemma rf_vf_in_cert_rf : rf ∩ vf ⊆ cert_rf.
+Lemma rf_vf_in_cert_rf : (rf ⨾ ⦗CI⦘) ∩ vf ⊆ cert_rf.
 Proof.
   unfold cert_rf.
   rewrite minus_inter_compl.
@@ -329,7 +408,7 @@ Proof.
   apply fr_in_eco. eexists. split; eauto.
 Qed.
 
-Lemma rf_D_in_cert_rf : rf ⨾ ⦗ D ⦘ ⊆ cert_rf.
+Lemma rf_D_in_cert_rf : rf ⨾ ⦗ D ∩₁ CI ⦘ ⊆ cert_rf.
 Proof.
   rewrite <- rf_vf_in_cert_rf.
   apply inclusion_inter_r.
@@ -340,22 +419,25 @@ Qed.
 Lemma rf_C_in_cert_rf : rf ⨾ ⦗ C ⦘ ⊆ cert_rf.
 Proof.
   rewrite <- rf_D_in_cert_rf.
-  unfold D.
-  rewrite !id_union, !seq_union_r.
+  unfold D, CI.
+  rewrite !set_inter_union_l, 
+          !id_union, !seq_union_r.
   basic_solver 10.
 Qed.
 
-Lemma rfi_in_cert_rf : rfi ⊆ cert_rf.
+Lemma rfi_in_cert_rf : rfi ⨾ ⦗ CI ⦘ ⊆ cert_rf.
 Proof.
   unfold cert_rf. rewrite minus_inter_compl.
   apply inclusion_inter_r.
   { rewrite (dom_r WF.(wf_rfiD)). 
-    (* arewrite (⦗R⦘ ⨾ ⦗E0⦘ ⊆ ⦗E0 ∩₁ R⦘) by basic_solver. *)
-    hahn_frame.
     unfold Execution.rfi. 
+    rewrite <- seq_eqv_inter_lr 
+      with (r := vf).
     apply inclusion_inter_r.
     2: { rewrite WF.(wf_rfl). basic_solver. }
-    unfold vf. unionR left.
+    unfold vf. 
+    rewrite seq_union_l.
+    unionR left.
     rewrite (dom_l WF.(wf_rfD)), (dom_r WF.(wf_rfE)).
     rewrite sb_in_hb. basic_solver 30. }
   unfold Execution.rfi.
@@ -381,6 +463,7 @@ Qed.
 
 Lemma cert_rf_D_in_rf : cert_rf ⨾ ⦗ D ⦘ ⊆ rf.
 Proof.
+  rewrite cert_rf_codom, !seqA, <- id_inter.
   arewrite (cert_rf ⊆ cert_rf ⨾ ⦗ E ∩₁ R ⦘).
   { rewrite (dom_r cert_rfD), (dom_r cert_rfE) at 1.
     basic_solver. }
@@ -396,11 +479,11 @@ Qed.
 Lemma cert_rf_C_in_rf : cert_rf ⨾ ⦗ C ⦘ ⊆ rf.
 Proof.
   arewrite (C ⊆₁ D).
-  { unfold D. basic_solver 10. }
+  { unfold D, CI. basic_solver 10. }
   apply cert_rf_D_in_rf.
 Qed.
 
-Lemma cert_rf_D_eq_rf_D : cert_rf ⨾ ⦗ D ⦘ ≡ rf ⨾ ⦗ D ⦘.
+Lemma cert_rf_D_eq_rf_D : cert_rf ⨾ ⦗ D ∩₁ CI ⦘ ≡ rf ⨾ ⦗ D ∩₁ CI ⦘.
 Proof. generalize cert_rf_D_in_rf, rf_D_in_cert_rf. basic_solver 10. Qed.
 
 Lemma cert_rf_Acq_in_rf : cert_rf ⨾ ⦗ Acq ⦘ ⊆ rf.
@@ -422,6 +505,7 @@ Proof.
     basic_solver 10. }
   unionL.
   2: by apply cert_rf_D_in_rf.
+  rewrite cert_rf_codom.
   unfolder. ins. desf.
   assert (x0 = x); desf.
   eapply cert_rff; eauto.
@@ -431,9 +515,9 @@ Proof.
 Qed.
 
 Lemma cert_rf_sb_F_Acq_in_rf :
-  cert_rf ⨾ sb ⨾ ⦗F⦘ ⨾ ⦗ Acq ⦘ ⨾ ⦗E0⦘ ⊆ rf ⨾ sb.
+  cert_rf ⨾ sb ⨾ ⦗F⦘ ⨾ ⦗ Acq ⦘ ⨾ ⦗CI⦘ ⊆ rf ⨾ sb.
 Proof.
-  arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗E0⦘ ⊆ ⦗C⦘ ⨾ sb).
+  arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗CI⦘ ⊆ ⦗C⦘ ⨾ sb).
   2 : by sin_rewrite cert_rf_C_in_rf.
   rewrite <- !id_inter, seq_eqv_r, seq_eqv_l. 
   intros x y [SB [Fy [ACQy E0y]]].
@@ -452,7 +536,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_F_Acq_in_rf :
-  cert_rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ E0 ⦘ ⊆ rf ⨾ sb^?.
+  cert_rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ CI ⦘ ⊆ rf ⨾ sb^?.
 Proof.
   rewrite !crE, !seq_union_l, !seq_union_r, !seq_id_l, !seq_id_r, !seqA.
   apply union_mori.   
@@ -460,8 +544,8 @@ Proof.
   apply cert_rf_sb_F_Acq_in_rf.
 Qed.  
 
-Lemma nI_rf_D_E0_in_sb :
-  ⦗set_compl I⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ ⦗E0⦘ ⊆ sb.
+Lemma nI_rf_D_CI_in_sb :
+  ⦗set_compl I⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ ⦗CI⦘ ⊆ sb.
 Proof. 
   unfold D.
   relsf.
@@ -497,7 +581,7 @@ Proof.
     match goal with H : rfi _ _ |- _ => destruct H as [AA BB] end.
     eapply wf_rff in H; eauto.
     apply H in AA. by rewrite AA. }
-  unfold E0.
+  unfold CI.
   rewrite !id_union. rewrite !seq_union_r.
   unionL.
   { rewrite seq_eqvC. seq_rewrite rf_covered; eauto. basic_solver. } 
@@ -516,46 +600,17 @@ Proof.
   apply seq_eqv_r. split; eauto. 
 Qed.
 
-Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⨾ ⦗E0⦘ ⊆ sb.
+Lemma non_I_cert_rf: ⦗set_compl I⦘ ⨾ cert_rf ⊆ sb.
 Proof.
   cdes COH.
   rewrite (dom_r (cert_rfD)).
+  rewrite cert_rf_codom.
   rewrite cert_rf_in_vf. 
   unfold vf.
   arewrite_id (⦗E⦘).
   relsf. rewrite !seqA. unionL.
 
-  { (* TODO: make lemmas about `C ∪₁ dom_rel (sb^? ⨾ ⦗I⦘)` ? *)
-    assert (hb ⨾ ⦗E0⦘ ⊆ (⦗C⦘ ⨾ hb ∪ sb) ⨾ ⦗E0⦘) as HBA.
-    { seq_rewrite <- seq_eqvK.
-      arewrite (hb ⨾ ⦗E0⦘ ⊆ ⦗C⦘ ⨾ hb ∪ sb).
-      2: basic_solver 10.
-      eapply hb_in_Chb_sb; eauto. }
-
-    assert (sc ⨾ hb ⨾ ⦗E0⦘ ⊆ ⦗C⦘ ⨾ sc ⨾ hb) as SCA.
-    { rewrite HBA at 1. 
-      rewrite !seq_union_l, !seq_union_r, !seqA.
-      unionL.
-      { sin_rewrite sc_covered; eauto. basic_solver. }
-      unfold E0.
-      rewrite sbCsbI_CsbI; eauto.
-      sin_rewrite (scCsbI_C WF COH TCCOH RELCOH).
-      rewrite sb_in_hb. basic_solver. }
-
-    assert (⦗set_compl I⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ hb ⨾ ⦗E0⦘ ⊆ sb) as BB.
-    { rewrite HBA, !seq_union_l, !seq_union_r, !seqA.
-      unionL.
-      { arewrite (⦗D⦘ ⨾ ⦗C⦘ ⊆ ⦗C⦘ ⨾ ⦗D⦘) by basic_solver.
-        seq_rewrite rf_covered; eauto.
-        basic_solver. }
-      unfold E0. 
-      rewrite sbCsbI_CsbI; eauto.
-      fold E0.
-      sin_rewrite nI_rf_D_E0_in_sb.
-      generalize (@sb_trans G). 
-      basic_solver. }
-
-    rewrite !crE.
+  { rewrite !crE.
     repeat (rewrite seq_union_l, seq_id_l).
     rewrite !seq_union_r.
     unionL.
@@ -569,33 +624,47 @@ Proof.
       basic_solver.
     all: arewrite_id (⦗R⦘); seq_rewrite seq_id_r.
     3 : sin_rewrite rewrite_trans; [|by apply hb_trans].
-    1-3: unfold E0; sin_rewrite hb_in_Chb_sb; eauto.
+    1-3: unfold CI; sin_rewrite hb_in_Chb_sb; eauto.
     1-3: rewrite !seq_union_r; seq_rewrite <- !id_inter. 
     1-3: rewrite set_interA; erewrite w_covered_issued; eauto.
     1-3: basic_solver.
-    rewrite SCA. sin_rewrite hb_covered; eauto.
+    arewrite (sc ⨾ hb ⨾ ⦗CI⦘ ⊆ ⦗C⦘ ⨾ sc ⨾ hb).
+    { generalize sc_hb_CI_in_C. basic_solver 10. }
+    sin_rewrite hb_covered; eauto.
     rewrite !seqA. seq_rewrite <- !id_inter. 
     rewrite set_interA; erewrite w_covered_issued; eauto.
     basic_solver. }
 
   arewrite_id (⦗R⦘); seq_rewrite seq_id_r.
-  arewrite (sb^? ⨾ ⦗E0⦘ ⊆ ⦗E0⦘ ⨾ sb^?).
-  { unfold E0.
-    rewrite id_union. 
-    rewrite seq_union_r, seq_union_l.
-    rewrite crE at 1 2 4 6. relsf.
-    repeat apply union_mori; try done.
-    { rewrite dom_rel_helper; 
-        [|eapply dom_sb_covered; eauto].
-      basic_solver. }
-    rewrite !seq_eqv_l, !seq_eqv_r.
-    unfolder; ins; desf; splits; auto.
-    { do 2 eexists; splits; eauto. }
-    do 2 eexists; splits.
-    2-3: eauto.
-    right. eapply sb_trans; eauto. }
-  sin_rewrite nI_rf_D_E0_in_sb.
+  arewrite (sb^? ⨾ ⦗CI⦘ ⊆ ⦗CI⦘ ⨾ sb^?).
+  { rewrite crE. relsf.
+    apply union_mori; try done.
+    generalize CI_sb_prcl. basic_solver. }
+  sin_rewrite nI_rf_D_CI_in_sb.
   generalize sb_trans. basic_solver.
+Qed.
+
+Lemma cert_rf_iss_sb : 
+  cert_rf ⊆ ⦗ I ⦘ ⨾ cert_rf ∪ sb ∩ same_tid.
+Proof. 
+  rewrite <- seq_id_l 
+    with (r := cert_rf) at 1.
+  rewrite <- set_compl_union_id
+    with (s := I).
+  rewrite id_union, seq_union_l.
+  apply union_mori; try done.
+  rewrite seq_eqv_l.
+  intros x y [nI CertRF].
+  assert (sb x y) as SB.
+  { apply non_I_cert_rf. basic_solver. }
+  split; auto.
+  apply sb_tid_init in SB.
+  destruct SB as [TID | INITx]; auto.
+  exfalso. apply nI.
+  eapply init_issued; eauto.
+  split; auto.
+  apply cert_rfE in CertRF.
+  by destruct_seq CertRF as [AA BB].
 Qed.
 
 (* Lemma cert_rf_ntid_sb : cert_rf ⊆ ⦗ NTid_ thread ⦘ ⨾ cert_rf ∪ sb. *)
@@ -659,52 +728,6 @@ Qed.
 (*   exists z. apply seq_eqv_r. split; auto. *)
 (*   generalize (@sb_trans G) SBXY SBYZ. basic_solver.  *)
 (* Qed. *)
-
-Lemma E0_rmwsfcl (RMWCOV : forall r w, rmw r w -> C r <-> C w) :
-  ⦗E0⦘ ⨾ rmw ≡ ⦗E0⦘ ⨾ rmw ⨾ ⦗E0⦘.
-Proof.
-  split; [|basic_solver].
-  unfold E0.
-  (* rewrite !id_inter. *)
-  (* rewrite seq_eqvC at 1 2. rewrite !seqA. *)
-  (* arewrite (⦗Tid_ thread⦘ ⨾ rmw ⊆ ⦗Tid_ thread⦘ ⨾ rmw ⨾ ⦗Tid_ thread⦘). *)
-  (* { arewrite (rmw ⊆ rmw ∩ same_tid) at 1. *)
-  (*   2: basic_solver. *)
-  (*   apply inclusion_inter_r; [done|]. apply WF.(wf_rmwt). } *)
-  rewrite !id_union. 
-  rewrite !seq_union_l, !seq_union_r.
-  unionL.
-  { repeat unionR left.
-    unfolder. ins. splits; desf.
-    match goal with
-    | H : rmw ?x ?y |- _ => eapply RMWCOV in H
-    end.
-    intuition. }
-  unionR right -> right.
-  rewrite WF.(wf_rmwD) at 1.
-  unfolder. ins. splits; desf.
-  1,3: exfalso;
-    match goal with
-    | H : I ?y |- _ => rename H into AA
-    end;
-    eapply issuedW in AA; eauto;
-      type_solver.
-  all: do 2 eexists.
-  { splits; eauto. }
-  splits; [| |by eauto].
-  2: done.
-  destruct (classic (y = y0)) as [|NEQ]; eauto.
-  right.
-  match goal with
-  | H : rmw ?x ?y |- _ => rename H into RMW 
-  end.
-  apply WF.(rmw_from_non_init) in RMW.
-  destruct_seq_l RMW as AA.
-  edestruct sb_semi_total_l with (x:=x); eauto.
-  { by apply rmw_in_sb. }
-  exfalso.
-  eapply wf_rmwi; eauto.
-Qed.
 
 End Properties.
 
