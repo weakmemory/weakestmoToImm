@@ -19,7 +19,6 @@ Notation "'lab'" := S.(ES.lab).
 Notation "'cf'" := S.(ES.cf).
 Notation "'hb'" := S.(hb).
 
-
 Notation "'same_loc'" := (same_loc lab).
 
 Notation "'R'" := (fun a => is_true (is_r lab a)).
@@ -33,7 +32,7 @@ Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 Definition one {A : Type} (X : A -> Prop) a b := X a \/ X b.
 
 Definition race (X : eventid -> Prop) :=
-  dom_rel (((X × X) \ (hb⁼ ∪ cf)) ∩ same_loc ∩ one W). (* hb should be hbc11? *)
+  dom_rel (((X × X) \ (hb⁼ ∪ cf)) ∩ same_loc ∩ one W).
 
 Lemma race_rw X :
   race X ⊆₁ R ∪₁ W.
@@ -57,12 +56,12 @@ Qed.
 Definition RLX_race_free (X : eventid -> Prop) :=
   race X ⊆₁ (Rel ∩₁ W) ∪₁ (Acq ∩₁ R).
 
+Definition RA_race_free (X : eventid -> Prop) :=
+  race X ⊆₁ Sc.
+
 Definition rc11_consistent_x (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
     ⟪ rc11 : rc11_consistent G ⟫.
-
-Definition RA_race_free (X : eventid -> Prop) :=
-  race X ⊆₁ Sc.
 
 Definition sc_consistent_x (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
@@ -82,10 +81,10 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma RArf_RLXrf X
-      (RArf : RA_race_free X) :
-  RLX_race_free X.
+Lemma RA_race_free_in_RLX_race_free :
+  RA_race_free ⊆₁ RLX_race_free.
 Proof.
+  intros X RArf.
   unfold RA_race_free in RArf.
   unfold RLX_race_free.
   arewrite (race X ⊆₁ Sc ∩₁ (R ∪₁ W)).
@@ -105,8 +104,3 @@ Definition RC11_RLX_race_free_program P :=
 
 Definition SC_RA_race_free_program P :=
   (forall S X, program_execution P S X -> sc_consistent_x S X -> RA_race_free S X).
-
-
-
-
-
