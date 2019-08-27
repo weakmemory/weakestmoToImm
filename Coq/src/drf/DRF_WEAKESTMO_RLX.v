@@ -57,15 +57,15 @@ Proof.
 Qed.
 
 Notation "'thread_syntax' t"  :=
-  (Language.syntax (thread_lts t)) (at level 10, only parsing).  
+  (Language.syntax (thread_lts t)) (at level 10, only parsing).
 
-Notation "'thread_init_st' t" := 
+Notation "'thread_init_st' t" :=
   (Language.init (thread_lts t)) (at level 10, only parsing).
 
 Notation "'thread_cont_st' t" :=
   (fun st => existT _ (thread_lts t) st) (at level 10, only parsing).
 
-Notation "'thread_st' t" := 
+Notation "'thread_st' t" :=
   (Language.state (thread_lts t)) (at level 10, only parsing).
 
 Notation "'K' S" := (ES.cont_set S) (at level 1).
@@ -80,7 +80,7 @@ Lemma wf_es P
   ⟪ INIT_LOC : ES.init_loc S ≡₁ ES.init_loc (prog_es_init P) ⟫ /\
   ⟪ contreach :
       forall k (state : thread_st (ES.cont_thread S k))
-        (lprog : thread_syntax (ES.cont_thread S k)) 
+        (lprog : thread_syntax (ES.cont_thread S k))
         (INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) =
                   Some lprog)
         (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)),
@@ -271,7 +271,7 @@ Proof.
   all:
     erewrite <- jf_necf; eauto;
     apply inclusion_inter_r; [basic_solver|];
-    rewrite inclusion_seq_eqv_l, inclusion_seq_eqv_r; eauto with hahn. 
+    rewrite inclusion_seq_eqv_l, inclusion_seq_eqv_r; eauto with hahn.
 Qed.
 
 
@@ -401,6 +401,7 @@ Notation "'jf' S" := S.(ES.jf) (at level 10).
 Notation "'rf' S" := S.(ES.rf) (at level 10).
 Notation "'co' S" := S.(ES.co) (at level 10).
 Notation "'cf' S" := S.(ES.cf) (at level 10).
+Notation "'hb' S" := S.(hb) (at level 10).
 
 Notation "'jfe' S" := S.(ES.jfe) (at level 10).
 Notation "'rfe' S" := S.(ES.rfe) (at level 10).
@@ -420,9 +421,9 @@ Lemma jf_in_hb
       (RACE_FREE : RC11_RLX_race_free_program P)
       (S : ES.t)
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
-  S.(ES.jf) ⊆ S.(hb).
+  jf S ⊆ hb S.
 Proof.
-  eapply clos_refl_trans_ind_left with (P := fun s => s.(ES.jf) ⊆ s.(hb)); eauto.
+  eapply clos_refl_trans_ind_left with (P := fun s => jf s ⊆ hb s); eauto.
   { basic_solver. }
   clear dependent S.
   intros S S' STEPS IH STEP.
@@ -433,7 +434,7 @@ Proof.
   1, 2: eby eapply steps_es_wf.
   generalize (hb_trans S'). intro HB_TRANS.
   inversion_clear STEP as [e [e' HH]]. desf.
-  assert (HB_MON: S.(hb) ⊆ S'.(hb)).
+  assert (HB_MON: hb S ⊆ hb S').
   { eapply step_hb_mon; eauto. }
   rename TT into STEP_.
   inversion STEP_ as [ST | [ST | [ST | ST]]].
@@ -449,7 +450,7 @@ Proof.
     assert (ACTS_MON : E S ⊆₁ E S').
     { eapply BasicStep.basic_step_nupd_acts_mon; eauto. }
 
-    assert (HB : (S'.(hb)⁼ w e) \/ (not (S'.(hb)⁼ w e))) by apply classic.
+    assert (HB : ((hb S')⁼ w e) \/ (not ((hb S')⁼ w e))) by apply classic.
     destruct HB as [[WE_EQ | [ WE_HB | EW_HB]] | WE_NHB].
     { type_solver. }
     { rewrite JF'. basic_solver. }
@@ -506,18 +507,18 @@ Proof.
       rewrite (Execution.ex_rf_restr_jf); auto.
       2: { by cdes PREF_EXEC. }
       rewrite <- restr_relE.
-      rewrite JF', <- union_restr. 
-      rewrite !inclusion_restr, <- unionA. 
+      rewrite JF', <- union_restr.
+      rewrite !inclusion_restr, <- unionA.
       rewrite acyclic_absorb.
       2: { left. rewrite WF_S.(ES.jfE).
-           rewrite dom_rel_helper with (r := sb S'). 
+           rewrite dom_rel_helper with (r := sb S').
            2: { eapply step_nupd_sb_dom; eauto. }
            specialize (BasicStep.basic_step_acts_set_ne BSTEP) as NE.
            rewrite seq_union_r.
            rewrite codom_rel_helper with (rr := singl_rel w e).
            2: { apply codom_singl_rel. }
            rewrite !seqA.
-           arewrite_false !(⦗eq e⦘ ⨾ ⦗E S⦘); [basic_solver|]. 
+           arewrite_false !(⦗eq e⦘ ⨾ ⦗E S⦘); [basic_solver|].
            basic_solver. }
       split.
       { rewrite sb_in_hb, IH, HB_MON, unionK. eby eapply hb_acyclic. }
@@ -553,11 +554,11 @@ Proof.
 
   inversion ST as [w HH]. desf.
   unfold AddJF.add_jf in AJF. desf.
-  unfold AddJF.jf_delta in JF'. 
+  unfold AddJF.jf_delta in JF'.
   rename rE' into eE', rR' into eR'.
-  assert (w'W : is_w (lab S') w). 
+  assert (w'W : is_w (lab S') w).
   { eapply update_step_W; eauto. basic_solver. }
-  assert (w'W' : is_w (lab S') w'). 
+  assert (w'W' : is_w (lab S') w').
   { eapply update_step_W; eauto. basic_solver. }
   assert (w'E' : (E S') w').
   { eapply update_step_E; eauto. basic_solver. }
@@ -565,20 +566,20 @@ Proof.
   { apply JF'. apply inclusion_union_r2. basic_solver. }
   assert (ACTS_MON : E S ⊆₁ E S').
   { eapply BasicStep.basic_step_nupd_acts_mon; eauto. }
-  assert (HB : (S'.(hb)⁼ w e) \/ (not (S'.(hb)⁼ w e))) by apply classic.
+  assert (HB : ((hb S')⁼ w e) \/ (not ((hb S')⁼ w e))) by apply classic.
   destruct HB as [[WE_EQ | [ WE_HB | EW_HB]] | WE_NHB].
-  { type_solver. }     
-  { rewrite JF'. basic_solver. } 
+  { type_solver. }
+  { rewrite JF'. basic_solver. }
   { unfold transp in EW_HB.
       exfalso. eapply coh; eauto.
       eexists. split; eauto.
       apply r_step. apply rf_in_eco.
-      apply ES.jf_in_rf; eauto. } 
+      apply ES.jf_in_rf; eauto. }
   exfalso.
   assert (PREF_HB_BWCL : dom_rel(hb S' ⨾ ⦗hb_pref2 S' w' w⦘) ⊆₁ hb_pref2 S' w' w).
   { unfold hb_pref2.
     rewrite dom_rel_eqv_dom_rel.
-    rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans S')).      
+    rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans S')).
     basic_solver 10. }
   specialize (step_hb_dom BSTEP STEP_ WF_S) as HB_DOM.
   assert (PREF_JF_BWCL : dom_rel(jf S' ⨾ ⦗hb_pref2 S' w' w⦘) ⊆₁ hb_pref2 S' w' w).
@@ -587,15 +588,15 @@ Proof.
     rewrite JF', IH.
     type_solver 9. }
 
-  assert (EW'_RMW : (ES.rmw S') e w').
+  assert (EW'_RMW : rmw S' e w').
   { cdes BSTEP. cdes BSTEP_.
     unfold BasicStep.rmw_delta in RMW'.
     apply RMW'. basic_solver. }
-  assert (EW'_HB : (hb S') e w').
+  assert (EW'_HB : hb S' e w').
   { apply ES.rmw_in_sb, sb_in_hb in EW'_RMW; auto. }
 
   assert (PREF_EXEC : program_execution P S' (hb_pref2 S' w' w)).
-  { red. splits; auto. constructor. 
+  { red. splits; auto. constructor.
     { apply hb_pref2_inE; eauto. }
     { rewrite hb_pref2_alt.
       specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_S).
@@ -615,32 +616,32 @@ Proof.
 
   assert (PREF_RC11 : rc11_consistent_x S' (hb_pref2 S' w' w)).
   { red. exists (x2g S' (hb_pref2 S' w' w)). splits.
-    { apply x2g_X2G; auto. by cdes PREF_EXEC. } 
+    { apply x2g_X2G; auto. by cdes PREF_EXEC. }
     apply x2g_rc11_consistent; auto.
     { by cdes PREF_EXEC. }
     rewrite restr_relE.
     rewrite seq_union_l, seq_union_r.
-    rewrite <- restr_relE with (r := rf S'). 
+    rewrite <- restr_relE with (r := rf S').
     fold (Execution.ex_rf S' (hb_pref2 S' w' w)).
     rewrite (Execution.ex_rf_restr_jf); auto.
     2: { by cdes PREF_EXEC. }
     rewrite <- restr_relE.
-    rewrite JF', <- union_restr. 
-    rewrite !inclusion_restr, <- unionA. 
+    rewrite JF', <- union_restr.
+    rewrite !inclusion_restr, <- unionA.
     cdes BSTEP.
     arewrite (sb S' ⊆ sb S ∪ (E S ∪₁ eq e) × eq w' ∪ E S × eq e).
-    { cdes BSTEP_. 
+    { cdes BSTEP_.
       unfold BasicStep.sb_delta in SB'.
       rewrite eq_opt_someE in SB'.
       rewrite SB' at 1.
       rewrite ES.cont_sb_domE at 1 2 3; eauto.
       basic_solver 20. }
     arewrite (sb S ∪ (E S ∪₁ eq e) × eq w' ∪ E S × eq e ∪ jf S ∪ singl_rel w e
-                 ⊆ 
+                 ⊆
               sb S ∪ jf S ∪ (E S ∪₁ eq e) × eq w' ∪ E S × eq e).
     { basic_solver 20. }
     assert (nEe : ~ E S e).
-    { eby eapply BasicStep.basic_step_acts_set_ne. } 
+    { eby eapply BasicStep.basic_step_acts_set_ne. }
     assert (SB_JF_DOM : (sb S ∪ jf S) ⊆ ⦗E S⦘ ⨾ ⊤₂).
     { rewrite (dom_l WF_S.(ES.sbE)), (dom_l WF_S.(ES.jfE)).
       basic_solver. }
@@ -652,7 +653,7 @@ Proof.
         basic_solver. }
       basic_solver. }
     assert (nEw' : ~ E S w').
-    { eby eapply BasicStep.basic_step_acts_set_ne'. } 
+    { eby eapply BasicStep.basic_step_acts_set_ne'. }
     split.
     2: { apply acyclic_disj. basic_solver. }
     apply acyclic_absorb; [left|].
@@ -695,8 +696,8 @@ Qed.
 Lemma rf_in_jf (S : ES.t) (X : eventid -> Prop)
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
-      (JF_IN_HB : S.(ES.jf) ⊆ S.(hb)):
-  restr_rel X S.(ES.rf) ⊆ S.(ES.jf).
+      (JF_IN_HB : jf S ⊆ hb S):
+  restr_rel X (rf S) ⊆ jf S.
 Proof.
   rewrite restr_relE.
   unfolder; intros x y HH.
@@ -718,8 +719,8 @@ Lemma po_rf_acyclic (S : ES.t) (X : eventid -> Prop)
       (WF : ES.Wf S)
       (CONS : es_consistent S (m := Weakestmo))
       (EXEC : Execution.t S X)
-      (JF_IN_HB : S.(ES.jf) ⊆ S.(hb)):
-  acyclic (restr_rel X (S.(ES.sb) ∪ S.(ES.rf))).
+      (JF_IN_HB : jf S ⊆ hb S):
+  acyclic (restr_rel X (sb S ∪ rf S)).
 Proof.
   rewrite sb_in_hb.
   rewrite <- union_restr, (rf_in_jf WF EXEC JF_IN_HB).
