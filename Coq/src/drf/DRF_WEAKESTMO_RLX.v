@@ -425,31 +425,31 @@ Proof.
   eapply clos_refl_trans_ind_left with (P := fun s => s.(ES.jf) ⊆ s.(hb)); eauto.
   { basic_solver. }
   clear dependent S.
-  intros G G' STEPS IH STEP.
-  assert (STEPS_G' : (step Weakestmo)＊ (prog_es_init P) G').
+  intros S S' STEPS IH STEP.
+  assert (STEPS_S' : (step Weakestmo)＊ (prog_es_init P) S').
   { eapply transitive_rt; eauto. apply rt_step. auto. }
-  assert (WF_G : ES.Wf G).
-  2: assert (WF_G' : ES.Wf G').
+  assert (WF_S : ES.Wf S).
+  2: assert (WF_S' : ES.Wf S').
   1, 2: eby eapply steps_es_wf.
-  generalize (hb_trans G'). intro HB_TRANS.
+  generalize (hb_trans S'). intro HB_TRANS.
   inversion_clear STEP as [e [e' HH]]. desf.
-  assert (HB_MON: G.(hb) ⊆ G'.(hb)).
+  assert (HB_MON: S.(hb) ⊆ S'.(hb)).
   { eapply step_hb_mon; eauto. }
   rename TT into STEP_.
-  inversion STEP_ as [S | [S | [S | S]]].
-  1, 3: inversion_clear S; desf; rewrite JF'; basic_solver.
-  { inversion S as [w HH]. desf.
+  inversion STEP_ as [ST | [ST | [ST | ST]]].
+  1, 3: inversion_clear ST; desf; rewrite JF'; basic_solver.
+  { inversion ST as [w HH]. desf.
     unfold AddJF.add_jf in AJF. desf.
     unfold AddJF.jf_delta in JF'.
     rename rE' into eE', rR' into eR'.
-    assert (wW' : is_w (lab G') w).
+    assert (wW' : is_w (lab S') w).
     { eapply load_step_W; eauto. intuition. }
-    assert (WE_JF' : jf G' w e).
+    assert (WE_JF' : jf S' w e).
     { apply JF'. apply inclusion_union_r2. basic_solver. }
-    assert (ACTS_MON : E G ⊆₁ E G').
+    assert (ACTS_MON : E S ⊆₁ E S').
     { eapply BasicStep.basic_step_nupd_acts_mon; eauto. }
 
-    assert (HB : (G'.(hb)⁼ w e) \/ (not (G'.(hb)⁼ w e))) by apply classic.
+    assert (HB : (S'.(hb)⁼ w e) \/ (not (S'.(hb)⁼ w e))) by apply classic.
     destruct HB as [[WE_EQ | [ WE_HB | EW_HB]] | WE_NHB].
     { type_solver. }
     { rewrite JF'. basic_solver. }
@@ -459,23 +459,23 @@ Proof.
       apply r_step. apply rf_in_eco.
       apply ES.jf_in_rf; eauto. }
     exfalso.
-      assert (HB_DOM : dom_rel (hb G') ⊆₁ E G).
+      assert (HB_DOM : dom_rel (hb S') ⊆₁ E S).
     { eapply step_nupd_hb_dom; eauto. }
-    assert (PREF_HB_BWCL : dom_rel(hb G' ⨾ ⦗hb_pref2 G' e w⦘) ⊆₁ hb_pref2 G' e w).
+    assert (PREF_HB_BWCL : dom_rel(hb S' ⨾ ⦗hb_pref2 S' e w⦘) ⊆₁ hb_pref2 S' e w).
     { rewrite hb_pref2_alt.
       rewrite id_union, seq_union_r, dom_union.
       rewrite !hb_pref_hb_bwcl. auto. }
-    assert (PREF_JF_BWCL : dom_rel(jf G' ⨾ ⦗hb_pref2 G' e w⦘) ⊆₁ hb_pref2 G' e w).
+    assert (PREF_JF_BWCL : dom_rel(jf S' ⨾ ⦗hb_pref2 S' e w⦘) ⊆₁ hb_pref2 S' e w).
     { unfold hb_pref2.
       rewrite dom_rel_eqv_dom_rel.
       rewrite JF', IH.
       type_solver 9. }
-    assert (PREF_EXEC : program_execution P G' (hb_pref2 G' e w)).
+    assert (PREF_EXEC : program_execution P S' (hb_pref2 S' e w)).
     { red. splits; auto. constructor.
       { apply hb_pref2_inE; eauto. }
       { rewrite hb_pref2_alt.
-        specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_G).
-        specialize (init_in_hb_pref WF_G').
+        specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_S).
+        specialize (init_in_hb_pref WF_S').
         basic_solver 10. }
       { rewrite sb_in_hb. apply PREF_HB_BWCL. }
       { rewrite sw_in_hb. apply PREF_HB_BWCL. }
@@ -490,34 +490,34 @@ Proof.
       { apply jf_prcl_rf_compl; auto.
         apply hb_pref2_inE; auto. }
       { apply hb_pref2_ncf; auto. }
-      assert (AE' : hb_pref2 G' e w ⊆₁ E G').
+      assert (AE' : hb_pref2 S' e w ⊆₁ E S').
       { apply hb_pref2_inE; eauto. }
       apply ncf_hb_jf_prcl_vis; auto.
       apply hb_pref2_ncf; auto. }
-    assert (PREF_RC11 : rc11_consistent_x G' (hb_pref2 G' e w)).
-    { red. exists (x2g G' (hb_pref2 G' e w)). splits.
+    assert (PREF_RC11 : rc11_consistent_x S' (hb_pref2 S' e w)).
+    { red. exists (x2g S' (hb_pref2 S' e w)). splits.
       { apply x2g_X2G; auto. by cdes PREF_EXEC. }
       apply x2g_rc11_consistent; auto.
       { by cdes PREF_EXEC. }
       rewrite restr_relE.
       rewrite seq_union_l, seq_union_r.
-      rewrite <- restr_relE with (r := rf G').
-      fold (Execution.ex_rf G' (hb_pref2 G' e w)).
+      rewrite <- restr_relE with (r := rf S').
+      fold (Execution.ex_rf S' (hb_pref2 S' e w)).
       rewrite (Execution.ex_rf_restr_jf); auto.
       2: { by cdes PREF_EXEC. }
       rewrite <- restr_relE.
       rewrite JF', <- union_restr. 
       rewrite !inclusion_restr, <- unionA. 
       rewrite acyclic_absorb.
-      2: { left. rewrite WF_G.(ES.jfE).
-           rewrite dom_rel_helper with (r := sb G'). 
+      2: { left. rewrite WF_S.(ES.jfE).
+           rewrite dom_rel_helper with (r := sb S'). 
            2: { eapply step_nupd_sb_dom; eauto. }
            specialize (BasicStep.basic_step_acts_set_ne BSTEP) as NE.
            rewrite seq_union_r.
            rewrite codom_rel_helper with (rr := singl_rel w e).
            2: { apply codom_singl_rel. }
            rewrite !seqA.
-           arewrite_false !(⦗eq e⦘ ⨾ ⦗E G⦘); [basic_solver|]. 
+           arewrite_false !(⦗eq e⦘ ⨾ ⦗E S⦘); [basic_solver|]. 
            basic_solver. }
       split.
       { rewrite sb_in_hb, IH, HB_MON, unionK. eby eapply hb_acyclic. }
@@ -525,14 +525,14 @@ Proof.
       assert (NEQ : w <> e).
       { intro. apply WE_NHB. basic_solver. }
       basic_solver. }
-    specialize (RACE_FREE G' (hb_pref2 G' e w) PREF_EXEC PREF_RC11).
-    assert (RACE_W : race G' (hb_pref2 G' e w) w).
+    specialize (RACE_FREE S' (hb_pref2 S' e w) PREF_EXEC PREF_RC11).
+    assert (RACE_W : race S' (hb_pref2 S' e w) w).
     { unfold race. unfold dom_rel. exists e.
       unfolder. splits.
       1,2,4: unfold hb_pref2; basic_solver 10.
       { apply and_not_or. split; auto. }
       unfold one. auto. }
-    assert (RACE_E : race G' (hb_pref2 G' e w) e).
+    assert (RACE_E : race S' (hb_pref2 S' e w) e).
     { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
       1,2,4: unfold hb_pref2; basic_solver 10.
@@ -551,21 +551,21 @@ Proof.
     apply proj1 in eACQ. apply proj1 in wREL.
     basic_solver. }
 
-  inversion S as [w HH]. desf.
+  inversion ST as [w HH]. desf.
   unfold AddJF.add_jf in AJF. desf.
   unfold AddJF.jf_delta in JF'. 
   rename rE' into eE', rR' into eR'.
-  assert (w'W : is_w (lab G') w). 
+  assert (w'W : is_w (lab S') w). 
   { eapply update_step_W; eauto. basic_solver. }
-  assert (w'W' : is_w (lab G') w'). 
+  assert (w'W' : is_w (lab S') w'). 
   { eapply update_step_W; eauto. basic_solver. }
-  assert (w'E' : (E G') w').
+  assert (w'E' : (E S') w').
   { eapply update_step_E; eauto. basic_solver. }
-  assert (WE_JF' : jf G' w e).
+  assert (WE_JF' : jf S' w e).
   { apply JF'. apply inclusion_union_r2. basic_solver. }
-  assert (ACTS_MON : E G ⊆₁ E G').
+  assert (ACTS_MON : E S ⊆₁ E S').
   { eapply BasicStep.basic_step_nupd_acts_mon; eauto. }
-  assert (HB : (G'.(hb)⁼ w e) \/ (not (G'.(hb)⁼ w e))) by apply classic.
+  assert (HB : (S'.(hb)⁼ w e) \/ (not (S'.(hb)⁼ w e))) by apply classic.
   destruct HB as [[WE_EQ | [ WE_HB | EW_HB]] | WE_NHB].
   { type_solver. }     
   { rewrite JF'. basic_solver. } 
@@ -575,31 +575,31 @@ Proof.
       apply r_step. apply rf_in_eco.
       apply ES.jf_in_rf; eauto. } 
   exfalso.
-  assert (PREF_HB_BWCL : dom_rel(hb G' ⨾ ⦗hb_pref2 G' w' w⦘) ⊆₁ hb_pref2 G' w' w).
+  assert (PREF_HB_BWCL : dom_rel(hb S' ⨾ ⦗hb_pref2 S' w' w⦘) ⊆₁ hb_pref2 S' w' w).
   { unfold hb_pref2.
     rewrite dom_rel_eqv_dom_rel.
-    rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans G')).      
+    rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans S')).      
     basic_solver 10. }
-  specialize (step_hb_dom BSTEP STEP_ WF_G) as HB_DOM.
-  assert (PREF_JF_BWCL : dom_rel(jf G' ⨾ ⦗hb_pref2 G' w' w⦘) ⊆₁ hb_pref2 G' w' w).
+  specialize (step_hb_dom BSTEP STEP_ WF_S) as HB_DOM.
+  assert (PREF_JF_BWCL : dom_rel(jf S' ⨾ ⦗hb_pref2 S' w' w⦘) ⊆₁ hb_pref2 S' w' w).
   { unfold hb_pref2.
     rewrite dom_rel_eqv_dom_rel.
     rewrite JF', IH.
     type_solver 9. }
 
-  assert (EW'_RMW : (ES.rmw G') e w').
+  assert (EW'_RMW : (ES.rmw S') e w').
   { cdes BSTEP. cdes BSTEP_.
     unfold BasicStep.rmw_delta in RMW'.
     apply RMW'. basic_solver. }
-  assert (EW'_HB : (hb G') e w').
+  assert (EW'_HB : (hb S') e w').
   { apply ES.rmw_in_sb, sb_in_hb in EW'_RMW; auto. }
 
-  assert (PREF_EXEC : program_execution P G' (hb_pref2 G' w' w)).
+  assert (PREF_EXEC : program_execution P S' (hb_pref2 S' w' w)).
   { red. splits; auto. constructor. 
     { apply hb_pref2_inE; eauto. }
     { rewrite hb_pref2_alt.
-      specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_G).
-      specialize (init_in_hb_pref WF_G').
+      specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_S).
+      specialize (init_in_hb_pref WF_S').
       basic_solver 10. }
     { rewrite sb_in_hb. apply PREF_HB_BWCL. }
     { rewrite sw_in_hb. apply PREF_HB_BWCL. }
@@ -613,36 +613,36 @@ Proof.
     apply hb_pref2_inE; auto.
     eapply hb_pref2_rmw_ncf; eauto. }
 
-  assert (PREF_RC11 : rc11_consistent_x G' (hb_pref2 G' w' w)).
-  { red. exists (x2g G' (hb_pref2 G' w' w)). splits.
+  assert (PREF_RC11 : rc11_consistent_x S' (hb_pref2 S' w' w)).
+  { red. exists (x2g S' (hb_pref2 S' w' w)). splits.
     { apply x2g_X2G; auto. by cdes PREF_EXEC. } 
     apply x2g_rc11_consistent; auto.
     { by cdes PREF_EXEC. }
     rewrite restr_relE.
     rewrite seq_union_l, seq_union_r.
-    rewrite <- restr_relE with (r := rf G'). 
-    fold (Execution.ex_rf G' (hb_pref2 G' w' w)).
+    rewrite <- restr_relE with (r := rf S'). 
+    fold (Execution.ex_rf S' (hb_pref2 S' w' w)).
     rewrite (Execution.ex_rf_restr_jf); auto.
     2: { by cdes PREF_EXEC. }
     rewrite <- restr_relE.
     rewrite JF', <- union_restr. 
     rewrite !inclusion_restr, <- unionA. 
     cdes BSTEP.
-    arewrite (sb G' ⊆ sb G ∪ (E G ∪₁ eq e) × eq w' ∪ E G × eq e).
+    arewrite (sb S' ⊆ sb S ∪ (E S ∪₁ eq e) × eq w' ∪ E S × eq e).
     { cdes BSTEP_. 
       unfold BasicStep.sb_delta in SB'.
       rewrite eq_opt_someE in SB'.
       rewrite SB' at 1.
       rewrite ES.cont_sb_domE at 1 2 3; eauto.
       basic_solver 20. }
-    arewrite (sb G ∪ (E G ∪₁ eq e) × eq w' ∪ E G × eq e ∪ jf G ∪ singl_rel w e
+    arewrite (sb S ∪ (E S ∪₁ eq e) × eq w' ∪ E S × eq e ∪ jf S ∪ singl_rel w e
                  ⊆ 
-              sb G ∪ jf G ∪ (E G ∪₁ eq e) × eq w' ∪ E G × eq e).
+              sb S ∪ jf S ∪ (E S ∪₁ eq e) × eq w' ∪ E S × eq e).
     { basic_solver 20. }
-    assert (nEe : ~ E G e).
+    assert (nEe : ~ E S e).
     { eby eapply BasicStep.basic_step_acts_set_ne. } 
-    assert (SB_JF_DOM : (sb G ∪ jf G) ⊆ ⦗E G⦘ ⨾ ⊤₂).
-    { rewrite (dom_l WF_G.(ES.sbE)), (dom_l WF_G.(ES.jfE)).
+    assert (SB_JF_DOM : (sb S ∪ jf S) ⊆ ⦗E S⦘ ⨾ ⊤₂).
+    { rewrite (dom_l WF_S.(ES.sbE)), (dom_l WF_S.(ES.jfE)).
       basic_solver. }
     apply acyclic_absorb; [left|].
     { rewrite seq_union_r.
@@ -651,7 +651,7 @@ Proof.
         seq_rewrite <- cross_inter_r.
         basic_solver. }
       basic_solver. }
-    assert (nEw' : ~ E G w').
+    assert (nEw' : ~ E S w').
     { eby eapply BasicStep.basic_step_acts_set_ne'. } 
     split.
     2: { apply acyclic_disj. basic_solver. }
@@ -665,14 +665,14 @@ Proof.
     { intro HH. eapply ES.sb_irr, ES.rmw_in_sb; eauto.
       eby rewrite HH in EW'_RMW. }
     basic_solver. }
-    specialize (RACE_FREE G' (hb_pref2 G' w' w) PREF_EXEC PREF_RC11).
-    assert (RACE_W : race G' (hb_pref2 G' w' w) w).
+    specialize (RACE_FREE S' (hb_pref2 S' w' w) PREF_EXEC PREF_RC11).
+    assert (RACE_W : race S' (hb_pref2 S' w' w) w).
     { unfold race. unfold dom_rel. exists e.
       unfolder. splits.
       1,2,4: unfold hb_pref2; basic_solver 10.
       { apply and_not_or. split; auto. }
       unfold one. auto. }
-    assert (RACE_E : race G' (hb_pref2 G' w' w) e).
+    assert (RACE_E : race S' (hb_pref2 S' w' w) e).
     { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
       1,2,4: unfold hb_pref2; basic_solver 10.
