@@ -1,6 +1,6 @@
 From hahn Require Import Hahn.
 From imm Require Import Events Execution TraversalConfig TraversalConfigAlt
-     imm_common imm_s imm_s_hb CertExecution1 (*CertExecution2*)
+     imm_common imm_s imm_s_hb CertExecution1
      CombRelations Execution_eco.
 Require Import AuxRel.
 Require Import AuxDef.
@@ -46,8 +46,7 @@ Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 
 Notation "'furr'" := (furr G sc).
 
-(* TODO: make up a better name *)
-Definition CI := (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)).
+Definition CsbI := (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)).
 
 Definition D := 
   C ∪₁ I ∪₁
@@ -60,7 +59,7 @@ Definition vf :=
   rf ⨾ ⦗ D ⦘ ⨾ sb^?.
 
 Definition cert_rf :=
-  vf ∩ same_loc lab ⨾ ⦗ CI ∩₁ R ⦘ \ co ⨾ vf.
+  vf ∩ same_loc lab ⨾ ⦗ CsbI ∩₁ R ⦘ \ co ⨾ vf.
 
 Definition cert_rfi := cert_rf ∩ sb.
 Definition cert_rfe := cert_rf \  sb.
@@ -72,21 +71,21 @@ Variable TCCOH : tc_coherent G sc TC.
 Variable RELCOH : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 (******************************************************************************)
-(** ** CI propeties *)
+(** ** CsbI propeties *)
 (******************************************************************************)
 
-Lemma CI_in_E : CI ⊆₁ E.
+Lemma CsbI_in_E : CsbI ⊆₁ E.
 Proof.
-  unfold CI.
+  unfold CsbI.
   rewrite coveredE, issuedE; try edone.
   rewrite (dom_l (@wf_sbE G)).
   basic_solver.
 Qed.
 
-Lemma CI_sb_prcl : 
-  dom_rel (sb ⨾ ⦗ CI ⦘) ⊆₁ CI. 
+Lemma CsbI_sb_prcl : 
+  dom_rel (sb ⨾ ⦗ CsbI ⦘) ⊆₁ CsbI. 
 Proof. 
-  unfold CI.
+  unfold CsbI.
   rewrite id_union. 
   rewrite seq_union_r. 
   rewrite dom_union.
@@ -100,11 +99,11 @@ Proof.
   right. eapply sb_trans; eauto.
 Qed.
 
-Lemma CI_rmw_fwcl (RMWCOV : forall r w, rmw r w -> C r <-> C w) :
-  ⦗CI⦘ ⨾ rmw ≡ ⦗CI⦘ ⨾ rmw ⨾ ⦗CI⦘.
+Lemma CsbI_rmw_fwcl (RMWCOV : forall r w, rmw r w -> C r <-> C w) :
+  ⦗CsbI⦘ ⨾ rmw ≡ ⦗CsbI⦘ ⨾ rmw ⨾ ⦗CsbI⦘.
 Proof.
   split; [|basic_solver].
-  unfold CI.
+  unfold CsbI.
   rewrite !id_union. 
   rewrite !seq_union_l, !seq_union_r.
   unionL.
@@ -140,24 +139,24 @@ Proof.
   eapply wf_rmwi; eauto.
 Qed.
 
-Lemma CI_hb_prcl : 
-  dom_rel (hb ⨾ ⦗ CI ⦘) ⊆₁ CI. 
+Lemma CsbI_hb_prcl : 
+  dom_rel (hb ⨾ ⦗ CsbI ⦘) ⊆₁ CsbI. 
 Proof. 
-  unfold CI.
+  unfold CsbI.
   rewrite <- seq_eqvK. 
   sin_rewrite hb_in_Chb_sb; eauto.
   rewrite seq_union_l, dom_union.
-  unionL; [|apply CI_sb_prcl].
+  unionL; [|apply CsbI_sb_prcl].
   rewrite !seqA, !dom_seq. 
   basic_solver. 
 Qed.
 
-Lemma sc_hb_CI_in_C :
-  dom_rel (sc ⨾ hb ⨾ ⦗CI⦘) ⊆₁ C.
+Lemma sc_hb_CsbI_in_C :
+  dom_rel (sc ⨾ hb ⨾ ⦗CsbI⦘) ⊆₁ C.
 Proof. 
-  arewrite (hb ⨾ ⦗CI⦘ ⊆ ⦗CI⦘ ⨾ hb).
-  { generalize CI_hb_prcl. basic_solver. }
-  unfold CI.
+  arewrite (hb ⨾ ⦗CsbI⦘ ⊆ ⦗CsbI⦘ ⨾ hb).
+  { generalize CsbI_hb_prcl. basic_solver. }
+  unfold CsbI.
   rewrite <- seqA.
   erewrite scCsbI_C; eauto.
   basic_solver.
@@ -180,6 +179,9 @@ Proof. unfold D. by repeat left. Qed.
 
 Lemma I_in_D : I ⊆₁ D. 
 Proof. unfold D. do 3 left. by right. Qed.
+
+Lemma CI_in_D : C ∪₁ I ⊆₁ D. 
+Proof. unfold D. by do 3 left. Qed.
 
 Lemma rfi_D_in_D :
   dom_rel (rfi ⨾ ⦗ D ⦘) ⊆₁ D.
@@ -212,17 +214,17 @@ Proof.
   generalize RFI DR. basic_solver.
 Qed.
 
-Lemma rfe_DCI_in_D :
-  dom_rel (rfe ⨾ ⦗ D ∩₁ CI ⦘) ⊆₁ D.
+Lemma rfe_D_CsbI_in_D :
+  dom_rel (rfe ⨾ ⦗ D ∩₁ CsbI ⦘) ⊆₁ D.
 Proof.
   intros w [r RFE]. destruct_seq_r RFE as DR.
   apply wf_rfeD in RFE; auto. destruct_seq RFE as [WW RR].
   apply wf_rfeE in RFE; auto. destruct_seq RFE as [EW ER].
-  destruct DR as [DR CIr].
+  destruct DR as [DR CsbIr].
   assert (C r -> D w) as UU.
   { intros HH. apply I_in_D. eapply dom_rf_covered; eauto.
     eexists. apply seq_eqv_r. split; eauto. apply RFE. }
-  destruct CIr as [EE0|EE0].
+  destruct CsbIr as [EE0|EE0].
   { intuition. }
 
   red in DR. unfold set_union in DR. desf.
@@ -255,14 +257,14 @@ Proof.
   generalize DR IV IT EE0. basic_solver 10.
 Qed.
 
-Lemma rf_DCI_in_D :
-  dom_rel (rf ⨾ ⦗ D ∩₁ CI ⦘) ⊆₁ D.
+Lemma rf_D_CsbI_in_D :
+  dom_rel (rf ⨾ ⦗ D ∩₁ CsbI ⦘) ⊆₁ D.
 Proof.
   intros w [r RF]. destruct_seq_r RF as DR.
   apply rfi_union_rfe in RF. destruct RF as [RF|RF].
   { apply rfi_D_in_D; auto. eexists.
     apply seq_eqv_r; split; eauto. apply DR. }
-  apply rfe_DCI_in_D; auto. eexists.
+  apply rfe_D_CsbI_in_D; auto. eexists.
   apply seq_eqv_r; split; eauto.
 Qed.
 
@@ -350,7 +352,7 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗CI⦘.
+Lemma cert_rf_codom : cert_rf ≡ cert_rf ⨾ ⦗CsbI⦘.
 Proof. unfold cert_rf. basic_solver. Qed.
 
 (* Lemma cert_rf_codomt : cert_rf ≡ cert_rf ⨾ ⦗Tid_ thread⦘. *)
@@ -387,14 +389,14 @@ Proof.
   unfold cert_rf in *. desf; unfolder in *; basic_solver 40.
 Qed.
 
-Lemma cert_rf_complete : forall b (IN: (CI ∩₁ R) b), exists a, cert_rf a b.
+Lemma cert_rf_complete : forall b (IN: (CsbI ∩₁ R) b), exists a, cert_rf a b.
 Proof.
   ins; unfolder in *; desc.
   assert (exists l, loc b = Some l); desc.
   { by generalize (is_r_loc lab); unfolder in *; basic_solver 12. }
 
   assert (E b) as UU.
-  { by apply CI_in_E. }
+  { by apply CsbI_in_E. }
 
   assert (E (InitEvent l)).
   { by apply WF; eauto. }
@@ -515,7 +517,7 @@ Proof.
   unfold vf. basic_solver 20.
 Qed.
 
-Lemma rf_vf_in_cert_rf : (rf ⨾ ⦗CI⦘) ∩ vf ⊆ cert_rf.
+Lemma rf_vf_in_cert_rf : (rf ⨾ ⦗CsbI⦘) ∩ vf ⊆ cert_rf.
 Proof.
   unfold cert_rf.
   rewrite minus_inter_compl.
@@ -531,7 +533,7 @@ Proof.
   apply fr_in_eco. eexists. split; eauto.
 Qed.
 
-Lemma rf_D_in_cert_rf : rf ⨾ ⦗ D ∩₁ CI ⦘ ⊆ cert_rf.
+Lemma rf_D_in_cert_rf : rf ⨾ ⦗ D ∩₁ CsbI ⦘ ⊆ cert_rf.
 Proof.
   rewrite <- rf_vf_in_cert_rf.
   apply inclusion_inter_r.
@@ -542,13 +544,13 @@ Qed.
 Lemma rf_C_in_cert_rf : rf ⨾ ⦗ C ⦘ ⊆ cert_rf.
 Proof.
   rewrite <- rf_D_in_cert_rf.
-  unfold D, CI.
+  unfold D, CsbI.
   rewrite !set_inter_union_l, 
           !id_union, !seq_union_r.
   basic_solver 10.
 Qed.
 
-Lemma rfi_in_cert_rf : rfi ⨾ ⦗ CI ⦘ ⊆ cert_rf.
+Lemma rfi_in_cert_rf : rfi ⨾ ⦗ CsbI ⦘ ⊆ cert_rf.
 Proof.
   unfold cert_rf. rewrite minus_inter_compl.
   apply inclusion_inter_r.
@@ -602,11 +604,11 @@ Qed.
 Lemma cert_rf_C_in_rf : cert_rf ⨾ ⦗ C ⦘ ⊆ rf.
 Proof.
   arewrite (C ⊆₁ D).
-  { unfold D, CI. basic_solver 10. }
+  { unfold D, CsbI. basic_solver 10. }
   apply cert_rf_D_in_rf.
 Qed.
 
-Lemma cert_rf_D_eq_rf_D : cert_rf ⨾ ⦗ D ∩₁ CI ⦘ ≡ rf ⨾ ⦗ D ∩₁ CI ⦘.
+Lemma cert_rf_D_eq_rf_D : cert_rf ⨾ ⦗ D ∩₁ CsbI ⦘ ≡ rf ⨾ ⦗ D ∩₁ CsbI ⦘.
 Proof. generalize cert_rf_D_in_rf, rf_D_in_cert_rf. basic_solver 10. Qed.
 
 Lemma cert_rf_Acq_in_rf : cert_rf ⨾ ⦗ Acq ⦘ ⊆ rf.
@@ -635,9 +637,9 @@ Proof.
 Qed.
 
 Lemma cert_rf_sb_F_Acq_in_rf :
-  cert_rf ⨾ sb ⨾ ⦗F⦘ ⨾ ⦗ Acq ⦘ ⨾ ⦗CI⦘ ⊆ rf ⨾ sb.
+  cert_rf ⨾ sb ⨾ ⦗F⦘ ⨾ ⦗ Acq ⦘ ⨾ ⦗CsbI⦘ ⊆ rf ⨾ sb.
 Proof.
-  arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗CI⦘ ⊆ ⦗C⦘ ⨾ sb).
+  arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗CsbI⦘ ⊆ ⦗C⦘ ⨾ sb).
   2 : by sin_rewrite cert_rf_C_in_rf.
   rewrite <- !id_inter, seq_eqv_r, seq_eqv_l. 
   intros x y [SB [Fy [ACQy E0y]]].
@@ -656,7 +658,7 @@ Proof.
 Qed.
 
 Lemma cert_rf_F_Acq_in_rf :
-  cert_rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ CI ⦘ ⊆ rf ⨾ sb^?.
+  cert_rf ⨾ (sb ⨾ ⦗F⦘)^? ⨾ ⦗ Acq ⦘ ⨾ ⦗ CsbI ⦘ ⊆ rf ⨾ sb^?.
 Proof.
   rewrite !crE, !seq_union_l, !seq_union_r, !seq_id_l, !seq_id_r, !seqA.
   apply union_mori.   
@@ -664,8 +666,8 @@ Proof.
   apply cert_rf_sb_F_Acq_in_rf.
 Qed.  
 
-Lemma nI_rf_D_CI_in_sb :
-  ⦗set_compl I⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ ⦗CI⦘ ⊆ sb.
+Lemma nI_rf_D_CsbI_in_sb :
+  ⦗set_compl I⦘ ⨾ rf ⨾ ⦗D⦘ ⨾ ⦗CsbI⦘ ⊆ sb.
 Proof. 
   unfold D.
   relsf.
@@ -701,7 +703,7 @@ Proof.
     match goal with H : rfi _ _ |- _ => destruct H as [AA BB] end.
     eapply wf_rff in H; eauto.
     apply H in AA. by rewrite AA. }
-  unfold CI.
+  unfold CsbI.
   rewrite !id_union. rewrite !seq_union_r.
   unionL.
   { rewrite seq_eqvC. seq_rewrite rf_covered; eauto. basic_solver. } 
@@ -744,23 +746,23 @@ Proof.
       basic_solver.
     all: arewrite_id (⦗R⦘); seq_rewrite seq_id_r.
     3 : sin_rewrite rewrite_trans; [|by apply hb_trans].
-    1-3: unfold CI; sin_rewrite hb_in_Chb_sb; eauto.
+    1-3: unfold CsbI; sin_rewrite hb_in_Chb_sb; eauto.
     1-3: rewrite !seq_union_r; seq_rewrite <- !id_inter. 
     1-3: rewrite set_interA; erewrite w_covered_issued; eauto.
     1-3: basic_solver.
-    arewrite (sc ⨾ hb ⨾ ⦗CI⦘ ⊆ ⦗C⦘ ⨾ sc ⨾ hb).
-    { generalize sc_hb_CI_in_C. basic_solver 10. }
+    arewrite (sc ⨾ hb ⨾ ⦗CsbI⦘ ⊆ ⦗C⦘ ⨾ sc ⨾ hb).
+    { generalize sc_hb_CsbI_in_C. basic_solver 10. }
     sin_rewrite hb_covered; eauto.
     rewrite !seqA. seq_rewrite <- !id_inter. 
     rewrite set_interA; erewrite w_covered_issued; eauto.
     basic_solver. }
 
   arewrite_id (⦗R⦘); seq_rewrite seq_id_r.
-  arewrite (sb^? ⨾ ⦗CI⦘ ⊆ ⦗CI⦘ ⨾ sb^?).
+  arewrite (sb^? ⨾ ⦗CsbI⦘ ⊆ ⦗CsbI⦘ ⨾ sb^?).
   { rewrite crE. relsf.
     apply union_mori; try done.
-    generalize CI_sb_prcl. basic_solver. }
-  sin_rewrite nI_rf_D_CI_in_sb.
+    generalize CsbI_sb_prcl. basic_solver. }
+  sin_rewrite nI_rf_D_CsbI_in_sb.
   generalize sb_trans. basic_solver.
 Qed.
 

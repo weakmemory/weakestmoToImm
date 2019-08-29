@@ -385,7 +385,7 @@ Section SimRelCert.
       rewrite cert_dom_alt.
       { rewrite dcertE; [|apply SRCC].
         rewrite trav_step_cov_sb_iss_tid.
-        unfold CI. basic_solver 10. }
+        unfold CsbI. basic_solver 10. }
       etransitivity.
       { apply cstate_covered; eauto. }
       eapply steps_preserve_E. 
@@ -515,13 +515,13 @@ Section SimRelCert.
     Lemma ex_cov_iss_cert_lab : 
       eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (certLab ∘ e2a).
     Proof. 
-      intros x [Xx e2aCIx].
+      intros x [Xx e2aCsbIx].
       erewrite ex_cov_iss_lab; 
         [ | apply SRCC | done].
       unfold compose.
       symmetry. eapply cslab.
       { apply SRCC. }
-      unfold D. do 3 left. 
+      eapply CI_in_D.
       eapply isim_trav_step_new_e_tid.
       1,2: apply SRCC.
       basic_solver.
@@ -549,7 +549,7 @@ Section SimRelCert.
         { eapply init_covered; eauto. apply SRCC. }
         erewrite ex_cov_iss_lab; [| apply SRCC |].
         { erewrite cslab; [auto | apply SRCC |].
-          unfold D. do 4 left. 
+          eapply C_in_D.
           eapply SimTraversalProperties.sim_trav_step_covered_le;
             eauto.
           econstructor. apply SRCC. }
@@ -601,24 +601,26 @@ Section SimRelCert.
           exfalso. apply nTIDx.
           by rewrite e2a_tid. }
         eapply ex_cov_iss_lab. apply SRCC. }
-      intros x [KSBx e2aCIx].
+      intros x [KSBx e2aCsbIx].
       erewrite kE_cert_lab; auto.
       unfold compose.
       erewrite <- cslab 
         with (G := G); [auto | apply SRCC|].
-      unfold D. do 3 left. basic_solver.
+      apply CI_in_D.
+      basic_solver.
     Qed.
 
     Lemma cert_ex_cov_iss_cert_lab : 
       eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (certLab ∘ e2a).
     Proof. 
-      intros x [KSBx e2aCIx].
+      intros x [KSBx e2aCsbIx].
       erewrite cert_ex_cov_iss_lab.
       2 : basic_solver.
       unfold compose.
       erewrite <- cslab; 
         [eauto | apply SRCC |].
-      unfold D. do 3 left. basic_solver.
+      apply CI_in_D.
+      basic_solver.
     Qed.
 
     Lemma cert_ex_iss_inW : 

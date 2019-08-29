@@ -736,7 +736,7 @@ Section SimRelEventToActionLemmas.
         (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-     (Tid_ (ktid S k) ∩₁ CI G TC') (e2a S' e).
+     (Tid_ (ktid S k) ∩₁ CsbI G TC') (e2a S' e).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     erewrite basic_step_e2a_e; eauto using BSTEP_. 
@@ -750,7 +750,7 @@ Section SimRelEventToActionLemmas.
         (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-     (Tid_ (ktid S k) ∩₁ CI G TC') (e2a S' e').
+     (Tid_ (ktid S k) ∩₁ CsbI G TC') (e2a S' e').
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     erewrite basic_step_e2a_e'; eauto. 
@@ -769,7 +769,7 @@ Section SimRelEventToActionLemmas.
     GE (e2a S' e).
   Proof. 
     cdes BSTEP_. 
-    eapply CI_in_E; eauto.  
+    eapply CsbI_in_E; eauto.  
     eapply basic_step_e2a_E0_e; eauto.
   Qed.
 
@@ -782,7 +782,7 @@ Section SimRelEventToActionLemmas.
      GE (e2a S' e').
   Proof. 
     cdes BSTEP_.
-    eapply CI_in_E; eauto.  
+    eapply CsbI_in_E; eauto.  
     eapply basic_step_e2a_E0_e'; eauto.
   Qed.
 

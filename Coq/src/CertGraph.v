@@ -70,7 +70,7 @@ Section CertGraph.
   Notation "'C''"  := (covered TC').
   Notation "'I''"  := (issued TC').
 
-  Notation "'E0'" := (Tid_ thread ∩₁ CI G TC').
+  Notation "'E0'" := (Tid_ thread ∩₁ CsbI G TC').
 
   Definition cert_dom st := 
     (C ∪₁ (dom_rel (sb^? ⨾ ⦗ I ⦘) ∩₁ NTid thread) ∪₁ acts_set st.(ProgToExecution.G)).  
@@ -140,7 +140,7 @@ Section CertGraph.
     Proof. 
       rewrite tr_acts_set; eauto.
       rewrite set_interC.
-      rewrite CI_in_E; eauto.
+      rewrite CsbI_in_E; eauto.
     Qed.
 
     Lemma E0_sb_prcl : 
@@ -149,7 +149,7 @@ Section CertGraph.
       rewrite seq_eqv_lr.
       intros x [y [TIDx [SB E0y]]].
       split; auto.
-      eapply CI_sb_prcl; eauto.
+      eapply CsbI_sb_prcl; eauto.
       exists y. 
       apply seq_eqv_r.
       split; auto.
@@ -159,17 +159,17 @@ Section CertGraph.
     Lemma E0_rmw_fwcl 
           (RMWCLOS : forall r w (RMW : rmw r w), C' r <-> C' w)
           (IRELCOV : W ∩₁ Rel ∩₁ I' ⊆₁ C') :
-      ⦗E0⦘ ⨾ rmw ⨾ ⦗E0⦘ ≡ ⦗E0⦘ ⨾ rmw.
+      ⦗E0⦘ ⨾ rmw ≡ ⦗E0⦘ ⨾ rmw ⨾ ⦗E0⦘.
     Proof. 
-      split; [basic_solver|].
+      split; [|basic_solver].
       rewrite seq_eqv_l, seq_eqv_lr. 
       unfolder. ins. desc.
       splits; auto.
       { subst thread. symmetry. 
         by apply WF.(wf_rmwt). }
-      assert ((⦗CI G TC'⦘ ⨾ rmw) x y) as HH.
+      assert ((⦗CsbI G TC'⦘ ⨾ rmw) x y) as HH.
       { basic_solver. }
-      eapply CI_rmw_fwcl in HH; eauto.
+      eapply CsbI_rmw_fwcl in HH; eauto.
       by destruct_seq HH as [AA BB].
     Qed.
 
@@ -195,7 +195,7 @@ Section CertGraph.
               ⟪ ILT : index < ctindex ⟫ ⟫.
     Proof. 
       assert (E0 ⊆₁ E) as E0_in_E.
-      { rewrite CI_in_E; eauto. basic_solver. }
+      { rewrite CsbI_in_E; eauto. basic_solver. }
       destruct (classic (exists e, E0 e)) as [|NCT].
       2: { exists 0. splits.
            { ins. inv LT. }
@@ -346,7 +346,7 @@ Section CertGraph.
 
     Lemma dom_addrE_in_D : dom_rel (addr ⨾ ⦗ E0 ⦘) ⊆₁ D G TC'.
     Proof.
-      unfold CI.
+      unfold CsbI.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (addr_in_sb WF).
@@ -365,7 +365,7 @@ Section CertGraph.
 
     Lemma dom_ctrlE_in_D : dom_rel (ctrl ⨾ ⦗ E0 ⦘) ⊆₁ D G TC'.
     Proof.
-      unfold CI.
+      unfold CsbI.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (ctrl_in_sb WF).
@@ -386,7 +386,7 @@ Section CertGraph.
 
     Lemma dom_rmw_depE_in_D : dom_rel (rmw_dep ⨾ ⦗ E0 ⦘) ⊆₁ D G TC'.
     Proof.
-      unfold CI.
+      unfold CsbI.
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (rmw_dep_in_sb WF).
@@ -408,7 +408,7 @@ Section CertGraph.
 
     Lemma dom_rmwE_in_D : dom_rel (rmw ⨾ ⦗ E0 ⦘) ⊆₁ D G TC'.
     Proof.
-      unfold CI. 
+      unfold CsbI. 
       rewrite set_inter_union_r.
       rewrite id_union; relsf; unionL; splits.
       { rewrite (rmw_in_sb WF).
@@ -425,7 +425,7 @@ Section CertGraph.
 
     Lemma dom_dataD_in_D : dom_rel (data ⨾ ⦗D G TC'⦘) ⊆₁ D G TC'.
     Proof.
-      unfold CI.
+      unfold CsbI.
       unfold D.
       rewrite !id_union; relsf; unionL; splits.
       { rewrite (data_in_sb WF).
@@ -482,7 +482,7 @@ Notation "'I'"  := (issued TC).
 Notation "'C''"  := (covered TC').
 Notation "'I''"  := (issued TC').
 
-Notation "'E0'" := (Tid_ thread ∩₁ CI G TC').
+Notation "'E0'" := (Tid_ thread ∩₁ CsbI G TC').
 (* Notation "'D'" := (D G TC' thread). *)
 
 Notation "'Tid' t" := (fun x => tid x = t) (at level 1).
@@ -691,8 +691,7 @@ Proof.
       apply DE.
       set (EE':=EE).
       destruct EE' as [TT [AA|AA]].
-      { (* TODO: use lemma C_in_D *)
-        unfold D. by repeat left. } 
+      { by apply C_in_D. }
       unfolder in AA. 
       destruct AA as [y [z [[EQx | SB] [EQ Iz]]]]. 
       { rewrite EQx. by apply I_in_D. }
@@ -766,9 +765,9 @@ Proof.
       rewrite TEH.(tr_rmw), !seqA.
       rewrite seq_eqvC. seq_rewrite <- !id_inter.
       arewrite (E0 ∩₁ Tid thread ≡₁ E0).
-      { rewrite set_interC. unfold CI. rewrite <- !set_interA. 
+      { rewrite set_interC. unfold CsbI. rewrite <- !set_interA. 
           by rewrite set_interK. }
-      eapply E0_rmw_fwcl.
+      symmetry. eapply E0_rmw_fwcl.
       3 : eauto.
       all: eauto. }
 
@@ -785,7 +784,7 @@ Proof.
         apply seq_eqv_r. do 2 (split; eauto). }
       assert (D G TC' w).
       2: { rewrite CERTLABD; auto. apply wf_rfv; auto. }
-      eapply rf_DCI_in_D; eauto.
+      eapply rf_D_CsbI_in_D; eauto.
       basic_solver 10. }
     
     unfold certLab at 2.

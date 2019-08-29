@@ -296,10 +296,10 @@ Section SimRelCertStep.
     edestruct cert_rf_complete as [w' RFwa];
       eauto; try apply SRCC.
     { assert
-        ((Tid_ (ktid S k) ∩₁ CI G TC') (ThreadEvent (ktid S k) st.(eindex)))
+        ((Tid_ (ktid S k) ∩₁ CsbI G TC') (ThreadEvent (ktid S k) st.(eindex)))
         as E0_eindex.
       { eapply ilbl_step_E0_eindex; eauto. apply SRCC. }
-      destruct E0_eindex as [TIDei CIei].
+      destruct E0_eindex as [TIDei CsbIei].
       split; eauto.
       eapply same_lab_u2v_dom_is_r.
       { apply same_lab_u2v_dom_comm.
@@ -906,7 +906,7 @@ Section SimRelCertStep.
          erewrite e2a_F; eauto.
          erewrite e2a_Acq; eauto.
          sin_rewrite HHSB.
-         arewrite (eq (e2a S' e) ⊆₁ Tid_ (ktid S k) ∩₁ CI G TC').
+         arewrite (eq (e2a S' e) ⊆₁ Tid_ (ktid S k) ∩₁ CsbI G TC').
          { unfolder. ins. desf. 
            eapply basic_step_e2a_E0_e; eauto.
            all: apply SRCC. }
