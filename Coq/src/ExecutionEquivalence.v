@@ -11,7 +11,8 @@ Require Import AuxDef.
 Require Import Logic.FinFun.
 Require Import Omega.
 Require Import Consistency.
-Require Import ExecutionToG.
+
+Require Import ImmProperties.
 Require Import SC.
 
 Local Open Scope program_scope.
@@ -363,7 +364,7 @@ Lemma psc_base_x_equiv
   psc_base ≡ psc_base'.
 Proof.
   unfold imm_s.psc_base.
-  rewrite (scbE G WF), (scbE G' WF'), !seqA.
+  rewrite WF.(scbE), WF'.(scbE), !seqA.
   specialize prcl_fwcl_swap with (s := E) (r := (⦗F⦘ ⨾ hb)^?) as HH.
   specialize prcl_fwcl_swap with (s := E') (r := (⦗F'⦘ ⨾ hb')^?) as HH'.
   seq_rewrite HH.

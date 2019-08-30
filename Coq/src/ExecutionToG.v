@@ -11,7 +11,7 @@ Require Import AuxDef.
 Require Import Logic.FinFun.
 Require Import Omega.
 Require Import Consistency.
-Require Import AuxGraph.
+Require Import ImmProperties.
 
 Local Open Scope program_scope.
 
@@ -1268,4 +1268,21 @@ Proof.
   eapply X2G_rc11_consistent; eauto.
   { by apply x2g_X2G. }
     by apply x2g_wf.
+Qed.
+
+Require Import ExecutionEquivalence.
+
+Lemma X2G_x_equiv S X :
+      (X2G S X) × (X2G S X) ⊆ X_EQUIV.
+Proof.
+  intros G G' [MATCH MATCH'].
+  cdes MATCH.
+  cdes MATCH'.
+  red. splits.
+  2: { unfolder in GACTS.
+       unfold "∘" in *.
+       intros a Ga.
+       apply GACTS in Ga. desf.
+         by rewrite <- GLAB, <- GLAB0. }
+  all: unfolder in *; basic_solver.
 Qed.
