@@ -283,7 +283,7 @@ Section SimRelCertStep.
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     exists w,
       ⟪ CertEx : certX S k w ⟫ /\
-      ⟪ CertRF : (cert_rf G sc TC' (ktid S k)) 
+      ⟪ CertRF : (cert_rf G sc TC') 
                    (e2a S w) (ThreadEvent (ktid S k) (st.(eindex))) ⟫.
   Proof.
     assert (ES.Wf S) as WF.
@@ -298,15 +298,18 @@ Section SimRelCertStep.
     edestruct cert_rf_complete as [w' RFwa];
       eauto; try apply SRCC.
     { assert
-        (E0 G TC' (ktid S k) (ThreadEvent (ktid S k) st.(eindex)))
+        ((GTid (ktid S k) ∩₁ CsbI G TC') (ThreadEvent (ktid S k) st.(eindex)))
         as E0_eindex.
       { eapply ilbl_step_E0_eindex; eauto. apply SRCC. }
+      destruct E0_eindex as [TIDei CsbIei].
       split; eauto.
       eapply same_lab_u2v_dom_is_r.
       { apply same_lab_u2v_dom_comm.
         eapply cuplab_cert. apply SRCC. }
       split.
-      { eapply dcertE; eauto; apply SRCC. }
+      { eapply dcertE; eauto.
+        { apply SRCC. }
+        split; auto. }
       unfold is_r.
       erewrite steps_preserve_lab.
       { edestruct ilbl_step_cases as [la [lb [LBLS HH]]]; eauto.
@@ -836,12 +839,8 @@ Section SimRelCertStep.
       { rewrite (dom_r WF.(ES.jfE)). unfold ES.acts_set.
         unfolder. ins. desf. omega. }
       assert (Grf (e2a S' w) (e2a S' (ES.next_act S))) as RF.
-      { eapply cert_rf_D_rf with (TC:=TC'); try apply SRCC; auto.
+      { eapply cert_rf_D_in_rf with (TC:=TC'); try apply SRCC; auto.
         apply seq_eqv_r. splits; eauto.
-        split.
-        { rewrite <- e2a_tid.
-          rewrite TID'. simpls.
-          rewrite updo; [|by desf]. by rewrite upds. }
         eapply dom_rmwE_in_D with (TC:=TC); eauto.
         1-3: by apply SRCC.
         simpls. desf.
@@ -909,8 +908,9 @@ Section SimRelCertStep.
          erewrite e2a_F; eauto.
          erewrite e2a_Acq; eauto.
          sin_rewrite HHSB.
-         arewrite (eq (e2a S' e) ⊆₁ E0 G TC' (ES.cont_thread S k)).
-         { unfolder. ins. desf. eapply basic_step_e2a_E0_e; eauto.
+         arewrite (eq (e2a S' e) ⊆₁ GTid (ktid S k) ∩₁ CsbI G TC').
+         { unfolder. ins. desf. 
+           eapply basic_step_e2a_E0_e; eauto.
            all: apply SRCC. }
          arewrite (⦗GE ∩₁ GF⦘ ⨾ ⦗GE ∩₁ GAcq⦘ ⊆
                    ⦗GE ∩₁ GF⦘ ⨾ ⦗GE ∩₁ GAcq⦘ ⨾ ⦗GF ∩₁ GAcq⦘) by basic_solver.

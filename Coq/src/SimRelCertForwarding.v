@@ -155,7 +155,7 @@ Section SimRelCertForwarding.
     ⟪ Kk'  : K S (k', existT _ _ st') ⟫ /\
     ⟪ ADJ  : ES.cont_adjacent S k k' e e'⟫ /\
     ⟪ STEP : ilbl_step (ktid S k) (opt_to_list lbl' ++ [lbl]) st st' ⟫ /\  
-    ⟪ CertRF : e2a S □ Sjf S ⨾ ⦗eq e⦘ ⊆ cert_rf G sc TC' (ktid S k) ⟫.  
+    ⟪ CertRF : e2a S □ Sjf S ⨾ ⦗eq e⦘ ⊆ cert_rf G sc TC' ⟫.  
 
   Lemma forwarding_seqn_e S lbl lbl' k k' e e'
         (st st' st'': thread_st (ktid S k))
@@ -398,7 +398,7 @@ Section SimRelCertForwarding.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    e2a S □ (Sjf S ⨾ ⦗kE S k'⦘) ⊆ cert_rf G sc TC' (ktid S k').
+    e2a S □ (Sjf S ⨾ ⦗kE S k'⦘) ⊆ cert_rf G sc TC'. 
   Proof.
     assert (ES.Wf S) as WF.
     { apply SRCC. }
@@ -407,8 +407,6 @@ Section SimRelCertForwarding.
     { apply SRCC. } 
     assert (ES.cont_adjacent S k k' e e') as ADJ.
     { apply FRWD. }
-    arewrite (ktid S k' = ktid S k).
-    { symmetry. apply ADJ. }
     erewrite ES.cont_adjacent_sb_dom; eauto.
     rewrite !id_union, !seq_union_r, !collect_rel_union.
     unionL; auto.
