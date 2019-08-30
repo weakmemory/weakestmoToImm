@@ -1,7 +1,7 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic.
-From imm Require Import 
+From imm Require Import
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
@@ -44,7 +44,7 @@ Lemma sim_state_set_tid_eq mode thread s s' state
   @sim_state G mode s thread state <->
   @sim_state G mode s' thread state.
 Proof.
-  split; intros AA. 
+  split; intros AA.
   all: red; splits; [|by apply AA].
   all: ins; split; intros BB.
   1,3: by apply AA; apply EQ.
@@ -57,23 +57,23 @@ Lemma sim_state_set_eq mode thread s s' state
   @sim_state G mode s' thread state.
 Proof. apply sim_state_set_tid_eq. by rewrite EQ. Qed.
 
-Lemma is_init_tid : 
-  is_init ⊆₁ Tid tid_init. 
+Lemma is_init_tid :
+  is_init ⊆₁ Tid tid_init.
 Proof. unfolder. unfold is_init. ins. desf. Qed.
 
-Lemma tid_initi prog 
+Lemma tid_initi prog
       (GPROG : program_execution prog G)
-      (PROG_NINIT : ~ (IdentMap.In tid_init prog)) : 
+      (PROG_NINIT : ~ (IdentMap.In tid_init prog)) :
   E ∩₁ Tid tid_init ⊆₁ is_init.
-Proof. 
-  red. unfolder. 
+Proof.
+  red. unfolder.
   intros e [EE TIDe].
   unfold tid, is_init in *.
   destruct e eqn:Heq; auto.
   destruct GPROG as [HH _].
   rewrite <- Heq in EE.
   specialize (HH e EE).
-  desf. 
+  desf.
 Qed.
 
 Lemma exists_nE thread :
@@ -296,11 +296,11 @@ Proof.
   unfolder. ins. apply or_comm. apply classic.
 Qed.
 
-Lemma isim_trav_step_new_e_tid_alt thread TC' 
-      (ITV : isim_trav_step G sc thread TC TC') : 
-  covered TC' ∪₁ issued TC' ≡₁ 
+Lemma isim_trav_step_new_e_tid_alt thread TC'
+      (ITV : isim_trav_step G sc thread TC TC') :
+  covered TC' ∪₁ issued TC' ≡₁
     (C ∪₁ I) ∩₁ NTid thread ∪₁ (covered TC' ∪₁ issued TC') ∩₁ Tid thread.
-Proof. 
+Proof.
   assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
   rewrite isim_trav_step_new_e_tid at 1; eauto.
   split; [|basic_solver].
@@ -311,11 +311,11 @@ Proof.
   apply ntid_tid_set_inter.
 Qed.
 
-Lemma isim_trav_step_new_covered_tid thread TC' 
-      (ITV : isim_trav_step G sc thread TC TC') : 
-  covered TC' ≡₁ 
+Lemma isim_trav_step_new_covered_tid thread TC'
+      (ITV : isim_trav_step G sc thread TC TC') :
+  covered TC' ≡₁
     C ∩₁ NTid thread ∪₁ covered TC' ∩₁ Tid thread.
-Proof. 
+Proof.
   assert (C ⊆₁ C ∩₁ NTid thread ∪₁ C ∩₁ Tid thread) as BB.
   { apply ntid_tid_set_inter. }
   assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
@@ -329,11 +329,11 @@ Proof.
   all: basic_solver 10.
 Qed.
 
-Lemma isim_trav_step_new_issued_tid thread TC' 
-      (ITV : isim_trav_step G sc thread TC TC') : 
-  issued TC' ≡₁ 
+Lemma isim_trav_step_new_issued_tid thread TC'
+      (ITV : isim_trav_step G sc thread TC TC') :
+  issued TC' ≡₁
     I ∩₁ NTid thread ∪₁ issued TC' ∩₁ Tid thread.
-Proof. 
+Proof.
   assert (I ⊆₁ I ∩₁ NTid thread ∪₁ I ∩₁ Tid thread) as BB.
   { apply ntid_tid_set_inter. }
   assert (sim_trav_step G sc TC TC') as ST by (eexists; eauto).
@@ -346,7 +346,7 @@ Proof.
   apply WF.(wf_rmwt) in RMW. rewrite RMW.
   basic_solver 10.
 Qed.
-  
+
 Variable RELCOV : W ∩₁ Rel ∩₁ I ⊆₁ C.
 
 Lemma release_rf_rmw_step : release ⨾ rf ⨾ rmw ⊆ release.
@@ -366,7 +366,7 @@ Qed.
 
 Lemma sw_in_Csw_sb : sw ⨾ ⦗C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)⦘ ⊆ ⦗ C ⦘ ⨾ sw ∪ sb.
 Proof.
-  rewrite !id_union. rewrite seq_union_r. 
+  rewrite !id_union. rewrite seq_union_r.
   unionL.
   { rewrite sw_covered; eauto. basic_solver. }
   arewrite (sw ⊆ ⦗ C ∪₁ set_compl C ⦘ ⨾ sw) at 1.
@@ -427,13 +427,13 @@ Proof.
     destruct_seq_l HH as NC.
     do 4 apply seqA in HH. destruct HH as [v [HH SUF]].
     apply seq_eqv_l. split; auto.
-    
+
     Ltac _ltt :=
       apply seqA;
       apply seqA with (r1 := ⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^?);
       apply seqA with (r1 := (⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^?) ⨾ ⦗W⦘);
       apply seqA with (r1 := ((⦗Rel⦘ ⨾ (⦗F⦘ ⨾ sb)^?) ⨾ ⦗W⦘) ⨾ (sb ∩ same_loc lab)^?).
-    
+
     _ltt.
     exists v. split.
     { generalize HH. basic_solver. }
@@ -607,7 +607,7 @@ Lemma istep_eindex_shift thread st st' lbl
       (STEP : ProgToExecution.istep thread lbl st st') :
   eindex st' = eindex st + length lbl.
 Proof.
-  cdes STEP. inv ISTEP0. 
+  cdes STEP. inv ISTEP0.
   all: simpls; omega.
 Qed.
 
@@ -673,7 +673,7 @@ Proof.
   rewrite id_union, seq_union_l.
   unionL.
   { unfold fwbob.
-    unionR right. 
+    unionR right.
     arewrite (sb^? ∩ release ⨾ sb ∩ Events.same_loc lab ⊆ sb).
     { generalize (@sb_trans G). basic_solver. }
     mode_solver. }
@@ -689,6 +689,53 @@ Proof.
   sin_rewrite rewrite_trans_seq_cr_l.
   2: by apply sb_same_loc_trans.
   unfold fwbob. eauto with hahn.
+Qed.
+
+Lemma scbE :
+  scb G ≡ ⦗E⦘ ⨾ scb G ⨾ ⦗E⦘.
+Proof.
+  unfold imm_s.scb.
+  rewrite wf_sbE, imm_s_hb.wf_hbE, wf_coE, wf_frE; auto.
+  basic_solver 30.
+Qed.
+
+Lemma rsE_alt :
+  rs G ⨾ ⦗E⦘ ≡ ⦗W ∩₁ E⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W ∩₁ E⦘ ⨾ (rf ⨾ rmw)＊.
+Proof.
+  unfold imm_s_hb.rs.
+  rewrite !seqA.
+  arewrite ((rf ⨾ rmw)＊ ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (rf ⨾ rmw)＊).
+  { rewrite rtE.
+    rewrite !seq_union_l, !seq_union_r.
+    apply union_more; [basic_solver|].
+    rewrite (dom_l WF.(wf_rfE)), !seqA.
+    rewrite ct_seq_eqv_l at 1.
+    rewrite (dom_r WF.(wf_rmwE)), <- !seqA.
+    rewrite ct_seq_eqv_r at 2.
+      by rewrite seqA. }
+  arewrite (⦗W⦘ ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ ⦗W ∩₁ E⦘) by basic_solver.
+  arewrite ((sb ∩ same_loc lab)^? ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (sb ∩ same_loc lab)^?).
+  { rewrite crE.
+    rewrite !seq_union_l, !seq_union_r.
+    apply union_more; [basic_solver|].
+    rewrite wf_sbE.
+    basic_solver. }
+  rewrite <- seqA, <- id_inter. done.
+Qed.
+
+Lemma rsE_alt_swap :
+  rs G ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ rs G.
+Proof.
+ rewrite WF.(imm_s_hb.wf_rsE).
+ rewrite !seq_union_l, !seq_union_r.
+ apply union_more; basic_solver.
+Qed.
+
+Lemma rsE_alt_restr :
+  rs G ⨾ ⦗E⦘ ≡ restr_rel E (rs G).
+Proof.
+  rewrite restr_relE, <- seqA, <- rsE_alt_swap; auto.
+  basic_solver.
 Qed.
 
 End Properties.
