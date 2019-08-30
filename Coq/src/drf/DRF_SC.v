@@ -14,13 +14,39 @@ Require Import ExecutionToG.
 
 Require Import DRF_RLX.
 
+Require Import Race_G.
+Require Import SC.
+
 Set Implicit Arguments.
 
-Theorem drf_rc11_sc P S X
+Theorem weakestmo2rc11 P G
+        (G_EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G)
+        (RC11 : rc11_consistent G) :
+  exists S X,
+    ⟪ ES_EXEC : program_execution P S X ⟫ /\
+    ⟪ MATCH : X2G S X G ⟫.
+Proof.
+Admitted.
+
+Theorem drf_rc11_sc P G
+        (RA_RACE_FREE : SC_RA_race_free_program_G P)
+        (RC11 : rc11_consistent G) :
+  sc_consistent G.
+Proof.
+Admitted.
+
+Theorem drf_rc11_sc_es P S X
       (RA_RACE_FREE : SC_RA_race_free_program P)
       (EXEC : program_execution P S X)
       (RC11 : rc11_consistent_x S X) :
   sc_consistent_x S X.
+Proof.
+Admitted.
+
+Lemma sc_cons_ES_G S X G
+        (SC : sc_consistent_x S X)
+        (MATCH : X2G S X G) :
+  sc_consistent G.
 Proof.
 Admitted.
 
@@ -30,9 +56,8 @@ Theorem drf_sc P S X
         (EXEC : program_execution P S X) :
   sc_consistent_x S X.
 Proof.
-  eapply drf_rc11_sc; eauto.
-  eapply drf_rlx; eauto.
-  red. intros S' X' EXEC' RC11.
-  apply RA_race_free_in_RLX_race_free, RA_RACE_FREE; auto.
-  eby eapply drf_rc11_sc.
-Qed.
+  eexists. splits.
+  2: { apply drf_rc11_sc with (P := stable_prog_to_prog P).
+       admit. admit. }
+
+Admitted.

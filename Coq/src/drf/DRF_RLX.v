@@ -7,6 +7,7 @@ Require Import EventStructure.
 Require Import Consistency.
 Require Import Execution.
 Require Import Step.
+Require Import Race_G.
 Require Import Race.
 Require Import ProgES.
 Require Import StepWf.
@@ -747,6 +748,3 @@ Proof.
   by apply jf_in_hb.
 Qed.
 End DRF.
-
-
-

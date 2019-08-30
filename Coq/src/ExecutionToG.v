@@ -815,6 +815,15 @@ Proof.
   by rewrite X2G_sw_transfer.
 Qed.
 
+Lemma X2G_hb_transfer'
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G)
+      (WF_G : Wf G) :
+  Move Shb ≡ Ghb.
+Proof.
+Admitted.
+
 Lemma X2G_fr_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)

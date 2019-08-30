@@ -9,6 +9,9 @@ Require Import Execution.
 Require Import ExecutionToG.
 Require Import Step.
 Require Import ProgES.
+Require Import EventToAction.
+
+Require Import Race_G.
 
 Section Race.
 
@@ -28,8 +31,6 @@ Notation "'F'" := (fun a => is_true (is_f lab a)).
 Notation "'Rel'" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
-
-Definition one {A : Type} (X : A -> Prop) a b := X a \/ X b.
 
 Definition race (X : eventid -> Prop) :=
   dom_rel (((X × X) \ (hb⁼ ∪ cf)) ∩ same_loc ∩ one W).
@@ -94,6 +95,16 @@ Proof.
 Qed.
 
 End Race.
+
+Lemma X2G_race S X G
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (MATCH : X2G S X G) :
+  e2a S □₁ (race S X) ≡₁ Race_G.race G.
+Proof.
+  unfold race.
+  rewrite set_collect_dom.
+Admitted.
 
 Definition program_execution P S X :=
   ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
