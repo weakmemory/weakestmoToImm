@@ -464,7 +464,7 @@ Section SimRelAddEW.
       { eapply sim_ewsRLX; eauto. }
       (* ewsMOD : ews ⊆₁ same_mod S' w' *)
       { intros x WSx.
-        unfold AuxDef.same_mod.
+        unfold same_mod.
         arewrite (Smod S' x = Smod S x).
         { erewrite basic_step_mod_eq_dom; eauto.
           eapply sim_ewsE; eauto. }
@@ -480,7 +480,7 @@ Section SimRelAddEW.
         basic_solver. }
       (* ewsVAL : ews ⊆₁ same_val S' w' *)
       { intros x WSx.
-        unfold AuxDef.same_val.
+        unfold same_val.
         arewrite (Sval S' x = Sval S x).
         { erewrite basic_step_val_eq_dom; eauto.
           eapply sim_ewsE; eauto. }

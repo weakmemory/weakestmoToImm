@@ -1,5 +1,7 @@
 From hahn Require Import Hahn.
-From imm Require Import Events Execution TraversalConfig TraversalConfigAlt
+From imm Require Import
+     AuxDef
+     Events Execution TraversalConfig TraversalConfigAlt
      imm_common imm_s imm_s_hb CertExecution1
      CombRelations Execution_eco.
 Require Import AuxRel.
@@ -695,7 +697,7 @@ Proof.
     arewrite (
       rfe ⨾ ⦗dom_rel (ppo ⨾ ⦗I⦘)⦘ ⊆ ⦗I⦘ ⨾ rfe ⨾ ⦗dom_rel (ppo ⨾ ⦗I⦘)⦘
     ).
-    { generalize (dom_rfe_ppo_issued TCCOH). basic_solver 20. }
+    { generalize (dom_rfe_ppo_issued WF TCCOH). basic_solver 20. }
     basic_solver. }
   { arewrite (rf ⨾ ⦗codom_rel (⦗I⦘ ⨾ rfi)⦘ ⊆ sb).
     2: { generalize (@sb_trans G). basic_solver. }
@@ -704,7 +706,7 @@ Proof.
     eapply wf_rff in H; eauto.
     apply H in AA. by rewrite AA. }
   unfold CsbI.
-  rewrite !id_union. rewrite !seq_union_r.
+  rewrite !id_union. rewrite !seq_union_r.  
   unionL.
   { rewrite seq_eqvC. seq_rewrite rf_covered; eauto. basic_solver. } 
   rewrite rfi_union_rfe. rewrite !seq_union_l, !seq_union_r.

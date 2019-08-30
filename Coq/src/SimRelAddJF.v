@@ -210,7 +210,7 @@ Section SimRelAddJF.
       { eapply basic_step_e2a_eq_dom; eauto. }
       rewrite e2aEQw in *.
       assert 
-        ((cert_rf G sc TC' ⨾ ⦗ Tid_ (ktid S k) ⦘) (e2a S w) (e2a S' e))
+        ((cert_rf G sc TC' ⨾ ⦗ GTid (ktid S k) ⦘) (e2a S w) (e2a S' e))
         as CertRFT.
       { apply seq_eqv_r; splits; auto.
         rewrite <- e2a_tid.
@@ -278,11 +278,11 @@ Section SimRelAddJF.
           red. by unfold Events.loc, compose. }
         apply restr_relE, seq_eqv_lr in HH. 
         basic_solver. }
-      { assert (AuxDef.same_val (certLab G st'') (e2a S' w) (e2a S' e)) as SAME_VAL.
+      { assert (same_val (certLab G st'') (e2a S' w) (e2a S' e)) as SAME_VAL.
         { eapply cert_rfv_clab; eauto. 
           { apply SRCC. }
           apply seq_eqv_r; splits; auto. }
-        unfold AuxDef.same_val, Events.val in *.
+        unfold same_val, Events.val in *.
         erewrite basic_step_e2a_certlab_e 
           with (e := e); eauto; try apply SRCC.
         arewrite (Slab S' w = Slab S w).

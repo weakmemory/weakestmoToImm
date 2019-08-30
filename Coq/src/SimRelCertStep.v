@@ -1,6 +1,8 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From imm Require Import Events Execution
+From imm Require Import
+     AuxDef 
+     Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_common imm_s imm_s_hb
@@ -296,7 +298,7 @@ Section SimRelCertStep.
     edestruct cert_rf_complete as [w' RFwa];
       eauto; try apply SRCC.
     { assert
-        ((Tid_ (ktid S k) ∩₁ CsbI G TC') (ThreadEvent (ktid S k) st.(eindex)))
+        ((GTid (ktid S k) ∩₁ CsbI G TC') (ThreadEvent (ktid S k) st.(eindex)))
         as E0_eindex.
       { eapply ilbl_step_E0_eindex; eauto. apply SRCC. }
       destruct E0_eindex as [TIDei CsbIei].
@@ -906,7 +908,7 @@ Section SimRelCertStep.
          erewrite e2a_F; eauto.
          erewrite e2a_Acq; eauto.
          sin_rewrite HHSB.
-         arewrite (eq (e2a S' e) ⊆₁ Tid_ (ktid S k) ∩₁ CsbI G TC').
+         arewrite (eq (e2a S' e) ⊆₁ GTid (ktid S k) ∩₁ CsbI G TC').
          { unfolder. ins. desf. 
            eapply basic_step_e2a_E0_e; eauto.
            all: apply SRCC. }
@@ -1127,7 +1129,7 @@ Section SimRelCertStep.
       destruct_seq wEWI as [SEY SEY'].
       apply WFS'.(ES.ewm) in AA.
       destruct AA as [|[AA QQ]]; desf. }
-    assert (issuable G TC (e2a S' q)) as ISN.
+    assert (issuable G sc TC (e2a S' q)) as ISN.
     { eapply issued_in_issuable; [by apply SRCC|].
         by rewrite <- wsE2Aeq. }
     assert (C (e2a S' x)) as CX.
