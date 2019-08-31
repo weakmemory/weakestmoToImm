@@ -1,6 +1,6 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From PromisingLib Require Import Basic.
+From PromisingLib Require Import Basic Language.
 From imm Require Import
      AuxDef
      Events Execution
@@ -503,7 +503,7 @@ Hint Resolve isim_trav_step_coherence.
 (******************************************************************************)
 
 Lemma cert_graph_start 
-      (state : Language.Language.state (PromiseLTS.thread_lts thread))
+      (state : Language.state (PromiseLTS.thread_lts thread))
       (NINITT : thread <> tid_init)
       (GPC : wf_thread_state thread state)
       (PROGST : stable_lprog (instrs state))
@@ -874,7 +874,7 @@ Qed.
 (******************************************************************************)
 
 Lemma ilbl_step_E0_eindex lbls
-        (st st' st'' : Language.Language.state (PromiseLTS.thread_lts thread))
+        (st st' st'' : Language.state (PromiseLTS.thread_lts thread))
         (WFT : wf_thread_state thread st) 
         (CG : cert_graph G sc TC' thread st'')
         (ILBL_STEP : ilbl_step thread lbls st st')
@@ -889,7 +889,7 @@ Proof.
 Qed.
 
 Lemma ilbl_step_E0_eindex' lbls lbl lbl'
-        (st st' st'' : Language.Language.state (PromiseLTS.thread_lts thread))
+        (st st' st'' : Language.state (PromiseLTS.thread_lts thread))
         (WFT : wf_thread_state thread st) 
         (CG : cert_graph G sc TC' thread st'')
         (ILBL_STEP : ilbl_step thread lbls st st')
@@ -908,7 +908,7 @@ Proof.
 Qed.
 
 (* Lemma ilbl_step_cert_dom_eindex lbls *)
-(*         (st st' st'' : Language.Language.state (Promise.thread_lts thread)) *)
+(*         (st st' st'' : Language.state (Promise.thread_lts thread)) *)
 (*         (WFT : wf_thread_state thread st)  *)
 (*         (CG : cert_graph G sc TC TC' thread st'') *)
 (*         (ILBL_STEP : ilbl_step thread lbls st st') *)

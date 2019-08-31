@@ -1,5 +1,6 @@
 Require Import Omega.
 From hahn Require Import Hahn.
+From PromisingLib Require Import Language.
 From imm Require Import
      AuxDef 
      Events Execution
@@ -242,7 +243,7 @@ Section SimRelCertStep.
   Proof.
     assert (tc_coherent G sc TC') as TCCOH'. 
     { eapply isim_trav_step_coherence; apply SRCC. }
-    assert ((K S) (k, existT Language.state (thread_lts (ktid S k)) st)) as KK.
+    assert ((K S) (k, existT _ (thread_lts (ktid S k)) st)) as KK.
     { edestruct cstate_cont; [apply SRCC|]. desf. }
     assert (wf_thread_state (ktid S k) st) as WFST.
     { by apply SRCC. }
@@ -288,7 +289,7 @@ Section SimRelCertStep.
   Proof.
     assert (ES.Wf S) as WF.
     { apply SRCC. }
-    assert ((K S) (k, existT Language.state (thread_lts (ktid S k)) st)) as KK.
+    assert ((K S) (k, existT _ (thread_lts (ktid S k)) st)) as KK.
     { edestruct cstate_cont; [apply SRCC|]. desf. }
     assert (wf_thread_state (ktid S k) st) as WFST.
     { by apply SRCC. }

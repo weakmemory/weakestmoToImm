@@ -1,6 +1,6 @@
 Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
-From PromisingLib Require Import Basic.
+From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
      CombRelations.
 Require Import AuxRel.
@@ -303,7 +303,7 @@ Section EventToAction.
   Qed.
 
   Lemma e2a_cont_sb_dom_inj k a b lang (st : Language.state lang)
-        (KE : K (k, existT Language.state lang st))
+        (KE : K (k, existT _ lang st))
         (ACTS : e2a □₁ SE ⊆₁ acts_set G)
         (AIN : ES.cont_sb_dom S k a)
         (BIN : ES.cont_sb_dom S k b)

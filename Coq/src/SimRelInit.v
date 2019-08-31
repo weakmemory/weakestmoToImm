@@ -1,7 +1,7 @@
 Require Import Omega.
 Require Import Program.Basics.
 From hahn Require Import Hahn.
-From PromisingLib Require Import Basic.
+From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal.
@@ -230,8 +230,7 @@ Section SimRelInit.
       assert
         (K (prog_g_es_init prog G)
            (CInit thread,
-            existT
-              Language.state
+            existT _ 
               (thread_lts thread)
               (proj1_sig
                  (get_stable thread (init lprog) BB
