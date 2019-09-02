@@ -1,6 +1,7 @@
 Require Import Omega Setoid Program.Basics.
+From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
-From imm Require Import Events.
+From imm Require Import AuxDef Events.
 Require Import AuxDef.
 Require Import AuxRel.
 
@@ -11,16 +12,6 @@ Definition eventid := nat.
 Inductive cont_label :=
 | CInit  (tid : thread_id)
 | CEvent (eid : eventid).
-
-Module Language.
-Record t :=
-  mk { syntax : Type;
-       state : Type;
-       init : syntax -> state;
-       is_terminal : state -> Prop;
-       step : list label -> state -> state -> Prop
-     }.
-End Language.
 
 Definition init_write l := Astore Xpln Opln l 0.
 
@@ -36,7 +27,7 @@ Record t :=
        co   : eventid -> eventid -> Prop ;
        ew   : eventid -> eventid -> Prop ;
        cont : list (cont_label *
-                    { lang : Language.t &
+                    { lang : Language.t (list label) &
                       lang.(Language.state) });
      }.
 

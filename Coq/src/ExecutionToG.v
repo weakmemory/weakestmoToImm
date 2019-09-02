@@ -11,7 +11,7 @@ Require Import AuxDef.
 Require Import Logic.FinFun.
 Require Import Omega.
 Require Import Consistency.
-Require Import AuxGraph.
+Require Import ImmProperties.
 
 Local Open Scope program_scope.
 

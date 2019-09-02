@@ -1,4 +1,5 @@
 Require Import Omega.
+From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
 From imm Require Import Events. 
 Require Import AuxRel.
@@ -83,7 +84,7 @@ Definition icf_delta S k e : relation eventid :=
 Hint Unfold sb_delta imm_sb_delta rmw_delta cf_delta icf_delta : ESStepDb.
 
 Definition basic_step_
-           (lang : Language.t)
+           (lang : Language.t (list label))
            (k k' : cont_label)
            (st st' : lang.(Language.state))
            (e  : eventid)
@@ -1565,9 +1566,9 @@ Qed.
 Lemma basic_step_K_adj e e' S S' 
       (WF : ES.Wf S) 
       (BSTEP : basic_step e e' S S') :
-  forall lang st st' k k' a a' 
-         (KK  : K S' (k,  existT Language.state lang st )) 
-         (KK' : K S' (k', existT Language.state lang st')) 
+  forall (lang : Language.t (list label)) st st' k k' a a' 
+         (KK  : K S' (k,  existT _ lang st )) 
+         (KK' : K S' (k', existT _ lang st')) 
          (ADJ : ES.cont_adjacent S' k k' a a'),
   exists lbl lbl', 
     ⟪ LBL  : lbl  = (lab S') a ⟫ /\
@@ -1627,8 +1628,8 @@ Proof.
       eapply ES.cont_adjacent_ninit_e; eauto. }
     desc. subst k0 k'0 a a'.
     cdes BSTEP_.
-    set (c1 := (k, existT Language.state lang st )).
-    set (c2 := (k, existT Language.state lang st0)).
+    set (c1 := (k, existT _ lang st )).
+    set (c2 := (k, existT _ lang st0)).
     assert (fst c1 = fst c2) as HH by done.
     eapply ES.unique_K in HH; eauto.
     subst c1 c2. simpl in HH.

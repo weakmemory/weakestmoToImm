@@ -1,6 +1,9 @@
 Require Import Program.Basics Omega.
+From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
-From imm Require Import Events Execution TraversalConfig Traversal
+From imm Require Import
+     AuxDef 
+     Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      SimState
      CertExecution2
@@ -129,7 +132,7 @@ Section SimRelCert.
   Notation "'kE'" := (ES.cont_sb_dom S k) (only parsing).
   Notation "'ktid'" := (ES.cont_thread S k) (only parsing).
 
-  Notation "'E0'" := (E0 G TC' ktid).
+  (* Notation "'E0'" := (E0 G TC' ktid). *)
 
   Notation "'contG'" := st.(ProgToExecution.G).
   Notation "'certG'" := st'.(ProgToExecution.G).
@@ -159,7 +162,7 @@ Section SimRelCert.
 
       tr_step : isim_trav_step G sc ktid TC TC' ;
 
-      cert : cert_graph G sc TC TC' ktid st' ;
+      cert : cert_graph G sc TC' ktid st' ;
       cstate : simrel_cstate ; 
 
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
@@ -167,7 +170,7 @@ Section SimRelCert.
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
-      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ktid ;
+      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ;
 
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ;
@@ -384,9 +387,8 @@ Section SimRelCert.
     Proof. 
       rewrite cert_dom_alt.
       { rewrite dcertE; [|apply SRCC].
-        unfold CertRf.E0.
-        rewrite trav_step_cov_sb_iss_tid at 2.
-        basic_solver 10. }
+        rewrite trav_step_cov_sb_iss_tid.
+        unfold CsbI. basic_solver 10. }
       etransitivity.
       { apply cstate_covered; eauto. }
       eapply steps_preserve_E. 
@@ -516,13 +518,13 @@ Section SimRelCert.
     Lemma ex_cov_iss_cert_lab : 
       eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (certLab ∘ e2a).
     Proof. 
-      intros x [Xx e2aCIx].
+      intros x [Xx e2aCsbIx].
       erewrite ex_cov_iss_lab; 
         [ | apply SRCC | done].
       unfold compose.
       symmetry. eapply cslab.
       { apply SRCC. }
-      unfold D. do 4 left. 
+      eapply CI_in_D.
       eapply isim_trav_step_new_e_tid.
       1,2: apply SRCC.
       basic_solver.
@@ -550,7 +552,7 @@ Section SimRelCert.
         { eapply init_covered; eauto. apply SRCC. }
         erewrite ex_cov_iss_lab; [| apply SRCC |].
         { erewrite cslab; [auto | apply SRCC |].
-          unfold D. do 5 left. 
+          eapply C_in_D.
           eapply SimTraversalProperties.sim_trav_step_covered_le;
             eauto.
           econstructor. apply SRCC. }
@@ -602,24 +604,26 @@ Section SimRelCert.
           exfalso. apply nTIDx.
           by rewrite e2a_tid. }
         eapply ex_cov_iss_lab. apply SRCC. }
-      intros x [KSBx e2aCIx].
+      intros x [KSBx e2aCsbIx].
       erewrite kE_cert_lab; auto.
       unfold compose.
       erewrite <- cslab 
         with (G := G); [auto | apply SRCC|].
-      unfold D. do 4 left. basic_solver.
+      apply CI_in_D.
+      basic_solver.
     Qed.
 
     Lemma cert_ex_cov_iss_cert_lab : 
       eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (certLab ∘ e2a).
     Proof. 
-      intros x [KSBx e2aCIx].
+      intros x [KSBx e2aCsbIx].
       erewrite cert_ex_cov_iss_lab.
       2 : basic_solver.
       unfold compose.
       erewrite <- cslab; 
         [eauto | apply SRCC |].
-      unfold D. do 4 left. basic_solver.
+      apply CI_in_D.
+      basic_solver.
     Qed.
 
     Lemma cert_ex_iss_inW : 
@@ -1059,7 +1063,7 @@ Section SimRelCert.
     Qed.
 
     Lemma e2a_co_jfe_kE : 
-      e2a □ Sco ⨾ Sjfe ⨾ ⦗kE⦘ ⊆ Gco ⨾ cert_rf G sc TC' ktid.
+      e2a □ Sco ⨾ Sjfe ⨾ ⦗kE⦘ ⊆ Gco ⨾ cert_rf G sc TC'.
     Proof. 
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
