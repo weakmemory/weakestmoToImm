@@ -1,6 +1,6 @@
 Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
-From PromisingLib Require Import Basic.
+From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution TraversalConfig Traversal
      SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
@@ -733,10 +733,10 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_E0_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-     E0 G TC' (ktid S k) (e2a S' e).
+     (GTid (ktid S k) ∩₁ CsbI G TC') (e2a S' e).
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     erewrite basic_step_e2a_e; eauto using BSTEP_. 
@@ -747,10 +747,10 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_E0_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-     E0 G TC' (ktid S k) (e2a S' e').
+     (GTid (ktid S k) ∩₁ CsbI G TC') (e2a S' e').
   Proof. 
     cdes BSTEP_. simpl in BSTEP_.
     erewrite basic_step_e2a_e'; eauto. 
@@ -762,34 +762,34 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_GE_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :     
     GE (e2a S' e).
   Proof. 
     cdes BSTEP_. 
-    eapply E0_in_E; eauto.  
+    eapply CsbI_in_E; eauto.  
     eapply basic_step_e2a_E0_e; eauto.
   Qed.
 
   Lemma basic_step_e2a_GE_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      GE (e2a S' e').
   Proof. 
     cdes BSTEP_.
-    eapply E0_in_E; eauto.  
+    eapply CsbI_in_E; eauto.  
     eapply basic_step_e2a_E0_e'; eauto.
   Qed.
 
   Lemma basic_step_e2a_GE TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
         (SRE2A : simrel_e2a S G sc)
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (TCCOH : tc_coherent G sc TC')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
@@ -816,7 +816,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_lab_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e = Execution.lab (ProgToExecution.G st'') (e2a S' e).
@@ -851,7 +851,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_lab_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e' = Execution.lab (ProgToExecution.G st'') (e2a S' e').
@@ -889,7 +889,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_certlab_e TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e = certLab G st'' (e2a S' e).
@@ -906,7 +906,7 @@ Section SimRelEventToActionLemmas.
 
   Lemma basic_step_e2a_certlab_e' TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e (Some e') S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
      Slab S' e' = certLab G st'' (e2a S' e').
@@ -924,7 +924,7 @@ Section SimRelEventToActionLemmas.
   Lemma basic_step_e2a_same_lab_u2v TC' k k' e e' S' 
         (st st' st'' : thread_st (ktid S k))
         (SRE2A : simrel_e2a S G sc)
-        (CG : cert_graph G sc TC TC' (ktid S k) st'')
+        (CG : cert_graph G sc TC' (ktid S k) st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     same_lab_u2v_dom (SE S') (Slab S') (Glab ∘ (e2a S')).

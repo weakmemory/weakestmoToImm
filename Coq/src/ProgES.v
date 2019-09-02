@@ -1,6 +1,6 @@
 Require Import Omega Setoid Program.Basics.
 From hahn Require Import Hahn.
-From PromisingLib Require Import Basic.
+From PromisingLib Require Import Basic Language.
 From imm Require Import Events Prog Execution ProgToExecution.
 Require Import AuxDef.
 Require Import AuxRel.
@@ -13,15 +13,15 @@ Require Import EventToAction.
 Set Implicit Arguments.
 Local Open Scope program_scope.
 
-Definition thread_lts (t : thread_id) : Language.t :=
-  @Language.mk
+Definition thread_lts (t : thread_id) : Language.t (list label) :=
+  @Language.mk (list label)
     (list Instr.t) state
     init
     is_terminal
     (ilbl_step t).
 
 Definition prog_init_threads (prog : Prog.t) :
-  IdentMap.t {lang : Language.t & Language.state lang} :=
+  IdentMap.t {lang : Language.t (list label) & Language.state lang} :=
   IdentMap.mapi
     (fun tid (linstr : list Instr.t) =>
        existT _ (thread_lts tid) (ProgToExecution.init linstr))
@@ -42,7 +42,7 @@ Qed.
 
 Definition prog_init_K
            (prog : stable_prog_type) :
-  list (cont_label * {lang : Language.t & Language.state lang}) :=
+  list (cont_label * {lang : Language.t (list label) & Language.state lang}) :=
   map
     (fun tidc =>
        let tid    := fst tidc in
@@ -478,8 +478,7 @@ Qed.
 Lemma prog_l_es_init_K prog locs k state
       (INK : ES.cont_set
                (prog_l_es_init prog locs)
-               (k, existT
-                     Language.state
+               (k, existT _
                      (thread_lts (ES.cont_thread (prog_l_es_init prog locs)
                                                  k))
                      state)) :
@@ -518,8 +517,7 @@ Qed.
 Lemma prog_g_es_init_K prog G k state
       (INK : ES.cont_set
                (prog_g_es_init prog G)
-               (k, existT
-                     Language.state
+               (k, existT _
                      (thread_lts (ES.cont_thread (prog_g_es_init prog G)
                                                  k))
                      state)) :

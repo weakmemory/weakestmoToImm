@@ -1,11 +1,14 @@
 Require Import Program.Basics Omega.
+From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
-From imm Require Import Events Execution
+From imm Require Import
+     AuxDef 
+     Events Execution
      Traversal TraversalConfig SimTraversal SimTraversalProperties
      Prog ProgToExecution ProgToExecutionProperties Receptiveness
      imm_common imm_s imm_s_hb
      CertExecution2
-     SubExecution CombRelations.
+     SubExecution CombRelations SimState.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -247,7 +250,7 @@ Section SimRelCertStepLemma.
         (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    e2a S' □ (Sjf S' ⨾ ⦗kE S' k'⦘) ⊆ cert_rf G sc TC' (ktid S' k').
+    e2a S' □ (Sjf S' ⨾ ⦗kE S' k'⦘) ⊆ cert_rf G sc TC'.
   Proof. 
     cdes CertSTEP.
     assert (ES.Wf S) as WFS by apply SRCC.
@@ -258,7 +261,6 @@ Section SimRelCertStepLemma.
     { econstructor; eauto. }
     erewrite basic_step_cont_sb_dom'; eauto.
     rewrite !id_union. rewrite !seq_union_r, !collect_rel_union.
-    erewrite basic_step_cont_thread'; eauto.
     unionL.
     { erewrite <- jf_in_cert_rf; eauto.
       arewrite (⦗kE S k⦘ ⊆ ⦗SE S⦘ ⨾ ⦗kE S k⦘).
@@ -304,7 +306,7 @@ Section SimRelCertStepLemma.
     assert (Execution.t S X) as EXEC by apply SRCC.
     assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT.
     { apply SRCC. }
-    assert (cert_graph G sc TC TC' (ktid S k) st'').
+    assert (cert_graph G sc TC' (ktid S k) st'').
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
@@ -335,7 +337,7 @@ Section SimRelCertStepLemma.
         rewrite <- EQa, EQx. 
         erewrite cslab; eauto.
         { eapply issuedW; eauto. }
-        red. do 4 left. right.
+        red. do 3 left. right.
         eapply sim_trav_step_issued_le; eauto.
         eexists; apply SRCC. }
       unfold_cert_step_ CertSTEP_;
@@ -366,7 +368,7 @@ Section SimRelCertStepLemma.
       rewrite <- EQa'', EQx. 
       erewrite cslab; eauto.
       { eapply issuedW; eauto. }
-      red. do 4 left. right.
+      red. do 3 left. right.
       eapply sim_trav_step_issued_le; eauto.
       eexists; apply SRCC. }
     unfold_cert_step_ CertSTEP_;
@@ -398,7 +400,7 @@ Section SimRelCertStepLemma.
     assert (Execution.t S X) as EXEC by apply SRCC.
     assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT.
     { apply SRCC. }
-    assert (cert_graph G sc TC TC' (ktid S k) st'').
+    assert (cert_graph G sc TC' (ktid S k) st'').
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
@@ -417,7 +419,7 @@ Section SimRelCertStepLemma.
         erewrite basic_step_e2a_certlab_e; eauto.
         erewrite cslab; eauto.
         { eapply issuedW; eauto. }
-        red. do 4 left. right.
+        red. do 3 left. right.
         eapply sim_trav_step_issued_le; eauto.
         eexists; apply SRCC. }
       unfold_cert_step_ CertSTEP_;
@@ -433,7 +435,7 @@ Section SimRelCertStepLemma.
       erewrite basic_step_e2a_certlab_e'; eauto.
       erewrite cslab; eauto.
       { eapply issuedW; eauto. }
-      red. do 4 left. right.
+      red. do 3 left. right.
       eapply sim_trav_step_issued_le; eauto.
       eexists; apply SRCC. }
     unfold_cert_step_ CertSTEP_;
@@ -457,7 +459,7 @@ Section SimRelCertStepLemma.
     assert (Execution.t S X) as EXEC by apply SRCC.
     assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT.
     { apply SRCC. }
-    assert (cert_graph G sc TC TC' (ktid S k) st'') as CERTG.
+    assert (cert_graph G sc TC' (ktid S k) st'') as CERTG.
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
