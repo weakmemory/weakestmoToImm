@@ -38,6 +38,12 @@ Section AuxRel.
   Definition set_map {A B : Type} (f : A -> B) (s : B -> Prop) :=
     fun x => s (f x).
 
+  Definition prcl {A : Type} (r : relation A) (s : A -> Prop) :=
+    dom_rel (r ⨾ ⦗s⦘) ⊆₁ s.
+
+  Definition fwcl {A : Type} (r : relation A) (s : A -> Prop):=
+    codom_rel (⦗s⦘ ⨾ r) ⊆₁ s.
+
 End AuxRel.
 
 Notation "⊤₁" := set_full.
@@ -54,7 +60,7 @@ Notation "f □ r"  := (collect_rel f r) (at level 45).
 Hint Unfold
      clos_sym clos_refl_sym
      inj_dom restr_fun set_map
-     eq_opt compl_rel fixset : unfolderDb.
+     eq_opt compl_rel fixset prcl fwcl : unfolderDb.
 
 Section Props.
 
@@ -847,7 +853,7 @@ Lemma seq_restr (rr rr' : relation A) :
 Proof. basic_solver. Qed.
 
 Lemma seq_restr_prcl (rr rr' : relation A)
-      (PRCL : dom_rel (rr' ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl rr' s) :
   restr_rel s rr ⨾ restr_rel s rr' ≡ restr_rel s (rr ⨾ rr').
 Proof.
   split; [by apply seq_restr|].
@@ -857,7 +863,7 @@ Proof.
 Qed.
 
 Lemma seq_restr_prcl_cr_r
-      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl r' s) :
   restr_rel s r ⨾ (restr_rel s r')^? ≡ restr_rel s (r ⨾ r'^?).
 Proof.
   rewrite !crE, !seq_union_r, !seq_id_r.
@@ -866,7 +872,7 @@ Proof.
 Qed.
 
 Lemma seq_restr_prcl_cr_l
-      (PRCL : dom_rel (r' ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl r' s) :
   (restr_rel s r)^? ⨾ restr_rel s r' ≡ restr_rel s (r^? ⨾ r').
 Proof.
   rewrite !crE, !seq_union_l, !seq_id_l.
@@ -875,7 +881,7 @@ Proof.
 Qed.
 
 Lemma seq_restr_fwcl {rr rr' : relation A}
-      (FWCL : codom_rel (⦗s⦘ ⨾ rr) ⊆₁ s) :
+      (FWCL : fwcl rr s) :
   restr_rel s rr ⨾ restr_rel s rr' ≡ restr_rel s (rr ⨾ rr').
 Proof.
   split; [by apply seq_restr|].
@@ -885,7 +891,7 @@ Proof.
 Qed.
 
 Lemma seq_restr_fwcl_cr_r
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+      (FWCL : fwcl r s) :
   restr_rel s r ⨾ (restr_rel s r')^? ≡ restr_rel s (r ⨾ r'^?).
 Proof.
   rewrite !crE, !seq_union_r, !seq_id_r.
@@ -894,7 +900,7 @@ Proof.
 Qed.
 
 Lemma seq_restr_fwcl_cr_l
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+      (FWCL : fwcl r s) :
   (restr_rel s r)^? ⨾ restr_rel s r' ≡ restr_rel s (r^? ⨾ r').
 Proof.
   rewrite !crE, !seq_union_l, !seq_id_l.
@@ -927,18 +933,17 @@ Proof.
 Qed.
 
 Lemma prcl_cr (rr : relation A)
-      (PRCL : dom_rel (rr ⨾ ⦗s⦘) ⊆₁ s) :
-  dom_rel (rr^? ⨾ ⦗s⦘) ⊆₁ s.
+      (PRCL : prcl rr s) :
+  prcl rr^? s.
 Proof.
+  unfold prcl.
   rewrite crE.
-  rewrite seq_union_l, dom_union, seq_id_l.
-  eapply set_subset_union_l.
-  split; auto. basic_solver.
+  unfolder in *. basic_solver 10.
 Qed.
 
 Lemma prcl_rt (rr : relation A)
-      (PRCL : dom_rel (rr ⨾ ⦗s⦘) ⊆₁ s) :
-  dom_rel (rr＊ ⨾ ⦗s⦘) ⊆₁ s.
+      (PRCL : prcl rr s) :
+  prcl rr＊ s.
 Proof.
   apply subset_eqv_rel.
   apply rt_ind_right with (P := fun x => ⦗dom_rel (x ⨾ ⦗s⦘)⦘).
@@ -953,54 +958,65 @@ Proof.
 Qed.
 
 Lemma prcl_ct (rr : relation A)
-      (PRCL : dom_rel (rr ⨾ ⦗s⦘) ⊆₁ s) :
-  dom_rel (rr⁺ ⨾ ⦗s⦘) ⊆₁ s.
+      (PRCL : prcl rr s) :
+  prcl rr⁺ s.
 Proof.
+  unfold prcl in *.
   rewrite ct_end, seqA.
   rewrite <- dom_rel_eqv_dom_rel, PRCL.
   by apply prcl_rt.
 Qed.
 
-Lemma fwcl_cr
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
-  codom_rel (⦗s⦘ ⨾ r^?) ⊆₁ s.
+Lemma transp_prcl_fwcl rr :
+  prcl rr⁻¹ s <-> fwcl rr s.
 Proof.
-  rewrite <- tr_dom_eqv_codom in FWCL.
-  rewrite <- tr_dom_eqv_codom.
-  rewrite transp_seq, transp_eqv_rel in *.
-  rewrite transp_cr in *. by apply prcl_cr.
+  unfold prcl, fwcl.
+  rewrite <- transp_eqv_rel, <- transp_seq at 1.
+    by rewrite tr_dom_eqv_codom.
+Qed.
+
+Lemma fwcl_cr
+      (FWCL : fwcl r s) :
+  fwcl r^? s.
+Proof.
+  unfold fwcl.
+  rewrite crE.
+  unfolder in *. basic_solver 30.
 Qed.
 
 Lemma fwcl_rt
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
-  codom_rel (⦗s⦘ ⨾ r＊) ⊆₁ s.
+      (FWCL : fwcl r s) :
+  fwcl r＊ s.
 Proof.
-  rewrite <- tr_dom_eqv_codom in FWCL.
-  rewrite <- tr_dom_eqv_codom.
-  rewrite transp_seq, transp_eqv_rel in *.
-  rewrite transp_rt in *. by apply prcl_rt.
+  apply transp_prcl_fwcl.
+  unfold prcl.
+  rewrite transp_rt.
+  apply transp_prcl_fwcl in FWCL.
+  by apply prcl_rt.
 Qed.
 
 Lemma fwcl_ct
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
-  codom_rel (⦗s⦘ ⨾ r⁺) ⊆₁ s.
+      (FWCL : fwcl r s) :
+  fwcl r⁺ s.
 Proof.
-  rewrite <- tr_dom_eqv_codom in FWCL.
-  rewrite <- tr_dom_eqv_codom.
-  rewrite transp_seq, transp_eqv_rel in *.
-  rewrite transp_ct in *. by apply prcl_ct.
+  apply transp_prcl_fwcl.
+  unfold prcl.
+  rewrite transp_ct.
+  apply transp_prcl_fwcl in FWCL.
+  by apply prcl_ct.
 Qed.
 
 Lemma prcl_fwcl_swap
-      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s)
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s) :
+      (PRCL : prcl r s)
+      (FWCL : fwcl r s) :
   r ⨾ ⦗s⦘ ≡ ⦗s⦘ ⨾ r.
 Proof.
-    by rewrite (dom_rel_helper PRCL), (codom_rel_helper FWCL), seqA.
+  unfold prcl, fwcl in *.
+  by rewrite (dom_rel_helper PRCL), (codom_rel_helper FWCL), seqA.
 Qed.
 
 Lemma restr_ct_prcl
-      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl r s) :
   restr_rel s r⁺ ≡ (restr_rel s r)⁺.
 Proof.
   split; [| by apply restr_ct].
@@ -1015,7 +1031,7 @@ Proof.
 Qed.
 
 Lemma restr_rt_prcl
-      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl r s) :
   restr_rel s r＊ ≡ ⦗s⦘ ⨾ (restr_rel s r)＊.
 Proof.
   rewrite !rtE.
@@ -1028,7 +1044,7 @@ Proof.
 Qed.
 
 Lemma restr_cr_prcl_l
-      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl r s) :
   restr_rel s r^? ≡ ⦗s⦘ ⨾ (restr_rel s r)^?.
 Proof.
   rewrite !crE.
@@ -1037,7 +1053,7 @@ Proof.
 Qed.
 
 Lemma restr_cr_prcl_r
-      (PRCL : dom_rel (r ⨾ ⦗s⦘) ⊆₁ s) :
+      (PRCL : prcl r s) :
   restr_rel s r^? ≡ (restr_rel s r)^? ⨾ ⦗s⦘.
 Proof.
   rewrite !crE.
@@ -1046,12 +1062,13 @@ Proof.
 Qed.
 
 Lemma fwcl_hom
-      (FWCL : codom_rel (⦗s⦘ ⨾ r) ⊆₁ s)
-      (FWCL' : codom_rel (⦗s'⦘ ⨾ r) ⊆₁ s'):
-  codom_rel (⦗s ∪₁ s'⦘ ⨾ r) ⊆₁ s ∪₁ s'.
+      (FWCL : fwcl r s)
+      (FWCL' : fwcl r s') :
+  fwcl r (s ∪₁ s').
 Proof.
+  unfold fwcl in *.
   unfolder in *.
-  basic_solver 10.
+  basic_solver 20.
 Qed.
 
 (******************************************************************************)
@@ -1408,15 +1425,17 @@ Lemma seq_eqv_imm :
 Proof. basic_solver. Qed.
 
 Lemma trans_prcl_immediate_seqr_split x y
-      (TRANS : transitive r) (PRCL : downward_total r) (IMM : (immediate r) x y) :
-  r ⨾ ⦗ eq y ⦘ ≡ (eq x ∪₁ dom_rel (r ⨾ ⦗ eq x ⦘)) × eq y.
+      (TRANS : transitive r)
+      (DWT : downward_total r)
+      (IMM : (immediate r) x y) :
+  r ⨾ ⦗eq y⦘ ≡ (eq x ∪₁ dom_rel (r ⨾ ⦗eq x⦘)) × eq y.
 Proof.
   red; split.
   { unfolder.
     intros z y' [Rzy EQy].
     split; auto.
     assert (r^= z x) as Rzx.
-    { eapply PRCL; eauto; desf.
+    { eapply DWT; eauto; desf.
       by apply immediate_in. }
     unfolder in *.
     unfold clos_refl_sym in Rzx.
@@ -1631,13 +1650,41 @@ Add Parametric Morphism A : (@codom_rel A) with signature
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@codom_rel A) with signature
-   same_relation ==> set_equiv as codom_rel_more.
+    same_relation ==> set_equiv as codom_rel_more.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
 
 Add Parametric Morphism A : (@set_minus A) with signature
-  set_equiv ==> set_equiv ==> set_equiv as set_minus_more.
+    set_equiv ==> set_equiv ==> set_equiv as set_minus_more.
 Proof. red; unfolder; splits; ins; desf; split; eauto. Qed.
 
 Add Parametric Morphism A : (@set_minus A) with signature
-  set_subset ==> set_subset --> set_subset as set_minus_mori.
+    set_subset ==> set_subset --> set_subset as set_minus_mori.
 Proof. red; unfolder; splits; ins; desf; eauto. Qed.
+
+Add Parametric Morphism A : (@prcl A) with signature
+    flip inclusion ==> set_equiv ==> impl as prcl_mori.
+Proof.
+  intros r r' INCL s s' EQ.
+  unfold prcl. by rewrite <- EQ, INCL.
+Qed.
+
+Add Parametric Morphism A : (@prcl A) with signature
+    same_relation ==> set_equiv ==> iff as prcl_more.
+Proof.
+  intros r r' EQ_r s s' EQ_s.
+  unfold prcl. by rewrite EQ_r, EQ_s.
+Qed.
+
+Add Parametric Morphism A : (@fwcl A) with signature
+    flip inclusion ==> set_equiv ==> impl as fwcl_mori.
+Proof.
+  intros r r' INCL s s' EQ.
+  unfold fwcl. by rewrite <- EQ, INCL.
+Qed.
+
+Add Parametric Morphism A : (@fwcl A) with signature
+    same_relation ==> set_equiv ==> iff as fwcl_more.
+Proof.
+  intros r r' EQ_r s s' EQ_s.
+  unfold fwcl. by rewrite EQ_r, EQ_s.
+Qed.
