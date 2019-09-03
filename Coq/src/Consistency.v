@@ -653,7 +653,7 @@ Section ConsistentProps.
   Qed.
 
   Lemma hb_imm_split_l :
-        hb ≡ immediate hb ⨾ hb^?.
+    hb ≡ immediate hb ⨾ hb^?.
   Proof.
     eapply ct_imm_split_l.
     { eapply hb_irr. }
