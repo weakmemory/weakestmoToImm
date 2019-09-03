@@ -287,6 +287,16 @@ Proof.
   basic_solver 20.
 Qed.
 
+Lemma ra_rf_in_hb  :
+  ⦗Rel⦘ ⨾ rf ⨾ ⦗Acq⦘ ⊆ hb.
+Proof.
+  unfold ES.rf.
+  rewrite inclusion_minus_rel, seqA.
+  arewrite (⦗Rel⦘ ⨾ ew ⊆ ⦗Rel⦘).
+  { rewrite WF.(ES.ewm). basic_solver. }
+  apply ra_jf_in_hb.
+Qed.
+
 (******************************************************************************)
 (** ** Sets and Relations in graph *)
 (******************************************************************************)
