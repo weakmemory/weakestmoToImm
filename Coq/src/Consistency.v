@@ -998,12 +998,44 @@ Section ConsistentProps.
     basic_solver.
   Qed.
 
+  Lemma hb_jf_prcl_cc_prcl {A}
+        (JF_PRCL : prcl jf A)
+        (HB_PRCL : prcl hb A) :
+    prcl cc A.
+  Proof.
+    rewrite cc_alt; eauto.
+    rewrite inclusion_inter_l2.
+    unfold prcl. rewrite seqA.
+    arewrite ((sb ∪ jf)＊ ⨾ ⦗A⦘ ⊆ ⦗A⦘ ⨾ (sb ∪ jf)＊).
+    { apply dom_r2l_rt.
+      assert (DOM': dom_rel((sb ∪ jf) ⨾ ⦗A⦘) ⊆₁ A).
+      { rewrite sb_in_hb. relsf. }
+      rewrite (dom_rel_helper DOM'). basic_solver. }
+    arewrite (jfe ⊆ jf).
+    rewrite <- seqA, dom_seq. auto.
+  Qed.
+
+  Lemma ncf_hb_jf_prcl_vis {A}
+        (AE : A ⊆₁ E)
+        (NCF : ES.cf_free S A)
+        (JF_PRCL : prcl jf A)
+        (HB_PRCL : prcl hb A) :
+    A ⊆₁ vis.
+  Proof.
+    unfold vis; splits; constructor;
+      rename x into v, H into vA; auto.
+    arewrite (cc ⨾ ⦗eq v⦘ ⊆ ∅₂); [|done].
+    arewrite (eq v ⊆₁ A); [basic_solver|].
+    rewrite (dom_rel_helper (hb_jf_prcl_cc_prcl JF_PRCL HB_PRCL)).
+    unfold cc. by rewrite inclusion_inter_l1.
+  Qed.
+
 End ConsistentProps.
 
 Section WeakestMOConsistentProps.
-
+  
   Variable ESC : @es_consistent Weakestmo.
-
+  
   Lemma co_jf_hb_tjf_irr : 
     irreflexive (co ⨾ jf^? ⨾ hb ⨾ jf⁻¹).
   Proof. 

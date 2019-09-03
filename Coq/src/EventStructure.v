@@ -1117,6 +1117,20 @@ Proof.
   exfalso. eapply NCF. eauto.
 Qed.
   
+
+Lemma jf_prcl_rf_compl {A} WF
+      (AE : A ⊆₁ E)
+      (JF_PRCL : prcl jf A):
+  A ∩₁ R ⊆₁ codom_rel (⦗A⦘ ⨾ rf).
+Proof.
+  arewrite (A ∩₁ R ≡₁ A ∩₁ (E ∩₁ R)) by basic_solver.
+  rewrite WF.(jf_complete).
+  rewrite set_interC, <- codom_eqv1.
+  rewrite (dom_rel_helper JF_PRCL).
+  rewrite jf_in_rf; auto.
+  basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** fr properties *)
 (******************************************************************************)

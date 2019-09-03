@@ -41,8 +41,11 @@ Section AuxRel.
   Definition prcl {A : Type} (r : relation A) (s : A -> Prop) :=
     dom_rel (r ⨾ ⦗s⦘) ⊆₁ s.
 
-  Definition fwcl {A : Type} (r : relation A) (s : A -> Prop):=
+  Definition fwcl {A : Type} (r : relation A) (s : A -> Prop) :=
     codom_rel (⦗s⦘ ⨾ r) ⊆₁ s.
+
+  Definition prefix {A : Type} (r : relation A) (s : A -> Prop) :=
+    dom_rel (r ⨾ ⦗s⦘).
 
 End AuxRel.
 
@@ -60,7 +63,8 @@ Notation "f □ r"  := (collect_rel f r) (at level 45).
 Hint Unfold
      clos_sym clos_refl_sym
      inj_dom restr_fun set_map
-     eq_opt compl_rel fixset prcl fwcl : unfolderDb.
+     eq_opt compl_rel fixset
+     prcl fwcl prefix : unfolderDb.
 
 Section Props.
 
@@ -1061,6 +1065,16 @@ Proof.
   apply union_more; basic_solver.
 Qed.
 
+Lemma prcl_hom
+      (PRCL : prcl r s)
+      (PRCL' : prcl r s') :
+  prcl r (s ∪₁ s').
+Proof.
+  unfold fwcl in *.
+  unfolder in *.
+  basic_solver 20.
+Qed.
+
 Lemma fwcl_hom
       (FWCL : fwcl r s)
       (FWCL' : fwcl r s') :
@@ -1688,3 +1702,11 @@ Proof.
   intros r r' EQ_r s s' EQ_s.
   unfold fwcl. by rewrite EQ_r, EQ_s.
 Qed.
+
+Add Parametric Morphism A : (@prefix A) with signature
+    inclusion ==> set_subset ==> set_subset as prefix_mori.
+Proof. basic_solver 10. Qed.
+
+Add Parametric Morphism A : (@prefix A) with signature
+    same_relation ==> set_equiv ==> set_equiv as prefix_more.
+Proof. basic_solver 10. Qed.

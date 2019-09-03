@@ -161,23 +161,15 @@ Notation "'lab'" := S.(ES.lab).
 Notation "'R'" := (fun a => is_true (is_r lab a)).
 Notation "'W'" := (fun a => is_true (is_w lab a)).
 
-
-Definition hb_pref v := dom_rel (hb^? ⨾ ⦗eq v⦘).
-
-Definition hb_pref2 v1 v2 := dom_rel (hb^? ⨾ (⦗eq v1⦘ ∪ ⦗eq v2⦘)).
-
-Lemma hb_pref2_alt v1 v2:
-  hb_pref2 v1 v2 ≡₁ hb_pref v1 ∪₁ hb_pref v2.
-Proof.
-  unfold hb_pref, hb_pref2.
-  basic_solver 10.
-Qed.
+Lemma prefix_union {A} (r : relation A) (s s' : A -> Prop) :
+      prefix r (s ∪₁ s') ≡₁ prefix r s ∪₁ prefix r s'.
+Proof. basic_solver 10. Qed.
 
 Lemma hb_pref_inE (v : eventid)
       (vE : E v) :
-  hb_pref v ⊆₁ E.
+  prefix hb^? (eq v) ⊆₁ E.
 Proof.
-  unfold hb_pref.
+  unfold prefix.
   rewrite hbE; auto.
   basic_solver.
 Qed.
@@ -185,70 +177,54 @@ Qed.
 Lemma hb_pref2_inE v1 v2
       (v1E : E v1)
       (v2E : E v2) :
-  hb_pref2 v1 v2 ⊆₁ E.
+  prefix hb^? (eq v1 ∪₁ eq v2) ⊆₁ E.
 Proof.
-  rewrite hb_pref2_alt.
+  rewrite prefix_union.
   rewrite !hb_pref_inE; auto.
   basic_solver.
 Qed.
 
 Lemma init_in_hb_pref v
       (vEninit : Eninit v) :
-  Einit ⊆₁ hb_pref v.
+  Einit ⊆₁ prefix hb^? (eq v).
 Proof.
-  unfold hb_pref.
   rewrite <- sb_in_hb.
   rewrite <- ES.sb_init; auto.
   basic_solver 10.
 Qed.
 
-Lemma hb_pref_hb_bwcl v :
-  dom_rel (hb ⨾ ⦗hb_pref v⦘) ⊆₁ hb_pref v.
-Proof.
-  unfold hb_pref.
-  specialize (hb_trans S).
-  basic_solver 10.
-Qed.
+
+Lemma trans_prefix_prcl {A} (r : relation A) (s : A -> Prop)
+      (TRANS : transitive r) :
+  prcl r (prefix r s).
+Proof. basic_solver 10. Qed.
 
 Variable CONS : es_consistent S (m := Weakestmo).
 
 Lemma hb_pref_rmw_fwcl v
       (nvRMW : ⦗eq v⦘ ⨾ rmw ⊆ ∅₂) :
-  codom_rel (⦗hb_pref v⦘ ⨾ rmw) ⊆₁ hb_pref v.
+  fwcl rmw (prefix hb^? (eq v)).
 Proof.
-   unfold hb_pref.
-   rewrite codom_rel_eqv_dom_rel, <- tr_dom_eqv_codom.
-   apply dom_rel_mori.
-   rewrite !transp_seq, !transp_inv.
-   rewrite crE at 1.
-   rewrite seq_union_l, seq_union_r, seq_id_l.
-   apply inclusion_union_l.
-   { apply inclusion_transpE.
-     rewrite transp_seq, transp_eqv_rel, transp_inv.
-     rewrite nvRMW. basic_solver. }
-   eby rewrite <- seqA, t_rmw_hb_in_hb.
-Qed.
-
-Lemma jf_prcl_rf_compl {A}
-      (AE : A ⊆₁ E)
-      (JF_PRCL : dom_rel(jf ⨾ ⦗A⦘) ⊆₁ A):
-  A ∩₁ R ⊆₁ codom_rel (⦗A⦘ ⨾ rf).
-Proof.
-  rewrite <- set_interK with (s := A) at 1.
-  rewrite AE at 2; auto.
-  rewrite set_interA, (ES.jf_complete WF).
-  rewrite set_interC, <- codom_eqv1.
-  rewrite (dom_rel_helper JF_PRCL).
-  rewrite ES.jf_in_rf; auto.
-  basic_solver.
+  unfold prefix, fwcl.
+  rewrite codom_rel_eqv_dom_rel, <- tr_dom_eqv_codom.
+  apply dom_rel_mori.
+  rewrite !transp_seq, !transp_inv.
+  rewrite crE at 1.
+  rewrite seq_union_l, seq_union_r, seq_id_l.
+  apply inclusion_union_l.
+  { apply inclusion_transpE.
+    rewrite transp_seq, transp_eqv_rel, transp_inv.
+    rewrite nvRMW. basic_solver. }
+  eby rewrite <- seqA, t_rmw_hb_in_hb.
 Qed.
 
 Lemma hb_pref2_ncf e w
       (JF : jf w e):
-  ES.cf_free S (hb_pref2 e w).
+  ES.cf_free S (prefix hb^? (eq e ∪₁ eq w)).
 Proof.
-  unfold hb_pref2.
+  unfold prefix.
   red. rewrite eqv_dom_in_seq_tr, !seqA.
+  rewrite id_union.
   arewrite ((hb^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘))⁻¹ ⨾
              cf ⨾
              hb^? ⨾ (⦗eq e⦘ ∪ ⦗eq w⦘) ⊆ ∅₂); [|basic_solver].
@@ -275,44 +251,9 @@ Proof.
 Qed.
 
 
-Lemma hb_jf_prcl_cc_prcl {A}
-           (JF_PRCL : dom_rel(jf ⨾ ⦗A⦘) ⊆₁ A)
-           (HB_PRCL : dom_rel(hb ⨾ ⦗A⦘) ⊆₁ A):
-  dom_rel (cc S ⨾ ⦗A⦘) ⊆₁ A.
-Proof.
-  assert (EE_DOM : dom_rel(jfe ⨾ (sb ∪ jf)＊ ⨾ ⦗A⦘) ⊆₁ A).
-  { arewrite ((sb ∪ jf)＊ ⨾ ⦗A⦘ ⊆ ⦗A⦘ ⨾ (sb ∪ jf)＊).
-    { apply dom_r2l_rt.
-      assert (DOM': dom_rel((sb ∪ jf) ⨾ ⦗A⦘) ⊆₁ A).
-      { rewrite sb_in_hb. relsf. }
-      rewrite (dom_rel_helper DOM'). basic_solver. }
-    arewrite (jfe ⊆ jf).
-    rewrite <-seqA, dom_seq. auto. }
-  rewrite cc_alt; eauto.
-  rewrite <- seq_eqv_inter_rr, seqA.
-  rewrite (dom_rel_helper EE_DOM).
-  basic_solver.
-Qed.
-
-Lemma ncf_hb_jf_prcl_vis {A}
-      (AE : A ⊆₁ E)
-      (NCF : ES.cf_free S A)
-      (JF_PRCL : dom_rel(jf ⨾ ⦗A⦘) ⊆₁ A)
-      (HB_PRCL : dom_rel(hb ⨾ ⦗A⦘) ⊆₁ A):
-  (A ⊆₁ vis S).
-Proof.
-  unfold vis; splits; constructor;
-  rename x into v, H into vA; auto.
-  arewrite (cc S ⨾ ⦗eq v⦘ ⊆ ∅₂); [|done].
-  arewrite (eq v ⊆₁ A); [basic_solver|].
-  rewrite (dom_rel_helper (hb_jf_prcl_cc_prcl JF_PRCL HB_PRCL)).
-  unfold cc. rewrite inclusion_inter_l1.
-  auto.
-Qed.
-
 Lemma rmw_pref r w
       (RMW : rmw r w):
-  hb_pref w ⊆₁ hb_pref r ∪₁ eq w.
+  prefix hb^? (eq w) ⊆₁ prefix hb^? (eq r) ∪₁ eq w.
 Proof.
   assert (NINIT_r : Eninit r).
   { apply (ES.rmwEninit WF) in RMW.
@@ -320,7 +261,7 @@ Proof.
   assert (wW : W w).
   { apply (ES.rmwD WF) in RMW.
     unfolder in RMW. basic_solver. }
-  unfold hb_pref.
+  unfold prefix.
   rewrite crE, seq_union_l, seq_id_l, dom_union at 1.
   rewrite set_unionC.
   apply set_subset_union; [|basic_solver].
@@ -352,13 +293,13 @@ Qed.
 Lemma hb_pref2_rmw_ncf e w w'
            (JF : jf w e)
            (RMW : rmw e w'):
-  ES.cf_free S (hb_pref2 w' w).
+  ES.cf_free S ((prefix hb^? (eq w' ∪₁ eq w))).
 Proof.
-  rewrite hb_pref2_alt.
+  rewrite prefix_union.
   rewrite rmw_pref; eauto.
   rewrite set_unionC, <- set_unionA.
-  rewrite set_unionC with (s := hb_pref w).
-  rewrite <- hb_pref2_alt.
+  rewrite set_unionC with (s := prefix hb^? (eq w)).
+  rewrite <- prefix_union.
   unfold ES.cf_free.
   rewrite !id_union, !seq_union_l, !seq_union_r.
   apply inclusion_union_l; apply inclusion_union_l.
@@ -369,7 +310,8 @@ Proof.
     rewrite seqA;
     rewrite <- seqA with (r1 := rmw);
     rewrite seq_rmw_cf_in_cf; eauto;
-    arewrite (eq e ⊆₁ hb_pref2 e w); [unfold hb_pref2; basic_solver 7|].
+      arewrite (eq e ⊆₁ prefix hb^? (eq e ∪₁ eq w)) at 1;
+      [basic_solver 7|].
   all: by apply hb_pref2_ncf.
 Qed.
 
@@ -462,25 +404,24 @@ Proof.
     exfalso.
       assert (HB_DOM : dom_rel (hb S') ⊆₁ E S).
     { eapply step_nupd_hb_dom; eauto. }
-    assert (PREF_HB_BWCL : dom_rel(hb S' ⨾ ⦗hb_pref2 S' e w⦘) ⊆₁ hb_pref2 S' e w).
-    { rewrite hb_pref2_alt.
-      rewrite id_union, seq_union_r, dom_union.
-      rewrite !hb_pref_hb_bwcl. auto. }
-    assert (PREF_JF_BWCL : dom_rel(jf S' ⨾ ⦗hb_pref2 S' e w⦘) ⊆₁ hb_pref2 S' e w).
-    { unfold hb_pref2.
-      rewrite dom_rel_eqv_dom_rel.
-      rewrite JF', IH.
-      type_solver 9. }
-    assert (PREF_EXEC : program_execution P S' (hb_pref2 S' e w)).
+    assert (PREF_HB_PRCL : prcl (hb S') (prefix (hb S')^? (eq e ∪₁ eq w))).
+    { rewrite prefix_union.
+      apply prcl_hom.
+      all: arewrite (hb S' ⊆ (hb S')^?);
+        apply trans_prefix_prcl, transitive_cr, hb_trans. }
+    assert (PREF_JF_PRCL : prcl (jf S') (prefix (hb S')^? (eq e ∪₁ eq w))).
+    { rewrite JF', IH.
+      basic_solver 9. }
+    assert (PREF_EXEC : program_execution P S' (prefix (hb S')^? (eq e ∪₁ eq w))).
     { red. splits; auto. constructor.
       { apply hb_pref2_inE; eauto. }
-      { rewrite hb_pref2_alt.
+      { rewrite prefix_union.
         specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_S).
         specialize (init_in_hb_pref WF_S').
         basic_solver 10. }
-      { rewrite sb_in_hb. apply PREF_HB_BWCL. }
-      { rewrite sw_in_hb. apply PREF_HB_BWCL. }
-      { rewrite hb_pref2_alt.
+      { rewrite sb_in_hb. apply PREF_HB_PRCL. }
+      { rewrite sw_in_hb. apply PREF_HB_PRCL. }
+      { rewrite prefix_union.
         apply fwcl_hom; apply hb_pref_rmw_fwcl; auto.
         { rewrite BasicStep.basic_step_nupd_rmw; eauto.
           rewrite ES.rmwE; eauto.
@@ -488,22 +429,22 @@ Proof.
           basic_solver. }
         rewrite ES.rmwD; eauto.
         type_solver. }
-      { apply jf_prcl_rf_compl; auto.
+      { apply ES.jf_prcl_rf_compl; auto.
         apply hb_pref2_inE; auto. }
       { apply hb_pref2_ncf; auto. }
-      assert (AE' : hb_pref2 S' e w ⊆₁ E S').
+      assert (AE' : prefix (hb S')^? (eq e ∪₁ eq w) ⊆₁ E S').
       { apply hb_pref2_inE; eauto. }
-      apply ncf_hb_jf_prcl_vis; auto.
+      eapply ncf_hb_jf_prcl_vis; eauto.
       apply hb_pref2_ncf; auto. }
-    assert (PREF_RC11 : rc11_consistent_x S' (hb_pref2 S' e w)).
-    { red. exists (x2g S' (hb_pref2 S' e w)). splits.
+    assert (PREF_RC11 : rc11_consistent_x S' (prefix (hb S')^? (eq e ∪₁ eq w))).
+    { red. exists (x2g S' (prefix (hb S')^? (eq e ∪₁ eq w))). splits.
       { apply x2g_X2G; auto. by cdes PREF_EXEC. }
       apply x2g_rc11_consistent; auto.
       { by cdes PREF_EXEC. }
       rewrite restr_relE.
       rewrite seq_union_l, seq_union_r.
       rewrite <- restr_relE with (r := rf S').
-      fold (Execution.ex_rf S' (hb_pref2 S' e w)).
+      fold (Execution.ex_rf S' (prefix (hb S')^? (eq e ∪₁ eq w))).
       rewrite (Execution.ex_rf_restr_jf); auto.
       2: { by cdes PREF_EXEC. }
       rewrite <- restr_relE.
@@ -526,17 +467,17 @@ Proof.
       assert (NEQ : w <> e).
       { intro. apply WE_NHB. basic_solver. }
       basic_solver. }
-    specialize (RACE_FREE S' (hb_pref2 S' e w) PREF_EXEC PREF_RC11).
-    assert (RACE_W : race S' (hb_pref2 S' e w) w).
+    specialize (RACE_FREE S' (prefix (hb S')^? (eq e ∪₁ eq w)) PREF_EXEC PREF_RC11).
+    assert (RACE_W : race S' (prefix (hb S')^? (eq e ∪₁ eq w)) w).
     { unfold race. unfold dom_rel. exists e.
       unfolder. splits.
-      1,2,4: unfold hb_pref2; basic_solver 10.
+      1,2,4: basic_solver 10.
       { apply and_not_or. split; auto. }
       unfold one. auto. }
-    assert (RACE_E : race S' (hb_pref2 S' e w) e).
+    assert (RACE_E : race S' (prefix (hb S')^? (eq e ∪₁ eq w)) e).
     { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
-      1,2,4: unfold hb_pref2; basic_solver 10.
+      1,2,4: basic_solver 10.
       { apply and_not_or. split.
         { unfolder in WE_NHB. intuition. }
         intro HH. by apply ES.cf_sym in HH. }
@@ -576,18 +517,15 @@ Proof.
       apply r_step. apply rf_in_eco.
       apply ES.jf_in_rf; eauto. }
   exfalso.
-  assert (PREF_HB_BWCL : dom_rel(hb S' ⨾ ⦗hb_pref2 S' w' w⦘) ⊆₁ hb_pref2 S' w' w).
-  { unfold hb_pref2.
-    rewrite dom_rel_eqv_dom_rel.
-    rewrite <- seqA, (rewrite_trans_seq_cr_r (hb_trans S')).
-    basic_solver 10. }
-  specialize (step_hb_dom BSTEP STEP_ WF_S) as HB_DOM.
-  assert (PREF_JF_BWCL : dom_rel(jf S' ⨾ ⦗hb_pref2 S' w' w⦘) ⊆₁ hb_pref2 S' w' w).
-  { unfold hb_pref2.
-    rewrite dom_rel_eqv_dom_rel.
-    rewrite JF', IH.
-    type_solver 9. }
 
+  assert (PREF_HB_PRCL : prcl (hb S') (prefix (hb S')^? (eq w' ∪₁ eq w))).
+  { rewrite prefix_union.
+    apply prcl_hom.
+    all: arewrite (hb S' ⊆ (hb S')^?);
+      apply trans_prefix_prcl, transitive_cr, hb_trans. }
+  assert (PREF_JF_PRCL : prcl (jf S') (prefix (hb S')^? (eq w' ∪₁ eq w))).
+  { rewrite JF', IH.
+    basic_solver 9. }
   assert (EW'_RMW : rmw S' e w').
   { cdes BSTEP. cdes BSTEP_.
     unfold BasicStep.rmw_delta in RMW'.
@@ -595,34 +533,34 @@ Proof.
   assert (EW'_HB : hb S' e w').
   { apply ES.rmw_in_sb, sb_in_hb in EW'_RMW; auto. }
 
-  assert (PREF_EXEC : program_execution P S' (hb_pref2 S' w' w)).
+  assert (PREF_EXEC : program_execution P S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
   { red. splits; auto. constructor.
     { apply hb_pref2_inE; eauto. }
-    { rewrite hb_pref2_alt.
+    { rewrite prefix_union.
       specialize (BasicStep.basic_step_acts_ninit_set BSTEP WF_S).
       specialize (init_in_hb_pref WF_S').
       basic_solver 10. }
-    { rewrite sb_in_hb. apply PREF_HB_BWCL. }
-    { rewrite sw_in_hb. apply PREF_HB_BWCL. }
-    { rewrite hb_pref2_alt.
+    { rewrite sb_in_hb. apply PREF_HB_PRCL. }
+    { rewrite sw_in_hb. apply PREF_HB_PRCL. }
+    { rewrite prefix_union.
       apply fwcl_hom; apply hb_pref_rmw_fwcl; auto.
       all: rewrite ES.rmwD; auto; type_solver. }
-    { apply jf_prcl_rf_compl; auto.
+    { apply ES.jf_prcl_rf_compl; auto.
       apply hb_pref2_inE; auto. }
     { eapply hb_pref2_rmw_ncf; eauto. }
-    apply ncf_hb_jf_prcl_vis; auto.
-    apply hb_pref2_inE; auto.
+    eapply Consistency.ncf_hb_jf_prcl_vis; eauto.
+    { apply hb_pref2_inE; auto. }
     eapply hb_pref2_rmw_ncf; eauto. }
 
-  assert (PREF_RC11 : rc11_consistent_x S' (hb_pref2 S' w' w)).
-  { red. exists (x2g S' (hb_pref2 S' w' w)). splits.
+  assert (PREF_RC11 : rc11_consistent_x S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
+  { red. exists (x2g S' (prefix (hb S')^? (eq w' ∪₁ eq w))). splits.
     { apply x2g_X2G; auto. by cdes PREF_EXEC. }
     apply x2g_rc11_consistent; auto.
     { by cdes PREF_EXEC. }
     rewrite restr_relE.
     rewrite seq_union_l, seq_union_r.
     rewrite <- restr_relE with (r := rf S').
-    fold (Execution.ex_rf S' (hb_pref2 S' w' w)).
+    fold (Execution.ex_rf S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
     rewrite (Execution.ex_rf_restr_jf); auto.
     2: { by cdes PREF_EXEC. }
     rewrite <- restr_relE.
@@ -666,17 +604,17 @@ Proof.
     { intro HH. eapply ES.sb_irr, ES.rmw_in_sb; eauto.
       eby rewrite HH in EW'_RMW. }
     basic_solver. }
-    specialize (RACE_FREE S' (hb_pref2 S' w' w) PREF_EXEC PREF_RC11).
-    assert (RACE_W : race S' (hb_pref2 S' w' w) w).
+    specialize (RACE_FREE S' (prefix (hb S')^? (eq w' ∪₁ eq w)) PREF_EXEC PREF_RC11).
+    assert (RACE_W : race S' (prefix (hb S')^? (eq w' ∪₁ eq w)) w).
     { unfold race. unfold dom_rel. exists e.
       unfolder. splits.
-      1,2,4: unfold hb_pref2; basic_solver 10.
+      1,2,4: basic_solver 10.
       { apply and_not_or. split; auto. }
       unfold one. auto. }
-    assert (RACE_E : race S' (hb_pref2 S' w' w) e).
+    assert (RACE_E : race S' (prefix (hb S')^? (eq w' ∪₁ eq w)) e).
     { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
-      1,2,4: unfold hb_pref2; basic_solver 10.
+      1,2,4: basic_solver 10.
       { apply and_not_or. split.
         { unfolder in WE_NHB. intuition. }
         intro HH. by apply ES.cf_sym in HH. }
