@@ -6,7 +6,7 @@ Require Import AuxRel.
 Require Import EventStructure.
 Require Import Consistency.
 Require Import Execution.
-Require Import ExecutionToG.
+Require Import ExecutionToGraph.
 Require Import Step.
 Require Import ProgES.
 
@@ -59,14 +59,6 @@ Definition rlx_race_free (X : eventid -> Prop) :=
 Definition ra_race_free (X : eventid -> Prop) :=
   race X ⊆₁ Sc.
 
-Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
-    ⟪ x2g  : X2G S X G ⟫ /\
-    ⟪ rc11 : rc11_consistent G ⟫.
-
-Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
-    ⟪ x2g  : X2G S X G ⟫ /\
-    ⟪ sc : sc_consistent G ⟫.
-
 Lemma ra_race_free_in_rlx_race_free :
   ra_race_free ⊆₁ rlx_race_free.
 Proof.
@@ -81,6 +73,7 @@ Qed.
 
 End Race.
 
+(* TODO: move to a more appropriate place *)
 Definition program_execution P S X :=
   ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
   ⟪ EXEC : Execution.t S X ⟫.

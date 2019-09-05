@@ -10,7 +10,7 @@ Require Import Step.
 Require Import Race.
 Require Import ProgES.
 Require Import StepWf.
-Require Import ExecutionToG.
+Require Import ExecutionToGraph.
 
 Require Import DRF_RLX.
 

@@ -12,6 +12,9 @@ Require Import Logic.FinFun.
 Require Import Omega.
 Require Import Consistency.
 Require Import ImmProperties.
+Require Import Step.
+
+Require Import SC.
 
 Local Open Scope program_scope.
 
@@ -588,7 +591,7 @@ Qed.
 Lemma seq_move_prcl r r'
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
-      (PRCL : dom_rel (r' ⨾ ⦗X⦘) ⊆₁ X) :
+      (PRCL : prcl r' X) :
   Move (r ⨾ r') ≡ Move r ⨾ Move r'.
 Proof. by apply seq_move, seq_restr_prcl. Qed.
 
@@ -1269,3 +1272,11 @@ Proof.
   { by apply x2g_X2G. }
     by apply x2g_wf.
 Qed.
+
+Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ rc11 : rc11_consistent G ⟫.
+
+Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ sc : sc_consistent G ⟫.
