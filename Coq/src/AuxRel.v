@@ -47,6 +47,9 @@ Section AuxRel.
   Definition prefix {A : Type} (r : relation A) (s : A -> Prop) :=
     dom_rel (r ⨾ ⦗s⦘).
 
+  Definition one_of {A : Type} (s : A -> Prop) :=
+    fun a b => s a \/ s b.
+
 End AuxRel.
 
 Notation "⊤₁" := set_full.

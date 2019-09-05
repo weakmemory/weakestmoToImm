@@ -473,7 +473,7 @@ Proof.
       unfolder. splits.
       1,2,4: basic_solver 10.
       { apply and_not_or. split; auto. }
-      unfold one. auto. }
+      unfold one_of. auto. }
     assert (RACE_E : race S' (prefix (hb S')^? (eq e ∪₁ eq w)) e).
     { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
@@ -481,7 +481,7 @@ Proof.
       { apply and_not_or. split.
         { unfolder in WE_NHB. intuition. }
         intro HH. by apply ES.cf_sym in HH. }
-      unfold one. auto. }
+      unfold one_of. auto. }
     specialize (RACE_FREE w RACE_W) as QW.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].
@@ -610,7 +610,7 @@ Proof.
       unfolder. splits.
       1,2,4: basic_solver 10.
       { apply and_not_or. split; auto. }
-      unfold one. auto. }
+      unfold one_of. auto. }
     assert (RACE_E : race S' (prefix (hb S')^? (eq w' ∪₁ eq w)) e).
     { unfold race. unfold dom_rel. exists w.
       unfolder. splits.
@@ -618,7 +618,7 @@ Proof.
       { apply and_not_or. split.
         { unfolder in WE_NHB. intuition. }
         intro HH. by apply ES.cf_sym in HH. }
-      unfold one. auto. }
+      unfold one_of. auto. }
     specialize (RACE_FREE w RACE_W) as QW.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].

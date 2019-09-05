@@ -29,10 +29,8 @@ Notation "'Rel'" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq'" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 Notation "'Sc'" := (fun a => is_true (is_sc S.(ES.lab) a)) (at level 10).
 
-Definition one {A : Type} (X : A -> Prop) a b := X a \/ X b.
-
 Definition race (X : eventid -> Prop) :=
-  dom_rel (((X × X) \ (hb⁼ ∪ cf)) ∩ same_loc ∩ one W).
+  dom_rel (((X × X) \ (hb⁼ ∪ cf)) ∩ same_loc ∩ one_of W).
 
 Lemma race_rw X :
   race X ⊆₁ R ∪₁ W.
@@ -48,7 +46,7 @@ Proof.
   rewrite interA, inclusion_inter_l2.
   intros x [y [EQ_LAB ONE]].
   unfold set_compl, is_f.
-  unfold one, is_w in ONE.
+  unfold one_of, is_w in ONE.
   unfold loc in EQ_LAB.
   desf.
 Qed.
