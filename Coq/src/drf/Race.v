@@ -53,43 +53,29 @@ Proof.
   desf.
 Qed.
 
-Definition RLX_race_free (X : eventid -> Prop) :=
+Definition rlx_race_free (X : eventid -> Prop) :=
   race X ⊆₁ (Rel ∩₁ W) ∪₁ (Acq ∩₁ R).
 
-Definition RA_race_free (X : eventid -> Prop) :=
+Definition ra_race_free (X : eventid -> Prop) :=
   race X ⊆₁ Sc.
 
-Definition rc11_consistent_x (S : ES.t) (X : eventid -> Prop) := exists G,
+Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
     ⟪ rc11 : rc11_consistent G ⟫.
 
-Definition sc_consistent_x (S : ES.t) (X : eventid -> Prop) := exists G,
+Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
     ⟪ sc : sc_consistent G ⟫.
 
-Lemma sc_in_rel :
-  Sc ⊆₁ Rel.
-Proof.
-  unfold is_sc, is_rel.
-  basic_solver.
-Qed.
-
-Lemma sc_in_acq :
-  Sc ⊆₁ Acq.
-Proof.
-  unfold is_sc, is_acq.
-  basic_solver.
-Qed.
-
-Lemma RA_race_free_in_RLX_race_free :
-  RA_race_free ⊆₁ RLX_race_free.
+Lemma ra_race_free_in_rlx_race_free :
+  ra_race_free ⊆₁ rlx_race_free.
 Proof.
   intros X RArf.
-  unfold RA_race_free in RArf.
-  unfold RLX_race_free.
+  unfold ra_race_free in RArf.
+  unfold rlx_race_free.
   arewrite (race X ⊆₁ Sc ∩₁ (R ∪₁ W)).
   { specialize race_rw. basic_solver. }
-  rewrite <- sc_in_rel, <- sc_in_acq.
+  rewrite <- ES.sc_in_rel, <- ES.sc_in_acq.
   basic_solver.
 Qed.
 
@@ -99,8 +85,8 @@ Definition program_execution P S X :=
   ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
   ⟪ EXEC : Execution.t S X ⟫.
 
-Definition RC11_RLX_race_free_program P :=
-  (forall S X, program_execution P S X -> rc11_consistent_x S X -> RLX_race_free S X).
+Definition rc11_rlx_race_free_program P :=
+  (forall S X, program_execution P S X -> rc11_consistent_ex S X -> rlx_race_free S X).
 
-Definition SC_RA_race_free_program P :=
-  (forall S X, program_execution P S X -> sc_consistent_x S X -> RA_race_free S X).
+Definition sc_ra_race_free_program P :=
+  (forall S X, program_execution P S X -> sc_consistent_ex S X -> ra_race_free S X).

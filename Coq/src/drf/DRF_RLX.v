@@ -360,7 +360,7 @@ Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 
 Lemma jf_in_hb
-      (RACE_FREE : RC11_RLX_race_free_program P)
+      (RACE_FREE : rc11_rlx_race_free_program P)
       (S : ES.t)
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
   jf S ⊆ hb S.
@@ -436,7 +436,7 @@ Proof.
       { apply hb_pref2_inE; eauto. }
       eapply ncf_hb_jf_prcl_vis; eauto.
       apply hb_pref2_ncf; auto. }
-    assert (PREF_RC11 : rc11_consistent_x S' (prefix (hb S')^? (eq e ∪₁ eq w))).
+    assert (PREF_RC11 : rc11_consistent_ex S' (prefix (hb S')^? (eq e ∪₁ eq w))).
     { red. exists (x2g S' (prefix (hb S')^? (eq e ∪₁ eq w))). splits.
       { apply x2g_X2G; auto. by cdes PREF_EXEC. }
       apply x2g_rc11_consistent; auto.
@@ -486,7 +486,7 @@ Proof.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].
     1, 2, 4: type_solver.
-    unfold RLX_race_free in RACE_FREE.
+    unfold rlx_race_free in RACE_FREE.
     unfolder in WE_NHB.
     apply WE_NHB. right. left.
     apply ra_jf_in_hb; auto.
@@ -552,7 +552,7 @@ Proof.
     { apply hb_pref2_inE; auto. }
     eapply hb_pref2_rmw_ncf; eauto. }
 
-  assert (PREF_RC11 : rc11_consistent_x S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
+  assert (PREF_RC11 : rc11_consistent_ex S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
   { red. exists (x2g S' (prefix (hb S')^? (eq w' ∪₁ eq w))). splits.
     { apply x2g_X2G; auto. by cdes PREF_EXEC. }
     apply x2g_rc11_consistent; auto.
@@ -623,7 +623,7 @@ Proof.
     specialize (RACE_FREE e RACE_E) as QE.
     destruct QE as [|wREL]; destruct QW as [eACQ|].
     1, 2, 4: type_solver.
-    unfold RLX_race_free in RACE_FREE.
+    unfold rlx_race_free in RACE_FREE.
     unfolder in WE_NHB.
     apply WE_NHB. right. left.
     apply ra_jf_in_hb; auto.
@@ -668,8 +668,8 @@ Qed.
 
 Theorem drf_rlx S X
       (EXEC : program_execution P S X)
-      (RACE_FREE : RC11_RLX_race_free_program P) :
-  rc11_consistent_x S X.
+      (RACE_FREE : rc11_rlx_race_free_program P) :
+  rc11_consistent_ex S X.
 Proof.
   cdes EXEC.
   assert (WF : ES.Wf S).
@@ -685,6 +685,3 @@ Proof.
   by apply jf_in_hb.
 Qed.
 End DRF.
-
-
-
