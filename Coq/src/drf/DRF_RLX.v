@@ -15,6 +15,7 @@ Require Import ExecutionToGraph.
 
 Set Implicit Arguments.
 
+(* TODO: move to a more appropriate place and prove:) *)
 Lemma steps_es_wf P
       (nInitProg : ~ IdentMap.In tid_init P)
       (S : ES.t)

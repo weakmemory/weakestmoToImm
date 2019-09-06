@@ -1,7 +1,7 @@
 Require Import Program.Basics.
 
 From hahn Require Import Hahn.
-From imm Require Import Events Prog Execution RC11.
+From imm Require Import Events Prog Execution RC11 ProgToExecutionProperties.
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Execution.
@@ -1280,3 +1280,17 @@ Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
 Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
     ⟪ sc : sc_consistent G ⟫.
+
+Definition program_execution P S X :=
+  ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
+  ⟪ EXEC : Execution.t S X ⟫.
+
+Lemma X2G_steps P S X
+      (WF : ES.Wf S) (* TODO : get rid, because it's guaranteed by steps_es_wf *)
+      (CONS : es_consistent (m := Weakestmo) S)
+      (EXEC : program_execution P S X) :
+  exists G,
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
+Proof.
+Admitted.

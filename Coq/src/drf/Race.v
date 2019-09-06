@@ -74,11 +74,6 @@ Qed.
 
 End Race.
 
-(* TODO: move to a more appropriate place *)
-Definition program_execution P S X :=
-  ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
-  ⟪ EXEC : Execution.t S X ⟫.
-
 Definition rc11_rlx_race_free_program P :=
   (forall S X, program_execution P S X -> rc11_consistent_ex S X -> rlx_race_free S X).
 
