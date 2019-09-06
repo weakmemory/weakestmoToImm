@@ -273,6 +273,30 @@ Qed.
 Lemma eco_trans (m' : model) : transitive (eco m').
 Proof. unfold eco. apply transitive_ct. Qed.
 
+Lemma ra_jf_in_hb  :
+  ⦗Rel⦘ ⨾ jf ⨾ ⦗Acq⦘ ⊆ hb.
+Proof.
+  rewrite <- sw_in_hb.
+  unfold sw.
+  rewrite <- inclusion_id_cr. rewrite seq_id_l.
+  rewrite (dom_l WF.(ES.jfE)) at 1.
+  rewrite (dom_l WF.(ES.jfD)) at 1.
+  rewrite !seqA.
+  arewrite (⦗Rel⦘ ⨾ ⦗E⦘ ⨾ ⦗W⦘ ⊆ release); [|done].
+  unfold release, rs.
+  basic_solver 20.
+Qed.
+
+Lemma ra_rf_in_hb  :
+  ⦗Rel⦘ ⨾ rf ⨾ ⦗Acq⦘ ⊆ hb.
+Proof.
+  unfold ES.rf.
+  rewrite inclusion_minus_rel, seqA.
+  arewrite (⦗Rel⦘ ⨾ ew ⊆ ⦗Rel⦘).
+  { rewrite WF.(ES.ewm). basic_solver. }
+  apply ra_jf_in_hb.
+Qed.
+
 (******************************************************************************)
 (** ** Sets and Relations in graph *)
 (******************************************************************************)
@@ -630,14 +654,92 @@ Section ConsistentProps.
     specialize (coh ESC) as hb_eco_irr.
     apply irreflexive_inclusion with (r' :=  hb ⨾ (eco m)^?).
     { basic_solver. }
-    eauto with hahn.                                                                           
+    eauto with hahn.
   Qed.
 
   Lemma hb_acyclic : acyclic hb.
   Proof.
     apply (trans_irr_acyclic hb_irr hb_trans).
   Qed.
-  
+
+  Lemma hb_imm_split_l :
+    hb ≡ immediate hb ⨾ hb^?.
+  Proof.
+    eapply ct_imm_split_l.
+    { eapply hb_irr. }
+    { eapply hb_trans. }
+    rewrite (dom_l hbE).
+    rewrite dom_seq, dom_eqv, ES.E_alt.
+    auto.
+  Qed.
+
+  Lemma hb_imm_split_r :
+    hb ≡ hb^? ⨾ immediate hb.
+  Proof.
+    eapply ct_imm_split_r.
+    { eapply hb_irr. }
+    { eapply hb_trans. }
+    rewrite (dom_l hbE).
+    rewrite dom_seq, dom_eqv, ES.E_alt.
+    auto.
+  Qed.
+
+  Lemma r_hb_in_imm_sb_hb :
+    ⦗R⦘ ⨾ hb ⊆ immediate sb ⨾ hb^?.
+  Proof.
+    rewrite hb_imm_split_l at 1; auto.
+    rewrite <- seqA. apply seq_mori; [|done].
+    unfold hb. rewrite imm_clos_trans.
+    rewrite imm_union, seq_union_r.
+    apply inclusion_union_l; [basic_solver|].
+    rewrite immediate_in, (dom_l swD ). type_solver.
+  Qed.
+
+  Lemma hb_w_in_hb_imm_sb :
+    hb ⨾ ⦗W⦘ ⊆ hb^? ⨾ immediate sb.
+  Proof.
+    rewrite hb_imm_split_r at 1; auto.
+    rewrite seqA. apply seq_mori; [done|].
+    unfold hb. rewrite imm_clos_trans.
+    rewrite imm_union, seq_union_l.
+    apply inclusion_union_l; [basic_solver|].
+    rewrite immediate_in, (dom_r swD). type_solver.
+  Qed.
+
+  (* This lemma was removed from the project during the working on the DRF theorem.
+     However, the proof relies on it.*)
+  Lemma icf_R :
+    icf ≡ ⦗R⦘ ⨾ icf ⨾ ⦗R⦘.
+  Admitted.
+
+  Lemma t_rmw_hb_in_hb :
+    rmw⁻¹ ⨾ hb ⊆ hb^?.
+  Proof.
+    rewrite WF.(ES.rmwD), R_ex_in_R.
+    rewrite (dom_l WF.(ES.rmwEninit)).
+    rewrite !transp_seq, WF.(ES.rmwi).
+    rewrite !seqA, !transp_eqv_rel.
+    rewrite r_hb_in_imm_sb_hb; eauto.
+    rewrite <- seq_eqvK with (dom := Eninit), seqA.
+    rewrite <- seqA with (r1 := (immediate sb)⁻¹).
+    rewrite <- transp_eqv_rel with (d := Eninit) at 1.
+    rewrite <- transp_seq.
+    rewrite <- seqA with (r3 := hb^?).
+    arewrite (⦗Eninit⦘ ⨾ immediate sb ⊆ immediate sb ∩ same_tid).
+    { erewrite <- inter_absorb_l with (r := ⦗Eninit⦘ ⨾ immediate sb)
+                                     (r' := immediate sb ); [|basic_solver].
+      erewrite seq_mori; [|apply inclusion_refl2 | apply immediate_in].
+      rewrite ES.sb_tid; eauto with hahn. }
+    rewrite transp_inter.
+    erewrite transp_sym_equiv with (r := (same_tid)); [| apply ES.same_tid_sym].
+    rewrite <- seqA with (r3 := hb^?).
+    rewrite HahnEquational.inter_trans; [| apply ES.same_tid_trans].
+    rewrite ES.imm_tsb_imm_sb_in_icf; auto.
+    arewrite (⦗W⦘ ⨾ (icf)^? ≡ ⦗W⦘).
+    { rewrite icf_R. type_solver. }
+    basic_solver.
+  Qed.
+
   Lemma cont_sb_dom_rmw k s
         (INK : K (k, s)) :
     codom_rel (⦗ES.cont_sb_dom S k⦘ ⨾ rmw) ⊆₁ ES.cont_sb_dom S k.
@@ -806,12 +908,134 @@ Section ConsistentProps.
     apply WF.
   Qed.
 
+  Lemma cc_alt :
+    cc ≡ cf ∩ (jfe ⨾ (sb ∪ jf)＊).
+  Proof.
+    unfold cc.
+    split.
+    { apply inclusion_inter_mon; [done|].
+      arewrite (jfe ⊆ (sb ∪ jf)＊) at 2.
+      arewrite (sb^? ⊆ (sb ∪ jf)＊).
+      by rewrite !rt_rt. }
+    rewrite <- interK with (r := cf) at 1.
+    rewrite interA.
+    apply inclusion_inter_mon; auto with hahn.
+    rewrite rtE at 1.
+    rewrite seq_union_r, seq_id_r, inter_union_r.
+    apply inclusion_union_l.
+    { rewrite ES.cf_same_tid.
+      rewrite jfe_alt at 1; eauto.
+      basic_solver. }
+    rewrite ES.jfi_union_jfe at 1.
+    rewrite <- !unionA.
+    arewrite (sb ∪ jfi ⊆ sb).
+    rewrite path_ut_last.
+    rewrite seq_union_r, inter_union_r.
+    apply inclusion_union_l.
+    { arewrite_false (cf ∩ (jfe ⨾ sb⁺)); [|done].
+      rewrite (ct_of_trans (ES.sb_trans WF)).
+      arewrite (jfe ⊆ compl_rel same_tid ⨾ ⦗Eninit⦘).
+      { rewrite jfe_alt; eauto.
+        rewrite ES.jf_nEinit_alt; eauto.
+        basic_solver. }
+      rewrite ES.sb_tid; eauto.
+      rewrite ES.cf_same_tid.
+      rewrite compl_seq_l;
+        [basic_solver |
+         apply ES.same_tid_sym |
+         apply ES.same_tid_trans]. }
+    rewrite inclusion_inter_l2.
+    repeat apply inclusion_seq_mon; eauto with hahn.
+    apply (rt_of_trans (ES.sb_trans WF)).
+  Qed.
+
+  Lemma seq_rmw_cf_in_cf :
+    rmw ⨾ cf ⊆ cf.
+  Proof.
+    unfold ES.cf.
+    rewrite (dom_l (ES.rmwEninit WF)), !seqA.
+    apply inclusion_seq_mon; [done|].
+    rewrite <- !seqA.
+    apply inclusion_seq_mon; [|done].
+    rewrite seqA.
+    rewrite inclusion_seq_eqv_l.
+    rewrite minus_inter_compl at 2.
+    apply inclusion_inter_r.
+    { rewrite ES.rmwt; auto.
+      specialize ES.same_tid_trans.
+      basic_solver. }
+    rewrite minus_inter_compl.
+    unfolder. intros r w HH. intro SBEQ.
+    desf; unfold "~" in HH1; apply HH1;
+      rename HH into RMW, HH0 into TID; clear HH1.
+    { right. right.
+      apply ES.rmw_in_sb; eauto. }
+    { apply ES.sb_imm_split_l in SBEQ; auto.
+      unfold seq in SBEQ. desf.
+      assert (TID_ZZ0 : ES.same_tid S z z0).
+      { apply immediate_in in SBEQ.
+        eapply ES.same_tid_trans with (y := r).
+        { apply ES.rmwt in RMW; basic_solver. }
+        assert (NINIT_R : Eninit r).
+        { apply (dom_l (ES.rmwEninit WF)) in RMW.
+          unfolder in RMW.
+          basic_solver. }
+        specialize ES.sb_tid.
+        basic_solver 5. }
+      assert (ICF : icf^? z z0).
+      { apply ES.imm_tsb_imm_sb_in_icf; auto.
+        apply ES.rmwi in RMW; auto.
+        basic_solver. }
+      unfolder in ICF. desf.
+      { unfolder in SBEQ0; basic_solver. }
+      apply (dom_r (ES.rmwD WF)) in RMW.
+      unfolder in RMW.
+      assert (R z); [|type_solver].
+      eapply icf_R in ICF; eauto. unfolder in ICF. basic_solver. }
+    right; right.
+    apply ES.rmw_in_sb in RMW; auto.
+    specialize ES.sb_trans.
+    basic_solver.
+  Qed.
+
+  Lemma hb_jf_prcl_cc_prcl {A}
+        (JF_PRCL : prcl jf A)
+        (HB_PRCL : prcl hb A) :
+    prcl cc A.
+  Proof.
+    rewrite cc_alt; eauto.
+    rewrite inclusion_inter_l2.
+    unfold prcl. rewrite seqA.
+    arewrite ((sb ∪ jf)＊ ⨾ ⦗A⦘ ⊆ ⦗A⦘ ⨾ (sb ∪ jf)＊).
+    { apply dom_r2l_rt.
+      assert (DOM': dom_rel((sb ∪ jf) ⨾ ⦗A⦘) ⊆₁ A).
+      { rewrite sb_in_hb. relsf. }
+      rewrite (dom_rel_helper DOM'). basic_solver. }
+    arewrite (jfe ⊆ jf).
+    rewrite <- seqA, dom_seq. auto.
+  Qed.
+
+  Lemma ncf_hb_jf_prcl_vis {A}
+        (AE : A ⊆₁ E)
+        (NCF : ES.cf_free S A)
+        (JF_PRCL : prcl jf A)
+        (HB_PRCL : prcl hb A) :
+    A ⊆₁ vis.
+  Proof.
+    unfold vis; splits; constructor;
+      rename x into v, H into vA; auto.
+    arewrite (cc ⨾ ⦗eq v⦘ ⊆ ∅₂); [|done].
+    arewrite (eq v ⊆₁ A); [basic_solver|].
+    rewrite (dom_rel_helper (hb_jf_prcl_cc_prcl JF_PRCL HB_PRCL)).
+    unfold cc. by rewrite inclusion_inter_l1.
+  Qed.
+
 End ConsistentProps.
 
 Section WeakestMOConsistentProps.
-
+  
   Variable ESC : @es_consistent Weakestmo.
-
+  
   Lemma co_jf_hb_tjf_irr : 
     irreflexive (co ⨾ jf^? ⨾ hb ⨾ jf⁻¹).
   Proof. 

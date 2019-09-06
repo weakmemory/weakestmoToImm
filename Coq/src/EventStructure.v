@@ -786,15 +786,32 @@ Lemma imm_tsb_imm_sb_in_icf WF :
 Proof.
   intros x y [[z [tIMMSB IMMSB]] STID].
   assert (cf^? x y) as CF.
-  { apply WF.(imm_tsb_imm_sb_in_cf). 
+  { apply WF.(imm_tsb_imm_sb_in_cf).
     basic_solver 10. }
   red. destruct CF as [|CF]; auto.
   right.
-  unfold ES.icf. 
+  unfold ES.icf.
   split; auto.
   exists z; splits; auto.
   by apply immediate_transp
     with (r := sb).
+Qed.
+
+Lemma sb_same_tid_alt WF :
+  ⦗Eninit⦘ ⨾ sb ≡ sb ∩ same_tid.
+Proof.
+  split.
+  { specialize (sb_tid WF). basic_solver. }
+  rewrite sb_Einit_Eninit at 1; auto.
+  rewrite inter_union_l.
+  apply inclusion_union_l.
+  { arewrite (Einit × Eninit ∩ same_tid ⊆ ∅₂); [|done].
+    unfold ES.acts_ninit_set, "\₁", ES.acts_init_set, ES.same_tid, "~".
+    unfolder. ins. desf. apply H2.
+    split; auto.
+    rewrite H3 in H0.
+    auto. }
+  basic_solver.
 Qed.
 
 (******************************************************************************)
@@ -1100,6 +1117,20 @@ Proof.
   exfalso. eapply NCF. eauto.
 Qed.
   
+
+Lemma jf_prcl_rf_compl {A} WF
+      (AE : A ⊆₁ E)
+      (JF_PRCL : prcl jf A):
+  A ∩₁ R ⊆₁ codom_rel (⦗A⦘ ⨾ rf).
+Proof.
+  arewrite (A ∩₁ R ≡₁ A ∩₁ (E ∩₁ R)) by basic_solver.
+  rewrite WF.(jf_complete).
+  rewrite set_interC, <- codom_eqv1.
+  rewrite (dom_rel_helper JF_PRCL).
+  rewrite jf_in_rf; auto.
+  basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** fr properties *)
 (******************************************************************************)
@@ -1175,6 +1206,26 @@ Qed.
 (******************************************************************************)
 (** ** co properites *)
 (******************************************************************************)
+
+
+
+(******************************************************************************)
+(** ** sc properites *)
+(******************************************************************************)
+
+Lemma sc_in_rel :
+  Sc ⊆₁ Rel.
+Proof.
+  unfold is_sc, is_rel.
+  basic_solver.
+Qed.
+
+Lemma sc_in_acq :
+  Sc ⊆₁ Acq.
+Proof.
+  unfold is_sc, is_acq.
+  basic_solver.
+Qed.
 
 (******************************************************************************)
 (** ** continuation properites *)

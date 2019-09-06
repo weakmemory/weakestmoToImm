@@ -11,15 +11,19 @@ Require Import AuxDef.
 Require Import Logic.FinFun.
 Require Import Omega.
 Require Import Consistency.
+Require Import ImmProperties.
+Require Import Step.
+
+Require Import SC.
 
 Local Open Scope program_scope.
 
-Section ExecutionToGraph. 
-  
+Section ExecutionToGraph.
+
 Variable S : ES.t.
 Variable X : eventid -> Prop.
 Variable G : execution.
-  
+
 
 Notation "'GE'" := G.(acts_set).
 Notation "'GEinit'" := (is_init ∩₁ GE).
@@ -116,14 +120,14 @@ Definition eventid_list :=
 Definition a2e : actid -> eventid :=
   let e_list := eventid_list in
   let a_list := map (e2a S) e_list in
-  list_to_fun (fun x y => excluded_middle_informative (x = y)) 
+  list_to_fun (fun x y => excluded_middle_informative (x = y))
               (ES.next_act S)
               (combine a_list e_list).
 
 Definition x2g : execution :=
   {| acts := map (e2a S) eventid_list;
      lab := fun a => match a with
-                  | InitEvent l => init_write l 
+                  | InitEvent l => init_write l
                   | thread_event => Slab (a2e thread_event)
                   end; (* to correspond wf_init_lab *)
      rmw := a2e ⋄ Srmw;
@@ -132,7 +136,7 @@ Definition x2g : execution :=
      ctrl := fun x y => False;
      rmw_dep := fun x y => False;
      rf :=  a2e ⋄ Srf;
-     co :=  a2e ⋄ Sco 
+     co :=  a2e ⋄ Sco
   |}.
 
 Lemma a2e_e2a
@@ -147,7 +151,7 @@ Proof.
     { ins. specialize (split_as_map l). intro HH. by rewrite HH. }
     rewrite combine_split_l; [|by rewrite map_length].
     apply Injective_map_NoDup_dom with (P := X).
-    { destruct EXEC. by apply e2a_inj. }  
+    { destruct EXEC. by apply e2a_inj. }
     { apply ForallE. intros y HH. apply in_filterP_iff in HH. desf. }
     apply nodup_filterP, nodup_first_nat_list. }
   assert (X_IN : In x eventid_list).
@@ -164,8 +168,8 @@ Proof.
   eapply nth_In.
   rewrite length_combine, map_length.
   apply Nat.min_glb_iff.
-  omega. 
-Qed. 
+  omega.
+Qed.
 
 Lemma e2a_a2e
       (WF : ES.Wf S)
@@ -180,7 +184,7 @@ Proof.
   arewrite (a2e (e2a S y) = y) by apply a2e_e2a.
 Qed.
 
-Lemma a2e_dom 
+Lemma a2e_dom
       (WF : ES.Wf S)
       (EXEC : Execution.t S X):
   a2e ⋄₁ SE ≡₁ e2a S □₁ X.
@@ -207,14 +211,14 @@ Proof.
   eapply Execution.ex_inE in Xe as Ee; eauto.
   unfolder.
   arewrite (a2e (e2a S e) = e) by apply a2e_e2a.
-Qed. 
+Qed.
 
 Lemma X2G_acts_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) :
   acts_set x2g ≡₁ e2a S □₁ X.
 Proof.
-  unfold acts_set. simpls. 
+  unfold acts_set. simpls.
   unfold eventid_list.
   unfolder. splits; intros x HH.
   { apply in_map_iff in HH.
@@ -238,13 +242,13 @@ Proof.
   unfold "□", "≡", "⊆". split.
   { intros a1 a2 HH.
     assert (IM_a1 : (e2a S □₁ X) a1).
-    2: assert (IM_a2 : (e2a S □₁ X) a2). 
+    2: assert (IM_a2 : (e2a S □₁ X) a2).
     1, 2: eapply a2e_dom; apply rE in HH; auto.
     1, 2: by unfolder in *; basic_solver.
     unfold "□₁" in IM_a1. desf. exists y.
     unfold "□₁" in IM_a2. desf. exists y0.
     unfold restr_rel.
-    splits; auto. 
+    splits; auto.
     arewrite (y = a2e (e2a S y)).
     2: arewrite (y0 = a2e (e2a S y0)).
     1, 2: by symmetry; apply a2e_e2a.
@@ -256,7 +260,7 @@ Proof.
   arewrite (a2e (e2a S e2) = e2) by apply a2e_e2a.
 Qed.
 
-Lemma X2G_sb_transfer 
+Lemma X2G_sb_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X) :
   sb x2g ≡ Move Ssb.
@@ -265,10 +269,10 @@ Proof.
   rewrite X2G_acts_transfer; auto.
   split.
   { rewrite <- restr_relE.
-    unfolder. 
-    intros a1 a2 [ESB [[e1 [Xe1 eq2]] [e2 [Xe2 eq1]]]]. 
+    unfolder.
+    intros a1 a2 [ESB [[e1 [Xe1 eq2]] [e2 [Xe2 eq1]]]].
     exists e1, e2. splits; auto.
-    unfold e2a in eq1, eq2. 
+    unfold e2a in eq1, eq2.
     destruct (excluded_middle_informative (Stid e1 = tid_init));
       destruct (excluded_middle_informative (Stid e2 = tid_init)).
     1, 3:  basic_solver.
@@ -281,7 +285,7 @@ Proof.
     destruct ESB as [SAME_TID LT].
     eapply Execution.ex_inE in Xe1 as Ee1; eauto.
     specialize (ES.seqn_lt_cont_cf_dom WF) as HH.
-    specialize (HH e1 e2 Ee1 SAME_TID LT). 
+    specialize (HH e1 e2 Ee1 SAME_TID LT).
     simpls.
     destruct HH as [HH | HH].
     { exfalso.
@@ -300,11 +304,11 @@ Lemma e2a_lab_pred p
       (X2G : X2G) :
    e2a S □₁ (X ∩₁ (p ∘ Slab)) ≡₁ GE ∩₁ (p ∘ Glab).
 Proof.
-  cdes X2G. 
+  cdes X2G.
   unfolder. unfold "∘".
   split.
   { intros x HH. desf.
-    arewrite (Glab (e2a S y) = Slab y). 
+    arewrite (Glab (e2a S y) = Slab y).
     { specialize (GLAB y HH).
       basic_solver. }
     split; auto.
@@ -319,7 +323,7 @@ Qed.
 Lemma X2G_lab {B}
       (p : forall {A}, (A -> label) -> A -> B)
       (p_lab : label -> B)
-      (EQ : forall {A} (sup : A -> label), p sup = p_lab ∘ sup) 
+      (EQ : forall {A} (sup : A -> label), p sup = p_lab ∘ sup)
       (WF : ES.Wf S)
       (X2G : X2G) :
   eq_dom X (p Slab) (p Glab ∘ e2a S).
@@ -339,14 +343,14 @@ Lemma X2G_lab_set_transfer
       (X2G : X2G) :
   e2a S □₁ (X ∩₁ (fun a => p Slab a)) ≡₁ GE ∩₁ (fun a => p Glab a).
 Proof.
-  cdes X2G. 
+  cdes X2G.
   unfolder. unfold "∘".
   split.
   { intros x HH. desf.
     split.
     { apply GACTS. basic_solver. }
     rewrite EQ.
-    arewrite (Glab (e2a S y) = Slab y). 
+    arewrite (Glab (e2a S y) = Slab y).
     { specialize (GLAB y HH).
       basic_solver . }
     by rewrite EQ in HH1. }
@@ -405,7 +409,7 @@ Lemma X2G_R_ex
   GE ∩₁ GR_ex ≡₁ e2a S □₁ (X ∩₁ SR_ex).
 Proof.
   set (f := fun x => match x with
-                  | Aload r _ _ _ => r 
+                  | Aload r _ _ _ => r
                   | _ => false end).
   erewrite X2G_lab_set_transfer
     with (p := R_ex) (p_lab := f); eauto.
@@ -437,8 +441,8 @@ Qed.
 
 Lemma X2G_Acq
       (WF : ES.Wf S)
-      (X2G : X2G) : 
- GE ∩₁ GAcq ≡₁ e2a S □₁ (X ∩₁ SAcq). 
+      (X2G : X2G) :
+ GE ∩₁ GAcq ≡₁ e2a S □₁ (X ∩₁ SAcq).
 Proof.
   set (f := fun x => let m :=
                       match x with
@@ -453,8 +457,8 @@ Qed.
 
 Lemma X2G_Rel
       (WF : ES.Wf S)
-      (X2G : X2G) : 
- GE ∩₁ GRel ≡₁ e2a S □₁ (X ∩₁ SRel). 
+      (X2G : X2G) :
+ GE ∩₁ GRel ≡₁ e2a S □₁ (X ∩₁ SRel).
 Proof.
   set (f := fun x => let m :=
                       match x with
@@ -469,8 +473,8 @@ Qed.
 
 Lemma X2G_Sc
       (WF : ES.Wf S)
-      (X2G : X2G) : 
- GE ∩₁ GSc ≡₁ e2a S □₁ (X ∩₁ SSc). 
+      (X2G : X2G) :
+ GE ∩₁ GSc ≡₁ e2a S □₁ (X ∩₁ SSc).
 Proof.
   set (f := fun x => let m :=
                       match x with
@@ -509,34 +513,30 @@ Proof.
                   end).
   set (f := fun (l1 : label) (l2 : label) => loc_l l1 = loc_l l2).
   erewrite X2G_lab_rel_transfer with (p_lab := f); eauto.
-Qed. 
-  
-Lemma move_codom r :
-  codom_rel Move r ⊆₁ e2a S □₁ (X ∩₁ codom_rel r). 
-Proof.
-  basic_solver 7. 
 Qed.
 
-Lemma move_dom r :
-  dom_rel Move r ⊆₁ e2a S □₁ (X ∩₁ dom_rel r). 
+Lemma move_codom r :
+  codom_rel Move r ⊆₁ e2a S □₁ (X ∩₁ codom_rel r).
 Proof.
   basic_solver 7.
 Qed.
 
-Lemma X2G_E r dom codom 
+Lemma move_dom r :
+  dom_rel Move r ⊆₁ e2a S □₁ (X ∩₁ dom_rel r).
+Proof.
+  basic_solver 7.
+Qed.
+
+Lemma X2G_E r dom codom
       (IN_DOM : dom_rel r ⊆₁ dom)
       (IN_CODOM : codom_rel r ⊆₁ codom)
       (X2G : X2G) :
-  Move r ≡ ⦗e2a S □₁ (X ∩₁ dom)⦘ ⨾ Move r ⨾ ⦗e2a S □₁ (X ∩₁ codom)⦘. 
+  Move r ≡ ⦗e2a S □₁ (X ∩₁ dom)⦘ ⨾ Move r ⨾ ⦗e2a S □₁ (X ∩₁ codom)⦘.
 Proof.
-  eapply dom_codom_rel_helper; eauto. 
+  eapply dom_codom_rel_helper; eauto.
   { rewrite move_dom. by rewrite IN_DOM. }
   rewrite move_codom. by rewrite IN_CODOM.
 Qed.
-
-Lemma is_total_restr' {A} dom (r : relation A) : 
-  is_total dom (restr_rel dom r) -> is_total dom r.
-Proof. apply is_total_mori; basic_solver. Qed.
 
 Lemma X2G_complete
       (WF : ES.Wf S)
@@ -561,8 +561,8 @@ Proof.
   rewrite <- set_interK with (s := X) at 1.
   rewrite set_interA, ex_rf_compl.
   basic_solver.
-Qed.  
-    
+Qed.
+
 Lemma X2G_rmw_atomicity
       (WF : ES.Wf S)
       (CONS : es_consistent (m := Weakestmo) S)
@@ -572,7 +572,7 @@ Lemma X2G_rmw_atomicity
 Proof.
   unfold rmw_atomicity.
 Admitted.
-  
+
 Lemma seq_move r r'
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
@@ -580,9 +580,9 @@ Lemma seq_move r r'
   Move (r ⨾ r') ≡ Move r ⨾ Move r'.
 Proof.
   split.
-  1: rewrite RR_MOR. 
+  1: rewrite RR_MOR.
   2: rewrite <- seq_restr.
-  all: apply collect_rel_seq; 
+  all: apply collect_rel_seq;
     destruct EXEC;
     specialize e2a_inj;
     basic_solver.
@@ -591,7 +591,7 @@ Qed.
 Lemma seq_move_prcl r r'
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
-      (PRCL : dom_rel (r' ⨾ ⦗X⦘) ⊆₁ X) :
+      (PRCL : prcl r' X) :
   Move (r ⨾ r') ≡ Move r ⨾ Move r'.
 Proof. by apply seq_move, seq_restr_prcl. Qed.
 
@@ -609,7 +609,7 @@ Lemma seq_move_cr_l r r'
   Move (r^? ⨾ r') ≡ (Move r)^? ⨾ Move r'.
 Proof.
   rewrite !crE.
-  rewrite !seq_union_l, !seq_id_l. 
+  rewrite !seq_union_l, !seq_id_l.
   rewrite <- union_restr, collect_rel_union.
   apply union_more; [done | by apply seq_move].
 Qed.
@@ -621,52 +621,9 @@ Lemma seq_move_cr_r r r'
   Move (r ⨾ r'^?) ≡ Move r ⨾ (Move r')^?.
 Proof.
   rewrite !crE.
-  rewrite !seq_union_r, !seq_id_r. 
+  rewrite !seq_union_r, !seq_id_r.
   rewrite <- union_restr, collect_rel_union.
   apply union_more; [done | by apply seq_move].
-Qed.
-
-Lemma rsE_alt 
-      (WF_G : Wf G) : 
-  Grs ⨾ ⦗GE⦘ ≡ ⦗GW ∩₁ GE⦘ ⨾ (Gsb ∩ same_loc Glab)^? ⨾ ⦗GW ∩₁ GE⦘ ⨾ (Grf ⨾ Grmw)＊.
-Proof.
-  unfold imm_s_hb.rs.
-  rewrite !seqA.
-  arewrite ((Grf ⨾ Grmw)＊ ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ (Grf ⨾ Grmw)＊).
-  { rewrite rtE.
-    rewrite !seq_union_l, !seq_union_r.
-    apply union_more; [basic_solver|].
-    rewrite (dom_l WF_G.(wf_rfE)), !seqA. 
-    rewrite ct_seq_eqv_l at 1.
-    rewrite (dom_r WF_G.(wf_rmwE)), <- !seqA. 
-    rewrite ct_seq_eqv_r at 2.
-      by rewrite seqA. }
-  arewrite (⦗GW⦘ ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ ⦗GW ∩₁ GE⦘).
-  { basic_solver. }
-  arewrite ((Gsb ∩ same_loc Glab)^? ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ (Gsb ∩ same_loc Glab)^?). 
-  { rewrite crE.
-    rewrite !seq_union_l, !seq_union_r.
-    apply union_more; [basic_solver|].
-    rewrite wf_sbE.
-    basic_solver. }
-  rewrite <- seqA, <- id_inter. done.
-Qed.
-
-Lemma rsE_alt_swap
-      (WF_G : Wf G) : 
-  Grs ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ Grs.
-Proof.
- rewrite WF_G.(imm_s_hb.wf_rsE).
- rewrite !seq_union_l, !seq_union_r.
- apply union_more; basic_solver.
-Qed.
-
-Lemma rsE_alt_restr
-      (WF_G : Wf G) : 
-  Grs ⨾ ⦗GE⦘ ≡ restr_rel GE Grs.
-Proof.
-  rewrite restr_relE, <- seqA, <- rsE_alt_swap; auto.
-  basic_solver.
 Qed.
 
 Lemma X2G_rs_transfer
@@ -674,7 +631,7 @@ Lemma X2G_rs_transfer
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) :  
+      (WF_G : Wf G) :
   Move Srs ≡ Grs ⨾ ⦗GE⦘.
 Proof.
   rewrite <- Execution.ex_rs_alt; auto.
@@ -718,14 +675,14 @@ Proof.
     rewrite restr_relE with (r := Gsb).
     rewrite <- G.(wf_sbE).
     apply inter_rel_more.
-    { cdes X2G. by rewrite GSB. } 
+    { cdes X2G. by rewrite GSB. }
     by apply X2G_same_loc. }
   rewrite !rtE, !seq_union_r, !seq_id_r, collect_rel_union.
   apply union_more.
   { rewrite collect_rel_eqv.
     rewrite <- X2G_W; auto.
     basic_solver. }
-  rewrite collect_rel_seq. 
+  rewrite collect_rel_seq.
   2 : { rewrite dom_ct. destruct EXEC; specialize e2a_inj; basic_solver. }
   apply seq_more.
   { rewrite collect_rel_eqv.
@@ -740,17 +697,17 @@ Proof.
   cdes X2G.
   by rewrite GRF, GRMW.
 Qed.
-  
+
 Lemma X2G_release_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
-      (X2G : X2G) 
-      (WF_G : Wf G) : 
+      (X2G : X2G)
+      (WF_G : Wf G) :
   Move Srelease ≡ Grelease ⨾ ⦗GE⦘.
 Proof.
   arewrite (restr_rel X Srelease ≡ ⦗X⦘ ⨾ restr_rel X Srelease).
-  { basic_solver. } 
+  { basic_solver. }
   rewrite <- Execution.ex_release_alt; auto.
   unfold Execution.ex_release.
   unfold imm_s_hb.release.
@@ -759,7 +716,7 @@ Proof.
   rewrite Execution.ex_rs_alt; auto.
   rewrite !seqA.
   rewrite WF_G.(rsE_alt_restr).
-  rewrite restr_relE with (d := GE). 
+  rewrite restr_relE with (d := GE).
   arewrite ((⦗GF⦘ ⨾ Gsb)^? ⨾ ⦗GE⦘ ≡ ⦗GE⦘ ⨾ (⦗GF⦘ ⨾ Gsb)^?).
   { rewrite G.(wf_sbE).
     rewrite crE. basic_solver 10. }
@@ -793,18 +750,18 @@ Lemma X2G_sw_transfer
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   Move Ssw ≡ Gsw.
 Proof.
   rewrite <- Execution.ex_sw_alt; auto.
   unfold Execution.ex_sw.
-  rewrite (dom_r WF_G.(imm_s_hb.wf_swE)). 
+  rewrite (dom_r WF_G.(imm_s_hb.wf_swE)).
   unfold imm_s_hb.sw.
   unfold Execution.ex_rf, Execution.ex_sb.
   rewrite Execution.ex_release_alt; auto.
   arewrite (restr_rel X Srf ⨾ (restr_rel X Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗SAcq⦘
                       ≡
-            restr_rel X Srf ⨾ (restr_rel X Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗X ∩₁ SAcq⦘). 
+            restr_rel X Srf ⨾ (restr_rel X Ssb ⨾ ⦗SF⦘)^? ⨾ ⦗X ∩₁ SAcq⦘).
   { basic_solver 15. }
 
   arewrite (restr_rel X Srf ⨾ (restr_rel X Ssb ⨾ ⦗SF⦘)^?
@@ -812,7 +769,7 @@ Proof.
             restr_rel X Srf ⨾ (restr_rel X ((restr_rel X Ssb ⨾ ⦗SF⦘)^?))).
   { basic_solver 15. }
   rewrite !collect_rel_seq.
-  2-4 : destruct EXEC; specialize e2a_inj; basic_solver. 
+  2-4 : destruct EXEC; specialize e2a_inj; basic_solver.
   rewrite (dom_l WF_G.(wf_rfE)), seqA.
   rewrite <- seqA with (r2 := ⦗GE⦘).
   apply seq_more; [by apply X2G_release_transfer|].
@@ -837,13 +794,13 @@ Proof.
   rewrite restr_eqv, collect_rel_eqv.
   by rewrite X2G_F.
 Qed.
-  
+
 Lemma X2G_hb_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (X2G : X2G)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   Move Shb ≡ Ghb.
 Proof.
   rewrite <- Execution.ex_hb_alt; auto.
@@ -855,13 +812,13 @@ Proof.
   rewrite Execution.ex_sw_alt; auto.
   rewrite union_restr.
   rewrite collect_rel_ct_inj;
-    [|by destruct EXEC; apply e2a_inj].  
+    [|by destruct EXEC; apply e2a_inj].
   rewrite <- union_restr.
   rewrite collect_rel_union.
   by rewrite X2G_sw_transfer.
 Qed.
 
-Lemma X2G_fr_transfer 
+Lemma X2G_fr_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (X2G : X2G):
@@ -872,7 +829,7 @@ Proof.
   unfold fr.
   unfold Execution.ex_rf.
   unfold Execution.ex_co.
-  rewrite collect_rel_seq. 
+  rewrite collect_rel_seq.
   2 : { destruct EXEC; specialize e2a_inj; basic_solver. }
   apply seq_more; [| by cdes X2G; rewrite GCO].
   rewrite transp_collect_rel.
@@ -884,8 +841,8 @@ Lemma X2G_eco_transfer
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
-  Move Seco ≡ Geco. 
+      (WF_G : Wf G) :
+  Move Seco ≡ Geco.
 Proof.
   rewrite <- Execution.ex_eco_alt; auto.
   unfold Execution.ex_eco, Execution_eco.eco.
@@ -896,16 +853,16 @@ Proof.
   repeat apply union_more.
   { by rewrite GRF. }
   { rewrite !crE, !seq_union_r, !seq_id_r.
-    rewrite collect_rel_union. 
+    rewrite collect_rel_union.
     apply union_more; [by rewrite GCO |].
     rewrite collect_rel_seq; [by rewrite GCO, GRF|].
-    destruct EXEC; specialize e2a_inj; basic_solver. } 
+    destruct EXEC; specialize e2a_inj; basic_solver. }
   rewrite !crE, !seq_union_r, !seq_id_r.
-  rewrite collect_rel_union. 
+  rewrite collect_rel_union.
   rewrite <- X2G_fr_transfer; auto.
   apply union_more; [done |].
   rewrite collect_rel_seq; [by rewrite GRF|].
-  destruct EXEC; specialize e2a_inj; basic_solver. 
+  destruct EXEC; specialize e2a_inj; basic_solver.
 Qed.
 
 Lemma X2G_cohernce
@@ -914,7 +871,7 @@ Lemma X2G_cohernce
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G :  X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   imm_s_hb.coherence G.
 Proof.
   unfold imm_s_hb.coherence.
@@ -937,7 +894,7 @@ Lemma X2G_scb_transfer
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   Move Sscb ≡ Gscb.
 Proof.
   cdes X2G.
@@ -948,7 +905,7 @@ Proof.
     rewrite restr_cross with (s := GE).
     arewrite (Move Ssb ≡ Move Ssb ∩ GE × GE).
     { arewrite (restr_rel X Ssb ≡ ⦗X⦘ ⨾ (restr_rel X Ssb) ⨾ ⦗X⦘) at 1.
-      { basic_solver. } 
+      { basic_solver. }
       rewrite !collect_rel_seq.
       2,3: destruct EXEC; specialize e2a_inj; basic_solver.
       rewrite collect_rel_eqv, <- GACTS.
@@ -960,7 +917,7 @@ Proof.
   { by rewrite GSB. }
   { rewrite <- seqA, !seq_move_prcl; auto.
     2: { by apply Execution.hb_prcl. }
-    2: { destruct EXEC. by rewrite inclusion_minus_rel. } 
+    2: { destruct EXEC. by rewrite inclusion_minus_rel. }
     by rewrite seqA, X2G_nloc_sb, X2G_hb_transfer. }
   { rewrite restr_inter, collect_rel_inter.
     2,3: destruct EXEC; specialize e2a_inj; basic_solver.
@@ -976,7 +933,7 @@ Lemma X2G_psc_f_transfer
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   Gpsc_f ⊆ Move Spsc_f.
 Proof.
   unfold Consistency.psc_f, imm_s.psc_f.
@@ -992,8 +949,8 @@ Proof.
   { cdes X2G.
     rewrite !crE.
     rewrite <- union_restr, collect_rel_union.
-    rewrite seq_union_l, !seq_union_r, !seq_id_r. 
-    rewrite restr_id, collect_rel_eqv, <- GACTS. 
+    rewrite seq_union_l, !seq_union_r, !seq_id_r.
+    rewrite restr_id, collect_rel_eqv, <- GACTS.
     rewrite WF_G.(imm_s_hb.wf_hbE) at 1 2 3.
     apply union_mori; [basic_solver|].
     rewrite seq_move_prcl; auto.
@@ -1004,22 +961,13 @@ Proof.
   basic_solver 20.
 Qed.
 
-Lemma scbE 
-      (WF : Wf G) : 
-  Gscb ≡ ⦗GE⦘ ⨾ Gscb ⨾ ⦗GE⦘.
-Proof.
-  unfold imm_s.scb.
-  rewrite wf_sbE, imm_s_hb.wf_hbE, wf_coE, wf_frE; auto.
-  basic_solver 30.
-Qed.
-
 Lemma X2G_psc_base_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
-  Gpsc_base ⊆ Move Spsc_base. 
+      (WF_G : Wf G) :
+  Gpsc_base ⊆ Move Spsc_base.
 Proof.
   cdes X2G.
   unfold Consistency.psc_base, imm_s.psc_base.
@@ -1028,15 +976,15 @@ Proof.
   rewrite codom_rel_helper with (rr := ⦗GE⦘ ⨾ (Ghb ⨾ ⦗GF⦘)^?).
   2: { apply fwcl_cr.
        rewrite imm_s_hb.wf_hbE; auto.
-       basic_solver. } 
+       basic_solver. }
   arewrite ((⦗GF⦘ ⨾ Ghb)^? ⨾ ⦗GE⦘ ⊆ ⦗GE⦘ ⨾ Move ((⦗SF⦘ ⨾ Shb)^?)).
   { rewrite !crE.
     rewrite <- union_restr, collect_rel_union.
-    rewrite restr_id, collect_rel_eqv, <- GACTS. 
-    rewrite !seq_union_l, !seq_id_l, seq_union_r. 
+    rewrite restr_id, collect_rel_eqv, <- GACTS.
+    rewrite !seq_union_l, !seq_id_l, seq_union_r.
     rewrite seq_move_prcl; auto.
     2: { by apply Execution.hb_prcl. }
-    apply union_mori; [basic_solver|]. 
+    apply union_mori; [basic_solver|].
     rewrite imm_s_hb.wf_hbE, !seqA; auto.
     seq_rewrite <- !id_inter.
     arewrite (⦗GF ∩₁ GE⦘ ≡ ⦗GE⦘ ⨾ ⦗GF ∩₁ GE⦘); [basic_solver|].
@@ -1045,13 +993,13 @@ Proof.
     rewrite X2G_hb_transfer; auto.
     basic_solver. }
   arewrite (⦗GE⦘ ⨾ (Ghb ⨾ ⦗GF⦘)^? ⊆ Move ((Shb ⨾ ⦗SF⦘)^?) ⨾ ⦗GE⦘).
-  { rewrite !crE. 
+  { rewrite !crE.
     rewrite <- union_restr, collect_rel_union.
-    rewrite restr_id, collect_rel_eqv, <- GACTS. 
-    rewrite !seq_union_r, !seq_id_r, seq_union_l. 
+    rewrite restr_id, collect_rel_eqv, <- GACTS.
+    rewrite !seq_union_r, !seq_id_r, seq_union_l.
     rewrite seq_move_prcl; auto.
-    2: { basic_solver. } 
-    apply union_mori; [basic_solver|]. 
+    2: { basic_solver. }
+    apply union_mori; [basic_solver|].
     rewrite imm_s_hb.wf_hbE, !seqA; auto.
     seq_rewrite <- !id_inter.
     arewrite (⦗GE ∩₁ GF⦘ ≡ ⦗GE ∩₁ GF⦘ ⨾ ⦗GE⦘); [basic_solver|].
@@ -1064,7 +1012,7 @@ Proof.
   rewrite <- !seq_restr.
   rewrite <- !seqA, !collect_rel_seq, !seqA.
   2-5: destruct EXEC; specialize e2a_inj; basic_solver.
-  rewrite restr_eqv, collect_rel_eqv. 
+  rewrite restr_eqv, collect_rel_eqv.
   rewrite <- X2G_Sc, X2G_scb_transfer; auto.
   basic_solver 30.
 Qed.
@@ -1075,12 +1023,12 @@ Lemma X2G_acyclic_psc
       (EXEC : Execution.t S X)
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   acyclic (Gpsc_f ∪ Gpsc_base).
 Proof.
   rewrite X2G_psc_f_transfer; auto.
   rewrite X2G_psc_base_transfer; auto.
-  rewrite <- collect_rel_union, union_restr. 
+  rewrite <- collect_rel_union, union_restr.
   apply collect_rel_acyclic_inj.
   { destruct EXEC. by apply e2a_inj. }
   apply acyclic_restr.
@@ -1093,12 +1041,12 @@ Lemma X2G_acyclic_sb_rf
       (EXEC : Execution.t S X)
       (ACYCLIC : acyclic (restr_rel X (Ssb ∪ Srf)))
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   acyclic (Gsb ∪ Grf).
 Proof.
   cdes X2G.
   rewrite GSB, GRF.
-  rewrite <- collect_rel_union, union_restr. 
+  rewrite <- collect_rel_union, union_restr.
   apply collect_rel_acyclic_inj.
   { destruct EXEC. by apply e2a_inj. }
   done.
@@ -1111,10 +1059,10 @@ Lemma X2G_rc11_consistent
       (JF_PRCL : dom_rel (Sjf ⨾ ⦗X⦘) ⊆₁ X)
       (ACYCLIC : acyclic (restr_rel X (Ssb ∪ Srf)))
       (X2G : X2G)
-      (WF_G : Wf G) : 
+      (WF_G : Wf G) :
   rc11_consistent G.
 Proof.
-  red. splits. 
+  red. splits.
   { by apply X2G_complete. }
   { by apply X2G_cohernce. }
   { by apply X2G_rmw_atomicity. }
@@ -1122,7 +1070,7 @@ Proof.
   by apply X2G_acyclic_sb_rf.
 Qed.
 
-End ExecutionToGraph. 
+End ExecutionToGraph.
 
 Lemma x2g_X2G {S X}
       (WF : ES.Wf S)
@@ -1132,8 +1080,8 @@ Proof.
   red. splits.
   { by apply X2G_acts_transfer. }
   { unfold eq_dom. ins.
-    specialize (a2e_e2a S X WF EXEC x DX) as a2e_e2a. 
-    unfold "∘", e2a in *. 
+    specialize (a2e_e2a S X WF EXEC x DX) as a2e_e2a.
+    unfold "∘", e2a in *.
     destruct (excluded_middle_informative (ES.tid S x = tid_init))
       as [INIT|NINIT].
     { unfold e2a.
@@ -1146,12 +1094,12 @@ Proof.
   all: apply X2G_rel_transfer; auto.
   { by apply ES.rmwE. }
   { by apply ES.rfE. }
-  by apply ES.coE. 
+  by apply ES.coE.
 Qed.
 
 Lemma x2g_wf {S X}
       (WF : ES.Wf S)
-      (EXEC : Execution.t S X) : 
+      (EXEC : Execution.t S X) :
   Wf (x2g S X).
 Proof.
   specialize (x2g_X2G WF EXEC) as X2G.
@@ -1163,12 +1111,12 @@ Proof.
   { intros a1 a2 P.
     destruct P as [Ga1 [Ga2 [NEQ [SAME_TID NINIT_a1]]]].
     apply GACTS in Ga1.
-    apply GACTS in Ga2. 
+    apply GACTS in Ga2.
     unfold "□₁" in Ga1, Ga2. desf.
     rename y0 into e1, y into e2.
     assert (SAME_TID' : ES.same_tid S e1 e2).
     { destruct (excluded_middle_informative ((ES.tid S) e1 = tid_init)).
-      { exfalso; apply NINIT_a1; unfold e2a; desf. } 
+      { exfalso; apply NINIT_a1; unfold e2a; desf. }
       destruct (excluded_middle_informative ((ES.tid S) e2 = tid_init)).
       all: unfold e2a in SAME_TID; desf. }
     assert (HH : (ES.sb S)⁼ e2 e1 \/ ES.cf S e2 e1).
@@ -1186,12 +1134,12 @@ Proof.
     { destruct SB.
       1: assert (ES.seqn S e2 < ES.seqn S e1); [|omega].
       2: assert (ES.seqn S e1 < ES.seqn S e2); [|omega].
-      1: apply ES.same_tid_sym in SAME_TID'. 
+      1: apply ES.same_tid_sym in SAME_TID'.
       all: by apply ES.seqn_sb_alt. }
     destruct (excluded_middle_informative ((ES.tid S) e1 = tid_init)).
-    { exfalso; apply NINIT_a1; unfold e2a; desf. } 
+    { exfalso; apply NINIT_a1; unfold e2a; desf. }
     destruct (excluded_middle_informative ((ES.tid S) e2 = tid_init)).
-    all : unfold e2a; desf; simpls; auto. 
+    all : unfold e2a; desf; simpls; auto.
     arewrite (0 = ES.seqn S e2); auto.
     eapply Execution.ex_inE in Ga2; eauto.
       by rewrite ES.seqn_init. }
@@ -1230,7 +1178,7 @@ Proof.
     apply inclusion_restr. }
   { rewrite GRF.
     unfolder. intros a1 a2 RF.
-    desf. 
+    desf.
     set (f := fun l => match l with
                     | Aload _ _ _ v | Astore _ _ _ v => Some v
                     | Afence _ => None
@@ -1266,7 +1214,7 @@ Proof.
     apply transitive_restr.
     by apply ES.co_trans. }
   { intro.
-    rewrite set_interC with (s := acts_set _).  
+    rewrite set_interC with (s := acts_set _).
     rewrite <- set_interK with (s := acts_set (x2g S X)).
     rewrite !set_interA.
     rewrite X2G_loc_; eauto.
@@ -1284,7 +1232,7 @@ Proof.
         (x0 := restr_rel (X ∩₁ (fun a : eventid => is_w (ES.lab S) a)
                             ∩₁ (fun x : eventid => loc (ES.lab S) x = ol)) (ES.co S)).
     { apply set_subset_refl2. }
-    { basic_solver. } 
+    { basic_solver. }
     apply is_total_restr.
     by apply Execution.co_total. }
   { rewrite GCO.
@@ -1294,7 +1242,7 @@ Proof.
     apply GACTS in Ea.
     destruct Ea as [e [Xe EQ]].
     assert (LOC' : loc (ES.lab S) e = Some l).
-    { rewrite <- EQ in LOC.    
+    { rewrite <- EQ in LOC.
       unfold "∘" in GLAB.
       rewrite <- LOC.
       unfold loc.
@@ -1305,9 +1253,9 @@ Proof.
     apply GACTS.
     cdes INIT_l.
     exists a.
-    eapply Execution.init_in_ex in EINA as Xa; eauto.  
+    eapply Execution.init_in_ex in EINA as Xa; eauto.
     split; auto.
-    unfold ES.acts_init_set in EINA. 
+    unfold ES.acts_init_set in EINA.
     unfolder in EINA.
     unfold e2a. rewrite LOCA. desf. }
 Qed.
@@ -1324,3 +1272,11 @@ Proof.
   { by apply x2g_X2G. }
     by apply x2g_wf.
 Qed.
+
+Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ rc11 : rc11_consistent G ⟫.
+
+Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ sc : sc_consistent G ⟫.

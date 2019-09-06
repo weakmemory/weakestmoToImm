@@ -1,8 +1,8 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic.
-From imm Require Import 
-     AuxDef 
+From imm Require Import
+     AuxDef
      Events Execution Execution_eco imm_s_hb imm_s imm_common
      Prog ProgToExecution ProgToExecutionProperties
      CombRelations CombRelationsMore
@@ -103,6 +103,53 @@ Lemma isim_trav_step_thread_ninit prog thread TC'
 Proof.
   apply sim_trav_step_to_step in STEP. desf.
   eapply itrav_step_thread_ninit; eauto.
+Qed.
+
+Lemma scbE :
+  scb G ≡ ⦗E⦘ ⨾ scb G ⨾ ⦗E⦘.
+Proof.
+  unfold imm_s.scb.
+  rewrite wf_sbE, imm_s_hb.wf_hbE, wf_coE, wf_frE; auto.
+  basic_solver 30.
+Qed.
+
+Lemma rsE_alt :
+  rs G ⨾ ⦗E⦘ ≡ ⦗W ∩₁ E⦘ ⨾ (sb ∩ same_loc lab)^? ⨾ ⦗W ∩₁ E⦘ ⨾ (rf ⨾ rmw)＊.
+Proof.
+  unfold imm_s_hb.rs.
+  rewrite !seqA.
+  arewrite ((rf ⨾ rmw)＊ ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (rf ⨾ rmw)＊).
+  { rewrite rtE.
+    rewrite !seq_union_l, !seq_union_r.
+    apply union_more; [basic_solver|].
+    rewrite (dom_l WF.(wf_rfE)), !seqA.
+    rewrite ct_seq_eqv_l at 1.
+    rewrite (dom_r WF.(wf_rmwE)), <- !seqA.
+    rewrite ct_seq_eqv_r at 2.
+      by rewrite seqA. }
+  arewrite (⦗W⦘ ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ ⦗W ∩₁ E⦘) by basic_solver.
+  arewrite ((sb ∩ same_loc lab)^? ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ (sb ∩ same_loc lab)^?).
+  { rewrite crE.
+    rewrite !seq_union_l, !seq_union_r.
+    apply union_more; [basic_solver|].
+    rewrite wf_sbE.
+    basic_solver. }
+  rewrite <- seqA, <- id_inter. done.
+Qed.
+
+Lemma rsE_alt_swap :
+  rs G ⨾ ⦗E⦘ ≡ ⦗E⦘ ⨾ rs G.
+Proof.
+ rewrite WF.(imm_s_hb.wf_rsE).
+ rewrite !seq_union_l, !seq_union_r.
+ apply union_more; basic_solver.
+Qed.
+
+Lemma rsE_alt_restr :
+  rs G ⨾ ⦗E⦘ ≡ restr_rel E (rs G).
+Proof.
+  rewrite restr_relE, <- seqA, <- rsE_alt_swap; auto.
+  basic_solver.
 Qed.
 
 End Properties.
