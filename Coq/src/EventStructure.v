@@ -1,6 +1,7 @@
 Require Import Omega Setoid Program.Basics.
+From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
-From imm Require Import Events.
+From imm Require Import AuxDef Events.
 Require Import AuxDef.
 Require Import AuxRel.
 
@@ -11,16 +12,6 @@ Definition eventid := nat.
 Inductive cont_label :=
 | CInit  (tid : thread_id)
 | CEvent (eid : eventid).
-
-Module Language.
-Record t :=
-  mk { syntax : Type;
-       state : Type;
-       init : syntax -> state;
-       is_terminal : state -> Prop;
-       step : list label -> state -> state -> Prop
-     }.
-End Language.
 
 Definition init_write l := Astore Xpln Opln l 0.
 
@@ -36,7 +27,7 @@ Record t :=
        co   : eventid -> eventid -> Prop ;
        ew   : eventid -> eventid -> Prop ;
        cont : list (cont_label *
-                    { lang : Language.t &
+                    { lang : Language.t (list label) &
                       lang.(Language.state) });
      }.
 
@@ -1126,6 +1117,20 @@ Proof.
   exfalso. eapply NCF. eauto.
 Qed.
   
+
+Lemma jf_prcl_rf_compl {A} WF
+      (AE : A ⊆₁ E)
+      (JF_PRCL : prcl jf A):
+  A ∩₁ R ⊆₁ codom_rel (⦗A⦘ ⨾ rf).
+Proof.
+  arewrite (A ∩₁ R ≡₁ A ∩₁ (E ∩₁ R)) by basic_solver.
+  rewrite WF.(jf_complete).
+  rewrite set_interC, <- codom_eqv1.
+  rewrite (dom_rel_helper JF_PRCL).
+  rewrite jf_in_rf; auto.
+  basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** fr properties *)
 (******************************************************************************)
@@ -1201,6 +1206,26 @@ Qed.
 (******************************************************************************)
 (** ** co properites *)
 (******************************************************************************)
+
+
+
+(******************************************************************************)
+(** ** sc properites *)
+(******************************************************************************)
+
+Lemma sc_in_rel :
+  Sc ⊆₁ Rel.
+Proof.
+  unfold is_sc, is_rel.
+  basic_solver.
+Qed.
+
+Lemma sc_in_acq :
+  Sc ⊆₁ Acq.
+Proof.
+  unfold is_sc, is_acq.
+  basic_solver.
+Qed.
 
 (******************************************************************************)
 (** ** continuation properites *)

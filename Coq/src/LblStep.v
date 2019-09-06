@@ -1,6 +1,8 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From imm Require Import Events Execution
+From imm Require Import
+     AuxDef 
+     Events Execution
      Prog ProgToExecution ProgToExecutionProperties.
 Require Import AuxDef.
 Require Import AuxRel.

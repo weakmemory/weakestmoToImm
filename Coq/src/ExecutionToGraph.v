@@ -12,6 +12,9 @@ Require Import Logic.FinFun.
 Require Import Omega.
 Require Import Consistency.
 Require Import ImmProperties.
+Require Import Step.
+
+Require Import SC.
 
 Local Open Scope program_scope.
 
@@ -588,7 +591,7 @@ Qed.
 Lemma seq_move_prcl r r'
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
-      (PRCL : dom_rel (r' ⨾ ⦗X⦘) ⊆₁ X) :
+      (PRCL : prcl r' X) :
   Move (r ⨾ r') ≡ Move r ⨾ Move r'.
 Proof. by apply seq_move, seq_restr_prcl. Qed.
 
@@ -814,15 +817,6 @@ Proof.
   rewrite collect_rel_union.
   by rewrite X2G_sw_transfer.
 Qed.
-
-Lemma X2G_hb_transfer'
-      (WF : ES.Wf S)
-      (EXEC : Execution.t S X)
-      (X2G : X2G)
-      (WF_G : Wf G) :
-  Move Shb ≡ Ghb.
-Proof.
-Admitted.
 
 Lemma X2G_fr_transfer
       (WF : ES.Wf S)
@@ -1279,19 +1273,10 @@ Proof.
     by apply x2g_wf.
 Qed.
 
-Require Import ExecutionEquivalence.
+Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ rc11 : rc11_consistent G ⟫.
 
-Lemma X2G_x_equiv S X :
-      (X2G S X) × (X2G S X) ⊆ X_EQUIV.
-Proof.
-  intros G G' [MATCH MATCH'].
-  cdes MATCH.
-  cdes MATCH'.
-  red. splits.
-  2: { unfolder in GACTS.
-       unfold "∘" in *.
-       intros a Ga.
-       apply GACTS in Ga. desf.
-         by rewrite <- GLAB, <- GLAB0. }
-  all: unfolder in *; basic_solver.
-Qed.
+Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
+    ⟪ x2g  : X2G S X G ⟫ /\
+    ⟪ sc : sc_consistent G ⟫.

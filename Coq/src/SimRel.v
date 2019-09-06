@@ -1,8 +1,10 @@
 Require Import Omega.
 Require Import Program.Basics.
 From hahn Require Import Hahn.
-From PromisingLib Require Import Basic.
-From imm Require Import Events Execution TraversalConfig Traversal
+From PromisingLib Require Import Basic Language.
+From imm Require Import
+     AuxDef 
+     Events Execution TraversalConfig Traversal
      Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
      CombRelations SimTraversal.
 Require Import AuxRel.
@@ -167,7 +169,7 @@ Section SimRel.
     Proof.
       destruct e; simpls; desf.
       assert (GE (ThreadEvent thread index)) as EE by (eapply coveredE; eauto).
-      destruct (exists_ncov TCCOH thread) as [m MM]; auto.
+      destruct (exists_ncov thread TCCOH) as [m MM]; auto.
       remember (m - index) as delta.
       generalize dependent m.
       generalize dependent index.

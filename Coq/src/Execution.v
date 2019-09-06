@@ -233,8 +233,8 @@ Section ExecutionRels.
       rewrite !seqA.
       arewrite (⦗Acq⦘ ⨾ ⦗X'⦘ ≡ ⦗X'⦘ ⨾ ⦗Acq⦘) by basic_solver.
       assert (PRCL' : dom_rel ((sb ⨾ ⦗F⦘)^? ⨾ ⦗X'⦘) ⊆₁ X').
-      { apply prcl_cr. rewrite seqA.
-        arewrite (⦗F⦘ ⨾ ⦗X'⦘ ⊆ ⦗X'⦘) by basic_solver. }
+      { apply prcl_cr.
+        by rewrite inclusion_seq_eqv_r. }
       seq_rewrite (dom_rel_helper PRCL').
       admit. }
     { admit. }
