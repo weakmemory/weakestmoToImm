@@ -1737,6 +1737,28 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma cont_adjacent_con_last_sb_imm_alt WF x k k' e e' 
+      (kLASTx : cont_last S k x)
+      (ADJ : cont_adjacent S k k' e e') :
+  immediate sb x e.
+Proof. 
+  assert (Eninit e) as nINITe.
+  { eapply cont_adjacent_ninit_e; eauto. }
+  edestruct cont_adjacent_cont_last_sb_imm
+    as [y IMMSB]; eauto.
+  destruct_seq_l IMMSB as kLASTy.
+  unfold cont_last in *.
+  destruct k; [|congruence].
+  split.
+  { apply sb_init; auto. basic_solver. }
+  intros z SB SB'.
+  eapply IMMSB; eauto.
+  apply sb_init; auto. 
+  split; auto.
+  apply sb_codom_ninit; auto.
+  basic_solver.
+Qed.    
+
 Lemma cont_adjacent_sb_imm WF k k' e e' 
       (ADJ : cont_adjacent S k k' e e') :
   eq e × eq_opt e' ⊆ immediate sb.
@@ -2176,6 +2198,82 @@ Proof.
   apply seqn_sb_alt in SB; auto.
   omega.
 Qed.
+
+Lemma seqn_eq_imm_sb WF x y z 
+      (* (SB : sb x y) *)
+      (Ey : E y)
+      (nCF : ~ cf x y)
+      (IMMSB : immediate sb x z)
+      (EQtid : tid y = tid z)
+      (EQseqn : seqn y = seqn z) :
+  immediate sb x y. 
+Proof.
+  assert (E x) as Ex.
+  { destruct IMMSB as [SB _].
+    apply sbE in SB; auto.
+    generalize SB. basic_solver. }
+  assert (Eninit z) as nINITz.
+  { apply sb_codom_ninit; auto.
+    generalize IMMSB. basic_solver. }
+  assert (E z) as Ez.
+  { apply nINITz. }
+  assert (Eninit y) as nINITy.
+  { split; auto.
+    intros [_ INITy].
+    apply nINITz.
+    split; auto; congruence. } 
+  assert (sb x y) as SB.
+  { apply acts_set_split in Ex.
+    destruct Ex as [INITx | nINITx].
+    { apply sb_init; auto. basic_solver. }
+    assert (same_tid x y) as STID.
+    { red. etransitivity.
+      { apply sb_tid; auto.
+        apply seq_eqv_l; split; auto.
+        apply IMMSB. }
+      congruence. }
+    edestruct same_thread_alt
+      with (x := x) (y := y) as [SB | CF]; eauto. 
+    { apply nINITx. }
+    { destruct SB as [EQ | [SB | SB]]; auto.
+      { subst y. exfalso.
+        assert (seqn x < seqn z) 
+          as SEQLT; [|omega].
+        apply seqn_sb_alt; auto.
+        apply IMMSB. }
+      red in SB. exfalso.
+      assert (seqn y < seqn x) 
+          as SEQLT.
+      { apply seqn_sb_alt; auto. by symmetry. }
+      assert (seqn x < seqn z) 
+          as SEQLT'; [|omega].
+      apply seqn_sb_alt; auto. 
+      { unfold ES.same_tid in *. congruence. }
+      apply IMMSB. }
+    exfalso. auto. }
+
+  split; auto.
+  intros z' SB' SB''.
+  assert (Eninit z') as nINITz'.
+  { apply sb_codom_ninit; auto. basic_solver. }
+  assert (seqn z' < seqn y) as SEQNLT.
+  { apply seqn_sb_alt; auto. 
+    apply sb_tid; auto. basic_solver. }
+  apply acts_set_split in Ex.
+  destruct Ex as [INITx | nINITx].
+  { erewrite seqn_immsb_init 
+      with (y := z) in EQseqn; eauto.
+    omega. }
+  assert (seqn x < seqn z') as SEQNLT'.
+  { apply seqn_sb_alt; auto. 
+    apply sb_tid; auto. basic_solver. }
+  erewrite seqn_immsb 
+    with (x := x) (y := z) in EQseqn; eauto; try omega.
+  apply sb_tid; auto. 
+  apply seq_eqv_l. 
+  split; auto.
+  apply IMMSB.
+Qed.      
 
 Lemma same_sb_dom_same_k k k' lst lst' WF
       (INK   : ES.cont_set S (k, lst))
