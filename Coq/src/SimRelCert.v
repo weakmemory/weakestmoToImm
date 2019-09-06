@@ -131,6 +131,7 @@ Section SimRelCert.
 
   Notation "'kE'" := (ES.cont_sb_dom S k) (only parsing).
   Notation "'ktid'" := (ES.cont_thread S k) (only parsing).
+  Notation "'klast'" := (ES.cont_last S k) (only parsing).
 
   (* Notation "'E0'" := (E0 G TC' ktid). *)
 
@@ -168,9 +169,11 @@ Section SimRelCert.
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
       cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
+      klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ;
+
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
-      jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ;
+      jf_kE_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ;
 
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ;
@@ -259,7 +262,7 @@ Section SimRelCert.
       intros x [Cx TIDx].
       eapply e2a_kEninit; eauto; try apply SRCC.
       assert ((e2a □₁ X) x) as Xx.
-      { eapply ex_cov_iss; [apply SRCC|]. basic_solver. }
+      { eapply ex_cov_iss; [apply SRCC|]. red. basic_solver. }
       destruct Xx as [x' [Xx' EQx]]. subst x.
       unfolder; eexists; splits; eauto.
       { eapply ex_ktid_cov; auto.
@@ -1083,7 +1086,7 @@ Section SimRelCert.
         { eapply e2a_ew; eauto. basic_solver 10. }
         eapply e2a_co_ew_iss; eauto.
         basic_solver 10. }
-      eapply jf_in_cert_rf; auto.
+      eapply jf_kE_in_cert_rf; auto.
       exists z, y; splits; auto.
       apply seq_eqv_r. 
       splits; auto.

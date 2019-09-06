@@ -209,7 +209,7 @@ Lemma prog_l_es_init_consistent locs prog :
 Proof.
   constructor; unfold ecf, ES.jfe, ES.icf.
   all: autorewrite with prog_l_es_init_db; auto.
-  5: apply acyclic_disj.
+  7: apply acyclic_disj.
   all: basic_solver.
 Qed.
 

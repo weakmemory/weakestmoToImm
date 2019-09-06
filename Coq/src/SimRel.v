@@ -15,6 +15,7 @@ Require Import Consistency.
 Require Import Execution.
 Require Import EventToAction.
 Require Import LblStep.
+Require Import CertRf.
 Require Import SimRelCont.
 Require Import SimRelEventToAction.
 Require Import ProgES.
@@ -139,11 +140,15 @@ Section SimRel.
 
       sr_e2a : simrel_e2a S G sc ;
       
-      ex_cov_iss : e2a □₁ X ≡₁ C ∪₁ dom_rel (Gsb^? ⨾ ⦗ I ⦘) ;
+      ex_cov_iss : e2a □₁ X ≡₁ CsbI G TC ;
+
+      ex_sb_cov_iss : e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb) ⊆₁ CsbI G TC ;
       
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
+
+      jf_ex_in_cert_rf : e2a □ (Sjf ⨾ ⦗X⦘) ⊆ cert_rf G sc TC ;
       
       jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
       e2a_co_iss   : e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;
@@ -233,11 +238,11 @@ Section SimRel.
 
     Lemma cov_in_ex : 
       C ⊆₁ e2a □₁ X. 
-    Proof. rewrite ex_cov_iss; auto. basic_solver 10. Qed.
+    Proof. rewrite ex_cov_iss; auto. unfold CsbI. basic_solver 10. Qed.
 
     Lemma iss_in_ex : 
       I ⊆₁ e2a □₁ X. 
-    Proof. rewrite ex_cov_iss; auto. basic_solver 10. Qed.
+    Proof. rewrite ex_cov_iss; auto. unfold CsbI. basic_solver 10. Qed.
 
     Lemma ex_iss_inW : 
       X ∩₁ e2a ⋄₁ I ⊆₁ SW.
@@ -546,9 +551,9 @@ Section SimRel.
       unfolder.
       intros x y [SB [Cx Cy]].
       assert ((e2a □₁ X) x) as e2aXx.
-      { apply ex_cov_iss; auto. basic_solver. }
+      { apply ex_cov_iss; auto. red. basic_solver. }
       assert ((e2a □₁ X) y) as e2aXy.
-      { apply ex_cov_iss; auto. basic_solver. }
+      { apply ex_cov_iss; auto. red. basic_solver. }
       destruct e2aXx as [x' [Xx' EQx]].
       destruct e2aXy as [y' [Xy' EQy]].
       do 2 eexists; splits; eauto.
@@ -729,9 +734,9 @@ Section SimRel.
       rewrite <- !restr_relE.
       intros x y [GCO [Ix Iy]].
       assert ((e2a □₁ X) x) as e2aXx.
-      { apply ex_cov_iss; auto. basic_solver 10. }
+      { apply ex_cov_iss; auto. red. basic_solver 10. }
       assert ((e2a □₁ X) y) as e2aXy.
-      { apply ex_cov_iss; auto. basic_solver 10. }
+      { apply ex_cov_iss; auto. red. basic_solver 10. }
       destruct e2aXx as [x' [Xx' EQx]].
       destruct e2aXy as [y' [Xy' EQy]].
       assert ((restr_rel SE (same_loc Slab)) x' y') as HH.

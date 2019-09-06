@@ -904,7 +904,7 @@ Section SimRelCertStep.
                    ES.cont_sb_dom S k × eq e ⨾
                    ⦗SE S' ∩₁ SF S'⦘ ⨾ ⦗SE S' ∩₁ SAcq S'⦘).
          { generalize SEE. basic_solver 10. }
-         rewrite jf_in_cert_rf; eauto.
+         rewrite jf_kE_in_cert_rf; eauto.
          rewrite !collect_rel_seqi, !collect_rel_eqv.
          erewrite e2a_F; eauto.
          erewrite e2a_Acq; eauto.
@@ -1577,6 +1577,7 @@ Section SimRelCertStep.
       symmetry.
       all: eapply basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
       all: eapply Execution.ex_inE; eauto. }
+    { admit. }
     { unfold Basics.compose.
       red. intros x [XX HH]. red in HH.
       assert (SE S x) as EX.
@@ -1595,6 +1596,7 @@ Section SimRelCertStep.
       unfolder. ins. desf.
       do 2 eexists. splits; eauto.
       all: eapply basic_step_e2a_eq_dom; eauto. }
+    { admit. }
     { arewrite (X ∩₁ e2a S' ⋄₁ C ⊆₁ X ∩₁ e2a S ⋄₁ C).
       { unfolder. ins. desf. split; eauto.
         erewrite <- basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
@@ -1622,7 +1624,7 @@ Section SimRelCertStep.
       all : basic_solver. }
     (* rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I  ⦘) ⊆₁ X *)
     eapply simrel_cert_step_rel_ew_ex_iss; eauto.
-  Qed.
+  Admitted.
         
 End SimRelCertStep.
 
