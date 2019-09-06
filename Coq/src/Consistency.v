@@ -120,8 +120,9 @@ Record es_consistent {m} :=
     jfe_vis : dom_rel jfe ⊆₁ vis;
     coh : irreflexive (hb ⨾ (eco m)^?);
 
-    (* icf_R : dom_rel icf ⊆₁ R; *)
-    (* icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew); *)
+    icf_R : dom_rel icf ⊆₁ R;
+    icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew);
+
     ncf_sc : acyclic (psc_f m ∪ psc_base)
   }.
 
@@ -706,12 +707,6 @@ Section ConsistentProps.
     rewrite immediate_in, (dom_r swD). type_solver.
   Qed.
 
-  (* This lemma was removed from the project during the working on the DRF theorem.
-     However, the proof relies on it.*)
-  Lemma icf_R :
-    icf ≡ ⦗R⦘ ⨾ icf ⨾ ⦗R⦘.
-  Admitted.
-
   Lemma t_rmw_hb_in_hb :
     rmw⁻¹ ⨾ hb ⊆ hb^?.
   Proof.
@@ -736,7 +731,9 @@ Section ConsistentProps.
     rewrite HahnEquational.inter_trans; [| apply ES.same_tid_trans].
     rewrite ES.imm_tsb_imm_sb_in_icf; auto.
     arewrite (⦗W⦘ ⨾ (icf)^? ≡ ⦗W⦘).
-    { rewrite icf_R. type_solver. }
+    { rewrite crE, seq_union_r, seq_id_r.
+      rewrite (dom_rel_helper ESC.(icf_R)).
+      type_solver. }
     basic_solver.
   Qed.
 
@@ -763,29 +760,28 @@ Section ConsistentProps.
     destruct (classic (z = x)) as [|XZNEQ]; subst.
     { destruct SB; desf. }
     exfalso.
-    admit. 
-    (* assert (icf x z) as CF. *)
-    (* 2: { apply WF.(ES.rmwD) in H0. *)
-    (*      assert (R x) as RX. *)
-    (*      { eapply icf_R; eauto. eexists. eauto. } *)
-    (*      destruct_seq H0 as [RR WW]. *)
-    (*      type_solver. } *)
-    (* set (SBIX := H0). *)
-    (* apply WF.(ES.rmwi) in SBIX. *)
-    (* apply WF.(ES.rmwEninit) in H0. *)
-    (* destruct_seq H0 as [EZ EX]. *)
-    (* edestruct WF.(ES.imm_tsb_imm_sb_in_icf). *)
-    (* { split. *)
-    (*   { exists z0. splits. *)
-    (*     { apply SBI. } *)
-    (*     apply SBIX. } *)
-    (*   red. *)
-    (*   erewrite <- WF.(ES.sb_tid) with (x:=z0). *)
-    (*   { by apply WF.(ES.rmwt). } *)
-    (*   apply seq_eqv_l. split; auto. apply SBI. } *)
-    (* { desf. } *)
-    (*   by apply ES.icf_sym. *)
-  Admitted.
+    assert (icf x z) as CF.
+    2: { apply WF.(ES.rmwD) in H0.
+         assert (R x) as RX.
+         { eapply icf_R; eauto. eexists. eauto. }
+         destruct_seq H0 as [RR WW].
+         type_solver. }
+    set (SBIX := H0).
+    apply WF.(ES.rmwi) in SBIX.
+    apply WF.(ES.rmwEninit) in H0.
+    destruct_seq H0 as [EZ EX].
+    edestruct WF.(ES.imm_tsb_imm_sb_in_icf).
+    { split.
+      { exists z0. splits.
+        { apply SBI. }
+        apply SBIX. }
+      red.
+      erewrite <- WF.(ES.sb_tid) with (x:=z0).
+      { by apply WF.(ES.rmwt). }
+      apply seq_eqv_l. split; auto. apply SBI. }
+    { desf. }
+      by apply ES.icf_sym.
+  Qed.
 
   Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
   Proof. 
@@ -991,7 +987,7 @@ Section ConsistentProps.
       apply (dom_r (ES.rmwD WF)) in RMW.
       unfolder in RMW.
       assert (R z); [|type_solver].
-      eapply icf_R in ICF; eauto. unfolder in ICF. basic_solver. }
+      eapply icf_R; eauto. basic_solver. }
     right; right.
     apply ES.rmw_in_sb in RMW; auto.
     specialize ES.sb_trans.
