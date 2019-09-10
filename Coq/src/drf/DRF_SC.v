@@ -20,7 +20,7 @@ Require Import SC.
 Set Implicit Arguments.
 
 Theorem drf_rc11_sc P G
-        (RA_RACE_FREE : SC_RA_race_free_program_G P)
+        (RA_RACE_FREE : sc_ra_race_free_program_G P)
         (RC11 : rc11_consistent G) :
   sc_consistent G.
 Proof.

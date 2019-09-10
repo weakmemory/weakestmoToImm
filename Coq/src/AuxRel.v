@@ -419,6 +419,13 @@ Proof.
   all: exfalso; eapply HH; split; eauto.
 Qed.
 
+Lemma eq_dom_compose (h : A -> B) (f g : B -> C) :
+  eq_dom (h □₁ s) f g <-> eq_dom s (f ∘ h) (g ∘ h).
+Proof.
+  unfold "∘".
+  split; basic_solver.
+Qed.
+
 (******************************************************************************)
 (** ** collect_rel properties *)
 (******************************************************************************)
@@ -1547,6 +1554,17 @@ Proof. basic_solver. Qed.
 Lemma transp_empty :
   r ⊆ ∅₂ <-> r⁻¹ ⊆ ∅₂.
 Proof. split; basic_solver. Qed.
+
+Lemma eq_dom_equivalence :
+  @equivalence (A -> B) (@eq_dom A B s).
+Proof.
+  constructor.
+  { basic_solver. }
+  { intros f g h EQ_fg EQ_gh a Xa.
+    by rewrite EQ_fg, EQ_gh. }
+  intros f g EQ a Xa.
+  by rewrite EQ.
+Qed.
 
 End Props.
 

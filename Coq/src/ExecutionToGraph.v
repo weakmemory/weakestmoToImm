@@ -13,6 +13,7 @@ Require Import Omega.
 Require Import Consistency.
 Require Import ImmProperties.
 Require Import Step.
+Require Import ExecutionEquivalence.
 
 Require Import SC.
 
@@ -1273,6 +1274,21 @@ Proof.
     by apply x2g_wf.
 Qed.
 
+Lemma X2G_x_equiv {S X}
+      (WF : ES.Wf S)
+      (CONS : es_consistent (m := Weakestmo) S)
+      (EXEC : Execution.t S X) :
+  X2G S X × X2G S X ⊆ X_EQUIV.
+Proof.
+  intros G1 G2 [MATCH1 MATCH2].
+  cdes MATCH1.
+  cdes MATCH2.
+  constructor; splits.
+  2: { rewrite GACTS; apply eq_dom_compose.
+       intros e Xe. by rewrite <- GLAB, GLAB0. }
+  all: unfolder in *; basic_solver.
+Qed.
+
 Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
     ⟪ x2g  : X2G S X G ⟫ /\
     ⟪ rc11 : rc11_consistent G ⟫.
@@ -1294,3 +1310,6 @@ Lemma X2G_steps P S X
     ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
 Proof.
 Admitted.
+
+
+
