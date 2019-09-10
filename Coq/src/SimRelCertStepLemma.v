@@ -49,6 +49,7 @@ Section SimRelCertStepLemma.
   Variable TC : trav_config.
   Variable TC' : trav_config.
   Variable X : eventid -> Prop.
+  Variable T : thread_id -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -155,7 +156,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_ex_ktid_cov k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     X ∩₁ Stid_ S' (ktid S' k') ∩₁ e2a S' ⋄₁ C ⊆₁ kE S' k'. 
@@ -180,7 +181,7 @@ Section SimRelCertStepLemma.
   
   Lemma simrel_cert_step_cov_in_ex k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     e2a S' ⋄₁ C ∩₁ kE S' k' ⊆₁ X.
@@ -217,7 +218,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_kE_lab k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     eq_dom (kE S' k' \₁ SEinit S') (Slab S') (Execution.lab (ProgToExecution.G st'') ∘ e2a S').
@@ -247,7 +248,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_jf_in_cert_rf k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     e2a S' □ (Sjf S' ⨾ ⦗kE S' k'⦘) ⊆ cert_rf G sc TC'.
@@ -262,7 +263,7 @@ Section SimRelCertStepLemma.
     erewrite basic_step_cont_sb_dom'; eauto.
     rewrite !id_union. rewrite !seq_union_r, !collect_rel_union.
     unionL.
-    { erewrite <- jf_in_cert_rf; eauto.
+    { erewrite <- jf_kE_in_cert_rf; eauto.
       arewrite (⦗kE S k⦘ ⊆ ⦗SE S⦘ ⨾ ⦗kE S k⦘).
       { rewrite <- seq_eqvK at 1. by erewrite kE_inE at 1; eauto. }
       arewrite (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S).
@@ -293,7 +294,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_ex_cont_iss k k' e e' S S' 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     X ∩₁ e2a S' ⋄₁ (acts_set st'.(ProgToExecution.G) ∩₁ I) ⊆₁ dom_rel (Sew S' ⨾ ⦗ kE S' k' ⦘).
@@ -388,7 +389,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_kE_iss k k' e e' S S' 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     kE S' k' ∩₁ e2a S' ⋄₁ I ⊆₁ dom_rel (Sew S' ⨾ ⦗ X ⦘).
@@ -446,7 +447,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_e2a_co_kE_iss k k' e e' S S' 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     e2a S' □ (Sco S' ⨾ ⦗kE S' k' ∩₁ e2a S' ⋄₁ I'⦘) ⊆ Gco.
@@ -500,7 +501,7 @@ Section SimRelCertStepLemma.
 
   Lemma simrel_cert_step_rmw_cov_in_kE k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     Grmw ⨾ ⦗C' ∩₁ e2a S' □₁ kE S' k'⦘ ⊆ e2a S' □ Srmw S' ⨾ ⦗ kE S' k' ⦘.
@@ -557,13 +558,13 @@ Section SimRelCertStepLemma.
   Lemma simrel_cert_lbl_step k S
         (st st' st'': thread_st (ktid S k))
         (NINIT : ktid S k <> tid_init)
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (LBL_STEP : lbl_step (ktid S k) st st')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     exists k' S',
       ⟪ kTID : ktid S' k' = ktid S k ⟫ /\
       ⟪ ESSTEP : (step Weakestmo)^? S S' ⟫ /\
-      ⟪ SRCC' : simrel_cert prog S' G sc TC TC' X k' st' st'' ⟫.
+      ⟪ SRCC' : simrel_cert prog S' G sc TC TC' X T k' st' st'' ⟫.
   Proof.
     assert (Wf G) as WF by apply SRCC.
     assert (ES.Wf S) as WFS by apply SRCC.
@@ -599,9 +600,9 @@ Section SimRelCertStepLemma.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (step_ e e' S S') as WMO_STEP_.
     { eapply simrel_cert_step_step_; eauto. }
-    assert (simrel prog S' G sc TC X) as SRC'.
+    assert (simrel_consistent prog S' G sc TC X (T \₁ eq (ktid S' k'))) as SRC'.
     { red. splits.
-      { eapply simrel_cert_step_simrel_; eauto. }
+      { eapply simrel_cert_step_simrel; eauto. }
       eapply simrel_cert_step_consistent; eauto. }
 
     assert (~ Basic.IdentMap.In tid_init (stable_prog_to_prog prog)) as PTINN.
@@ -654,6 +655,7 @@ Section SimRelCertStepLemma.
     { eapply simrel_cert_step_ex_ktid_cov; eauto. }
     (* cov_in_ex : e2a' ⋄₁ C ∩₁ kE' ⊆₁ X *)
     { eapply simrel_cert_step_cov_in_ex; eauto. }
+    { admit. }
     (* kE_lab : eq_dom (kE' \₁ SEinit') Slab' (certG.(lab) ∘ e2a') *)
     { eapply simrel_cert_step_kE_lab; eauto. } 
     (* jf_in_cert_rf : e2a' □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)

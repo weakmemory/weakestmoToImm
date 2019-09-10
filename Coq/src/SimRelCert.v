@@ -34,6 +34,7 @@ Section SimRelCert.
   Variable TC : trav_config.
   Variable TC': trav_config.
   Variable X : eventid -> Prop.
+  Variable T : thread_id -> Prop.
   Variable k : cont_label.
 
   (* A state in a continuation related to k in S. *)
@@ -159,7 +160,7 @@ Section SimRelCert.
   Notation "'certC'" := (C' ∩₁ e2a □₁ kE).
 
   Record simrel_cert :=
-    { sim : simrel prog S G sc TC X ;
+    { sim : simrel_consistent prog S G sc TC X (T \₁ eq ktid);
 
       tr_step : isim_trav_step G sc ktid TC TC' ;
 
@@ -169,7 +170,11 @@ Section SimRelCert.
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
       cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
-      klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ;
+      kE_front_in_kE : 
+        codom_rel (⦗kE \₁ dom_rel (Ssb ⨾ ⦗kE ∩₁ e2a ⋄₁ C'⦘)⦘ ⨾ Ssb) ⊆₁ 
+          kE ∩₁ e2a ⋄₁ (CsbI G TC') ;
+
+      (* klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ; *)
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
@@ -503,7 +508,7 @@ Section SimRelCert.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq ktid)) as SR_.
       { apply SRCC. }
       rewrite ex_cov_iss; eauto.
       rewrite cert_dom_cov_sb_iss.
@@ -733,7 +738,7 @@ Section SimRelCert.
     { apply SRCC. }
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
-    assert (simrel_ prog S G sc TC X) as SR_.
+    assert (simrel prog S G sc TC X (T \₁ eq ktid)) as SR_.
     { apply SRCC. }
     rewrite cert_dom_alt.
     2 : apply cstate_covered.
@@ -838,7 +843,7 @@ Section SimRelCert.
     { apply SRCC. }
     assert (simrel_e2a S G sc) as SRE2A. 
     { apply SRCC. }
-    assert (simrel_ prog S G sc TC X) as SR_.
+    assert (simrel prog S G sc TC X (T \₁ eq ktid)) as SR_.
     { apply SRCC. }
     rewrite set_inter_union_l, id_union, seq_union_r,
             collect_rel_union.
@@ -864,7 +869,7 @@ Section SimRelCert.
     (*   { apply SRCC. } *)
     (*   assert (Execution.t S X) as EXEC. *)
     (*   { apply SRCC. } *)
-    (*   assert (simrel_ prog S G sc TC X) as SR_. *)
+    (*   assert (simrel prog S G sc TC X) as SR_. *)
     (*   { apply SRCC. } *)
     (*   rewrite cert_dom_alt. *)
     (*   2 : apply cstate_covered. *)
@@ -938,7 +943,7 @@ Section SimRelCert.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq ktid)) as SR_.
       { apply SRCC. }
       rewrite sw_in_ex_cov_sw_sb; eauto.
       relsf. splits.
@@ -1070,7 +1075,7 @@ Section SimRelCert.
     Proof. 
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq ktid)) as SR_.
       { apply SRCC. }
       rewrite seq_eqv_r.
       intros x' y' [x [y [HH [EQx' EQy']]]].

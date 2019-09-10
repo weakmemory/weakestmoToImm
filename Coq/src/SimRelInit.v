@@ -118,7 +118,10 @@ Section SimRelInit.
         (GCLOS : forall tid m n (LT : m < n) (NE : GE (ThreadEvent tid n)),
             GE (ThreadEvent tid m)) : 
     let Sinit := prog_g_es_init prog G in
-    simrel prog Sinit G sc (init_trav G) (ES.acts_set Sinit).
+    simrel_consistent prog Sinit G sc 
+                      (init_trav G) 
+                      (ES.acts_set Sinit) 
+                      (fun t => t = tid_init \/ IdentMap.In t prog).
   Proof.
     clear S TC X.
     assert (simrel_e2a (prog_g_es_init prog G) G sc) as HH.
@@ -297,7 +300,6 @@ Section SimRelInit.
       red. basic_solver. }
     { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
       basic_solver. }
-    { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }

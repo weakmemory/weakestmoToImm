@@ -18,6 +18,7 @@ Require Import SimRel.
 Require Import SimRelInit.
 Require Import SimRelStep.
 Require Import ProgES.
+Require Import CertRf.
 
 Set Implicit Arguments.
 Local Open Scope program_scope.
@@ -64,6 +65,7 @@ Section Compilation.
     Variable S : ES.t.
     Variable TC : trav_config.
     Variable X : eventid -> Prop.
+    Variable T : thread_id -> Prop.
   
     Notation "'SE'" := S.(ES.acts_set).
     Notation "'SEinit'" := S.(ES.acts_init_set).
@@ -109,7 +111,7 @@ Section Compilation.
       ⟪ GCO   : Gco  ≡  e2a S □ (Sco ∩ X × X) ⟫.
 
     Lemma simrel_extract
-          (SRC : simrel prog S G sc TC X)
+          (SRC : simrel_consistent prog S G sc TC X T)
           (COVinG : GE ⊆₁ C) :
       simrel_extracted.
     Proof. 
@@ -121,7 +123,7 @@ Section Compilation.
       { apply SRC. }
       assert (Execution.t S X) as EXEC.
       { apply SRC. }
-      assert (simrel_ prog S G sc TC X) as SRC_.
+      assert (simrel prog S G sc TC X T) as SRC_.
       { apply SRC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRC. }
@@ -161,6 +163,7 @@ Section Compilation.
           [| | | eapply ex_cov_iss_lab; eauto].
         all : auto.
         rewrite <- COVISSG, DCOV.
+        fold (CsbI G TC).
         erewrite <- ex_cov_iss; eauto.
         erewrite set_inter_absorb_r; auto.
         apply set_in_map_collect. }
@@ -233,10 +236,11 @@ Section Compilation.
         (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
+    let T := (fun t => t = tid_init \/ IdentMap.In t prog) in
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
         ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
-        ⟪ SRC  : simrel prog S G sc TC X ⟫.
+        ⟪ SRC  : simrel_consistent prog S G sc TC X T ⟫.
   Proof. 
     eapply clos_refl_trans_ind_left.
     { exists (prog_g_es_init prog G), (ES.acts_set (prog_g_es_init prog G)).

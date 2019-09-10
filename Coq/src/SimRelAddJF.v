@@ -37,6 +37,7 @@ Section SimRelAddJF.
   Variable TC : trav_config.
   Variable TC' : trav_config.
   Variable X : eventid -> Prop.
+  Variable T : thread_id -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -144,7 +145,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -179,7 +180,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_ncf_we w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -194,7 +195,7 @@ Section SimRelAddJF.
     
     Lemma sim_add_jf_iss_sb_w w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -242,7 +243,7 @@ Section SimRelAddJF.
 
     Lemma weaken_sim_add_jf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
@@ -313,7 +314,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jf_delta_in_cert_rf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -326,7 +327,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jf_in_cert_rf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -350,7 +351,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_e2a_jf_furr w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -375,7 +376,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jf_delta_dom w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -391,7 +392,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jfe_delta_dom w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
@@ -407,7 +408,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_hb_sw_delta_dom w k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (SAJF : sim_add_jf k w e S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
@@ -439,7 +440,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_hb_delta_dom w k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (SAJF : sim_add_jf k w e S S')
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
@@ -460,7 +461,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_hb_jf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
@@ -500,7 +501,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_hb_tjf_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
@@ -546,7 +547,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_hb_jf_thb_ncf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
@@ -602,7 +603,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jf_necf w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S')
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
@@ -618,7 +619,7 @@ Section SimRelAddJF.
     
     Lemma sim_add_jf_jfe_vis w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
@@ -643,7 +644,7 @@ Section SimRelAddJF.
 
     Lemma sim_add_jf_jfe_ex_iss w k k' e e' S S' 
           (st st' st'' : thread_st (ES.cont_thread S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
           (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
           (SAJF : sim_add_jf k w e S S') 
           (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
