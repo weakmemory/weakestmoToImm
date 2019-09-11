@@ -170,11 +170,25 @@ Section SimRelCert.
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
       cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
+      (* TODO: we can derive it from `contsimstate` *)
+      exists_pc_ktid : 
+        exists e, pc G TC ktid e ;
+      
+      ex_pc_ktid_sb_in_ex : 
+        let pc := 
+          if (excluded_middle_informative (kE ⊆₁ e2a ⋄₁ C)) then
+            pc G TC  ktid
+          else 
+            pc G TC' ktid
+        in
+        codom_rel (⦗X ∩₁ e2a ⋄₁ pc⦘ ⨾ Ssb) ⊆₁ 
+          X ∩₁ e2a ⋄₁ (CsbI G TC) ;
+
       kE_front_in_kE : 
         codom_rel (⦗kE \₁ dom_rel (Ssb ⨾ ⦗kE ∩₁ e2a ⋄₁ C'⦘)⦘ ⨾ Ssb) ⊆₁ 
           kE ∩₁ e2a ⋄₁ (CsbI G TC') ;
 
-      (* klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ; *)
+      klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ;
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 

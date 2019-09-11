@@ -288,29 +288,52 @@ Section SimRelCertForwarding.
     { cdes FRWD. eapply ES.cont_adjacent_ninit_e; eauto. }
     assert (SE S e) as Ee.
     { apply nINITe. }
-    (* assert (ES.cont_last S k ⊆₁ X) as klastX. *)
-    (* { rewrite <- set_interK  *)
-    (*     with (s := ES.cont_last S k). *)
-    (*   rewrite klast_ex_sb_max at 1; eauto. *)
-    (*   rewrite set_inter_union_l.  *)
-    (*   unionL; [basic_solver|]. *)
-    (*   intros x [MAX kLASTx]. *)
-    (*   exfalso. apply (MAX e). *)
-    (*   cdes FRWD. *)
-    (*   set (kSBIMM := ADJ). *)
-    (*   apply ES.cont_adjacent_cont_last_sb_imm  *)
-    (*     in kSBIMM; auto. *)
-    (*   destruct kSBIMM as [y SB].  *)
-    (*   destruct_seq_l SB as kLASTy.  *)
-    (*   destruct SB as [SB _]. *)
-    (*   unfold ES.cont_last in *.  *)
-    (*   destruct k; [|congruence]. *)
-    (*   apply ES.sb_init; auto. *)
-    (*   split; auto. } *)
-    (* edestruct ES.exists_cont_last  *)
-    (*   with (k := k) as [x kLASTx]; eauto. *)
-    (* assert (X x) as Xx. *)
-    (* { basic_solver. } *)
+    assert (ES.cont_last S k ⊆₁ X) as klastX.
+    { rewrite <- set_interK
+        with (s := ES.cont_last S k).
+      rewrite klast_ex_sb_max at 1; eauto.
+      rewrite set_inter_union_l.
+      unionL; [basic_solver|].
+      intros x [MAX kLASTx].
+      exfalso. apply (MAX e).
+      cdes FRWD.
+      set (kSBIMM := ADJ).
+      apply ES.cont_adjacent_cont_last_sb_imm
+        in kSBIMM; auto.
+      destruct kSBIMM as [y SB].
+      destruct_seq_l SB as kLASTy.
+      destruct SB as [SB _].
+      unfold ES.cont_last in *.
+      destruct k; [|congruence].
+      apply ES.sb_init; auto.
+      split; auto. }
+     edestruct ES.exists_cont_last  
+      with (k := k) as [x kLASTx]; eauto.
+    assert (X x) as Xx.
+    { basic_solver. }
+    assert (immediate (Ssb S) x e) as IMMSB.
+    { cdes FRWD. eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
+    eapply ex_ktid_front_in_ex; eauto.
+    exists x. apply seq_eqv_l.
+    splits; auto; [|apply IMMSB].
+    repeat split; auto.
+    { admit. }
+    intros [y SB].
+    destruct_seq_r SB as HA.
+    destruct HA as [Xy [Cy [z [kSBz E2Az]]]].
+    assert (SEninit S y) as nINITy.
+    { 
+
+    set (kLASTx' := kLASTx).
+    apply ES.cont_last_alt in kLASTx'; auto.
+    apply kLASTx'.
+    exists z. apply seq_eqv_r.
+    splits; auto.
+    
+
+     kLASTx.
+    unfold set_inter. simpls; splits; auto.
+    split; auto.
     (* assert (immediate (Ssb S) x e) as IMMSB. *)
     (* { cdes FRWD. eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. } *)
     (* assert (CsbI G TC (e2a S e)) as CsbIe. *)

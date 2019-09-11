@@ -142,10 +142,14 @@ Section SimRel.
       
       ex_cov_iss : e2a □₁ X ≡₁ CsbI G TC ;
 
-      ex_front_in_ex : 
+      (* TODO: we can derive it from `contsimstate` *)
+      exists_pc : 
         forall t (Tt : T t), 
-          codom_rel (⦗(X ∩₁ STid t) \₁ dom_rel (Ssb ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘)⦘ ⨾ Ssb) ⊆₁ 
-            X ∩₁ e2a ⋄₁ (CsbI G TC) ;
+          exists e, pc G TC t e ;
+
+      ex_pc_sb_in_ex : 
+        forall t (Tt : T t), 
+          codom_rel (⦗X ∩₁ e2a ⋄₁ pc G TC t⦘ ⨾ Ssb) ⊆₁ X ∩₁ e2a ⋄₁ (CsbI G TC) ;
 
       (* ex_sb_cov_iss : e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb) ⊆₁ CsbI G TC ; *)
       
@@ -172,60 +176,16 @@ Section SimRel.
     ⟪ SRC_ : simrel T ⟫ /\ 
     ⟪ SCONS : @es_consistent S Weakestmo ⟫.
   
-  Section SimRelGraphProps. 
-    Lemma exists_pc thread e
-          (TCCOH : tc_coherent G sc TC)
-          (SRCG  : simrel_graph)
-          (NINIT : thread <> tid_init)
-          (COV : C e)
-          (TID : GTid thread e) :
-      exists e', pc G TC thread e'.
-    Proof.
-      destruct e; simpls; desf.
-      assert (GE (ThreadEvent thread index)) as EE by (eapply coveredE; eauto).
-      destruct (exists_ncov thread TCCOH) as [m MM]; auto.
-      remember (m - index) as delta.
-      generalize dependent m.
-      generalize dependent index.
-      induction delta.
-      { ins. exfalso. apply MM.
-        assert (m = index \/ m < index) as [|HH] by omega; desf.
-        eapply dom_sb_covered; eauto.
-        eexists. apply seq_eqv_r. splits; eauto.
-        red. apply seq_eqv_l. split.
-        { eapply gprclos; eauto. }
-        apply seq_eqv_r.
-        splits; auto.
-        simpls. }
-      ins.
-      destruct (classic (C (ThreadEvent thread (Datatypes.S index))))
-        as [MCOV|NMCOV].
-      { apply IHdelta with (m:=m) in MCOV; eauto.
-        2: omega.
-        eapply coveredE; eauto. }
-      exists (ThreadEvent thread index).
-      red. split; [split|]; auto.
-      intros [e HH]. destruct_seq_r HH as CE.
-      assert (exists p, e = ThreadEvent thread p /\
-                        ⟪ LT : index < p ⟫); desf.
-      { red in HH. destruct_seq HH as [AA BB].
-        red in HH. desf; desf. eauto. }
-      apply NMCOV.
-      assert (p = Datatypes.S index \/ Datatypes.S index < p) by omega; desf.
-      eapply dom_sb_covered; eauto.
-      eexists. apply seq_eqv_r.
-      split; [|by apply CE].
-      assert (GE (ThreadEvent thread p)) as PE by (eapply coveredE; eauto).
-      red. apply seq_eqv_l. split.
-      { eapply gprclos; eauto. }
-      apply seq_eqv_r. split; auto.
-      simpls.
-    Qed.
-  End SimRelGraphProps. 
-
   Section SimRelCommonProps. 
     Variable T : thread_id -> Prop.
     Variable SRC_ : simrel T.
+
+    (******************************************************************************)
+    (** ** pc properties  *)
+    (******************************************************************************)
+
+    Lemma pc_in_cov t : pc G TC t ⊆₁ C.
+    Proof. unfold pc. basic_solver. Qed.
 
     (******************************************************************************)
     (** ** E/Einit/Eninit properties  *)
