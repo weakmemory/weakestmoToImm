@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events Prog RC11.
+From imm Require Import Events Prog RC11 Execution.
 Require Import SC.
 
 Require Import AuxRel.
@@ -79,3 +79,66 @@ Definition rc11_rlx_race_free_program P :=
 
 Definition sc_ra_race_free_program P :=
   (forall S X, program_execution P S X -> sc_consistent_ex S X -> ra_race_free S X).
+
+(* TODO: move to AuxRel.v *)
+Lemma cs_collect_rel {A B} (r : relation A) (f : A -> B) :
+  f □ r^⋈ ≡ (f □ r)^⋈.
+Proof. basic_solver 10. Qed.
+
+Lemma X2G_race_transfer S X G
+      (WF : ES.Wf S)
+      (WF_G : Wf G)
+      (EXEC : Execution.t S X)
+      (MATCH : X2G S X G) :
+  e2a S □₁ race S X ⊆₁ Race_G.race G.
+Proof.
+  intros a [e [HH EQ]].
+  desf.
+  destruct HH as [e' HH].
+  exists (e2a S e').
+  assert (INCL : e2a S □ ((X × X \ ((hb S)⁼ ∪ ES.cf S)) ∩
+                          same_loc (ES.lab S) ∩
+                          one_of (fun a : eventid => is_w (ES.lab S) a))
+                 ⊆
+                 (acts_set G × acts_set G \ (imm_s_hb.hb G)⁼) ∩
+                 same_loc (lab G) ∩
+                 one_of (fun a : actid => is_w (lab G) a)).
+  { arewrite ((X × X \ ((hb S)⁼ ∪ ES.cf S)) ∩
+              same_loc (ES.lab S) ∩
+              one_of (fun a : eventid => is_w (ES.lab S) a)
+              ⊆
+              (X × X \ ((hb S)⁼ ∪ ES.cf S)) ∩
+              restr_rel X (same_loc (ES.lab S)) ∩
+              one_of (X ∩₁ (fun a : eventid => is_w (ES.lab S) a)))
+      by basic_solver.
+    rewrite !collect_rel_interi, collect_rel_one_of.
+    rewrite X2G_same_loc, <- X2G_W; eauto.
+    arewrite (e2a S □ (X × X \ ((hb S)⁼ ∪ ES.cf S)) ⊆
+              acts_set G × acts_set G \ (imm_s_hb.hb G)⁼).
+    { rewrite minus_union_r.
+      rewrite minus_disjoint with (r' := ES.cf S).
+      2: { rewrite interC, <- restr_cross, restr_relE.
+           split; [by apply Execution.ex_ncf | done]. }
+      rewrite inclusion_inter_l1.
+      arewrite (X × X \ (hb S)⁼ ⊆ X × X \ (restr_rel X (hb S)⁼)).
+      rewrite collect_rel_minus_inj.
+      2,3: rewrite (hbE S WF); destruct EXEC;
+        specialize e2a_inj; basic_solver.
+      arewrite (acts_set G × acts_set G \ (imm_s_hb.hb G)⁼ ≡
+                acts_set G × acts_set G \ restr_rel (acts_set G) (imm_s_hb.hb G)⁼).
+      { split; [apply inclusion_minus_mon|]; basic_solver 5. }
+      apply inclusion_minus_mon.
+      { cdes MATCH. by rewrite collect_rel_cross, GACTS. }
+      rewrite crs_restr2.
+      rewrite crs_restr2 with (s := X).
+      rewrite collect_rel_union.
+      apply inclusion_union_mon.
+      { rewrite !restr_eqv. cdes MATCH. relsf.
+        by rewrite collect_rel_eqv, GACTS. }
+      rewrite <- !cs_restr, cs_collect_rel.
+      rewrite X2G_hb_transfer'; eauto.
+      basic_solver 10. }
+    basic_solver. }
+  eapply map_collect_id in HH.
+  by apply INCL in HH.
+Qed.

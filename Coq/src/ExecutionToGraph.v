@@ -819,6 +819,16 @@ Proof.
   by rewrite X2G_sw_transfer.
 Qed.
 
+(* It should be easy to prove *)
+Lemma X2G_hb_transfer'
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G)
+      (WF_G : Wf G) :
+  Ghb ⊆ Move Shb.
+Proof.
+Admitted.
+
 Lemma X2G_fr_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
@@ -1307,6 +1317,7 @@ Lemma X2G_steps P S X
       (EXEC : program_execution P S X) :
   exists G,
     ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
     ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
 Proof.
 Admitted.

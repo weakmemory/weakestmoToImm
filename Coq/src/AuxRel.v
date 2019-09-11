@@ -67,7 +67,7 @@ Hint Unfold
      clos_sym clos_refl_sym
      inj_dom restr_fun set_map
      eq_opt compl_rel fixset
-     prcl fwcl prefix : unfolderDb.
+     prcl fwcl prefix one_of : unfolderDb.
 
 Section Props.
 
@@ -711,6 +711,14 @@ Proof.
   { apply INJ_CODOM ; basic_solver. }
   desf.
 Qed.
+
+Lemma collect_rel_one_of (f : A -> B) :
+  f □ one_of s ⊆ one_of (f □₁ s).
+Proof. basic_solver. Qed.
+
+Lemma cs_collect_rel (f : A -> B) :
+  f □ r^⋈ ≡ (f □ r)^⋈.
+Proof. basic_solver 10. Qed.
 
 (******************************************************************************)
 (** ** set_map properties *)
@@ -1731,3 +1739,11 @@ Proof. basic_solver 10. Qed.
 Add Parametric Morphism A : (@prefix A) with signature
     same_relation ==> set_equiv ==> set_equiv as prefix_more.
 Proof. basic_solver 10. Qed.
+
+Add Parametric Morphism A : (@one_of A) with signature
+    set_subset ==> inclusion as one_of_mori.
+Proof. basic_solver. Qed.
+
+Add Parametric Morphism A : (@one_of A) with signature
+    set_equiv ==> same_relation as one_of_more.
+Proof. basic_solver. Qed.
