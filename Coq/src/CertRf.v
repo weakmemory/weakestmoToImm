@@ -881,9 +881,9 @@ Proof.
   done.
 Qed.
 
-Lemma isim_trav_step_cert_rf_co thread TC TC' 
+Lemma sim_trav_step_cert_rf_co TC TC' 
       (TCOH : tc_coherent G sc TC)
-      (TRAV_STEP : isim_trav_step G sc thread TC TC') :
+      (TRAV_STEP : sim_trav_step G sc TC TC') :
   cert_rf G sc TC ⨾ (cert_rf G sc TC')⁻¹ ⊆ co^?.
 Proof. 
   intros x y [z [CertRF CertRF']].
@@ -912,7 +912,7 @@ Proof.
   unfold cert_rf in *.
   apply CertRF'.
   exists x; splits; auto.
-  eapply isim_trav_step_vf_mon; eauto.
+  eapply sim_trav_step_vf_mon; eauto.
   generalize CertRF. basic_solver.
 Qed.
 
