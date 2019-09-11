@@ -2,6 +2,7 @@ From hahn Require Import Hahn.
 From imm Require Import
      AuxDef
      Events Execution TraversalConfig TraversalConfigAlt
+     SimTraversal SimTraversalProperties
      imm_common imm_s imm_s_hb CertExecution1
      CombRelations Execution_eco.
 Require Import AuxRel.
@@ -820,3 +821,99 @@ Qed.
 End Properties.
 
 End CertRf.
+
+Section CertRfLemmas.
+Variable G  : execution.
+Variable sc : relation actid.
+Variable WF  : Wf G.
+Variable COH : imm_consistent G sc.
+
+Notation "'E'"  := G.(acts_set).
+Notation "'lab'" := (G.(lab)).
+Notation "'rmw'" := G.(rmw).
+
+Notation "'Tid_' t" := (fun x => tid x = t) (at level 1).
+Notation "'NTid_' t" := (fun x => tid x <> t) (at level 1).
+
+Notation "'R'" := (fun a => is_true (is_r lab a)).
+Notation "'W'" := (fun a => is_true (is_w lab a)).
+Notation "'F'" := (fun a => is_true (is_f lab a)).
+
+Notation "'Acq'" := (fun a => is_true (is_acq lab a)).
+Notation "'Rel'" := (fun a => is_true (is_rel lab a)).
+Notation "'Sc'" := (fun a => is_true (is_sc lab a)).
+Notation "'Acq/Rel'" := (fun a => is_true (is_ra lab a)).
+
+Notation "'sb'"  := (G.(sb)).
+Notation "'ppo'" := (G.(ppo)).
+Notation "'sw'"  := (G.(imm_s_hb.sw)).
+Notation "'hb'"  := (G.(imm_s_hb.hb)).
+Notation "'rf'"  := (G.(rf)).
+Notation "'rfi'" := (G.(rfi)).
+Notation "'rfe'" := (G.(rfe)).
+Notation "'co'"  := (G.(co)).
+Notation "'loc'" := (loc lab).
+
+Notation "'Loc_' l" := (fun x => loc x = Some l) (at level 1).
+Notation "'W_' l" := (W ∩₁ Loc_ l) (at level 1).
+Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
+
+Notation "'furr'" := (furr G sc).
+
+Lemma sim_trav_step_D_mon TC TC' 
+      (TCOH : tc_coherent G sc TC)
+      (TRAV_STEP : sim_trav_step G sc TC TC') :
+  D G TC ⊆₁ D G TC'. 
+Proof. 
+  unfold D.
+  rewrite sim_trav_step_covered_le; eauto.
+  rewrite sim_trav_step_issued_le; eauto.
+Qed.
+
+Lemma sim_trav_step_vf_mon TC TC' 
+      (TCOH : tc_coherent G sc TC)
+      (TRAV_STEP : sim_trav_step G sc TC TC') :
+  vf G sc TC ⊆ vf G sc TC'. 
+Proof. 
+  unfold vf. 
+  rewrite sim_trav_step_covered_le; eauto.
+  rewrite sim_trav_step_D_mon; eauto.
+  done.
+Qed.
+
+Lemma isim_trav_step_cert_rf_co thread TC TC' 
+      (TCOH : tc_coherent G sc TC)
+      (TRAV_STEP : isim_trav_step G sc thread TC TC') :
+  cert_rf G sc TC ⨾ (cert_rf G sc TC')⁻¹ ⊆ co^?.
+Proof. 
+  intros x y [z [CertRF CertRF']].
+  red in CertRF'.
+  destruct (classic (x = y)) 
+    as [EQ|nEQ].
+  { basic_solver. }
+  edestruct wf_co_total 
+    as [CO|CO]; eauto.
+  { unfolder. splits.
+    { apply cert_rfE in CertRF; auto.
+      generalize CertRF. basic_solver. }
+    { apply cert_rfD in CertRF; auto.
+      generalize CertRF. basic_solver. }
+    edone. }
+  { unfolder. splits.
+    { apply cert_rfE in CertRF'; auto.
+      generalize CertRF'. basic_solver. }
+    { apply cert_rfD in CertRF'; auto.
+      generalize CertRF'. basic_solver. }
+    symmetry.
+    apply cert_rfl in CertRF.
+    apply cert_rfl in CertRF'.
+    congruence. }
+  exfalso.
+  unfold cert_rf in *.
+  apply CertRF'.
+  exists x; splits; auto.
+  eapply isim_trav_step_vf_mon; eauto.
+  generalize CertRF. basic_solver.
+Qed.
+
+End CertRfLemmas.
