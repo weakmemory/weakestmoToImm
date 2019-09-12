@@ -10,6 +10,7 @@ Require Import ExecutionToGraph.
 Require Import Step.
 Require Import ProgES.
 Require Import EventToAction.
+Require Import ExecutionEquivalence.
 
 Require Import Race_G.
 
@@ -80,11 +81,6 @@ Definition rc11_rlx_race_free_program P :=
 Definition sc_ra_race_free_program P :=
   (forall S X, program_execution P S X -> sc_consistent_ex S X -> ra_race_free S X).
 
-(* TODO: move to AuxRel.v *)
-Lemma cs_collect_rel {A B} (r : relation A) (f : A -> B) :
-  f □ r^⋈ ≡ (f □ r)^⋈.
-Proof. basic_solver 10. Qed.
-
 Lemma X2G_race_transfer S X G
       (WF : ES.Wf S)
       (WF_G : Wf G)
@@ -141,4 +137,74 @@ Proof.
     basic_solver. }
   eapply map_collect_id in HH.
   by apply INCL in HH.
+Qed.
+
+(* TODO: Move to AuxRel.v *)
+Lemma set_subset_collect_inj {A B} (f : A -> B) (s s' : A -> Prop)
+      (INJ : inj_dom (s ∪₁ s') f) :
+  s ⊆₁ s' <-> f □₁ s ⊆₁ f □₁ s'.
+Proof.
+  split; [apply set_subset_collect|].
+  intros INCL a Sa.
+  assert (HH : (f □₁ s) (f a)) by basic_solver.
+  specialize (INCL (f a) HH).
+  destruct INCL as [a' EQS].
+  arewrite (a = a').
+  { apply INJ; basic_solver. }
+  desf.
+Qed.
+
+Lemma rlx_race_free_transer S X G
+      (WF : ES.Wf S)
+      (WF_G : Wf G)
+      (EXEC : Execution.t S X)
+      (MATCH : X2G S X G)
+      (RLX_RACE_FREE_G : rlx_race_free_G G) :
+  rlx_race_free S X.
+Proof.
+  unfold rlx_race_free.
+  eapply set_subset_trans.
+  2: { apply set_subset_inter_l with (s := X).
+       right. apply set_subset_rel. }
+  eapply set_subset_collect_inj with (s := race S X) (f := e2a S).
+  { unfold race. destruct EXEC.
+    specialize e2a_inj. basic_solver. }
+  rewrite X2G_race_transfer; eauto.
+  unfold rlx_race_free_G in RLX_RACE_FREE_G.
+  arewrite (Race_G.race G ⊆₁ Race_G.race G ∩₁ acts_set G)
+    by unfold Race_G.race; basic_solver.
+  rewrite RLX_RACE_FREE_G.
+  rewrite set_inter_union_r.
+  rewrite set_collect_union.
+  assert (HH : forall (s s' s'' : eventid -> Prop), s ∩₁ (s' ∩₁ s'') ≡₁ (s ∩₁ s') ∩₁ (s ∩₁ s''))
+    by basic_solver.
+  rewrite HH, set_collect_inter_inj.
+  2: { destruct EXEC. specialize e2a_inj. basic_solver. }
+  rewrite <- X2G_W, <- X2G_Rel; eauto.
+
+  rewrite HH, set_collect_inter_inj.
+  2: { destruct EXEC. specialize e2a_inj. basic_solver. }
+  rewrite <- X2G_R, <- X2G_Acq; eauto.
+  basic_solver 10.
+Qed.
+
+Lemma rc11_rlx_race_free_program_transfer P
+      (NINIT : ~ Basic.IdentMap.In tid_init P)
+      (RACE_FREE_G : rc11_rlx_race_free_program_G (stable_prog_to_prog P)) :
+  rc11_rlx_race_free_program P.
+Proof.
+  intros S X EXEC RC11.
+  cdes EXEC.
+  specialize (X2G_steps P S X EXEC) as HH.
+  desf.
+  eapply rlx_race_free_transer; eauto.
+  { eby eapply steps_es_wf. }
+  apply RACE_FREE_G; auto.
+  unfold rc11_consistent_ex in RC11.
+  desf.
+  apply rc11_x_equiv with (G := G0); auto.
+  eapply X2G_x_equiv; eauto.
+  { eby eapply steps_es_wf. }
+  { eby eapply steps_es_consistent. }
+  basic_solver.
 Qed.

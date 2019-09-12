@@ -35,11 +35,11 @@ Admitted.
 
 Theorem drf_sc P S X
         (nInitProg : ~ IdentMap.In tid_init P)
-        (RA_RACE_FREE : sc_ra_race_free_program P)
+        (RA_RACE_FREE : sc_ra_race_free_program_G (stable_prog_to_prog P))
         (EXEC : program_execution P S X) :
   sc_consistent_ex S X.
 Proof.
   eexists. splits.
-  2: { apply drf_rc11_sc with (P := stable_prog_to_prog P).
+  3: { apply drf_rc11_sc with (P := stable_prog_to_prog P).
        admit. admit. }
 Admitted.

@@ -15,30 +15,6 @@ Require Import ExecutionToGraph.
 
 Set Implicit Arguments.
 
-(* TODO: move to a more appropriate place and prove:) *)
-Lemma steps_es_wf P
-      (nInitProg : ~ IdentMap.In tid_init P)
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  ES.Wf S.
-Proof.
-Admitted.
-
-Lemma steps_es_consistent P
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  @es_consistent S Weakestmo.
-Proof.
-  apply rtE in STEPS.
-  unfolder in STEPS. desf.
-  { apply prog_es_init_consistent. }
-  assert (HH :  codom_rel (step Weakestmo) S).
-  { apply codom_ct.
-    basic_solver. }
-  cdes HH.
-  unfold step in HH0. desf.
-Qed.
-
 (*
 Lemma basic_step_init_loc e e' S S'
       (BSTEP : BasicStep.basic_step e e' S S')
@@ -362,11 +338,13 @@ Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 
 Lemma jf_in_hb
-      (RACE_FREE : rc11_rlx_race_free_program P)
+      (RACE_FREE_G : rc11_rlx_race_free_program_G (stable_prog_to_prog P))
       (S : ES.t)
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
   jf S ⊆ hb S.
 Proof.
+  assert (RACE_FREE : rc11_rlx_race_free_program P).
+  { by apply rc11_rlx_race_free_program_transfer. }
   eapply clos_refl_trans_ind_left with (P := fun s => jf s ⊆ hb s); eauto.
   { basic_solver. }
   clear dependent S.
@@ -441,6 +419,7 @@ Proof.
     assert (PREF_RC11 : rc11_consistent_ex S' (prefix (hb S')^? (eq e ∪₁ eq w))).
     { red. exists (x2g S' (prefix (hb S')^? (eq e ∪₁ eq w))). splits.
       { apply x2g_X2G; auto. by cdes PREF_EXEC. }
+      { apply x2g_wf; auto. apply PREF_EXEC. }
       apply x2g_rc11_consistent; auto.
       { by cdes PREF_EXEC. }
       rewrite restr_relE.
@@ -557,6 +536,7 @@ Proof.
   assert (PREF_RC11 : rc11_consistent_ex S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
   { red. exists (x2g S' (prefix (hb S')^? (eq w' ∪₁ eq w))). splits.
     { apply x2g_X2G; auto. by cdes PREF_EXEC. }
+    { apply x2g_wf; auto. apply PREF_EXEC. }
     apply x2g_rc11_consistent; auto.
     { by cdes PREF_EXEC. }
     rewrite restr_relE.
@@ -670,7 +650,7 @@ Qed.
 
 Theorem drf_rlx S X
       (EXEC : program_execution P S X)
-      (RACE_FREE : rc11_rlx_race_free_program P) :
+      (RACE_FREE_G : rc11_rlx_race_free_program_G (stable_prog_to_prog P)) :
   rc11_consistent_ex S X.
 Proof.
   cdes EXEC.
@@ -680,6 +660,7 @@ Proof.
   { eby eapply steps_es_consistent. }
   red. exists (x2g S X). splits.
   { by apply x2g_X2G. }
+  { by apply x2g_wf. }
   apply x2g_rc11_consistent; auto.
   { rewrite jf_in_hb; auto.
     by apply Execution.hb_prcl. }

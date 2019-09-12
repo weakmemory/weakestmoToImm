@@ -2,6 +2,8 @@ Require Import Program.Basics.
 
 From hahn Require Import Hahn.
 From imm Require Import Events Prog Execution RC11 ProgToExecutionProperties.
+From PromisingLib Require Import Basic Language.
+
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Execution.
@@ -1300,20 +1302,42 @@ Proof.
 Qed.
 
 Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
-    ⟪ x2g  : X2G S X G ⟫ /\
-    ⟪ rc11 : rc11_consistent G ⟫.
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ RC11 : rc11_consistent G ⟫.
 
 Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
-    ⟪ x2g  : X2G S X G ⟫ /\
-    ⟪ sc : sc_consistent G ⟫.
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ SC : sc_consistent G ⟫.
 
 Definition program_execution P S X :=
   ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
   ⟪ EXEC : Execution.t S X ⟫.
 
+(* TODO: move to a more appropriate place and prove:) *)
+Lemma steps_es_wf {P S}
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  ES.Wf S.
+Proof.
+Admitted.
+
+Lemma steps_es_consistent {P S}
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  @es_consistent S Weakestmo.
+Proof.
+  apply rtE in STEPS.
+  unfolder in STEPS. desf.
+  { apply prog_es_init_consistent. }
+  assert (HH : codom_rel (step Weakestmo) S).
+  { apply codom_ct.
+    basic_solver. }
+  cdes HH.
+  unfold step in HH0. desf.
+Qed.
+
 Lemma X2G_steps P S X
-      (WF : ES.Wf S) (* TODO : get rid, because it's guaranteed by steps_es_wf *)
-      (CONS : es_consistent (m := Weakestmo) S)
       (EXEC : program_execution P S X) :
   exists G,
     ⟪ MATCH : X2G S X G ⟫ /\
@@ -1321,6 +1345,3 @@ Lemma X2G_steps P S X
     ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
 Proof.
 Admitted.
-
-
-

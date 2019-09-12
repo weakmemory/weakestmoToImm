@@ -25,10 +25,8 @@ Notation "'Acqrel'" := (is_acqrel lab).
 
 Notation "'same_loc'" := (same_loc lab).
 
-Definition one {A : Type} (X : A -> Prop) a b := X a \/ X b.
-
 Definition race :=
-  dom_rel (((E × E) \ hb⁼) ∩ same_loc ∩ one W).
+  dom_rel (((E × E) \ hb⁼) ∩ same_loc ∩ one_of W).
 
 Definition ra_race_free_G :=
   race ⊆₁ Sc.

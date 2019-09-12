@@ -426,6 +426,20 @@ Proof.
   split; basic_solver.
 Qed.
 
+Lemma set_subset_collect_inj (f : A -> B)
+      (INJ : inj_dom (s ∪₁ s') f) :
+  s ⊆₁ s' <-> f □₁ s ⊆₁ f □₁ s'.
+Proof.
+  split; [apply set_subset_collect|].
+  intros INCL a Sa.
+  assert (HH : (f □₁ s) (f a)) by basic_solver.
+  specialize (INCL (f a) HH).
+  destruct INCL as [a' EQS].
+  arewrite (a = a').
+  { apply INJ; basic_solver. }
+  desf.
+Qed.
+
 (******************************************************************************)
 (** ** collect_rel properties *)
 (******************************************************************************)
