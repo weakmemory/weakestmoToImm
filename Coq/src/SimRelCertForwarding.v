@@ -500,6 +500,18 @@ Section SimRelCertForwarding.
     apply prcl_cr. apply SRCC.
   Qed.
 
+  Lemma simrel_cert_forwarding_kE_sb_cov_iss lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    e2a S □₁ codom_rel (⦗kE S k'⦘ ⨾ Ssb S) ⊆₁ CsbI G TC'.
+  Proof. 
+    rewrite simrel_cert_forwarding_kE_ex; eauto.
+    rewrite ex_sb_cov_iss; [|apply SRCC].
+    admit. 
+  Admitted.
+
   Lemma simrel_cert_forwarding_kE_lab lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
@@ -756,6 +768,31 @@ Section SimRelCertForwarding.
     eapply simrel_cert_forwarding_ex_cont_iss_e'; eauto.
   Qed.
 
+  Lemma simrel_cert_forwarding_kE_iss lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    kE S k' ∩₁ e2a S ⋄₁ I ⊆₁ dom_rel (Sew S ⨾ ⦗ X ⦘).
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (X ∩₁ SW S ⊆₁ X) as XW.
+    { basic_solver. }
+    rewrite <- XW.
+    rewrite <- ES.ew_eqvW; auto.
+    2 : erewrite Execution.ex_inE 
+          with (X := X); eauto.
+    erewrite simrel_cert_forwarding_kE_ex; eauto.
+    rewrite <- set_interK 
+      with (s := X) at 1.
+    rewrite set_interA.
+    erewrite ex_iss_inW; eauto.
+    apply SRCC.
+  Qed.
+
   Lemma simrel_cert_lbl_step_nrwm_eindex k S
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
@@ -891,9 +928,10 @@ Section SimRelCertForwarding.
     { eapply simrel_cert_forwarding_ex_ktid_cov; eauto. }
     (* cov_in_ex : e2a ⋄₁ C ∩₁ kE' ⊆₁ X *)
     { eapply simrel_cert_forwarding_cov_in_ex; eauto. }
-    { admit. }
     (* klast_ex_sb_max : klast' ⊆₁ X ∪₁ max_elt Ssb' *)
     { erewrite simrel_cert_forwarding_klast_ex; eauto. basic_solver. }
+    (* kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE'⦘ ⨾ Ssb) ⊆₁ CsbI G TC ; *)
+    { eapply simrel_cert_forwarding_kE_sb_cov_iss; eauto. } 
     (* kE_lab : eq_dom (kE' \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
     { eapply simrel_cert_forwarding_kE_lab; eauto. }
     (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
@@ -905,7 +943,7 @@ Section SimRelCertForwarding.
     (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE' ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE' ⦘) *)
     { eapply simrel_cert_forwarding_ex_cont_iss; eauto. }
     (* kE_iss : kE' ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) *)
-    { admit. }
+    { eapply simrel_cert_forwarding_kE_iss; eauto. }
     (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE' ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco *)
     { admit. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE'⦘ ⊆ e2a □ Srmw ⨾ ⦗kE'⦘ *)
