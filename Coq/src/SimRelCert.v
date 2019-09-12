@@ -62,6 +62,7 @@ Section SimRelCert.
 
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Scf'" := (S.(ES.cf)).
+  Notation "'Sicf'" := (S.(ES.icf)).
   Notation "'Srmw'" := (S.(ES.rmw)).
   Notation "'Sjf'" := (S.(ES.jf)).
   Notation "'Sjfi'" := (S.(ES.jfi)).
@@ -171,18 +172,18 @@ Section SimRelCert.
       cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
       (* TODO: we can derive it from `contsimstate` *)
-      exists_pc_ktid : 
-        exists e, pc G TC ktid e ;
+      (* exists_pc_ktid :  *)
+      (*   exists e, pc G TC ktid e ; *)
       
-      ex_pc_ktid_sb_in_ex : 
-        let pc := 
-          if (excluded_middle_informative (kE ⊆₁ e2a ⋄₁ C)) then
-            pc G TC  ktid
-          else 
-            pc G TC' ktid
-        in
-        codom_rel (⦗X ∩₁ e2a ⋄₁ pc⦘ ⨾ Ssb) ⊆₁ 
-          X ∩₁ e2a ⋄₁ (CsbI G TC) ;
+      (* ex_pc_ktid_sb_in_ex :  *)
+      (*   let pc :=  *)
+      (*     if (excluded_middle_informative (kE ⊆₁ e2a ⋄₁ C)) then *)
+      (*       pc G TC  ktid *)
+      (*     else  *)
+      (*       pc G TC' ktid *)
+      (*   in *)
+      (*   codom_rel (⦗X ∩₁ e2a ⋄₁ pc⦘ ⨾ Ssb) ⊆₁  *)
+      (*     X ∩₁ e2a ⋄₁ (CsbI G TC) ; *)
 
       kE_front_in_kE : 
         codom_rel (⦗kE \₁ dom_rel (Ssb ⨾ ⦗kE ∩₁ e2a ⋄₁ C'⦘)⦘ ⨾ Ssb) ⊆₁ 
@@ -193,6 +194,12 @@ Section SimRelCert.
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
       jf_kE_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' ;
+
+      icf_ex_ktid_in_co : 
+        e2a □ (Sjf ⨾ ⦗set_compl kE⦘ ⨾ Sicf ⨾ ⦗X ∩₁ STid ktid⦘ ⨾ Sjf⁻¹) ⊆ Gco ;
+
+      icf_kE_in_co : 
+        e2a □ (Sjf ⨾ Sicf ⨾ ⦗kE⦘ ⨾ Sjf⁻¹) ⊆ Gco ;
 
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ;

@@ -294,13 +294,14 @@ Section SimRelInit.
       apply set_subset_inter_r. splits.
       2: by apply HH.
       unfold e2a. unfolder. ins. desf. }
-    { admit. } 
     { unfold prog_g_es_init, prog_l_es_init, ES.init. basic_solver. }
     { eapply eq_dom_mori; eauto.
       2: by apply prog_g_es_init_same_lab.
       red. basic_solver. }
     { simpls. rewrite WF.(rmw_in_sb). rewrite no_sb_to_init.
       basic_solver. }
+    { unfold prog_g_es_init, ES.init. basic_solver. }
+    { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
@@ -312,6 +313,6 @@ Section SimRelInit.
     pose proof (prog_g_es_init_lab prog G x) as AA.
     unfold prog_g_es_init, ES.init, is_rel, Events.mod, mode_le in *. simpls.
     desf.
-  Admitted.
+  Qed.
 
 End SimRelInit.

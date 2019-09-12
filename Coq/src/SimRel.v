@@ -50,6 +50,7 @@ Section SimRel.
 
   Notation "'Ssb'" := (S.(ES.sb)).
   Notation "'Scf'" := (S.(ES.cf)).
+  Notation "'Sicf'" := (S.(ES.icf)).
   Notation "'Srmw'" := (S.(ES.rmw)).
   Notation "'Sjf'" := (S.(ES.jf)).
   Notation "'Sjfi'" := (S.(ES.jfi)).
@@ -142,26 +143,17 @@ Section SimRel.
       
       ex_cov_iss : e2a □₁ X ≡₁ CsbI G TC ;
 
-      (* TODO: we can derive it from `contsimstate` *)
-      exists_pc : 
-        forall t (Tt : T t), 
-          exists e, pc G TC t e ;
-
-      ex_pc_sb_in_ex : 
-        forall t (Tt : T t), 
-          codom_rel (⦗X ∩₁ e2a ⋄₁ pc G TC t⦘ ⨾ Ssb) ⊆₁ X ∩₁ e2a ⋄₁ (CsbI G TC) ;
-
-      (* ex_sb_cov_iss : e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb) ⊆₁ CsbI G TC ; *)
+      ex_sb_cov_iss : e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb) ⊆₁ CsbI G TC ;
       
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
 
-      (* TODO: we can refactor it later; 
-       *       although it seems unnecessary, 
-       *       it can simplify some parts of the proof 
-       *)
-      (* jf_ex_in_cert_rf : e2a □ (Sjf ⨾ ⦗X⦘) ⊆ cert_rf G sc TC ; *)
+      jf_ex_in_cert_rf : e2a □ (Sjf ⨾ ⦗X⦘) ⊆ cert_rf G sc TC ;
+
+      icf_ex_in_co : 
+        forall t (Tt : T t), 
+          e2a □ (Sjf ⨾ Sicf ⨾ ⦗X ∩₁ STid t⦘ ⨾ Sjf⁻¹) ⊆ Gco ;
       
       jf_cov_in_rf : e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf ;
       e2a_co_iss   : e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;

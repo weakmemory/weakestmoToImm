@@ -1597,6 +1597,8 @@ Section SimRelCertStep.
       unfolder. ins. desf.
       do 2 eexists. splits; eauto.
       all: eapply basic_step_e2a_eq_dom; eauto. }
+    { admit. }
+    { admit. }
     { arewrite (X ∩₁ e2a S' ⋄₁ C ⊆₁ X ∩₁ e2a S ⋄₁ C).
       { unfolder. ins. desf. split; eauto.
         erewrite <- basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
