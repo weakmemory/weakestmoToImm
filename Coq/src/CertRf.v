@@ -860,6 +860,16 @@ Notation "'R_' l" := (R ∩₁ Loc_ l) (at level 1).
 
 Notation "'furr'" := (furr G sc).
 
+Lemma sim_trav_step_CsbI_mon TC TC' 
+      (TCOH : tc_coherent G sc TC)
+      (TRAV_STEP : sim_trav_step G sc TC TC') :
+  CsbI G TC ⊆₁ CsbI G TC'. 
+Proof. 
+  unfold CsbI.
+  rewrite sim_trav_step_covered_le; eauto.
+  rewrite sim_trav_step_issued_le; eauto.
+Qed.
+
 Lemma sim_trav_step_D_mon TC TC' 
       (TCOH : tc_coherent G sc TC)
       (TRAV_STEP : sim_trav_step G sc TC TC') :

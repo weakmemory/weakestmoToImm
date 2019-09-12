@@ -1339,6 +1339,27 @@ Proof.
   splits; eauto; basic_solver 10.
 Qed.
 
+Lemma cont_sb_dom_cf k lang st WF 
+      (KK : K (k, existT _ lang st)) :  
+  dom_rel (cf ⨾ ⦗cont_sb_dom S k⦘) ⊆₁ set_compl (cont_sb_dom S k).
+Proof. 
+  intros x [y CF] kSBx.
+  destruct_seq_r CF as kSBy.
+  eapply cont_sb_cf_free; eauto.
+  basic_solver. 
+Qed.
+
+Lemma cont_sb_dom_icf k lang st WF 
+      (KK : K (k, existT _ lang st)) :  
+  dom_rel (icf ⨾ ⦗cont_sb_dom S k⦘) ⊆₁ set_compl (cont_sb_dom S k).
+Proof. 
+  intros x [y ICF] kSBx.
+  destruct_seq_r ICF as kSBy.
+  destruct ICF as [CF _].
+  eapply cont_sb_cf_free; eauto.
+  basic_solver. 
+Qed.
+
 Lemma cont_sb_dom_cross k lang st WF 
       (KK : K (k, existT _ lang st)) :  
   cont_sb_dom S k × cont_sb_dom S k ⊆ Einit × Einit ∪ sb⁼.
@@ -1382,7 +1403,7 @@ Proof.
   { unfolder; splits; [apply SB'|]; eauto. }
   { basic_solver. }
   generalize HH. basic_solver.
-Qed.
+Qed.  
 
 (******************************************************************************)
 (** ** cont_last properites *)
@@ -1757,7 +1778,7 @@ Proof.
   split; auto.
   apply sb_codom_ninit; auto.
   basic_solver.
-Qed.    
+Qed.
 
 Lemma cont_adjacent_sb_imm WF k k' e e' 
       (ADJ : cont_adjacent S k k' e e') :
@@ -1767,6 +1788,25 @@ Proof.
   rewrite RMWe.
   by apply rmwi. 
 Qed.
+
+Lemma cont_adjacent_nsb_dom_e WF lang st k k' e e' 
+      (KK : K (k, existT _ lang st))   
+      (ADJ : cont_adjacent S k k' e e') :
+  ~ cont_sb_dom S k e.
+Proof. 
+  intros kSBe.
+  edestruct exists_cont_last 
+    with (k := k) as [x kLAST]; auto.
+  eapply cont_sb_dom_alt_imm 
+    with (e := e) in kSBe; eauto.
+  { destruct kSBe as [y SB].
+    destruct_seq_r SB as EQe. 
+    subst y.
+    eapply sb_irr; eauto. }
+  exists x. 
+  apply seq_eqv_l; splits; auto. 
+  eapply cont_adjacent_con_last_sb_imm_alt; eauto.
+Qed.  
 
 Lemma cont_adjacent_sb_dom WF k k' e e'
       (ADJ : cont_adjacent S k k' e e') :
