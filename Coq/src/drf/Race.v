@@ -139,21 +139,6 @@ Proof.
   by apply INCL in HH.
 Qed.
 
-(* TODO: Move to AuxRel.v *)
-Lemma set_subset_collect_inj {A B} (f : A -> B) (s s' : A -> Prop)
-      (INJ : inj_dom (s ∪₁ s') f) :
-  s ⊆₁ s' <-> f □₁ s ⊆₁ f □₁ s'.
-Proof.
-  split; [apply set_subset_collect|].
-  intros INCL a Sa.
-  assert (HH : (f □₁ s) (f a)) by basic_solver.
-  specialize (INCL (f a) HH).
-  destruct INCL as [a' EQS].
-  arewrite (a = a').
-  { apply INJ; basic_solver. }
-  desf.
-Qed.
-
 Lemma rlx_race_free_transer S X G
       (WF : ES.Wf S)
       (WF_G : Wf G)
