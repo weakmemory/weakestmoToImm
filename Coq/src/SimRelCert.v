@@ -185,11 +185,13 @@ Section SimRelCert.
       (*   codom_rel (⦗X ∩₁ e2a ⋄₁ pc⦘ ⨾ Ssb) ⊆₁  *)
       (*     X ∩₁ e2a ⋄₁ (CsbI G TC) ; *)
 
-      kE_front_in_kE : 
-        codom_rel (⦗kE \₁ dom_rel (Ssb ⨾ ⦗kE ∩₁ e2a ⋄₁ C'⦘)⦘ ⨾ Ssb) ⊆₁ 
-          kE ∩₁ e2a ⋄₁ (CsbI G TC') ;
+      (* kE_front_in_kE :  *)
+      (*   codom_rel (⦗kE \₁ dom_rel (Ssb ⨾ ⦗kE ∩₁ e2a ⋄₁ C'⦘)⦘ ⨾ Ssb) ⊆₁  *)
+      (*     kE ∩₁ e2a ⋄₁ (CsbI G TC') ; *)
 
       klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ;
+
+      kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC' ;
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
