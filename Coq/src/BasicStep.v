@@ -1321,6 +1321,20 @@ Proof.
   exists x0; splits; eauto. 
 Qed.
 
+Lemma basic_step_icf_restr lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S')
+      (wfE: ES.Wf S) :
+  restr_rel (E S) (icf S') ≡ icf S. 
+Proof. 
+  rewrite basic_step_icf; eauto.
+  rewrite restr_union.
+  arewrite_false 
+    (restr_rel (E S) (icf_delta S k e)).
+  { cdes BSTEP_. step_solver. }
+  rewrite ES.icfE; auto.
+  basic_solver 10.
+Qed.
+
 (******************************************************************************)
 (** ** basic_step : `rmw` properties *)
 (******************************************************************************)
