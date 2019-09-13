@@ -377,6 +377,56 @@ Section SimRelCertStepLemma.
     desf. simpls. desf. unfolder. ins. desf. omega.
   Qed.
 
+  Lemma simrel_cert_step_icf_ex_ktid_in_co k k' e e' S S' 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    e2a S' □ (Sjf S' ⨾ ⦗set_compl (kE S' k')⦘ ⨾ Sicf S' ⨾ ⦗X ∩₁ Stid_ S' (ktid S' k')⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
+  Proof. 
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (Execution.t S X) as EXEC by apply SRCC.
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) as SRCONT.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { cdes CertSTEP. econstructor; eauto. }
+    arewrite (Sjf S' ⨾ ⦗set_compl (ES.cont_sb_dom S' k')⦘ ⊆ 
+              Sjf S  ⨾ ⦗set_compl (ES.cont_sb_dom S  k )⦘).
+    { unfold_cert_step CertSTEP.
+      1,3: arewrite (kE S k ⊆₁ kE S' k') at 1.
+      1,3: erewrite basic_step_cont_sb_dom'  
+             with (S' := S'); eauto; basic_solver.
+      1,2: rewrite JF'; basic_solver.
+      all: cdes AJF; rewrite JF'.
+      all: rewrite seq_union_l; unionL.
+      1,3: arewrite (kE S k ⊆₁ kE S' k') at 1.
+      1,3: erewrite basic_step_cont_sb_dom'  
+             with (S' := S'); eauto; basic_solver.
+      1,2: done. 
+      all: erewrite basic_step_cont_sb_dom'; eauto.
+      all: rewrite !set_compl_union.
+      all: unfold jf_delta; basic_solver. }
+    cdes CertSTEP. cdes BSTEP_.
+    erewrite simrel_cert_basic_step_ex_tid; eauto.
+    erewrite basic_step_cont_thread'; eauto.
+    arewrite (Sjf S ⨾ ⦗set_compl (ES.cont_sb_dom S  k )⦘ ⨾ Sicf S' ⨾ ⦗X ∩₁ Stid_ S (ktid S k)⦘ ⊆ 
+              Sjf S ⨾ ⦗set_compl (ES.cont_sb_dom S  k )⦘ ⨾ Sicf S  ⨾ ⦗X ∩₁ Stid_ S (ktid S k)⦘).
+    { rewrite !seq_eqv_r, !seq_eqv_l.
+      intros x y [z [JF [nkSBx [ICF [Xy TIDy]]]]].
+      unfolder; eexists; splits; eauto. 
+      admit. }
+    arewrite (⦗X ∩₁ Stid_ S (ktid S k)⦘ ⨾ (Sjf S')⁻¹ ⊆ 
+              ⦗X ∩₁ Stid_ S (ktid S k)⦘ ⨾ (Sjf S )⁻¹).
+    { rewrite !seq_eqv_l. 
+      intros x y [[Xx TIDx] JF]. red in JF.
+      unfolder; splits; auto.
+      admit. }
+    erewrite basic_step_e2a_collect_rel_eq_dom; 
+      eauto; [apply SRCC|].
+    rewrite ES.jfE; auto.
+    basic_solver 20.
+  Admitted.
+
   Lemma simrel_cert_step_ex_cont_iss k k' e e' S S' 
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
