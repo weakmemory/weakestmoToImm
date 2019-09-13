@@ -1337,11 +1337,74 @@ Proof.
   unfold step in HH0. desf.
 Qed.
 
+Require Import Setoid.
+
+Add Parametric Morphism S G : (fun X => X2G S X G) with signature
+    set_equiv ==> iff as X2G_more.
+Proof.
+  unfold X2G.
+  ins. split.
+  { splits. all: desf; by rewrite <- H. }
+  splits. all: desf; by rewrite H.
+Qed.
+
+Notation "'K' S" := (ES.cont_set S) (at level 1).
+
+Lemma X2G_FOO P S X
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (EXEC : program_execution P S X)
+      (k : cont_label)
+      (st : ProgToExecution.state)
+      lprog
+      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) st)) :
+  ⟪ INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some lprog ⟫ /\
+  ⟪ REACH : (fun st st' => exists lbls, Language.step (thread_lts (ES.cont_thread S k)) lbls st st')＊
+              (ProgToExecution.init lprog) st ⟫ /\
+  ⟪ RESTR : X_EQUIV (x2g S (ES.cont_sb_dom S k)) st.(ProgToExecution.G) ⟫.
+Admitted.
+
 Lemma X2G_steps P S X
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
       (EXEC : program_execution P S X) :
   exists G,
     ⟪ MATCH : X2G S X G ⟫ /\
     ⟪ WF : Wf G ⟫ /\
     ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
 Proof.
+  assert (exists G,
+             ⟪ MATCH : X2G S (ES.acts_set S ∩₁ X) G ⟫ /\
+             ⟪ WF : Wf G ⟫ /\
+             ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫).
+  2: { desf. exists G. splits; auto.
+       assert (X ≡₁ (ES.acts_set S ∩₁ X)).
+       { cdes EXEC. destruct EXEC2. basic_solver. }
+       eapply X2G_more; eauto. }
+  cdes EXEC.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { exists (x2g (prog_es_init P) (ES.acts_set (prog_es_init P) ∩₁ X)). splits.
+    { apply x2g_X2G.
+      { by apply prog_es_init_wf. }
+      unfold prog_es_init.
+      constructor.
+      { basic_solver. }
+      { admit. }
+      { rewrite prog_l_es_init_sb. basic_solver. }
+      { rewrite prog_l_es_init_sw. basic_solver. }
+      { rewrite prog_l_es_init_rmw. basic_solver. }
+      { rewrite prog_l_es_init_w. type_solver. }
+      { rewrite prog_l_es_init_init.
+        arewrite (forall Q, Q ∩₁ X ⊆₁ Q) by basic_solver.
+        unfold ES.cf_free. by rewrite ES.ncfEinit. }
+      admit. }
+    { apply x2g_wf; admit. }
+    constructor.
+    { ins. left.
+      unfold acts_set, acts, x2g in IN. admit. }
+    ins.
+    exists (x2g (prog_es_init P) (ES.acts_set (prog_es_init P) ∩₁ X)).
+    split.
+    { exists (ProgToExecution.init linstr). splits.
+      { apply rt_refl.  }
 Admitted.

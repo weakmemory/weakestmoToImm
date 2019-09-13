@@ -186,6 +186,13 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma prog_l_es_init_rmw locs prog :
+  ES.rmw (prog_l_es_init prog locs) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  unfold prog_l_es_init, ES.init. simpls.
+Qed.
+
 Hint Rewrite prog_g_es_init_ninit
      prog_g_es_init_sb
      prog_g_es_init_jf
@@ -202,6 +209,7 @@ Hint Rewrite prog_l_es_init_ninit
      prog_l_es_init_cf
      prog_l_es_init_psc_f
      prog_l_es_init_psc_base
+     prog_l_es_init_rmw
   : prog_l_es_init_db.
 
 Lemma prog_l_es_init_consistent locs prog :
