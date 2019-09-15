@@ -1108,7 +1108,6 @@ Section SimRelCertForwarding.
     assert (step_ e e' S S') as STEP_.
     { eapply simrel_cert_step_step_; eauto. }
 
-
     (* some technicalities *)
     assert (lbl0 = lbl) as EQl.
     { rewrite LBL, LAB'.
@@ -1307,6 +1306,10 @@ Section SimRelCertForwarding.
       intros INITy'.
       apply ES.acts_init_set_inW in INITy'; auto.
       type_solver. }
+    set (E2Ay'' := E2Ay').
+    do 2 erewrite e2a_ninit in E2Ay''; auto.
+    inversion E2Ay'' as [[EQTID EQSEQN]].
+    clear E2Ay''.
     edestruct Execution.ex_rf_compl
       as [x' HH]; eauto.
     { basic_solver. }
@@ -1364,6 +1367,8 @@ Section SimRelCertForwarding.
         { basic_solver. }
         arewrite (val id ll = val (Slab S) y).
         { basic_solver. }
+        arewrite (val (Slab S') e = val Glab (e2a S' e)).
+        { unfold val.
         admit. 
         (* arewrite (val (Slab S') e = val (Slab S) x'). *)
         (* { erewrite <- ES.rfv; eauto. } *)
@@ -1402,12 +1407,24 @@ Section SimRelCertForwarding.
     { split; auto. 
       eexists; splits; eauto.
       { apply immediate_transp with (r := Ssb S); red; eauto. }
-      do 2 erewrite e2a_ninit in E2Ay'; auto.
-      inversion E2Ay' as [[EQTID EQSEQN]].
       eapply ES.seqn_eq_imm_sb; eauto.
       intros CF'. eapply Execution.ex_ncf; eauto.
       apply seq_eqv_lr; splits; [|apply CF'|]; eauto. }
-
+    
+    assert (Gco (e2a S x) (e2a S x')) as CO'.
+    { destruct RF as [[x'' [EW JF'']] _].
+      arewrite (e2a S x' = e2a S x'').
+      { eapply e2a_ew; eauto. basic_solver 10. }
+      eapply icf_ex_ktid_in_co; eauto.
+      do 2 eexists; splits; eauto.
+      exists y; splits; auto.
+      apply seq_eqv_l. split. 
+      { admit. }
+      exists y'; splits; auto.
+      apply seq_eqv_l. split; [|done].
+      split; auto; congruence. }
+    destruct CO as [EQ|CO]; [congruence|].
+    eapply co_trans; eauto.
 
     admit. 
   Admitted.
