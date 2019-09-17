@@ -303,7 +303,6 @@ Section SimRelInit.
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold prog_g_es_init, ES.init. basic_solver. }
-    { unfold prog_g_es_init, ES.init. basic_solver. }
     { unfold ES.jfe, prog_g_es_init, ES.init. basic_solver. }
     { rewrite prog_g_es_init_alt. unfold ES.init. basic_solver. }
     unfold release.
