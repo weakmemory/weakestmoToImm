@@ -1,7 +1,8 @@
 Require Import Program.Basics.
 
 From hahn Require Import Hahn.
-From imm Require Import Events Prog Execution RC11 ProgToExecutionProperties.
+From imm Require Import Events Prog Execution RC11 ProgToExecutionProperties
+     TraversalConfig Traversal.
 From PromisingLib Require Import Basic Language.
 
 Require Import AuxRel.
@@ -16,6 +17,7 @@ Require Import Consistency.
 Require Import ImmProperties.
 Require Import Step.
 Require Import ExecutionEquivalence.
+Require Import SimRelCont.
 
 Require Import SC.
 
@@ -1350,21 +1352,50 @@ Qed.
 
 Notation "'K' S" := (ES.cont_set S) (at level 1).
 
-Lemma X2G_FOO P S X
-      (NINIT : ~ IdentMap.In tid_init P)
-      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+
+Section X2G_STEPS.
+
+
+Variable P : stable_prog_type.
+Variable S : ES.t.
+Variable _G : execution.
+Variable _TC : trav_config.
+Variable _X : eventid -> Prop.
+Variable X : eventid -> Prop.
+
+Variable src : simrel_cont (stable_prog_to_prog P) S _G _TC _X.
+
+
+Lemma X2G_FOO
+      (* (NINIT : ~ IdentMap.In tid_init P) *)
+      (* (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> []) *)
       (EXEC : program_execution P S X)
       (k : cont_label)
       (st : ProgToExecution.state)
-      lprog
-      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) st)) :
-  ⟪ INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some lprog ⟫ /\
-  ⟪ REACH : (fun st st' => exists lbls, Language.step (thread_lts (ES.cont_thread S k)) lbls st st')＊
+      (lprog : list Instr.t)
+      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) st))
+      (INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some lprog) :
+  ⟪ REACH : (fun st st' => exists lbls, LblStep.ilbl_step (ES.cont_thread S k) lbls st st')＊
               (ProgToExecution.init lprog) st ⟫ /\
   ⟪ RESTR : X_EQUIV (x2g S (ES.cont_sb_dom S k)) st.(ProgToExecution.G) ⟫.
+Proof.
 Admitted.
 
-Lemma X2G_steps P S X
+Notation "'ex_sb'" := (Execution.ex_sb S X).
+
+Lemma X2G_steps'
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (EXEC : program_execution P S X) :
+  exists G,
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
+Proof.
+  exists (x2g S (wmin_elt ex_sb)).
+Admitted.
+
+Lemma X2G_steps
       (NINIT : ~ IdentMap.In tid_init P)
       (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
       (EXEC : program_execution P S X) :
@@ -1408,3 +1439,5 @@ Proof.
     { exists (ProgToExecution.init linstr). splits.
       { apply rt_refl.  }
 Admitted.
+
+End X2G_STEPS.
