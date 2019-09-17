@@ -382,6 +382,7 @@ Section SimRelCertForwarding.
       do 2 eexists; splits; eauto.
       exists e; splits; auto.
       apply seq_eqv_l; splits.
+      (* cont_adjacent k k' e e' => ~ cont_sb_dom S k e  *)
       { admit. }
       exists y; splits.
       { by apply ES.icf_sym. }
@@ -510,8 +511,9 @@ Section SimRelCertForwarding.
   Proof. 
     rewrite simrel_cert_forwarding_kE_ex; eauto.
     rewrite ex_sb_cov_iss; [|apply SRCC].
-    admit. 
-  Admitted.
+    eapply sim_trav_step_CsbI_mon; 
+      try eexists; apply SRCC.
+  Qed.
 
   Lemma simrel_cert_forwarding_kE_lab lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
@@ -630,9 +632,9 @@ Section SimRelCertForwarding.
     { apply FRWD. }
     erewrite <- ES.cont_adjacent_sb_dom_mon; eauto.
     arewrite (ES.cont_thread S k' = ES.cont_thread S k).
-    { admit. }
+    { by cdes ADJ. }
     apply SRCC.
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_forwarding_icf_kE_in_co lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
@@ -654,6 +656,7 @@ Section SimRelCertForwarding.
     do 2 eexists; splits; eauto.
     exists z; splits; auto.
     apply seq_eqv_l; splits.
+    (* dom (cf ; [cont_sb_dom S k]) ⊆ ~ cont_sb_dom S k  *)
     { admit. }
     exists z'; splits; auto. 
     apply seq_eqv_l; splits; [|done].
@@ -1371,7 +1374,7 @@ Section SimRelCertForwarding.
     destruct HH as [Xx' RF].
     assert (cert_rf G sc TC (e2a S x') (e2a S y')) 
       as CertRF'.
-    { admit. }
+    { eapply rf_ex_in_cert_rf; eauto. basic_solver 10. }
     assert (e2a S' e = e2a S y') as EQE2Ae.
     { eapply basic_step_e2a_cont_icf_dom; eauto. basic_solver 10. }
     assert (e2a S w = e2a S' w) as EQE2Aw.
@@ -1455,6 +1458,7 @@ Section SimRelCertForwarding.
         assert (Stid S x' <> ktid S k) as nTIDx'.
         { (* todo: make a lemma `rfe_alt` *)
           admit. }
+        (* lemma: rfe_iss *)
         assert (I (e2a S x')) as Ix.
         { admit. }
         arewrite (Slab S x' = Glab (e2a S x')).
@@ -1502,7 +1506,9 @@ Section SimRelCertForwarding.
       do 2 eexists; splits; eauto.
       exists y; splits; auto.
       apply seq_eqv_l. split. 
-      { admit. }
+      { intros kSBy.
+        eapply ES.cont_sb_cont_icf_inter_false; eauto.
+        basic_solver. }
       exists y'; splits; auto.
       apply seq_eqv_l. split; [|done].
       split; auto; congruence. }
