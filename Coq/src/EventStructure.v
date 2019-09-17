@@ -1906,6 +1906,34 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma cont_icf_cont_cf WF k :
+  cont_icf_dom S k ⊆₁ cont_cf_dom S k. 
+Proof.
+  rewrite <- set_interK 
+    with (s := cont_icf_dom S k).
+  rewrite cont_icf_domE at 1; auto.
+  unfold cont_icf_dom, cont_cf_dom.
+  destruct k; basic_solver.
+Qed.
+
+Lemma cont_sb_cont_icf_inter_false WF lang k st
+      (KK : K (k, existT _ lang st)) :
+  cont_sb_dom S k ∩₁ cont_icf_dom S k ⊆₁ ∅.
+Proof. 
+  rewrite cont_icf_cont_cf; auto.
+  rewrite cont_sb_cont_cf_inter_false; eauto.
+Qed.
+
+Lemma cont_sb_dom_sb_cont_icf WF lang k st e
+      (KK : K (k, existT _ lang st))   
+      (kICFe : cont_icf_dom S k e) :
+  cont_sb_dom S k ≡₁ dom_rel (sb ⨾ ⦗eq e⦘).
+Proof.   
+  unfold cont_icf_dom in kICFe.
+  erewrite cont_sb_dom_alt_imm; eauto.
+  generalize kICFe. basic_solver 10.
+Qed.
+
 Lemma cont_icf_dom_cont_adjacent WF lang k st e
       (KK : K (k, existT _ lang st)) 
       (kICFe : cont_icf_dom S k e) :
