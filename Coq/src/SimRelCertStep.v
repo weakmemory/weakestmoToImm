@@ -1597,22 +1597,22 @@ Section SimRelCertStep.
       unfolder. ins. desf.
       do 2 eexists. splits; eauto.
       all: eapply basic_step_e2a_eq_dom; eauto. }
+    (* jf_ex_in_cert_rf : e2a' □ (Sjf' ⨾ ⦗X⦘) ⊆ cert_rf G sc TC *)
+    { rewrite <- set_interK 
+        with (s := X).
+      rewrite Execution.ex_inE 
+        with (X := X) at 1; eauto.
+      rewrite id_inter. 
+      rewrite <- seqA, step_jfE; eauto.
+      erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
+      { apply SRCC. } 
+      rewrite ES.jfE; auto.
+      basic_solver. }
+    (* icf_ex_in_co : 
+     *   forall t (Tt : T t \₁ eq (ktid')), 
+     *     e2a □ (Sjf' ⨾ Sicf' ⨾ ⦗X ∩₁ STid' ktid'⦘ ⨾ Sjf'⁻¹) ⊆ Gco ;
+     *)
     { admit. }
-    { admit. }
-    { arewrite (X ∩₁ e2a S' ⋄₁ C ⊆₁ X ∩₁ e2a S ⋄₁ C).
-      { unfolder. ins. desf. split; eauto.
-        erewrite <- basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
-        eapply Execution.ex_inE; eauto. }
-      arewrite (⦗X ∩₁ e2a S ⋄₁ C⦘ ⊆ ⦗SE S⦘ ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘).
-      { unfolder. ins. desf. splits; auto.
-        eapply Execution.ex_inE; eauto. }
-      arewrite (Sjf S' ⨾ ⦗SE S⦘ ⊆ Sjf S).
-      { eapply simrel_cert_step_jf_E; eauto. }
-      rewrite WFS.(ES.jfE).
-      unfolder. ins. desf.
-      do 2 (erewrite basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto).
-      eapply jf_cov_in_rf; try apply SRCC.
-      basic_solver 10. }
     (* e2a_co_ew : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
     { eapply simrel_cert_step_e2a_co_iss; eauto. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
