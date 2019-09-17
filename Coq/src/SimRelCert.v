@@ -171,24 +171,6 @@ Section SimRelCert.
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
       cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
-      (* TODO: we can derive it from `contsimstate` *)
-      (* exists_pc_ktid :  *)
-      (*   exists e, pc G TC ktid e ; *)
-      
-      (* ex_pc_ktid_sb_in_ex :  *)
-      (*   let pc :=  *)
-      (*     if (excluded_middle_informative (kE ⊆₁ e2a ⋄₁ C)) then *)
-      (*       pc G TC  ktid *)
-      (*     else  *)
-      (*       pc G TC' ktid *)
-      (*   in *)
-      (*   codom_rel (⦗X ∩₁ e2a ⋄₁ pc⦘ ⨾ Ssb) ⊆₁  *)
-      (*     X ∩₁ e2a ⋄₁ (CsbI G TC) ; *)
-
-      (* kE_front_in_kE :  *)
-      (*   codom_rel (⦗kE \₁ dom_rel (Ssb ⨾ ⦗kE ∩₁ e2a ⋄₁ C'⦘)⦘ ⨾ Ssb) ⊆₁  *)
-      (*     kE ∩₁ e2a ⋄₁ (CsbI G TC') ; *)
-
       klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ;
 
       kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC' ;
@@ -209,11 +191,6 @@ Section SimRelCert.
       e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco ; 
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
-
-      (* contpckE : forall e (XE : certX e) (state : thread_st (Stid e)) *)
-      (*                 (PC : (certC ∩₁ GTid (Stid e) \₁ dom_rel (sb G ⨾ ⦗certC⦘)) (e2a e)) *)
-      (*                 (INK : K (CEvent e, thread_cont_st (Stid e) state)), *)
-      (*     @sim_state G sim_normal certC (Stid e) state; *)
 
       contsimstate_kE :
           exists kC (state : thread_st (ES.cont_thread S kC)),
@@ -752,6 +729,46 @@ Section SimRelCert.
       eapply ES.cont_sb_cf_free; eauto.
       apply seq_eqv_lr. eauto.
     Qed.
+
+  Lemma jf_cert_ex_in_cert_rf : 
+    e2a □ (Sjf ⨾ ⦗certX⦘) ⊆ cert_rf G sc TC'.
+  Proof.
+    rewrite id_union.
+    relsf. unionL.
+    2 : apply jf_kE_in_cert_rf; auto.
+    rewrite <- set_interK 
+      with (s := X).
+    rewrite set_interA, <- seq_eqv. 
+    rewrite <- seqA.
+    rewrite collect_rel_seqi, 
+    collect_rel_eqv.
+    rewrite jf_ex_in_cert_rf; 
+      [|apply SRCC].
+    erewrite ex_NTid.
+    arewrite (e2a □₁ X ⊆₁ fun _ => True).
+    relsf.
+    admit. 
+  Admitted.
+
+  Lemma icf_certX_in_co : 
+    forall t (Tt : T t), 
+      e2a □ (Sjf ⨾ Sicf ⨾ ⦗certX ∩₁ STid t⦘ ⨾ Sjf⁻¹) ⊆ Gco.
+  Proof. 
+    intros t Tt.
+    rewrite set_inter_union_l.
+    rewrite id_union.
+    relsf. unionL.
+    { destruct (classic (t = ktid))
+        as [EQ|nEQ].
+      { basic_solver. }
+      arewrite (SNTid ktid ⊆₁ fun _ => True).
+      relsf.
+      eapply icf_ex_in_co; [apply SRCC|].
+      basic_solver. }
+    arewrite (STid t ⊆₁ fun _ => True).
+    relsf.
+    eapply icf_kE_in_co; eauto. 
+  Qed.
 
   Lemma ew_ex_cert_dom_iss_cert_ex_iss :
     dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ (cert_dom G TC ktid st ∩₁ I)⦘) ≡₁ 
