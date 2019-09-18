@@ -1272,6 +1272,54 @@ Section SimRelCertForwarding.
     by rewrite EQLab, EQLab'.
   Qed.
 
+  Lemma same_jf_icf_kE_in_co k k' e e' S S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (JF' : Sjf S' ≡ Sjf S) :
+    e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
+  Proof. 
+    assert (Wf G) as WFG.
+    { apply SRCC. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as CONS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+    assert (simrel_e2a S G sc) as SRE2A.
+    { apply SRCC. } 
+    assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+
+    rewrite JF'.
+    arewrite (⦗kE S' k'⦘ ⨾ (Sjf S)⁻¹ ⊆ ⦗kE S k⦘ ⨾ (Sjf S)⁻¹).
+    { erewrite basic_step_cont_sb_dom'; eauto. 
+      cdes BSTEP_. step_solver. }
+    arewrite 
+      (Sjf S ⨾ Sicf S' ⨾ ⦗kE S k⦘ ⊆ Sjf S ⨾ Sicf S ⨾ ⦗kE S k⦘). 
+    { cdes BSTEP_. 
+      rewrite <- seq_eqvK 
+        with (dom := kE S k) at 1.
+      erewrite ES.cont_sb_domE at 1; eauto.
+      rewrite ES.jfE; auto.
+      rewrite !seqA.
+      arewrite (⦗SE S⦘ ⨾ Sicf S' ⨾ ⦗SE S⦘ ≡ Sicf S).
+      { rewrite <- restr_relE.
+        eapply basic_step_icf_restr; eauto. }
+      rewrite ES.jfE; auto.
+      basic_solver 10. }
+    erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
+    { apply SRCC. }
+    rewrite ES.jfE; auto.
+    basic_solver 20. 
+  Qed.
+
   Lemma sim_add_jf_nforwarding_jf_icf_dom_w_in_co w lbl lbl' k k' e e' S S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (LBL  : lbl  = Slab S' e ) 
@@ -1629,8 +1677,8 @@ Section SimRelCertForwarding.
     e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
   Proof. 
     unfold_cert_step CertSTEP.
-    1,3: admit.
+    1,3: eapply same_jf_icf_kE_in_co; eauto. 
     all: eapply sim_add_jf_nforwarding_icf_kE_in_co; eauto.
-  Admitted.
+  Qed.
     
 End SimRelCertForwarding.
