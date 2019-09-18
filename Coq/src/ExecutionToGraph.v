@@ -18,6 +18,7 @@ Require Import ImmProperties.
 Require Import Step.
 Require Import ExecutionEquivalence.
 Require Import SimRelCont.
+Require Import StepWf.
 
 Require Import SC.
 
@@ -1350,6 +1351,15 @@ Proof.
   splits. all: desf; by rewrite H.
 Qed.
 
+Add Parametric Morphism S : (x2g S) with signature
+    set_equiv ==> X_EQUIV as x2g_more.
+Proof.
+  intros X X' EQ.
+  ins. red. splits.
+  all: unfold x2g, acts_set; simpls.
+  all: try rewrite EQ; admit.
+Admitted.
+
 Notation "'K' S" := (ES.cont_set S) (at level 1).
 
 
@@ -1381,6 +1391,91 @@ Lemma X2G_FOO
 Proof.
 Admitted.
 
+Lemma CInit_cont_keep tid
+      (STEPS : (fun s s' => exists e e', BasicStep.basic_step e e' s s')＊ (prog_es_init P) S)
+      (INK : exists st, K S ((CInit tid), existT _ (thread_lts tid) st)) :
+  IdentMap.In tid (stable_prog_to_prog P).
+Proof.
+  generalize dependent tid.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { ins. desf.
+    unfold prog_es_init, prog_l_es_init, ES.init, ES.cont_set in INK.
+    simpls.
+    unfold prog_init_K in INK.
+    apply in_split_l in INK. simpls.
+    rewrite split_as_map in INK. simpls.
+    rewrite map_map in INK. simpls.
+    apply in_map_iff in INK.
+    destruct INK as [k [EQ INK]]. desf.
+    unfold stable_prog_to_prog.
+    apply IdentMap.Facts.map_in_iff.
+    exists (snd k).
+    rewrite (surjective_pairing k) in INK.
+    apply RegMap.elements_complete in INK.
+    by apply UsualFMapPositive.UsualPositiveMap.Facts.find_mapsto_iff. }
+  clear dependent S.
+  intros S S' STEPS IH STEP tid INK. simpls. desf.
+  apply IH. exists st.
+  cdes STEP.
+  eapply BasicStep.basic_step_cont_set in INK; eauto.
+  unfold "∪₁" in INK. desf.
+Qed.
+
+Lemma tid_from_prog x
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
+      (IN : ES.acts_set S x) :
+  ES.acts_init_set S x \/ IdentMap.In (ES.tid S x) (stable_prog_to_prog P).
+Proof.
+  generalize dependent x.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { ins. left.
+    by apply prog_l_es_init_init. }
+  clear dependent S.
+  intros S S' STEPS IH STEP x IN.
+  assert (WF : ES.Wf S).
+  { eby eapply steps_es_wf. }
+  assert (WF' : ES.Wf S').
+  { eapply steps_es_wf; eauto.
+    apply rt_step in STEP. apply rt_rt. basic_solver. }
+  cdes STEP.
+  eapply BasicStep.basic_step_acts_set in IN; eauto.
+  apply set_unionA in IN. destruct IN as [OLD | NEW].
+  { specialize (IH x OLD). desf.
+    { left. eby eapply BasicStep.basic_step_acts_init_set. }
+    right.
+    arewrite (ES.tid S' x = ES.tid S x); [ | done].
+    eby eapply BasicStep.basic_step_tidlab_eq_dom. }
+  right.
+  cdes BSTEP.
+  assert (CONT_T : IdentMap.In (ES.cont_thread S k) (stable_prog_to_prog P)).
+  { unfold ES.cont_thread. desf.
+    { apply CInit_cont_keep.
+      { assert (STEPS_IN : step Weakestmo ⊆
+                     ((fun s s' : ES.t =>
+                    exists (e0 : eventid) (e'0 : option eventid), BasicStep.basic_step e0 e'0 s s'))).
+        2: { apply clos_refl_trans_mori in STEPS_IN. by apply STEPS_IN. }
+        unfold step. basic_solver. }
+      assert (lang = thread_lts tid).
+      { admit. }
+      desf.
+      cdes BSTEP_. eauto. }
+    assert (Eeid : ES.acts_set S eid).
+    { cdes BSTEP_. eby eapply ES.K_inE. }
+    specialize (IH eid Eeid). desf.
+    exfalso.
+    assert (NINITeid : ES.acts_ninit_set S eid).
+    { cdes BSTEP_. eby eapply ES.K_inEninit. }
+    apply set_minus_inter_set_compl in NINITeid.
+    unfolder in *; basic_solver 30. }
+  destruct NEW as [EQ_e | EQ_e'].
+  { rewrite <- EQ_e.
+    eby erewrite BasicStep.basic_step_tid_e. }
+  unfold eq_opt in EQ_e'.  desf.
+  eby erewrite BasicStep.basic_step_tid_e'.
+Admitted.
+
 Notation "'ex_sb'" := (Execution.ex_sb S X).
 
 Lemma X2G_steps'
@@ -1392,7 +1487,15 @@ Lemma X2G_steps'
     ⟪ WF : Wf G ⟫ /\
     ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
 Proof.
-  exists (x2g S (wmin_elt ex_sb)).
+  cdes EXEC.
+  exists (x2g S X). splits.
+  1: apply x2g_X2G; auto.
+  2: apply x2g_wf; auto.
+  1,2: eby eapply steps_es_wf.
+  assert (X ≡₁ (⋃₁ x ∈ wmax_elt ex_sb, (ES.cont_sb_dom S (CEvent x)))).
+  { admit. }
+  constructor.
+  { ins. 
 Admitted.
 
 Lemma X2G_steps
