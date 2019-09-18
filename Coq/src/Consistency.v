@@ -861,6 +861,12 @@ Section ConsistentProps.
     basic_solver.
   Qed.  
 
+  Lemma jfe_dom_ninit : dom_rel jfe ⊆₁ Eninit.
+  Proof. rewrite jfe_alt. basic_solver. Qed.
+
+  Lemma jfe_nsame_tid : jfe ⊆ compl_rel same_tid.
+  Proof. rewrite jfe_alt. basic_solver. Qed.
+    
   Lemma rfe_ew_jfe : rfe ≡ ew ⨾ jfe. 
   Proof. 
     split; [apply ES.rfe_in_ew_jfe; auto|].
@@ -902,6 +908,25 @@ Section ConsistentProps.
     apply seq_mori; [|done]. 
     rewrite transitiveI.
     apply WF.
+  Qed.
+
+  Lemma rfe_dom_ninit : dom_rel rfe ⊆₁ Eninit.
+  Proof. 
+    rewrite rfe_ew_jfe, 
+            jfe_alt, 
+            ES.ewEninit; 
+      auto. 
+    basic_solver.
+  Qed.
+
+  Lemma rfe_nsame_tid : rfe ⊆ compl_rel same_tid.
+  Proof. 
+    rewrite rfe_ew_jfe, 
+            ES.ew_tid, 
+            jfe_nsame_tid; 
+      auto. 
+    unfold ES.same_tid.
+    basic_solver.
   Qed.
 
   Lemma cc_alt :

@@ -1430,6 +1430,20 @@ Proof.
   basic_solver 10. 
 Qed.
 
+Lemma basic_step_sb_cont_icf_cont_sb_e lang k k' st st' e e' S S' 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  dom_rel (sb S ⨾ ⦗ES.cont_icf_dom S k⦘) ⊆₁ dom_rel (sb S' ⨾ ⦗eq e⦘).
+Proof. 
+  cdes BSTEP_.
+  erewrite basic_step_sbe; eauto.
+  rewrite dom_cross.
+  2 : { intros EQx. eapply EQx. edone. }
+  unfolder. ins. desf.
+  eapply ES.cont_sb_dom_sb_cont_icf; eauto.
+  basic_solver 10.
+Qed.
+
 Lemma basic_step_cont_set lang k k' st st' e e' S S' 
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') :
   K S' ≡₁ K S ∪₁ eq (CEvent (opt_ext e e'), existT _ lang st').

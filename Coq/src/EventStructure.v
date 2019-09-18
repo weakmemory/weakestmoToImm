@@ -863,10 +863,6 @@ Proof.
   by apply dwt_imm_f, sb_prcl.
 Qed.
 
-(******************************************************************************)
-(** ** ew properties *)
-(******************************************************************************)
-
 Lemma rmw_dom_ninit WF : dom_rel rmw ⊆₁ Eninit. 
 Proof. rewrite rmwEninit; auto. basic_solver. Qed.
 
@@ -987,6 +983,14 @@ Proof.
   assert ((E ∩₁ W) x) as EWx.
   { apply domEW. basic_solver. }
   generalize EWx. basic_solver 10.
+Qed.
+
+Lemma ewEninit WF : ew ⊆ (Eninit × Eninit)^?.
+Proof. 
+  rewrite ewc; auto.
+  apply clos_refl_mori.
+  rewrite cfEninit.
+  basic_solver.
 Qed.
 
 (******************************************************************************)
@@ -1803,6 +1807,28 @@ Proof.
     destruct_seq_r SB as EQe. 
     subst y.
     eapply sb_irr; eauto. }
+  exists x. 
+  apply seq_eqv_l; splits; auto. 
+  eapply cont_adjacent_con_last_sb_imm_alt; eauto.
+Qed.
+
+Lemma cont_adjacent_nsb_dom_e' WF lang st k k' e e' 
+      (KK : K (k, existT _ lang st))   
+      (ADJ : cont_adjacent S k k' e (Some e')) :
+  ~ cont_sb_dom S k e'.
+Proof. 
+  intros kSBe'.
+  edestruct exists_cont_last 
+    with (k := k) as [x kLAST]; auto.
+  eapply cont_sb_dom_alt_imm 
+    with (e := e) in kSBe'; eauto.
+  { destruct kSBe' as [y SB].
+    destruct_seq_r SB as EQe. 
+    subst y.
+    eapply sb_irr; eauto. 
+    eapply sb_trans; eauto.
+    eapply cont_adjacent_sb_imm; eauto.
+    basic_solver. }
   exists x. 
   apply seq_eqv_l; splits; auto. 
   eapply cont_adjacent_con_last_sb_imm_alt; eauto.
