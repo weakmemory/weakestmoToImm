@@ -382,8 +382,7 @@ Section SimRelCertForwarding.
       do 2 eexists; splits; eauto.
       exists e; splits; auto.
       apply seq_eqv_l; splits.
-      (* cont_adjacent k k' e e' => ~ cont_sb_dom S k e  *)
-      { admit. }
+      { cdes FRWD. eapply ES.cont_adjacent_nsb_dom_e; eauto. }
       exists y; splits.
       { by apply ES.icf_sym. }
       apply seq_eqv_l; splits; [|done].
@@ -393,7 +392,7 @@ Section SimRelCertForwarding.
     all: eapply co_irr; eauto.
     { rewrite EQ in CO'. apply CO'. }
     eapply co_trans; eauto.
-  Admitted.
+  Qed.
 
   Lemma forwarding_ex_e' lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
@@ -657,7 +656,10 @@ Section SimRelCertForwarding.
     exists z; splits; auto.
     apply seq_eqv_l; splits.
     (* dom (cf ; [cont_sb_dom S k]) ⊆ ~ cont_sb_dom S k  *)
-    { admit. }
+    { cdes FRWD. 
+      eapply ES.cont_sb_dom_cf; eauto. 
+      destruct ICF as [CF _].
+      basic_solver 10. }
     exists z'; splits; auto. 
     apply seq_eqv_l; splits; [|done].
     red; split.
@@ -669,7 +671,7 @@ Section SimRelCertForwarding.
     generalize ICF INITz'. 
     unfold ES.acts_ninit_set.
     basic_solver 10. 
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_forwarding_ex_cont_iss_e lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
@@ -1270,7 +1272,7 @@ Section SimRelCertForwarding.
     by rewrite EQLab, EQLab'.
   Qed.
 
-  Lemma sim_add_jf_jf_icf_dom_w_in_co w lbl lbl' k k' e e' S S' 
+  Lemma sim_add_jf_nforwarding_jf_icf_dom_w_in_co w lbl lbl' k k' e e' S S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
         (LBL  : lbl  = Slab S' e ) 
         (LBL' : lbl' = option_map (Slab S') e')
@@ -1284,6 +1286,8 @@ Section SimRelCertForwarding.
     assert (Wf G) as WFG.
     { apply SRCC. }
     assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as CONS.
     { apply SRCC. }
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
@@ -1448,19 +1452,19 @@ Section SimRelCertForwarding.
           exists x'. split.
           { eapply basic_step_cf_mon; eauto.
             apply ES.cf_sym; auto. }
-          (* add lemma: 
-           * `basic_step k k' e e'` -> dom (sb ⨾ [cont_icf_dom k]) ⊆ dom (sb ⨾ [e]) *)
-          admit. }
+          assert (dom_rel (Ssb S ⨾ ⦗ES.cont_icf_dom S k⦘) x')
+            as SBkICFx'.
+          { basic_solver 10. }
+          eapply basic_step_sb_cont_icf_cont_sb_e
+            in SBkICFx'; eauto.
+          generalize SBkICFx'. basic_solver. }
 
         assert (SEninit S x') as nINITx.
-        { (* todo: make a lemma `dom rfe ⊆ Eninit` *)
-          admit. }
+        { eapply rfe_dom_ninit; eauto. basic_solver. }
         assert (Stid S x' <> ktid S k) as nTIDx'.
-        { (* todo: make a lemma `rfe_alt` *)
-          admit. }
-        (* lemma: rfe_iss *)
+        { eapply rfe_nsame_tid in RFE; eauto. }
         assert (I (e2a S x')) as Ix.
-        { admit. }
+        { eapply rfe_iss; eauto. basic_solver. }
         arewrite (Slab S x' = Glab (e2a S x')).
         { eapply ex_cov_iss_lab; eauto. basic_solver. }
         arewrite (Slab S w = Glab (e2a S w)); [|congruence].
@@ -1517,12 +1521,15 @@ Section SimRelCertForwarding.
 
   Admitted.
 
-  Lemma sim_add_jf_icf_kE_in_co w k k' e e' S S' 
+  Lemma sim_add_jf_nforwarding_icf_kE_in_co w lbl lbl' k k' e e' S S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-        (SAJF : sim_add_jf k w e S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
+        (SAJF : sim_add_jf G sc TC' X k w e S S') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') : 
     e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
   Proof. 
     assert (ES.Wf S) as WF.
@@ -1578,7 +1585,8 @@ Section SimRelCertForwarding.
       { step_solver. }
       rewrite <- cross_inter_r.
       rewrite set_interC.
-      admit. }
+      erewrite ES.cont_sb_cont_icf_inter_false; eauto.
+      basic_solver. }
 
     { arewrite_false (Sicf S ⨾ ⦗eq e⦘).
       { rewrite ES.icfE; auto. step_solver. }
@@ -1606,8 +1614,23 @@ Section SimRelCertForwarding.
     2 : { rewrite ES.jfE; auto.
           cdes AJF. basic_solver 10. }
     
-    eapply sim_add_jf_jf_icf_dom_w_in_co; eauto.
+    eapply sim_add_jf_nforwarding_jf_icf_dom_w_in_co; eauto.
 
+  Qed.
+
+  Lemma simrel_cert_nforwarding_icf_kE_in_co lbl lbl' k k' e e' S S'
+        (st st' st'': thread_st (ktid S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')  
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
+    e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
+  Proof. 
+    unfold_cert_step CertSTEP.
+    1,3: admit.
+    all: eapply sim_add_jf_nforwarding_icf_kE_in_co; eauto.
   Admitted.
-
+    
 End SimRelCertForwarding.
