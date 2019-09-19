@@ -1491,21 +1491,40 @@ Section SimRelCertForwarding.
           apply e2a_eq_in_cf in EQ; 
             try apply AJF; auto.
           destruct EQ as [EQ|CF]; auto.
+          assert (SEninit S x') as nINITx'.
+          { apply ES.cfEninit in CF; auto.
+            generalize CF. basic_solver. }
           cdes AJF.
           exfalso. apply nCF.
-          assert (ES.Wf S') as WF'.
-          { (* refactor `simrel_cert_step_wf` *)
-            admit. }
-          eapply ES.cf_sb_in_cf; eauto.
-          exists x'. split.
-          { eapply basic_step_cf_mon; eauto.
-            apply ES.cf_sym; auto. }
           assert (dom_rel (Ssb S ⨾ ⦗ES.cont_icf_dom S k⦘) x')
             as SBkICFx'.
           { basic_solver 10. }
           eapply basic_step_sb_cont_icf_cont_sb_e
             in SBkICFx'; eauto.
-          generalize SBkICFx'. basic_solver. }
+          assert (ES.cont_cf_dom S k w) 
+            as kCFw.
+          { eapply ES.cont_cf_cont_sb; eauto.
+            unfolder; splits; auto.
+            { arewrite (Stid S w = Stid S x').
+              { symmetry. apply ES.cf_same_tid; auto. }
+              arewrite (Stid S x' = Stid S y); auto.
+              edestruct ES.Tid_sb_prcl
+                as [INITx' | TIDx']; eauto. 
+              { basic_solver 10. }
+              unfold ES.acts_ninit_set in nINITx'.
+              exfalso. by apply nINITx'. }
+            intros kSBw.
+            eapply ES.cont_sb_cf_free
+              with (k := k); eauto.
+            apply seq_eqv_lr; splits.
+            2,3: eauto.
+            destruct SBkICFx' as [z' HH].
+            eapply basic_step_sbe in HH; eauto.
+            by destruct HH as [AA _]. }
+
+          eapply basic_step_cf; eauto.
+          unfold cf_delta.
+          basic_solver 10. }
 
         assert (SEninit S x') as nINITx.
         { eapply rfe_dom_ninit; eauto. basic_solver. }
@@ -1567,7 +1586,7 @@ Section SimRelCertForwarding.
     destruct CO as [EQ|CO]; [congruence|].
     eapply co_trans; eauto.
 
-  Admitted.
+  Qed.
 
   Lemma sim_add_jf_nforwarding_icf_kE_in_co w lbl lbl' k k' e e' S S' 
         (st st' st'' : thread_st (ES.cont_thread S k))
