@@ -246,7 +246,11 @@ Section Compilation.
     { exists (prog_g_es_init prog G), (ES.acts_set (prog_g_es_init prog G)).
       splits; auto using rt_refl, simrel_init. }
     intros TC TC' TC_STEPS IH TC_STEP. desc.
+    destruct TC_STEP as [thread TC_ISTEP].
     edestruct simrel_step as [X' [S' HH]]; eauto. 
+    { right. apply stable_prog_to_prog_in.
+      eapply CertGraph.trstep_thread_prog; eauto.
+      apply SRC. }
     destruct HH as [STEPS' SRC']. 
     red in STEPS', SRC'.
     exists S', X'. splits; auto.
