@@ -62,6 +62,7 @@ Section SimRelCertStep.
   Notation "'Srf' S" := S.(ES.rf) (at level 10).
   Notation "'Sco' S" := S.(ES.co) (at level 10).
   Notation "'Scf' S" := S.(ES.cf) (at level 10).
+  Notation "'Sicf' S" := S.(ES.icf) (at level 10).
 
   Notation "'Sjfe' S" := S.(ES.jfe) (at level 10).
   Notation "'Srfe' S" := S.(ES.rfe) (at level 10).
@@ -971,6 +972,63 @@ Section SimRelCertStep.
     all: eapply BB; eauto.
   Qed.
 
+  Lemma simrel_cert_step_icf_ex_in_co k k' e e' S S'        
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (CertSTEP : cert_step k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    forall t (Tt : (T \₁ eq (ktid S' k')) t),
+      e2a S' □ Sjf S' ⨾ Sicf S' ⨾ ⦗X ∩₁ Stid_ S' t⦘ ⨾ (Sjf S')⁻¹ ⊆ Gco.
+  Proof. 
+    cdes CertSTEP. 
+    assert (ES.Wf S) as WFS by apply SRCC.
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (step_ e e' S S') as STEP_.
+    { eapply simrel_cert_step_step_; eauto. }
+
+    erewrite basic_step_cont_thread'; eauto.
+    ins. erewrite basic_step_icf; eauto.
+    erewrite simrel_cert_basic_step_ex_tid; eauto.
+    relsf. unionL.
+    { arewrite (Sjf S' ⨾ Sicf S ⊆ Sjf S ⨾ Sicf S).
+      { rewrite ES.icfE at 1; auto.
+        rewrite <- seqA
+          with (r1 := Sjf S').
+        rewrite step_jfE; eauto. 
+        basic_solver 10. }
+      arewrite 
+        (⦗X ∩₁ Stid_ S t⦘ ⨾ (Sjf S')⁻¹ ⊆ ⦗X ∩₁ Stid_ S t⦘ ⨾ (Sjf S)⁻¹).
+      { rewrite !seq_eqv_l. 
+        unfolder. ins. desf.
+        splits; auto.
+        eapply step_jfE; eauto.
+        apply seq_eqv_r; splits; auto.
+        eapply Execution.ex_inE; eauto. }
+      erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
+      { eapply icf_ex_in_co; eauto. apply SRCC. }
+      rewrite ES.jfE; auto.
+      basic_solver 20. }
+    arewrite_false 
+      (icf_delta S k e ⨾ ⦗X ∩₁ Stid_ S t⦘); 
+      [|basic_solver].
+    unfold icf_delta.
+    cdes BSTEP_.
+    rewrite ES.cont_icf_cont_cf,
+            ES.cont_cf_Tid_; eauto.
+    arewrite (eq e ⊆₁ Stid_ S' (ktid S k)).
+    { intros x EQx. subst x.
+      eapply basic_step_tid_e; eauto. }
+    rewrite seq_eqv_r.
+    unfolder. ins. desf.
+    { apply Tt. symmetry.
+      erewrite <- basic_step_tid_eq_dom; eauto.
+      eapply Execution.ex_inE; eauto. }
+    by apply Tt. 
+  Qed.
+
   Lemma simrel_cert_step_e2a_co_iss k k' e e' S S'        
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
@@ -1612,7 +1670,7 @@ Section SimRelCertStep.
      *   forall t (Tt : T t \₁ eq (ktid')), 
      *     e2a □ (Sjf' ⨾ Sicf' ⨾ ⦗X ∩₁ STid' ktid'⦘ ⨾ Sjf'⁻¹) ⊆ Gco ;
      *)
-    { admit. }
+    { eapply simrel_cert_step_icf_ex_in_co; eauto. }
     (* e2a_co_ew : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
     { eapply simrel_cert_step_e2a_co_iss; eauto. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
