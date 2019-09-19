@@ -414,18 +414,26 @@ Section SimRelCertStepLemma.
     { rewrite !seq_eqv_r, !seq_eqv_l.
       intros x y [z [JF [nkSBx [ICF [Xy TIDy]]]]].
       unfolder; eexists; splits; eauto. 
-      admit. }
+      eapply basic_step_icf_restr
+        with (S' := S'); eauto. 
+      red; splits; auto.
+      { apply ES.jfE in JF; auto.
+        generalize JF. basic_solver. }
+      eapply Execution.ex_inE; eauto. }
     arewrite (⦗X ∩₁ Stid_ S (ktid S k)⦘ ⨾ (Sjf S')⁻¹ ⊆ 
               ⦗X ∩₁ Stid_ S (ktid S k)⦘ ⨾ (Sjf S )⁻¹).
     { rewrite !seq_eqv_l. 
       intros x y [[Xx TIDx] JF]. red in JF.
       unfolder; splits; auto.
-      admit. }
+      eapply step_jfE; eauto.
+      { eapply simrel_cert_step_step_; eauto. }
+      apply seq_eqv_r; splits; auto.
+      eapply Execution.ex_inE; eauto. }
     erewrite basic_step_e2a_collect_rel_eq_dom; 
       eauto; [apply SRCC|].
     rewrite ES.jfE; auto.
     basic_solver 20.
-  Admitted.
+  Qed.
 
   Lemma simrel_cert_step_ex_cont_iss k k' e e' S S' 
         (st st' st'': (thread_st (ktid S k)))
@@ -711,18 +719,18 @@ Section SimRelCertStepLemma.
     edestruct ilbl_step_lbls as [l [l' EQlbl]]; eauto.
     { eapply wf_cont_state; eauto. }
     
-    (* destruct (classic  *)
-    (*   (exists k' st' e e', forwarding G sc TC' S l l' k k' e e' st st') *)
-    (* ) as [[k' [st''' [e [e' FRWD]]]] | nFRWD]. *)
-    (* { assert (st''' = st') as EQst. *)
-    (*   { cdes FRWD. *)
-    (*     eapply unique_ilbl_step; eauto. *)
-    (*     by rewrite <- EQlbl. } *)
-    (*   subst st'''. *)
-    (*   assert (ktid S k = ktid S k') as kEQTID. *)
-    (*   { by apply FRWD. } *)
-    (*   exists k', S. splits; auto. *)
-    (*   eapply simrel_cert_forwarding; eauto. } *)
+    destruct (classic
+      (exists k' st' e e', forwarding G sc TC' S l l' k k' e e' st st')
+    ) as [[k' [st''' [e [e' FRWD]]]] | nFRWD].
+    { assert (st''' = st') as EQst.
+      { cdes FRWD.
+        eapply unique_ilbl_step; eauto.
+        by rewrite <- EQlbl. }
+      subst st'''.
+      assert (ktid S k = ktid S k') as kEQTID.
+      { by apply FRWD. }
+      exists k', S. splits; auto.
+      eapply simrel_cert_forwarding; eauto. }
 
     subst lbl.
     edestruct simrel_cert_step as [k' HH]; eauto. 
@@ -799,9 +807,9 @@ Section SimRelCertStepLemma.
     (* jf_in_cert_rf : e2a' □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
     { eapply simrel_cert_step_jf_in_cert_rf; eauto. }
     (* icf_ex_ktid_in_co : e2a' □ (Sjf' ⨾ ⦗set_compl kE'⦘ ⨾ Sicf' ⨾ ⦗X ∩₁ STid' ktid'⦘ ⨾ Sjf'⁻¹) ⊆ Gco *)
-    { admit. }
+    { eapply simrel_cert_step_icf_ex_ktid_in_co; eauto. }
     (* icf_kE_in_co : e2a' □ (Sjf' ⨾ Sicf' ⨾ ⦗kE'⦘ ⨾ Sjf'⁻¹) ⊆ Gco *)
-    { admit. }
+    { eapply simrel_cert_nforwarding_icf_kE_in_co; eauto. }
     (* ex_cont_iss : X ∩₁ e2a' ⋄₁ (contE' ∩₁ I) ⊆₁ dom_rel (Sew' ⨾ ⦗ kE' ⦘) ; *)
     { eapply simrel_cert_step_ex_cont_iss; eauto. }
     (* kE_iss : kE' ∩₁ e2a' ⋄₁ I ⊆₁ dom_rel (Sew' ⨾ ⦗ X ⦘) ; *)
