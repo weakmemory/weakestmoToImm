@@ -744,8 +744,8 @@ Section SimRelStep.
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. 
       by unfold CsbI. }
-    (* ex_sb_cov_iss : e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb) ⊆₁ CsbI G TC *)
-    { admit. }
+    (* ex_sb_cov_iss : e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb) ⊆₁ CsbI G TC' *)
+    { eapply certX_sb_cov_iss; eauto. }
     (* ex_cov_iss_lab : eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a) *)
     { eapply cert_ex_cov_iss_lab; apply SRCC. }
     (* rmw_cov_in_ex : Grmw ⨾ ⦗ C' ⦘ ⊆ e2a □ Srmw ⨾ ⦗ certX ⦘ *)
@@ -800,7 +800,7 @@ Section SimRelStep.
     intros x HH.
     eapply rel_ew_cert_ex; eauto.
     generalize HH. basic_solver 10.
-  Admitted.
+  Qed.
 
   Lemma simrel_step_helper k S
         (st st''' : thread_st (ktid S k))

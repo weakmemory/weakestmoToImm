@@ -684,6 +684,20 @@ Section SimRelCert.
       basic_solver.
     Qed.
 
+    Lemma certX_sb_cov_iss : 
+      e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb) ⊆₁ CsbI G TC'.
+    Proof. 
+      rewrite id_union, 
+              seq_union_l,
+              codom_union, 
+              set_collect_union.
+      arewrite (SNTid ktid ⊆₁ fun _ => True).
+      relsf. split.
+      { erewrite <- sim_trav_step_CsbI_mon; 
+          try eexists; apply SRCC. }
+      by apply kE_sb_cov_iss.
+    Qed.
+
     Lemma certX_ncf_cont : 
       certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.
     Proof. 
