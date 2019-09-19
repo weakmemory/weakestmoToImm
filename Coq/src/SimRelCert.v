@@ -171,9 +171,13 @@ Section SimRelCert.
       ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE ;
       cov_in_ex   : e2a ⋄₁ C ∩₁ kE ⊆₁ X ;
 
-      klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb ;
-
-      kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC' ;
+      kcond : (
+        ⟪ klast_ex : klast ⊆₁ X ⟫ /\
+        ⟪ kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC ⟫
+      ) \/ (
+        ⟪ klast_sb_max : klast ⊆₁ max_elt Ssb ⟫ /\
+        ⟪ kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC' ⟫
+      ) ;
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
 
@@ -685,17 +689,29 @@ Section SimRelCert.
     Qed.
 
     Lemma certX_sb_cov_iss : 
-      e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb) ⊆₁ CsbI G TC'.
+      forall t (Tt : T t), 
+        e2a □₁ codom_rel (⦗certX ∩₁ STid t⦘ ⨾ Ssb) ⊆₁ CsbI G TC'.
     Proof. 
-      rewrite id_union, 
+      ins.
+      rewrite set_inter_union_l,
+              id_union, 
               seq_union_l,
               codom_union, 
               set_collect_union.
-      arewrite (SNTid ktid ⊆₁ fun _ => True).
       relsf. split.
-      { erewrite <- sim_trav_step_CsbI_mon; 
-          try eexists; apply SRCC. }
-      by apply kE_sb_cov_iss.
+      { erewrite <- sim_trav_step_CsbI_mon. 
+        2,3: try eexists; apply SRCC.
+        unfolder. ins. desc.
+        eapply ex_sb_cov_iss
+          with (t := t).
+        { apply SRCC. }
+        all: basic_solver 10. }
+      arewrite (STid t ⊆₁ fun _ => True).
+      relsf.
+      edestruct kcond; eauto; desc. 
+      all: erewrite kE_sb_cov_iss; eauto.
+      eapply sim_trav_step_CsbI_mon;
+        try eexists; apply SRCC.
     Qed.
 
     Lemma certX_ncf_cont : 

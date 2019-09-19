@@ -271,6 +271,35 @@ Section SimRelCertForwarding.
     erewrite forwarding_seqn_e'; eauto.
   Qed.
 
+  Lemma forwarding_ex_kcond lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st') :
+    ⟪ klast_ex : klast S k ⊆₁ X ⟫ /\
+    ⟪ kE_sb_cov_iss : e2a S □₁ codom_rel (⦗kE S k⦘ ⨾ Ssb S) ⊆₁ CsbI G TC ⟫.
+  Proof.
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    edestruct kcond; eauto; desc.
+    edestruct ES.exists_cont_last  
+      with (k := k) as [x kLASTx]; eauto.
+    exfalso. 
+    eapply klast_sb_max
+      with (b := e); eauto.
+    cdes FRWD.
+    set (kSBIMM := ADJ).
+    apply ES.cont_adjacent_cont_last_sb_imm
+      in kSBIMM; auto.
+    destruct kSBIMM as [y SB].
+    destruct_seq_l SB as kLASTy.
+    destruct SB as [SB _].
+    unfold ES.cont_last in *.
+    destruct k; [|congruence].
+    apply ES.sb_init; auto.
+    split; auto. 
+    cdes FRWD. eapply ES.cont_adjacent_ninit_e; eauto.
+  Qed.
+  
   Lemma forwarding_ex_e lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
@@ -293,24 +322,7 @@ Section SimRelCertForwarding.
     assert (SE S e) as Ee.
     { apply nINITe. }
     assert (ES.cont_last S k ⊆₁ X) as klastX.
-    { rewrite <- set_interK
-        with (s := ES.cont_last S k).
-      rewrite klast_ex_sb_max at 1; eauto.
-      rewrite set_inter_union_l.
-      unionL; [basic_solver|].
-      intros x [MAX kLASTx].
-      exfalso. apply (MAX e).
-      cdes FRWD.
-      set (kSBIMM := ADJ).
-      apply ES.cont_adjacent_cont_last_sb_imm
-        in kSBIMM; auto.
-      destruct kSBIMM as [y SB].
-      destruct_seq_l SB as kLASTy.
-      destruct SB as [SB _].
-      unfold ES.cont_last in *.
-      destruct k; [|congruence].
-      apply ES.sb_init; auto.
-      split; auto. }
+    { eapply forwarding_ex_kcond; eauto. }
      edestruct ES.exists_cont_last  
       with (k := k) as [x kLASTx]; eauto.
     assert (X x) as Xx.
@@ -318,7 +330,8 @@ Section SimRelCertForwarding.
     assert (immediate (Ssb S) x e) as IMMSB.
     { cdes FRWD. eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
     assert (CsbI G TC (e2a S e)) as CsbIe.
-    { eapply ex_sb_cov_iss; eauto.
+    { eapply forwarding_ex_kcond; eauto.
+      apply ES.cont_last_in_cont_sb in kLASTx; auto.
       generalize IMMSB. basic_solver 10. }
     eapply ex_cov_iss in CsbIe; eauto.
     destruct CsbIe as [y [Xy EQE2Ay]].
@@ -506,12 +519,41 @@ Section SimRelCertForwarding.
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-    e2a S □₁ codom_rel (⦗kE S k'⦘ ⨾ Ssb S) ⊆₁ CsbI G TC'.
-  Proof. 
-    rewrite simrel_cert_forwarding_kE_ex; eauto.
-    rewrite ex_sb_cov_iss; [|apply SRCC].
-    eapply sim_trav_step_CsbI_mon; 
-      try eexists; apply SRCC.
+    e2a S □₁ codom_rel (⦗kE S k'⦘ ⨾ Ssb S) ⊆₁ CsbI G TC.
+  Proof.
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    cdes FRWD.
+    edestruct forwarding_ex_kcond
+      as [HA HB]; eauto.
+    red in HA, HB.
+    erewrite ES.cont_adjacent_sb_dom; eauto. 
+    rewrite set_unionA.
+    rewrite id_union.
+    relsf; split; try done.
+    edestruct ES.exists_cont_last  
+      with (k := k) as [x kLASTx]; eauto.
+    rewrite seq_eqv_l.
+    intros y' [y [HH EQy']].
+    destruct HH as [z [EQz SB]].
+    subst y'.
+    apply HB.
+    eexists; splits; eauto.
+    exists x. 
+    apply seq_eqv_l. 
+    split; auto.
+    { apply ES.cont_last_in_cont_sb; auto. }
+    unfold eq_opt in *.
+    destruct EQz as [EQz|EQz];
+      [|destruct e' as [e'|]]; 
+      try done; subst z.
+    { eapply ES.sb_trans; eauto.
+      eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
+    eapply ES.sb_trans; eauto.
+    eapply ES.sb_trans; eauto.
+    { eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
+    eapply ES.cont_adjacent_sb_imm; eauto.
+    basic_solver. 
   Qed.
 
   Lemma simrel_cert_forwarding_kE_lab lbl lbl' k k' e e' S 
@@ -934,10 +976,10 @@ Section SimRelCertForwarding.
     { eapply simrel_cert_forwarding_ex_ktid_cov; eauto. }
     (* cov_in_ex : e2a ⋄₁ C ∩₁ kE' ⊆₁ X *)
     { eapply simrel_cert_forwarding_cov_in_ex; eauto. }
-    (* klast_ex_sb_max : klast' ⊆₁ X ∪₁ max_elt Ssb' *)
-    { erewrite simrel_cert_forwarding_klast_ex; eauto. basic_solver. }
-    (* kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE'⦘ ⨾ Ssb) ⊆₁ CsbI G TC ; *)
-    { eapply simrel_cert_forwarding_kE_sb_cov_iss; eauto. } 
+    (* kcond : ... *)
+    { left; splits.
+      { eapply simrel_cert_forwarding_klast_ex; eauto. }
+      eapply simrel_cert_forwarding_kE_sb_cov_iss; eauto. }
     (* kE_lab : eq_dom (kE' \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
     { eapply simrel_cert_forwarding_kE_lab; eauto. }
     (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
@@ -1376,11 +1418,11 @@ Section SimRelCertForwarding.
     destruct kICFy' as [z HH].
     apply seq_eqv_lr in HH.
     destruct HH as [kLASTz [IMMSB TIDy]].
-    eapply klast_ex_sb_max in kLASTz; eauto.
-    destruct kLASTz as [Xz | MAXSBz].
-    2 : { exfalso. eapply MAXSBz. apply IMMSB. }
+    edestruct kcond; eauto; desc.
+    2 : { exfalso. eapply klast_sb_max; eauto. apply IMMSB. }
     assert (CsbI G TC (e2a S y)) as CsbIy.
-    { eapply ex_sb_cov_iss; [apply SRCC|].
+    { eapply kE_sb_cov_iss. 
+      apply ES.cont_last_in_cont_sb in kLASTz; auto.
       generalize IMMSB. unfold immediate. 
       basic_solver 10. }
     eapply ex_cov_iss in CsbIy; eauto.

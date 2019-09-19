@@ -143,7 +143,9 @@ Section SimRel.
       
       ex_cov_iss : e2a □₁ X ≡₁ CsbI G TC ;
 
-      ex_sb_cov_iss : e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb) ⊆₁ CsbI G TC ;
+      ex_sb_cov_iss : 
+        forall t (Tt : T t), 
+          e2a □₁ codom_rel (⦗X ∩₁ STid t⦘ ⨾ Ssb) ⊆₁ CsbI G TC ;
       
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 
