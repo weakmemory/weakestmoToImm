@@ -1365,35 +1365,11 @@ Notation "'K' S" := (ES.cont_set S) (at level 1).
 
 Section X2G_STEPS.
 
-
 Variable P : stable_prog_type.
-Variable S : ES.t.
-Variable _G : execution.
-Variable _TC : trav_config.
-Variable _X : eventid -> Prop.
-Variable X : eventid -> Prop.
 
-Variable src : simrel_cont (stable_prog_to_prog P) S _G _TC _X.
-
-
-Lemma X2G_FOO
-      (* (NINIT : ~ IdentMap.In tid_init P) *)
-      (* (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> []) *)
-      (EXEC : program_execution P S X)
-      (k : cont_label)
-      (st : ProgToExecution.state)
-      (lprog : list Instr.t)
-      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) st))
-      (INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some lprog) :
-  ⟪ REACH : (fun st st' => exists lbls, LblStep.ilbl_step (ES.cont_thread S k) lbls st st')＊
-              (ProgToExecution.init lprog) st ⟫ /\
-  ⟪ RESTR : X_EQUIV (x2g S (ES.cont_sb_dom S k)) st.(ProgToExecution.G) ⟫.
-Proof.
-Admitted.
-
-Lemma CInit_cont_keep tid
+Lemma CInit_cont_keep S tid lang
       (STEPS : (fun s s' => exists e e', BasicStep.basic_step e e' s s')＊ (prog_es_init P) S)
-      (INK : exists st, K S ((CInit tid), existT _ (thread_lts tid) st)) :
+      (INK : exists st, K S ((CInit tid), existT _ lang st)) :
   IdentMap.In tid (stable_prog_to_prog P).
 Proof.
   generalize dependent tid.
@@ -1420,6 +1396,30 @@ Proof.
   eapply BasicStep.basic_step_cont_set in INK; eauto.
   unfold "∪₁" in INK. desf.
 Qed.
+
+Variable S : ES.t.
+Variable _G : execution.
+Variable _TC : trav_config.
+Variable _X : eventid -> Prop.
+Variable X : eventid -> Prop.
+
+Variable src : simrel_cont (stable_prog_to_prog P) S _G _TC _X.
+
+
+Lemma X2G_FOO
+      (* (NINIT : ~ IdentMap.In tid_init P) *)
+      (* (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> []) *)
+      (EXEC : program_execution P S X)
+      (k : cont_label)
+      (st : ProgToExecution.state)
+      (lprog : list Instr.t)
+      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) st))
+      (INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some lprog) :
+  ⟪ REACH : (fun st st' => exists lbls, LblStep.ilbl_step (ES.cont_thread S k) lbls st st')＊
+              (ProgToExecution.init lprog) st ⟫ /\
+  ⟪ RESTR : X_EQUIV (x2g S (ES.cont_sb_dom S k)) st.(ProgToExecution.G) ⟫.
+Proof.
+Admitted.
 
 Lemma tid_from_prog x
       (NINIT : ~ IdentMap.In tid_init P)
@@ -1451,15 +1451,11 @@ Proof.
   cdes BSTEP.
   assert (CONT_T : IdentMap.In (ES.cont_thread S k) (stable_prog_to_prog P)).
   { unfold ES.cont_thread. desf.
-    { apply CInit_cont_keep.
+    { eapply CInit_cont_keep with (lang := lang).
       { assert (STEPS_IN : step Weakestmo ⊆
-                     ((fun s s' : ES.t =>
-                    exists (e0 : eventid) (e'0 : option eventid), BasicStep.basic_step e0 e'0 s s'))).
-        2: { apply clos_refl_trans_mori in STEPS_IN. by apply STEPS_IN. }
-        unfold step. basic_solver. }
-      assert (lang = thread_lts tid).
-      { admit. }
-      desf.
+                           (fun s s' => exists e e', BasicStep.basic_step e e' s s')).
+        { unfold step. basic_solver. }
+        apply clos_refl_trans_mori in STEPS_IN. eby apply STEPS_IN. }
       cdes BSTEP_. eauto. }
     assert (Eeid : ES.acts_set S eid).
     { cdes BSTEP_. eby eapply ES.K_inE. }
@@ -1474,7 +1470,7 @@ Proof.
     eby erewrite BasicStep.basic_step_tid_e. }
   unfold eq_opt in EQ_e'.  desf.
   eby erewrite BasicStep.basic_step_tid_e'.
-Admitted.
+Qed.
 
 Notation "'ex_sb'" := (Execution.ex_sb S X).
 
