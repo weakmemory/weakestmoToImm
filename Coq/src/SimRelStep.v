@@ -285,21 +285,21 @@ Section SimRelStep.
 
     constructor; auto.
     { red; splits; [constructor|]; try apply SRC.
-      ins. eapply SRC. apply Tt. }
+      all: ins; eapply SRC; apply Tt. }
     (* ex_ktid_cov : X ∩₁ STid ktid ∩₁ e2a ⋄₁ C ⊆₁ kE *)
     { generalize XkTIDCOV. basic_solver 20. }
     (* cov_in_ex : e2a ⋄₁ C ∩₁ kE ⊆₁ X *)
     { rewrite XkTIDCOV. basic_solver. }
-    (* klast_ex_sb_max : klast ⊆₁ X ∪₁ max_elt Ssb *)
-    { rewrite ES.cont_last_in_cont_sb; auto.
-      rewrite XkTIDCOV. basic_solver. }
-    (* kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC' *)
-    { arewrite (kE S k ⊆₁ X).
-      { rewrite XkTIDCOV. basic_solver. }
-      rewrite <- sim_trav_step_CsbI_mon
-        with (TC := TC); eauto.
-      { apply SRC. }
-      eexists; eauto. }
+    (* kcond : ... *)
+    { left. splits.
+      { rewrite ES.cont_last_in_cont_sb; auto.
+        rewrite XkTIDCOV. basic_solver. }
+      admit. 
+      (* arewrite (kE S k ⊆₁ X ). *)
+      (* { rewrite XkTIDCOV. basic_solver. } *)
+      (* erewrite ex_sb_cov_iss. *)
+      (* apply SRC. } *)
+      (* eexists; eauto. *) }
     (* kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
     { intros x [kEx nINITx].
       erewrite ex_cov_iss_lab; try apply SRC.
@@ -496,7 +496,7 @@ Section SimRelStep.
     red in UU. desf.
     eexists. splits; eauto.
     right. by rewrite e2a_tid.
-  Qed.
+  Admitted.
 
   Lemma ew_ex_iss_cert_ex_iss k S 
         (st : thread_st (ktid S k))
@@ -744,7 +744,10 @@ Section SimRelStep.
     { rewrite cert_ex_certD; eauto. 
       rewrite cert_dom_cov_sb_iss; eauto. 
       by unfold CsbI. }
-    (* ex_sb_cov_iss : e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb) ⊆₁ CsbI G TC' *)
+    (* ex_sb_cov_iss : 
+     *   forall t (Tt : T t),    
+     *     e2a □₁ codom_rel (⦗certX ∩₁ STid t⦘ ⨾ Ssb) ⊆₁ CsbI G TC' 
+     *)
     { eapply certX_sb_cov_iss; eauto. }
     (* ex_cov_iss_lab : eq_dom (certX ∩₁ e2a ⋄₁ (C' ∪₁ I')) Slab (Glab ∘ e2a) *)
     { eapply cert_ex_cov_iss_lab; apply SRCC. }

@@ -276,7 +276,7 @@ Section SimRelCertForwarding.
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st') :
     ⟪ klast_ex : klast S k ⊆₁ X ⟫ /\
-    ⟪ kE_sb_cov_iss : e2a S □₁ codom_rel (⦗kE S k⦘ ⨾ Ssb S) ⊆₁ CsbI G TC ⟫.
+    ⟪ kE_sb_cov_iss : e2a S □₁ codom_rel (⦗kE S k \₁ SEinit S⦘ ⨾ Ssb S) ⊆₁ CsbI G TC ⟫.
   Proof.
     assert (ES.Wf S) as WF.
     { apply SRCC. }
@@ -331,7 +331,9 @@ Section SimRelCertForwarding.
     { cdes FRWD. eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
     assert (CsbI G TC (e2a S e)) as CsbIe.
     { eapply forwarding_ex_kcond; eauto.
-      apply ES.cont_last_in_cont_sb in kLASTx; auto.
+      apply ES.cont_last_in_cont_sb 
+        in kLASTx; auto.
+      
       generalize IMMSB. basic_solver 10. }
     eapply ex_cov_iss in CsbIe; eauto.
     destruct CsbIe as [y [Xy EQE2Ay]].

@@ -173,10 +173,10 @@ Section SimRelCert.
 
       kcond : (
         ⟪ klast_ex : klast ⊆₁ X ⟫ /\
-        ⟪ kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC ⟫
+        ⟪ kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb ⨾ ⦗STid ktid⦘) ⊆₁ CsbI G TC ⟫
       ) \/ (
         ⟪ klast_sb_max : klast ⊆₁ max_elt Ssb ⟫ /\
-        ⟪ kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb) ⊆₁ CsbI G TC' ⟫
+        ⟪ kE_sb_cov_iss : e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb ⨾ ⦗STid ktid⦘) ⊆₁ CsbI G TC' ⟫
       ) ;
 
       kE_lab : eq_dom (kE \₁ SEinit) Slab (certG.(lab) ∘ e2a) ;
@@ -690,29 +690,44 @@ Section SimRelCert.
 
     Lemma certX_sb_cov_iss : 
       forall t (Tt : T t), 
-        e2a □₁ codom_rel (⦗certX ∩₁ STid t⦘ ⨾ Ssb) ⊆₁ CsbI G TC'.
+        e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb ⨾ ⦗STid t⦘) ⊆₁ CsbI G TC'.
     Proof. 
-      ins.
-      rewrite set_inter_union_l,
-              id_union, 
-              seq_union_l,
-              codom_union, 
-              set_collect_union.
-      relsf. split.
-      { erewrite <- sim_trav_step_CsbI_mon. 
-        2,3: try eexists; apply SRCC.
-        unfolder. ins. desc.
-        eapply ex_sb_cov_iss
-          with (t := t).
-        { apply SRCC. }
-        all: basic_solver 10. }
-      arewrite (STid t ⊆₁ fun _ => True).
-      relsf.
-      edestruct kcond; eauto; desc. 
-      all: erewrite kE_sb_cov_iss; eauto.
-      eapply sim_trav_step_CsbI_mon;
-        try eexists; apply SRCC.
-    Qed.
+      assert (ES.Wf S) as WFS by apply SRCC.
+      edestruct cstate_cont as [st_ [stEQ KK]]; 
+        [apply SRCC|].
+      admit. 
+      (* red in stEQ, KK. ins. *)
+      (* rewrite id_union,  *)
+      (*         seq_union_l, *)
+      (*         codom_union,  *)
+      (*         set_collect_union. *)
+      (* relsf. split. *)
+      (* { admit. } *)
+      (*   (* erewrite <- sim_trav_step_CsbI_mon.  *) *)
+      (*   (* 2,3: try eexists; apply SRCC. *) *)
+      (*   (* unfolder. ins. desc. *) *)
+      (*   (* eapply ex_sb_cov_iss *) *)
+      (*   (*   with (t := t). *) *)
+      (*   (* { apply SRCC. } *) *)
+      (*   (* { split; auto. congruence. } *) *)
+      (*   (* basic_solver 10. } *) *)
+      (* (* arewrite  *) *)
+      (* (*   (ES.cont_sb_dom S k ∩₁ STid t ⊆₁ ES.cont_sb_dom S k \₁ SEinit). *) *)
+      (* (* { intros x [kSBx TIDx]. *) *)
+      (* (*   split; auto. *) *)
+      (* (*   intros INITx. *) *)
+      (* (*   destruct INITx as [_ INITx]. *) *)
+      (* (*   destruct (classic (t = ktid)) *) *)
+      (* (*     as [EQ|nEQ]. *) *)
+      (* (*   { eapply ktid_ninit; eauto. congruence. } *) *)
+      (* (*   eapply noinitT; [eapply SRCC|]. *) *)
+      (* (*   split; congruence. } *) *)
+      (* relsf. *)
+      (* edestruct kcond; eauto; desc.  *)
+      (* all: erewrite kE_sb_cov_iss; eauto. *)
+      (* eapply sim_trav_step_CsbI_mon; *)
+      (*   try eexists; apply SRCC. *)
+    Admitted.
 
     Lemma certX_ncf_cont : 
       certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.

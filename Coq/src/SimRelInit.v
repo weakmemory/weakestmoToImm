@@ -121,7 +121,7 @@ Section SimRelInit.
     simrel_consistent prog Sinit G sc 
                       (init_trav G) 
                       (ES.acts_set Sinit) 
-                      (fun t => t = tid_init \/ IdentMap.In t prog).
+                      (fun t => IdentMap.In t prog).
   Proof.
     clear S TC X.
     assert (simrel_e2a (prog_g_es_init prog G) G sc) as HH.

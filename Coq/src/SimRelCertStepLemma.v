@@ -217,12 +217,12 @@ Section SimRelCertStepLemma.
     omega.
   Qed.
 
-  Lemma simrel_cert_step_klast_ex_sb_max k k' e e' S S'
+  Lemma simrel_cert_step_klast_sb_max k k' e e' S S'
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    klast S' k' ⊆₁ X ∪₁ max_elt (Ssb S').
+    klast S' k' ⊆₁ max_elt (Ssb S').
   Proof. 
     cdes CertSTEP. cdes BSTEP_.
     assert (ES.Wf S) as WFS by apply SRCC.
@@ -238,7 +238,7 @@ Section SimRelCertStepLemma.
     unfold opt_ext, eq_opt. 
     destruct e' as [e'|].
     { intros x EQx. subst x. 
-      right. red. ins.
+      red. ins.
       destruct REL as [SB | [SB | SB]].
       { eapply basic_step_acts_set_ne'; eauto.
         apply ES.sbE in SB; auto.
@@ -249,7 +249,7 @@ Section SimRelCertStepLemma.
       destruct SB as [EQe _]. omega. }
     relsf.
     intros x EQx. subst x. 
-    right. red. ins.
+    red. ins.
     eapply basic_step_acts_set_ne; eauto.
     destruct REL as [SB | SB].
     { apply ES.sbE in SB; auto.
@@ -295,7 +295,10 @@ Section SimRelCertStepLemma.
       apply SRCC. }
     relsf; splits; auto.
     { erewrite basic_step_e2a_set_collect_eq_dom; 
-        eauto; [apply SRCC|].
+        eauto. 
+      { edestruct kcond; eauto; desc; auto.
+        erewrite <- sim_trav_step_CsbI_mon; 
+          eauto; [|eexists]; apply SRCC. }
       rewrite ES.sbE; auto.
       basic_solver. }
     1-2: step_solver. 
@@ -798,10 +801,10 @@ Section SimRelCertStepLemma.
     { eapply simrel_cert_step_ex_ktid_cov; eauto. }
     (* cov_in_ex : e2a' ⋄₁ C ∩₁ kE' ⊆₁ X *)
     { eapply simrel_cert_step_cov_in_ex; eauto. }
-    (* klast_ex_sb_max : klast' ⊆₁ X ∪₁ max_elt Ssb' *)
-    { eapply simrel_cert_step_klast_ex_sb_max; eauto. }
-    (* kE_sb_cov_iss : e2a' □₁ codom_rel (⦗kE'⦘ ⨾ Ssb') ⊆₁ CsbI G TC' *)
-    { eapply simrel_cert_step_kE_sb_cov_iss; eauto. }
+    (* kcond : ... *)
+    { right. splits.
+      { eapply simrel_cert_step_klast_sb_max; eauto. }
+      eapply simrel_cert_step_kE_sb_cov_iss; eauto. }
     (* kE_lab : eq_dom (kE' \₁ SEinit') Slab' (certG.(lab) ∘ e2a') *)
     { eapply simrel_cert_step_kE_lab; eauto. } 
     (* jf_in_cert_rf : e2a' □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)

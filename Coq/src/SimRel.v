@@ -125,6 +125,8 @@ Section SimRel.
   Record simrel (T : thread_id -> Prop) :=
     { noinitprog : ~ IdentMap.In tid_init prog ;
       gprog : program_execution (stable_prog_to_prog prog) G ;
+
+      (* noinitT : ~ T tid_init ; *)
       
       gwf   : Execution.Wf G ;
       swf   : ES.Wf S ;
@@ -145,7 +147,7 @@ Section SimRel.
 
       ex_sb_cov_iss : 
         forall t (Tt : T t), 
-          e2a □₁ codom_rel (⦗X ∩₁ STid t⦘ ⨾ Ssb) ⊆₁ CsbI G TC ;
+          e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb ⨾ ⦗STid t⦘) ⊆₁ CsbI G TC ;
       
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 

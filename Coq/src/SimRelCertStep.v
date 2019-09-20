@@ -1625,6 +1625,7 @@ Section SimRelCertStep.
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
     constructor; try apply SRCC.
+    { erewrite basic_step_cont_thread'; eauto; apply SRCC. }
     { eapply simrel_cert_step_wf; eauto. }
     { eapply step_preserves_execution; eauto; apply SRCC. }
     { eapply basic_step_simrel_cont; eauto; try apply SRCC. }
@@ -1636,7 +1637,17 @@ Section SimRelCertStep.
       symmetry.
       all: eapply basic_step_e2a_eq_dom with (S:=S) (S':=S'); eauto.
       all: eapply Execution.ex_inE; eauto. }
-    { admit. }
+    { erewrite basic_step_cont_thread'; eauto. ins.
+      erewrite simrel_cert_basic_step_ex_tid; eauto.
+      cdes BSTEP_. rewrite SB'.
+      rewrite seq_union_r, 
+              codom_union, 
+              set_collect_union.
+      rewrite set_subset_union_l. split.
+      { erewrite basic_step_e2a_set_collect_eq_dom; eauto.
+        { erewrite ex_sb_cov_iss; eauto. apply SRCC. } 
+        rewrite ES.sbE; auto. basic_solver. }
+      admit. }
     { unfold Basics.compose.
       red. intros x [XX HH]. red in HH.
       assert (SE S x) as EX.
