@@ -175,12 +175,13 @@ Qed.
 
 Lemma rc11_rlx_race_free_program_transfer P
       (NINIT : ~ Basic.IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> nil)
       (RACE_FREE_G : rc11_rlx_race_free_program_G (stable_prog_to_prog P)) :
   rc11_rlx_race_free_program P.
 Proof.
   intros S X EXEC RC11.
   cdes EXEC.
-  specialize (X2G_steps P S X EXEC) as HH.
+  specialize (X2G_steps P S X NINIT PP EXEC) as HH.
   desf.
   eapply rlx_race_free_transer; eauto.
   { eby eapply steps_es_wf. }

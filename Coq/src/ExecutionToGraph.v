@@ -1426,12 +1426,11 @@ Lemma tid_from_prog x
       (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
       (IN : ES.acts_set S x) :
-  ES.acts_init_set S x \/ IdentMap.In (ES.tid S x) (stable_prog_to_prog P).
+  ES.tid S x = tid_init \/ IdentMap.In (ES.tid S x) (stable_prog_to_prog P).
 Proof.
   generalize dependent x.
   eapply clos_refl_trans_ind_left with (z := S); eauto.
-  { ins. left.
-    by apply prog_l_es_init_init. }
+  { auto. }
   clear dependent S.
   intros S S' STEPS IH STEP x IN.
   assert (WF : ES.Wf S).
@@ -1464,6 +1463,7 @@ Proof.
     assert (NINITeid : ES.acts_ninit_set S eid).
     { cdes BSTEP_. eby eapply ES.K_inEninit. }
     apply set_minus_inter_set_compl in NINITeid.
+    unfold ES.acts_init_set in NINITeid.
     unfolder in *; basic_solver 30. }
   destruct NEW as [EQ_e | EQ_e'].
   { rewrite <- EQ_e.
@@ -1484,17 +1484,29 @@ Lemma X2G_steps'
     ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
 Proof.
   cdes EXEC.
+  assert (WF : ES.Wf S).
+  { eby eapply steps_es_wf. }
   exists (x2g S X). splits.
-  1: apply x2g_X2G; auto.
-  2: apply x2g_wf; auto.
-  1,2: eby eapply steps_es_wf.
+  { by apply x2g_X2G. }
+  { by apply x2g_wf. }
   assert (X ≡₁ (⋃₁ x ∈ wmax_elt ex_sb, (ES.cont_sb_dom S (CEvent x)))).
   { admit. }
   constructor.
-  { ins. 
+  { intros a Ge.
+    apply (x2g_X2G WF EXEC1) in Ge.
+    destruct Ge as [e [Xe EQ]].
+    unfold is_init. desf; [left | right]; simpls.
+    unfold e2a in Heq. desf.
+    assert (ES.tid S e = tid_init \/ IdentMap.In (ES.tid S e) (stable_prog_to_prog P));
+      [ | basic_solver].
+    apply tid_from_prog; auto.
+    eby eapply Execution.ex_inE. }
+  ins.
 Admitted.
 
-Lemma X2G_steps
+End X2G_STEPS.
+
+Lemma X2G_steps P S X
       (NINIT : ~ IdentMap.In tid_init P)
       (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
       (EXEC : program_execution P S X) :
@@ -1538,5 +1550,3 @@ Proof.
     { exists (ProgToExecution.init linstr). splits.
       { apply rt_refl.  }
 Admitted.
-
-End X2G_STEPS.
