@@ -688,46 +688,97 @@ Section SimRelCert.
       basic_solver.
     Qed.
 
-    Lemma certX_sb_cov_iss : 
+    Lemma ex_ntid_sb_cov_iss : 
+      forall t (Tt : (T \₁ eq ktid) t), 
+        e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb ⨾ ⦗STid t⦘) ⊆₁ CsbI G TC'.
+    Proof. 
+      ins.
+      erewrite <- sim_trav_step_CsbI_mon. 
+      2,3: try eexists; apply SRCC.
+      erewrite ex_sb_cov_iss.
+      1-2: eauto; apply SRCC.
+      done.
+    Qed.
+
+    Lemma kE_sb_cov_iss : 
+      e2a □₁ codom_rel (⦗kE⦘ ⨾ Ssb ⨾ ⦗STid ktid⦘) ⊆₁ CsbI G TC'.
+    Proof. 
+      edestruct kcond; eauto; desc; try done.
+      erewrite <- sim_trav_step_CsbI_mon. 
+      2,3: try eexists; apply SRCC.
+      done.
+    Qed.
+
+    Lemma cert_ex_sb_cov_iss : 
       forall t (Tt : T t), 
         e2a □₁ codom_rel (⦗certX⦘ ⨾ Ssb ⨾ ⦗STid t⦘) ⊆₁ CsbI G TC'.
     Proof. 
       assert (ES.Wf S) as WFS by apply SRCC.
+      assert (Execution.t S X) as EXEC by apply SRCC.
       edestruct cstate_cont as [st_ [stEQ KK]]; 
         [apply SRCC|].
-      admit. 
-      (* red in stEQ, KK. ins. *)
-      (* rewrite id_union,  *)
-      (*         seq_union_l, *)
-      (*         codom_union,  *)
-      (*         set_collect_union. *)
-      (* relsf. split. *)
-      (* { admit. } *)
-      (*   (* erewrite <- sim_trav_step_CsbI_mon.  *) *)
-      (*   (* 2,3: try eexists; apply SRCC. *) *)
-      (*   (* unfolder. ins. desc. *) *)
-      (*   (* eapply ex_sb_cov_iss *) *)
-      (*   (*   with (t := t). *) *)
-      (*   (* { apply SRCC. } *) *)
-      (*   (* { split; auto. congruence. } *) *)
-      (*   (* basic_solver 10. } *) *)
-      (* (* arewrite  *) *)
-      (* (*   (ES.cont_sb_dom S k ∩₁ STid t ⊆₁ ES.cont_sb_dom S k \₁ SEinit). *) *)
-      (* (* { intros x [kSBx TIDx]. *) *)
-      (* (*   split; auto. *) *)
-      (* (*   intros INITx. *) *)
-      (* (*   destruct INITx as [_ INITx]. *) *)
-      (* (*   destruct (classic (t = ktid)) *) *)
-      (* (*     as [EQ|nEQ]. *) *)
-      (* (*   { eapply ktid_ninit; eauto. congruence. } *) *)
-      (* (*   eapply noinitT; [eapply SRCC|]. *) *)
-      (* (*   split; congruence. } *) *)
-      (* relsf. *)
-      (* edestruct kcond; eauto; desc.  *)
-      (* all: erewrite kE_sb_cov_iss; eauto. *)
-      (* eapply sim_trav_step_CsbI_mon; *)
-      (*   try eexists; apply SRCC. *)
-    Admitted.
+      red in stEQ, KK. ins.
+      rewrite id_union,
+              seq_union_l,
+              codom_union,
+              set_collect_union.
+      destruct 
+        (classic (t = ktid))
+        as [EQ|nEQ];
+        relsf; split; try subst t.
+      { rewrite seq_eqv_lr.
+        intros y' [y [HH EQy']].
+        destruct HH as [x [[Xx nTIDx] [SB TIDy]]]. 
+        subst y'.
+        eapply kE_sb_cov_iss; eauto.
+        eexists; split; eauto.
+        assert 
+          (exists e, SEinit e /\ Ssb e y)
+          as [e [INITe SB']].
+        { assert (SE x) as Ex.
+          { eapply Execution.ex_inE; eauto. }
+          eapply ES.acts_set_split in Ex.
+          destruct Ex as [INITx | nINITx].
+          { exists x; split; auto. }
+          edestruct ES.exists_acts_init
+            as [e INITe]; eauto. 
+          exists e. 
+          splits; auto.
+          eapply ES.sb_trans; eauto.
+          eapply ES.sb_init; eauto.
+          split; auto. }
+        exists e.
+        apply seq_eqv_lr; split; auto.
+        eapply ES.cont_sb_dom_Einit; eauto. }
+      { eapply kE_sb_cov_iss; eauto. }
+      { arewrite 
+          (SNTid (ES.cont_thread S k) ⊆₁ fun _ => True).
+        relsf. eapply ex_ntid_sb_cov_iss.
+        basic_solver. }
+      erewrite ES.cont_sb_tid; eauto.
+      rewrite id_union,
+              seq_union_l,
+              codom_union,
+              set_collect_union.
+      rewrite set_subset_union_l. split.
+      { erewrite Execution.init_in_ex; eauto.
+        eapply ex_ntid_sb_cov_iss; eauto.
+        basic_solver. }
+      rewrite seq_eqv_lr.
+      intros x' [x [HH EQx']].
+      destruct HH as [y [nTIDx [SB TIDy]]]. 
+      exfalso. 
+      assert (Stid y = Stid x) 
+        as HH; [|congruence].
+      eapply ES.sb_tid; eauto.
+      unfold ES.acts_ninit_set.
+      apply seq_eqv_l; unfolder; splits; auto.
+      { apply ES.sbE in SB; auto.
+        generalize SB. basic_solver. }
+      intros [_ INITy].
+      eapply ktid_ninit; eauto.
+      congruence. 
+    Qed.
 
     Lemma certX_ncf_cont : 
       certX ∩₁ ES.cont_cf_dom S k ≡₁ ∅.

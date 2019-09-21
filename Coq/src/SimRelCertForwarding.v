@@ -276,7 +276,7 @@ Section SimRelCertForwarding.
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st') :
     ⟪ klast_ex : klast S k ⊆₁ X ⟫ /\
-    ⟪ kE_sb_cov_iss : e2a S □₁ codom_rel (⦗kE S k \₁ SEinit S⦘ ⨾ Ssb S) ⊆₁ CsbI G TC ⟫.
+    ⟪ kE_sb_cov_iss : e2a S □₁ codom_rel (⦗kE S k⦘ ⨾ Ssb S ⨾ ⦗Stid_ S (ktid S k)⦘) ⊆₁ CsbI G TC ⟫.
   Proof.
     assert (ES.Wf S) as WF.
     { apply SRCC. }
@@ -333,8 +333,13 @@ Section SimRelCertForwarding.
     { eapply forwarding_ex_kcond; eauto.
       apply ES.cont_last_in_cont_sb 
         in kLASTx; auto.
-      
-      generalize IMMSB. basic_solver 10. }
+      eexists; splits; eauto.
+      exists x.
+      apply seq_eqv_lr; splits; auto.
+      { apply IMMSB. }
+      cdes FRWD.
+      erewrite ES.cont_adjacent_tid_e; eauto. }
+
     eapply ex_cov_iss in CsbIe; eauto.
     destruct CsbIe as [y [Xy EQE2Ay]].
     assert (SE S y) as Ey.
@@ -521,11 +526,13 @@ Section SimRelCertForwarding.
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
-    e2a S □₁ codom_rel (⦗kE S k'⦘ ⨾ Ssb S) ⊆₁ CsbI G TC.
+    e2a S □₁ codom_rel (⦗kE S k'⦘ ⨾ Ssb S ⨾ ⦗Stid_ S (ktid S k')⦘) ⊆₁ CsbI G TC.
   Proof.
     assert (ES.Wf S) as WF.
     { apply SRCC. }
     cdes FRWD.
+    arewrite (ktid S k' = ktid S k).
+    { by cdes ADJ. }
     edestruct forwarding_ex_kcond
       as [HA HB]; eauto.
     red in HA, HB.
@@ -535,15 +542,15 @@ Section SimRelCertForwarding.
     relsf; split; try done.
     edestruct ES.exists_cont_last  
       with (k := k) as [x kLASTx]; eauto.
-    rewrite seq_eqv_l.
+    rewrite seq_eqv_lr.
     intros y' [y [HH EQy']].
-    destruct HH as [z [EQz SB]].
+    destruct HH as [z [EQz [SB TIDy]]].
     subst y'.
     apply HB.
     eexists; splits; eauto.
     exists x. 
-    apply seq_eqv_l. 
-    split; auto.
+    apply seq_eqv_lr. 
+    splits; auto.
     { apply ES.cont_last_in_cont_sb; auto. }
     unfold eq_opt in *.
     destruct EQz as [EQz|EQz];

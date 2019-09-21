@@ -684,6 +684,50 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma basic_step_sb_nTid t lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF: ES.Wf S) 
+      (nEQ : t <> ES.cont_thread S k) :
+  sb S' ⨾ ⦗Tid_ S' t⦘ ≡ sb S ⨾ ⦗Tid_ S t⦘. 
+Proof. 
+  assert (basic_step e e' S S') 
+    as BSTEP.
+  { do 5 eexists. red. eauto. }
+  cdes BSTEP_.
+  rewrite SB'.
+  rewrite !seq_union_l.
+
+  arewrite
+    (sb S ⨾ ⦗Tid_ S' t⦘ ≡ sb S ⨾ ⦗Tid_ S t⦘).
+  { rewrite !seq_eqv_r.
+    split; intros x y [SB TIDy]; 
+      splits; auto.
+    { erewrite <- basic_step_tid_eq_dom; eauto.
+      apply ES.sbE in SB; auto.
+      generalize SB. basic_solver. }
+    erewrite basic_step_tid_eq_dom; eauto.
+    apply ES.sbE in SB; auto.
+    generalize SB. basic_solver. }
+
+  arewrite_false 
+    (sb_delta S k e e' ⨾ ⦗Tid_ S' t⦘).
+  { unfold sb_delta.
+    rewrite unionA.
+    rewrite <- cross_union_r.
+    rewrite seq_eqv_r.
+    intros x y [[[_ EQy] | [_ EQy]] TIDy].
+    { apply nEQ.
+      subst t y. 
+      erewrite basic_step_tid_e; eauto. }
+    apply nEQ.
+    unfold eq_opt in EQy.
+    destruct e' as [e'|]; try done.
+    subst t y. 
+    erewrite basic_step_tid_e'; eauto. }
+
+  basic_solver.
+Qed.
+
 Lemma basic_step_sbe lang k k' st st' e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
