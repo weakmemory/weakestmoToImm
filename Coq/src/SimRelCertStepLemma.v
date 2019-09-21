@@ -263,7 +263,7 @@ Section SimRelCertStepLemma.
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    e2a S' □₁ codom_rel (⦗kE S' k'⦘ ⨾ Ssb S') ⊆₁ CsbI G TC'.
+    e2a S' □₁ codom_rel (⦗kE S' k'⦘ ⨾ Ssb S' ⨾ ⦗Stid_ S' (ktid S' k')⦘) ⊆₁ CsbI G TC'.
   Proof. 
     cdes CertSTEP. cdes BSTEP_.
     assert (ES.Wf S) as WFS by apply SRCC.
@@ -277,6 +277,8 @@ Section SimRelCertStepLemma.
     rewrite !id_union.
     rewrite !seq_union_l, !seq_union_r.
     rewrite !codom_union.
+    arewrite 
+      (sb_delta S k e e' ⨾ ⦗Stid_ S' (ktid S' k')⦘ ⊆ sb_delta S k e e').
     rewrite !codom_seq 
       with (r' := sb_delta S k e e').
     rewrite basic_step_sb_delta_codom; eauto.
@@ -294,14 +296,24 @@ Section SimRelCertStepLemma.
       eapply basic_step_e2a_E0_e'; eauto.
       apply SRCC. }
     relsf; splits; auto.
-    { erewrite basic_step_e2a_set_collect_eq_dom; 
-        eauto. 
-      { edestruct kcond; eauto; desc; auto.
-        erewrite <- sim_trav_step_CsbI_mon; 
-          eauto; [|eexists]; apply SRCC. }
-      rewrite ES.sbE; auto.
-      basic_solver. }
-    1-2: step_solver. 
+    2-3: step_solver.
+    erewrite basic_step_e2a_set_collect_eq_dom; 
+      eauto. 
+    { assert 
+        (Ssb S ⨾ ⦗Stid_ S' (ktid S' k')⦘ ⊆ Ssb S ⨾ ⦗Stid_ S (ktid S k)⦘)
+        as HH.
+      { rewrite !seq_eqv_r.
+        erewrite basic_step_cont_thread'; eauto.
+        unfolder; ins; desf; splits; auto.
+        erewrite <- basic_step_tid_eq_dom; eauto.
+        apply ES.sbE in H; auto.
+        generalize H. basic_solver. }
+      rewrite HH.
+      edestruct kcond; eauto; desc; auto.
+      erewrite <- sim_trav_step_CsbI_mon; 
+        eauto; [|eexists]; apply SRCC. }
+    rewrite ES.sbE; auto.
+    basic_solver. 
   Qed.
 
   Lemma simrel_cert_step_kE_lab k k' e e' S S'

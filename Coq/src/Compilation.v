@@ -236,7 +236,7 @@ Section Compilation.
         (nLocsEmpty : g_locs G <> []) 
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
-    let T := (fun t => t = tid_init \/ IdentMap.In t prog) in
+    let T := (fun t => IdentMap.In t prog) in
     forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
       exists S X, 
         ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
@@ -248,7 +248,7 @@ Section Compilation.
     intros TC TC' TC_STEPS IH TC_STEP. desc.
     destruct TC_STEP as [thread TC_ISTEP].
     edestruct simrel_step as [X' [S' HH]]; eauto. 
-    { right. apply stable_prog_to_prog_in.
+    { apply stable_prog_to_prog_in.
       eapply CertGraph.trstep_thread_prog; eauto.
       apply SRC. }
     destruct HH as [STEPS' SRC']. 
