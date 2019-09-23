@@ -1678,6 +1678,7 @@ Section SimRelCertStep.
      *     e2a □ (Sjf' ⨾ Sicf' ⨾ ⦗X ∩₁ STid' ktid'⦘ ⨾ Sjf'⁻¹) ⊆ Gco ;
      *)
     { eapply simrel_cert_step_icf_ex_in_co; eauto. }
+    { admit. }
     (* e2a_co_ew : e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
     { eapply simrel_cert_step_e2a_co_iss; eauto. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) *)
