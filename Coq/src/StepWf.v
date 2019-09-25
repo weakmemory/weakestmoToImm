@@ -1,6 +1,7 @@
 Require Import Omega.
 From hahn Require Import Hahn.
-From imm Require Import AuxDef Events. 
+From imm Require Import AuxDef Events ProgToExecutionProperties ProgToExecution.
+From PromisingLib Require Import Basic Language.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -9,6 +10,8 @@ Require Import AddJF.
 Require Import AddEW.
 Require Import AddCO.
 Require Import Step.
+Require Import ProgES.
+Require Import Consistency.
 
 Set Implicit Arguments.
 
@@ -1638,4 +1641,268 @@ Proof.
   { eapply basic_step_K_adj; eauto. }
 Qed.
  
+Lemma basic_step_init_loc e e' S S'
+      (BSTEP : BasicStep.basic_step e e' S S')
+      (WF : ES.Wf S) :
+  ES.init_loc S ≡₁ ES.init_loc S'.
+Proof.
+  specialize (BasicStep.basic_step_acts_init_set BSTEP WF) as EINIT.
+  unfolder. splits; unfold ES.init_loc; ins; desf.
+  { exists a. splits; [by apply EINIT|].
+    arewrite (loc S' a = loc S a); [|done].
+    apply (BasicStep.basic_step_loc_eq_dom BSTEP).
+    apply ES.acts_set_split. basic_solver. }
+  exists a. splits; [by apply EINIT|].
+  arewrite (loc S a = loc S' a); [|done].
+  rewrite (BasicStep.basic_step_loc_eq_dom BSTEP); auto.
+  apply EINIT in EINA.
+  apply ES.acts_set_split. basic_solver.
+Qed.
+
+Local Definition extr_loc lbl := match lbl with
+                       | Aload _ _ l _ | Astore _ _ l _ => Some l
+                       | Afence _ => None
+                       end.
+
+Lemma nempty_list_neq_empty_list_r {A} (xs : list A) (x : A) :
+  xs ++ [x] <> [].
+Proof.
+  intro HH.
+  assert (WRONG : length (xs ++ [x]) = length ([] : list A))
+    by congruence.
+  rewrite app_length, length_nil in WRONG.
+  unfold length in WRONG. omega.
+Qed.
+
+Lemma loc_in_istep_ thread lbl lbl' st st' instr l
+      (LOC : extr_loc lbl = Some l)
+      (STEP : ProgToExecution.istep_ thread (opt_to_list lbl' ++ [lbl]) st st' instr) :
+  In l (ProgLoc.instr_locs instr).
+Proof.
+  destruct STEP.
+  1,2: exfalso; eby eapply nempty_list_neq_empty_list_r.
+  1,2,4,5,6:
+    unfold opt_to_list, "++" in LABELS; desf;
+    unfold extr_loc in LOC; desf;
+    unfold ProgToExecution.RegFile.eval_lexpr, ProgLoc.instr_locs, ProgLoc.lexpr_locs;
+    desf; basic_solver.
+  unfold opt_to_list, "++" in LABELS. desf.
+Qed.
+
+Lemma loc_in_istep thread lbl lbl' st st' l
+      (STEP : ProgToExecution.istep thread (opt_to_list lbl' ++ [lbl]) st st')
+      (LOC : extr_loc lbl = Some l) :
+    In l (ProgLoc.linstr_locs (ProgToExecution.instrs st)).
+Proof.
+  cdes STEP.
+  symmetry in ISTEP.
+  apply nth_error_In in ISTEP.
+  unfold ProgLoc.linstr_locs.
+  apply in_flatten_iff.
+  exists (ProgLoc.instr_locs instr).
+  split; [| eby eapply loc_in_istep_].
+  apply in_map_iff.
+  eauto.
+Qed.
+
+Lemma istep_same_instrs thread lbls st st'
+      (STEP : ProgToExecution.istep thread lbls st st') :
+  ProgToExecution.instrs st = ProgToExecution.instrs st.
+Proof. basic_solver. Qed.
+
+Lemma pair_congruence {A B} {a1 a2 : A} {b1 b2 : B} :
+     (a1, b1) = (a2, b2) <-> a1 = a2 /\ b1 = b2.
+Proof. split; [basic_solver | ins; desf]. Qed.
+
+Lemma get_stable_same_instrs t s q r :
+  ProgToExecution.instrs (proj1_sig (LblStep.get_stable t s q r)) = ProgToExecution.instrs s.
+Proof.
+  set (s' := (LblStep.get_stable t s q r)).
+  destruct s'.
+  destruct u. desf.
+  unfold proj1_sig.
+  eapply clos_refl_trans_ind_right with (x := s); eauto.
+  intros s' s'' STEP EQ STEPS'.
+  unfold ProgToExecution.istep in STEP. desf.
+  by rewrite INSTRS.
+Qed.
+
+Lemma steps_es_props P
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (S : ES.t)
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  ⟪ LTS : forall k lang (state : lang.(Language.state))
+            (INK : K S (k, existT _ lang state)),
+      lang = thread_lts (ES.cont_thread S k) ⟫ /\
+  ⟪ INIT_LOC : ES.init_loc S ≡₁ ES.init_loc (prog_es_init P) ⟫ /\
+  ⟪ INSTRS : forall k (state : ProgToExecution.state)
+               (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) state)),
+      IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) =
+      Some (ProgToExecution.instrs state) ⟫ /\
+  ⟪ WF : ES.Wf S ⟫.
+Proof.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { splits.
+    { ins. unfold ES.cont_thread.
+      unfold prog_es_init, prog_l_es_init, ES.init, ES.cont_set, ES.cont, prog_init_K in INK.
+      apply in_map_iff in INK. desf. }
+    { done. }
+    { intros k st INK.
+      unfold prog_es_init, prog_l_es_init, ES.cont_set, ES.init, ES.cont_thread in INK.
+      simpls.
+      specialize (prog_l_es_init_K P (ProgLoc.prog_locs (stable_prog_to_prog P))
+                                   k st INK) as HH.
+      desf.
+      unfold prog_init_K in INK. apply in_map_iff in INK.
+      destruct INK.
+      destruct H.
+      apply pair_congruence in H.
+      destruct H.
+      apply eq_sigT_fst in H1 as FOO.
+      assert (fst x = thread) by congruence.
+      rewrite H2 in H1.
+      apply inj_pair2 in H1 as BAR.
+      desf. simpls.
+      destruct x, s. simpls.
+      unfold stable_prog_to_prog.
+      rewrite IdentMap.Facts.map_o. unfold option_map.
+      apply Prog.RegMap.elements_complete in H0.
+      desf. simpls.
+      rewrite get_stable_same_instrs.
+      basic_solver. }
+    unfold prog_es_init.
+    by apply prog_l_es_init_wf. }
+  clear dependent S.
+  intros S S' STEPS IH STEP. desf. splits.
+  { intros k lang state INK.
+    cdes STEP. cdes BSTEP.
+    eapply BasicStep.basic_step_cont_set in INK; eauto.
+    red in INK; desf.
+    { erewrite BasicStep.basic_step_cont_thread; eauto. }
+    cdes BSTEP_.
+    apply LTS in CONT as LANG_EQ. subst.
+    eby erewrite <- BasicStep.basic_step_cont_thread'. }
+  { cdes STEP. eby rewrite <- basic_step_init_loc with (S := S). }
+  { intros k st INK.
+    cdes STEP. cdes BSTEP.
+    eapply BasicStep.basic_step_cont_set in INK; eauto.
+    red in INK; desf.
+    { erewrite BasicStep.basic_step_cont_thread; eauto.
+      apply INSTRS.
+      eby erewrite BasicStep.basic_step_cont_thread in INK. }
+    cdes BSTEP_.
+    unfold thread_lts in STEP0; simpls.
+    erewrite LblStep.steps_same_instrs.
+    2: { apply inclusion_t_rt.
+         eby eapply LblStep.ilbl_step_in_steps. }
+    assert (HH : ES.tid S' (opt_ext e e') = ES.cont_thread S k0).
+    { destruct e'; simpls.
+      { eby eapply BasicStep.basic_step_tid_e'. }
+      eby eapply BasicStep.basic_step_tid_e. }
+    rewrite HH.
+    erewrite <- INSTRS with (k := k0); eauto.
+    eby rewrite <- HH. }
+  cdes STEP.
+  cdes BSTEP.
+  eapply step_wf; eauto.
+  ins.
+  eapply basic_step_init_loc with (S := S); eauto.
+  apply INIT_LOC, prog_es_init_init_loc.
+
+  unfold ProgLoc.prog_locs.
+  apply nodup_In.
+  apply in_flatten_iff.
+  cdes BSTEP_.
+  apply LTS in CONT. desf.
+  unfold thread_lts in *; desf.
+  assert (LBL_LOC : extr_loc lbl = Some l).
+  { destruct e'.
+    { rewrite LAB' in LL.
+        unfold upd_opt, opt_ext in *; desf.
+        unfold Events.loc in LL. desf.
+        all: rewrite updo in Heq; [| done];
+          rewrite upds in Heq;  basic_solver 30. }
+    rewrite LAB' in LL.
+    unfold upd_opt, opt_ext in *; desf.
+    unfold Events.loc in LL. desf.
+    all: rewrite upds in Heq; basic_solver. }
+  exists (ProgLoc.linstr_locs (ProgToExecution.instrs st)).
+  split.
+  { apply in_map_iff.
+    exists (ES.cont_thread S k, ProgToExecution.instrs st).
+    split; [done |].
+    specialize (SetoidList.InA_alt
+                  (UsualFMapPositive.UsualPositiveMap'.eq_key_elt (A:=(list Prog.Instr.t)))
+                  (ES.cont_thread S k, ProgToExecution.instrs st)) as FOO.
+    assert (HH : SetoidList.InA (UsualFMapPositive.UsualPositiveMap'.eq_key_elt
+                                   (A:=(list Prog.Instr.t)))
+                                (ES.cont_thread S k, ProgToExecution.instrs st)
+                                (IdentMap.Properties.to_list (stable_prog_to_prog P))).
+    { eapply IdentMap.Properties.of_list_1.
+      { apply UsualFMapPositive.UsualPositiveMap'.elements_3w. }
+      rewrite IdentMap.Properties.of_list_3.
+      apply IdentMap.find_2.
+      apply INSTRS.
+        by cdes BSTEP_.
+    }
+    apply FOO in HH as [y [EQ IN]].
+    assert ((ES.cont_thread S k, ProgToExecution.instrs st) = y).
+    { rewrite (surjective_pairing y).
+      apply pair_congruence.
+        by unfold UsualFMapPositive.UsualPositiveMap'.eq_key_elt,
+           UsualFMapPositive.UsualPositiveMap'.E.eq in EQ. }
+    basic_solver. }
+  simpls.
+  cdes STEP0.
+  cdes STEP1.
+  cdes STEP2.
+  eby eapply loc_in_istep.
+Qed.
+
+Lemma steps_es_lang {P S k lang state}
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
+      (INK : K S (k, existT _ lang state)) :
+  lang = thread_lts (ES.cont_thread S k).
+Proof. eby eapply steps_es_props. Qed.
+
+Lemma steps_es_init_loc {P S}
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  ES.init_loc S ≡₁ ES.init_loc (prog_es_init P).
+Proof. eby eapply steps_es_props. Qed.
+
+Lemma steps_es_instrs {P S k state}
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
+      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) state)) :
+  IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some (ProgToExecution.instrs state).
+Proof. eby eapply steps_es_props. Qed.
+
+Lemma steps_es_wf {P S}
+      (nInitProg : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  ES.Wf S.
+Proof. eby eapply steps_es_props. Qed.
+
+Lemma steps_es_consistent {P S}
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
+  @es_consistent S Weakestmo.
+Proof.
+  apply rtE in STEPS.
+  unfolder in STEPS. desf.
+  { apply prog_es_init_consistent. }
+  assert (HH : codom_rel (step Weakestmo) S).
+  { apply codom_ct.
+    basic_solver. }
+  cdes HH.
+  unfold step in HH0. desf.
+Qed.
+
+
 End ESstepWf.

@@ -1,8 +1,9 @@
-Require Import Program.Basics.
+Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
-
+Import ListNotations.
 Set Implicit Arguments.
 Local Open Scope program_scope.
+
 
 Section AuxRel.
 
@@ -1586,6 +1587,16 @@ Proof.
     by rewrite EQ_fg, EQ_gh. }
   intros f g EQ a Xa.
   by rewrite EQ.
+Qed.
+
+Lemma nempty_list_neq_empty_list_r (xs : list A) (x : A) :
+  xs ++ [x] <> [].
+Proof.
+  intro HH.
+  assert (WRONG : length (xs ++ [x]) = length ([] : list A))
+    by congruence.
+  rewrite app_length, length_nil in WRONG.
+  unfold length in WRONG. omega.
 Qed.
 
 End Props.

@@ -8,6 +8,7 @@ Require Import Consistency.
 Require Import Execution.
 Require Import ExecutionToGraph.
 Require Import Step.
+Require Import StepWf.
 Require Import ProgES.
 Require Import EventToAction.
 Require Import ExecutionEquivalence.

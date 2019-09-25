@@ -1318,28 +1318,6 @@ Definition program_execution P S X :=
   ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
   ⟪ EXEC : Execution.t S X ⟫.
 
-(* TODO: move to a more appropriate place and prove:) *)
-Lemma steps_es_wf {P S}
-      (nInitProg : ~ IdentMap.In tid_init P)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  ES.Wf S.
-Proof.
-Admitted.
-
-Lemma steps_es_consistent {P S}
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  @es_consistent S Weakestmo.
-Proof.
-  apply rtE in STEPS.
-  unfolder in STEPS. desf.
-  { apply prog_es_init_consistent. }
-  assert (HH : codom_rel (step Weakestmo) S).
-  { apply codom_ct.
-    basic_solver. }
-  cdes HH.
-  unfold step in HH0. desf.
-Qed.
-
 Require Import Setoid.
 
 Add Parametric Morphism S G : (fun X => X2G S X G) with signature
