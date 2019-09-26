@@ -195,6 +195,8 @@ Section SimRelCert.
       (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco ;  *)
 
       e2a_co_kE : e2a □ (Sco ⨾ ⦗kE⦘) ⊆ Gco ; 
+
+      e2a_co_ex_ktid : e2a □ (Sco ⨾ ⦗X ∩₁ STid ktid \₁ e2a ⋄₁ contE⦘) ⊆ Gco ; 
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
 
