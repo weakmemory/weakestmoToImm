@@ -552,6 +552,15 @@ Proof.
   do 2 eexists; splits; eauto.
 Qed.
 
+Lemma ilbl_step_acts_set_mon thread lbl lbl' state state'
+      (WFT : wf_thread_state thread state)
+      (ILBL_STEP : ilbl_step thread (opt_to_list lbl' ++ [lbl]) state state') :
+  acts_set state.(G) ⊆₁ acts_set state'.(G).
+Proof. 
+  edestruct ilbl_step_acts_set; eauto.
+  desc. rewrite ACTS. basic_solver.
+Qed.
+
 Lemma ilbl_step_lbls thread lbls state state'
       (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread lbls state state') :

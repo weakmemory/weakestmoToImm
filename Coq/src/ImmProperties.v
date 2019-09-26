@@ -77,6 +77,25 @@ Notation "'Loc_' l" := (fun x => loc lab x = Some l) (at level 1).
 Notation "'W_ex'" := G.(W_ex).
 Notation "'W_ex_acq'" := (W_ex ∩₁ (fun a => is_true (is_xacq lab a))).
 
+Lemma wf_thread_state_ext_sb_prcl thread st
+      (WFT : wf_thread_state thread st) :
+  prcl (⦗set_compl is_init⦘ ⨾ ext_sb) (acts_set st.(ProgToExecution.G)).
+Proof. 
+  red. rewrite seqA.
+  rewrite seq_eqv_lr.
+  unfolder. 
+  intros x [y [nINIT [EXT_SB ACTS]]].
+  edestruct acts_rep as [yn HH];
+    eauto; desc.
+  unfold is_init in nINIT.
+  destruct x; try done.
+  subst y. 
+  unfold ext_sb in EXT_SB.
+  desc. subst.
+  eapply acts_clos; auto. 
+  omega.
+Qed.
+
 Lemma itrav_step_thread_ninit prog e TC'
       (GPROG : program_execution prog G)
       (PROG_NINIT : ~ (IdentMap.In tid_init prog))
