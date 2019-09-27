@@ -1043,7 +1043,7 @@ Section SimRelCertStep.
     { econstructor; eauto. }
     ins.
     unfold_cert_step_ CertSTEP_.
-    3,4: eapply sim_add_co_e2a_co_tid; eauto; basic_solver. 
+    3,4: eapply sim_add_co_e2a_co_ex_tid; eauto; basic_solver. 
     all: rewrite CO'.
     all: erewrite simrel_cert_basic_step_ex_tid; eauto.
     all: erewrite basic_step_e2a_collect_rel_eq_dom; 

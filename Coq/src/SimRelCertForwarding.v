@@ -868,16 +868,18 @@ Section SimRelCertForwarding.
     unionL; [apply SRCC|].
     arewrite 
       (eq e ∪₁ eq_opt e' ⊆₁ 
-          X \₁ e2a S ⋄₁ (acts_set st.(ProgToExecution.G)));
+          X ∩₁ (Stid_ S (ktid S k)) \₁ e2a S ⋄₁ (acts_set st.(ProgToExecution.G)));
       [|apply SRCC].
     unfolder; unfold eq_opt; ins; desf; splits.
     { eapply forwarding_ex_e; eauto. }
+    { eapply ES.cont_adjacent_tid_e; eauto. }
     { intros HH.
       eapply acts_rep 
         in HH; [|eapply wf_cont_state]; eauto.
       erewrite forwarding_e2a_e in HH; eauto.
       desc. inversion REP. omega. }
     { eapply forwarding_ex_e'; eauto. }
+    { eapply ES.cont_adjacent_tid_e'; eauto. }
     intros HH.
     eapply acts_rep 
       in HH; [|eapply wf_cont_state]; eauto.
@@ -1039,7 +1041,8 @@ Section SimRelCertForwarding.
     (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE'⦘) ⊆ Gco *)
     { eapply simrel_cert_forwarding_e2a_co_kE; eauto. }
     (* e2a_co_ex_ktid : e2a □ (Sco ⨾ ⦗X \₁ e2a ⋄₁ contE'⦘) ⊆ Gco  *)
-    { erewrite set_minus_mori; [|edone|red].
+    { cdes ADJ. rewrite <- kEQTID.
+      erewrite set_minus_mori; [|edone|red].
       { eapply e2a_co_ex_ktid; eauto. }
       erewrite ilbl_step_acts_set_mon; eauto.
       eapply wf_cont_state; eauto. }
