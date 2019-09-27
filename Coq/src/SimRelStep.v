@@ -409,7 +409,9 @@ Section SimRelStep.
       unionL; [|basic_solver 10].
       arewrite_false 
         (Sco S ⨾ ⦗X ∩₁ e2a S ⋄₁ C ∩₁ SEinit S⦘).
-      { admit. }
+      { rewrite <- ES.coEninit; auto.
+        unfold ES.acts_ninit_set.
+        basic_solver. }
       basic_solver. }
     (* e2a_co_ex_ktid : e2a □ (Sco ⨾ ⦗X ∩₁ STid ktid \₁ e2a ⋄₁ contE⦘) ⊆ Gco *)
     { erewrite <- e2a_co_ex_tid; eauto. basic_solver 10. }
@@ -482,7 +484,7 @@ Section SimRelStep.
     red in UU. desf.
     eexists. splits; eauto.
     right. by rewrite e2a_tid.
-  Admitted.
+  Qed.
 
   Lemma ew_ex_iss_cert_ex_iss k S 
         (st : thread_st (ktid S k))

@@ -767,8 +767,7 @@ Section SimRelAddCO.
       assert (SE S x) as Ex.
       { eapply Execution.ex_inE in Xx; eauto. }
       assert (SEninit S x) as ENINITx.
-      { (* add lemma `codom S.co <= Eninit`  *)
-        admit. }
+      { eapply ES.co_codom_ninit; eauto. basic_solver. }
 
       assert (SEninit S' w') as ENINITw'.
       { unfold eq_opt in *.
@@ -826,7 +825,7 @@ Section SimRelAddCO.
       apply ES.coD in CO; auto.
       generalize CO. basic_solver.
 
-    Admitted.
+    Qed.
 
     Lemma sim_add_co_e2a_co_ex_tid w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
@@ -1060,8 +1059,7 @@ Section SimRelAddCO.
       assert (SE S x) as Ex.
       { eapply Execution.ex_inE in Xx; eauto. }
       assert (SEninit S x) as ENINITx.
-      { (* add lemma `codom S.co <= Eninit`  *)
-        admit. }
+      { eapply ES.co_codom_ninit; eauto. basic_solver. }
       assert (~ is_init (e2a S x)) as GNINITx.
       { intros INITx.
         eapply e2a_Eninit; eauto.
@@ -1170,7 +1168,7 @@ Section SimRelAddCO.
       eexists. split.
       { eapply imm_s_hb.sb_in_hb; eauto. }
       right. by eapply Execution_eco.co_in_eco. 
-    Admitted.
+    Qed.
 
     Lemma sim_add_co_e2a_co_ex_ktid w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
