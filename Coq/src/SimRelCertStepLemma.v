@@ -1027,7 +1027,8 @@ Section SimRelCertStepLemma.
          { eapply steps_stable_lbl_steps. apply seq_eqv_lr. splits; auto.
            apply terminal_stable. by apply TERMINAL. }
          apply lbl_steps_in_steps.
-         apply rtE in LBLSTEPS. destruct LBLSTEPS as [AA|LBLSTEPS].
+         apply rtE in LBLSTEPS. 
+         destruct LBLSTEPS as [AA|LBLSTEPS].
          { exfalso. red in AA. desf.
            eapply no_lbl_step_from_terminal.
            apply seq_eqv_l. split; eauto. }
@@ -1035,184 +1036,45 @@ Section SimRelCertStepLemma.
          destruct LBLSTEPS as [st''' [STEP'' LBLSTEPS]].
          assert (st''' = st'); subst.
          2: by rewrite CTS.
-         cdes STEP''.
-         eapply unique_ilbl_step; eauto.
-         assert 
-           (lbls = opt_to_list (option_map (Slab S') e') ++ [(Slab S') e]);
-         desf.
 
-         assert (exists lbls0 lbls', lbls = opt_to_list lbls' ++ [lbls0]); desf.
-         { clear -STEP''0.
-           red in STEP''0.
-           unfolder in STEP''0. desf.
-           unfold opt_to_list.
-           cdes STEP''0. cdes STEP. inv ISTEP0.
-           1-4: by eexists; exists None; simpls.
-           all: eexists; eexists (Some _); simpls. }
+         destruct STEP'' as [lbls ISTEP''].
+         edestruct ilbl_step_lbls as [lbl [lbl' EQlbls]].
+         { apply WTS. }
+         { apply ISTEP''. }
+         subst lbls.
+         symmetry.
+         eapply unique_same_label_fst_ilbl_step.
+         2,3: eauto.
+
+         erewrite ilbl_step_eindex_lbl
+           with (st := st); eauto.
 
          assert (wf_thread_state (ES.cont_thread S k) st''') as WTS'''.
-         { eapply wf_thread_state_lbl_step with (state0:=st); eauto. }
+         { eapply wf_thread_state_lbl_step 
+             with (state0:=st); [|eexists]; eauto. }
 
          assert (acts_set (ProgToExecution.G st''')
                           (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'''.
-         { eapply acts_clos; eauto. eapply lbl_step_eindex_lt; eauto. }
-
-         assert ((ProgToExecution.step (ES.cont_thread S k))＊ st''' state') as STEPS'''.
-         { by eapply lbl_steps_in_steps; eauto. }
-         
-         assert (lbls0 = Glab (ThreadEvent (ES.cont_thread S k) (eindex st))); subst.
-         { arewrite (lbls0 =
-                     Execution.lab st'''.(ProgToExecution.G)
-                                   (ThreadEvent (ES.cont_thread S k) (eindex st))).
-           { eapply ilbl_step_eindex_lbl; eauto. }
-           erewrite <- steps_preserve_lab; simpls; eauto.
-           eapply TEH. eapply steps_preserve_E; eauto. }
-         
-         assert (C' (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIC'.
-         { apply CALT. red. exists e.
-           split; auto.
-           eapply basic_step_e2a_e; eauto. }
-
-         assert (acts_set (ProgToExecution.G st')
-                          (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST'.
-         { eapply acts_clos; eauto. eapply lbl_step_eindex_lt; eauto. }
-
-         assert ((ProgToExecution.step (ES.cont_thread S k))＊ st' st'') as STEPS'.
-         { by eapply lbl_steps_in_steps; eauto. }
-
-         assert (acts_set (ProgToExecution.G st'')
-                          (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST''.
-         { eapply steps_preserve_E.
-           2: by eauto.
-           all: eauto. }
-
-         arewrite (Slab S' e = Glab (ThreadEvent (ES.cont_thread S k) (eindex st))).
-         { arewrite (Slab S' e =
-                     Execution.lab st'.(ProgToExecution.G)
-                                   (ThreadEvent (ES.cont_thread S k) (eindex st))).
-           { eapply ilbl_step_eindex_lbl; eauto. }
-           erewrite <- steps_preserve_lab; simpls; eauto.
-           erewrite <- cslab with (G:=G) (state:=st'').
-           3: by apply C_in_D; eauto.
-           2: by apply SRCC.
-           unfold certLab, restr_fun; desf. }
-         
-         assert (lbls' = option_map (Slab S') e'); desf.
-         destruct (classic (Grmw (ThreadEvent (ES.cont_thread S k)
-                                              (eindex st))
-                                 (ThreadEvent (ES.cont_thread S k)
-                                              (1 + eindex st)))) as [RMW|NRMW].
-         2: { assert (~ Execution.rmw (ProgToExecution.G st')
-                        (ThreadEvent (ES.cont_thread S k) (eindex st))
-                        (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as NRMW'.
-              { intros AA. apply NRMW.
-                assert (Execution.rmw
-                          (ProgToExecution.G st'')
-                          (ThreadEvent (ES.cont_thread S k) (eindex st))
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as BB.
-                { eapply steps_preserve_rmw; eauto. }
-                eapply dcertRMW in BB.
-                2: by apply SRCC.
-                unfolder in BB. desf. }
-
-              assert (~ Execution.rmw (ProgToExecution.G st''')
-                        (ThreadEvent (ES.cont_thread S k) (eindex st))
-                        (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as NRMW'''.
-              { intros AA. apply NRMW.
-                assert (Execution.rmw
-                          (ProgToExecution.G state')
-                          (ThreadEvent (ES.cont_thread S k) (eindex st))
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as BB.
-                { eapply steps_preserve_rmw; eauto. }
-                eapply tr_rmw in BB; eauto.
-                unfolder in BB. desf. }
-              
-              assert (lbls' = None); subst.
-              { eapply ilbl_step_nrmw_None with (st:=st); eauto. }
-
-              symmetry.
-              eapply ilbl_step_nrmw_None with (st:=st); eauto. }
-
-         assert (Execution.rmw
-                   (ProgToExecution.G st'')
-                   (ThreadEvent (ES.cont_thread S k) (eindex st))
-                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMW''.
-         { eapply dcertRMW.
-           { apply SRCC. }
-           apply seq_eqv_l. splits; auto. }
-
-         assert (acts_set (ProgToExecution.G st'')
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST''.
-         { eapply wft_rmwE in RMW''; eauto. by destruct_seq RMW'' as [AA BB]. }
-
-         assert (Execution.rmw
-                   (ProgToExecution.G st')
-                   (ThreadEvent (ES.cont_thread S k) (eindex st))
-                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as ARMW'.
-         { eapply steps_dont_add_rmw; eauto.
-           apply seq_eqv_l. split; auto. }
-
-         assert (acts_set (ProgToExecution.G st')
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST'.
-         { eapply wft_rmwE in ARMW'; eauto. unfolder in ARMW'. desf. }
-
-         assert (C' (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as EIC''.
-         { eapply sim_trav_step_rmw_covered with (G:=G)
-               (r:= ThreadEvent (ES.cont_thread S k) (eindex st)); eauto.
-           { red. eexists. apply SRCC. }
-           apply SRCC. }
-
-         assert (Execution.rmw
-                   (ProgToExecution.G state')
-                   (ThreadEvent (ES.cont_thread S k) (eindex st))
-                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMWST'.
-         { eapply tr_rmw; eauto. apply seq_eqv_lr; auto. }
-
-         assert (wf_thread_state (ES.cont_thread S k) state') as WTST'.
-         { eapply wf_thread_state_lbl_steps; eauto. }
+         { eapply acts_clos; eauto. eapply lbl_step_eindex_lt; eexists; eauto. }
 
          assert (acts_set (ProgToExecution.G state')
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as WEST'.
-         { eapply wft_rmwE in RMWST'; eauto. unfolder in RMWST'. desf. }
+                          (ThreadEvent (ES.cont_thread S k) (eindex st))) as EIST''''.
+         { eapply steps_preserve_E; eauto. eapply lbl_steps_in_steps; eauto. }
 
-         assert (Execution.rmw
-                   (ProgToExecution.G st''')
-                   (ThreadEvent (ES.cont_thread S k) (eindex st))
-                   (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as RMW'''.
-         { eapply steps_dont_add_rmw; eauto.
-           apply seq_eqv_l. split; auto. }
-
-         assert (acts_set (ProgToExecution.G st''')
-                          (ThreadEvent (ES.cont_thread S k) (1 + eindex st))) as AEIST'''.
-         { apply (dom_r WTS'''.(wft_rmwE)) in RMW'''.
-           by destruct_seq_r RMW''' as AA. }
-         
-         destruct e' as [e'|].
-         2: { eapply acts_rep in AEIST'; eauto. desf.
-              apply ilbl_step_cases in ILBL_STEP; auto.
-              desf; simpls; omega. }
-         destruct lbls' as [lbls'|].
-         2: { eapply acts_rep in AEIST'''; eauto. desf.
-              apply ilbl_step_cases in STEP''0; auto.
-              desf; simpls; omega. }
-         simpls.
-         assert (lbls' = Slab S' e').
-         2: by subst.
-         erewrite ilbl_step_eindex_lbl' with (st:=st) (st':=st''') (lbl':=lbls'); eauto.
-         2: eby simpls.
-         erewrite <- steps_preserve_lab with (state':=state'); eauto.
+         erewrite <- steps_preserve_lab
+           with (state' := state'); eauto. 
+         2 : { unfold tid. eapply lbl_steps_in_steps; eauto. }
          erewrite tr_lab; eauto.
+         
+         erewrite basic_step_e2a_certlab_e
+           with (S := S); eauto; [|apply SRCC].
 
-         arewrite (Slab S' e' =
-                   Execution.lab (ProgToExecution.G st')
-                                 (ThreadEvent (ES.cont_thread S k) (1 + eindex st))).
-         { erewrite <- ilbl_step_eindex_lbl' with (st:=st); eauto.
-           simpls. eauto. }
-         erewrite <- steps_preserve_lab with (state':=st''); eauto.
-         erewrite <- cslab; [|by apply SRCC|].
-         { unfold certLab, restr_fun. desf. }
-         eapply C_in_D. erewrite <- basic_step_e2a_e' with (e':=e'); eauto.
-         apply EECE. basic_solver. }
+         erewrite basic_step_e2a_e
+           with (S := S); eauto.
+         erewrite <- cslab; eauto;
+           [apply SRCC|].
+         eapply C_in_D. 
+         erewrite <- basic_step_e2a_e; eauto. }
 
     assert (ES.seqn S' e = eindex st) as SEQNE.
     { (* TODO: introduce a lemma *) admit. }
