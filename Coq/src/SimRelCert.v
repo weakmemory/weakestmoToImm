@@ -847,8 +847,10 @@ Section SimRelCert.
     erewrite ex_NTid.
     arewrite (e2a □₁ X ⊆₁ fun _ => True).
     relsf.
-    admit. 
-  Admitted.
+    eapply isim_trav_step_cert_rf_ntid; 
+      try apply SRCC.
+    apply ktid_ninit; auto.
+  Qed.
 
   Lemma icf_certX_in_co : 
     forall t (Tt : T t), 
