@@ -943,7 +943,7 @@ Proof.
   rewrite hbE; auto. basic_solver 5.
 Qed. 
 
-Lemma add_jf_icf_jf lang k k' st st' w e e' S S'
+Lemma add_jf_icf_jf lang k k' st st' w e e' S S'  
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (AJF : add_jf w e S S') 
       (wfE: ES.Wf S) :
@@ -982,7 +982,7 @@ Proof.
     erewrite transp_sym_equiv
       with (r := icf S').
     2 : apply ES.icf_sym. 
-    basic_solver. }
+    basic_solver 10. }
   rewrite unionC.
   rewrite <- csE.
   apply clos_sym_more.

@@ -28,6 +28,7 @@ Require Import ImmProperties.
 Require Import SimRelCont.
 Require Import SimRelEventToAction.
 Require Import SimRel.
+Require Import SimRelAddJF.
 Require Import SimRelCert.
 Require Import SimRelCertBasicStep.
 Require Import SimRelCertStep.
@@ -44,6 +45,7 @@ Section SimRelCertForwarding.
   Variable TC : trav_config.
   Variable TC' : trav_config.
   Variable X : eventid -> Prop.
+  Variable T : thread_id -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -145,6 +147,7 @@ Section SimRelCertForwarding.
 
   Notation "'kE' S" := (fun k => ES.cont_sb_dom S k) (at level 1, only parsing).
   Notation "'ktid' S" := (fun k => ES.cont_thread S k) (at level 1, only parsing).
+  Notation "'klast' S" := (fun k => ES.cont_last S k) (at level 1, only parsing).
 
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid_ S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
@@ -160,7 +163,7 @@ Section SimRelCertForwarding.
 
   Lemma forwarding_seqn_e S lbl lbl' k k' e e'
         (st st' st'': thread_st (ktid S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st') :
     ES.seqn S e = eindex st.
   Proof. 
@@ -212,7 +215,7 @@ Section SimRelCertForwarding.
   
   Lemma forwarding_seqn_e' S lbl lbl' k k' e e'
         (st st' st'': thread_st (ktid S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e (Some e') st st') :
     ES.seqn S e' = 1 + eindex st.
   Proof. 
@@ -238,7 +241,7 @@ Section SimRelCertForwarding.
 
   Lemma forwarding_e2a_e S lbl lbl' k k' e e'
         (st st' st'': thread_st (ktid S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st') :
     e2a S e = ThreadEvent (ES.cont_thread S k) (eindex st).
   Proof. 
@@ -254,7 +257,7 @@ Section SimRelCertForwarding.
 
   Lemma forwarding_e2a_e' S lbl lbl' k k' e e'
         (st st' st'': thread_st (ktid S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e (Some e') st st') :
     e2a S e' = ThreadEvent (ES.cont_thread S k) (1 + eindex st).
   Proof. 
@@ -268,9 +271,173 @@ Section SimRelCertForwarding.
     erewrite forwarding_seqn_e'; eauto.
   Qed.
 
+  Lemma forwarding_ex_kcond lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st') :
+    ⟪ klast_ex : klast S k ⊆₁ X ⟫ /\
+    ⟪ kE_sb_cov_iss : e2a S □₁ codom_rel (⦗kE S k⦘ ⨾ Ssb S ⨾ ⦗Stid_ S (ktid S k)⦘) ⊆₁ CsbI G TC ⟫.
+  Proof.
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    edestruct kcond; eauto; desc.
+    edestruct ES.exists_cont_last  
+      with (k := k) as [x kLASTx]; eauto.
+    exfalso. 
+    eapply klast_sb_max
+      with (b := e); eauto.
+    cdes FRWD.
+    set (kSBIMM := ADJ).
+    apply ES.cont_adjacent_cont_last_sb_imm
+      in kSBIMM; auto.
+    destruct kSBIMM as [y SB].
+    destruct_seq_l SB as kLASTy.
+    destruct SB as [SB _].
+    unfold ES.cont_last in *.
+    destruct k; [|congruence].
+    apply ES.sb_init; auto.
+    split; auto. 
+    cdes FRWD. eapply ES.cont_adjacent_ninit_e; eauto.
+  Qed.
+  
+  Lemma forwarding_ex_e lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    X e. 
+  Proof. 
+    assert (Wf G) as WFG.
+    { apply SRCC. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as CONS. 
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
+    { apply SRCC. }
+    assert (SEninit S e) as nINITe.
+    { cdes FRWD. eapply ES.cont_adjacent_ninit_e; eauto. }
+    assert (SE S e) as Ee.
+    { apply nINITe. }
+    assert (ES.cont_last S k ⊆₁ X) as klastX.
+    { eapply forwarding_ex_kcond; eauto. }
+     edestruct ES.exists_cont_last  
+      with (k := k) as [x kLASTx]; eauto.
+    assert (X x) as Xx.
+    { basic_solver. }
+    assert (immediate (Ssb S) x e) as IMMSB.
+    { cdes FRWD. eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
+    assert (CsbI G TC (e2a S e)) as CsbIe.
+    { eapply forwarding_ex_kcond; eauto.
+      apply ES.cont_last_in_cont_sb 
+        in kLASTx; auto.
+      eexists; splits; eauto.
+      exists x.
+      apply seq_eqv_lr; splits; auto.
+      { apply IMMSB. }
+      cdes FRWD.
+      erewrite ES.cont_adjacent_tid_e; eauto. }
+
+    eapply ex_cov_iss in CsbIe; eauto.
+    destruct CsbIe as [y [Xy EQE2Ay]].
+    assert (SE S y) as Ey.
+    { eapply Execution.ex_inE; eauto. }
+    set (EQE2Ay' := EQE2Ay).
+    apply e2a_eq_in_cf in EQE2Ay'; auto.
+    destruct EQE2Ay' as [EQ|CF]; [congruence|].
+    set (EQE2Ay' := EQE2Ay).
+    erewrite e2a_ninit
+      with (e := e) in EQE2Ay'; auto.
+    unfold e2a in EQE2Ay'.
+    destruct
+      (excluded_middle_informative ((Stid S) y = tid_init))
+      as [TIDy|nTIDy]; [congruence|].
+    inversion EQE2Ay' as [[EQTID EQSEQN]].
+    clear EQE2Ay'.
+    assert (Stid S y = ES.cont_thread S k) as TIDy.
+    { cdes FRWD. erewrite <- ES.cont_adjacent_tid_e; eauto. }
+    assert (SEninit S y) as nINITy.
+    { split; auto.
+      unfold ES.acts_init_set.
+      intros [_ INITy]. congruence. }
+    assert (Sicf S y e) as ICF.
+    { red; split; auto.
+      exists x; split; auto.
+      apply immediate_transp with (r := Ssb S).
+      unfold transp.
+      eapply ES.seqn_eq_imm_sb; eauto.
+      intros CF'.
+      eapply Execution.ex_ncf; eauto.
+      apply seq_eqv_lr.
+      splits; [| apply CF' |]; eauto. }
+    assert ((SE S ∩₁ SR S) y) as Ry.
+    { split; auto.
+      eapply icf_R; eauto.
+      basic_solver. }
+    assert ((SE S ∩₁ SR S) e) as Re.
+    { split; auto.
+      apply ES.icf_sym in ICF.
+      eapply icf_R; eauto.
+      basic_solver. }
+    apply ES.jf_complete in Ry; auto.
+    apply ES.jf_complete in Re; auto.
+    destruct Ry as [w  JF ].
+    destruct Re as [w' JF'].
+    assert
+      (cert_rf G sc TC (e2a S w) (e2a S y))
+      as CertRF.
+    { eapply jf_ex_in_cert_rf; eauto. basic_solver 10. }
+    assert
+      (cert_rf G sc TC' (e2a S w') (e2a S e))
+      as CertRF'.
+    { apply FRWD. basic_solver 10. }
+    assert (Gco^? (e2a S w) (e2a S w')) as CO.
+    { eapply sim_trav_step_cert_rf_co; eauto.
+      1-3: try eexists; apply SRCC.
+      unfolder; exists (e2a S y); splits; auto; congruence. }
+    assert (Gco (e2a S w') (e2a S w)) as CO'.
+    { eapply icf_ex_ktid_in_co; eauto.
+      do 2 eexists; splits; eauto.
+      exists e; splits; auto.
+      apply seq_eqv_l; splits.
+      { cdes FRWD. eapply ES.cont_adjacent_nsb_dom_e; eauto. }
+      exists y; splits.
+      { by apply ES.icf_sym. }
+      apply seq_eqv_l; splits; [|done].
+      basic_solver. } 
+    exfalso.
+    destruct CO as [EQ|CO]. 
+    all: eapply co_irr; eauto.
+    { rewrite EQ in CO'. apply CO'. }
+    eapply co_trans; eauto.
+  Qed.
+
+  Lemma forwarding_ex_e' lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e (Some e') st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    X e'. 
+  Proof. 
+    assert (Wf G) as WFG.
+    { apply SRCC. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as CONS. 
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    eapply Execution.ex_rmw_fwcl; eauto.
+    exists e. apply seq_eqv_l. split.
+    { eapply forwarding_ex_e; eauto. }
+    cdes FRWD; eapply ES.cont_adjacent_rmw; eauto.
+  Qed.
+
   Lemma simrel_cert_forwarding_ex_ktid_cov lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     X ∩₁ Stid_ S (ktid S k') ∩₁ e2a S ⋄₁ C ⊆₁ kE S k'. 
@@ -286,7 +453,7 @@ Section SimRelCertForwarding.
 
   Lemma simrel_cert_forwarding_cov_in_ex lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     e2a S ⋄₁ C ∩₁ kE S k' ⊆₁ X.
@@ -319,9 +486,88 @@ Section SimRelCertForwarding.
     erewrite forwarding_seqn_e'; eauto. 
   Qed.
 
+  Lemma simrel_cert_forwarding_klast_ex lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    klast S k' ⊆₁ X.
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    set (FRWD' := FRWD).
+    cdes FRWD'. cdes ADJ.
+    unfold ES.cont_last.
+    subst k'. 
+    unfold opt_ext. 
+    destruct e' as [e'|].
+    { unfolder. ins. desf.
+      eapply forwarding_ex_e'; eauto. }
+    unfolder. ins. desf. 
+    eapply forwarding_ex_e; eauto.
+  Qed.
+
+  Lemma simrel_cert_forwarding_kE_ex lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    kE S k' ⊆₁ X.
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    erewrite ES.cont_sb_dom_alt; auto.
+    erewrite simrel_cert_forwarding_klast_ex; eauto.
+    apply prcl_cr. apply SRCC.
+  Qed.
+
+  Lemma simrel_cert_forwarding_kE_sb_cov_iss lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') : 
+    e2a S □₁ codom_rel (⦗kE S k'⦘ ⨾ Ssb S ⨾ ⦗Stid_ S (ktid S k')⦘) ⊆₁ CsbI G TC.
+  Proof.
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    cdes FRWD.
+    arewrite (ktid S k' = ktid S k).
+    { by cdes ADJ. }
+    edestruct forwarding_ex_kcond
+      as [HA HB]; eauto.
+    red in HA, HB.
+    erewrite ES.cont_adjacent_sb_dom; eauto. 
+    rewrite set_unionA.
+    rewrite id_union.
+    relsf; split; try done.
+    edestruct ES.exists_cont_last  
+      with (k := k) as [x kLASTx]; eauto.
+    rewrite seq_eqv_lr.
+    intros y' [y [HH EQy']].
+    destruct HH as [z [EQz [SB TIDy]]].
+    subst y'.
+    apply HB.
+    eexists; splits; eauto.
+    exists x. 
+    apply seq_eqv_lr. 
+    splits; auto.
+    { apply ES.cont_last_in_cont_sb; auto. }
+    unfold eq_opt in *.
+    destruct EQz as [EQz|EQz];
+      [|destruct e' as [e'|]]; 
+      try done; subst z.
+    { eapply ES.sb_trans; eauto.
+      eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
+    eapply ES.sb_trans; eauto.
+    eapply ES.sb_trans; eauto.
+    { eapply ES.cont_adjacent_con_last_sb_imm_alt; eauto. }
+    eapply ES.cont_adjacent_sb_imm; eauto.
+    basic_solver. 
+  Qed.
+
   Lemma simrel_cert_forwarding_kE_lab lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'') 
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     eq_dom (kE S k' \₁ SEinit S) (Slab S) (Execution.lab (ProgToExecution.G st'') ∘ e2a S).
@@ -396,7 +642,7 @@ Section SimRelCertForwarding.
 
   Lemma simrel_cert_forwarding_jf_in_cert_rf lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     e2a S □ (Sjf S ⨾ ⦗kE S k'⦘) ⊆ cert_rf G sc TC'. 
@@ -423,12 +669,67 @@ Section SimRelCertForwarding.
     generalize RMW. type_solver. 
   Qed.
 
-  Lemma simrel_cert_forwarding_ex_cont_iss_e lbl lbl' k k' e e' S 
+  Lemma simrel_cert_forwarding_icf_ex_ktid_in_co lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    X ∩₁ e2a S ⋄₁ (eq (e2a S e) ∩₁ I) ⊆₁ eq e.
+     e2a S □ (Sjf S ⨾ ⦗set_compl (kE S k')⦘ ⨾ Sicf S ⨾ ⦗X ∩₁ (Stid_ S (ktid S k'))⦘ ⨾ (Sjf S)⁻¹) ⊆ Gco.
+  Proof.
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (ES.cont_adjacent S k k' e e') as ADJ.
+    { apply FRWD. }
+    erewrite <- ES.cont_adjacent_sb_dom_mon; eauto.
+    arewrite (ES.cont_thread S k' = ES.cont_thread S k).
+    { by cdes ADJ. }
+    apply SRCC.
+  Qed.
+
+  Lemma simrel_cert_forwarding_icf_kE_in_co lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    e2a S □ (Sjf S ⨾ Sicf S ⨾ ⦗kE S k'⦘ ⨾ (Sjf S)⁻¹) ⊆ Gco.
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (ES.cont_adjacent S k k' e e') as ADJ.
+    { apply FRWD. }
+    intros x' y' [x [y [HH [EQx EQy]]]].
+    destruct HH as [z  [JF HH]].
+    destruct HH as [z' [ICF JF']].
+    destruct_seq_l JF' as kSBz'.
+    red in JF'. subst x' y'.
+    eapply simrel_cert_forwarding_icf_ex_ktid_in_co; eauto.
+    do 2 eexists; splits; eauto.
+    exists z; splits; auto.
+    apply seq_eqv_l; splits.
+    (* dom (cf ; [cont_sb_dom S k]) ⊆ ~ cont_sb_dom S k  *)
+    { cdes FRWD. 
+      eapply ES.cont_sb_dom_cf; eauto. 
+      destruct ICF as [CF _].
+      basic_solver 10. }
+    exists z'; splits; auto. 
+    apply seq_eqv_l; splits; [|done].
+    red; split.
+    { eapply simrel_cert_forwarding_kE_ex; eauto. }
+    cdes FRWD; eapply ES.cont_sb_tid in kSBz'; eauto.
+    destruct kSBz' as [INITz' | TIDz']; auto.
+    apply ES.icfEninit in ICF; auto.
+    exfalso.
+    generalize ICF INITz'. 
+    unfold ES.acts_ninit_set.
+    basic_solver 10. 
+  Qed.
+
+  Lemma simrel_cert_forwarding_ex_cont_iss_e lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    X ∩₁ e2a S ⋄₁ (eq (e2a S e) ∩₁ I) ⊆₁ dom_rel (Sew S ⨾ ⦗eq e⦘).
   Proof. 
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
@@ -436,70 +737,54 @@ Section SimRelCertForwarding.
     { apply SRCC. }
     assert (Execution.t S X) as EXEC.
     { apply SRCC. }
-    cdes FRWD.
-    edestruct ES.cont_adjacent_cont_last_sb_imm
-      as [x HH]; eauto.
-    apply seq_eqv_l in HH.
-    destruct HH as [kLAST SBIMM].
+    assert (X e) as Xe.
+    { eapply forwarding_ex_e; eauto. }
     intros y [Xy [EQy Iy]].
-    assert (SE S e) as Ee.
-    { eapply ES.cont_adjacent_ninit_e; eauto. }
-    assert (SW S e) as We.
-    { eapply same_lab_u2v_dom_is_w.
-      { eapply e2a_lab. apply SRCC. }
-      split; auto.
-      unfold is_w, compose.
-      fold (is_w Glab (e2a S e)).
-      eapply issuedW.
-      { apply SRCC. }
-      congruence. }
+    eapply ES.ew_eqvW with (ws := eq e); auto.
+    { intros ee EQee. subst ee. split.
+      { cdes FRWD; eapply ES.cont_adjacent_ninit_e; eauto. }
+      eapply ex_iss_inW; [apply SRCC|].
+      unfolder; splits; auto; congruence. }
     edestruct e2a_eq_in_cf
       with (x := y) (y := e) as [EQ | CF]; eauto.
     { eapply Execution.ex_inE; eauto. }
-    assert (SR S e) as Re.
-    2 : exfalso; type_solver. 
-    (* eapply icf_R; eauto.  *)
-    (* exists y.  *)
-    (* apply ES.icf_sym. *)
-    (* split; auto. *)
-    (* exists x.  *)
-    (* split; auto. *)
-    (* apply immediate_transp  *)
-    (*   with (r := Ssb S); red. *)
-    (* assert (X x) as Xx. *)
-    (* { admit. } *)
-    (* assert (ES.seqn S e = ES.seqn S y) *)
-    (*   as SEQNEQ. *)
-    (* { erewrite !e2a_ninit in EQy. *)
-    (*   { by inversion EQy. } *)
-    (*   { apply ES.cfEninit in CF. *)
-    (*     generalize CF. basic_solver. } *)
-    (*   apply ES.cfEninit in CF. *)
-    (*   generalize CF. basic_solver. } *)
-    (* split. *)
-    (* { admit. } *)
-    (* intros z SB SB'. *)
-    (* destruct k.  *)
-    (* { unfold ES.cont_last in kLAST. *)
-    (*   assert (ES.seqn S e = 0) as SEQNe. *)
-    (*   { eapply ES.seqn_immsb_init; eauto. } *)
-    (*   assert (0 < ES.seqn S y)  *)
-    (*     as SEQNy; try omega. *)
-    (*   (* TODO: make a lemma *) *)
-    (*   apply ES.sb_imm_split_r in SB'; eauto. *)
-    (*   destruct SB' as [z' [SB'' SBIMM']]. *)
-    (*   erewrite ES.seqn_immsb; eauto; try omega. *)
-    (*   eapply ES.sb_tid; auto. *)
-    (*   apply seq_eqv_l.  *)
-    (*   split; [|apply SBIMM']. *)
-    (*   split.  *)
-    (*   { admit. } *)
-    admit. 
-  Admitted.
+    { cdes FRWD; eapply ES.cont_adjacent_ninit_e; eauto. }
+    exfalso. eapply Execution.ex_ncf; eauto.
+    apply seq_eqv_lr; splits; eauto.
+  Qed.
+
+  Lemma simrel_cert_forwarding_ex_cont_iss_e' lbl lbl' k k' e e' S
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e (Some e') st st')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    X ∩₁ e2a S ⋄₁ (eq (e2a S e')∩₁ I) ⊆₁ dom_rel (Sew S ⨾ ⦗eq e'⦘).
+  Proof.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as SCONS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (X e') as Xe.
+    { eapply forwarding_ex_e'; eauto. }
+    intros y [Xy [EQy Iy]].
+    eapply ES.ew_eqvW with (ws := eq e'); auto.
+    { intros ee EQee. subst ee. split.
+      { cdes FRWD; eapply ES.cont_adjacent_ninit_e'; eauto. }
+      eapply ex_iss_inW; [apply SRCC|].
+      unfolder; splits; auto; congruence. }
+    edestruct e2a_eq_in_cf
+      with (x := y) (y := e') as [EQ | CF]; eauto.
+    { eapply Execution.ex_inE; eauto. }
+    { cdes FRWD; eapply ES.cont_adjacent_ninit_e'; eauto. }
+    exfalso. eapply Execution.ex_ncf; eauto.
+    apply seq_eqv_lr; splits; eauto.
+  Qed.
 
   Lemma simrel_cert_forwarding_ex_cont_iss lbl lbl' k k' e e' S 
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     X ∩₁ e2a S ⋄₁ (acts_set st'.(ProgToExecution.G) ∩₁ I) ⊆₁ dom_rel (Sew S ⨾ ⦗ kE S k' ⦘).
@@ -527,18 +812,47 @@ Section SimRelCertForwarding.
     apply set_union_Proper;
       [apply set_union_Proper|].
     { apply SRCC. }
-    { admit. }
+    { arewrite (a = e2a S e).
+      { erewrite forwarding_e2a_e; eauto. }
+      eapply simrel_cert_forwarding_ex_cont_iss_e; eauto. }
+    unfold eq_opt, option_map in *. 
+    destruct lbl' as [lbl'|]; 
+      [|basic_solver].
+    destruct e' as [e'|]; [|done].
+    destruct a' as [a'|]; [|done].
+    arewrite (a' = e2a S e').
+    { erewrite forwarding_e2a_e'; eauto; congruence. }
+    eapply simrel_cert_forwarding_ex_cont_iss_e'; eauto.
+  Qed.
 
-    (* { eapply ES.ew_eqvW with (ws := eq e); auto. *)
-    (*   intros ee HH. subst ee. *)
-    (*   split; auto. } *)
-
-    admit. 
-  Admitted.
+  Lemma simrel_cert_forwarding_kE_iss lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    kE S k' ∩₁ e2a S ⋄₁ I ⊆₁ dom_rel (Sew S ⨾ ⦗ X ⦘).
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (X ∩₁ SW S ⊆₁ X) as XW.
+    { basic_solver. }
+    rewrite <- XW.
+    rewrite <- ES.ew_eqvW; auto.
+    2 : erewrite Execution.ex_inE 
+          with (X := X); eauto.
+    erewrite simrel_cert_forwarding_kE_ex; eauto.
+    rewrite <- set_interK 
+      with (s := X) at 1.
+    rewrite set_interA.
+    erewrite ex_iss_inW; eauto.
+    apply SRCC.
+  Qed.
 
   Lemma simrel_cert_lbl_step_nrwm_eindex k S
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (LBL_STEP : lbl_step (ktid S k) st st')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     ~ (codom_rel Grmw) (ThreadEvent (ktid S k) st.(eindex)).
@@ -602,7 +916,7 @@ Section SimRelCertForwarding.
 
     Lemma simrel_cert_forwarding_rmw_cov_in_kE lbl lbl' k k' e e' S
         (st st' st'': (thread_st (ktid S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
     Grmw ⨾ ⦗C' ∩₁ e2a S □₁ kE S k'⦘ ⊆ e2a S □ Srmw S ⨾ ⦗ kE S k' ⦘.
@@ -650,16 +964,15 @@ Section SimRelCertForwarding.
 
   Lemma simrel_cert_forwarding lbl lbl' k k' e e' S
         (st st' st'': thread_st (ktid S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
-    simrel_cert prog S G sc TC TC' X k' st' st''.
+    simrel_cert prog S G sc TC TC' X T k' st' st''.
   Proof. 
     set (HH := FRWD).
     unfold forwarding in HH. desc.
     assert (ktid S k = ktid S k') as kEQTID.
     { by apply ADJ. }
-    
     constructor; auto. 
     all: try (by try rewrite <- kEQTID; apply SRCC).
     (* cstate : simrel_cstate S k' st' st'' *)      
@@ -672,28 +985,70 @@ Section SimRelCertForwarding.
     { eapply simrel_cert_forwarding_ex_ktid_cov; eauto. }
     (* cov_in_ex : e2a ⋄₁ C ∩₁ kE' ⊆₁ X *)
     { eapply simrel_cert_forwarding_cov_in_ex; eauto. }
+    (* kcond : ... *)
+    { left; splits.
+      { eapply simrel_cert_forwarding_klast_ex; eauto. }
+      eapply simrel_cert_forwarding_kE_sb_cov_iss; eauto. }
     (* kE_lab : eq_dom (kE' \₁ SEinit) Slab (certG.(lab) ∘ e2a) *)
     { eapply simrel_cert_forwarding_kE_lab; eauto. }
     (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE'⦘) ⊆ cert_rf G sc TC' ktid' *)
     { eapply simrel_cert_forwarding_jf_in_cert_rf; eauto. }
+    (* icf_ex_ktid_in_co : e2a □ (Sjf ⨾ ⦗set_compl kE'⦘ ⨾ Sicf ⨾ ⦗X ∩₁ STid ktid⦘ ⨾ Sjf⁻¹) ⊆ Gco *)
+    { eapply simrel_cert_forwarding_icf_ex_ktid_in_co; eauto. }
+    (* icf_kE_in_co : e2a □ (Sjf ⨾ Sicf ⨾ ⦗kE'⦘ ⨾ Sjf⁻¹) ⊆ Gco *)
+    { eapply simrel_cert_forwarding_icf_kE_in_co; eauto. }
     (* ex_cont_iss : X ∩₁ e2a ⋄₁ (contE' ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE' ⦘) *)
     { eapply simrel_cert_forwarding_ex_cont_iss; eauto. }
-    { admit. }
+    (* kE_iss : kE' ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) *)
+    { eapply simrel_cert_forwarding_kE_iss; eauto. }
+    (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE' ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco *)
     { admit. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE'⦘ ⊆ e2a □ Srmw ⨾ ⦗kE'⦘ *)
     { eapply simrel_cert_forwarding_rmw_cov_in_kE; eauto. }
     admit.
   Admitted.
 
-  Lemma simrel_cert_nforwarding_icf_R lbl lbl' k k' e e' S S'
+  Lemma simrel_cert_cont_icf_dom_forwarding x k S 
+        (st st': thread_st (ktid S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st')
+        (kICFx : ES.cont_icf_dom S k x) 
+        (JFx : e2a S □ Sjf S ⨾ ⦗eq x⦘ ⊆ cert_rf G sc TC') : 
+    exists x' ll ll' k'' st'', 
+      forwarding S ll ll' k k'' x x' st st''.
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+
+    edestruct cstate_cont
+      as [s [EQs KK]]; [apply SRCC|].
+    red in EQs, KK. subst s.
+    edestruct ES.cont_icf_dom_cont_adjacent
+      with (S := S) (k := k) (e := x)
+      as [k''' [x' ADJ]]; eauto.
+    edestruct simrel_cont_adjacent_inK'
+      with (S := S) (k := k) (k' := k''')
+      as [st''' KK''']; eauto.
+
+    edestruct ES.K_adj
+      with (S := S) (k := k) (k' := k''') (st' := st''')
+      as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto.
+    red in EQll, EQll', LSTEP.
+    exists x', ll, ll', k''', st'''. 
+    red; splits; auto. 
+  Qed.
+    
+  Lemma simrel_cert_cont_icf_dom_R lbl lbl' k k' e e' S S'
         (st st' st'': thread_st (ktid S k))
-        (LBL  : lbl  = Slab S' e ) 
+        (LBL  : lbl  = Slab S' e )
         (LBL' : lbl' = option_map (Slab S') e')
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
-    dom_rel (Sicf S') ⊆₁ SR S'.
-  Proof.
+    ES.cont_icf_dom S k ⊆₁ SR S.   
+  Proof. 
     cdes CertSTEP. cdes BSTEP_.
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
@@ -718,95 +1073,124 @@ Section SimRelCertForwarding.
         by rewrite upds. }
       destruct lbl'0; done. }
     subst lbl0 lbl'0.
-
-    admit.
-
-    (* erewrite basic_step_icf; eauto. *)
-    (* rewrite dom_union. unionL. *)
-    (* { arewrite (dom_rel (Sicf S) ⊆₁ SE S ∩₁ SR S). *)
-    (*   { apply set_subset_inter_r. split. *)
-    (*     { rewrite ES.icfE; auto. basic_solver. } *)
-    (*     eapply icf_R; apply SRCC. } *)
-    (*   (* TODO: introduce lemma *) *)
-    (*   intros x [Ex Rx]. *)
-    (*   unfold is_r. *)
-    (*   erewrite basic_step_lab_eq_dom; eauto. } *)
-
-    (* unfold icf_delta. *)
-    (* destruct  *)
-    (*   (classic (is_r (Slab S') e)) *)
-    (*   as [Re|nRe]. *)
-    (* { rewrite csE, dom_union. unionL. *)
-    (*   2 : basic_solver.  *)
-    (*   rewrite dom_cross. *)
-    (*   2 : { intros HH. eapply HH. edone. } *)
-    (*   intros x kICFx. *)
-    (*   assert ((Slab S □₁ ES.cont_icf_dom S k) (Slab S x))  *)
-    (*     as HH. *)
-    (*   { basic_solver. } *)
-    (*   eapply basic_step_cont_icf_dom_same_lab_u2v  *)
-    (*     in HH; eauto. *)
-    (*   unfold is_r in *. *)
-    (*   arewrite (Slab S' x = Slab S x). *)
-    (*   { erewrite basic_step_lab_eq_dom; eauto. *)
-    (*     eapply ES.cont_icf_domE; eauto. } *)
-    (*   unfold same_label_u2v in HH. *)
-    (*   destruct (Slab S' e); try done. *)
-    (*   destruct (Slab S x); done. } *)
     
-    (* intros x [y HH]. *)
-    (* exfalso.  *)
-    (* apply nFRWD. *)
-    (* edestruct cstate_cont *)
-    (*   as [s [EQs KK]]; [apply SRCC|]. *)
-    (* red in EQs, KK. subst s. *)
-    (* assert (exists z, ES.cont_icf_dom S k z)  *)
-    (*   as [z kICFz]. *)
-    (* { generalize HH. basic_solver. } *)
-    (* edestruct ES.cont_icf_dom_cont_adjacent  *)
-    (*   with (S := S) (k := k) (e := z) *)
-    (*   as [k''' [z' ADJ]]; eauto. *)
-    (* edestruct simrel_cont_adjacent_inK' *)
-    (*   with (S := S) (k := k) (k' := k''') *)
-    (*   as [st''' KK''']; eauto. *)
-    (* exists k''', st''', z, z'. *)
-    (* edestruct ES.K_adj  *)
-    (*   with (S := S) (k := k) (k' := k''') (st' := st''') *)
-    (*   as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto. *)
-    (* red in EQll, EQll', LSTEP. *)
+    intros x kICFx.
 
-    (* edestruct nR_ilbl_step  *)
-    (*   as [EQl [EQl' EQl'']]. *)
-    (* { apply STEP. } *)
-    (* { apply LSTEP. } *)
-    (* { unfold is_r, id in *.  *)
-    (*   by rewrite LBL. } *)
-    (* red in EQl, EQl', EQl''. *)
+    destruct
+      (classic (is_r (Slab S') e))
+      as [Re|nRe].
+    { assert ((Slab S □₁ ES.cont_icf_dom S k) (Slab S x))
+        as HH.
+      { basic_solver. }
+      eapply basic_step_cont_icf_dom_same_lab_u2v
+        in HH; eauto.
+      unfold is_r in *.
+      unfold same_label_u2v in HH.
+      destruct (Slab S' e); try done.
+      destruct (Slab S x); done. }
 
-    (* assert (st' = st''') as EQst. *)
-    (* { eapply unique_nR_ilbl_step. *)
-    (*   { eapply STEP. } *)
-    (*   { eapply LSTEP. } *)
-    (*   unfold is_r, id in *.  *)
-    (*   by rewrite LBL. } *)
-    (* subst st'''. *)
+    assert (~ is_r (Slab S) x) 
+      as nRx.
+    { intros Rx. apply nRe.
+      assert ((Slab S □₁ ES.cont_icf_dom S k) (Slab S x))
+        as HA.
+      { basic_solver. }
+      eapply basic_step_cont_icf_dom_same_lab_u2v
+        in HA; eauto.
+      unfold is_r in *.
+      unfold same_label_u2v in HA.
+      destruct (Slab S x); try done.
+      destruct (Slab S' e); done. }
+  
+    exfalso.
+    apply nFRWD.
+    edestruct simrel_cert_cont_icf_dom_forwarding
+      as [x' [ll [ll' [k''' [st''' FRWD]]]]]; eauto.
+    { arewrite (eq x ⊆₁ set_compl (is_r (Slab S))).
+      { basic_solver. }
+      rewrite ES.jfD; auto; basic_solver. }
+    
+    exists k''', st''', x, x'.
+    cdes FRWD. 
+    edestruct nR_ilbl_step 
+      with (la := lbl) as [EQll [lNone lNone']]; eauto.
+    { apply STEP. }
+    { intros Rlbl. apply nRe.
+      rewrite LAB'.
+      unfold is_r in *.
+      unfold eq_opt, opt_ext in *.
+      rewrite updo_opt, upds; auto.
+      unfolder. 
+      destruct e' as [e'|]; 
+        auto; omega. }
+    red in EQll, lNone, lNone'. 
+    rewrite EQll.
+    arewrite (lbl' = ll'); auto.
+    congruence.
+  Qed.
 
-    (* constructor; splits; auto. *)
-    (* 1-2: congruence. *)
-    (* arewrite (eq z ⊆₁ set_compl (is_r (Slab S))). *)
-    (* 2 : rewrite ES.jfD; auto; basic_solver. *)
-    (* intros z'' EQz''. subst z''.  *)
-    (* assert ((Slab S □₁ ES.cont_icf_dom S k) (Slab S z))  *)
-    (*   as HA. *)
-    (* { basic_solver. } *)
-    (* eapply basic_step_cont_icf_dom_same_lab_u2v  *)
-    (*   in HA; eauto. *)
-    (* intros Rz. apply nRe. *)
-    (* unfold is_r in *. *)
-    (* unfold same_label_u2v in HA.     *)
-    (* destruct (Slab S z); try done. *)
-    (* destruct (Slab S' e); done. *)
-  Admitted.
+  Lemma simrel_cert_nforwarding_icf_R lbl lbl' k k' e e' S S'
+        (st st' st'': thread_st (ktid S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
+    dom_rel (Sicf S') ⊆₁ SR S'.
+  Proof.
+    cdes CertSTEP. cdes BSTEP_.
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor; eauto. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+
+    erewrite basic_step_icf; eauto.
+    rewrite dom_union. unionL.
+    { arewrite (dom_rel (Sicf S) ⊆₁ SE S ∩₁ SR S).
+      { apply set_subset_inter_r. split.
+        { rewrite ES.icfE; auto. basic_solver. }
+        eapply icf_R; apply SRCC. }
+      (* TODO: introduce lemma *)
+      intros x [Ex Rx].
+      unfold is_r.
+      erewrite basic_step_lab_eq_dom; eauto. }
+
+    unfold icf_delta.
+    rewrite csE, dom_union.
+    unfold transp.
+    rewrite set_subset_union_l; split.
+    
+    { rewrite dom_cross.
+      2 : { intros HH; eapply HH; edone. }
+      rewrite <- set_interK 
+        with (s := ES.cont_icf_dom S k).
+      rewrite ES.cont_icf_domE at 1; auto.
+      erewrite simrel_cert_cont_icf_dom_R; eauto.
+      (* TODO: introduce lemma *)
+      intros x [Ex Rx].
+      unfold is_r.
+      erewrite basic_step_lab_eq_dom; eauto. }
+
+    intros x [y [kICFy EQx]]. subst x.
+    destruct
+      (classic (is_r (Slab S') e))
+      as [Re|nRe]; auto.
+    exfalso. apply nRe.
+    assert ((Slab S □₁ ES.cont_icf_dom S k) (Slab S y))
+      as HH.
+    { basic_solver. }
+    eapply basic_step_cont_icf_dom_same_lab_u2v
+      in HH; eauto.
+    eapply simrel_cert_cont_icf_dom_R 
+      in kICFy; eauto.
+    unfold is_r in *.
+    unfold same_label_u2v in HH.
+    destruct (Slab S y); try done.
+    destruct (Slab S' e); done. 
+  Qed.
 
   (* TODO: move to more suitable place *)
   Lemma same_label_u2v_same_val lbl lbl'  
@@ -822,7 +1206,7 @@ Section SimRelCertForwarding.
         (st st' st'': thread_st (ktid S k))
         (LBL  : lbl  = Slab S' e ) 
         (LBL' : lbl' = option_map (Slab S') e')
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
         (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')  
         (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
@@ -843,6 +1227,181 @@ Section SimRelCertForwarding.
     assert (step_ e e' S S') as STEP_.
     { eapply simrel_cert_step_step_; eauto. }
 
+    (* some technicalities *)
+    assert (lbl0 = lbl) as EQl.
+    { rewrite LBL, LAB'.
+      rewrite updo_opt, upds; auto.
+      unfold opt_ext in *.
+      basic_solver. }
+    assert (lbl'0 = lbl') as EQl'.
+    { rewrite LBL', LAB'.
+      unfold option_map, opt_same_ctor in *.
+      destruct e' as [e'|].
+      { destruct lbl'0; [|done].
+        unfold upd_opt.
+          by rewrite upds. }
+      destruct lbl'0; done. }
+    subst lbl0 lbl'0.
+
+    eapply step_icf_jf_irr; eauto. split.
+    { eapply icf_jf. apply SRCC. }
+
+    rewrite !seq_eqv_r.
+    intros x [[y [JF' EQy]] HH]. subst y.
+    destruct HH as [z [y [EW [JF kICFy]]]].
+    red.
+    
+    apply nFRWD.
+    edestruct simrel_cert_cont_icf_dom_forwarding
+      as [z' [ll [ll' [k''' [st''' FRWD]]]]]; eauto.
+    { rewrite seq_eqv_r.
+      intros a b [a' [b' [[JF'' EQb'] [EQa EQb]]]].
+      subst a b b'.
+      assert (a' = y) as EQa'.
+      { eapply ES.jff with (S := S); eauto. }
+      subst a'.
+      arewrite (e2a S y = e2a S x).
+      { erewrite e2a_ew; eauto. basic_solver 10. }
+      arewrite (e2a S x = e2a S' x).
+      { symmetry. eapply basic_step_e2a_eq_dom; eauto.
+        apply ES.ewE in EW; auto.
+        generalize EW. basic_solver. }
+      arewrite (e2a S z = e2a S' e).
+      { erewrite basic_step_e2a_cont_icf_dom
+          with (S := S) (e := e); eauto.
+        basic_solver. }
+      
+      assert (is_r (Slab S') e) as Re.
+      { apply ES.jfD in JF'; auto.
+        generalize JF'. basic_solver. }
+      unfold_cert_step_ CertSTEP_.
+      1,3: try cdes AEW; type_solver.
+      all: cdes AJF.
+      all: arewrite (x = w); auto.
+      all: apply JF'0 in JF'.
+      all: unfold jf_delta, singl_rel in JF'.
+      all: destruct JF' as [JF'|JF'].
+      2,4: basic_solver.
+      all: exfalso; eapply basic_step_acts_set_ne; eauto.
+      all: apply ES.jfE in JF'; auto.
+      all: generalize JF'; basic_solver. }
+    
+    exists k''', st''', z, z'.
+    cdes FRWD.
+    assert (lbl = ll) as EQLab.
+    { eapply same_label_u2v_same_val.
+      { eapply same_label_u2v_ilbl_step.
+        { apply STEP. }
+        apply STEP0. }
+      arewrite (val id lbl = val (Slab S') e).
+      { basic_solver. }
+      arewrite (val id ll = val (Slab S) z).
+      { basic_solver. }
+      arewrite (val (Slab S') e = val (Slab S') x).
+      { erewrite <- ES.jfv; eauto. }
+      arewrite (val (Slab S') x = val (Slab S) x).
+      { unfold val.
+        erewrite basic_step_lab_eq_dom; eauto.
+        apply ES.ewE in EW; auto.
+        generalize EW. basic_solver. }
+      erewrite ES.ewv.
+      2-3: eauto.
+      erewrite ES.jfv; eauto. }
+
+    assert (lbl' = ll') as EQLab'.
+    { eapply same_label_fst_ilbl_step.
+      { eapply STEP. }
+      rewrite EQLab.
+      eapply STEP0. }
+
+    assert (st' = st''') as EQst.
+    { eapply unique_ilbl_step.
+      { eapply STEP. }
+      rewrite EQLab, EQLab'.
+      apply STEP0. }
+    subst st'''.
+    by rewrite EQLab, EQLab'.
+  Qed.
+
+  Lemma same_jf_icf_kE_in_co k k' e e' S S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (JF' : Sjf S' ≡ Sjf S) :
+    e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
+  Proof. 
+    assert (Wf G) as WFG.
+    { apply SRCC. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as CONS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+    assert (simrel_e2a S G sc) as SRE2A.
+    { apply SRCC. } 
+    assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+
+    rewrite JF'.
+    arewrite (⦗kE S' k'⦘ ⨾ (Sjf S)⁻¹ ⊆ ⦗kE S k⦘ ⨾ (Sjf S)⁻¹).
+    { erewrite basic_step_cont_sb_dom'; eauto. 
+      cdes BSTEP_. step_solver. }
+    arewrite 
+      (Sjf S ⨾ Sicf S' ⨾ ⦗kE S k⦘ ⊆ Sjf S ⨾ Sicf S ⨾ ⦗kE S k⦘). 
+    { cdes BSTEP_. 
+      rewrite <- seq_eqvK 
+        with (dom := kE S k) at 1.
+      erewrite ES.cont_sb_domE at 1; eauto.
+      rewrite ES.jfE; auto.
+      rewrite !seqA.
+      arewrite (⦗SE S⦘ ⨾ Sicf S' ⨾ ⦗SE S⦘ ≡ Sicf S).
+      { rewrite <- restr_relE.
+        eapply basic_step_icf_restr; eauto. }
+      rewrite ES.jfE; auto.
+      basic_solver 10. }
+    erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
+    { apply SRCC. }
+    rewrite ES.jfE; auto.
+    basic_solver 20. 
+  Qed.
+
+  Lemma sim_add_jf_nforwarding_jf_icf_dom_w_in_co w lbl lbl' k k' e e' S S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (SAJF : sim_add_jf G sc TC' X k w e S S') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
+    e2a S □ Sjf S ⨾ ES.cont_icf_dom S k × eq w ⊆ Gco.
+  Proof. 
+    assert (Wf G) as WFG.
+    { apply SRCC. }
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (@es_consistent S Weakestmo) as CONS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_cont (stable_prog_to_prog prog) S G TC X) 
+      as SRCONT.
+    { apply SRCC. } 
+    assert (simrel_e2a S G sc) as SRE2A.
+    { apply SRCC. } 
+    assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (add_jf w e S S') as AJF. 
+    { eapply weaken_sim_add_jf; eauto. } 
+    cdes SAJF. cdes BSTEP_.
 
     (* some technicalities *)
     assert (lbl0 = lbl) as EQl.
@@ -860,98 +1419,336 @@ Section SimRelCertForwarding.
       destruct lbl'0; done. }
     subst lbl0 lbl'0.
 
-    admit.
+    intros x' y' [x [z [HH [EQx' EQy']]]].
+    destruct HH as [y [JF [kICFy EQz]]].
+    subst x' y' z.
+    set (kICFy' := kICFy).
+    unfold ES.cont_icf_dom in kICFy'.
+    destruct kICFy' as [z HH].
+    apply seq_eqv_lr in HH.
+    destruct HH as [kLASTz [IMMSB TIDy]].
+    edestruct kcond; eauto; desc.
+    2 : { exfalso. eapply klast_sb_max; eauto. apply IMMSB. }
+    assert (CsbI G TC (e2a S y)) as CsbIy.
+    { eapply kE_sb_cov_iss. 
+      apply ES.cont_last_in_cont_sb in kLASTz; auto.
+      generalize IMMSB. unfold immediate. 
+      basic_solver 10. }
+    eapply ex_cov_iss in CsbIy; eauto.
+    destruct CsbIy as [y' [Xy' E2Ay']].
 
-    (* eapply step_icf_jf_irr; eauto. split.  *)
-    (* { eapply icf_jf. apply SRCC. } *)
+    assert (SEninit S y) as ENINITy.
+    { eapply ES.cont_icf_domEnint; eauto. }
+    assert (SE S y) as Ey.
+    { apply ENINITy. }
+    assert (SR S y) as Ry.
+    { apply ES.jfD in JF; auto.
+      generalize JF. basic_solver. }
 
-    (* rewrite !seq_eqv_r. *)
-    (* intros x [[y [JF' EQy]] HH]. subst y. *)
-    (* destruct HH as [z [y [EW [JF kICFy]]]]. *)
-    (* red. *)
+    assert (SE S y') as Ey'.
+    { eapply Execution.ex_inE; eauto. }
+    assert (SR S y') as Ry'.
+    { eapply same_lab_u2v_dom_is_r.
+      { eapply e2a_lab. apply SRCC. }
+      split; auto.
+      unfold is_r, compose.
+      rewrite E2Ay'.
+      fold (compose Glab (e2a S) y).
+      fold (is_r (Glab ∘ e2a S) y).
+      eapply same_lab_u2v_dom_is_r.
+      { eapply same_lab_u2v_dom_comm.
+        eapply e2a_lab. apply SRCC. }
+      split; auto. }
+    assert (SEninit S y') as ENINITy'.
+    { split; auto.
+      intros INITy'.
+      apply ES.acts_init_set_inW in INITy'; auto.
+      type_solver. }
+
+    set (E2Ay'' := E2Ay').
+    do 2 erewrite e2a_ninit in E2Ay''; auto.
+    inversion E2Ay'' as [[EQTID EQSEQN]].
+    clear E2Ay''.
     
-    (* apply nFRWD. *)
-    (* edestruct cstate_cont *)
-    (*   as [s [EQs KK]]; [apply SRCC|]. *)
-    (* red in EQs, KK. subst s. *)
-    (* edestruct ES.cont_icf_dom_cont_adjacent  *)
-    (*   with (S := S) (k := k) (e := z) *)
-    (*   as [k''' [z' ADJ]]; eauto. *)
-    (* edestruct simrel_cont_adjacent_inK' *)
-    (*   with (S := S) (k := k) (k' := k''') *)
-    (*   as [st''' KK''']; eauto. *)
-    (* exists k''', st''', z, z'. *)
-    (* edestruct ES.K_adj  *)
-    (*   with (S := S) (k := k) (k' := k''') (st' := st''') *)
-    (*   as [ll [ll' [EQll [EQll' LSTEP]]]]; eauto. *)
-    (* red in EQll, EQll', LSTEP. *)
+    edestruct Execution.ex_rf_compl
+      as [x' HH]; eauto.
+    { basic_solver. }
+    apply seq_eqv_l in HH.
+    destruct HH as [Xx' RF].
+    assert (cert_rf G sc TC (e2a S x') (e2a S y')) 
+      as CertRF'.
+    { eapply rf_ex_in_cert_rf; eauto. basic_solver 10. }
+    assert (e2a S' e = e2a S y') as EQE2Ae.
+    { eapply basic_step_e2a_cont_icf_dom; eauto. basic_solver 10. }
+    assert (e2a S w = e2a S' w) as EQE2Aw.
+    { symmetry. erewrite basic_step_e2a_eq_dom; eauto. by cdes AJF. }
+    assert (Gco^? (e2a S x') (e2a S w)) as CO.
+    { eapply sim_trav_step_cert_rf_co; eauto.
+      1-3: try eexists; apply SRCC.
+      eexists; split; eauto; red; congruence. }
 
-    (* assert (lbl = ll) as EQLab. *)
-    (* { eapply same_label_u2v_same_val. *)
-    (*   { eapply same_label_u2v_ilbl_step. *)
-    (*     { apply STEP. } *)
-    (*     apply LSTEP. } *)
-    (*   arewrite (val id lbl = val (Slab S') e). *)
-    (*   { basic_solver. } *)
-    (*   arewrite (val id ll = val (Slab S) z). *)
-    (*   { basic_solver. } *)
-    (*   arewrite (val (Slab S') e = val (Slab S') x). *)
-    (*   { erewrite <- ES.jfv; eauto. } *)
-    (*   arewrite (val (Slab S') x = val (Slab S) x). *)
-    (*   { unfold val.  *)
-    (*     erewrite basic_step_lab_eq_dom; eauto. *)
-    (*     apply ES.ewE in EW; auto. *)
-    (*     generalize EW. basic_solver. } *)
-    (*   erewrite ES.ewv.  *)
-    (*   2-3: eauto. *)
-    (*   erewrite ES.jfv; eauto. } *)
-
-    (* assert (lbl' = ll') as EQLab'. *)
-    (* { eapply same_label_fst_ilbl_step. *)
-    (*   { eapply STEP. } *)
-    (*   rewrite EQLab. *)
-    (*   eapply LSTEP. } *)
-
-    (* assert (st' = st''') as EQst. *)
-    (* { eapply unique_ilbl_step. *)
-    (*   { eapply STEP. } *)
-    (*   rewrite EQLab, EQLab'. *)
-    (*   apply LSTEP. } *)
-    (* subst st'''. *)
-
-    (* constructor; splits; auto. *)
-    (* 1-2: congruence. *)
-    (* rewrite seq_eqv_r. *)
-    (* intros a b [a' [b' [[JF'' EQb'] [EQa EQb]]]]. *)
-    (* subst a b b'. *)
-    (* assert (a' = y) as EQa'. *)
-    (* { eapply ES.jff with (S := S); eauto. } *)
-    (* subst a'. *)
-    (* arewrite (e2a S y = e2a S x). *)
-    (* { erewrite e2a_ew; eauto. basic_solver 10. } *)
-    (* arewrite (e2a S x = e2a S' x). *)
-    (* { symmetry. eapply basic_step_e2a_eq_dom; eauto.  *)
-    (*   apply ES.ewE in EW; auto.  *)
-    (*   generalize EW. basic_solver. } *)
-    (* arewrite (e2a S z = e2a S' e). *)
-    (* { erewrite basic_step_e2a_cont_icf_dom *)
-    (*     with (S := S) (e := e); eauto. *)
-    (*   basic_solver. } *)
+    set (HH := E2Ay').
+    apply e2a_eq_in_cf in HH; auto.
+    destruct HH as [EQ|CF].
     
-    (* assert (is_r (Slab S') e) as Re. *)
-    (* { apply ES.jfD in JF'; auto.  *)
-    (*   generalize JF'. basic_solver. } *)
-    (* unfold_cert_step_ CertSTEP_. *)
-    (* 1,3: try cdes AEW; type_solver.  *)
-    (* all: cdes AJF.  *)
-    (* all: arewrite (x = w); auto.  *)
-    (* all: apply JF'0 in JF'.  *)
-    (* all: unfold jf_delta, singl_rel in JF'. *)
-    (* all: destruct JF' as [JF'|JF']. *)
-    (* 2,4: basic_solver. *)
-    (* all: exfalso; eapply basic_step_acts_set_ne; eauto. *)
-    (* all: apply ES.jfE in JF'; auto.   *)
-    (* all: generalize JF'; basic_solver. *)
-  Admitted.
+    { subst y'. 
+      assert (Sew S x x') as EW.
+      { eapply ES.rf_trf_in_ew; auto.
+        unfolder; eexists; splits; eauto.
+        apply ES.jf_in_rf; auto. }
+      assert (e2a S x = e2a S x') as EQE2Ax'.
+      { eapply e2a_ew; eauto. basic_solver 10. }
+      rewrite EQE2Ax'.
+      destruct CO as [EQ|CO]; auto.
 
+      exfalso. apply nFRWD.
+      edestruct simrel_cert_cont_icf_dom_forwarding
+        as [y' [ll [ll' [k''' [st''' FRWD]]]]]; eauto.
+      { intros a' b' [a [b [HH [EQa' EQb']]]].
+        apply seq_eqv_r in HH.
+        destruct HH as [JF'' EQb].
+        subst a' b' b.
+        rewrite <- EQE2Ae.
+        arewrite (a = x); [|congruence].
+        eapply ES.jff; eauto. }
+      
+      cdes FRWD.
+      clear CertRF0.
+      rename STEP0 into LSTEP.
+      rename LBL0 into LL.
+      rename LBL'0 into LL'.
+
+      exists k''', st''', y, y'.
+      assert (lbl = ll) as EQLab.
+      { eapply same_label_u2v_same_val.
+        { eapply same_label_u2v_ilbl_step; eauto.
+          apply STEP. }
+        arewrite (val id lbl = val (Slab S') e).
+        { basic_solver. }
+        arewrite (val id ll = val (Slab S) y).
+        { basic_solver. }
+        arewrite (val (Slab S') e = val (Slab S) w).
+        { cdes AJF. rewrite <- VAL. unfold val.
+          erewrite basic_step_lab_eq_dom; eauto. }
+        arewrite (val (Slab S) y = val (Slab S) x').
+        { symmetry. apply ES.rfv; auto. }
+        unfold val.
+        arewrite (Slab S x' = Slab S w); auto.
+        apply ES.rfi_union_rfe in RF.
+        destruct RF as [RFI | RFE].
+        { assert (SE S x') as Ex'.
+          { eapply Execution.ex_inE; eauto. }
+          destruct RFI as [RF SB].
+          apply e2a_eq_in_cf in EQ; 
+            try apply AJF; auto.
+          destruct EQ as [EQ|CF]; auto.
+          assert (SEninit S x') as nINITx'.
+          { apply ES.cfEninit in CF; auto.
+            generalize CF. basic_solver. }
+          cdes AJF.
+          exfalso. apply nCF.
+          assert (dom_rel (Ssb S ⨾ ⦗ES.cont_icf_dom S k⦘) x')
+            as SBkICFx'.
+          { basic_solver 10. }
+          eapply basic_step_sb_cont_icf_cont_sb_e
+            in SBkICFx'; eauto.
+          assert (ES.cont_cf_dom S k w) 
+            as kCFw.
+          { eapply ES.cont_cf_cont_sb; eauto.
+            unfolder; splits; auto.
+            { arewrite (Stid S w = Stid S x').
+              { symmetry. apply ES.cf_same_tid; auto. }
+              arewrite (Stid S x' = Stid S y); auto.
+              edestruct ES.Tid_sb_prcl
+                as [INITx' | TIDx']; eauto. 
+              { basic_solver 10. }
+              unfold ES.acts_ninit_set in nINITx'.
+              exfalso. by apply nINITx'. }
+            intros kSBw.
+            eapply ES.cont_sb_cf_free
+              with (k := k); eauto.
+            apply seq_eqv_lr; splits.
+            2,3: eauto.
+            destruct SBkICFx' as [z' HH].
+            eapply basic_step_sbe in HH; eauto.
+            by destruct HH as [AA _]. }
+
+          eapply basic_step_cf; eauto.
+          unfold cf_delta.
+          basic_solver 10. }
+
+        assert (SEninit S x') as nINITx.
+        { eapply rfe_dom_ninit; eauto. basic_solver. }
+        assert (Stid S x' <> ktid S k) as nTIDx'.
+        { eapply rfe_nsame_tid in RFE; eauto. }
+        assert (I (e2a S x')) as Ix.
+        { eapply rfe_iss; eauto. basic_solver. }
+        arewrite (Slab S x' = Glab (e2a S x')).
+        { eapply ex_cov_iss_lab; eauto. basic_solver. }
+        arewrite (Slab S w = Glab (e2a S w)); [|congruence].
+        eapply ex_cov_iss_lab; eauto.
+        edestruct sim_add_jf_iss_sb_w
+          as [HH | kSBw]; eauto.
+        { generalize HH. basic_solver. }
+        exfalso. 
+        eapply ES.cont_sb_tid in kSBw; eauto.
+        destruct kSBw as [INITw | TIDw].
+        { erewrite e2a_ninit, e2a_init 
+            in EQ; auto; congruence. }
+        assert (SEninit S w) as nINITw.
+        { split; [apply AJF|].
+          intros [_ INITw].
+          eapply ktid_ninit; eauto.
+          congruence. }
+        do 2 erewrite e2a_ninit in EQ; auto.
+        congruence. }
+
+      assert (lbl' = ll') as EQLab'.
+      { eapply same_label_fst_ilbl_step.
+        { eapply STEP. }
+        rewrite EQLab.
+        eapply LSTEP. }
+
+      by rewrite EQLab, EQLab'. }
+
+    apply ES.cf_sym in CF; auto.
+    assert (Sicf S y y') as ICF.
+    { split; auto. 
+      eexists; splits; eauto.
+      { apply immediate_transp with (r := Ssb S); red; eauto. }
+      eapply ES.seqn_eq_imm_sb; eauto.
+      intros CF'. eapply Execution.ex_ncf; eauto.
+      apply seq_eqv_lr; splits; [|apply CF'|]; eauto. }
+    
+    assert (Gco (e2a S x) (e2a S x')) as CO'.
+    { destruct RF as [[x'' [EW JF'']] _].
+      arewrite (e2a S x' = e2a S x'').
+      { eapply e2a_ew; eauto. basic_solver 10. }
+      eapply icf_ex_ktid_in_co; eauto.
+      do 2 eexists; splits; eauto.
+      exists y; splits; auto.
+      apply seq_eqv_l. split. 
+      { intros kSBy.
+        eapply ES.cont_sb_cont_icf_inter_false; eauto.
+        basic_solver. }
+      exists y'; splits; auto.
+      apply seq_eqv_l. split; [|done].
+      split; auto; congruence. }
+    destruct CO as [EQ|CO]; [congruence|].
+    eapply co_trans; eauto.
+
+  Qed.
+
+  Lemma sim_add_jf_nforwarding_icf_kE_in_co w lbl lbl' k k' e e' S S' 
+        (st st' st'' : thread_st (ES.cont_thread S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'') 
+        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
+        (SAJF : sim_add_jf G sc TC' X k w e S S') 
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') 
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') : 
+    e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
+  Proof. 
+    assert (ES.Wf S) as WF.
+    { apply SRCC. }
+    assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
+    { apply SRCC. }
+    assert (basic_step e e' S S') as BSTEP.
+    { econstructor. eauto. }
+    assert (add_jf w e S S') as AJF. 
+    { eapply weaken_sim_add_jf; eauto. } 
+    cdes BSTEP_; cdes SAJF.
+    erewrite basic_step_cont_sb_dom'; eauto.
+    rewrite !id_union, !seq_union_l, !seq_union_r.
+    arewrite_false (Sicf S' ⨾ ⦗eq_opt e'⦘).
+    { cdes BSTEP_. 
+      rewrite basic_step_icf; eauto.
+      unfold icf_delta.
+      rewrite ES.cont_icf_domE; auto.
+      rewrite ES.icfE; auto.
+      step_solver. }
+    relsf. 
+    rewrite basic_step_icf; eauto.
+    rewrite !seq_union_l, !seq_union_r.
+    rewrite !collect_rel_union.
+    unionL.
+
+    { arewrite (Sjf S' ⨾ Sicf S ⊆ Sjf S ⨾ Sicf S).
+      { rewrite ES.icfE; auto.
+        rewrite <- seqA with (r1 := Sjf S').
+        rewrite add_jf_jfE; eauto.
+        rewrite ES.jfE; auto.
+        basic_solver 10. }
+      arewrite (⦗kE S k⦘ ⨾ (Sjf S')⁻¹ ⊆ ⦗kE S k⦘ ⨾ (Sjf S)⁻¹).
+      { rewrite !seq_eqv_l.
+        unfold transp.
+        intros x y [kSBx JF].
+        splits; auto. 
+        eapply add_jf_jfE; eauto.
+        apply seq_eqv_r.
+        splits; auto.
+        eapply ES.cont_sb_domE; eauto. }
+      erewrite basic_step_e2a_collect_rel_eq_dom; 
+        eauto; [apply SRCC|].
+      rewrite ES.jfE; auto.
+      basic_solver 20. }
+
+    { arewrite_false (icf_delta S k e ⨾ ⦗ES.cont_sb_dom S k⦘); 
+        [|basic_solver].
+      unfold icf_delta.
+      rewrite csE, transp_cross.
+      rewrite seq_union_l.
+      unionL.
+      { step_solver. }
+      rewrite <- cross_inter_r.
+      rewrite set_interC.
+      erewrite ES.cont_sb_cont_icf_inter_false; eauto.
+      basic_solver. }
+
+    { arewrite_false (Sicf S ⨾ ⦗eq e⦘).
+      { rewrite ES.icfE; auto. step_solver. }
+      basic_solver. }
+
+    unfold icf_delta.
+    rewrite csE, transp_cross.
+    rewrite !seq_union_l, !seq_union_r.
+    rewrite collect_rel_union.
+    arewrite_false (eq e × ES.cont_icf_dom S k ⨾ ⦗eq e⦘).
+    { rewrite ES.cont_icf_domE; auto. step_solver. }
+    relsf.
+
+    arewrite (⦗eq e⦘ ⨾ (Sjf S')⁻¹ ⊆ eq e × eq w).
+    { rewrite JF'. step_solver. }
+    rewrite seq_cross_eq. 
+    rewrite JF'.
+    rewrite seq_union_l.
+    arewrite_false (jf_delta w e ⨾ ES.cont_icf_dom S k × eq w).
+    { unfold jf_delta. 
+      rewrite ES.cont_icf_domE; auto.
+      step_solver. }
+    rewrite union_false_r.
+    erewrite basic_step_e2a_collect_rel_eq_dom; eauto.
+    2 : { rewrite ES.jfE; auto.
+          cdes AJF. basic_solver 10. }
+    
+    eapply sim_add_jf_nforwarding_jf_icf_dom_w_in_co; eauto.
+
+  Qed.
+
+  Lemma simrel_cert_nforwarding_icf_kE_in_co lbl lbl' k k' e e' S S'
+        (st st' st'': thread_st (ktid S k))
+        (LBL  : lbl  = Slab S' e ) 
+        (LBL' : lbl' = option_map (Slab S') e')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (CertSTEP : cert_step G sc TC TC' X k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'')  
+        (nFRWD : ~ exists k' st' e e', forwarding S lbl lbl' k k' e e' st st') :
+    e2a S' □ (Sjf S' ⨾ Sicf S' ⨾ ⦗kE S' k'⦘ ⨾ (Sjf S')⁻¹) ⊆ Gco.
+  Proof. 
+    unfold_cert_step CertSTEP.
+    1,3: eapply same_jf_icf_kE_in_co; eauto. 
+    all: eapply sim_add_jf_nforwarding_icf_kE_in_co; eauto.
+  Qed.
+    
 End SimRelCertForwarding.

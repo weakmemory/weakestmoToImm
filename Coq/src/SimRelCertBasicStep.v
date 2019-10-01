@@ -34,6 +34,7 @@ Section SimRelCertBasicStep.
   Variable TC : trav_config.
   Variable TC' : trav_config.
   Variable X : eventid -> Prop.
+  Variable T : thread_id -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -130,7 +131,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_ex_tid t k k' e e' S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
     X ∩₁ STid S' t ≡₁ X ∩₁ STid S t.
   Proof.
@@ -147,7 +148,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_ex_ntid t k k' e e' S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
     X ∩₁ SNTid S' t ≡₁ X ∩₁ SNTid S  t.
   Proof.
@@ -166,7 +167,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_cert_ex k k' e e' S S' 
         (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
     certX S' k' ≡₁ certX S k ∪₁ eq e ∪₁ eq_opt e'.  
   Proof. 
@@ -184,7 +185,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_cstate k k' e e' S S'
         (st st' st'': thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     simrel_cstate S' k' st' st''. 
@@ -206,7 +207,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_e2a_eqr k k' e e' S S' r r' r''
         (st st' st'' : thread_st (ES.cont_thread S k))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
         (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
         (rEQ : r' ≡ r) 
@@ -225,7 +226,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_hb_sb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     dom_rel ((Shb S)^? ⨾ (sb_delta S k e e')) ⊆₁ certX S k ∪₁ eq e. 
@@ -250,7 +251,7 @@ Section SimRelCertBasicStep.
 
   Lemma simrel_cert_basic_step_hb_rel_jf_sb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
-        (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
         (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
     dom_rel ((Shb S)^? ⨾ release S ⨾ Sjf S ⨾ sb_delta S k e e') ⊆₁ certX S k. 

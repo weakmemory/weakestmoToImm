@@ -684,6 +684,50 @@ Proof.
   basic_solver 10.
 Qed.
 
+Lemma basic_step_sb_nTid t lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF: ES.Wf S) 
+      (nEQ : t <> ES.cont_thread S k) :
+  sb S' ⨾ ⦗Tid_ S' t⦘ ≡ sb S ⨾ ⦗Tid_ S t⦘. 
+Proof. 
+  assert (basic_step e e' S S') 
+    as BSTEP.
+  { do 5 eexists. red. eauto. }
+  cdes BSTEP_.
+  rewrite SB'.
+  rewrite !seq_union_l.
+
+  arewrite
+    (sb S ⨾ ⦗Tid_ S' t⦘ ≡ sb S ⨾ ⦗Tid_ S t⦘).
+  { rewrite !seq_eqv_r.
+    split; intros x y [SB TIDy]; 
+      splits; auto.
+    { erewrite <- basic_step_tid_eq_dom; eauto.
+      apply ES.sbE in SB; auto.
+      generalize SB. basic_solver. }
+    erewrite basic_step_tid_eq_dom; eauto.
+    apply ES.sbE in SB; auto.
+    generalize SB. basic_solver. }
+
+  arewrite_false 
+    (sb_delta S k e e' ⨾ ⦗Tid_ S' t⦘).
+  { unfold sb_delta.
+    rewrite unionA.
+    rewrite <- cross_union_r.
+    rewrite seq_eqv_r.
+    intros x y [[[_ EQy] | [_ EQy]] TIDy].
+    { apply nEQ.
+      subst t y. 
+      erewrite basic_step_tid_e; eauto. }
+    apply nEQ.
+    unfold eq_opt in EQy.
+    destruct e' as [e'|]; try done.
+    subst t y. 
+    erewrite basic_step_tid_e'; eauto. }
+
+  basic_solver.
+Qed.
+
 Lemma basic_step_sbe lang k k' st st' e e' S S'
       (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
       (WF : ES.Wf S) :
@@ -1321,6 +1365,20 @@ Proof.
   exists x0; splits; eauto. 
 Qed.
 
+Lemma basic_step_icf_restr lang k k' st st' e e' S S'
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S')
+      (wfE: ES.Wf S) :
+  restr_rel (E S) (icf S') ≡ icf S. 
+Proof. 
+  rewrite basic_step_icf; eauto.
+  rewrite restr_union.
+  arewrite_false 
+    (restr_rel (E S) (icf_delta S k e)).
+  { cdes BSTEP_. step_solver. }
+  rewrite ES.icfE; auto.
+  basic_solver 10.
+Qed.
+
 (******************************************************************************)
 (** ** basic_step : `rmw` properties *)
 (******************************************************************************)
@@ -1414,6 +1472,20 @@ Proof.
   arewrite_false (sb S ⨾ ⦗eq e⦘). 
   { step_solver. }
   basic_solver 10. 
+Qed.
+
+Lemma basic_step_sb_cont_icf_cont_sb_e lang k k' st st' e e' S S' 
+      (BSTEP_ : basic_step_ lang k k' st st' e e' S S') 
+      (WF : ES.Wf S) :
+  dom_rel (sb S ⨾ ⦗ES.cont_icf_dom S k⦘) ⊆₁ dom_rel (sb S' ⨾ ⦗eq e⦘).
+Proof. 
+  cdes BSTEP_.
+  erewrite basic_step_sbe; eauto.
+  rewrite dom_cross.
+  2 : { intros EQx. eapply EQx. edone. }
+  unfolder. ins. desf.
+  eapply ES.cont_sb_dom_sb_cont_icf; eauto.
+  basic_solver 10.
 Qed.
 
 Lemma basic_step_cont_set lang k k' st st' e e' S S' 

@@ -31,14 +31,17 @@ Definition stable_prog_type := IdentMap.t { linstr & stable_lprog linstr }.
 Definition stable_prog_to_prog (prog : stable_prog_type) : Prog.t :=
   (IdentMap.map (fun x => projT1 x) prog).
 
+Lemma stable_prog_to_prog_in prog thread :
+  IdentMap.In thread (stable_prog_to_prog prog) <-> IdentMap.In thread prog. 
+Proof. 
+  unfold stable_prog_to_prog. 
+  eapply RegMap.Facts.map_in_iff.
+Qed.
+
 Lemma stable_prog_to_prog_no_init prog
       (PROG_NINIT : ~ IdentMap.In tid_init prog) :
   ~ IdentMap.In tid_init (stable_prog_to_prog prog).
-Proof.
-  unfold stable_prog_to_prog.
-  intros HH.
-  apply RegMap.Facts.map_in_iff in HH. intuition.
-Qed.
+Proof. by rewrite stable_prog_to_prog_in. Qed.
 
 Definition prog_init_K
            (prog : stable_prog_type) :
@@ -217,7 +220,7 @@ Lemma prog_l_es_init_consistent locs prog :
 Proof.
   constructor; unfold ecf, ES.jfe, ES.icf.
   all: autorewrite with prog_l_es_init_db; auto.
-  5: apply acyclic_disj.
+  7: apply acyclic_disj.
   all: basic_solver.
 Qed.
 

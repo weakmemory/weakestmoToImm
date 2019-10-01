@@ -39,6 +39,7 @@ Section SimRelAddCO.
   Variable TC : trav_config.
   Variable TC' : trav_config.
   Variable X : eventid -> Prop.
+  Variable T : thread_id -> Prop.
 
   Notation "'SE' S" := S.(ES.acts_set) (at level 10).
   Notation "'SEinit' S" := S.(ES.acts_init_set) (at level 10).
@@ -173,7 +174,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_loc_e2a w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
@@ -202,7 +203,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_loc w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
@@ -230,7 +231,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_ws_Einit w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S')
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
@@ -297,7 +298,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_ws_ews w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
           (wEE' : (eq e ∪₁ eq_opt e') w') :
@@ -319,7 +320,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_co_ew_prcl w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S')
           (wEE' : (eq e ∪₁ eq_opt e') w') :
       dom_rel ((Sco S)^? ⨾ (Sew S)^? ⨾ ⦗ sim_ws k w' S S' ⦘) ⊆₁ sim_ws k w' S S'.
@@ -365,7 +366,7 @@ Section SimRelAddCO.
 
     Lemma sim_ws_basic_step_ews_co_prcl w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S')
           (wEE' : (eq e ∪₁ eq_opt e') w') : 
       dom_rel (Sco S ⨾ ⦗sim_ews TC X w' S S'⦘) ⊆₁ sim_ws k w' S S'.
@@ -379,7 +380,7 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
       { apply SRCC. }
       intros x [y [z [CO [a SEWS]]]]. 
       unfold sim_ews in SEWS. desc. subst z.
@@ -407,7 +408,7 @@ Section SimRelAddCO.
     
     Lemma weaken_sim_add_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
@@ -426,7 +427,7 @@ Section SimRelAddCO.
 
     Lemma basic_step_e2a_sim_ws_eq w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') :
       e2a S' □₁ (sim_ws k w' S S') ≡₁ e2a S □₁ (sim_ws k w' S S').
     Proof.   
@@ -443,7 +444,7 @@ Section SimRelAddCO.
 
     Lemma basic_step_e2a_ws_compl_in_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (SACO : sim_add_co k w' S S')
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
@@ -524,7 +525,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_co w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (SACO : sim_add_co k w' S S') 
           (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') 
@@ -558,7 +559,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_ws_compl_ex_iss w' k k' e e' S S'
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S')
           (SAEW : sim_add_ew TC X w' S S')
           (SACO : sim_add_co k w' S S')
@@ -581,7 +582,7 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }
@@ -645,7 +646,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_co_iss w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (SAEW : sim_add_ew TC X w' S S') 
           (SACO : sim_add_co k w' S S') 
@@ -662,7 +663,7 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }
@@ -686,7 +687,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_co_issw w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (SAEW : sim_add_ew TC X w' S S') 
           (SACO : sim_add_co k w' S S') 
@@ -703,7 +704,7 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }
@@ -725,7 +726,7 @@ Section SimRelAddCO.
 
     Lemma sim_add_co_e2a_co_kE_issw w' k k' e e' S S' 
           (st st' st'' : thread_st (ktid S k))
-          (SRCC : simrel_cert prog S G sc TC TC' X k st st'')
+          (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
           (BSTEP_ : basic_step_ (thread_lts (ktid S k)) k k' st st' e e' S S') 
           (SAEW : sim_add_ew TC X w' S S') 
           (SACO : sim_add_co k w' S S') 
@@ -742,7 +743,7 @@ Section SimRelAddCO.
       { apply SRCC. }
       assert (simrel_e2a S G sc) as SRE2A.
       { apply SRCC. }
-      assert (simrel_ prog S G sc TC X) as SR_.
+      assert (simrel prog S G sc TC X (T \₁ eq (ktid S k))) as SR_.
       { apply SRCC. }
       assert (Execution.t S X) as EXEC.
       { apply SRCC. }

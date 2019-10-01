@@ -76,8 +76,9 @@ Section SimRelCont.
   Notation "'C'"  := (covered TC).
   Notation "'I'"  := (issued TC).
         
+  (* TODO: move to the different place *)
   Definition pc thread :=
-    C ∩₁ GTid thread \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
+    C ∩₁ (GEinit ∪₁ GTid thread) \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
 
   Record simrel_cont :=
     { contlang : forall k lang (state : lang.(Language.state))
@@ -127,7 +128,8 @@ Section SimRelCont.
       (*          (CEMP : C ∩₁ GTid thread ⊆₁ ∅) *)
       (*          (INK : K S (CInit thread, thread_cont_st thread state)), *)
       (*     @sim_state G sim_normal C thread state; *)
-      
+
+      (* TODO: move it to SimRel.v and use `pc` and `cont_last` *)   
       contsimstate :
         forall thread (lprog : thread_syntax thread) 
                (INPROG : IdentMap.find thread prog = Some lprog),

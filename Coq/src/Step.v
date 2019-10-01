@@ -660,9 +660,40 @@ Proof.
   apply JF_nECF.
 Qed.
 
+Lemma step_same_jf_jf_icf e e' S S'
+      (BSTEP : basic_step e e' S S') 
+      (JF' : jf S' ≡ jf S) 
+      (wfE: ES.Wf S) :
+  jf S' ⨾ icf S' ⨾ (jf S')⁻¹ ≡ jf S ⨾ icf S ⨾ (jf S)⁻¹.
+Proof. 
+  cdes BSTEP.
+  rewrite JF'.
+  rewrite ES.jfE; auto.
+  rewrite !transp_seq, !transp_eqv_rel.
+  rewrite !seqA.
+  arewrite (⦗E S⦘ ⨾ icf S' ⨾ ⦗E S⦘ ≡ icf S).
+  { rewrite <- restr_relE.
+    eapply basic_step_icf_restr; eauto. }
+  rewrite ES.icfE; auto.
+  basic_solver 20.
+Qed.  
+
 (******************************************************************************)
 (** ** Step properties *)
 (******************************************************************************)
+
+Lemma step_jfE e e' S S'
+      (WF : ES.Wf S) 
+      (BSTEP : basic_step e e' S S') 
+      (STEP : step_ e e' S S') :
+  jf S' ⨾ ⦗E S⦘ ≡ jf S.
+Proof. 
+  unfold_step_ STEP.
+  2,4: eapply add_jf_jfE; eauto.
+  all: rewrite JF'.
+  all: rewrite ES.jfE; auto.
+  all: basic_solver.
+Qed.
 
 Lemma step_jf_mon e e' S S'
       (STEP : step_ e e' S S') :
