@@ -192,7 +192,11 @@ Section SimRelCert.
       ex_cont_iss : X ∩₁ e2a ⋄₁ (contE ∩₁ I) ⊆₁ dom_rel (Sew ⨾ ⦗ kE ⦘) ;
       kE_iss : kE ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) ;
 
-      e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco ; 
+      (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco ;  *)
+
+      e2a_co_kE : e2a □ (Sco ⨾ ⦗kE⦘) ⊆ Gco ; 
+
+      e2a_co_ex_ktid : e2a □ (Sco ⨾ ⦗X ∩₁ STid ktid \₁ e2a ⋄₁ contE⦘) ⊆ Gco ; 
       
       rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ;
 
@@ -843,8 +847,10 @@ Section SimRelCert.
     erewrite ex_NTid.
     arewrite (e2a □₁ X ⊆₁ fun _ => True).
     relsf.
-    admit. 
-  Admitted.
+    eapply isim_trav_step_cert_rf_ntid; 
+      try apply SRCC.
+    apply ktid_ninit; auto.
+  Qed.
 
   Lemma icf_certX_in_co : 
     forall t (Tt : T t), 
@@ -970,6 +976,34 @@ Section SimRelCert.
     by destruct INITy as [_ TIDy].
   Qed.
 
+  Lemma e2a_co_cert_ex_tid :
+    forall t (Tt : T t),
+      e2a □ (Sco ⨾ ⦗certX ∩₁ STid t⦘) ⊆ Gco.
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    assert (simrel_e2a S G sc) as SRE2A. 
+    { apply SRCC. }
+    assert (simrel prog S G sc TC X (T \₁ eq ktid)) as SR_.
+    { apply SRCC. }
+    intros t Tt.
+    rewrite set_inter_union_l.
+    rewrite id_union.
+    relsf. unionL.
+    { destruct (classic (t = ktid))
+        as [EQ|nEQ].
+      { basic_solver. }
+      arewrite (SNTid ktid ⊆₁ fun _ => True).
+      relsf.
+      eapply e2a_co_ex_tid; [apply SRCC|].
+      basic_solver. }
+    arewrite (STid t ⊆₁ fun _ => True).
+    relsf.
+    eapply e2a_co_kE; eauto.
+  Qed.
+
   Lemma e2a_co_cert_ex_iss :
     e2a □ (Sco ⨾ ⦗certX ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco.
   Proof. 
@@ -994,7 +1028,8 @@ Section SimRelCert.
       { eapply e2a_co_iss; eauto. basic_solver 10. }
       exfalso. apply nTIDy.
       by erewrite e2a_tid. }
-    by eapply e2a_co_kE_iss. 
+    arewrite (e2a ⋄₁ I' ⊆₁ fun _ => True).
+    relsf. by eapply e2a_co_kE. 
   Qed.
       
     (* Lemma ex_iss_cert_ex : *)

@@ -51,6 +51,8 @@ Notation "'furr'" := (furr G sc).
 
 Definition CsbI := (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)).
 
+(* TODO: rename to `determined`,
+ * i.e. in the same style as `covered`/`issued` *)
 Definition D := 
   C ∪₁ I ∪₁
   dom_rel (rfi^? ⨾ ppo ⨾ ⦗ I ⦘) ∪₁ 
@@ -165,6 +167,49 @@ Proof.
   basic_solver.
 Qed.
 
+Lemma hb_sc_hb_CsbI_alt :
+  hb^? ⨾ sc^? ⨾ hb^? ⨾ ⦗CsbI⦘ ⊆ 
+    (⦗C⦘ ⨾ hb^? ⨾ sc^? ⨾ hb^? ∪ sb)^?.
+Proof. 
+  rewrite crE
+    with (r := hb) at 1 2.
+  rewrite crE
+    with (r := sc) at 1.
+  relsf. 
+  arewrite (hb ⨾ hb ⊆ hb). 
+  rewrite !unionA.
+  apply union_mori.
+  { basic_solver. }
+  unionL.
+
+  1,4,5 : unfold CsbI; 
+          rewrite hb_in_Chb_sb; 
+          eauto; basic_solver 10. 
+
+  { unfold CsbI.
+    erewrite scCsbI_C; eauto.
+    basic_solver 10. }
+
+  { erewrite dom_rel_helper.
+    2 : eapply sc_hb_CsbI_in_C; eauto.
+    basic_solver 10. }
+
+  { unfold CsbI.
+    erewrite scCsbI_C; eauto.
+    sin_rewrite hb_covered; eauto.
+    basic_solver 10. }
+
+  erewrite dom_rel_helper
+    with (r := hb ⨾ ⦗CsbI⦘).
+  2 : eapply CsbI_hb_prcl; eauto.
+  arewrite 
+    (sc ⨾ ⦗CsbI⦘ ⊆ ⦗C⦘ ⨾ sc).
+  { unfold CsbI at 1. 
+    erewrite scCsbI_C; eauto; done. }
+  sin_rewrite hb_covered; eauto.
+  basic_solver 10.
+Qed.
+
 (******************************************************************************)
 (** ** D propeties *)
 (******************************************************************************)
@@ -175,6 +220,26 @@ Proof.
   rewrite (wf_ppoE WF), (wf_rfiE WF), (wf_rfeE WF), (coveredE TCCOH).
   rewrite (issuedE TCCOH) at 1.
   basic_solver 21. 
+Qed.
+
+Lemma D_R : D ∩₁ R ≡₁ C ∩₁ R ∪₁ 
+  dom_rel (ppo ⨾ ⦗ I ⦘) ∪₁ 
+  codom_rel (⦗I⦘ ⨾ rfi) ∪₁ 
+  codom_rel (rfe ⨾ ⦗ R ∩₁ Acq ⦘).
+Proof. 
+  unfold D.
+  rewrite !set_inter_union_l.
+  rewrite crE. relsf.
+  arewrite 
+    (I ∩₁ R ≡₁ ∅).
+  { split; [|done].
+    rewrite issuedW; eauto.
+    type_solver. }
+  arewrite 
+    (dom_rel (rfi ⨾ ppo ⨾ ⦗I⦘) ∩₁ R ≡₁ ∅).
+  { rewrite wf_rfiD; auto. type_solver. }
+  rewrite wf_rfiD, wf_rfeD, wf_ppoD; auto.
+  basic_solver 20.
 Qed.
 
 Lemma C_in_D : C ⊆₁ D. 
@@ -294,6 +359,51 @@ Proof.
   rewrite (dom_l WF.(wf_rfD)) at 2.
   rewrite !seqA. rewrite seq_union_r.
     by seq_rewrite seq_eqvK.
+Qed.
+
+Lemma vf_alt : 
+  vf ≡ ⦗ W ⦘ ⨾ (rf ⨾ ⦗ C ⦘)^? ⨾ hb^? ⨾ sc^? ⨾ hb^? ⨾ ⦗ E ⦘ ∪ 
+        rf ⨾ ⦗ C ⦘ ⨾ sb^? ∪
+        rf ⨾ ⦗ dom_rel (ppo ⨾ ⦗ I ⦘) ⦘ ⨾ sb^? ∪
+        ⦗I⦘ ⨾ rfi ⨾ sb^? ∪
+        rfe ⨾ ⦗ Acq ⦘ ⨾ sb^?.
+Proof. 
+  unfold vf.
+  rewrite !unionA.
+  apply union_more; try done.
+  rewrite <- !seqA, <- !unionA.
+  rewrite <- !seq_union_l.
+  apply seq_more; try done.
+  arewrite (rf ⨾ ⦗D⦘ ≡ rf ⨾ ⦗D ∩₁ R⦘).
+  { rewrite wf_rfD; auto. basic_solver. }
+  rewrite D_R.
+  rewrite !id_union, !seq_union_r.
+  repeat apply union_more; try done.
+  { rewrite wf_rfD; auto. basic_solver. }
+  { rewrite seq_eqv_l, seq_eqv_r.
+    unfolder; splits.
+    { intros x y [RF [z [Iz RFI]]].
+      arewrite (x = z); auto.
+      eapply wf_rff; eauto.
+      apply RFI. }
+    intros x y [Ix RFI].
+    split; [apply RFI|].
+    exists x; splits; auto. }
+  rewrite seq_eqv_r
+    with (dom := R ∩₁ Acq).
+  rewrite seq_eqv_r
+    with (dom := Acq).
+  rewrite seq_eqv_r.
+  unfolder; splits.
+  { intros x y [RF [z [RFE [Ry ACQy]]]].
+    arewrite (x = z); auto.
+    eapply wf_rff; eauto.
+    apply RFE. }
+  intros x y [RFE ACQy].
+  split; [apply RFE|].
+  exists x; splits; auto.
+  apply wf_rfeD in RFE; auto.
+  generalize RFE. basic_solver.
 Qed.
 
 Lemma vf_in_furr : vf ⊆ furr.
@@ -924,6 +1034,148 @@ Proof.
   exists x; splits; auto.
   eapply sim_trav_step_vf_mon; eauto.
   generalize CertRF. basic_solver.
+Qed.
+
+Lemma isim_trav_step_vf_ntid thread TC TC'
+      (NINITT : thread <> tid_init) 
+      (TCOH : tc_coherent G sc TC)
+      (RELCOH : W ∩₁ Rel ∩₁ (issued TC) ⊆₁ covered TC)
+      (ITRAV_STEP : isim_trav_step G sc thread TC TC') :
+  vf G sc TC' ⨾ ⦗CsbI G TC ∩₁ NTid_ thread⦘ ⊆ vf G sc TC.
+Proof.
+  assert (sim_trav_step G sc TC TC')
+    as TRAV_STEP.
+  { eexists; edone. }
+  assert (tc_coherent G sc TC')
+    as TCCOH'.
+  { eapply sim_trav_step_coherence; eauto. } 
+  assert (W ∩₁ Rel ∩₁ issued TC' ⊆₁ covered TC')
+    as RELCOH'.
+  { eapply sim_trav_step_rel_covered; eauto. }
+  rewrite !vf_alt; eauto.
+  rewrite !seq_union_l.
+
+  rewrite !seqA.
+  arewrite 
+    (sb^? ⨾ ⦗CsbI G TC ∩₁ NTid_ thread⦘ ⊆ ⦗CsbI G TC ∩₁ NTid_ thread⦘ ⨾ sb^?).
+  { rewrite !crE. relsf.
+    apply union_mori; try done.
+    rewrite seq_eqv_l, seq_eqv_r.
+    intros x y [SB [CsbIy nTIDy]].
+    unfolder; splits; auto.
+    { eapply CsbI_sb_prcl; eauto. basic_solver 10. }
+    intros TIDx.
+    apply sb_tid_init in SB.
+    destruct SB as [EQtid | INITx].
+    { congruence. }
+    apply is_init_tid in INITx.
+    congruence. }
+
+  repeat apply union_mori.
+
+  { rewrite crE
+      with (r := rf ⨾ ⦗covered TC'⦘).
+    relsf. unionL.
+    { basic_solver 20. }
+    rewrite !seqA.
+    arewrite 
+      (⦗E⦘ ⨾ ⦗CsbI G TC ∩₁ NTid_ thread⦘ ⊆ 
+       ⦗CsbI G TC⦘ ⨾ ⦗NTid_ thread⦘ ⨾ ⦗E⦘).
+    { basic_solver. }
+    arewrite 
+      (hb^? ⨾ sc^? ⨾ hb^? ⨾ ⦗CsbI G TC⦘ ⊆ 
+       (⦗covered TC⦘ ⨾ hb^? ⨾ sc^? ⨾ hb^? ∪ sb)^?).
+    { eapply hb_sc_hb_CsbI_alt; auto. }
+    rewrite crE. relsf. unionL.
+    { erewrite isim_trav_step_new_covered_tid;
+        eauto.
+      basic_solver 20. }
+    { basic_solver 20. }
+    arewrite 
+      (sb ⨾ ⦗NTid_ thread⦘ ⊆ ⦗NTid_ thread⦘ ⨾ sb).
+    { rewrite seq_eqv_r, seq_eqv_l.
+      intros x y [SB nTIDy].
+      split; auto.
+      apply sb_tid_init in SB.
+      destruct SB as [EQtid | INITx].
+      { congruence. }
+      apply is_init_tid in INITx.
+      congruence. }
+    erewrite isim_trav_step_new_covered_tid;
+      eauto.
+    rewrite sb_in_hb.
+    basic_solver 20. }
+  
+  { erewrite isim_trav_step_new_covered_tid;
+      eauto. 
+    basic_solver 10. }
+  
+  { seq_rewrite !seq_eqv_r.
+    intros x y [z [HH SB']].
+    destruct HH as [HH [CsbIz nTIDz]].
+    destruct HH as [RF [z' [PPO Iy']]].
+    do 2 (eexists; splits; eauto).
+    (* TODO: introduce lemma `I' ∩ Ntid thread ⊆ I` *)
+    eapply isim_trav_step_new_issued_tid in Iy'; eauto.
+    destruct Iy' as [[Iy _] | [Iy' TIDy]]; auto.
+    assert (SB := PPO).
+    apply ppo_in_sb in SB; auto.
+    apply sb_tid_init in SB.
+    destruct SB as [EQtid | INITx].
+    { congruence. }
+    eapply init_w in INITx; eauto.
+    apply wf_ppoD in PPO.
+    exfalso. 
+    generalize PPO.
+    type_solver. }
+  
+  { arewrite 
+      (rfi ⨾ ⦗CsbI G TC ∩₁ NTid_ thread⦘ ⊆ ⦗CsbI G TC ∩₁ NTid_ thread⦘ ⨾ rfi).
+    { rewrite seq_eqv_l, seq_eqv_r.
+      intros x y [RFI [CsbIy nTIDy]].
+      assert (sb x y) as SB.
+      { apply RFI. }
+      unfolder; splits; auto.
+      { eapply CsbI_sb_prcl; eauto. basic_solver 10. }
+      intros TIDx.
+      apply sb_tid_init in SB.
+      destruct SB as [EQtid | INITx].
+      { congruence. }
+      apply is_init_tid in INITx.
+      congruence. }
+    erewrite isim_trav_step_new_issued_tid;
+      eauto. 
+    basic_solver 10. }
+
+  basic_solver 10.
+
+Qed.
+
+Lemma isim_trav_step_cert_rf_ntid thread TC TC' 
+      (NINITT : thread <> tid_init) 
+      (TCOH : tc_coherent G sc TC)
+      (RELCOH : W ∩₁ Rel ∩₁ (issued TC) ⊆₁ covered TC)
+      (ITRAV_STEP : isim_trav_step G sc thread TC TC') : 
+  cert_rf G sc TC ⨾ ⦗NTid_ thread⦘ ⊆ cert_rf G sc TC'.
+Proof. 
+  assert (sim_trav_step G sc TC TC')
+    as TRAV_STEP.
+  { eexists; edone. }
+  unfold cert_rf.
+  rewrite !seq_eqv_r
+    with (dom := CsbI G TC ∩₁ R).
+  rewrite !seq_eqv_r.
+  intros x y [CertRF nTIDy].
+  destruct CertRF as [VF nCOVF].
+  destruct VF as [[VF EQloc] [CsbIy Ry]].
+  unfolder; splits; auto.
+  { eapply sim_trav_step_vf_mon; eauto. }
+  { eapply sim_trav_step_CsbI_mon; eauto. }
+  intros [z [CO VF']].
+  apply nCOVF.
+  exists z; splits; auto.
+  eapply isim_trav_step_vf_ntid; eauto.
+  basic_solver.
 Qed.
 
 End CertRfLemmas.

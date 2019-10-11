@@ -400,30 +400,21 @@ Section SimRelStep.
       eapply ex_iss_inW.
       { apply SRC. }
       split; auto. }
-    (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco *)
-    { etransitivity; [|eapply e2a_co_iss; eauto].
-      arewrite 
-        (kE S k ∩₁ e2a S ⋄₁ I' ⊆₁ X ∩₁ e2a S ⋄₁ C).
-      { rewrite XkTIDCOV. basic_solver. }
-      arewrite 
-        (Sco S ⨾ ⦗X ∩₁ e2a S ⋄₁ C⦘ ≡ Sco S ⨾ ⦗X ∩₁ SW S ∩₁ e2a S ⋄₁ C⦘).
-      { rewrite ES.coD; auto. basic_solver. }
-      apply collect_rel_mori; try done.
-      apply seq_mori; try done.
-      apply eqv_rel_mori; try done.
-      intros x [[Xx Wx] Cx].
-      split; auto.
-      red. red in Cx.
-      eapply w_covered_issued; eauto.
-      split; auto.
-      unfold is_w.
-      fold (compose Glab (e2a S) x).
-      fold (is_w (Glab ∘ e2a S) x).
-      eapply same_lab_u2v_dom_is_w.
-      { apply same_lab_u2v_dom_comm.
-        eapply e2a_lab; apply SRC. }
-      split; auto.
-      eapply Execution.ex_inE; eauto. }
+    (* e2a_co_kE : e2a □ (Sco ⨾ ⦗kE⦘) ⊆ Gco *)
+    { etransitivity; 
+        [|eapply e2a_co_ex_tid; eauto].
+      rewrite XkTIDCOV.
+      rewrite set_inter_union_r, id_union.
+      rewrite seq_union_r, collect_rel_union.
+      unionL; [|basic_solver 10].
+      arewrite_false 
+        (Sco S ⨾ ⦗X ∩₁ e2a S ⋄₁ C ∩₁ SEinit S⦘).
+      { rewrite <- ES.coEninit; auto.
+        unfold ES.acts_ninit_set.
+        basic_solver. }
+      basic_solver. }
+    (* e2a_co_ex_ktid : e2a □ (Sco ⨾ ⦗X ∩₁ STid ktid \₁ e2a ⋄₁ contE⦘) ⊆ Gco *)
+    { erewrite <- e2a_co_ex_tid; eauto. basic_solver 10. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE⦘ ⊆ e2a □ Srmw ⨾ ⦗ kE ⦘ ; *)
     { rewrite XkTIDCOV at 1.
       unfolder. ins. desf.
@@ -779,10 +770,14 @@ Section SimRelStep.
     { eapply jf_cert_ex_in_cert_rf; eauto. }
     (* icf_ex_in_co : 
      *   forall t (Tt : T t), 
-     *     e2a □ (Sjf ⨾ Sicf ⨾ ⦗X ∩₁ STid t⦘ ⨾ Sjf⁻¹) ⊆ Gco 
+     *     e2a □ (Sjf ⨾ Sicf ⨾ ⦗certX ∩₁ STid t⦘ ⨾ Sjf⁻¹) ⊆ Gco 
      *)
     { eapply icf_certX_in_co; eauto. }
-    (*  e2a_co_iss : e2a □ (Sco ⨾ ⦗certX ∩₁ e2a ⋄₁ I⦘) ⊆ Gco *)
+    (*  e2a_co_ex_tid : 
+     *    forall t (Tt : T t), 
+     *      e2a □ (Sco ⨾ ⦗certX ∩₁ STid t⦘) ⊆ Gco *)
+    { eapply e2a_co_cert_ex_tid; eauto. }
+    (*  e2a_co_iss : e2a □ (Sco ⨾ ⦗certX ∩₁ e2a S ⋄₁ I'⦘) ⊆ Gco *)
     { eapply e2a_co_cert_ex_iss; eauto. }
     (* jfe_ex_iss : dom_rel Sjfe ⊆₁ dom_rel (Sew ⨾ ⦗ certX ∩₁ e2a ⋄₁ I ⦘) *)
     { etransitivity.

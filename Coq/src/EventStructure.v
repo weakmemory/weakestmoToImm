@@ -952,6 +952,57 @@ Lemma jfi_in_sb WF : jfi ⊆ sb.
 Proof. unfold ES.jfi. basic_solver. Qed.
 
 (******************************************************************************)
+(** ** co properties *)
+(******************************************************************************)
+
+Lemma co_codom_ninit WF : codom_rel co ⊆₁ Eninit.
+Proof. 
+  intros y [x CO].
+  assert (E x) as Ex.
+  { apply coE in CO; auto.
+    generalize CO. basic_solver. }
+  assert (E y) as Ey.
+  { apply coE in CO; auto.
+    generalize CO. basic_solver. }
+
+  apply acts_set_split 
+    in Ey.
+  destruct Ey 
+    as [INITy | nINITy]; auto.
+
+  apply acts_set_split 
+    in Ex.
+  destruct Ex 
+    as [INITx | nINITx]; auto.
+
+  { exfalso. 
+    assert (x = y) as EQ; subst.
+    { eapply init_uniq; auto.
+      eapply col; auto. }
+    eapply co_irr; eauto. }
+
+  exfalso. 
+  eapply co_irr, co_trans; eauto.
+  eapply co_init; auto.
+  apply seq_eqv_lr. 
+  unfold set_inter.
+  splits; auto.
+  { red; erewrite <- col; auto. }
+  apply coD in CO; auto.
+  generalize CO. basic_solver.
+Qed.
+
+Lemma coEninit WF : co ⨾ ⦗Eninit⦘ ≡ co.
+Proof. 
+  split; [basic_solver|].
+  rewrite seq_eqv_r.
+  unfolder; ins; desc.
+  split; auto.
+  eapply co_codom_ninit; auto.
+  basic_solver.
+Qed.
+
+(******************************************************************************)
 (** ** ew properties *)
 (******************************************************************************)
 

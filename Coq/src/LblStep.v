@@ -528,6 +528,12 @@ Proof.
 
 Qed.
 
+Lemma ilbl_step_lbls thread lbls state state'
+      (WFT : wf_thread_state thread state)
+      (ILBL_STEP : ilbl_step thread lbls state state') :
+  exists lbl lbl', lbls = opt_to_list lbl' ++ [lbl].
+Proof. edestruct ilbl_step_cases; desf; eauto. Qed.
+
 Lemma ilbl_step_acts_set thread lbl lbl' state state'
       (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread (opt_to_list lbl' ++ [lbl]) state state') :
@@ -552,12 +558,13 @@ Proof.
   do 2 eexists; splits; eauto.
 Qed.
 
-Lemma ilbl_step_lbls thread lbls state state'
+Lemma ilbl_step_acts_set_mon thread lbl lbl' state state'
       (WFT : wf_thread_state thread state)
-      (ILBL_STEP : ilbl_step thread lbls state state') :
-  exists lbl lbl', lbls = opt_to_list lbl' ++ [lbl].
+      (ILBL_STEP : ilbl_step thread (opt_to_list lbl' ++ [lbl]) state state') :
+  acts_set state.(G) ⊆₁ acts_set state'.(G).
 Proof. 
-  edestruct ilbl_step_cases as [lbl [lbl' [LBLS _]]]; eauto. 
+  edestruct ilbl_step_acts_set; eauto.
+  desc. rewrite ACTS. basic_solver.
 Qed.
 
 Lemma ineps_step_eindex_shift thread lbl st st'
@@ -824,11 +831,13 @@ Lemma same_label_nR_ilbl_step thread la la' lb lb' state state' state''
   la = lb.
 Proof. eapply nR_ilbl_step; eauto. Qed.
 
-Lemma unique_same_label_fst_ilbl_step thread l la' lb' state state' state''
-      (STEP1 : ilbl_step thread (opt_to_list la' ++ [l]) state state' )
-      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [l]) state state'') :
+Lemma unique_same_label_fst_ilbl_step thread la la' lb lb' state state' state''
+      (EQ : la = lb)
+      (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state' )
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') :
   state' = state''.
-Proof. 
+Proof.
+  rewrite EQ in *.
   eapply unique_ilbl_step; eauto.
   erewrite same_label_fst_ilbl_step 
     with (la' := la'); eauto.

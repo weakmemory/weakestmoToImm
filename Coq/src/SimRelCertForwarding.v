@@ -850,6 +850,43 @@ Section SimRelCertForwarding.
     apply SRCC.
   Qed.
 
+  Lemma simrel_cert_forwarding_e2a_co_kE lbl lbl' k k' e e' S 
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
+        (FRWD : forwarding S lbl lbl' k k' e e' st st')         
+        (CST_REACHABLE : (lbl_step (ktid S k))＊ st' st'') :
+    e2a S □ Sco S ⨾ ⦗ES.cont_sb_dom S k'⦘ ⊆ Gco.
+  Proof. 
+    assert (ES.Wf S) as WFS.
+    { apply SRCC. }
+    assert (Execution.t S X) as EXEC.
+    { apply SRCC. }
+    cdes FRWD.
+    erewrite ES.cont_adjacent_sb_dom; eauto.
+    rewrite set_unionA.
+    rewrite id_union, seq_union_r, collect_rel_union.
+    unionL; [apply SRCC|].
+    arewrite 
+      (eq e ∪₁ eq_opt e' ⊆₁ 
+          X ∩₁ (Stid_ S (ktid S k)) \₁ e2a S ⋄₁ (acts_set st.(ProgToExecution.G)));
+      [|apply SRCC].
+    unfolder; unfold eq_opt; ins; desf; splits.
+    { eapply forwarding_ex_e; eauto. }
+    { eapply ES.cont_adjacent_tid_e; eauto. }
+    { intros HH.
+      eapply acts_rep 
+        in HH; [|eapply wf_cont_state]; eauto.
+      erewrite forwarding_e2a_e in HH; eauto.
+      desc. inversion REP. omega. }
+    { eapply forwarding_ex_e'; eauto. }
+    { eapply ES.cont_adjacent_tid_e'; eauto. }
+    intros HH.
+    eapply acts_rep 
+      in HH; [|eapply wf_cont_state]; eauto.
+    erewrite forwarding_e2a_e' in HH; eauto.
+    desc. inversion REP. omega. 
+  Qed.
+
   Lemma simrel_cert_lbl_step_nrwm_eindex k S
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
@@ -1001,11 +1038,17 @@ Section SimRelCertForwarding.
     { eapply simrel_cert_forwarding_ex_cont_iss; eauto. }
     (* kE_iss : kE' ∩₁ e2a ⋄₁ I ⊆₁ dom_rel (Sew ⨾ ⦗ X ⦘) *)
     { eapply simrel_cert_forwarding_kE_iss; eauto. }
-    (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE' ∩₁ e2a ⋄₁ I'⦘) ⊆ Gco *)
-    { admit. }
+    (* e2a_co_kE_iss : e2a □ (Sco ⨾ ⦗kE'⦘) ⊆ Gco *)
+    { eapply simrel_cert_forwarding_e2a_co_kE; eauto. }
+    (* e2a_co_ex_ktid : e2a □ (Sco ⨾ ⦗X \₁ e2a ⋄₁ contE'⦘) ⊆ Gco  *)
+    { cdes ADJ. rewrite <- kEQTID.
+      erewrite set_minus_mori; [|edone|red].
+      { eapply e2a_co_ex_ktid; eauto. }
+      erewrite ilbl_step_acts_set_mon; eauto.
+      eapply wf_cont_state; eauto. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE'⦘ ⊆ e2a □ Srmw ⨾ ⦗kE'⦘ *)
     { eapply simrel_cert_forwarding_rmw_cov_in_kE; eauto. }
-    admit.
+    admit. 
   Admitted.
 
   Lemma simrel_cert_cont_icf_dom_forwarding x k S 
