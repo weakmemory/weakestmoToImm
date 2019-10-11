@@ -1376,12 +1376,9 @@ Proof.
 Qed.
 
 Variable S : ES.t.
-Variable _G : execution.
-Variable _TC : trav_config.
-Variable _X : eventid -> Prop.
 Variable X : eventid -> Prop.
 
-Variable src : simrel_cont (stable_prog_to_prog P) S _G _TC _X.
+Variable src : simrel_cont (stable_prog_to_prog P) S.
 
 
 Lemma X2G_FOO
