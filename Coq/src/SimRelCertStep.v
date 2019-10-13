@@ -1632,13 +1632,14 @@ Section SimRelCertStep.
   Qed.
 
   Lemma basic_step_contsimstate k k' e e' S S'
-        (WF : ES.Wf S)
-        (CSS : contsimstate prog S G TC X)
-        (XE : X ⊆₁ SE S)
-        (st st' : thread_st (ES.cont_thread S k))
+        (st st' st'': (thread_st (ktid S k)))
+        (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S'):
     contsimstate prog S' G TC X.
   Proof.
+    assert (CSS : contsimstate prog S G TC X) by apply SRCC.
+    assert (WF : ES.Wf S) by apply SRCC.
+    assert (XE : X ⊆₁ SE S) by apply SRCC.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
     unfold contsimstate.
