@@ -1844,6 +1844,39 @@ Proof.
   by apply rmwi. 
 Qed.
 
+Lemma cont_adjacent_sb_e WF k k' e e'
+      (ADJ : cont_adjacent S k k' e e') :
+  cont_sb_dom S k × eq e ⊆ sb.
+Proof. 
+  cdes ADJ.
+  erewrite cont_sb_dom_alt; auto.
+  rewrite seq_eqv_r.
+  intros x y [[z [SB kLASTz]] EQy].
+  subst y.
+  eapply sb_imm_split_r; auto.
+  exists z; splits; auto.
+  eapply cont_adjacent_con_last_sb_imm_alt; eauto.
+Qed.
+
+Lemma cont_adjacent_sb_e' WF k k' e e'
+      (ADJ : cont_adjacent S k k' e e') :
+  (cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⊆ sb.
+Proof. 
+  unfold eq_opt.
+  destruct e' as [e'|]; 
+    [|basic_solver].
+  intros x y [[kSBx | EQx] EQy]; 
+    subst y.
+  { eapply sb_imm_split_r; auto.
+    exists e; split.
+    { right. eapply cont_adjacent_sb_e; eauto. basic_solver. }
+    eapply cont_adjacent_sb_imm; eauto.
+    basic_solver. }
+  subst x.
+  eapply cont_adjacent_sb_imm; eauto.
+  basic_solver.
+Qed.
+
 Lemma cont_adjacent_nsb_dom_e WF lang st k k' e e' 
       (KK : K (k, existT _ lang st))   
       (ADJ : cont_adjacent S k k' e e') :
