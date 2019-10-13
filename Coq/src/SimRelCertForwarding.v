@@ -999,7 +999,7 @@ Section SimRelCertForwarding.
     eapply ES.cont_adjacent_rmw; eauto. 
   Qed.
 
-  Lemma simrel_cert_forwarding_step_contsimstate_kE_covered lbl lbl' k k' e e' S
+  Lemma simrel_cert_forwarding_contsimstate_kE_covered lbl lbl' k k' e e' S
         (st st' st'': (thread_st (ktid S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
         (FRWD : forwarding S lbl lbl' k k' e e' st st')         
@@ -1147,9 +1147,9 @@ Section SimRelCertForwarding.
       split; auto.
       eapply e2a_sb; eauto.
       { apply SRCC. } 
-      (* TODO: lemma in EventStructure.v *)
-      (* cont_sb_dom S k × e ⊆ sb *)
-      admit. }
+      do 2 eexists; splits; eauto.
+      eapply ES.cont_adjacent_sb_e; eauto.
+      basic_solver. }
 
     exists k', st'.
     splits; auto.
@@ -1280,7 +1280,7 @@ Section SimRelCertForwarding.
       desc. generalize ACTS. basic_solver. }
 
     erewrite cslab; eauto;
-      [| apply SRCC | eapply C_in_D].
+      [| apply SRCC | by eapply C_in_D].
 
     erewrite forwarding_e2a_e; eauto. 
     
@@ -1342,8 +1342,13 @@ Section SimRelCertForwarding.
       eapply wf_cont_state; eauto. }
     (* rmw_cov_in_kE : Grmw ⨾ ⦗C' ∩₁ e2a □₁ kE'⦘ ⊆ e2a □ Srmw ⨾ ⦗kE'⦘ *)
     { eapply simrel_cert_forwarding_rmw_cov_in_kE; eauto. }
-    admit. 
-  Admitted.
+    
+    destruct 
+      (classic ((e2a S ⋄₁ C' ∩₁ kE S k' ⊆₁ e2a S ⋄₁ C' ∩₁ kE S k))).
+    { eapply simrel_cert_forwarding_contsimstate_kE_covered; eauto. }
+    eapply simrel_cert_forwarding_contsimstate_kE_covering; eauto.
+
+  Qed.
 
   Lemma simrel_cert_cont_icf_dom_forwarding x k S 
         (st st': thread_st (ktid S k))
