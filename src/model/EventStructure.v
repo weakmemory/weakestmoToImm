@@ -721,6 +721,8 @@ Proof.
   apply nSBcrs.
   unfolder. auto.
 Qed.
+ 
+Hint Unfold union : unfolderDb.
 
 Lemma cf_sb_in_cf WF : cf ⨾ sb ⊆ cf.
 Proof.
@@ -738,10 +740,10 @@ Proof.
     apply sb_tid; auto.
     apply seq_eqv_l. split; auto. }
   intros DD. apply CF.
-  unfolder in DD. desf.
+  repeat unfolder in DD. desf.
   { generalize SB. basic_solver. }
   { assert (same_tid x y) as STIDxy.
-    { eapply WF.(sb_tid). basic_solver. }
+    { eapply WF.(sb_tid). basic_solver 10. }
     assert (same_tid z y) as STIDzy.
     { eapply WF.(sb_tid). basic_solver. }
     assert ((sb ∩ same_tid)⁼ x z).
@@ -2185,7 +2187,7 @@ Proof.
   apply same_thread_cf_free in HH; auto. 
   apply seq_eqv_lr in HH.
   destruct HH as [_ [SB _]].
-  unfolder in SB; desf.
+  repeat unfolder in SB. desf.
   { assert (seqn x < seqn y) as HH; [|omega]. 
     eapply seqn_sb_alt; eauto. }
   assert (seqn y < seqn x) as HH; [|omega]. 
@@ -2371,10 +2373,9 @@ Proof.
   apply seq_eqv_l. split; auto.
   apply seq_eqv_r. split; auto.
   split; auto.
-  intros SB. unfolder in SB. desf.
-  { omega. }
-  apply seqn_sb_alt in SB; auto.
-  omega.
+  intros SB. repeat unfolder in SB. 
+  desf; [omega|].
+  apply seqn_sb_alt in SB; auto. omega.
 Qed.
 
 Lemma seqn_eq_imm_sb WF x y z 
