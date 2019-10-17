@@ -1,7 +1,10 @@
 Require Import Program.Basics.
 
 From hahn Require Import Hahn.
-From imm Require Import Events Prog Execution RC11.
+From imm Require Import Events Prog Execution RC11 ProgToExecutionProperties
+     TraversalConfig Traversal.
+From PromisingLib Require Import Basic Language.
+
 Require Import AuxRel.
 Require Import EventStructure.
 Require Import Execution.
@@ -13,6 +16,9 @@ Require Import Omega.
 Require Import Consistency.
 Require Import ImmProperties.
 Require Import Step.
+Require Import ExecutionEquivalence.
+Require Import SimRelCont.
+Require Import StepWf.
 
 Require Import SC.
 
@@ -818,6 +824,16 @@ Proof.
   by rewrite X2G_sw_transfer.
 Qed.
 
+(* It should be easy to prove *)
+Lemma X2G_hb_transfer'
+      (WF : ES.Wf S)
+      (EXEC : Execution.t S X)
+      (X2G : X2G)
+      (WF_G : Wf G) :
+  Ghb ⊆ Move Shb.
+Proof.
+Admitted.
+
 Lemma X2G_fr_transfer
       (WF : ES.Wf S)
       (EXEC : Execution.t S X)
@@ -1273,10 +1289,239 @@ Proof.
     by apply x2g_wf.
 Qed.
 
+Lemma X2G_x_equiv {S X}
+      (WF : ES.Wf S)
+      (CONS : es_consistent (m := Weakestmo) S)
+      (EXEC : Execution.t S X) :
+  X2G S X × X2G S X ⊆ X_EQUIV.
+Proof.
+  intros G1 G2 [MATCH1 MATCH2].
+  cdes MATCH1.
+  cdes MATCH2.
+  constructor; splits.
+  2: { rewrite GACTS; apply eq_dom_compose.
+       intros e Xe. by rewrite <- GLAB, GLAB0. }
+  all: unfolder in *; basic_solver.
+Qed.
+
 Definition rc11_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
-    ⟪ x2g  : X2G S X G ⟫ /\
-    ⟪ rc11 : rc11_consistent G ⟫.
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ RC11 : rc11_consistent G ⟫.
 
 Definition sc_consistent_ex (S : ES.t) (X : eventid -> Prop) := exists G,
-    ⟪ x2g  : X2G S X G ⟫ /\
-    ⟪ sc : sc_consistent G ⟫.
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ SC : sc_consistent G ⟫.
+
+Definition program_execution P S X :=
+  ⟪ STEPS : (step Weakestmo)＊ (prog_es_init P) S⟫ /\
+  ⟪ EXEC : Execution.t S X ⟫.
+
+Require Import Setoid.
+
+Add Parametric Morphism S G : (fun X => X2G S X G) with signature
+    set_equiv ==> iff as X2G_more.
+Proof.
+  unfold X2G.
+  ins. split.
+  { splits. all: desf; by rewrite <- H. }
+  splits. all: desf; by rewrite H.
+Qed.
+
+Add Parametric Morphism S : (x2g S) with signature
+    set_equiv ==> X_EQUIV as x2g_more.
+Proof.
+  intros X X' EQ.
+  ins. red. splits.
+  all: unfold x2g, acts_set; simpls.
+  all: try rewrite EQ; admit.
+Admitted.
+
+Notation "'K' S" := (ES.cont_set S) (at level 1).
+
+
+Section X2G_STEPS.
+
+Variable P : stable_prog_type.
+
+Lemma CInit_cont_keep S tid lang
+      (STEPS : (fun s s' => exists e e', BasicStep.basic_step e e' s s')＊ (prog_es_init P) S)
+      (INK : exists st, K S ((CInit tid), existT _ lang st)) :
+  IdentMap.In tid (stable_prog_to_prog P).
+Proof.
+  generalize dependent tid.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { ins. desf.
+    unfold prog_es_init, prog_l_es_init, ES.init, ES.cont_set in INK.
+    simpls.
+    unfold prog_init_K in INK.
+    apply in_split_l in INK. simpls.
+    rewrite split_as_map in INK. simpls.
+    rewrite map_map in INK. simpls.
+    apply in_map_iff in INK.
+    destruct INK as [k [EQ INK]]. desf.
+    unfold stable_prog_to_prog.
+    apply IdentMap.Facts.map_in_iff.
+    exists (snd k).
+    rewrite (surjective_pairing k) in INK.
+    apply RegMap.elements_complete in INK.
+    by apply UsualFMapPositive.UsualPositiveMap.Facts.find_mapsto_iff. }
+  clear dependent S.
+  intros S S' STEPS IH STEP tid INK. simpls. desf.
+  apply IH. exists st.
+  cdes STEP.
+  eapply BasicStep.basic_step_cont_set in INK; eauto.
+  unfold "∪₁" in INK. desf.
+Qed.
+
+Variable S : ES.t.
+Variable X : eventid -> Prop.
+
+Variable src : simrel_cont (stable_prog_to_prog P) S.
+
+
+Lemma X2G_FOO
+      (* (NINIT : ~ IdentMap.In tid_init P) *)
+      (* (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> []) *)
+      (EXEC : program_execution P S X)
+      (k : cont_label)
+      (st : ProgToExecution.state)
+      (lprog : list Instr.t)
+      (INK : K S (k, existT _ (thread_lts (ES.cont_thread S k)) st))
+      (INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) = Some lprog) :
+  ⟪ REACH : (fun st st' => exists lbls, LblStep.ilbl_step (ES.cont_thread S k) lbls st st')＊
+              (ProgToExecution.init lprog) st ⟫ /\
+  ⟪ RESTR : X_EQUIV (x2g S (ES.cont_sb_dom S k)) st.(ProgToExecution.G) ⟫.
+Proof.
+Admitted.
+
+Lemma tid_from_prog x
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (STEPS : (step Weakestmo)＊ (prog_es_init P) S)
+      (IN : ES.acts_set S x) :
+  ES.tid S x = tid_init \/ IdentMap.In (ES.tid S x) (stable_prog_to_prog P).
+Proof.
+  generalize dependent x.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { auto. }
+  clear dependent S.
+  intros S S' STEPS IH STEP x IN.
+  assert (WF : ES.Wf S).
+  { eby eapply steps_es_wf. }
+  assert (WF' : ES.Wf S').
+  { eapply steps_es_wf; eauto.
+    apply rt_step in STEP. apply rt_rt. basic_solver. }
+  cdes STEP.
+  eapply BasicStep.basic_step_acts_set in IN; eauto.
+  apply set_unionA in IN. destruct IN as [OLD | NEW].
+  { specialize (IH x OLD). desf.
+    { left. eby eapply BasicStep.basic_step_acts_init_set. }
+    right.
+    arewrite (ES.tid S' x = ES.tid S x); [ | done].
+    eby eapply BasicStep.basic_step_tidlab_eq_dom. }
+  right.
+  cdes BSTEP.
+  assert (CONT_T : IdentMap.In (ES.cont_thread S k) (stable_prog_to_prog P)).
+  { unfold ES.cont_thread. desf.
+    { eapply CInit_cont_keep with (lang := lang).
+      { assert (STEPS_IN : step Weakestmo ⊆
+                           (fun s s' => exists e e', BasicStep.basic_step e e' s s')).
+        { unfold step. basic_solver. }
+        apply clos_refl_trans_mori in STEPS_IN. eby apply STEPS_IN. }
+      cdes BSTEP_. eauto. }
+    assert (Eeid : ES.acts_set S eid).
+    { cdes BSTEP_. eby eapply ES.K_inE. }
+    specialize (IH eid Eeid). desf.
+    exfalso.
+    assert (NINITeid : ES.acts_ninit_set S eid).
+    { cdes BSTEP_. eby eapply ES.K_inEninit. }
+    apply set_minus_inter_set_compl in NINITeid.
+    unfold ES.acts_init_set in NINITeid.
+    unfolder in *; basic_solver 30. }
+  destruct NEW as [EQ_e | EQ_e'].
+  { rewrite <- EQ_e.
+    eby erewrite BasicStep.basic_step_tid_e. }
+  unfold eq_opt in EQ_e'.  desf.
+  eby erewrite BasicStep.basic_step_tid_e'.
+Qed.
+
+Notation "'ex_sb'" := (Execution.ex_sb S X).
+
+Lemma X2G_steps'
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (EXEC : program_execution P S X) :
+  exists G,
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
+Proof.
+  cdes EXEC.
+  assert (WF : ES.Wf S).
+  { eby eapply steps_es_wf. }
+  exists (x2g S X). splits.
+  { by apply x2g_X2G. }
+  { by apply x2g_wf. }
+  assert (X ≡₁ (⋃₁ x ∈ wmax_elt ex_sb, (ES.cont_sb_dom S (CEvent x)))).
+  { admit. }
+  constructor.
+  { intros a Ge.
+    apply (x2g_X2G WF EXEC1) in Ge.
+    destruct Ge as [e [Xe EQ]].
+    unfold is_init. desf; [left | right]; simpls.
+    unfold e2a in Heq. desf.
+    assert (ES.tid S e = tid_init \/ IdentMap.In (ES.tid S e) (stable_prog_to_prog P));
+      [ | basic_solver].
+    apply tid_from_prog; auto.
+    eby eapply Execution.ex_inE. }
+  ins.
+Admitted.
+
+End X2G_STEPS.
+
+Lemma X2G_steps P S X
+      (NINIT : ~ IdentMap.In tid_init P)
+      (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> [])
+      (EXEC : program_execution P S X) :
+  exists G,
+    ⟪ MATCH : X2G S X G ⟫ /\
+    ⟪ WF : Wf G ⟫ /\
+    ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫.
+Proof.
+  assert (exists G,
+             ⟪ MATCH : X2G S (ES.acts_set S ∩₁ X) G ⟫ /\
+             ⟪ WF : Wf G ⟫ /\
+             ⟪ EXEC : ProgToExecutionProperties.program_execution (stable_prog_to_prog P) G ⟫).
+  2: { desf. exists G. splits; auto.
+       assert (X ≡₁ (ES.acts_set S ∩₁ X)).
+       { cdes EXEC. destruct EXEC2. basic_solver. }
+       eapply X2G_more; eauto. }
+  cdes EXEC.
+  eapply clos_refl_trans_ind_left with (z := S); eauto.
+  { exists (x2g (prog_es_init P) (ES.acts_set (prog_es_init P) ∩₁ X)). splits.
+    { apply x2g_X2G.
+      { by apply prog_es_init_wf. }
+      unfold prog_es_init.
+      constructor.
+      { basic_solver. }
+      { admit. }
+      { rewrite prog_l_es_init_sb. basic_solver. }
+      { rewrite prog_l_es_init_sw. basic_solver. }
+      { rewrite prog_l_es_init_rmw. basic_solver. }
+      { rewrite prog_l_es_init_w. type_solver. }
+      { rewrite prog_l_es_init_init.
+        arewrite (forall Q, Q ∩₁ X ⊆₁ Q) by basic_solver.
+        unfold ES.cf_free. by rewrite ES.ncfEinit. }
+      admit. }
+    { apply x2g_wf; admit. }
+    constructor.
+    { ins. left.
+      unfold acts_set, acts, x2g in IN. admit. }
+    ins.
+    exists (x2g (prog_es_init P) (ES.acts_set (prog_es_init P) ∩₁ X)).
+    split.
+    { exists (ProgToExecution.init linstr). splits.
+      { apply rt_refl.  }
+Admitted.

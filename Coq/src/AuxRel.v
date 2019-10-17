@@ -1,8 +1,9 @@
-Require Import Program.Basics.
+Require Import Program.Basics Omega.
 From hahn Require Import Hahn.
-
+Import ListNotations.
 Set Implicit Arguments.
 Local Open Scope program_scope.
+
 
 Section AuxRel.
 
@@ -67,7 +68,7 @@ Hint Unfold
      clos_sym clos_refl_sym
      inj_dom restr_fun set_map
      eq_opt compl_rel fixset
-     prcl fwcl prefix : unfolderDb.
+     prcl fwcl prefix one_of : unfolderDb.
 
 Section Props.
 
@@ -419,6 +420,27 @@ Proof.
   all: exfalso; eapply HH; split; eauto.
 Qed.
 
+Lemma eq_dom_compose (h : A -> B) (f g : B -> C) :
+  eq_dom (h □₁ s) f g <-> eq_dom s (f ∘ h) (g ∘ h).
+Proof.
+  unfold "∘".
+  split; basic_solver.
+Qed.
+
+Lemma set_subset_collect_inj (f : A -> B)
+      (INJ : inj_dom (s ∪₁ s') f) :
+  s ⊆₁ s' <-> f □₁ s ⊆₁ f □₁ s'.
+Proof.
+  split; [apply set_subset_collect|].
+  intros INCL a Sa.
+  assert (HH : (f □₁ s) (f a)) by basic_solver.
+  specialize (INCL (f a) HH).
+  destruct INCL as [a' EQS].
+  arewrite (a = a').
+  { apply INJ; basic_solver. }
+  desf.
+Qed.
+
 (******************************************************************************)
 (** ** collect_rel properties *)
 (******************************************************************************)
@@ -704,6 +726,14 @@ Proof.
   { apply INJ_CODOM ; basic_solver. }
   desf.
 Qed.
+
+Lemma collect_rel_one_of (f : A -> B) :
+  f □ one_of s ⊆ one_of (f □₁ s).
+Proof. basic_solver. Qed.
+
+Lemma cs_collect_rel (f : A -> B) :
+  f □ r^⋈ ≡ (f □ r)^⋈.
+Proof. basic_solver 10. Qed.
 
 (******************************************************************************)
 (** ** set_map properties *)
@@ -1548,6 +1578,27 @@ Lemma transp_empty :
   r ⊆ ∅₂ <-> r⁻¹ ⊆ ∅₂.
 Proof. split; basic_solver. Qed.
 
+Lemma eq_dom_equivalence :
+  @equivalence (A -> B) (@eq_dom A B s).
+Proof.
+  constructor.
+  { basic_solver. }
+  { intros f g h EQ_fg EQ_gh a Xa.
+    by rewrite EQ_fg, EQ_gh. }
+  intros f g EQ a Xa.
+  by rewrite EQ.
+Qed.
+
+Lemma nempty_list_neq_empty_list_r (xs : list A) (x : A) :
+  xs ++ [x] <> [].
+Proof.
+  intro HH.
+  assert (WRONG : length (xs ++ [x]) = length ([] : list A))
+    by congruence.
+  rewrite app_length, length_nil in WRONG.
+  unfold length in WRONG. omega.
+Qed.
+
 End Props.
 
 Require Import Setoid.
@@ -1713,3 +1764,11 @@ Proof. basic_solver 10. Qed.
 Add Parametric Morphism A : (@prefix A) with signature
     same_relation ==> set_equiv ==> set_equiv as prefix_more.
 Proof. basic_solver 10. Qed.
+
+Add Parametric Morphism A : (@one_of A) with signature
+    set_subset ==> inclusion as one_of_mori.
+Proof. basic_solver. Qed.
+
+Add Parametric Morphism A : (@one_of A) with signature
+    set_equiv ==> same_relation as one_of_more.
+Proof. basic_solver. Qed.

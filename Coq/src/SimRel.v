@@ -3,10 +3,10 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import
-     AuxDef 
+     AuxDef
      Events Execution TraversalConfig Traversal
-     Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
-     CombRelations SimTraversal.
+     Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb
+     CombRelations SimTraversal SimState.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import ImmProperties.
@@ -66,15 +66,15 @@ Section SimRel.
   Notation "'Ssw'" := (S.(Consistency.sw)).
   Notation "'Shb'" := (S.(Consistency.hb)).
 
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+  Notation "'thread_syntax' tid"  :=
+    (Language.syntax (thread_lts tid)) (at level 10, only parsing).
 
-  Notation "'thread_st' tid" := 
+  Notation "'thread_st' tid" :=
     (Language.state (thread_lts tid)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' tid" := 
+  Notation "'thread_init_st' tid" :=
     (Language.init (thread_lts tid)) (at level 10, only parsing).
-  
+
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
@@ -105,7 +105,7 @@ Section SimRel.
   Notation "'Grelease'" := (imm_s_hb.release G).
   Notation "'Gsw'" := (imm_s_hb.sw G).
   Notation "'Ghb'" := (imm_s_hb.hb G).
-  
+
   Notation "'Gfurr'" := (furr G sc).
 
   Notation "'C'"  := (covered TC).
@@ -115,22 +115,34 @@ Section SimRel.
 
   Notation "'e2a'" := (e2a S).
 
-  Record simrel_graph := 
+  Record simrel_graph :=
     { gprclos : forall thread m n (LT : m < n) (EE : GE (ThreadEvent thread n)),
         GE (ThreadEvent thread m);
       rmwclos : forall r w (RMW : Grmw r w), C r <-> C w;
       irelcov : GW ∩₁ GRel ∩₁ I ⊆₁ C;
     }.
 
+  Definition contsimstate :=
+    forall thread
+      (lprog : thread_syntax thread)
+      (INPROG : IdentMap.find thread (stable_prog_to_prog prog) = Some lprog),
+        exists k (state : thread_st (ES.cont_thread S k)),
+          ⟪ THK   : thread = ES.cont_thread S k ⟫ /\
+          ⟪ INK   : K (k, thread_cont_st (ES.cont_thread S k) state) ⟫ /\
+          ⟪ INX   : ES.cont_sb_dom S k ≡₁
+                                   SEinit ∪₁
+                                   X ∩₁ STid (ES.cont_thread S k) ∩₁ e2a ⋄₁ C ⟫ /\
+          ⟪ SIMST : @sim_state G sim_normal C (ES.cont_thread S k) state ⟫.
+
   Record simrel (T : thread_id -> Prop) :=
     { noinitprog : ~ IdentMap.In tid_init prog ;
       gprog : program_execution (stable_prog_to_prog prog) G ;
 
       (* noinitT : ~ T tid_init ; *)
-      
+
       gwf   : Execution.Wf G ;
       swf   : ES.Wf S ;
-      
+
       gcons : imm_consistent G sc ;
 
       tccoh : tc_coherent G sc TC ;
@@ -138,29 +150,31 @@ Section SimRel.
       sr_graph : simrel_graph ;
 
       sr_exec : Execution.t S X ;
-      
-      sr_cont : simrel_cont (stable_prog_to_prog prog) S G TC X ;
+
+      sr_cont : simrel_cont (stable_prog_to_prog prog) S ;
+
+      sr_cont_state : contsimstate ;
 
       sr_e2a : simrel_e2a S G sc ;
-      
+
       ex_cov_iss : e2a □₁ X ≡₁ CsbI G TC ;
 
-      ex_sb_cov_iss : 
-        forall t (Tt : T t), 
+      ex_sb_cov_iss :
+        forall t (Tt : T t),
           e2a □₁ codom_rel (⦗X⦘ ⨾ Ssb ⨾ ⦗STid t⦘) ⊆₁ CsbI G TC ;
-      
+
       ex_cov_iss_lab : eq_dom (X ∩₁ e2a ⋄₁ (C ∪₁ I)) Slab (Glab ∘ e2a) ;
 
       rmw_cov_in_ex : Grmw ⨾ ⦗ C ⦘ ⊆ e2a □ Srmw ⨾ ⦗ X ⦘ ;
 
       jf_ex_in_cert_rf : e2a □ (Sjf ⨾ ⦗X⦘) ⊆ cert_rf G sc TC ;
 
-      icf_ex_in_co : 
-        forall t (Tt : T t), 
+      icf_ex_in_co :
+        forall t (Tt : T t),
           e2a □ (Sjf ⨾ Sicf ⨾ ⦗X ∩₁ STid t⦘ ⨾ Sjf⁻¹) ⊆ Gco ;
 
-      e2a_co_ex_tid : 
-        forall t (Tt : T t), 
+      e2a_co_ex_tid :
+        forall t (Tt : T t),
           e2a □ (Sco ⨾ ⦗X ∩₁ STid t⦘) ⊆ Gco ;
 
       e2a_co_iss : e2a □ (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco ;
@@ -169,21 +183,25 @@ Section SimRel.
       ew_ex_iss  : dom_rel (Sew \ eq) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ;
 
       rel_ew_ex_iss : dom_rel (Srelease ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆₁ X ;
+
     }.
 
-  Definition simrel_consistent T := 
-    ⟪ SRC_ : simrel T ⟫ /\ 
+  Definition simrel_consistent T :=
+    ⟪ SRC_ : simrel T ⟫ /\
     ⟪ SCONS : @es_consistent S Weakestmo ⟫.
-  
-  Section SimRelCommonProps. 
+
+  Section SimRelCommonProps.
     Variable T : thread_id -> Prop.
     Variable SRC_ : simrel T.
+
+    Definition pc thread :=
+      C ∩₁ (GEinit ∪₁ GTid thread) \₁ dom_rel (Gsb ⨾ ⦗ C ⦘).
 
     (******************************************************************************)
     (** ** pc properties  *)
     (******************************************************************************)
 
-    Lemma pc_in_cov t : pc G TC t ⊆₁ C.
+    Lemma pc_in_cov t : pc t ⊆₁ C.
     Proof. unfold pc. basic_solver. Qed.
 
     (******************************************************************************)
@@ -192,7 +210,7 @@ Section SimRel.
 
     Lemma init_in_map_cov :
       SEinit ⊆₁ e2a ⋄₁ C.
-    Proof. 
+    Proof.
       erewrite <- e2a_map_same_Einit;
         try apply SRC_.
       apply set_subset_inter_l. right.
@@ -205,15 +223,15 @@ Section SimRel.
     (** ** X properties  *)
     (******************************************************************************)
 
-    Lemma cov_in_ex : 
-      C ⊆₁ e2a □₁ X. 
+    Lemma cov_in_ex :
+      C ⊆₁ e2a □₁ X.
     Proof. rewrite ex_cov_iss; eauto. unfold CsbI. basic_solver 10. Qed.
 
-    Lemma iss_in_ex : 
-      I ⊆₁ e2a □₁ X. 
+    Lemma iss_in_ex :
+      I ⊆₁ e2a □₁ X.
     Proof. rewrite ex_cov_iss; eauto. unfold CsbI. basic_solver 10. Qed.
 
-    Lemma ex_iss_inW : 
+    Lemma ex_iss_inW :
       X ∩₁ e2a ⋄₁ I ⊆₁ SW.
     Proof.
       unfolder.
@@ -225,8 +243,8 @@ Section SimRel.
         apply SRC_. }
       basic_solver.
     Qed.
-    
-    Lemma ex_iss_inEW : 
+
+    Lemma ex_iss_inEW :
       X ∩₁ e2a ⋄₁ I ⊆₁ SE ∩₁ SW.
     Proof.
       unfolder; ins; desf; splits.
@@ -236,9 +254,9 @@ Section SimRel.
       split; done.
     Qed.
 
-    Lemma ex_w_cov_in_iss : 
+    Lemma ex_w_cov_in_iss :
       X ∩₁ SW ∩₁ e2a ⋄₁ C ⊆₁ X ∩₁ e2a ⋄₁ I.
-    Proof. 
+    Proof.
       unfolder.
       intros x [[Xx Wx] Cx].
       split; auto.
@@ -251,22 +269,22 @@ Section SimRel.
       apply SRC_.
     Qed.
 
-    Lemma ex_w_rel_iss_in_cov : 
+    Lemma ex_w_rel_iss_in_cov :
       X ∩₁ SW ∩₁ SRel ∩₁ e2a ⋄₁ I ⊆₁ X ∩₁ e2a ⋄₁ C.
-    Proof. 
+    Proof.
       unfolder.
       intros x [[[Xx Wx] RELx] Ix].
       splits; auto.
       apply irelcov; [apply SRC_|].
       assert (SE x) as Ex.
-      { eapply Execution.ex_inE; eauto. 
+      { eapply Execution.ex_inE; eauto.
         apply SRC_. }
       unfolder; splits; auto.
       { unfold is_w.
         fold (compose Glab e2a x).
         fold (is_w (Glab ∘ e2a) x).
         eapply same_lab_u2v_dom_is_w.
-        { apply same_lab_u2v_dom_comm. 
+        { apply same_lab_u2v_dom_comm.
           eapply e2a_lab. apply SRC_. }
         done. }
       unfold is_rel, Events.mod.
@@ -274,7 +292,7 @@ Section SimRel.
       fold (Events.mod (Glab ∘ e2a) x).
       fold (is_rel (Glab ∘ e2a) x).
       eapply same_lab_u2v_dom_is_rel.
-      { apply same_lab_u2v_dom_comm. 
+      { apply same_lab_u2v_dom_comm.
         eapply e2a_lab. apply SRC_. }
       done.
     Qed.
@@ -305,9 +323,9 @@ Section SimRel.
       eapply sb_cov. basic_solver 10.
     Qed.
 
-    Lemma jf_ex_cov : 
-      dom_rel (Sjf ⨾ ⦗ X ∩₁ e2a ⋄₁ C ⦘) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘). 
-    Proof. 
+    Lemma jf_ex_cov :
+      dom_rel (Sjf ⨾ ⦗ X ∩₁ e2a ⋄₁ C ⦘) ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘).
+    Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       assert (Execution.t S X) as EXEC.
@@ -317,11 +335,11 @@ Section SimRel.
       { arewrite (Sjfi ⊆ ⦗SW⦘ ⨾ Sjfi).
         { rewrite ES.jfiD; auto. basic_solver. }
         rewrite ES.jfi_in_sb; auto.
-        erewrite dom_rel_helper 
+        erewrite dom_rel_helper
           with (r := Ssb ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘).
         2 : eapply sb_ex_cov.
-        seq_rewrite <- id_inter. 
-        arewrite 
+        seq_rewrite <- id_inter.
+        arewrite
           (SW ∩₁ (X ∩₁ e2a ⋄₁ C) ⊆₁ X ∩₁ SW ∩₁ e2a ⋄₁ C).
         { basic_solver. }
         rewrite ex_w_cov_in_iss.
@@ -332,11 +350,11 @@ Section SimRel.
       eapply jfe_ex_iss; eauto.
     Qed.
 
-    Lemma jfe_iss : 
+    Lemma jfe_iss :
       dom_rel Sjfe ⊆₁ e2a ⋄₁ I.
-    Proof. 
+    Proof.
       intros x [y JFE].
-      edestruct jfe_ex_iss 
+      edestruct jfe_ex_iss
         as [x' EW]; eauto.
       { basic_solver. }
       destruct_seq_r EW as HH.
@@ -346,7 +364,7 @@ Section SimRel.
       { apply SRC_. }
       basic_solver 10.
     Qed.
-    
+
     Lemma rfe_ex_iss :
       dom_rel Srfe ⊆₁ dom_rel (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘).
     Proof.
@@ -371,9 +389,9 @@ Section SimRel.
 
     Lemma rfe_iss :
       dom_rel Srfe ⊆₁ e2a ⋄₁ I.
-    Proof. 
+    Proof.
       intros x [y RFE].
-      edestruct rfe_ex_iss 
+      edestruct rfe_ex_iss
         as [x' EW]; eauto.
       { basic_solver. }
       destruct_seq_r EW as HH.
@@ -384,9 +402,9 @@ Section SimRel.
       basic_solver 10.
     Qed.
 
-    Lemma ew_in_ew_ex_iss_ew : 
+    Lemma ew_in_ew_ex_iss_ew :
       Sew ⊆ (Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘ ⨾ Sew)^?.
-    Proof. 
+    Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       rewrite <- seqA.
@@ -401,9 +419,9 @@ Section SimRel.
       generalize HH. basic_solver.
     Qed.
 
-    Lemma e2a_co_ew_iss : 
+    Lemma e2a_co_ew_iss :
       e2a □ (Sco ⨾ Sew ⨾ ⦗X ∩₁ e2a ⋄₁ I⦘) ⊆ Gco.
-    Proof. 
+    Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       rewrite <- seqA.
@@ -415,11 +433,11 @@ Section SimRel.
     (** ** `e2a □ S.rr ⊆ G.rr`  properties  *)
     (******************************************************************************)
 
-    Lemma ex_Tid t : 
+    Lemma ex_Tid t :
       e2a □₁ (X ∩₁ STid t) ≡₁ (e2a □₁ X) ∩₁ GTid t.
-    Proof. 
-      unfolder. split. 
-      { ins; desf. 
+    Proof.
+      unfolder. split.
+      { ins; desf.
         split; eauto.
         symmetry. apply e2a_tid. }
       ins; desf.
@@ -427,10 +445,10 @@ Section SimRel.
       apply e2a_tid.
     Qed.
 
-    Lemma ex_NTid t : 
+    Lemma ex_NTid t :
       e2a □₁ (X ∩₁ SNTid t) ≡₁ (e2a □₁ X) ∩₁ GNTid t.
-    Proof. 
-      unfolder. split. 
+    Proof.
+      unfolder. split.
       { intros x [y [[Xy NTIDy] EQx]].
         splits; eauto.
         intros TIDx. apply NTIDy.
@@ -441,44 +459,44 @@ Section SimRel.
       subst. symmetry. apply e2a_tid.
     Qed.
 
-    Lemma jf_cov_in_rf : 
+    Lemma jf_cov_in_rf :
       e2a □ (Sjf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf.
-    Proof. 
+    Proof.
       rewrite id_inter.
       rewrite <- seqA.
-      rewrite collect_rel_seqi, 
+      rewrite collect_rel_seqi,
               collect_rel_eqv.
       rewrite collect_map_in_set.
-      rewrite jf_ex_in_cert_rf; eauto. 
+      rewrite jf_ex_in_cert_rf; eauto.
       apply cert_rf_C_in_rf; apply SRC_.
     Qed.
 
-    Lemma rf_ex_in_cert_rf : 
+    Lemma rf_ex_in_cert_rf :
       e2a □ (Srf ⨾ ⦗X⦘) ⊆ cert_rf G sc TC.
-    Proof. 
+    Proof.
       unfold ES.rf.
       rewrite inclusion_minus_rel.
-      rewrite !seqA. 
-      rewrite collect_rel_seqi. 
+      rewrite !seqA.
+      rewrite collect_rel_seqi.
       rewrite e2a_ew; [|apply SRC_].
-      rewrite jf_ex_in_cert_rf; eauto. 
+      rewrite jf_ex_in_cert_rf; eauto.
       basic_solver.
     Qed.
 
-    Lemma rf_cov_in_rf : 
+    Lemma rf_cov_in_rf :
       e2a □ (Srf ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘) ⊆ Grf.
-    Proof. 
+    Proof.
       unfold ES.rf.
       rewrite inclusion_minus_rel.
-      rewrite !seqA. 
-      rewrite collect_rel_seqi. 
+      rewrite !seqA.
+      rewrite collect_rel_seqi.
       rewrite e2a_ew; [|apply SRC_].
-      rewrite jf_cov_in_rf; eauto. 
+      rewrite jf_cov_in_rf; eauto.
       basic_solver.
     Qed.
-    
-    Lemma e2a_ew_iss : 
-      e2a □ (Sew \ eq) ⊆ ⦗ I ⦘. 
+
+    Lemma e2a_ew_iss :
+      e2a □ (Sew \ eq) ⊆ ⦗ I ⦘.
     Proof.
       intros x y HH.
       assert (x = y) as EQxy; subst.
@@ -495,9 +513,9 @@ Section SimRel.
       eexists; eauto.
     Qed.
 
-    Lemma e2a_co_ncf : 
+    Lemma e2a_co_ncf :
       e2a □ (Sco \ Scf) ⊆ Gco.
-    Proof. 
+    Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       assert (Execution.t S X) as EXEC.
@@ -506,9 +524,9 @@ Section SimRel.
       { apply SRC_. }
       intros x' y' [x [y [[CO nCF] [EQx' EQy']]]].
       subst x' y'.
-      edestruct e2a_co as [EQ | CO']; eauto. 
+      edestruct e2a_co as [EQ | CO']; eauto.
       { basic_solver 10. }
-      exfalso. 
+      exfalso.
       assert (SE x /\ SE y) as HH.
       { apply ES.coE in CO; auto.
         generalize CO. basic_solver. }
@@ -536,15 +554,15 @@ Section SimRel.
     (*   split; done. *)
     (* Qed. *)
 
-    Lemma e2a_co_jf_cov : 
+    Lemma e2a_co_jf_cov :
       e2a □ Sco ⨾ Sjf^? ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ⊆ Gco ⨾ (Grf ⨾ ⦗C⦘)^?.
-    Proof. 
+    Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       assert (Execution.t S X) as EXEC.
       { apply SRC_. }
       rewrite crE. relsf. unionL.
-      { arewrite (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ≡ 
+      { arewrite (Sco ⨾ ⦗X ∩₁ e2a ⋄₁ C⦘ ≡
                   Sco ⨾ ⦗X ∩₁ SW ∩₁ e2a ⋄₁ C⦘).
         { rewrite ES.coD; auto. basic_solver. }
         rewrite ex_w_cov_in_iss.
@@ -573,9 +591,9 @@ Section SimRel.
     (** ** `G.rr ⊆ e2a □ S.rr` properties  *)
     (******************************************************************************)
 
-    Lemma sb_cov_in_ex : 
+    Lemma sb_cov_in_ex :
       Gsb ⨾ ⦗C⦘ ⊆ e2a □ Ssb ⨾ ⦗X⦘.
-    Proof. 
+    Proof.
       assert (Wf G) as WFG.
       { apply SRC_. }
       assert (ES.Wf S) as WFS.
@@ -585,7 +603,7 @@ Section SimRel.
       assert (Execution.t S X) as EXEC.
       { apply SRC_. }
       erewrite dom_rel_helper with (r := Gsb ⨾ ⦗C⦘).
-      2 : eapply dom_sb_covered; eauto. 
+      2 : eapply dom_sb_covered; eauto.
       rewrite <- restr_relE.
       unfolder.
       intros x y [SB [Cx Cy]].
@@ -597,13 +615,13 @@ Section SimRel.
       destruct e2aXy as [y' [Xy' EQy]].
       do 2 eexists; splits; eauto.
       assert (SEninit y') as nINITy.
-      { red. unfolder. split. 
+      { red. unfolder. split.
         { eapply Execution.ex_inE; eauto. }
         intros EINITy.
         apply no_sb_to_init in SB.
         apply seq_eqv_r in SB.
         destruct SB as [SB nINITy].
-        apply nINITy. 
+        apply nINITy.
         eapply e2a_Einit.
         1: apply SRC_.
         basic_solver. }
@@ -613,10 +631,10 @@ Section SimRel.
       { assert (Stid x' = Stid y') as STID.
         { rewrite !e2a_tid. basic_solver. }
         assert (SEninit x') as nINITx.
-        { red. unfolder. split. 
+        { red. unfolder. split.
           { eapply Execution.ex_inE; eauto. }
           intros [_ TIDx].
-          apply nINITy. 
+          apply nINITy.
           unfold ES.acts_init_set. split.
           { eapply Execution.ex_inE; eauto. }
           congruence. }
@@ -624,7 +642,7 @@ Section SimRel.
           as [[EQ | [SB' | SB']] | CF]; subst; eauto.
         { eapply Execution.ex_inE; eauto. }
         { exfalso. eapply sb_irr; eauto. }
-        { exfalso. eapply sb_irr, sb_trans; eauto. 
+        { exfalso. eapply sb_irr, sb_trans; eauto.
           eapply e2a_sb.
           1-2 : apply SRC_.
           basic_solver 10. }
@@ -632,12 +650,12 @@ Section SimRel.
         apply seq_eqv_lr. splits; [|apply CF|]; eauto. }
       apply ES.sb_init; auto. split; auto.
       subst. eapply e2a_map_Einit. split.
-      { eapply Execution.ex_inE; eauto. } 
-      split; auto. apply wf_sbE in SB. 
-      generalize SB. basic_solver. 
+      { eapply Execution.ex_inE; eauto. }
+      split; auto. apply wf_sbE in SB.
+      generalize SB. basic_solver.
     Qed.
 
-    Lemma sb_restr_cov_in_ex : 
+    Lemma sb_restr_cov_in_ex :
       ⦗C⦘ ⨾ Gsb ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Ssb ⨾ ⦗X⦘.
     Proof.
       assert (Wf G) as WFG.
@@ -652,12 +670,12 @@ Section SimRel.
                <- dom_rel_helper with (r := Ssb ⨾ ⦗X⦘).
       { by apply sb_cov_in_ex. }
       { by apply Execution.ex_sb_prcl. }
-      eapply dom_sb_covered; eauto. 
+      eapply dom_sb_covered; eauto.
     Qed.
 
-    Lemma rmw_restr_cov_in_ex : 
+    Lemma rmw_restr_cov_in_ex :
       ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srmw ⨾ ⦗X⦘.
-    Proof. 
+    Proof.
       assert (Wf G) as WFG.
       { apply SRC_. }
       assert (ES.Wf S) as WFS.
@@ -667,19 +685,19 @@ Section SimRel.
       assert (Execution.t S X) as EXEC.
       { apply SRC_. }
       erewrite <- dom_rel_helper with (r := Grmw ⨾ ⦗C⦘),
-               <- dom_rel_helper with (r := Srmw ⨾ ⦗X⦘).                                      
+               <- dom_rel_helper with (r := Srmw ⨾ ⦗X⦘).
       { eapply rmw_cov_in_ex; eauto. }
       { rewrite ES.rmwi; auto.
         rewrite immediate_in.
         by apply Execution.ex_sb_prcl. }
       rewrite wf_rmwi; auto.
       rewrite immediate_in.
-      eapply dom_sb_covered; eauto. 
+      eapply dom_sb_covered; eauto.
     Qed.
 
-    Lemma rf_cov_in_ex : 
+    Lemma rf_cov_in_ex :
       Grf ⨾ ⦗ C ⦘ ⊆ e2a □ Srf ⨾ ⦗ X ⦘.
-    Proof. 
+    Proof.
       assert (Wf G) as WFG.
       { apply SRC_. }
       assert (ES.Wf S) as WFS.
@@ -701,7 +719,7 @@ Section SimRel.
         unfold compose, is_r.
         apply wf_rfD in GRF; auto.
         generalize GRF. basic_solver. }
-      edestruct Execution.ex_rf_compl 
+      edestruct Execution.ex_rf_compl
         as [x' HH]; eauto.
       { basic_solver. }
       apply seq_eqv_l in HH.
@@ -718,16 +736,16 @@ Section SimRel.
           basic_solver 10. }
         eapply jf_cov_in_rf; eauto.
         do 2 eexists; splits; eauto.
-        apply seq_eqv_r. 
+        apply seq_eqv_r.
         unfolder; splits; auto.
         congruence. }
       eapply wf_rff; eauto.
       red. congruence.
     Qed.
 
-    Lemma iss_rf_cov_in_ex : 
+    Lemma iss_rf_cov_in_ex :
       ⦗I⦘ ⨾ Grf ⨾ ⦗C⦘ ⊆ e2a □ ⦗X⦘ ⨾ Srf ⨾ ⦗X⦘.
-    Proof. 
+    Proof.
       assert (Wf G) as WFG.
       { apply SRC_. }
       assert (ES.Wf S) as WFS.
@@ -756,12 +774,12 @@ Section SimRel.
       subst x. eapply e2a_ew; [apply SRC_|].
       unfolder; do 2 eexists; splits; eauto.
       apply ES.rf_trf_in_ew; auto.
-      basic_solver. 
+      basic_solver.
     Qed.
 
-    Lemma co_restr_iss_in_ex : 
+    Lemma co_restr_iss_in_ex :
       ⦗ I ⦘ ⨾ Gco ⨾ ⦗ I ⦘ ⊆ e2a □ ⦗ X ⦘ ⨾ Sco ⨾ ⦗ X ⦘.
-    Proof. 
+    Proof.
       assert (Wf G) as WFG.
       { apply SRC_. }
       assert (ES.Wf S) as WFS.
@@ -782,8 +800,8 @@ Section SimRel.
       { eapply same_lab_u2v_dom_same_loc.
         { eapply e2a_lab; eauto. apply SRC_. }
         red. unfold compose. splits; auto.
-        { red. unfold loc. 
-          apply wf_col; auto. 
+        { red. unfold loc.
+          apply wf_col; auto.
           congruence. }
         { eapply Execution.ex_inE; eauto. }
         eapply Execution.ex_inE; eauto. }
@@ -792,7 +810,7 @@ Section SimRel.
       red; splits; auto.
       edestruct Execution.co_total
         as [SCO | SCO].
-      1-2 : eauto.      
+      1-2 : eauto.
       { unfolder; splits.
         { apply Xx'. }
         { eapply same_lab_u2v_dom_is_w.
@@ -812,7 +830,7 @@ Section SimRel.
           generalize GCO. basic_solver. }
         done. }
       { intros NEQ. subst.
-        eapply co_irr; eauto. } 
+        eapply co_irr; eauto. }
       { done. }
       exfalso. eapply co_irr; eauto.
       eapply co_trans; eauto.
@@ -823,7 +841,7 @@ Section SimRel.
       destruct E2ACO as [EQ | GCO']; auto.
       exfalso.
       assert (x' = y') as EQ'.
-      { eapply e2a_inj with (X := X); 
+      { eapply e2a_inj with (X := X);
           eauto; try apply EXEC.
         congruence. }
       rewrite EQ' in *.
@@ -836,7 +854,7 @@ Section SimRel.
 
     Lemma rel_ew_e2a_iss_cov :
       dom_rel (Srelease ⨾ Sew ⨾ ⦗ e2a ⋄₁ I ⦘) ⊆₁ e2a ⋄₁ C.
-    Proof. 
+    Proof.
       unfold set_map.
       rewrite seq_eqv_r.
       intros x [z [y [REL [EW Iz]]]].
@@ -850,31 +868,31 @@ Section SimRel.
 
     Lemma rel_ew_ex_iss_cov :
       dom_rel (Srelease ⨾ Sew ⨾ ⦗ X ∩₁ e2a ⋄₁ I ⦘) ⊆₁ X ∩₁ e2a ⋄₁ C.
-    Proof. 
-      apply set_subset_inter_r. 
+    Proof.
+      apply set_subset_inter_r.
       split.
       { eapply rel_ew_ex_iss; eauto. }
       arewrite (X ∩₁ e2a ⋄₁ I ⊆₁ e2a ⋄₁ I) by basic_solver.
       apply rel_ew_e2a_iss_cov.
     Qed.
 
-    Lemma rel_in_ex_cov_rel_sb : 
-      Srelease ⊆ ⦗ X ∩₁ e2a ⋄₁ C ⦘ ⨾ Srelease ∪ Ssb^?. 
+    Lemma rel_in_ex_cov_rel_sb :
+      Srelease ⊆ ⦗ X ∩₁ e2a ⋄₁ C ⦘ ⨾ Srelease ∪ Ssb^?.
     Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       arewrite (Srelease ⊆ ⦗X ∩₁ e2a ⋄₁ C ∪₁ set_compl (X ∩₁ e2a ⋄₁ C)⦘ ⨾ Srelease).
       { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. 
+      rewrite id_union, seq_union_l.
       apply union_mori; [done|].
-      unfold release at 1, rs. 
+      unfold release at 1, rs.
       rewrite <- !seqA.
       intros x y [z [HH JFRMW]].
       apply clos_rt_rtn1 in JFRMW.
       induction JFRMW as [|y w [u [JF RMW]]].
       { generalize WFS.(ES.sb_trans) HH. basic_solver 10. }
       apply ES.jfi_union_jfe in JF. destruct JF as [JF|JF].
-      { apply WFS.(ES.rmwi) in RMW. red in JF. 
+      { apply WFS.(ES.rmwi) in RMW. red in JF.
         generalize WFS.(ES.sb_trans) IHJFRMW JF RMW. basic_solver 10. }
       exfalso.
       assert (~ (X ∩₁ e2a ⋄₁ C) x) as CC.
@@ -887,19 +905,19 @@ Section SimRel.
       generalize HH JFRMW. basic_solver 40.
     Qed.
 
-    Lemma sw_in_ex_cov_sw_sb : 
-      Ssw ⊆ ⦗ X ∩₁ e2a ⋄₁ C ⦘ ⨾ Ssw ∪ Ssb. 
+    Lemma sw_in_ex_cov_sw_sb :
+      Ssw ⊆ ⦗ X ∩₁ e2a ⋄₁ C ⦘ ⨾ Ssw ∪ Ssb.
     Proof.
       assert (ES.Wf S) as WFS.
       { apply SRC_. }
       arewrite (Ssw ⊆ ⦗X ∩₁ e2a ⋄₁ C ∪₁ set_compl (X ∩₁ e2a ⋄₁ C)⦘ ⨾ Ssw).
       { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. 
+      rewrite id_union, seq_union_l.
       apply union_mori; [done|].
       unfold sw.
       arewrite (⦗set_compl (X ∩₁ e2a ⋄₁ C)⦘ ⨾ Srelease ⨾ Sjf ⊆ Ssb).
       2: { generalize WFS.(ES.sb_trans). basic_solver. }
-      rewrite ES.jfi_union_jfe. 
+      rewrite ES.jfi_union_jfe.
       rewrite !seq_union_r. unionL.
       { rewrite <- seqA.
         erewrite eqv_l_set_compl_eqv_l.
@@ -907,7 +925,7 @@ Section SimRel.
         unfold ES.jfi.
         generalize WFS.(ES.sb_trans). basic_solver. }
       intros x y HH.
-      destruct_seq_l HH as DX. 
+      destruct_seq_l HH as DX.
       exfalso. apply DX.
       destruct HH as [z [REL RFE]].
       eapply rel_ew_ex_iss_cov; eauto.
@@ -923,9 +941,9 @@ Section SimRel.
       { apply SRC_. }
       arewrite (Shb ⊆ ⦗X ∩₁ e2a ⋄₁ C ∪₁ set_compl (X ∩₁ e2a ⋄₁ C)⦘ ⨾ Shb).
       { rewrite set_compl_union_id. by rewrite seq_id_l. }
-      rewrite id_union, seq_union_l. 
+      rewrite id_union, seq_union_l.
       apply union_mori; [done|].
-      intros x y HH. 
+      intros x y HH.
       destruct_seq_l HH as DX.
       red in HH. apply clos_trans_tn1 in HH.
       induction HH as [y [|HH]|y z [HH|HH]]; auto.
@@ -938,7 +956,7 @@ Section SimRel.
       apply seq_eqv_l.
       split; auto.
       red. intros CC. apply DX.
-      eapply sb_ex_cov. 
+      eapply sb_ex_cov.
       basic_solver 10.
     Qed.
 

@@ -7,134 +7,13 @@ Require Import EventStructure.
 Require Import Consistency.
 Require Import Execution.
 Require Import Step.
+Require Import Race_G.
 Require Import Race.
 Require Import ProgES.
 Require Import StepWf.
 Require Import ExecutionToGraph.
 
 Set Implicit Arguments.
-
-Lemma steps_es_wf P
-      (nInitProg : ~ IdentMap.In tid_init P)
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  ES.Wf S.
-Proof.
-Admitted.
-
-Lemma steps_es_consistent P
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S) :
-  @es_consistent S Weakestmo.
-Proof.
-  apply rtE in STEPS.
-  unfolder in STEPS. desf.
-  { apply prog_es_init_consistent. }
-  assert (HH :  codom_rel (step Weakestmo) S).
-  { apply codom_ct.
-    basic_solver. }
-  cdes HH.
-  unfold step in HH0. desf.
-Qed.
-
-(*
-Lemma basic_step_init_loc e e' S S'
-      (BSTEP : BasicStep.basic_step e e' S S')
-      (WF : ES.Wf S) :
-  ES.init_loc S ≡₁ ES.init_loc S'.
-Proof.
-  specialize (BasicStep.basic_step_acts_init_set BSTEP WF) as EINIT.
-  unfolder. splits; unfold ES.init_loc; ins; desf.
-  { exists a. splits; [by apply EINIT|].
-    arewrite (loc S' a = loc S a); [|done].
-    apply (BasicStep.basic_step_loc_eq_dom BSTEP).
-    apply ES.acts_set_split. basic_solver. }
-  exists a. splits; [by apply EINIT|].
-  arewrite (loc S a = loc S' a); [|done].
-  rewrite (BasicStep.basic_step_loc_eq_dom BSTEP); auto.
-  apply EINIT in EINA.
-  apply ES.acts_set_split. basic_solver.
-Qed.
-
-Notation "'thread_syntax' t"  :=
-  (Language.syntax (thread_lts t)) (at level 10, only parsing).
-
-Notation "'thread_init_st' t" :=
-  (Language.init (thread_lts t)) (at level 10, only parsing).
-
-Notation "'thread_cont_st' t" :=
-  (fun st => existT _ (thread_lts t) st) (at level 10, only parsing).
-
-Notation "'thread_st' t" :=
-  (Language.state (thread_lts t)) (at level 10, only parsing).
-
-Notation "'K' S" := (ES.cont_set S) (at level 1).
-
-Lemma wf_es P
-      (nInitProg : ~ IdentMap.In tid_init P)
-      (S : ES.t)
-      (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
-  ⟪ LTS : forall k lang (state : lang.(Language.state))
-            (INK : K S (k, existT _ lang state)),
-      lang = thread_lts (ES.cont_thread S k) ⟫ /\
-  ⟪ INIT_LOC : ES.init_loc S ≡₁ ES.init_loc (prog_es_init P) ⟫ /\
-  ⟪ contreach :
-      forall k (state : thread_st (ES.cont_thread S k))
-        (lprog : thread_syntax (ES.cont_thread S k))
-        (INPROG : IdentMap.find (ES.cont_thread S k) (stable_prog_to_prog P) =
-                  Some lprog)
-        (INK : K S (k, thread_cont_st (ES.cont_thread S k) state)),
-        (ProgToExecution.step (ES.cont_thread S k))＊
-                                   (thread_init_st (ES.cont_thread S k) lprog)
-                                   state ⟫ /\
-  ⟪ WF : ES.Wf S ⟫.
-Proof.
-  eapply clos_refl_trans_ind_left with (z := S); eauto.
-  { splits; [| done | | admit].
-    { ins. unfold ES.cont_thread.
-      unfold prog_es_init, prog_l_es_init, ES.init, ES.cont_set, ES.cont, prog_init_K in INK.
-      apply in_map_iff in INK. desf. }
-    admit. }
-  clear dependent S.
-  intros S S' STESPS IH STEP.
-  assert(LTS': forall (k : cont_label)
-                (lang : Language.t)
-                (state : Language.state lang),
-            (K S') (k, existT Language.state lang state) ->
-            lang = thread_lts (ES.cont_thread S' k)).
-  { intros k lang state INK.
-    cdes STEP. cdes BSTEP.
-    eapply BasicStep.basic_step_cont_set in INK; eauto.
-    red in INK. desf.
-    { erewrite BasicStep.basic_step_cont_thread; eauto. }
-    cdes BSTEP_; desf.
-    apply LTS in CONT; subst.
-    erewrite <- BasicStep.basic_step_cont_thread; eauto. }
-  assert (INIT_LOC': ES.init_loc S' ≡₁ ES.init_loc (prog_es_init P)).
-  { cdes STEP.
-    erewrite <- basic_step_init_loc; eauto. }
-  splits; auto; desf. admit.
-  clear contreach.
-
-  cdes STEP.
-  cdes BSTEP.
-  eapply step_wf; eauto.
-  ins.
-  apply INIT_LOC'.
-  apply prog_es_init_init_loc.
-
-  cdes BSTEP_.
-  assert (CONT'' : (K S') (k', existT Language.state lang st')).
-  { red. rewrite CONT'. basic_solver. }
-  apply LTS' in CONT'' as HH. subst.
-  simpls. desf.
-  simpls.
-
-  unfold LblStep.ilbl_step in STEP0.
-  unfold LblStep.ineps_step in STEP0.
-  unfold ProgToExecution.istep in STEP0.
-Admitted.
- *)
 
 (******************************************************************************)
 (** ** Prefix executional properties *)
@@ -325,6 +204,7 @@ Section DRF.
 
 Variable  P : IdentMap.t {linstr : list Instr.t & LblStep.stable_lprog linstr}.
 Variable (nInitProg : ~ IdentMap.In tid_init P).
+Variable (PP : ProgLoc.prog_locs (stable_prog_to_prog P) <> []).
 
 Notation "'E' S" := S.(ES.acts_set) (at level 10).
 Notation "'Einit' S"  := S.(ES.acts_init_set) (at level 10).
@@ -360,11 +240,13 @@ Notation "'Rel' S" := (fun a => is_true (is_rel S.(ES.lab) a)) (at level 10).
 Notation "'Acq' S" := (fun a => is_true (is_acq S.(ES.lab) a)) (at level 10).
 
 Lemma jf_in_hb
-      (RACE_FREE : rc11_rlx_race_free_program P)
+      (RACE_FREE_G : rc11_rlx_race_free_program_G (stable_prog_to_prog P))
       (S : ES.t)
       (STEPS : (step Weakestmo)＊ (prog_es_init P) S):
   jf S ⊆ hb S.
 Proof.
+  assert (RACE_FREE : rc11_rlx_race_free_program P).
+  { by apply rc11_rlx_race_free_program_transfer. }
   eapply clos_refl_trans_ind_left with (P := fun s => jf s ⊆ hb s); eauto.
   { basic_solver. }
   clear dependent S.
@@ -377,7 +259,7 @@ Proof.
   generalize (hb_trans S'). intro HB_TRANS.
   inversion_clear STEP as [e [e' HH]]. desf.
   assert (HB_MON: hb S ⊆ hb S').
-  { eapply step_hb_mon; eauto. }
+  { eby eapply step_hb_mon. }
   rename TT into STEP_.
   inversion STEP_ as [ST | [ST | [ST | ST]]].
   1, 3: inversion_clear ST; desf; rewrite JF'; basic_solver.
@@ -439,6 +321,7 @@ Proof.
     assert (PREF_RC11 : rc11_consistent_ex S' (prefix (hb S')^? (eq e ∪₁ eq w))).
     { red. exists (x2g S' (prefix (hb S')^? (eq e ∪₁ eq w))). splits.
       { apply x2g_X2G; auto. by cdes PREF_EXEC. }
+      { apply x2g_wf; auto. apply PREF_EXEC. }
       apply x2g_rc11_consistent; auto.
       { by cdes PREF_EXEC. }
       rewrite restr_relE.
@@ -555,6 +438,7 @@ Proof.
   assert (PREF_RC11 : rc11_consistent_ex S' (prefix (hb S')^? (eq w' ∪₁ eq w))).
   { red. exists (x2g S' (prefix (hb S')^? (eq w' ∪₁ eq w))). splits.
     { apply x2g_X2G; auto. by cdes PREF_EXEC. }
+    { apply x2g_wf; auto. apply PREF_EXEC. }
     apply x2g_rc11_consistent; auto.
     { by cdes PREF_EXEC. }
     rewrite restr_relE.
@@ -668,7 +552,7 @@ Qed.
 
 Theorem drf_rlx S X
       (EXEC : program_execution P S X)
-      (RACE_FREE : rc11_rlx_race_free_program P) :
+      (RACE_FREE_G : rc11_rlx_race_free_program_G (stable_prog_to_prog P)) :
   rc11_consistent_ex S X.
 Proof.
   cdes EXEC.
@@ -678,6 +562,7 @@ Proof.
   { eby eapply steps_es_consistent. }
   red. exists (x2g S X). splits.
   { by apply x2g_X2G. }
+  { by apply x2g_wf. }
   apply x2g_rc11_consistent; auto.
   { rewrite jf_in_hb; auto.
     by apply Execution.hb_prcl. }

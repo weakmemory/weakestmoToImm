@@ -89,17 +89,17 @@ Lemma prog_g_es_init_alt prog (G : execution) :
   prog_g_es_init prog G = ES.init (g_locs G) (prog_init_K prog).
 Proof.
   unfold prog_g_es_init, prog_l_es_init, g_locs.
-  rewrite undup_nodup; auto. 
+  rewrite undup_nodup; auto.
 Qed.
 
 Lemma prog_l_es_init_ninit locs prog :
   ES.acts_ninit_set (prog_l_es_init prog locs) ≡₁ ∅.
 Proof.
   split; [|basic_solver].
-  red. unfold prog_l_es_init, ES.init. intros x HH. 
+  red. unfold prog_l_es_init, ES.init. intros x HH.
   apply HH. red. split; auto.
   apply HH.
-Qed. 
+Qed.
 
 Lemma prog_g_es_init_ninit G prog :
   ES.acts_ninit_set (prog_g_es_init prog G) ≡₁ ∅.
@@ -115,7 +115,7 @@ Qed.
 Lemma prog_g_es_init_sb G prog :
   ES.sb (prog_g_es_init prog G) ≡ ∅₂.
 Proof. apply prog_l_es_init_sb. Qed.
-  
+
 Lemma prog_l_es_init_jf locs prog :
   ES.jf (prog_l_es_init prog locs) ≡ ∅₂.
 Proof.
@@ -162,16 +162,16 @@ Lemma prog_g_es_init_cf G prog :
   ES.cf (prog_g_es_init prog G) ≡ ∅₂.
 Proof. apply prog_l_es_init_cf. Qed.
 
-Lemma prog_l_es_init_psc_f locs prog : 
-  psc_f (prog_l_es_init prog locs) Weakestmo ≡ ∅₂. 
+Lemma prog_l_es_init_psc_f locs prog :
+  psc_f (prog_l_es_init prog locs) Weakestmo ≡ ∅₂.
 Proof.
-  unfold psc_f. 
+  unfold psc_f.
   rewrite prog_l_es_init_hb.
   basic_solver.
 Qed.
 
-Lemma prog_l_es_init_scb locs prog : 
-  scb (prog_l_es_init prog locs) ≡ ∅₂. 
+Lemma prog_l_es_init_scb locs prog :
+  scb (prog_l_es_init prog locs) ≡ ∅₂.
 Proof.
   unfold scb.
   unfold ES.fr, ES.rf.
@@ -181,12 +181,19 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma prog_l_es_init_psc_base locs prog : 
-  psc_base (prog_l_es_init prog locs) ≡ ∅₂. 
+Lemma prog_l_es_init_psc_base locs prog :
+  psc_base (prog_l_es_init prog locs) ≡ ∅₂.
 Proof.
-  unfold psc_base. 
+  unfold psc_base.
   rewrite prog_l_es_init_scb.
   basic_solver.
+Qed.
+
+Lemma prog_l_es_init_rmw locs prog :
+  ES.rmw (prog_l_es_init prog locs) ≡ ∅₂.
+Proof.
+  split; [|basic_solver].
+  unfold prog_l_es_init, ES.init. simpls.
 Qed.
 
 Hint Rewrite prog_g_es_init_ninit
@@ -205,6 +212,7 @@ Hint Rewrite prog_l_es_init_ninit
      prog_l_es_init_cf
      prog_l_es_init_psc_f
      prog_l_es_init_psc_base
+     prog_l_es_init_rmw
   : prog_l_es_init_db.
 
 Lemma prog_l_es_init_consistent locs prog :
@@ -224,7 +232,7 @@ Lemma prog_es_init_consistent prog :
   @es_consistent (prog_es_init prog) Weakestmo.
 Proof. apply prog_l_es_init_consistent. Qed.
 
-Lemma prog_l_es_init_act_in prog locs 
+Lemma prog_l_es_init_act_in prog locs
       e (ACT : ES.acts_set (prog_l_es_init prog locs) e) :
   exists l,
     In (e, init_write l)
@@ -262,7 +270,7 @@ Proof.
   rewrite undup_nodup in ACT; auto.
 Qed.
 
-Lemma prog_l_es_init_act_lab prog locs 
+Lemma prog_l_es_init_act_lab prog locs
       e (ACT : ES.acts_set (prog_l_es_init prog locs) e) :
   exists l, ES.lab (prog_l_es_init prog locs) e = Astore Xpln Opln l 0.
 Proof.
@@ -275,7 +283,7 @@ Qed.
 Lemma prog_g_es_init_act_lab prog G
       e (ACT : ES.acts_set (prog_g_es_init prog G) e) :
   exists l, ES.lab (prog_g_es_init prog G) e = Astore Xpln Opln l 0.
-Proof. by apply prog_l_es_init_act_lab. Qed.  
+Proof. by apply prog_l_es_init_act_lab. Qed.
 
 Lemma prog_l_es_init_w locs prog :
   ES.acts_set (prog_l_es_init prog locs) ≡₁
@@ -283,7 +291,7 @@ Lemma prog_l_es_init_w locs prog :
   (fun a => is_true (is_w (ES.lab (prog_l_es_init prog locs)) a)).
 Proof.
   split; [|basic_solver].
-  unfolder. intros. split; auto. 
+  unfolder. intros. split; auto.
   unfold is_w.
   apply prog_l_es_init_act_lab in H. desf.
 Qed.
@@ -320,35 +328,35 @@ Lemma prog_g_es_init_init G prog :
 Proof. apply prog_l_es_init_init. Qed.
 
 (* TODO : move to a more suitable place  *)
-Lemma length_nempty {A : Type} (l : list A) (nEmpty : l <> []) : 
-  0 < length l. 
-Proof. 
+Lemma length_nempty {A : Type} (l : list A) (nEmpty : l <> []) :
+  0 < length l.
+Proof.
   unfold length.
   destruct l.
   { intuition. }
   apply Nat.lt_0_succ.
 Qed.
 
-Lemma prog_l_es_init_nempty locs prog  
-      (nInitProg : ~ IdentMap.In tid_init prog) 
+Lemma prog_l_es_init_nempty locs prog
+      (nInitProg : ~ IdentMap.In tid_init prog)
       (nLocsEmpty : locs <> []) :
   ~ ES.acts_init_set (prog_l_es_init prog locs) ≡₁ ∅.
-Proof. 
+Proof.
   intros HH. eapply HH.
   apply prog_l_es_init_init.
   unfold ES.acts_set.
   unfold prog_l_es_init, ES.init.
   simpls.
   erewrite map_length.
-  eapply length_nempty. 
+  eapply length_nempty.
   by apply undup_nonnil.
-Qed.  
+Qed.
 
-Lemma prog_g_es_init_nempty G prog 
-      (nInitProg : ~ IdentMap.In tid_init prog) 
+Lemma prog_g_es_init_nempty G prog
+      (nInitProg : ~ IdentMap.In tid_init prog)
       (nLocsEmpty : g_locs G <> []) :
   ~ ES.acts_init_set (prog_g_es_init prog G) ≡₁ ∅.
-Proof. by apply prog_l_es_init_nempty. Qed.  
+Proof. by apply prog_l_es_init_nempty. Qed.
 
 Lemma prog_l_es_init_wf locs prog
       (nInitProg : ~ IdentMap.In tid_init prog)
@@ -368,7 +376,7 @@ Proof.
   { ins. red. exists b.
     splits; auto.
     red. split; auto. }
-  { intros e [AA BB]. 
+  { intros e [AA BB].
     eapply prog_l_es_init_act_lab; eauto. }
   { red. ins.
     destruct SX as [SX _]. apply prog_l_es_init_act_in in SX.
@@ -407,7 +415,7 @@ Proof.
     all: eapply prog_l_es_init_w; eauto.
     Unshelve. all: auto. }
   { intros HH. desf.
-    unfold prog_l_es_init, ES.init, ES.cont_thread, ES.cont_set in *. 
+    unfold prog_l_es_init, ES.init, ES.cont_thread, ES.cont_set in *.
     simpls.
     unfold prog_init_K in KK.
     apply in_map_iff in KK.
@@ -417,7 +425,7 @@ Proof.
     apply RegMap.Facts.in_find_iff.
     rewrite KK0. desf. }
   { intros HH. desf. inv RMW. }
-  { unfold prog_l_es_init, ES.init, ES.cont_thread, ES.cont_set in *. 
+  { unfold prog_l_es_init, ES.init, ES.cont_thread, ES.cont_set in *.
     simpls.
     unfold prog_init_K in *.
     ins.
@@ -434,7 +442,7 @@ Proof.
     unfold prog_init_K in *.
     apply in_map_iff in inK. desf. }
   ins. exfalso.
-  unfold ES.cont_adjacent 
+  unfold ES.cont_adjacent
     in ADJ.
   desc.
   unfold ES.cont_set,
@@ -503,8 +511,8 @@ Proof.
   destruct s; simpls.
   eexists; splits; eauto.
   all: pose (AA :=
-               @proj2_sig 
-                 _ _ 
+               @proj2_sig
+                 _ _
                  (get_stable t (init x) s
                              (rt_refl state (step t) (init x)))).
   arewrite
@@ -542,7 +550,7 @@ Proof.
                         (a:=e)
                         (DEC:=Nat.eq_dec).
   { apply indexed_list_fst_nodup. }
-  
+
   2: { desf. left. eauto. }
   desf. right.
   generalize dependent e.
@@ -571,39 +579,49 @@ Proof.
   induction l; simpls.
   congruence.
 Qed.
-  
-Lemma prog_l_es_init_init_loc prog locs l
-      (L_IN : In l locs) :
-  ES.init_loc (prog_l_es_init prog locs) l.
-Proof.
-  apply in_undup_iff in L_IN.
-  specialize (indexed_list_in_exists l (undup locs) L_IN) as [e Foo].
-  exists e. splits.
-  { apply prog_l_es_init_init. 
-    unfold prog_l_es_init, ES.init.
-    unfold ES.acts_set, ES.next_act. rewrite length_map.
-    apply indexed_list_range. eauto. }
-  unfold prog_l_es_init, ES.init. simpl. 
-  unfold Events.loc.
-  arewrite ((list_to_fun
-               Nat.eq_dec
-               (Afence Orlx)
-               (indexed_list (map init_write (undup locs)))) e =
-            init_write l); [|done].
-  apply l2f_in.
-  { apply indexed_list_fst_nodup. }
-  rewrite traverse_map_indexed_list.
-  eapply in_map with
-      (f := (fun p : nat * location => let (a, b) := p in (a, init_write b))) in Foo.
-  auto.
-Qed.    
 
-Lemma prog_g_init_init_loc prog G l
-      (L_IN : In l (g_locs G)) :
-  ES.init_loc (prog_g_es_init prog G) l.
+Lemma prog_l_es_init_init_loc prog locs :
+  (fun l => In l locs) ≡₁ ES.init_loc (prog_l_es_init prog locs).
+Proof.
+  split.
+  { intros l L_IN.
+    apply in_undup_iff in L_IN.
+    specialize (indexed_list_in_exists l (undup locs) L_IN) as [e Foo].
+    exists e. splits.
+    { apply prog_l_es_init_init.
+      unfold prog_l_es_init, ES.init.
+      unfold ES.acts_set, ES.next_act. rewrite length_map.
+      apply indexed_list_range. eauto. }
+    unfold prog_l_es_init, ES.init. simpl.
+    unfold Events.loc.
+    arewrite ((list_to_fun
+                 Nat.eq_dec
+                 (Afence Orlx)
+                 (indexed_list (map init_write (undup locs)))) e =
+              init_write l); [|done].
+    apply l2f_in.
+    { apply indexed_list_fst_nodup. }
+    rewrite traverse_map_indexed_list.
+    eapply in_map with
+        (f := (fun p : nat * location => let (a, b) := p in (a, init_write b))) in Foo.
+    auto. }
+  intros l [a HH]. desf.
+  unfold prog_l_es_init, ES.init, ES.lab in LOCA.
+  specialize (l2f_codom (indexed_list (map init_write (undup locs)))
+                        a
+                        (Afence Orlx) Nat.eq_dec) as RR.
+  desf; unfold loc in LOCA; desf.
+  all: rewrite traverse_map_indexed_list in RR;
+    apply in_map_iff in RR; desf.
+  apply In_map_snd in RR0.
+  rewrite indexed_list_map_snd in RR0.
+  by apply in_undup_iff.
+Qed.
+
+Lemma prog_g_init_init_loc prog G :
+  (fun l => In l (g_locs G)) ≡₁ ES.init_loc (prog_g_es_init prog G).
 Proof. by apply prog_l_es_init_init_loc. Qed.
 
-Lemma prog_es_init_init_loc prog l
-      (L_IN : In l (prog_locs (stable_prog_to_prog prog))) :
-  ES.init_loc (prog_es_init prog) l.
+Lemma prog_es_init_init_loc prog :
+  (fun l => In l (prog_locs (stable_prog_to_prog prog))) ≡₁ ES.init_loc (prog_es_init prog).
 Proof. by apply prog_l_es_init_init_loc. Qed.

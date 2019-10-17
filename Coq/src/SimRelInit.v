@@ -3,7 +3,7 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
+     Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb
      CombRelations SimTraversal.
 Require Import AuxRel.
 Require Import AuxDef.
@@ -62,15 +62,15 @@ Section SimRelInit.
   Notation "'Ssw'" := Consistency.sw.
   Notation "'Shb'" := Consistency.hb.
 
-  Notation "'thread_syntax' tid"  := 
-    (Language.syntax (thread_lts tid)) (at level 10, only parsing).  
+  Notation "'thread_syntax' tid"  :=
+    (Language.syntax (thread_lts tid)) (at level 10, only parsing).
 
-  Notation "'thread_st' tid" := 
+  Notation "'thread_st' tid" :=
     (Language.state (thread_lts tid)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' tid" := 
+  Notation "'thread_init_st' tid" :=
     (Language.init (thread_lts tid)) (at level 10, only parsing).
-  
+
   Notation "'thread_cont_st' tid" :=
     (fun st => existT _ (thread_lts tid) st) (at level 10, only parsing).
 
@@ -101,7 +101,7 @@ Section SimRelInit.
   Notation "'Grelease'" := (imm_s_hb.release G).
   Notation "'Gsw'" := (imm_s_hb.sw G).
   Notation "'Ghb'" := (imm_s_hb.hb G).
-  
+
   Notation "'Gfurr'" := (furr G sc).
 
   Notation "'C'"  := (covered TC).
@@ -109,18 +109,18 @@ Section SimRelInit.
 
   Notation "'Gfurr'" := (furr G sc).
 
-  Lemma simrel_init 
+  Lemma simrel_init
         (nInitProg : ~ IdentMap.In tid_init prog)
         (PExec : program_execution (stable_prog_to_prog prog) G)
         (WF : Execution.Wf G)
         (CONS : imm_consistent G sc)
-        (nLocsEmpty : g_locs G <> []) 
+        (nLocsEmpty : g_locs G <> [])
         (GCLOS : forall tid m n (LT : m < n) (NE : GE (ThreadEvent tid n)),
-            GE (ThreadEvent tid m)) : 
+            GE (ThreadEvent tid m)) :
     let Sinit := prog_g_es_init prog G in
-    simrel_consistent prog Sinit G sc 
-                      (init_trav G) 
-                      (ES.acts_set Sinit) 
+    simrel_consistent prog Sinit G sc
+                      (init_trav G)
+                      (ES.acts_set Sinit)
                       (fun t => IdentMap.In t prog).
   Proof.
     clear S TC X.
@@ -133,7 +133,7 @@ Section SimRelInit.
     { apply prog_g_es_init_wf; auto. }
     { apply init_trav_coherent; auto. }
     { constructor; eauto.
-      2: basic_solver. 
+      2: basic_solver.
       simpls. ins.
       split.
       { apply rmw_from_non_init in RMW; auto.
@@ -154,7 +154,7 @@ Section SimRelInit.
     { constructor.
       all: try by (ins;
                    match goal with
-                   | H : ES.cont_set _ _ |- _ => 
+                   | H : ES.cont_set _ _ |- _ =>
                      apply prog_g_es_init_K in H; desf
                    end).
       5: { ins. apply prog_g_es_init_K in INKi; desf.
@@ -170,7 +170,7 @@ Section SimRelInit.
         eapply wf_thread_state_steps.
         2: { simpls. apply eps_steps_in_steps. eauto. }
         apply wf_thread_state_init. }
-      { ins. 
+      { ins.
         assert (exists xst,
                    IdentMap.find thread prog = Some xst /\
                    lprog = projT1 xst) as [xst [XST]];
@@ -188,35 +188,35 @@ Section SimRelInit.
             by apply IdentMap.elements_correct. }
         destruct xst as [lprog BB]. simpls.
         pose (AA :=
-                @proj2_sig 
-                  _ _ 
+                @proj2_sig
+                  _ _
                   (get_stable thread (init lprog) BB
                               (rt_refl state (step thread) (init lprog)))).
         red in AA. desf. }
-      { ins.
-        apply eps_steps_in_steps.
-        unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
-        ES.cont_set in *.
-        simpls.
-        apply in_map_iff in INK.
-        destruct INK as [xst [INK REP]].
-        apply pair_inj in INK. destruct INK as [AA INK].
-        rewrite <- AA in *.
-        inv INK.
-        destruct xst as [thread [xprog BB]]. simpls.
-        assert (xprog = lprog); subst.
-        { clear -REP INPROG.
-          apply IdentMap.elements_complete in REP.
-          unfold stable_prog_to_prog in *.
-          rewrite IdentMap.Facts.map_o in INPROG.
-          unfold option_map in *. desf. }
-        pose (AA :=
-                @proj2_sig 
-                  _ _ 
-                  (get_stable thread (init lprog) BB
-                              (rt_refl state (step thread) (init lprog)))).
-        red in AA. desf. }
-
+      ins.
+      apply eps_steps_in_steps.
+      unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,
+      ES.cont_set in *.
+      simpls.
+      apply in_map_iff in INK.
+      destruct INK as [xst [INK REP]].
+      apply pair_inj in INK. destruct INK as [AA INK].
+      rewrite <- AA in *.
+      inv INK.
+      destruct xst as [thread [xprog BB]]. simpls.
+      assert (xprog = lprog); subst.
+      { clear -REP INPROG.
+        apply IdentMap.elements_complete in REP.
+        unfold stable_prog_to_prog in *.
+        rewrite IdentMap.Facts.map_o in INPROG.
+        unfold option_map in *. desf. }
+      pose (AA :=
+              @proj2_sig
+                _ _
+                (get_stable thread (init lprog) BB
+                            (rt_refl state (step thread) (init lprog)))).
+      red in AA. desf. }
+    { unfold contsimstate.
       ins.
       unfold stable_prog_to_prog in INPROG.
       rewrite IdentMap.Facts.map_o in INPROG.
@@ -226,14 +226,14 @@ Section SimRelInit.
       end.
       destruct s as [lprog BB].
       pose (AA :=
-              @proj2_sig 
-                _ _ 
+              @proj2_sig
+                _ _
                 (get_stable thread (init lprog) BB
                             (rt_refl state (step thread) (init lprog)))).
       assert
         (K (prog_g_es_init prog G)
            (CInit thread,
-            existT _ 
+            existT _
               (thread_lts thread)
               (proj1_sig
                  (get_stable thread (init lprog) BB
