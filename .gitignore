@@ -1,18 +1,11 @@
 *.aux
-*.bbl
-*.blg
-*.log
-*.pdf
 *.vo
 *.vio
 *.glob
-*.out
 
 *~
 
-Paper/auto/*
-
-Coq/.coqdeps.d
-Coq/Makefile.coq
-Coq/Makefile.coq.conf
-Coq/_CoqProject
+.coqdeps.d
+Makefile.coq
+Makefile.coq.conf
+_CoqProject

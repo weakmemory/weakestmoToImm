@@ -721,6 +721,8 @@ Proof.
   apply nSBcrs.
   unfolder. auto.
 Qed.
+ 
+Hint Unfold union : unfolderDb.
 
 Lemma cf_sb_in_cf WF : cf ⨾ sb ⊆ cf.
 Proof.
@@ -738,10 +740,10 @@ Proof.
     apply sb_tid; auto.
     apply seq_eqv_l. split; auto. }
   intros DD. apply CF.
-  unfolder in DD. desf.
+  repeat unfolder in DD. desf.
   { generalize SB. basic_solver. }
   { assert (same_tid x y) as STIDxy.
-    { eapply WF.(sb_tid). basic_solver. }
+    { eapply WF.(sb_tid). basic_solver 10. }
     assert (same_tid z y) as STIDzy.
     { eapply WF.(sb_tid). basic_solver. }
     assert ((sb ∩ same_tid)⁼ x z).
@@ -1844,6 +1846,39 @@ Proof.
   by apply rmwi. 
 Qed.
 
+Lemma cont_adjacent_sb_e WF k k' e e'
+      (ADJ : cont_adjacent S k k' e e') :
+  cont_sb_dom S k × eq e ⊆ sb.
+Proof. 
+  cdes ADJ.
+  erewrite cont_sb_dom_alt; auto.
+  rewrite seq_eqv_r.
+  intros x y [[z [SB kLASTz]] EQy].
+  subst y.
+  eapply sb_imm_split_r; auto.
+  exists z; splits; auto.
+  eapply cont_adjacent_con_last_sb_imm_alt; eauto.
+Qed.
+
+Lemma cont_adjacent_sb_e' WF k k' e e'
+      (ADJ : cont_adjacent S k k' e e') :
+  (cont_sb_dom S k ∪₁ eq e) × eq_opt e' ⊆ sb.
+Proof. 
+  unfold eq_opt.
+  destruct e' as [e'|]; 
+    [|basic_solver].
+  intros x y [[kSBx | EQx] EQy]; 
+    subst y.
+  { eapply sb_imm_split_r; auto.
+    exists e; split.
+    { right. eapply cont_adjacent_sb_e; eauto. basic_solver. }
+    eapply cont_adjacent_sb_imm; eauto.
+    basic_solver. }
+  subst x.
+  eapply cont_adjacent_sb_imm; eauto.
+  basic_solver.
+Qed.
+
 Lemma cont_adjacent_nsb_dom_e WF lang st k k' e e' 
       (KK : K (k, existT _ lang st))   
       (ADJ : cont_adjacent S k k' e e') :
@@ -2152,7 +2187,7 @@ Proof.
   apply same_thread_cf_free in HH; auto. 
   apply seq_eqv_lr in HH.
   destruct HH as [_ [SB _]].
-  unfolder in SB; desf.
+  repeat unfolder in SB. desf.
   { assert (seqn x < seqn y) as HH; [|omega]. 
     eapply seqn_sb_alt; eauto. }
   assert (seqn y < seqn x) as HH; [|omega]. 
@@ -2338,10 +2373,9 @@ Proof.
   apply seq_eqv_l. split; auto.
   apply seq_eqv_r. split; auto.
   split; auto.
-  intros SB. unfolder in SB. desf.
-  { omega. }
-  apply seqn_sb_alt in SB; auto.
-  omega.
+  intros SB. repeat unfolder in SB. 
+  desf; [omega|].
+  apply seqn_sb_alt in SB; auto. omega.
 Qed.
 
 Lemma seqn_eq_imm_sb WF x y z 
