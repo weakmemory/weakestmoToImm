@@ -71,25 +71,25 @@ Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
 (** ** StepWf ew properties *)
 (******************************************************************************)
 
-Lemma step_same_ew_ewE e e' S S' 
+Lemma step_same_ew_ewE e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (EW' : ew S' ≡ ew S) :
-  ew S' ≡ ⦗E S'⦘ ⨾ ew S' ⨾ ⦗E S'⦘. 
-Proof. 
-  rewrite EW'. rewrite ES.ewE; auto. 
+  ew S' ≡ ⦗E S'⦘ ⨾ ew S' ⨾ ⦗E S'⦘.
+Proof.
+  rewrite EW'. rewrite ES.ewE; auto.
   assert (E S ⊆₁ E S') as Emon.
   { eapply basic_step_acts_set_mon; eauto. }
   basic_solver 10.
 Qed.
 
-Lemma step_add_ew_ewE ews w' e e' S S' 
+Lemma step_add_ew_ewE ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  ew S' ≡ ⦗E S'⦘ ⨾ ew S' ⨾ ⦗E S'⦘. 
-Proof. 
+  ew S' ≡ ⦗E S'⦘ ⨾ ew S' ⨾ ⦗E S'⦘.
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes AEW.
   rewrite EW'. relsf.
   apply union_more.
@@ -99,12 +99,12 @@ Proof.
     basic_solver 10. }
   unfold ew_delta.
   rewrite csE, transp_cross.
-  relsf. 
+  relsf.
   erewrite basic_step_acts_set
       with (S' := S'); eauto.
   rewrite set_unionA, id_union. relsf.
-  rewrite <- !cross_inter_r. 
-  rewrite <- !cross_inter_l. 
+  rewrite <- !cross_inter_r.
+  rewrite <- !cross_inter_l.
   arewrite (E S ∩₁ eq w' ≡₁ ∅).
   { split; try done. unfolder in wEE'; desf; step_solver. }
   arewrite ((eq e ∪₁ eq_opt e') ∩₁ ews ≡₁ ∅).
@@ -112,34 +112,34 @@ Proof.
   relsf. generalize wEE'. basic_solver 10.
 Qed.
 
-Lemma step_same_ew_ewD e e' S S' 
+Lemma step_same_ew_ewD e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (EW' : ew S' ≡ ew S) :
-  ew S' ≡ ⦗W S'⦘ ⨾ ew S' ⨾ ⦗W S'⦘. 
-Proof. 
+  ew S' ≡ ⦗W S'⦘ ⨾ ew S' ⨾ ⦗W S'⦘.
+Proof.
   rewrite EW'.
   arewrite (⦗W S'⦘ ⨾ ew S ⨾ ⦗W S'⦘ ≡ ⦗E S ∩₁ W S'⦘ ⨾ ew S ⨾ ⦗E S ∩₁ W S'⦘).
   { rewrite ES.ewE; auto. basic_solver. }
-  erewrite basic_step_w_eq_w; eauto. 
-  rewrite ES.ewE, ES.ewD; auto. 
-  basic_solver. 
+  erewrite basic_step_w_eq_w; eauto.
+  rewrite ES.ewE, ES.ewD; auto.
+  basic_solver.
 Qed.
 
-Lemma step_add_ew_ewD ews w' e e' S S' 
+Lemma step_add_ew_ewD ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  ew S' ≡ ⦗W S'⦘ ⨾ ew S' ⨾ ⦗W S'⦘. 
-Proof. 
+  ew S' ≡ ⦗W S'⦘ ⨾ ew S' ⨾ ⦗W S'⦘.
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes AEW.
   rewrite EW'. relsf.
   apply union_more.
   { arewrite (⦗W S'⦘ ⨾ ew S ⨾ ⦗W S'⦘ ≡ ⦗E S ∩₁ W S'⦘ ⨾ ew S ⨾ ⦗E S ∩₁ W S'⦘).
     { rewrite ES.ewE; auto. basic_solver. }
-    erewrite basic_step_w_eq_w; eauto. 
-    rewrite ES.ewE, ES.ewD; auto. 
+    erewrite basic_step_w_eq_w; eauto.
+    rewrite ES.ewE, ES.ewD; auto.
     basic_solver. }
   unfold ew_delta.
   assert (ews ⊆₁ W S') as wsW'.
@@ -147,58 +147,58 @@ Proof.
     arewrite (lab S' x = lab S x).
     { erewrite basic_step_lab_eq_dom; eauto. }
     fold (is_w (lab S) x). basic_solver. }
-  basic_solver 10. 
+  basic_solver 10.
 Qed.
 
-Lemma step_same_ew_ewm e e' S S' 
+Lemma step_same_ew_ewm e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (EW' : ew S' ≡ ew S) :
   ew S' ⊆ (set_compl (Rel S') × set_compl (Rel S'))^?.
-Proof. 
-  rewrite EW'. 
+Proof.
+  rewrite EW'.
   intros x y EW.
   assert (E S x) as Ex.
-  { apply ES.ewE in EW; auto. 
+  { apply ES.ewE in EW; auto.
     generalize EW. basic_solver. }
   assert (E S y) as Ey.
-  { apply ES.ewE in EW; auto. 
+  { apply ES.ewE in EW; auto.
     generalize EW. basic_solver. }
   apply ES.ewm in EW; auto.
   destruct EW as [EQ | [xRlx yRlx]].
   { basic_solver. }
-  unfolder. right. 
-  unfold is_rel. 
+  unfolder. right.
+  unfold is_rel.
   erewrite basic_step_mod_eq_dom
     with (S' := S'); eauto.
   erewrite basic_step_mod_eq_dom
     with (S' := S'); eauto.
 Qed.
 
-Lemma step_add_ew_ewm ews w' e e' S S' 
+Lemma step_add_ew_ewm ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   ew S' ⊆ (set_compl (Rel S') × set_compl (Rel S'))^?.
-Proof. 
+Proof.
   cdes AEW.
   rewrite EW'.
-  unfold ew_delta. 
+  unfold ew_delta.
   rewrite csE, transp_cross.
-  unionL. 
+  unionL.
   { intros x y EW.
     assert (E S x) as Ex.
-    { apply ES.ewE in EW; auto. 
+    { apply ES.ewE in EW; auto.
       generalize EW. basic_solver. }
     assert (E S y) as Ey.
-    { apply ES.ewE in EW; auto. 
+    { apply ES.ewE in EW; auto.
       generalize EW. basic_solver. }
     apply ES.ewm in EW; auto.
     destruct EW as [EQ | [xRlx yRlx]].
     { basic_solver. }
-    unfolder. right. 
-    unfold is_rel. 
+    unfolder. right.
+    unfold is_rel.
     erewrite basic_step_mod_eq_dom
       with (S' := S'); eauto.
     erewrite basic_step_mod_eq_dom
@@ -206,146 +206,146 @@ Proof.
   { basic_solver. }
   { intros x y [xEWS EQy]. subst y.
     assert (~ Rel S' x) as nRELx.
-    { unfold is_rel in *. 
+    { unfold is_rel in *.
       erewrite basic_step_mod_eq_dom
-        with (S' := S'); eauto. 
+        with (S' := S'); eauto.
       by apply ewsnREL. }
     unfolder. right. split; auto.
-    destruct 
+    destruct
       (excluded_middle_informative (Rel S' w'))
       as [wREL | nwREL]; auto.
     exfalso. apply nRELx.
-    unfold is_rel. 
+    unfold is_rel.
     apply ewsMOD in xEWS.
     red in xEWS. by rewrite <- xEWS. }
   intros x y [EQx yEWS]. subst x.
   assert (~ Rel S' y) as nRELy.
   { unfold is_rel.
     erewrite basic_step_mod_eq_dom
-      with (S' := S'); eauto. 
+      with (S' := S'); eauto.
     by apply ewsnREL. }
   unfolder. right. split; auto.
-  destruct 
+  destruct
     (excluded_middle_informative (Rel S' w'))
     as [wREL | nwREL]; auto.
   exfalso. apply nRELy.
-  unfold is_rel. 
+  unfold is_rel.
   apply ewsMOD in yEWS.
   red in yEWS. by rewrite <- yEWS.
-Qed.    
+Qed.
 
-Lemma step_same_ew_ewl e e' S S' 
+Lemma step_same_ew_ewl e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (EW' : ew S' ≡ ew S) :
-  ew S' ⊆ same_loc S'. 
-Proof. 
-  rewrite EW'. 
+  ew S' ⊆ same_loc S'.
+Proof.
+  rewrite EW'.
   intros x y EW.
-  assert 
-    ((restr_rel (E S) (same_loc S')) x y) 
+  assert
+    ((restr_rel (E S) (same_loc S')) x y)
     as HH.
   { eapply basic_step_same_loc_restr; eauto.
     unfolder; splits.
     { apply ES.ewl; auto. }
-    { apply ES.ewE in EW; auto. 
+    { apply ES.ewE in EW; auto.
       generalize EW. basic_solver. }
-    apply ES.ewE in EW; auto. 
+    apply ES.ewE in EW; auto.
     generalize EW. basic_solver. }
   generalize HH. basic_solver.
 Qed.
 
-Lemma step_add_ew_ewl ews w' e e' S S' 
+Lemma step_add_ew_ewl ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  ew S' ⊆ same_loc S'. 
-Proof. 
+  ew S' ⊆ same_loc S'.
+Proof.
   cdes AEW.
   rewrite EW'.
-  unfold ew_delta. 
+  unfold ew_delta.
   rewrite csE, transp_cross.
   rewrite ewsLOC.
   unionL.
   2-4 : basic_solver.
   intros x y EW.
-  assert 
-    ((restr_rel (E S) (same_loc S')) x y) 
+  assert
+    ((restr_rel (E S) (same_loc S')) x y)
     as HH.
   { eapply basic_step_same_loc_restr; eauto.
     unfolder; splits.
     { apply ES.ewl; auto. }
-    { apply ES.ewE in EW; auto. 
+    { apply ES.ewE in EW; auto.
       generalize EW. basic_solver. }
-    apply ES.ewE in EW; auto. 
-    generalize EW. basic_solver. }
-  generalize HH. basic_solver. 
-Qed.
-
-Lemma step_same_ew_ewv e e' S S' 
-      (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (EW' : ew S' ≡ ew S) :
-  ew S' ⊆ same_val S'. 
-Proof. 
-  rewrite EW'. 
-  intros x y EW.
-  assert 
-    ((restr_rel (E S) (same_val S')) x y) 
-    as HH.
-  { eapply basic_step_same_val_restr; eauto.
-    unfolder; splits.
-    { apply ES.ewv; auto. }
-    { apply ES.ewE in EW; auto. 
-      generalize EW. basic_solver. }
-    apply ES.ewE in EW; auto. 
+    apply ES.ewE in EW; auto.
     generalize EW. basic_solver. }
   generalize HH. basic_solver.
 Qed.
 
-Lemma step_add_ew_ewv ews w' e e' S S' 
+Lemma step_same_ew_ewv e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (EW' : ew S' ≡ ew S) :
+  ew S' ⊆ same_val S'.
+Proof.
+  rewrite EW'.
+  intros x y EW.
+  assert
+    ((restr_rel (E S) (same_val S')) x y)
+    as HH.
+  { eapply basic_step_same_val_restr; eauto.
+    unfolder; splits.
+    { apply ES.ewv; auto. }
+    { apply ES.ewE in EW; auto.
+      generalize EW. basic_solver. }
+    apply ES.ewE in EW; auto.
+    generalize EW. basic_solver. }
+  generalize HH. basic_solver.
+Qed.
+
+Lemma step_add_ew_ewv ews w' e e' S S'
+      (wfE: ES.Wf S)
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  ew S' ⊆ same_val S'. 
-Proof. 
+  ew S' ⊆ same_val S'.
+Proof.
   cdes AEW.
   rewrite EW'.
-  unfold ew_delta. 
+  unfold ew_delta.
   rewrite csE, transp_cross.
   rewrite ewsVAL.
   unionL.
   2-4 : basic_solver.
   intros x y EW.
-  assert 
-    ((restr_rel (E S) (same_val S')) x y) 
+  assert
+    ((restr_rel (E S) (same_val S')) x y)
     as HH.
   { eapply basic_step_same_val_restr; eauto.
     unfolder; splits.
     { apply ES.ewv; auto. }
-    { apply ES.ewE in EW; auto. 
+    { apply ES.ewE in EW; auto.
       generalize EW. basic_solver. }
-    apply ES.ewE in EW; auto. 
+    apply ES.ewE in EW; auto.
     generalize EW. basic_solver. }
-  generalize HH. basic_solver. 
+  generalize HH. basic_solver.
 Qed.
 
-Lemma step_add_ew_ewc ews w' e e' S S' 
+Lemma step_add_ew_ewc ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   ew S' ⊆ (cf S')^?.
-Proof. 
+Proof.
   cdes AEW.
   rewrite EW'.
   unfold ew_delta.
   rewrite ewsCF.
   rewrite csE, transp_cross.
   unionL.
-  { rewrite ES.ewc; auto. 
+  { rewrite ES.ewc; auto.
     apply clos_refl_mori.
     eapply basic_step_cf_mon; eauto. }
   { basic_solver. }
@@ -353,14 +353,14 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma step_add_ew_ew_refl ews w' e e' S S' 
+Lemma step_add_ew_ew_refl ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') 
-      (wWW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w')
+      (wWW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') :
   ⦗E S' ∩₁ W S'⦘ ⊆ ew S'.
-Proof. 
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes AEW.
   rewrite EW', wWW'.
   rewrite id_union.
@@ -370,13 +370,13 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma step_add_ew_ew_trans ews w' e e' S S' 
+Lemma step_add_ew_ew_trans ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   transitive (ew S').
-Proof. 
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes AEW.
   rewrite EW'.
   unfold ew_delta.
@@ -402,12 +402,12 @@ Proof.
   arewrite (ew S ⨾ ew S ⊆ ew S).
   { apply transitiveI. apply ES.ew_trans; auto. }
   arewrite (eq w' × ews ⨾ ew S ⊆ eq w' × ews).
-  { unfolder. ins. desc. 
+  { unfolder. ins. desc.
     splits; auto.
-    eapply add_ew_ews_ew_fwcl; eauto. 
+    eapply add_ew_ews_ew_fwcl; eauto.
     basic_solver 10. }
   arewrite (ew S ⨾ ews × eq w' ⊆ ews × eq w').
-  { unfolder. ins. desc. 
+  { unfolder. ins. desc.
     splits; auto.
     eapply ewsEWprcl. basic_solver 10. }
   arewrite (ews × eq w' ⨾ eq w' × ews ⊆ ew S).
@@ -415,31 +415,31 @@ Proof.
   basic_solver 10.
 Qed.
 
-Lemma step_add_ew_ew_sym ews w' e e' S S' 
+Lemma step_add_ew_ew_sym ews w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   symmetric (ew S').
-Proof. 
+Proof.
   cdes AEW.
   rewrite EW'.
-  unfold ew_delta. 
+  unfold ew_delta.
   apply union_sym.
-  { apply ES.ew_sym; auto. } 
+  { apply ES.ew_sym; auto. }
   apply union_sym.
   { basic_solver. }
   apply cs_sym.
 Qed.
 
-Lemma step_add_ew_ew_co ews ws w' e e' S S' 
+Lemma step_add_ew_ew_co ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
       (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   ew S' ∩ co S' ≡ ∅₂.
-Proof. 
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes AEW; cdes ACO.
   split; [|done].
   rewrite EW', CO'.
@@ -457,8 +457,8 @@ Proof.
   arewrite_false (ews × eq w' ∩ ws × eq w').
   { unfolder. ins. desf. eapply ws_ews. basic_solver. }
   arewrite_false (eq w' × ews ∩ eq w' × ws_compl ews ws S).
-  { unfolder. ins. desf. 
-    eapply add_co_ews_inter_ws_compl_false; eauto.  
+  { unfolder. ins. desf.
+    eapply add_co_ews_inter_ws_compl_false; eauto.
     basic_solver. }
   relsf.
   erewrite add_co_ws_complE; auto.
@@ -552,7 +552,7 @@ Proof.
   { unfolder. ins. desf. splits; auto.
     apply ewsCOprcl. basic_solver 10. }
   arewrite (ws × ews ⊆ co S).
-  { eapply add_co_ws_cross_ews_in_co; eauto. } 
+  { eapply add_co_ws_cross_ews_in_co; eauto. }
   basic_solver.
 Qed.
 
@@ -560,25 +560,25 @@ Qed.
 (** ** StepWf co properties *)
 (******************************************************************************)
 
-Lemma step_same_co_coE e e' S S' 
+Lemma step_same_co_coE e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (CO' : co S' ≡ co S) :
-  co S' ≡ ⦗E S'⦘ ⨾ co S' ⨾ ⦗E S'⦘. 
-Proof. 
-  rewrite CO'. rewrite ES.coE; auto. 
+  co S' ≡ ⦗E S'⦘ ⨾ co S' ⨾ ⦗E S'⦘.
+Proof.
+  rewrite CO'. rewrite ES.coE; auto.
   assert (E S ⊆₁ E S') as Emon.
   { eapply basic_step_acts_set_mon; eauto. }
   basic_solver 10.
 Qed.
 
-Lemma step_add_co_coE ews ws w' e e' S S' 
+Lemma step_add_co_coE ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  co S' ≡ ⦗E S'⦘ ⨾ co S' ⨾ ⦗E S'⦘. 
-Proof. 
+  co S' ≡ ⦗E S'⦘ ⨾ co S' ⨾ ⦗E S'⦘.
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes ACO.
   rewrite CO'. relsf.
   apply union_more.
@@ -604,38 +604,38 @@ Proof.
   arewrite_false (eq w' × ws_compl ews ws S ⨾ ⦗eq e ∪₁ eq_opt e'⦘).
   { rewrite add_co_ws_complE; auto. step_solver. }
   assert (ws_compl ews ws S ⊆₁ E S).
-  { apply add_co_ws_complE; auto. } 
+  { apply add_co_ws_complE; auto. }
   relsf. basic_solver 10.
 Qed.
 
-Lemma step_same_co_coD e e' S S' 
+Lemma step_same_co_coD e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (CO' : co S' ≡ co S) :
-  co S' ≡ ⦗W S'⦘ ⨾ co S' ⨾ ⦗W S'⦘. 
-Proof. 
+  co S' ≡ ⦗W S'⦘ ⨾ co S' ⨾ ⦗W S'⦘.
+Proof.
   rewrite CO'.
   arewrite (⦗W S'⦘ ⨾ co S ⨾ ⦗W S'⦘ ≡ ⦗E S ∩₁ W S'⦘ ⨾ co S ⨾ ⦗E S ∩₁ W S'⦘).
   { rewrite ES.coE; auto. basic_solver. }
-  erewrite basic_step_w_eq_w; eauto. 
-  rewrite ES.coE, ES.coD; auto. 
-  basic_solver. 
+  erewrite basic_step_w_eq_w; eauto.
+  rewrite ES.coE, ES.coD; auto.
+  basic_solver.
 Qed.
 
-Lemma step_add_co_coD ews ws w' e e' S S' 
+Lemma step_add_co_coD ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  co S' ≡ ⦗W S'⦘ ⨾ co S' ⨾ ⦗W S'⦘. 
-Proof. 
+  co S' ≡ ⦗W S'⦘ ⨾ co S' ⨾ ⦗W S'⦘.
+Proof.
   cdes BSTEP; cdes BSTEP_; cdes ACO.
   rewrite CO'. relsf.
   apply union_more.
   { arewrite (⦗W S'⦘ ⨾ co S ⨾ ⦗W S'⦘ ≡ ⦗E S ∩₁ W S'⦘ ⨾ co S ⨾ ⦗E S ∩₁ W S'⦘).
     { rewrite ES.coE; auto. basic_solver. }
-    erewrite basic_step_w_eq_w; eauto. 
-    rewrite ES.coE, ES.coD; auto. 
+    erewrite basic_step_w_eq_w; eauto.
+    rewrite ES.coE, ES.coD; auto.
     basic_solver. }
   unfold co_delta.
   relsf. apply union_more.
@@ -648,55 +648,55 @@ Proof.
   assert (ws_compl ews ws S ⊆₁ W S') as wsW'.
   { red. ins. unfold is_w.
     arewrite (lab S' x = lab S x).
-    { erewrite basic_step_lab_eq_dom; eauto. 
+    { erewrite basic_step_lab_eq_dom; eauto.
       eapply add_co_ws_complE; eauto. }
-    fold (is_w (lab S) x). 
+    fold (is_w (lab S) x).
     eapply add_co_ws_complW; eauto. }
   basic_solver 10.
 Qed.
 
-Lemma step_same_co_col e e' S S' 
+Lemma step_same_co_col e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (CO' : co S' ≡ co S) :
-  co S' ⊆ same_loc S'. 
-Proof. 
-  rewrite CO'. 
+  co S' ⊆ same_loc S'.
+Proof.
+  rewrite CO'.
   intros x y CO.
-  assert 
-    ((restr_rel (E S) (same_loc S')) x y) 
+  assert
+    ((restr_rel (E S) (same_loc S')) x y)
     as HH.
   { eapply basic_step_same_loc_restr; eauto.
     unfolder; splits.
     { apply ES.col; auto. }
-    { apply ES.coE in CO; auto. 
+    { apply ES.coE in CO; auto.
       generalize CO. basic_solver. }
-    apply ES.coE in CO; auto. 
+    apply ES.coE in CO; auto.
     generalize CO. basic_solver. }
   generalize HH. basic_solver.
 Qed.
 
-Lemma step_add_co_col ews ws w' e e' S S' 
+Lemma step_add_co_col ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (ACO : add_co ews ws w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
-  co S' ⊆ same_loc S'. 
-Proof. 
+  co S' ⊆ same_loc S'.
+Proof.
   cdes ACO.
   rewrite CO'.
   unionL.
   { intros x y CO.
-    assert 
-      ((restr_rel (E S) (same_loc S')) x y) 
+    assert
+      ((restr_rel (E S) (same_loc S')) x y)
       as HH.
     { eapply basic_step_same_loc_restr; eauto.
       unfolder; splits.
       { apply ES.col; auto. }
-      { apply ES.coE in CO; auto. 
+      { apply ES.coE in CO; auto.
         generalize CO. basic_solver. }
-      apply ES.coE in CO; auto. 
+      apply ES.coE in CO; auto.
       generalize CO. basic_solver. }
     generalize HH. basic_solver. }
   { rewrite wsLOC. basic_solver. }
@@ -704,19 +704,19 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma step_same_co_init e e' S S' 
+Lemma step_same_co_init e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (CO' : co S' ≡ co S) 
-      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S) : 
+      (BSTEP : basic_step e e' S S')
+      (CO' : co S' ≡ co S)
+      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S) :
   ⦗Einit S'⦘ ⨾ same_loc S' ⨾ ⦗Eninit S' ∩₁ W S'⦘ ⊆ co S'.
-Proof. 
+Proof.
   assert (Eninit S' ∩₁ W S' ≡₁ Eninit S ∩₁ W S) as WW.
   { unfold ES.acts_ninit_set.
     rewrite !set_inter_minus_l. rewrite WW'.
     erewrite basic_step_acts_init_set; eauto. }
 
-  rewrite WW, CO'. 
+  rewrite WW, CO'.
   rewrite basic_step_acts_init_set; eauto.
   rewrite <- seq_eqvK with (dom := Einit S).
   rewrite <- seq_eqvK with (dom := Eninit S ∩₁ W S).
@@ -732,15 +732,15 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma step_add_co_co_init ews ws w' e e' S S' 
+Lemma step_add_co_co_init ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (ACO : add_co ews ws w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') 
-      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w')
+      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') :
   ⦗Einit S'⦘ ⨾ same_loc S' ⨾ ⦗Eninit S' ∩₁ W S'⦘ ⊆ co S'.
-Proof. 
+Proof.
   cdes ACO.
   assert (Eninit S' ∩₁ W S' ≡₁ Eninit S ∩₁ W S ∪₁ eq w') as WW.
   { unfold ES.acts_ninit_set.
@@ -781,49 +781,49 @@ Proof.
   unfolder; split; auto.
   red in eqLOC.
   arewrite (loc S x = loc S' x); auto.
-  symmetry. 
+  symmetry.
   eapply basic_step_loc_eq_dom; eauto.
   apply xInit.
 Qed.
 
-Lemma step_add_co_irr ews ws w' e e' S S' 
+Lemma step_add_co_irr ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   irreflexive (co S').
-Proof. 
-  cdes BSTEP; cdes BSTEP_; cdes ACO. 
+Proof.
+  cdes BSTEP; cdes BSTEP_; cdes ACO.
   rewrite CO'.
   unfold co_delta.
-  unfolder. 
-  intros x [CO | [[wWS EQx] | [EQx wWS]]]. 
+  unfolder.
+  intros x [CO | [[wWS EQx] | [EQx wWS]]].
   { eapply ES.co_irr; eauto. }
   { subst x. apply wsE in wWS.
-    unfolder in wEE'. 
+    unfolder in wEE'.
     desf; step_solver. }
   subst x. apply add_co_ws_complE in wWS; eauto.
-  unfolder in wEE'. 
+  unfolder in wEE'.
   desf; step_solver.
 Qed.
 
-Lemma step_add_co_trans ews ws w' e e' S S' 
+Lemma step_add_co_trans ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') 
+      (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w') :
   transitive (co S').
-Proof. 
-  cdes BSTEP; cdes BSTEP_; cdes ACO. 
+Proof.
+  cdes BSTEP; cdes BSTEP_; cdes ACO.
   apply transitiveI.
   rewrite CO'.
   unfold co_delta.
   relsf.
   arewrite_false (ws × eq w' ⨾ co S).
-  { unfolder in wEE'; desf; step_solver. } 
+  { unfolder in wEE'; desf; step_solver. }
   arewrite_false (ws × eq w' ⨾ ws × eq w').
-  { rewrite wsE. unfolder in wEE'; desf; step_solver. } 
+  { rewrite wsE. unfolder in wEE'; desf; step_solver. }
   arewrite_false (co S ⨾ eq w' × ws_compl ews ws S).
   { erewrite add_co_ws_complE; auto. unfolder in wEE'; desf; step_solver. }
   arewrite_false (eq w' × ws_compl ews ws S ⨾ eq w' × ws_compl ews ws S).
@@ -846,21 +846,21 @@ Proof.
     eapply add_co_ws_cross_ws_compl_in_co; eauto.
     basic_solver. }
   basic_solver.
-Qed.    
+Qed.
 
 Lemma step_same_co_total e e' S S'
       (wfE: ES.Wf S)
       (BSTEP : basic_step e e' S S')
-      (EW' : ew S' ≡ ew S) 
-      (CO' : co S' ≡ co S) 
-      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S) : 
-  forall ol a b 
-             (aW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) a) 
-             (bW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) b) 
+      (EW' : ew S' ≡ ew S)
+      (CO' : co S' ≡ co S)
+      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S) :
+  forall ol a b
+             (aW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) a)
+             (bW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) b)
              (nEW : ~ ew S' a b),
         co S' a b \/ co S' b a.
-Proof. 
-  ins. 
+Proof.
+  ins.
   assert ((E S ∩₁ W S) a) as Ha.
   { apply WW'. generalize aW. basic_solver. }
   assert ((E S ∩₁ W S) b) as Hb.
@@ -876,22 +876,22 @@ Proof.
     generalize bW. basic_solver. }
   assert ((co S) a b \/ (co S) b a) as HCO.
   { eapply ES.co_total; eauto.
-    { unfolder; splits; try apply aLOC; auto. } 
-    { unfolder; splits; auto. } 
-    intros EW. 
+    { unfolder; splits; try apply aLOC; auto. }
+    { unfolder; splits; auto. }
+    intros EW.
     by apply nEW, EW'. }
   generalize CO' HCO. basic_solver.
 Qed.
 
 Lemma add_co_split_writes ews ws w' S S'
-      (wfE : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
-  E S ∩₁ W S ∩₁ Loc_ S (loc S' w') \₁ ews ⊆₁ 
+      (wfE : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
+  E S ∩₁ W S ∩₁ Loc_ S (loc S' w') \₁ ews ⊆₁
   ws ∪₁ ws_compl ews ws S.
-Proof. 
+Proof.
   cdes ACO.
   intros w [[[wE wW] eqLOC] nEWS].
-  destruct 
+  destruct
     (excluded_middle_informative (ws w))
     as [wWS | nwWS].
   { by left. }
@@ -917,22 +917,22 @@ Lemma step_add_co_total_helper ews ws w' e e' S S'
       (AEW : add_ew ews w' S S')
       (ACO : add_co ews ws w' S S')
       (wEE' : (eq e ∪₁ eq_opt e') w')
-      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
-  forall a (aW : (E S ∩₁ W S ∩₁ Loc_ S (loc S' w')) a) 
+      (WW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') :
+  forall a (aW : (E S ∩₁ W S ∩₁ Loc_ S (loc S' w')) a)
          (nEW : ~ (ew S') a w'),
       co S' a w' \/ co S' w' a.
-Proof. 
-  ins. 
+Proof.
+  ins.
   destruct aW as [[aE aW] aLOC].
-  edestruct 
+  edestruct
     add_co_split_writes
     as [aWS | anWS]; eauto.
   { unfolder; splits; eauto.
-    cdes AEW. intros aEWS. 
+    cdes AEW. intros aEWS.
     eapply nEW. apply EW'.
     unfold ew_delta.
     basic_solver 10. }
-  { left. cdes ACO. apply CO'. 
+  { left. cdes ACO. apply CO'.
     unfold co_delta.
     basic_solver. }
   right. cdes ACO. apply CO'.
@@ -940,21 +940,21 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma step_add_co_total ews ws w' e e' S S' 
+Lemma step_add_co_total ews ws w' e e' S S'
       (wfE: ES.Wf S)
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (ACO : add_co ews ws w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') 
-      (wWW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') : 
-  forall ol a b 
-             (aW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) a) 
-             (bW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) b) 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w')
+      (wWW' : E S' ∩₁ W S' ≡₁ E S ∩₁ W S ∪₁ eq w') :
+  forall ol a b
+             (aW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) a)
+             (bW : (E S' ∩₁ W S' ∩₁ Loc_ S' ol) b)
              (nEW : ~ ew S' a b),
         co S' a b \/ co S' b a.
-Proof. 
-  ins. 
-  destruct 
+Proof.
+  ins.
+  destruct
     (classic (loc S' w' = ol))
     as [lEQ | lnEQ].
   { subst ol.
@@ -972,26 +972,26 @@ Proof.
         generalize bW. basic_solver. }
       assert ((co S) a b \/ (co S) b a) as HCO.
       { eapply ES.co_total; eauto.
-        { unfolder; splits; try apply aLOC; auto. } 
-        { unfolder; splits; auto. } 
+        { unfolder; splits; try apply aLOC; auto. }
+        { unfolder; splits; auto. }
         intros EW. apply nEW.
         cdes AEW. apply EW'. by left. }
       destruct HCO as [COab | COba].
       { cdes ACO. left. apply CO'. basic_solver. }
       cdes ACO. right. apply CO'. basic_solver. }
-    { subst b. eapply step_add_co_total_helper; eauto. 
-      unfolder; splits; auto. 
+    { subst b. eapply step_add_co_total_helper; eauto.
+      unfolder; splits; auto.
       eapply basic_step_loc_in_loc; eauto.
       generalize aW. basic_solver. }
-    { subst a. apply or_comm. 
-      eapply step_add_co_total_helper; eauto. 
+    { subst a. apply or_comm.
+      eapply step_add_co_total_helper; eauto.
       unfolder; splits; auto.
-      { eapply basic_step_loc_in_loc; eauto. 
+      { eapply basic_step_loc_in_loc; eauto.
         generalize bW. basic_solver. }
-      red. ins. apply nEW. 
+      red. ins. apply nEW.
       eapply step_add_ew_ew_sym; eauto. }
-    exfalso. subst a b. apply nEW. 
-    cdes AEW. apply EW'. 
+    exfalso. subst a b. apply nEW.
+    cdes AEW. apply EW'.
     unfold ew_delta.
     basic_solver. }
   assert ((E S ∩₁ W S) a) as Ha.
@@ -1014,14 +1014,14 @@ Proof.
     generalize bW. basic_solver. }
   assert ((co S) a b \/ (co S) b a) as HCO.
   { eapply ES.co_total; eauto.
-    { unfolder; splits; try apply aLOC; auto. } 
-    { unfolder; splits; auto. } 
-    intros EW. apply nEW. 
+    { unfolder; splits; try apply aLOC; auto. }
+    { unfolder; splits; auto. }
+    intros EW. apply nEW.
     cdes AEW. apply EW'. basic_solver. }
   destruct HCO as [COab | COba].
   { cdes ACO. left. apply CO'. basic_solver. }
   cdes ACO. right. apply CO'. basic_solver.
-Qed.  
+Qed.
 
 (******************************************************************************)
 (** ** StepWf Lemma *)
@@ -1058,7 +1058,7 @@ Proof.
       do 2 left. apply EINA. }
     erewrite basic_step_tid_eq_dom; eauto.
     all: apply EINA. }
-  
+
   constructor.
   { ins; desf.
     cdes BSTEP. cdes BSTEP_.
@@ -1234,7 +1234,7 @@ Proof.
     rewrite <- !cross_inter_r.
     assert (eq e0 ∩₁ eq (ES.next_act S) ⊆₁ ∅) as DD.
     { red in EE. desf. unfolder. ins. desf. simpls. omega. }
-    rewrite set_interC. 
+    rewrite set_interC.
     relsf.
     2: { intros HH. eapply HH. split; eauto. }
     rewrite SB'.
@@ -1296,7 +1296,7 @@ Proof.
         cdes BSTEP_.
         apply SB'. right.
         red. left. left. red. split; auto.
-        red. red. 
+        red. red.
         eexists. apply seq_eqv_r. split; eauto. }
       red. destruct EE as [_ EE]. rewrite EE.
       erewrite basic_step_tid_e with (e:=e); eauto.
@@ -1436,7 +1436,7 @@ Proof.
     2,4: cdes AJF.
     all: rewrite JF'; try rewrite transp_union; auto.
     all: apply functional_union; auto.
-    1,3: by unfold jf_delta, singl_rel, transp; red; ins; desf. 
+    1,3: by unfold jf_delta, singl_rel, transp; red; ins; desf.
     all: unfold jf_delta; unfolder.
     all: intros x [y JF] HH; desf.
     all: apply (dom_r WF.(ES.jfE)) in JF; destruct_seq_r JF as EE.
@@ -1485,27 +1485,27 @@ Proof.
 
   (* co and ew properties *)
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_co_coE; eauto. 
+    1,2 : eapply step_same_co_coE; eauto.
     all : eapply step_add_co_coE; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_co_coD; eauto. 
+    1,2 : eapply step_same_co_coD; eauto.
     all : eapply step_add_co_coD; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_co_col; eauto. 
+    1,2 : eapply step_same_co_col; eauto.
     all : eapply step_add_co_col; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_co_init; eauto. 
+    1,2 : eapply step_same_co_init; eauto.
     { eapply fence_step_W; eauto. }
     { eapply load_step_W; eauto. }
-    all : eapply step_add_co_co_init; eauto. 
+    all : eapply step_add_co_co_init; eauto.
     1,3 : basic_solver.
     { eapply store_step_W; eauto. }
     eapply update_step_W; eauto. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite CO'; apply ES.co_irr; auto. 
+    1,2 : rewrite CO'; apply ES.co_irr; auto.
     all : eapply step_add_co_irr; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite CO'; apply ES.co_trans; auto. 
+    1,2 : rewrite CO'; apply ES.co_trans; auto.
     all : eapply step_add_co_trans; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
     { eapply step_same_co_total; eauto.
@@ -1520,45 +1520,45 @@ Proof.
     eapply update_step_W; eauto. }
 
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_ew_ewE; eauto. 
+    1,2 : eapply step_same_ew_ewE; eauto.
     all : eapply step_add_ew_ewE; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_ew_ewD; eauto. 
+    1,2 : eapply step_same_ew_ewD; eauto.
     all : eapply step_add_ew_ewD; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_ew_ewm; eauto. 
+    1,2 : eapply step_same_ew_ewm; eauto.
     all : eapply step_add_ew_ewm; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_ew_ewl; eauto. 
+    1,2 : eapply step_same_ew_ewl; eauto.
     all : eapply step_add_ew_ewl; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : eapply step_same_ew_ewv; eauto. 
+    1,2 : eapply step_same_ew_ewv; eauto.
     all : eapply step_add_ew_ewv; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW', ES.ewc; auto; 
+    1,2 : rewrite EW', ES.ewc; auto;
           apply clos_refl_mori; eapply basic_step_cf_mon; eauto.
     all : eapply step_add_ew_ewc; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
     { rewrite EW'. erewrite fence_step_W; eauto. by apply ES.ew_refl. }
     { rewrite EW'. erewrite load_step_W; eauto. by apply ES.ew_refl. }
-    all : eapply step_add_ew_ew_refl; eauto. 
+    all : eapply step_add_ew_ew_refl; eauto.
     1,3 : basic_solver.
     { erewrite store_step_W; eauto. }
     erewrite update_step_W; eauto. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW'; apply ES.ew_sym; auto. 
+    1,2 : rewrite EW'; apply ES.ew_sym; auto.
     all : eapply step_add_ew_ew_sym; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW'; apply ES.ew_trans; auto. 
+    1,2 : rewrite EW'; apply ES.ew_trans; auto.
     all : eapply step_add_ew_ew_trans; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW', CO'; apply ES.ew_co; auto. 
+    1,2 : rewrite EW', CO'; apply ES.ew_co; auto.
     all : eapply step_add_ew_ew_co; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW', CO'; apply ES.ew_co_in_co; auto. 
+    1,2 : rewrite EW', CO'; apply ES.ew_co_in_co; auto.
     all : eapply step_add_ew_ew_co_in_co; eauto; basic_solver. }
   { red in TT. desf; cdes TT; desf.
-    1,2 : rewrite EW', CO'; apply ES.co_ew_in_co; auto. 
+    1,2 : rewrite EW', CO'; apply ES.co_ew_in_co; auto.
     all : eapply step_add_ew_co_ew_in_co; eauto; basic_solver. }
 
   { red. ins. desf.
@@ -1589,7 +1589,7 @@ Proof.
       apply WF.(ES.rmw_K). do 2 eexists. splits; eauto.
       red. eauto. }
     unfold opt_ext in *.
-    red in RMW. 
+    red in RMW.
     unfold eq_opt in *. inv RMW. desf.
     inv KK; [omega|].
     destruct c. apply NES. eapply ES.K_inE; eauto. }
@@ -1640,7 +1640,7 @@ Proof.
     unfold opt_ext. basic_solver. }
   { eapply basic_step_K_adj; eauto. }
 Qed.
- 
+
 Lemma basic_step_init_loc e e' S S'
       (BSTEP : BasicStep.basic_step e e' S S')
       (WF : ES.Wf S) :

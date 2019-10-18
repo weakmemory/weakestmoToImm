@@ -10,14 +10,14 @@ Lemma pair_inj {A B} (a c : A) (b d : B) (EQ: (a, b) = (c, d)) :
   a = c /\ b = d.
 Proof. ins. inv EQ. Qed.
 
-Definition opt_same_ctor {A B} (a : option A) (b : option B) : Prop := 
+Definition opt_same_ctor {A B} (a : option A) (b : option B) : Prop :=
   match a, b with
   | None  , None
   | Some _, Some _ => True
   | _, _ => False
   end.
 
-Definition opt_ext {A} (def : A) (a : option A) : A := 
+Definition opt_ext {A} (def : A) (a : option A) : A :=
   match a with
   | None => def
   | Some a => a
@@ -29,7 +29,7 @@ Definition opt_to_list {A} (a : option A) : list A :=
   | Some a => [a]
   end.
 
-Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) := 
+Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) :=
   match a, b with
   | Some a, Some b => upd f a b
   | _, _ => f
@@ -37,14 +37,14 @@ Definition upd_opt {A} {B} (f : A -> B) (a : option A) (b : option B) :=
 
 Fixpoint countNatP (p: nat -> Prop) (n : nat) : nat :=
   match n with
-  | 0 => 0 
+  | 0 => 0
   | S n =>
     let shift := if excluded_middle_informative (p n)
                  then 1 else 0
     in
     shift + countNatP p n
   end.
-                               
+
 Fixpoint indexed_list_helper {A} (i : nat) (l : list A) :
   list (nat * A) :=
   match l with
@@ -97,7 +97,7 @@ Lemma l2f_v {A B} (l : list (A * B)) a def
   ((~ exists b, ⟪ BIN : In (a, b) l ⟫) /\
    ⟪ VV  : list_to_fun DEC def l a = def ⟫).
 Proof.
-  induction l. 
+  induction l.
   { right. splits; eauto.
     intros HH. desf. }
   destruct a0 as [a' b'].
@@ -276,55 +276,55 @@ Proof. unfold indexed_list. by apply indexed_list_helper_in_exists. Qed.
 
 Hint Unfold upd_opt : unfolderDb.
 
-Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B): 
+Lemma option_map_same_ctor (A B : Type) (a : option A) (f : A -> B):
   opt_same_ctor (option_map f a) a.
 Proof. unfold option_map. red. destruct a; auto. Qed.
 
-Lemma opt_to_list_none (A : Type) : 
+Lemma opt_to_list_none (A : Type) :
   opt_to_list (None : option A) = [].
 Proof. by unfold opt_to_list. Qed.
 
-Lemma opt_to_list_some (A : Type) (a : A) : 
+Lemma opt_to_list_some (A : Type) (a : A) :
   opt_to_list (Some a) = [a].
 Proof. by unfold opt_to_list. Qed.
 
 Lemma opt_to_list_app_singl (A : Type) (a a' : A) (b b' : option A) :
   opt_to_list b ++ [a] = opt_to_list b' ++ [a'] -> a = a' /\ b = b'.
-Proof. 
+Proof.
   unfold opt_to_list, app. ins.
   destruct b, b'; inversion H; intuition.
 Qed.
 
 Lemma opt_to_list_app_singl_singl (A : Type) (a a' : A) (b : option A) :
   opt_to_list b ++ [a] = [a'] -> a = a' /\ b = None.
-Proof. 
+Proof.
   unfold opt_to_list.
   destruct b as [b|];
-    unfold app; intros EQ; 
-    by inversion EQ. 
+    unfold app; intros EQ;
+    by inversion EQ.
 Qed.
 
 Lemma opt_to_list_app_singl_pair (A : Type) (a a' : A) (b : option A) (b' : A) :
   opt_to_list b ++ [a] = [b'; a'] -> a = a' /\ b = Some b'.
-Proof. 
+Proof.
   unfold opt_to_list.
   destruct b as [b|];
-    unfold app; intros EQ; 
-    by inversion EQ. 
+    unfold app; intros EQ;
+    by inversion EQ.
 Qed.
 
-Lemma upd_opt_none_l (A B : Type) (f : A -> B) b : upd_opt f None b = f. 
-Proof. 
+Lemma upd_opt_none_l (A B : Type) (f : A -> B) b : upd_opt f None b = f.
+Proof.
   by unfold upd_opt.
 Qed.
 
-Lemma upd_opt_none_r (A B : Type) (f : A -> B) a : upd_opt f a None = f. 
-Proof. 
+Lemma upd_opt_none_r (A B : Type) (f : A -> B) a : upd_opt f a None = f.
+Proof.
   destruct a; by unfold upd_opt.
 Qed.
 
-Lemma upd_opt_some (A B : Type) (f : A -> B) a b : upd_opt f (Some a) (Some b) = upd f a b. 
-Proof. 
+Lemma upd_opt_some (A B : Type) (f : A -> B) a b : upd_opt f (Some a) (Some b) = upd f a b.
+Proof.
   by unfold upd_opt.
 Qed.
 
@@ -339,24 +339,24 @@ Proof.
   exfalso. apply n. by apply H.
 Qed.
 
-Lemma updo_opt (A B : Type) (f : A -> B) a b x 
-      (NEQ : ~ eq_opt a x) 
-      (CTOR : opt_same_ctor a b) : 
+Lemma updo_opt (A B : Type) (f : A -> B) a b x
+      (NEQ : ~ eq_opt a x)
+      (CTOR : opt_same_ctor a b) :
   upd_opt f a b x = f x.
-Proof. 
-  unfold upd_opt, eq_opt in *. 
-  destruct a, b; auto. 
-  apply updo. auto. 
+Proof.
+  unfold upd_opt, eq_opt in *.
+  destruct a, b; auto.
+  apply updo. auto.
 Qed.
 
-Lemma set_collect_updo_opt (A B : Type) (f : A -> B) a b s 
-      (DISJ : set_disjoint s (eq_opt a)) 
-      (CTOR : opt_same_ctor a b) : 
+Lemma set_collect_updo_opt (A B : Type) (f : A -> B) a b s
+      (DISJ : set_disjoint s (eq_opt a))
+      (CTOR : opt_same_ctor a b) :
   (upd_opt f a b) □₁ s ≡₁ f □₁ s.
-Proof. 
-  unfold upd_opt, eq_opt, set_disjoint in *. 
-  destruct a, b; auto. 
-  apply set_collect_updo. 
+Proof.
+  unfold upd_opt, eq_opt, set_disjoint in *.
+  destruct a, b; auto.
+  apply set_collect_updo.
   specialize (DISJ a).
   intuition.
 Qed.
@@ -396,27 +396,27 @@ Lemma countNatP_empty n : countNatP ∅ n = 0.
 Proof. induction n; simpls; desf. Qed.
 
 Lemma countNatP_zero s n : countNatP s n = 0 <-> forall m, s m -> n <= m.
-Proof. 
-  red. split. 
-  { induction n. 
+Proof.
+  red. split.
+  { induction n.
     { ins; omega. }
-    unfold countNatP. 
+    unfold countNatP.
     destruct (excluded_middle_informative (s n)) as [HH | nHH].
     { ins; omega. }
     rewrite Nat.add_0_l.
-    intros HH m Sm. 
-    eapply IHn in HH; eauto. 
-    destruct HH; intuition. } 
-  intros Hm. 
-  induction n.  
+    intros HH m Sm.
+    eapply IHn in HH; eauto.
+    destruct HH; intuition. }
+  intros Hm.
+  induction n.
   { ins; omega. }
-  unfold countNatP. 
+  unfold countNatP.
   destruct (excluded_middle_informative (s n)) as [HH | nHH].
   { specialize (Hm n). intuition. }
   rewrite Nat.add_0_l.
   apply IHn.
   intros m Sm.
-  specialize (Hm m). 
+  specialize (Hm m).
   intuition.
 Qed.
 
@@ -425,30 +425,30 @@ Proof.
   generalize dependent m.
   induction n; ins; [omega|].
   destruct (excluded_middle_informative (m = n)) as [HH | nHH].
-  { arewrite (countNatP (eq m) n = 0); [|omega]. 
-    eapply countNatP_zero. 
+  { arewrite (countNatP (eq m) n = 0); [|omega].
+    eapply countNatP_zero.
     intuition. }
   rewrite Nat.add_0_l.
   rewrite Nat.lt_succ_r in LT.
   destruct LT; intuition.
 Qed.
 
-Lemma countNatP_union (s s' : nat -> Prop) n 
-      (DISJ : set_disjoint s s') : 
+Lemma countNatP_union (s s' : nat -> Prop) n
+      (DISJ : set_disjoint s s') :
   countNatP (s ∪₁ s') n = countNatP s n + countNatP s' n.
-Proof. 
+Proof.
   induction n; simpls.
   destruct (excluded_middle_informative ((s ∪₁ s') n)) as [HH | nHH].
-  { unfold set_union in HH. 
+  { unfold set_union in HH.
     destruct HH as [S | S'].
-    { assert (~ s' n) as nS'. 
+    { assert (~ s' n) as nS'.
       { red. ins. by apply (DISJ n). }
       desf; omega. }
-    assert (~ s n) as nS. 
+    assert (~ s n) as nS.
     { red. ins. by apply (DISJ n). }
     desf; omega. }
   unfold not, set_union in nHH.
-  desf; exfalso; auto.  
+  desf; exfalso; auto.
 Qed.
 
 Lemma countNatP_lt_eq (s : nat -> Prop) m n (LT : m < n) (HH : forall e (EE : s e), e < m):
@@ -483,7 +483,7 @@ Proof.
   { apply NoDup_nil. }
   apply NoDup_cons; auto.
   rewrite first_nat_list_In_alt.
-  omega. 
+  omega.
 Qed.
 
 Lemma split_as_map {A B} (l : list (A * B)) :
@@ -529,7 +529,7 @@ Qed.
 
 Lemma map_rel_restr_eq_dom {A B} (f g : A -> B) s r (EQ : eq_dom s f g) :
   restr_rel s (f ⋄ r) ≡ restr_rel s (g ⋄ r).
-Proof. 
+Proof.
   unfolder.
   split.
   { ins. desf. rewrite <- !EQ; auto. }

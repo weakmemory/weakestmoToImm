@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events. 
+From imm Require Import Events.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -62,15 +62,15 @@ Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 1).
 Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
 Notation "'Val_' S" := (fun v e => val S e = v) (at level 1).
 
-Definition ws_compl ews ws S := 
+Definition ws_compl ews ws S :=
   codom_rel (⦗ews ∪₁ ws⦘ ⨾ co S) \₁ (ews ∪₁ ws).
 
-Definition co_delta ews ws w' S : relation eventid := 
+Definition co_delta ews ws w' S : relation eventid :=
   ws × eq w' ∪ eq w' × ws_compl ews ws S.
 
 Hint Unfold ws_compl co_delta : ESStepDb.
 
-Definition add_co ews ws w' S S' : Prop := 
+Definition add_co ews ws w' S S' : Prop :=
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\
   ⟪ wsE : ws ⊆₁ E S ⟫ /\
@@ -89,23 +89,23 @@ Definition add_co ews ws w' S S' : Prop :=
 (******************************************************************************)
 
 Lemma add_co_ws_co_prcl ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   dom_rel (co S ⨾ ⦗ws⦘) ⊆₁ ws.
 Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed.
 
 Lemma add_co_ws_ew_prcl ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   dom_rel (ew S ⨾ ⦗ws⦘) ⊆₁ ws.
 Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed.
 
 Lemma add_co_ws_ew_fwcl ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   codom_rel (⦗ws⦘ ⨾ ew S) ⊆₁ ws.
-Proof. 
-  cdes ACO. 
+Proof.
+  cdes ACO.
   intros x [y [z [[EQz WS] EW]]]. subst z.
   apply ES.ew_sym in EW; auto.
   eapply add_co_ws_ew_prcl; eauto.
@@ -113,36 +113,36 @@ Proof.
 Qed.
 
 Lemma add_co_ws_co_ew_prcl ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   dom_rel (co S ⨾ ew S ⨾ ⦗ws⦘) ⊆₁ ws.
 Proof. cdes ACO. generalize wsCOEWprcl. basic_solver 10. Qed.
 
-Lemma add_co_ws_complE ews ws S 
-      (wf : ES.Wf S) : 
+Lemma add_co_ws_complE ews ws S
+      (wf : ES.Wf S) :
   ws_compl ews ws S ⊆₁ E S.
-Proof. 
+Proof.
   unfold ws_compl.
   rewrite ES.coE; auto.
   basic_solver.
 Qed.
 
-Lemma add_co_ws_complW ews ws S 
-      (wf : ES.Wf S) : 
+Lemma add_co_ws_complW ews ws S
+      (wf : ES.Wf S) :
   ws_compl ews ws S ⊆₁ W S.
-Proof. 
+Proof.
   unfold ws_compl.
   rewrite ES.coD; auto.
   basic_solver.
 Qed.
 
 Lemma add_co_ws_compl_loc ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') : 
+      (ACO : add_co ews ws w' S S') :
   ws_compl ews ws S ⊆₁ same_loc S' w'.
-Proof. 
+Proof.
   cdes AEW; cdes ACO.
   unfold ws_compl.
   rewrite ES.coE; auto.
@@ -157,15 +157,15 @@ Proof.
   { erewrite basic_step_loc_eq_dom; eauto. }
   arewrite (loc S' x = loc S x).
   { erewrite basic_step_loc_eq_dom; eauto. }
-  done. 
+  done.
 Qed.
 
 Lemma add_co_wsEWLoc ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S') :
   ws ⊆₁ (E S) ∩₁ (W S) ∩₁ (Loc_ S (loc S' w')).
-Proof. 
+Proof.
   cdes ACO.
   intros x xWS.
   unfolder; splits; auto.
@@ -175,34 +175,34 @@ Proof.
 Qed.
 
 Lemma add_co_ws_complEWLoc ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') : 
+      (ACO : add_co ews ws w' S S') :
   ws_compl ews ws S ⊆₁ (E S) ∩₁ (W S) ∩₁ (Loc_ S (loc S' w')).
-Proof. 
+Proof.
   cdes ACO.
   intros x xWS.
   unfolder; splits; auto.
   { eapply add_co_ws_complE; eauto. }
   { eapply add_co_ws_complW; eauto. }
   etransitivity.
-  { symmetry. eapply basic_step_loc_eq_dom; eauto. 
+  { symmetry. eapply basic_step_loc_eq_dom; eauto.
     eapply add_co_ws_complE; eauto. }
-  symmetry. eapply add_co_ws_compl_loc in xWS; eauto. 
+  symmetry. eapply add_co_ws_compl_loc in xWS; eauto.
 Qed.
 
 Lemma add_co_ws_compl_co_fwcl ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   codom_rel (⦗ws_compl ews ws S⦘ ⨾ co S) ⊆₁ ws_compl ews ws S.
-Proof. 
-  cdes ACO. 
-  unfold ws_compl. 
+Proof.
+  cdes ACO.
+  unfold ws_compl.
   intros y [x [z [[EQz HH] CO]]]. subst z.
   destruct HH as [[z [z' [[EQz' EWWS] COzx]]] nEWWS]. subst z'.
   red. splits.
-  { do 2 eexists. splits. 
+  { do 2 eexists. splits.
     { red. eauto using EWWS. }
     eapply ES.co_trans; eauto. }
   intros EWWSy. apply nEWWS.
@@ -211,19 +211,19 @@ Proof.
 Qed.
 
 Lemma add_co_ws_compl_ew_fwcl ews ws w' S S'
-      (wf : ES.Wf S) 
+      (wf : ES.Wf S)
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') : 
+      (ACO : add_co ews ws w' S S') :
   codom_rel (⦗ws_compl ews ws S⦘ ⨾ ew S) ⊆₁ ws_compl ews ws S.
-Proof. 
-  cdes AEW; cdes ACO. 
-  unfold ws_compl. 
+Proof.
+  cdes AEW; cdes ACO.
+  unfold ws_compl.
   intros y [x [z [[EQz HH] EW]]]. subst z.
   destruct HH as [[z [z' [[EQz' EWWS] COzx]]] nEWWS]. subst z'.
   red. splits.
-  { do 2 eexists. splits. 
+  { do 2 eexists. splits.
     { red. eauto using EWWS. }
-    eapply ES.co_ew_in_co; eauto. 
+    eapply ES.co_ew_in_co; eauto.
     basic_solver. }
   intros EWWSy. apply nEWWS.
   generalize wsCOEWprcl ewsCOprcl EWWSy ewsEWprcl EW.
@@ -231,43 +231,43 @@ Proof.
 Qed.
 
 Lemma add_co_ws_inter_ws_compl_false ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   ws ∩₁ ws_compl ews ws S ⊆₁ ∅.
 Proof. unfold ws_compl. basic_solver. Qed.
 
 Lemma add_co_ews_inter_ws_compl_false ews ws w' S S'
-      (wf : ES.Wf S) 
-      (ACO : add_co ews ws w' S S') : 
+      (wf : ES.Wf S)
+      (ACO : add_co ews ws w' S S') :
   ews ∩₁ ws_compl ews ws S ⊆₁ ∅.
 Proof. unfold ws_compl. basic_solver. Qed.
 
 Lemma add_co_ws_cross_ws_compl_in_co ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   ws × ws_compl ews ws S ⊆ co S.
-Proof. 
+Proof.
   cdes AEW; cdes ACO.
   intros x y [xWS yWS].
-  destruct 
+  destruct
     (excluded_middle_informative (ew S x y))
     as [EW | nEW].
   { exfalso.
     destruct yWS as [HH nEWWS].
     eapply nEWWS.
-    right. eapply add_co_ws_ew_fwcl; eauto. 
+    right. eapply add_co_ws_ew_fwcl; eauto.
     basic_solver 10. }
   edestruct ES.co_total; eauto.
   { eapply add_co_wsEWLoc; eauto. }
   { eapply add_co_ws_complEWLoc; eauto. }
-  exfalso. 
+  exfalso.
   destruct yWS as [HH nEWWS].
   apply nEWWS.
   right. eapply add_co_ws_co_prcl; eauto.
-  basic_solver 10. 
+  basic_solver 10.
 Qed.
 
 Lemma add_co_ws_cross_ews_in_ew_compl ews ws w' e e' S S'
@@ -289,13 +289,13 @@ Proof.
 Qed.
 
 Lemma add_co_ews_cross_ws_compl_in_ew_compl ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   ews × ws_compl ews ws S ⊆ compl_rel (ew S).
-Proof. 
+Proof.
   cdes AEW; cdes ACO.
   intros x y [xEWS yWSC].
   assert (~ ews y) as ynEWS.
@@ -307,13 +307,13 @@ Proof.
 Qed.
 
 Lemma add_co_ws_cross_ews_in_co ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   ws × ews ⊆ co S.
-Proof. 
+Proof.
   cdes AEW; cdes ACO.
   intros x y [xWS yEWS].
   assert (~ ew S x y) as nEW.
@@ -328,13 +328,13 @@ Proof.
 Qed.
 
 Lemma add_co_ews_cross_ws_compl_in_co ews ws w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (ACO : add_co ews ws w' S S')
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   ews × ws_compl ews ws S ⊆ co S.
-Proof. 
+Proof.
   cdes AEW; cdes ACO.
   intros x y [xEWS yWSC].
   assert (~ ew S x y) as nEW.
@@ -343,7 +343,7 @@ Proof.
   destruct yWSC' as [[z [z' [[EQz' HA] CO]]] HB]. subst z'.
   destruct HA as [zEWS | zWS].
   { apply ES.ew_co_in_co; auto.
-    eexists; splits; eauto. 
+    eexists; splits; eauto.
     apply ewsEW. basic_solver. }
   edestruct ES.co_total as [COxy | COyx]; eauto.
   { eapply add_ew_ewsEWLoc; eauto. }
@@ -353,11 +353,11 @@ Proof.
 Qed.
 
 Lemma add_co_ews_co_codom ews ws w' S S'
-      (wf : ES.Wf S) 
+      (wf : ES.Wf S)
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') : 
-  codom_rel (⦗ews⦘ ⨾ co S) ⊆₁ ws_compl ews ws S. 
-Proof. 
+      (ACO : add_co ews ws w' S S') :
+  codom_rel (⦗ews⦘ ⨾ co S) ⊆₁ ws_compl ews ws S.
+Proof.
   cdes AEW; cdes ACO.
   unfold ws_compl.
   intros x [y [z [[EQz EWS] CO]]]. subst z.
@@ -365,18 +365,18 @@ Proof.
   intros [EW | WS].
   { eapply ES.ew_co; eauto.
     split; eauto.
-    eapply ewsEW. 
+    eapply ewsEW.
     basic_solver. }
   eapply ws_ews. split; [|eauto].
-  eapply add_co_ws_co_prcl; eauto. basic_solver 10. 
+  eapply add_co_ws_co_prcl; eauto. basic_solver 10.
 Qed.
 
 Lemma add_co_ews_co_ws_empty ews ws w' S S'
-      (wf : ES.Wf S) 
+      (wf : ES.Wf S)
       (AEW : add_ew ews w' S S')
-      (ACO : add_co ews ws w' S S') : 
+      (ACO : add_co ews ws w' S S') :
   ⦗ews⦘ ⨾ co S ⨾ ⦗ws⦘ ⊆ ∅₂.
-Proof. 
+Proof.
   cdes AEW; cdes ACO.
   rewrite <- seqA.
   intros x y [z [HA [EQz WSy]]]. subst z.
@@ -391,28 +391,28 @@ Qed.
 (******************************************************************************)
 
 Lemma add_co_co_delta_dom ews ws w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   dom_rel (co_delta ews ws w' S) ⊆₁ ws ∪₁ eq w'.
 Proof. unfold co_delta. basic_solver. Qed.
 
 Lemma add_co_co_delta_codom ews ws w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   codom_rel (co_delta ews ws w' S) ⊆₁ ws_compl ews ws S ∪₁ eq w'.
 Proof. unfold co_delta. basic_solver. Qed.
 
 Lemma add_co_co_deltaEl ews ws w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   co_delta ews ws w' S ⨾ ⦗E S⦘ ≡ eq w' × ws_compl ews ws S.
-Proof. 
+Proof.
   cdes ACO; cdes BSTEP; cdes BSTEP_.
   unfold co_delta. relsf.
   arewrite_false (ws × eq w' ⨾ ⦗E S⦘).
@@ -420,26 +420,26 @@ Proof.
   relsf. split; [basic_solver|].
   unfolder. ins. desf. splits; auto.
   eapply add_co_ws_complE; eauto.
-Qed.  
+Qed.
 
 Lemma add_co_co_deltaEr ews ws w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (ACO : add_co ews ws w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (ACO : add_co ews ws w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   ⦗E S⦘ ⨾ co_delta ews ws w' S ≡ ws × eq w'.
-Proof. 
+Proof.
   cdes ACO; cdes BSTEP; cdes BSTEP_.
   unfold co_delta. relsf.
-  arewrite_false (⦗E S⦘ ⨾ eq w' × ws_compl ews ws S). 
+  arewrite_false (⦗E S⦘ ⨾ eq w' × ws_compl ews ws S).
   { unfolder in wEE'; desf; step_solver. }
   basic_solver 10.
-Qed.  
+Qed.
 
 End AddCO.
 
 (* Section hides the tactics and hints, so we repeat it here.
- * TODO: invent a better solution, 
- *       perhaps it is better to get rid of notation here at all. 
+ * TODO: invent a better solution,
+ *       perhaps it is better to get rid of notation here at all.
  *)
 Hint Unfold ws_compl co_delta : ESStepDb.

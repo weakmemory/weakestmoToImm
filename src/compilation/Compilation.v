@@ -2,7 +2,7 @@ Require Import Program.Basics.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic.
 From imm Require Import Events Execution TraversalConfig Traversal
-     Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb 
+     Prog ProgToExecution ProgToExecutionProperties imm_s imm_s_hb
      CombRelations SimTraversal TraversalCounting.
 Require Import AuxRel.
 Require Import AuxDef.
@@ -66,7 +66,7 @@ Section Compilation.
     Variable TC : trav_config.
     Variable X : eventid -> Prop.
     Variable T : thread_id -> Prop.
-  
+
     Notation "'SE'" := S.(ES.acts_set).
     Notation "'SEinit'" := S.(ES.acts_init_set).
     Notation "'SEninit'" := S.(ES.acts_ninit_set).
@@ -102,7 +102,7 @@ Section Compilation.
     Notation "'C'"  := (covered TC).
     Notation "'I'"  := (issued TC).
 
-    Definition simrel_extracted := 
+    Definition simrel_extracted :=
       ⟪ GACTS : GE ≡₁ e2a S □₁ X ⟫ /\
       ⟪ GLAB  : eq_dom X Slab (Glab ∘ e2a S) ⟫ /\
       ⟪ GSB   : Gsb  ≡  e2a S □ (Ssb ∩ X × X) ⟫ /\
@@ -114,7 +114,7 @@ Section Compilation.
           (SRC : simrel_consistent prog S G sc TC X T)
           (COVinG : GE ⊆₁ C) :
       simrel_extracted.
-    Proof. 
+    Proof.
       assert (ES.Wf S) as SWF.
       { apply SRC. }
       assert (Wf G) as GWF.
@@ -131,7 +131,7 @@ Section Compilation.
       assert (GE ≡₁ C) as COVG.
       { split; auto. eapply coveredE; eauto. }
       assert (GE ≡₁ C ∪₁ I) as COVISSG.
-      { split; auto. 
+      { split; auto.
         { rewrite COVG. basic_solver. }
         apply set_subset_union_l. split.
         { eapply coveredE; eauto. }
@@ -142,11 +142,11 @@ Section Compilation.
         unionL; auto.
         rewrite issuedE; [|apply SRC].
         rewrite COVG.
-        rewrite crE. relsf. 
+        rewrite crE. relsf.
         split; auto.
         eapply dom_sb_covered; eauto. }
       assert (GE ∩₁ GW ≡₁ I) as ISSG.
-      { split. 
+      { split.
         { rewrite COVG. rewrite set_interC.
           eapply w_covered_issued; eauto. }
         apply set_subset_inter_r. split.
@@ -156,10 +156,10 @@ Section Compilation.
       constructor; splits.
       3-6: split.
 
-      { rewrite DCOV. symmetry. 
+      { rewrite DCOV. symmetry.
         eapply ex_cov_iss; eauto. }
 
-      { eapply eq_dom_more; 
+      { eapply eq_dom_more;
           [| | | eapply ex_cov_iss_lab; eauto].
         all : auto.
         rewrite <- COVISSG, DCOV.
@@ -174,7 +174,7 @@ Section Compilation.
         eapply sb_restr_cov_in_ex; eauto. }
 
       { rewrite collect_rel_interi.
-        erewrite e2a_sb; try apply SRC. 
+        erewrite e2a_sb; try apply SRC.
         basic_solver. }
 
       { arewrite (Grmw ≡ ⦗C⦘ ⨾ Grmw ⨾ ⦗C⦘).
@@ -183,7 +183,7 @@ Section Compilation.
         eapply rmw_restr_cov_in_ex; eauto. }
 
       { rewrite collect_rel_interi.
-        erewrite e2a_rmw; try apply SRC. 
+        erewrite e2a_rmw; try apply SRC.
         basic_solver. }
 
       { arewrite (Grf ≡ ⦗GE ∩₁ GW⦘ ⨾ Grf ⨾ ⦗GE⦘).
@@ -206,7 +206,7 @@ Section Compilation.
           { apply SRC. }
           eexists; splits; eauto.
           eapply Execution.ex_inE; eauto. }
-        symmetry. 
+        symmetry.
         eapply e2a_ew; eauto.
         basic_solver 10. }
 
@@ -218,7 +218,7 @@ Section Compilation.
 
       unfolder. ins. desf.
       eapply e2a_co_ncf; eauto.
-      unfolder; do 2 eexists; splits; eauto. 
+      unfolder; do 2 eexists; splits; eauto.
       intros CF.
       eapply Execution.ex_ncf.
       { apply SRC. }
@@ -233,44 +233,44 @@ Section Compilation.
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc)
-        (nLocsEmpty : g_locs G <> []) 
+        (nLocsEmpty : g_locs G <> [])
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
     let T := (fun t => IdentMap.In t prog) in
-    forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC), 
-      exists S X, 
+    forall TC (TC_STEPS : (sim_trav_step G sc)＊ (init_trav G) TC),
+      exists S X,
         ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
         ⟪ SRC  : simrel_consistent prog S G sc TC X T ⟫.
-  Proof. 
+  Proof.
     eapply clos_refl_trans_ind_left.
     { exists (prog_g_es_init prog G), (ES.acts_set (prog_g_es_init prog G)).
       splits; auto using rt_refl, simrel_init. }
     intros TC TC' TC_STEPS IH TC_STEP. desc.
     destruct TC_STEP as [thread TC_ISTEP].
-    edestruct simrel_step as [X' [S' HH]]; eauto. 
+    edestruct simrel_step as [X' [S' HH]]; eauto.
     { apply stable_prog_to_prog_in.
       eapply CertGraph.trstep_thread_prog; eauto.
       apply SRC. }
-    destruct HH as [STEPS' SRC']. 
+    destruct HH as [STEPS' SRC'].
     red in STEPS', SRC'.
     exists S', X'. splits; auto.
     eapply rt_trans; eauto.
   Qed.
 
-  Theorem compilation_correctness 
+  Theorem compilation_correctness
         (nInitProg : ~ IdentMap.In tid_init prog)
         (GProg : program_execution (stable_prog_to_prog prog) G)
         (GWF : Execution.Wf G)
         (IMMCONS : imm_consistent G sc)
-        (nLocsEmpty : g_locs G <> []) 
+        (nLocsEmpty : g_locs G <> [])
         (GCLOS : forall t m n (LT : m < n) (NE : GE (ThreadEvent t n)),
             GE (ThreadEvent t m)) :
     exists S X,
       ⟪ STEPS : (step Weakestmo)＊ (prog_g_es_init prog G) S ⟫ /\
       ⟪ EXEC  : simrel_extracted S X ⟫.
-  Proof. 
-    edestruct sim_traversal 
-      as [TC [TC_STEPS GCOV]]; 
+  Proof.
+    edestruct sim_traversal
+      as [TC [TC_STEPS GCOV]];
       eauto.
     edestruct simrel_traversal
       as [S [X [STEPS SRC]]];

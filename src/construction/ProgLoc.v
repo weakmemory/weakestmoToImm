@@ -17,7 +17,7 @@ Definition instr_locs (instr : Instr.t) : list location :=
   | Instr.store  _ le _
   | Instr.update _ _ _ _ _ le => lexpr_locs le
 
-  | Instr.assign _ _ 
+  | Instr.assign _ _
   | Instr.fence _
   | Instr.ifgoto _ _ => nil
   end.

@@ -1,5 +1,5 @@
 From hahn Require Import Hahn.
-From imm Require Import Events. 
+From imm Require Import Events.
 Require Import AuxRel.
 Require Import AuxDef.
 Require Import EventStructure.
@@ -62,12 +62,12 @@ Notation "'Mod_' S" := (fun m x => mod S x = m) (at level 1).
 Notation "'Loc_' S" := (fun l x => loc S x = l) (at level 1).
 Notation "'Val_' S" := (fun v e => val S e = v) (at level 1).
 
-Definition ew_delta ws w : relation eventid := 
+Definition ew_delta ws w : relation eventid :=
   eq w × eq w ∪ (ws × eq w)^⋈.
 
 Hint Unfold ew_delta : ESStepDb.
 
-Definition add_ew ews w' S S' : Prop :=   
+Definition add_ew ews w' S S' : Prop :=
   ⟪ wE' : E S' w' ⟫ /\
   ⟪ wW' : W S' w' ⟫ /\
   ⟪ ewsE : ews ⊆₁ E S ⟫ /\
@@ -79,18 +79,18 @@ Definition add_ew ews w' S S' : Prop :=
   ⟪ ewsCF : ews ⊆₁ cf S' w' ⟫ /\
   ⟪ ewsEW : ews × ews ⊆ ew S ⟫ /\
   ⟪ ewsEWprcl : dom_rel (ew S ⨾ ⦗ews⦘) ⊆₁ ews ⟫ /\
-  ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ews w' ⟫. 
+  ⟪ EW' : ew S' ≡ ew S ∪ ew_delta ews w' ⟫.
 
 (******************************************************************************)
 (** ** ews lemmas *)
 (******************************************************************************)
 
 Lemma add_ew_ewsEWLoc ews w' e e' S S'
-      (wf : ES.Wf S) 
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') : 
+      (wf : ES.Wf S)
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S') :
   ews ⊆₁ (E S) ∩₁ (W S) ∩₁ (Loc_ S (loc S' w')).
-Proof. 
+Proof.
   cdes AEW.
   intros x xEWS.
   unfolder; splits; auto.
@@ -100,11 +100,11 @@ Proof.
 Qed.
 
 Lemma add_ew_ews_ew_fwcl ews w' S S'
-      (wf : ES.Wf S) 
-      (AEW : add_ew ews w' S S') : 
+      (wf : ES.Wf S)
+      (AEW : add_ew ews w' S S') :
   codom_rel (⦗ews⦘ ⨾ ew S) ⊆₁ ews.
 Proof.
-  cdes AEW. 
+  cdes AEW.
   intros x [y [z [[EQz EWS] EW]]]. subst z.
   apply ES.ew_sym in EW; auto.
   apply ewsEWprcl.
@@ -116,56 +116,56 @@ Qed.
 (******************************************************************************)
 
 Lemma add_ew_ew_delta_dom ews w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   dom_rel (ew_delta ews w') ⊆₁ ews ∪₁ eq w'.
 Proof. unfold ew_delta. basic_solver. Qed.
 
 Lemma add_ew_ew_delta_codom ews w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   codom_rel (ew_delta ews w') ⊆₁ ews ∪₁ eq w'.
 Proof. unfold ew_delta. basic_solver. Qed.
 
 Lemma add_ew_ew_deltaEl ews w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
-  ew_delta ews w' ⨾ ⦗E S⦘ ≡ eq w' × ews. 
-Proof. 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ew_delta ews w' ⨾ ⦗E S⦘ ≡ eq w' × ews.
+Proof.
   cdes AEW; cdes BSTEP; cdes BSTEP_.
-  unfold ew_delta. 
+  unfold ew_delta.
   rewrite csE, transp_cross.
   relsf.
   arewrite_false (eq w' × eq w' ⨾ ⦗E S⦘).
   { unfolder in wEE'; desf; step_solver. }
   arewrite_false (ews × eq w' ⨾ ⦗E S⦘).
   { unfolder in wEE'; desf; step_solver. }
-  relsf. 
+  relsf.
   generalize ewsE. basic_solver.
 Qed.
 
 Lemma add_ew_ew_deltaEr ews w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
-  ⦗E S⦘ ⨾ ew_delta ews w' ≡ ews × eq w'. 
-Proof. 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ⦗E S⦘ ⨾ ew_delta ews w' ≡ ews × eq w'.
+Proof.
   cdes AEW; cdes BSTEP; cdes BSTEP_.
-  unfold ew_delta. 
+  unfold ew_delta.
   rewrite csE, transp_cross.
   relsf.
   arewrite_false (⦗E S⦘ ⨾ eq w' × eq w').
   { unfolder in wEE'; desf; step_solver. }
   arewrite_false (⦗E S⦘ ⨾ eq w' × ews).
   { unfolder in wEE'; desf; step_solver. }
-  relsf. 
+  relsf.
   generalize ewsE. basic_solver.
 Qed.
 
@@ -174,42 +174,42 @@ Qed.
 (******************************************************************************)
 
 Lemma add_ew_mon ews w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
   ew S ⊆ ew S'.
-Proof. 
-  cdes AEW. 
-  rewrite EW'. 
-  basic_solver. 
+Proof.
+  cdes AEW.
+  rewrite EW'.
+  basic_solver.
 Qed.
 
 Lemma add_ew_ewE ews w' e e' S S'
-      (BSTEP : basic_step e e' S S') 
-      (AEW : add_ew ews w' S S') 
-      (wf : ES.Wf S) 
-      (wEE' : (eq e ∪₁ eq_opt e') w') : 
-  ⦗E S⦘ ⨾ ew S' ⨾ ⦗E S⦘ ≡ ew S. 
-Proof. 
-  cdes BSTEP; cdes BSTEP_; cdes AEW. 
-  rewrite EW'. split. 
-  2 : rewrite ES.ewE; auto; basic_solver.  
-  relsf. 
-  arewrite_false 
+      (BSTEP : basic_step e e' S S')
+      (AEW : add_ew ews w' S S')
+      (wf : ES.Wf S)
+      (wEE' : (eq e ∪₁ eq_opt e') w') :
+  ⦗E S⦘ ⨾ ew S' ⨾ ⦗E S⦘ ≡ ew S.
+Proof.
+  cdes BSTEP; cdes BSTEP_; cdes AEW.
+  rewrite EW'. split.
+  2 : rewrite ES.ewE; auto; basic_solver.
+  relsf.
+  arewrite_false
     (⦗E S⦘ ⨾ ew_delta ews w' ⨾ ⦗E S⦘).
-  2 : basic_solver. 
-  unfold ew_delta. 
-  rewrite csE. relsf. 
+  2 : basic_solver.
+  unfold ew_delta.
+  rewrite csE. relsf.
   arewrite (eq w' ⊆₁ eq e ∪₁ eq_opt e').
   { generalize wEE'. basic_solver. }
-  step_solver. 
+  step_solver.
 Qed.
 
 End AddEW.
 
 (* Section hides the tactics and hints, so we repeat it here.
- * TODO: invent a better solution, 
- *       perhaps it is better to get rid of notation here at all. 
+ * TODO: invent a better solution,
+ *       perhaps it is better to get rid of notation here at all.
  *)
 Hint Unfold ew_delta : ESStepDb.

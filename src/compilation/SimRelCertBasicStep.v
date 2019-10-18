@@ -109,13 +109,13 @@ Section SimRelCertBasicStep.
 
   Notation "'Gfurr'" := (furr G sc).
 
-  Notation "'thread_syntax' t"  := 
-    (Language.syntax (thread_lts t)) (at level 10, only parsing).  
+  Notation "'thread_syntax' t"  :=
+    (Language.syntax (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_st' t" := 
+  Notation "'thread_st' t" :=
     (Language.state (thread_lts t)) (at level 10, only parsing).
 
-  Notation "'thread_init_st' t" := 
+  Notation "'thread_init_st' t" :=
     (Language.init (thread_lts t)) (at level 10, only parsing).
 
   Notation "'thread_cont_st' t" :=
@@ -129,10 +129,10 @@ Section SimRelCertBasicStep.
 
   Notation "'certX' S" := (fun k => (X ∩₁ SNTid S (ktid S k)) ∪₁ (kE S k)) (at level 1, only parsing).
 
-  Lemma simrel_cert_basic_step_ex_tid t k k' e e' S S' 
+  Lemma simrel_cert_basic_step_ex_tid t k k' e e' S S'
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
     X ∩₁ STid S' t ≡₁ X ∩₁ STid S t.
   Proof.
     assert (ES.Wf S) as WFS.
@@ -146,10 +146,10 @@ Section SimRelCertBasicStep.
     all: apply SRCC.
   Qed.
 
-  Lemma simrel_cert_basic_step_ex_ntid t k k' e e' S S' 
+  Lemma simrel_cert_basic_step_ex_ntid t k k' e e' S S'
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
     X ∩₁ SNTid S' t ≡₁ X ∩₁ SNTid S  t.
   Proof.
     assert (ES.Wf S) as WFS.
@@ -165,12 +165,12 @@ Section SimRelCertBasicStep.
     all: apply SRCC.
   Qed.
 
-  Lemma simrel_cert_basic_step_cert_ex k k' e e' S S' 
+  Lemma simrel_cert_basic_step_cert_ex k k' e e' S S'
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') : 
-    certX S' k' ≡₁ certX S k ∪₁ eq e ∪₁ eq_opt e'.  
-  Proof. 
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') :
+    certX S' k' ≡₁ certX S k ∪₁ eq e ∪₁ eq_opt e'.
+  Proof.
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
     assert (basic_step e e' S S') as BSTEP.
@@ -186,16 +186,16 @@ Section SimRelCertBasicStep.
   Lemma simrel_cert_basic_step_cstate k k' e e' S S'
         (st st' st'': thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    simrel_cstate S' k' st' st''. 
-  Proof. 
-    cdes BSTEP_. 
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+    simrel_cstate S' k' st' st''.
+  Proof.
+    cdes BSTEP_.
     constructor.
     (* cstate_stable : stable_state (ES.cont_thread S' k') st'' *)
     { eapply cstate_stable. apply SRCC. }
     (* cstate_q_cont : Kstate (k', st'); *)
-    { red. exists st'. split; auto. 
+    { red. exists st'. split; auto.
       eapply basic_step_cont_set; eauto.
       erewrite basic_step_cont_thread' with (S' := S'); eauto.
       subst. basic_solver. }
@@ -208,29 +208,29 @@ Section SimRelCertBasicStep.
   Lemma simrel_cert_basic_step_e2a_eqr k k' e e' S S' r r' r''
         (st st' st'' : thread_st (ES.cont_thread S k))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S') 
+        (BSTEP_ : basic_step_ (cont_lang S k) k k' st st' e e' S S')
         (restrE : r ≡ ⦗ SE S ⦘ ⨾ r ⨾ ⦗ SE S ⦘)
-        (rEQ : r' ≡ r) 
-        (rIN : (e2a S) □ r ⊆ r'') : 
+        (rEQ : r' ≡ r)
+        (rIN : (e2a S) □ r ⊆ r'') :
     (e2a S') □ r' ⊆ r''.
-  Proof. 
+  Proof.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor. eauto. }
     assert (ES.Wf S) as WFS.
     { apply SRCC. }
-    rewrite rEQ, restrE, <- restr_relE. 
-    rewrite collect_rel_restr_eq_dom. 
-    2 : eapply basic_step_e2a_eq_dom; eauto. 
-    rewrite restr_relE, <- restrE; eauto. 
+    rewrite rEQ, restrE, <- restr_relE.
+    rewrite collect_rel_restr_eq_dom.
+    2 : eapply basic_step_e2a_eq_dom; eauto.
+    rewrite restr_relE, <- restrE; eauto.
   Qed.
 
   Lemma simrel_cert_basic_step_hb_sb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    dom_rel ((Shb S)^? ⨾ (sb_delta S k e e')) ⊆₁ certX S k ∪₁ eq e. 
-  Proof. 
+        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+    dom_rel ((Shb S)^? ⨾ (sb_delta S k e e')) ⊆₁ certX S k ∪₁ eq e.
+  Proof.
     cdes BSTEP_.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
@@ -242,20 +242,20 @@ Section SimRelCertBasicStep.
     { intros x [y [z [[EQxy | HB] [certD _]]]].
       { basic_solver. }
       left. eapply cert_ex_hb_prcl; eauto. basic_solver 10. }
-    rewrite crE, seq_union_l, seq_id_l, dom_union. 
+    rewrite crE, seq_union_l, seq_id_l, dom_union.
     unionL. splits.
     { basic_solver. }
-    etransitivity; [| apply set_subset_empty_l]. 
-    step_solver. 
+    etransitivity; [| apply set_subset_empty_l].
+    step_solver.
   Qed.
 
   Lemma simrel_cert_basic_step_hb_rel_jf_sb_delta_dom k k' e e' S S'
         (st st' st'': (thread_st (ES.cont_thread S k)))
         (SRCC : simrel_cert prog S G sc TC TC' X T k st st'')
-        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S') 
-        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') : 
-    dom_rel ((Shb S)^? ⨾ release S ⨾ Sjf S ⨾ sb_delta S k e e') ⊆₁ certX S k. 
-  Proof. 
+        (BSTEP_ : basic_step_ (thread_lts (ES.cont_thread S k)) k k' st st' e e' S S')
+        (CST_REACHABLE : (lbl_step (ES.cont_thread S k))＊ st' st'') :
+    dom_rel ((Shb S)^? ⨾ release S ⨾ Sjf S ⨾ sb_delta S k e e') ⊆₁ certX S k.
+  Proof.
     cdes BSTEP_.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
@@ -269,10 +269,10 @@ Section SimRelCertBasicStep.
       eapply hb_rel_ew_cert_ex; eauto.
       edestruct jf_kE_in_ew_cert_ex as [a Ha]; eauto.
       { generalize HB. basic_solver 10. }
-      eexists. apply seqA. 
+      eexists. apply seqA.
       eexists; splits; eauto. }
-    etransitivity; [| apply set_subset_empty_l]. 
-    step_solver. 
+    etransitivity; [| apply set_subset_empty_l].
+    step_solver.
   Qed.
 
 End SimRelCertBasicStep.
