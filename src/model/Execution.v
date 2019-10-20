@@ -71,19 +71,19 @@ Record t (X : eventid -> Prop) :=
 
        ex_sb_prcl : dom_rel (sb ⨾ ⦗X⦘) ⊆₁ X ;
        ex_sw_prcl : dom_rel (sw ⨾ ⦗X⦘) ⊆₁ X ;
-       
+
        ex_rmw_fwcl : codom_rel (⦗X⦘ ⨾ rmw) ⊆₁ X ;
 
        ex_rf_compl : X ∩₁ R ⊆₁ codom_rel (⦗X⦘ ⨾ rf) ;
-       
-       ex_ncf : ES.cf_free S X ; 
+
+       ex_ncf : ES.cf_free S X ;
 
        ex_vis : X ⊆₁ vis S ;
      }.
 
 Lemma sb_total (WF : ES.Wf S) X (exec : t X) :
-  X × X ∩ same_tid ⊆ Einit × Einit ∪ sb⁼. 
-Proof. 
+  X × X ∩ same_tid ⊆ Einit × Einit ∪ sb⁼.
+Proof.
   intros x y [[Xx Xy] STID].
   assert (E x) as Ex.
   { eapply ex_inE; eauto. }
@@ -95,31 +95,31 @@ Proof.
   destruct Ey as [INITy | nINITy].
   { basic_solver. }
   { right. right. left.
-    apply ES.sb_init; auto. 
+    apply ES.sb_init; auto.
     basic_solver. }
   { right. right. right.
-    apply ES.sb_init; auto. 
+    apply ES.sb_init; auto.
     basic_solver. }
   right.
-  edestruct ES.same_thread_alt 
+  edestruct ES.same_thread_alt
     as [SB | CF]; eauto.
   { apply nINITx. }
-  exfalso. 
+  exfalso.
   eapply ex_ncf; eauto.
   apply seq_eqv_lr; eauto.
 Qed.
 
-Lemma co_total (WF : ES.Wf S) X (exec : t X) : 
-  forall ol, is_total (X ∩₁ W ∩₁ Loc_ ol) co. 
-Proof. 
-  red. ins. 
+Lemma co_total (WF : ES.Wf S) X (exec : t X) :
+  forall ol, is_total (X ∩₁ W ∩₁ Loc_ ol) co.
+Proof.
+  red. ins.
   unfolder in IWa.
   unfolder in IWb.
   desc.
   edestruct ES.co_total; eauto.
-  { unfolder; splits; eauto. 
+  { unfolder; splits; eauto.
     eapply ex_inE; eauto. }
-  { unfolder; splits; eauto. 
+  { unfolder; splits; eauto.
     eapply ex_inE; eauto. }
   intros EW.
   apply ES.ewc in EW; auto.
@@ -128,19 +128,19 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma hb_prcl X (exec : t X) : 
+Lemma hb_prcl X (exec : t X) :
   dom_rel (hb ⨾ ⦗X⦘) ⊆₁ X.
-Proof. 
+Proof.
   rewrite seq_eqv_r.
   intros x [y [HB yX]].
   induction HB as [x y [SB | SW] | ]; auto.
   { apply ex_sb_prcl; auto. basic_solver 10. }
-  apply ex_sw_prcl; auto. basic_solver 10. 
+  apply ex_sw_prcl; auto. basic_solver 10.
 Qed.
 
 Lemma ex_rff X
       (WF : ES.Wf S)
-      (EXEC : t X) : 
+      (EXEC : t X) :
   functional ((restr_rel X rf)⁻¹).
 Proof. apply (ES.ncf_rff WF (ex_ncf X EXEC)). Qed.
 
@@ -287,7 +287,7 @@ Section ExecutionRels.
     basic_solver 15.
   Qed.
 
-  Lemma rs_prcl 
+  Lemma rs_prcl
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     dom_rel (rs ⨾ ⦗X⦘) ⊆₁ X.
@@ -296,7 +296,7 @@ Section ExecutionRels.
     unfold ex_rs.
     basic_solver.
   Qed.
-  
+
   Lemma ex_rs_alt
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
@@ -307,8 +307,8 @@ Section ExecutionRels.
     unfold ex_rs.
     basic_solver 20.
   Qed.
-    
-  Lemma ex_release_alt_r 
+
+  Lemma ex_release_alt_r
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_release ≡ release ⨾ ⦗X⦘.
@@ -324,14 +324,14 @@ Section ExecutionRels.
       { specialize (ex_sb_prcl X EXEC). basic_solver. }
       rewrite <- seqA in PRCL.
       apply prcl_cr in PRCL as PRCL'.
-      rewrite (dom_rel_helper PRCL'). 
+      rewrite (dom_rel_helper PRCL').
       rewrite <- restr_relE, restr_cr_prcl_r; auto.
       unfold ex_sb.
       basic_solver 10. }
     done.
   Qed.
 
-  Lemma release_prcl 
+  Lemma release_prcl
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     dom_rel (release ⨾ ⦗X⦘) ⊆₁ X.
@@ -342,7 +342,7 @@ Section ExecutionRels.
     basic_solver 10.
   Qed.
 
-  Lemma ex_release_alt 
+  Lemma ex_release_alt
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_release ≡ restr_rel X release.
@@ -356,7 +356,7 @@ Section ExecutionRels.
 
   Lemma ex_sw_alt_r
         (WF : ES.Wf S)
-        (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) : 
+        (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_sw ≡ sw ⨾ ⦗X⦘.
   Proof.
     unfold ex_sw.
@@ -368,7 +368,7 @@ Section ExecutionRels.
       { specialize (ex_sb_prcl X EXEC). basic_solver. }
       rewrite <- seqA in PRCL.
       apply prcl_cr in PRCL as PRCL'.
-      rewrite (dom_rel_helper PRCL'). 
+      rewrite (dom_rel_helper PRCL').
       rewrite <- restr_relE, restr_cr_prcl_r; auto.
       unfold ex_sb.
       basic_solver 10. }
@@ -383,18 +383,18 @@ Section ExecutionRels.
 
   Lemma sw_prcl
         (WF : ES.Wf S)
-        (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) : 
+        (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     dom_rel (sw ⨾ ⦗X⦘) ⊆₁ X.
   Proof.
     rewrite <- ex_sw_alt_r; auto.
-    unfold ex_sw, ex_rf. 
+    unfold ex_sw, ex_rf.
     rewrite restr_relE.
     seq_rewrite (ex_release_alt_r); auto.
     rewrite dom_seq.
     by apply release_prcl.
   Qed.
 
-  Lemma ex_sw_alt 
+  Lemma ex_sw_alt
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_sw ≡ restr_rel X sw.
@@ -409,8 +409,8 @@ Section ExecutionRels.
     rewrite ex_release_alt; auto.
     basic_solver 20.
   Qed.
-    
-  Lemma ex_hb_alt_r 
+
+  Lemma ex_hb_alt_r
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_hb ≡ hb ⨾ ⦗X⦘.
@@ -418,19 +418,19 @@ Section ExecutionRels.
     assert (SB_SW_PRCL : dom_rel ((sb ∪ sw) ⨾ ⦗X⦘) ⊆₁ X).
     { rewrite seq_union_l.
       rewrite (dom_rel_helper (ex_sb_prcl X EXEC)).
-      rewrite dom_rel_helper with (r := sw ⨾ ⦗X⦘). 
+      rewrite dom_rel_helper with (r := sw ⨾ ⦗X⦘).
       2: by apply sw_prcl.
       basic_solver. }
     unfold ex_hb, Consistency.hb, ex_sb.
     rewrite ex_sw_alt; auto.
     rewrite union_restr.
     rewrite <- (restr_ct_prcl SB_SW_PRCL).
-    apply prcl_ct in SB_SW_PRCL. 
-    rewrite (dom_rel_helper (SB_SW_PRCL)). 
+    apply prcl_ct in SB_SW_PRCL.
+    rewrite (dom_rel_helper (SB_SW_PRCL)).
     apply restr_relE.
   Qed.
 
-  Lemma ex_hb_alt 
+  Lemma ex_hb_alt
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :
     ex_hb ≡ restr_rel X hb.
@@ -440,9 +440,9 @@ Section ExecutionRels.
     2: { by apply hb_prcl. }
     by rewrite restr_relE.
   Qed.
-    
+
   Lemma ex_fr_alt
-        (WF : ES.Wf S) : 
+        (WF : ES.Wf S) :
     ex_fr ≡ restr_rel X fr .
   Proof.
     unfold ex_fr, ES.fr, ex_co, ex_rf.
@@ -458,7 +458,7 @@ Section ExecutionRels.
   Qed.
 
   Lemma ex_co_rf_alt
-        (WF : ES.Wf S) : 
+        (WF : ES.Wf S) :
     ex_co ⨾ ex_rf ≡ restr_rel X (co ⨾ rf).
   Proof.
     split; [unfold ex_co, ex_rf; basic_solver |].
@@ -470,7 +470,7 @@ Section ExecutionRels.
   Qed.
 
   Lemma ex_fr_rf_alt
-        (WF : ES.Wf S) : 
+        (WF : ES.Wf S) :
     ex_fr ⨾ ex_rf ≡ restr_rel X (fr ⨾ rf).
   Proof.
     rewrite WF.(ex_fr_alt).
@@ -483,9 +483,9 @@ Section ExecutionRels.
     unfold ex_rf.
     basic_solver 10.
   Qed.
-  
-  Lemma ex_eco_alt 
-        (WF : ES.Wf S) : 
+
+  Lemma ex_eco_alt
+        (WF : ES.Wf S) :
     ex_eco ≡ restr_rel X (eco S Weakestmo).
   Proof.
     unfold ex_eco, ex_rf, ex_co.

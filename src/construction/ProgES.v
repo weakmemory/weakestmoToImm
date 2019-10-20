@@ -32,9 +32,9 @@ Definition stable_prog_to_prog (prog : stable_prog_type) : Prog.t :=
   (IdentMap.map (fun x => projT1 x) prog).
 
 Lemma stable_prog_to_prog_in prog thread :
-  IdentMap.In thread (stable_prog_to_prog prog) <-> IdentMap.In thread prog. 
-Proof. 
-  unfold stable_prog_to_prog. 
+  IdentMap.In thread (stable_prog_to_prog prog) <-> IdentMap.In thread prog.
+Proof.
+  unfold stable_prog_to_prog.
   eapply RegMap.Facts.map_in_iff.
 Qed.
 

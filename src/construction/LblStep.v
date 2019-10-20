@@ -1,7 +1,7 @@
 Require Import Omega.
 From hahn Require Import Hahn.
 From imm Require Import
-     AuxDef 
+     AuxDef
      Events Execution
      Prog ProgToExecution ProgToExecutionProperties.
 Require Import AuxDef.
@@ -226,20 +226,20 @@ Proof.
   basic_solver.
 Qed.
 
-Lemma ilbl_step_alt thread lbls (state state'' : state) 
+Lemma ilbl_step_alt thread lbls (state state'' : state)
       (ILBL_STEP : ilbl_step thread lbls state state'') :
-  exists state', 
+  exists state',
     ⟪ NNIL     : lbls <> [] ⟫ /\
     ⟪ ISTEP    : istep thread lbls state state' ⟫ /\
     ⟪ EPS_STEP : (istep thread [])＊ state' state'' ⟫ /\
     ⟪ STABLE   : stable_state state'' ⟫.
-Proof. 
-  edestruct ILBL_STEP. 
-  unfold seq in *. 
-  unfold ineps_step in *. 
+Proof.
+  edestruct ILBL_STEP.
+  unfold seq in *.
+  unfold ineps_step in *.
   unfold eqv_rel in *.
-  desf. eexists. splits; eauto. 
-Qed. 
+  desf. eexists. splits; eauto.
+Qed.
 
 Lemma same_pos_stable state state'
       (INSTR : state.(instrs) = state'.(instrs))
@@ -453,7 +453,7 @@ Lemma ilbl_step_cases thread lbls state state'
   exists lbl lbl',
     ⟪ LBLS : lbls = opt_to_list lbl' ++ [lbl] ⟫ /\
     ( ( ⟪ EINDEX : state'.(eindex) = 1 + state.(eindex) ⟫ /\
-        ⟪ ACTS : acts_set state'.(G) ≡₁ 
+        ⟪ ACTS : acts_set state'.(G) ≡₁
                  acts_set state.(G) ∪₁ eq (ThreadEvent thread state.(eindex)) ⟫ /\
         ⟪ GLAB : lab state'.(G) = upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl ⟫ /\
         ⟪ LBL'none : lbl' = None ⟫ /\
@@ -463,23 +463,23 @@ Lemma ilbl_step_cases thread lbls state state'
           (exists ord, ⟪ LBL_F : lbl = Afence ord ⟫) ) /\
         ⟪ GRMW : rmw state'.(G) = rmw state.(G) ⟫ ) \/
       ( ⟪ EINDEX : state'.(eindex) = 2 + state.(eindex) ⟫ /\
-        ⟪ ACTS : acts_set state'.(G) ≡₁ 
-                 acts_set state.(G) ∪₁ 
+        ⟪ ACTS : acts_set state'.(G) ≡₁
+                 acts_set state.(G) ∪₁
                  eq (ThreadEvent thread state.(eindex)) ∪₁ eq (ThreadEvent thread (1 + state.(eindex))) ⟫ /\
-        ⟪ GLAB : lab state'.(G) = 
-                 upd_opt (upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl) 
+        ⟪ GLAB : lab state'.(G) =
+                 upd_opt (upd (lab state.(G)) (ThreadEvent thread state.(eindex)) lbl)
                               (Some (ThreadEvent thread (1 + state.(eindex)))) lbl' ⟫ /\
-        (exists xmod ordr ordw loc valr valw, 
+        (exists xmod ordr ordw loc valr valw,
           ⟪ LBL_LD_EX : lbl = Aload true ordr loc valr ⟫ /\
           ⟪ LBL_ST_EX : lbl' = Some (Astore xmod ordw loc valw) ⟫ ) /\
-        ⟪ GRMW : rmw state'.(G) ≡ rmw state.(G) ∪ 
+        ⟪ GRMW : rmw state'.(G) ≡ rmw state.(G) ∪
                  eq (ThreadEvent thread state.(eindex)) × eq (ThreadEvent thread (1 + state.(eindex))) ⟫ )).
-Proof. 
-  eapply ilbl_step_alt in ILBL_STEP; desf. 
-  cdes ISTEP. 
-  edestruct ISTEP0; desf; do 2 eexists. 
+Proof.
+  eapply ilbl_step_alt in ILBL_STEP; desf.
+  cdes ISTEP.
+  edestruct ISTEP0; desf; do 2 eexists.
 
-  Ltac nupd_helper UINDEX UG := 
+  Ltac nupd_helper UINDEX UG :=
     split;
       [ erewrite opt_to_list_none; by apply app_nil_l
       | left; splits; eauto 20;
@@ -501,8 +501,8 @@ Proof.
 
   1-4: nupd_helper UINDEX UG.
 
-  Ltac upd_helper UINDEX UG := 
-    split; 
+  Ltac upd_helper UINDEX UG :=
+    split;
       [ erewrite opt_to_list_some; unfold "++"; eauto
       | right; splits; eauto 20;
         [ symmetry; etransitivity;
@@ -517,7 +517,7 @@ Proof.
         | erewrite eps_steps_same_G; eauto;
           unfold add in UG; unfold add_rmw in UG; rewrite UG;
           unfold acts_set, upd_opt; simpl;
-          rewrite Nat.add_1_r; basic_solver           
+          rewrite Nat.add_1_r; basic_solver
         | erewrite eps_steps_same_G; [|eauto];
           unfold add_rmw in UG; rewrite UG; simpl;
           rewrite Nat.add_comm; basic_solver
@@ -546,7 +546,7 @@ Lemma ilbl_step_acts_set thread lbl lbl' state state'
     ⟪ ACTS : acts_set state'.(G) ≡₁ acts_set state.(G) ∪₁ eq e ∪₁ eq_opt e'⟫.
 Proof.
   unfold eq_opt.
-  edestruct ilbl_step_cases as [l [l' [LBLS HH]]]; eauto. 
+  edestruct ilbl_step_cases as [l [l' [LBLS HH]]]; eauto.
   apply opt_to_list_app_singl in LBLS. desc. subst l l'.
   destruct HH as [HA | HB].
   { destruct HA as [_ [ACTS [_ [LBL' _]]]].
@@ -562,7 +562,7 @@ Lemma ilbl_step_acts_set_mon thread lbl lbl' state state'
       (WFT : wf_thread_state thread state)
       (ILBL_STEP : ilbl_step thread (opt_to_list lbl' ++ [lbl]) state state') :
   acts_set state.(G) ⊆₁ acts_set state'.(G).
-Proof. 
+Proof.
   edestruct ilbl_step_acts_set; eauto.
   desc. rewrite ACTS. basic_solver.
 Qed.
@@ -647,7 +647,7 @@ Lemma istep_eindex_lbl' thread lbl lbl' st st'
       (STEP: istep thread (opt_to_list (Some lbl') ++ [lbl]) st st') :
   lbl' = lab (ProgToExecution.G st') (ThreadEvent thread (1 + eindex st)).
 Proof.
-  assert (eindex st + 1 = 1 + eindex st) 
+  assert (eindex st + 1 = 1 + eindex st)
     as HH by omega.
   cdes STEP; inv ISTEP0;
     apply opt_to_list_app_singl_pair in LABELS; desf;
@@ -683,7 +683,7 @@ Qed.
 Lemma ilbl_step_nrmw_None thread lbl lbl' st st'
       (WTS : wf_thread_state thread st)
       (STEP : ilbl_step
-                thread 
+                thread
                 (opt_to_list lbl' ++ [lbl]) st st')
       (NRMW : ~ rmw (ProgToExecution.G st') (ThreadEvent thread (eindex st))
                 (ThreadEvent thread (1 + eindex st))) :
@@ -699,10 +699,10 @@ Lemma same_label_u2v_istep thread la la' lb lb' state state' state''
       (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
       (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') :
   same_label_u2v la lb.
-Proof. 
-  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
-  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
-  red in EQis1, EQis2. 
+Proof.
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]].
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]].
+  red in EQis1, EQis2.
   assert (instr1 = instr2) as EQii.
   { congruence. }
   inversion STEP1_;
@@ -710,14 +710,14 @@ Proof.
   all: inversion STEP2_;
     try (by exfalso; eapply app_cons_not_nil; eauto).
   all : rewrite EQii, II0 in II; inversion II; subst.
-  all: 
-    try apply opt_to_list_app_singl_singl 
-      in LABELS; 
-    try apply opt_to_list_app_singl_pair 
-      in LABELS; 
-    try apply opt_to_list_app_singl_singl 
+  all:
+    try apply opt_to_list_app_singl_singl
+      in LABELS;
+    try apply opt_to_list_app_singl_pair
+      in LABELS;
+    try apply opt_to_list_app_singl_singl
       in LABELS0;
-    try apply opt_to_list_app_singl_pair 
+    try apply opt_to_list_app_singl_pair
       in LABELS0;
     desc; rewrite LABELS, LABELS0; by red.
 Qed.
@@ -726,7 +726,7 @@ Lemma same_label_u2v_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
       (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') :
   same_label_u2v la lb.
-Proof. 
+Proof.
   unfold ilbl_step, ineps_step in *.
   destruct STEP1 as [s1 [[_ ISTEP1] _]].
   destruct STEP2 as [s2 [[_ ISTEP2] _]].
@@ -737,10 +737,10 @@ Lemma same_label_fst_istep thread l la' lb' state state' state''
       (STEP1 : istep thread (opt_to_list la' ++ [l]) state state')
       (STEP2 : istep thread (opt_to_list lb' ++ [l]) state state'') :
   la' = lb'.
-Proof. 
-  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
-  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
-  red in EQis1, EQis2. 
+Proof.
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]].
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]].
+  red in EQis1, EQis2.
   assert (instr1 = instr2) as EQii.
   { congruence. }
   inversion STEP1_;
@@ -748,14 +748,14 @@ Proof.
   all: inversion STEP2_;
     try (by exfalso; eapply app_cons_not_nil; eauto).
   all : rewrite EQii, II0 in II; inversion II; subst.
-  all: 
-    try apply opt_to_list_app_singl_singl 
-      in LABELS; 
-    try apply opt_to_list_app_singl_pair 
-      in LABELS; 
-    try apply opt_to_list_app_singl_singl 
+  all:
+    try apply opt_to_list_app_singl_singl
+      in LABELS;
+    try apply opt_to_list_app_singl_pair
+      in LABELS;
+    try apply opt_to_list_app_singl_singl
       in LABELS0;
-    try apply opt_to_list_app_singl_pair 
+    try apply opt_to_list_app_singl_pair
       in LABELS0;
     desc; congruence.
 Qed.
@@ -764,7 +764,7 @@ Lemma same_label_fst_ilbl_step thread l la' lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [l]) state state')
       (STEP2 : ilbl_step thread (opt_to_list lb' ++ [l]) state state'') :
   la' = lb'.
-Proof. 
+Proof.
   unfold ilbl_step, ineps_step in *.
   destruct STEP1 as [s1 [[_ ISTEP1] _]].
   destruct STEP2 as [s2 [[_ ISTEP2] _]].
@@ -773,24 +773,24 @@ Qed.
 
 Lemma nR_istep thread la la' lb lb' state state' state''
       (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
-      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
+      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'')
       (nR : ~ is_r id la) :
   ⟪ EQLab    : la = lb ⟫ /\
   ⟪ LabNone  : la' = None ⟫ /\
   ⟪ LabNone' : lb' = None ⟫.
-Proof. 
-  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]]. 
-  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]]. 
-  red in EQis1, EQis2. 
+Proof.
+  destruct STEP1 as [EQis1 [instr1 [EQi1 STEP1_]]].
+  destruct STEP2 as [EQis2 [instr2 [EQi2 STEP2_]]].
+  red in EQis1, EQis2.
   assert (instr1 = instr2) as EQii.
   { congruence. }
   unfold is_r, id in nR.
   inversion STEP1_;
     try (by exfalso; eapply app_cons_not_nil; eauto).
-  all: 
-    try apply opt_to_list_app_singl_singl 
-      in LABELS; 
-    try apply opt_to_list_app_singl_pair 
+  all:
+    try apply opt_to_list_app_singl_singl
+      in LABELS;
+    try apply opt_to_list_app_singl_pair
       in LABELS;
     desc.
   all: try by (
@@ -805,7 +805,7 @@ Qed.
 
 Lemma nR_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
-      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'')
       (nR : ~ is_r id la) :
   ⟪ EQLab    : la = lb ⟫ /\
   ⟪ LabNone  : la' = None ⟫ /\
@@ -819,14 +819,14 @@ Qed.
 
 Lemma same_label_nR_istep thread la la' lb lb' state state' state''
       (STEP1 : istep thread (opt_to_list la' ++ [la]) state state')
-      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'') 
+      (STEP2 : istep thread (opt_to_list lb' ++ [lb]) state state'')
       (nR : ~ is_r id la) :
   la = lb.
 Proof. eapply nR_istep; eauto. Qed.
-  
+
 Lemma same_label_nR_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
-      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'')
       (nR : ~ is_r id la) :
   la = lb.
 Proof. eapply nR_ilbl_step; eauto. Qed.
@@ -839,18 +839,18 @@ Lemma unique_same_label_fst_ilbl_step thread la la' lb lb' state state' state''
 Proof.
   rewrite EQ in *.
   eapply unique_ilbl_step; eauto.
-  erewrite same_label_fst_ilbl_step 
+  erewrite same_label_fst_ilbl_step
     with (la' := la'); eauto.
 Qed.
 
 Lemma unique_nR_ilbl_step thread la la' lb lb' state state' state''
       (STEP1 : ilbl_step thread (opt_to_list la' ++ [la]) state state')
-      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'') 
+      (STEP2 : ilbl_step thread (opt_to_list lb' ++ [lb]) state state'')
       (nR : ~ is_r id la) :
   state' = state''.
-Proof. 
+Proof.
   eapply unique_ilbl_step; eauto.
-  edestruct nR_ilbl_step 
+  edestruct nR_ilbl_step
     with (la := la) as [HA [HB HC]]; eauto.
   red in HA, HB, HC. by subst.
 Qed.

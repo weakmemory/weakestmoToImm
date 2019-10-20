@@ -60,12 +60,12 @@ Notation "'K'"     := S.(ES.cont_set).
 
 (* causality conflict  *)
 
-Definition cc := 
-  cf ∩ (jfe ⨾ (sb ∪ jf)＊ ⨾ jfe ⨾ sb^?). 
+Definition cc :=
+  cf ∩ (jfe ⨾ (sb ∪ jf)＊ ⨾ jfe ⨾ sb^?).
 
 (* visible events *)
 
-Definition vis e := 
+Definition vis e :=
   ⟪ EE : E e ⟫ /\ ⟪ CCEW : cc ⨾ ⦗ eq e ⦘ ⊆ ew ⨾ sb⁼ ⟫.
 
 (* release sequence *)
@@ -84,7 +84,7 @@ Definition hb : relation eventid := (sb ∪ sw)⁺.
 
 (* extended conflict *)
 
-Definition ecf : relation eventid := 
+Definition ecf : relation eventid :=
   (hb⁻¹)^? ⨾ cf ⨾ hb^?.
 
 (* coherence *)
@@ -94,7 +94,7 @@ Definition co_strong : relation eventid :=
 
 Definition mco (m : model) : relation eventid :=
   match m with
-  | Weakest   => co_strong 
+  | Weakest   => co_strong
   | Weakestmo => co
   end.
 
@@ -116,7 +116,7 @@ Definition psc_base :=
 
 Record es_consistent {m} :=
   { ecf_irf : irreflexive ecf;
-    jf_necf : jf ∩ ecf ≡ ∅₂; 
+    jf_necf : jf ∩ ecf ≡ ∅₂;
     jfe_vis : dom_rel jfe ⊆₁ vis;
     coh : irreflexive (hb ⨾ (eco m)^?);
 
@@ -126,9 +126,9 @@ Record es_consistent {m} :=
     ncf_sc : acyclic (psc_f m ∪ psc_base)
   }.
 
-Record good_restriction (A : eventid -> Prop) := 
+Record good_restriction (A : eventid -> Prop) :=
   { visA : A ⊆₁ vis ;
-    ncfA : ES.cf_free S A ; 
+    ncfA : ES.cf_free S A ;
     hbA  : dom_rel (hb ⨾ ⦗A⦘) ⊆₁ A ;
   }.
 
@@ -150,7 +150,7 @@ Proof. unfold cc. basic_solver. Qed.
 Lemma cc_tid : cc ⊆ same_tid.
 Proof. unfold cc, ES.cf. basic_solver. Qed.
 
-Lemma cc_ninit : cc ⊆ Eninit × Eninit. 
+Lemma cc_ninit : cc ⊆ Eninit × Eninit.
 Proof. unfold cc, ES.cf. basic_solver. Qed.
 
 Lemma cf_in_ecf : cf ⊆ ecf.
@@ -160,14 +160,14 @@ Proof.
 Qed.
 
 Lemma ecf_sym : symmetric ecf.
-Proof. 
+Proof.
   unfold ecf, seq.
   intros a b [c [HB [d [CF tHB]]]].
-  eexists. split. 
-  { apply transp_cr in tHB. 
+  eexists. split.
+  { apply transp_cr in tHB.
     unfold transp in tHB.
     apply tHB. }
-  eexists. split. 
+  eexists. split.
   { eapply ES.cf_sym. eauto. }
   apply transp_cr in HB.
   by unfold transp in HB.
@@ -191,30 +191,30 @@ Proof. generalize hb_trans; basic_solver 20. Qed.
 Lemma hb_sb_sw : hb ≡ hb^? ⨾ (sb ∪ sw).
 Proof. unfold hb; rewrite ct_end at 1; rels. Qed.
 
-Lemma sw_ninit : sw ⨾ ⦗Einit⦘ ≡ ∅₂. 
-Proof. 
+Lemma sw_ninit : sw ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof.
   split; [|done].
   unfold sw.
   rewrite crE. relsf.
-  unionL. 
+  unionL.
   { rewrite ES.jfD; auto.
     rewrite ES.acts_init_set_inW; auto.
     type_solver. }
   rewrite !seqA.
   arewrite (sb ⨾ ⦗F⦘ ⨾ ⦗Acq⦘ ⨾ ⦗Einit⦘ ≡ sb ⨾ ⦗Einit⦘ ⨾ ⦗F⦘ ⨾ ⦗Acq⦘).
   { basic_solver. }
-  rewrite <- seqA with (r1 := sb). 
+  rewrite <- seqA with (r1 := sb).
   rewrite ES.sb_ninit; auto.
   basic_solver.
-Qed.  
+Qed.
 
-Lemma hb_ninit : hb ⨾ ⦗Einit⦘ ≡ ∅₂. 
-Proof. 
+Lemma hb_ninit : hb ⨾ ⦗Einit⦘ ≡ ∅₂.
+Proof.
   split; [|done].
   unfold hb.
   rewrite seq_eqv_r.
   intros x y [TC INIT].
-  induction TC; [|intuition]. 
+  induction TC; [|intuition].
   destruct H as [SB | SW].
   { eapply ES.sb_ninit; eauto.
     apply seq_eqv_r; eauto. }
@@ -302,12 +302,12 @@ Qed.
 (** ** Sets and Relations in graph *)
 (******************************************************************************)
 
-Lemma visE : vis ⊆₁ E. 
+Lemma visE : vis ⊆₁ E.
 Proof. unfold vis. basic_solver. Qed.
 
 Lemma ccE : cc ≡ ⦗E⦘ ⨾ cc ⨾ ⦗E⦘.
-Proof. 
-  unfold cc. 
+Proof.
+  unfold cc.
   rewrite <- restr_relE, restr_inter, restr_inter_absorb_r.
   by rewrite ES.cfE, restr_relE at 1.
 Qed.
@@ -381,9 +381,9 @@ Qed.
 (** ** Domains and codomains  *)
 (******************************************************************************)
 
-Lemma ccW : cc ≡ ⦗W⦘ ⨾ cc. 
-Proof. 
-  unfold cc. 
+Lemma ccW : cc ≡ ⦗W⦘ ⨾ cc.
+Proof.
+  unfold cc.
   rewrite interC.
   rewrite <- seq_eqv_inter_ll.
   rewrite <- !seqA.
@@ -442,14 +442,14 @@ Qed.
 (******************************************************************************)
 
 Lemma rs_alt : rs ≡ ⦗E ∩₁ W⦘ ⨾ (sb ∩ same_loc)^? ⨾ ⦗E ∩₁ W⦘ ⨾ (jf ⨾ rmw)＊.
-Proof. 
+Proof.
   unfold rs.
   rewrite (ES.sbE WF).
   basic_solver 42.
 Qed.
 
 Lemma release_alt : release ≡ ⦗E ∩₁ FW ∩₁ Rel⦘ ⨾ (⦗E ∩₁ F⦘ ⨾ sb)^? ⨾ rs.
-Proof. 
+Proof.
   rewrite releaseE, releaseD.
   unfold release.
   rewrite (ES.sbE WF), rsD, rsE.
@@ -512,26 +512,26 @@ Qed.
 (** ** Alternative representations of properties *)
 (******************************************************************************)
 
-Lemma ecf_irr_hb_cf_irr : irreflexive ecf -> irreflexive (hb ⨾ cf). 
-Proof. 
+Lemma ecf_irr_hb_cf_irr : irreflexive ecf -> irreflexive (hb ⨾ cf).
+Proof.
   unfold ecf.
-  rewrite !crE. relsf. 
-  unfold irreflexive. 
-  intros ECFIRR x HH. 
+  rewrite !crE. relsf.
+  unfold irreflexive.
+  intros ECFIRR x HH.
   destruct HH as [y [HB CF]].
   eapply ECFIRR.
   left. right.
-  unfold transp. 
-  eexists; split; eauto. 
-  by apply ES.cf_sym. 
+  unfold transp.
+  eexists; split; eauto.
+  by apply ES.cf_sym.
 Qed.
 
-Lemma ecf_irr_thb_cf_hb_irr : irreflexive ecf -> irreflexive (hb⁻¹ ⨾ cf ⨾ hb). 
-Proof. 
+Lemma ecf_irr_thb_cf_hb_irr : irreflexive ecf -> irreflexive (hb⁻¹ ⨾ cf ⨾ hb).
+Proof.
   unfold ecf.
-  rewrite !crE. relsf. 
-  unfold irreflexive. 
-  intros ECFIRR x HH. 
+  rewrite !crE. relsf.
+  unfold irreflexive.
+  intros ECFIRR x HH.
   destruct HH as [y [THB [z [CF HB]]]].
   eapply ECFIRR.
   right. right.
@@ -539,83 +539,83 @@ Proof.
   exists y; split; eauto.
 Qed.
 
-Lemma ecf_irr_alt : 
+Lemma ecf_irr_alt :
   irreflexive ecf <-> irreflexive (hb ⨾ cf) /\  irreflexive (hb⁻¹ ⨾ cf ⨾ hb).
-Proof. 
-  split. 
-  { ins. split. 
+Proof.
+  split.
+  { ins. split.
     { by apply ecf_irr_hb_cf_irr. }
     by apply ecf_irr_thb_cf_hb_irr. }
   unfold ecf. rewrite !crE. relsf.
   unfold irreflexive.
   intros [HBCF THBCFHB].
-  unfold union. 
+  unfold union.
   ins; desf.
   { eapply ES.cf_irr. eauto. }
   { destruct H as [y [HB CF]].
     unfold transp in HB.
-    eapply HBCF. 
+    eapply HBCF.
     apply ES.cf_sym in CF.
     unfold seq. eauto. }
   { destruct H as [y [CF HB]].
-    eapply HBCF. 
+    eapply HBCF.
     unfold seq. eauto. }
-  eapply THBCFHB. eauto. 
+  eapply THBCFHB. eauto.
 Qed.
 
 Lemma jf_necf_jf_ncf : jf ∩ ecf ≡ ∅₂ -> jf ∩ cf ≡ ∅₂.
-Proof. 
-  intros [JFnECF _]. 
+Proof.
+  intros [JFnECF _].
   split; [|basic_solver].
   by sin_rewrite cf_in_ecf.
 Qed.
 
 Lemma jf_necf_hb_jf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf) ∩ cf ≡ ∅₂.
-Proof. 
-  unfold ecf. 
-  intros [JFnECF _]. 
+Proof.
+  unfold ecf.
+  intros [JFnECF _].
   split; [|basic_solver].
   intros x y [[z [HB JF]] CF].
-  eapply JFnECF. split; eauto.  
-  red. exists x. splits; auto. 
-  red. exists y. splits; auto. 
+  eapply JFnECF. split; eauto.
+  red. exists x. splits; auto.
+  red. exists y. splits; auto.
 Qed.
 
 Lemma jf_necf_hb_tjf_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂.
-Proof. 
-  unfold ecf. 
-  intros [JFnECF _]. 
+Proof.
+  unfold ecf.
+  intros [JFnECF _].
   split; [|basic_solver].
   intros x y [[z [HB tJF]] CF].
-  eapply JFnECF. split. 
+  eapply JFnECF. split.
   { unfold transp in tJF. eauto. }
   red. exists y. splits.
   { unfolder; auto. }
-  red. exists x. splits; auto. 
-  by apply ES.cf_sym. 
+  red. exists x. splits; auto.
+  by apply ES.cf_sym.
 Qed.
 
 Lemma jf_necf_hb_jf_thb_ncf : jf ∩ ecf ≡ ∅₂ -> (hb ⨾ jf ⨾ hb⁻¹) ∩ cf ≡ ∅₂.
-Proof. 
+Proof.
   unfold ecf.
-  intros [JFnECF _]. 
+  intros [JFnECF _].
   split; [|basic_solver].
   intros x y [[z [HB [z' [JF tHB]]]] CF].
-  eapply JFnECF. split; eauto.  
+  eapply JFnECF. split; eauto.
   red. exists x. splits.
   { unfolder; auto. }
-  red. exists y. splits; auto. 
+  red. exists y. splits; auto.
 Qed.
 
-Lemma jf_necf_alt : 
-  jf ∩ ecf ≡ ∅₂ <-> 
-    jf ∩ cf ≡ ∅₂ /\ 
-    (hb ⨾ jf) ∩ cf ≡ ∅₂ /\ 
-    (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂ /\ 
+Lemma jf_necf_alt :
+  jf ∩ ecf ≡ ∅₂ <->
+    jf ∩ cf ≡ ∅₂ /\
+    (hb ⨾ jf) ∩ cf ≡ ∅₂ /\
+    (hb ⨾ jf⁻¹) ∩ cf ≡ ∅₂ /\
     (hb ⨾ jf ⨾ hb⁻¹) ∩ cf ≡ ∅₂.
-Proof. 
-  split. 
-  { intros [JFnECF _]. 
+Proof.
+  split.
+  { intros [JFnECF _].
     splits; red; splits; try by intuition.
     { by apply jf_necf_jf_ncf. }
     { by apply jf_necf_hb_jf_ncf. }
@@ -624,22 +624,22 @@ Proof.
   intros [[JFnCF _] [[HBJFnCF _] [[HBtJFnCF _] [HBJFtHBnCF _]]]].
   split; [|basic_solver].
   unfold ecf.
-  rewrite !crE, !seq_union_l, !seq_union_r, 
+  rewrite !crE, !seq_union_l, !seq_union_r,
     !seq_id_r, !seq_id_l, !inter_union_r.
   unfold union. intros x y HH. desf.
   { eapply JFnCF; eauto. }
   { destruct HH as [JF [z [CF HB]]].
-    eapply HBtJFnCF. split. 
+    eapply HBtJFnCF. split.
     { unfolder; eauto. }
       by apply ES.cf_sym. }
   { destruct HH as [JF [z [tHB CF]]].
-    eapply HBJFnCF. 
+    eapply HBJFnCF.
     split; unfolder; eauto. }
   destruct HH as [JF HH].
   destruct HH as [z [tHB [z' [CF HB]]]].
-  eapply HBJFtHBnCF. split; eauto.  
-  red. exists x. splits; eauto. 
-  red. exists y. splits; eauto. 
+  eapply HBJFtHBnCF. split; eauto.
+  red. exists x. splits; eauto.
+  red. exists y. splits; eauto.
 Qed.
 
 (******************************************************************************)
@@ -784,30 +784,30 @@ Section ConsistentProps.
   Qed.
 
   Lemma jf_tsb : jf ∩ sb⁻¹ ⊆ ∅₂.
-  Proof. 
+  Proof.
     intros x y [JF tSB].
     eapply coh; [apply ESC|].
     eexists. split.
     { apply sb_in_hb. basic_solver. }
-    apply r_step. unfold eco. 
-    apply t_step. unfold ES.rf. 
+    apply r_step. unfold eco.
+    apply t_step. unfold ES.rf.
     do 2 left. split.
     { apply ES.jf_in_ew_jf; auto. }
-    intros CF. 
+    intros CF.
     apply ES.cf_sym in CF.
     eapply ES.n_sb_cf; eauto.
   Qed.
 
   Lemma jfi_alt : jfi ≡ ⦗Einit⦘ ⨾ jf ∪ (jf ∩ same_tid).
-  Proof. 
+  Proof.
     unfold ES.jfi.
     rewrite ES.sb_Einit_Eninit; auto.
-    rewrite inter_union_r. 
+    rewrite inter_union_r.
     apply union_more.
-    { red. split. 
+    { red. split.
       { basic_solver. }
       rewrite ES.jfE at 1; auto.
-      rewrite ES.acts_set_split at 2. 
+      rewrite ES.acts_set_split at 2.
       rewrite id_union. relsf.
       arewrite_false (jf ⨾ ⦗Einit⦘).
       { rewrite ES.jfD, ES.acts_init_set_inW; auto. type_solver. }
@@ -826,7 +826,7 @@ Section ConsistentProps.
   Qed.
 
   Lemma jfe_alt : jfe ≡ ⦗Eninit⦘ ⨾ jf ∩ compl_rel same_tid.
-  Proof. 
+  Proof.
     unfold ES.jfe.
     erewrite <- inter_absorb_r
       with (r := jf) at 1.
@@ -839,18 +839,18 @@ Section ConsistentProps.
       apply seq_eqv_l. unfold inter_rel.
       splits; auto.
       intros STID. unfold ES.same_tid in STID.
-      edestruct ES.same_thread_alt as [crsSB | CF]; 
+      edestruct ES.same_thread_alt as [crsSB | CF];
         try apply STID; eauto.
       { apply Enix. }
-      { apply crsE in crsSB. 
+      { apply crsE in crsSB.
         destruct crsSB as [[ID | SB] | tSB]; auto.
         { unfolder in ID. desc.
           eapply ES.jf_eq; eauto.
           split; eauto. }
         eapply jf_tsb. basic_solver. }
-      eapply ES.jf_ncf; eauto. 
+      eapply ES.jf_ncf; eauto.
       basic_solver. }
-    rewrite seq_eqv_l. 
+    rewrite seq_eqv_l.
     unfold compl_rel, ES.same_tid.
     intros x y [Enix [JF nSTID]].
     unfolder; splits; auto.
@@ -859,23 +859,23 @@ Section ConsistentProps.
     intros SB. apply nSTID.
     apply ES.sb_tid; auto.
     basic_solver.
-  Qed.  
+  Qed.
 
   Lemma jfe_dom_ninit : dom_rel jfe ⊆₁ Eninit.
   Proof. rewrite jfe_alt. basic_solver. Qed.
 
   Lemma jfe_nsame_tid : jfe ⊆ compl_rel same_tid.
   Proof. rewrite jfe_alt. basic_solver. Qed.
-    
-  Lemma rfe_ew_jfe : rfe ≡ ew ⨾ jfe. 
-  Proof. 
+
+  Lemma rfe_ew_jfe : rfe ≡ ew ⨾ jfe.
+  Proof.
     split; [apply ES.rfe_in_ew_jfe; auto|].
     unfold ES.rfe, ES.rf.
     rewrite jfe_alt.
     rewrite seq_eqv_l.
     intros x y [z [EW [nINITx [JF nSTID]]]].
     unfolder; eexists; splits; eauto.
-    { intros CF. 
+    { intros CF.
       apply nSTID.
       etransitivity.
       { eapply ES.ew_tid; auto.
@@ -893,38 +893,38 @@ Section ConsistentProps.
       apply ES.cf_sym; eauto. }
     apply ES.sb_Einit_Eninit in SB; auto.
     destruct SB as [[INITx _] | HH].
-    { exfalso. 
+    { exfalso.
       eapply ES.ncfEinit_l.
       basic_solver. }
     apply ES.sb_tid; auto.
-    generalize HH. 
+    generalize HH.
     basic_solver 20.
   Qed.
 
   Lemma ew_rfe_in_rfe : ew ⨾ rfe ⊆ rfe.
   Proof.
-    rewrite rfe_ew_jfe. 
+    rewrite rfe_ew_jfe.
     rewrite <- seqA.
-    apply seq_mori; [|done]. 
+    apply seq_mori; [|done].
     rewrite transitiveI.
     apply WF.
   Qed.
 
   Lemma rfe_dom_ninit : dom_rel rfe ⊆₁ Eninit.
-  Proof. 
-    rewrite rfe_ew_jfe, 
-            jfe_alt, 
-            ES.ewEninit; 
-      auto. 
+  Proof.
+    rewrite rfe_ew_jfe,
+            jfe_alt,
+            ES.ewEninit;
+      auto.
     basic_solver.
   Qed.
 
   Lemma rfe_nsame_tid : rfe ⊆ compl_rel same_tid.
-  Proof. 
-    rewrite rfe_ew_jfe, 
-            ES.ew_tid, 
-            jfe_nsame_tid; 
-      auto. 
+  Proof.
+    rewrite rfe_ew_jfe,
+            ES.ew_tid,
+            jfe_nsame_tid;
+      auto.
     unfold ES.same_tid.
     basic_solver.
   Qed.
@@ -1054,12 +1054,12 @@ Section ConsistentProps.
 End ConsistentProps.
 
 Section WeakestMOConsistentProps.
-  
+
   Variable ESC : @es_consistent Weakestmo.
-  
-  Lemma co_jf_hb_tjf_irr : 
+
+  Lemma co_jf_hb_tjf_irr :
     irreflexive (co ⨾ jf^? ⨾ hb ⨾ jf⁻¹).
-  Proof. 
+  Proof.
     apply irreflexive_seqC. rewrite !seqA.
     apply irreflexive_seqC. rewrite !seqA.
     seq_rewrite <- ES.fr_alt; auto.
@@ -1069,8 +1069,8 @@ Section WeakestMOConsistentProps.
     rewrite fr_in_eco.
     arewrite (rf ⊆ eco Weakestmo).
     generalize (eco_trans Weakestmo).
-    basic_solver. 
-  Qed. 
+    basic_solver.
+  Qed.
 
 End WeakestMOConsistentProps.
 
@@ -1082,9 +1082,9 @@ Require Import Setoid.
 
 Add Parametric Morphism : good_restriction with signature
   eq ==> set_equiv ==> iff as good_restriction_more.
-Proof. 
-  intros S s s' EQV. 
+Proof.
+  intros S s s' EQV.
   split; intros GRestr; constructor.
-  1-3 : rewrite <- EQV; apply GRestr. 
-  all : rewrite EQV; apply GRestr. 
+  1-3 : rewrite <- EQV; apply GRestr.
+  all : rewrite EQV; apply GRestr.
 Qed.
