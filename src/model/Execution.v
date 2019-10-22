@@ -211,44 +211,7 @@ Section ExecutionRels.
     unfold ex_rf.
     basic_solver 5.
   Qed.
-
-  Lemma sb_rf_prcl X'
-        (PRCL : dom_rel ((ex_sb ∪ ex_rf) ⨾ ⦗X'⦘) ⊆₁ X')
-        (INCL : X' ⊆₁ X)
-        (EINIT : ex_Einit ⊆₁ X') :
-    t X'.
-  Proof.
-    destruct EXEC.
-    assert (sb_prcl : dom_rel (sb ⨾ ⦗X'⦘) ⊆₁ X').
-    { rewrite dom_rel_helper with (r := sb ⨾ ⦗X'⦘).
-      2: { rewrite INCL. apply ex_sb_prcl0. }
-      arewrite (⦗X⦘ ⨾ sb ⨾ ⦗X'⦘ ⊆ ex_sb ⨾ ⦗X'⦘).
-      { unfold ex_sb.
-        rewrite restr_relE.
-        basic_solver. }
-      by arewrite (ex_sb ⊆ ex_sb ∪ ex_rf). }
-    constructor.
-    1,2,3,8 : auto; basic_solver.
-    { unfold Consistency.sw.
-      rewrite !seqA.
-      arewrite (⦗Acq⦘ ⨾ ⦗X'⦘ ≡ ⦗X'⦘ ⨾ ⦗Acq⦘) by basic_solver.
-      assert (PRCL' : dom_rel ((sb ⨾ ⦗F⦘)^? ⨾ ⦗X'⦘) ⊆₁ X').
-      { apply prcl_cr.
-        by rewrite inclusion_seq_eqv_r. }
-      seq_rewrite (dom_rel_helper PRCL').
-      admit. }
-    { admit. }
-    { arewrite (X' ∩₁ R ≡₁ X ∩₁ R ∩₁ X ∩₁ X') by basic_solver 10.
-      rewrite ex_rf_compl0, <- !codom_eqv1, !seqA.
-      rewrite dom_rel_helper with (d := X').
-      { basic_solver. }
-      unfold ex_rf in PRCL.
-      arewrite (⦗X⦘ ⨾ rf ⨾ ⦗X⦘ ⊆ ex_sb ∪ ex_rf).
-      { unfold ex_rf. basic_solver. }
-      auto. }
-      by rewrite INCL.
-    Admitted.
-
+  
   Lemma ex_rs_alt_r
         (WF : ES.Wf S)
         (JF_PRCL : dom_rel (jf ⨾ ⦗X⦘) ⊆₁ X) :

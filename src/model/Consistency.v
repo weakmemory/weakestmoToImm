@@ -122,8 +122,6 @@ Record es_consistent {m} :=
 
     icf_R : dom_rel icf ⊆₁ R;
     icf_jf : irreflexive (jf ⨾ icf ⨾ jf⁻¹ ⨾ ew);
-
-    ncf_sc : acyclic (psc_f m ∪ psc_base)
   }.
 
 Record good_restriction (A : eventid -> Prop) :=
