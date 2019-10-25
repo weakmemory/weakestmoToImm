@@ -2,7 +2,7 @@
 
 This repository contains Coq code supplementing the paper 
 *Reconciling Event Structures with Modern Multiprocessors*
-by Evgenii Moiseenko, Anton Podkopaev, Ori Lahav, Orestis Melkonian and Viktor Vafeiadis.
+by Evgenii Moiseenko, Anton Podkopaev, Ori Lahav, Orestis Melkonian, and Viktor Vafeiadis.
 
 ## Building the Project
 
