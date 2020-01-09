@@ -33,35 +33,35 @@ To build the project just use `make` command (assuming all dependencies were ins
   - *Execution.v* --- definition of the `extracted` subset of events and related lemmas.
 
 * `src/construction` --- operational semantics of the `Weakestmo`.
-  - *ProgES.v* --- construction of the initial event structure for a program.
-  - *LblStep.v* --- thread-local sequential semantics, generating labels of events.
-  - *BasicStep.v* --- `basic_step` relation, updating set of events, program order and read-modify-write pairs of an event structure.
-  - *AddJF.v* --- `add_jf` relation, updating justified-from component of an event structure.
-  - *AddEW.v* --- `add_ew` relation, updating equal-writes component of an event structure.
-  - *AddCO.v* --- `add_co` relation, updating coherence component of an event structure.
-  - *Step.v* --- `step_` and `step` relations, updating whole event structure.
-  - *StepWf.v* --- preservation of the event structure's well-formdness property by `step_` relation.
+  - *ProgES.v* --- construction of the initial event structure.
+  - *LblStep.v* --- thread-local sequential semantics.
+  - *BasicStep.v* --- `basic_step` relation used to update set of events, program order and read-modify-write pairs of the event structure.
+  - *AddJF.v* --- `add_jf` relation used to update justified-from component of the event structure.
+  - *AddEW.v* --- `add_ew` relation used to equal-writes component of the event structure.
+  - *AddCO.v* --- `add_co` relation used to update coherence component of the event structure.
+  - *Step.v* --- `step_` and `step` relations used to update the event structure.
+  - *StepWf.v* --- preservation of the event structure's well-formdness property by the `step_` relation.
 
 * `src/imm_aux` --- auxiliary definition related to `IMM`.
-  - *EventToAction.v* --- definition of the function, relating events in the event structure and execution graph.
-  - *ImmProperties.v* --- some auxiliary properties of `IMM` model.
+  - *EventToAction.v* --- definition of the function which establish a connection between events of the event structure and the execution graph.
+  - *ImmProperties.v* --- some auxiliary properties of the `IMM` model.
 
-* `src/compilation` --- proof of compilation correctness to `IMM`.
-  - *CertRF.v* --- definition of `cert_rf` relation.
+* `src/compilation` --- proof of the compilation correctness to `IMM`.
+  - *CertRF.v* --- definition of `cert_rf` relation (a.k.a. `stable justification` relation).
   - *CertGraph.v* --- construction of the certification branch.
-  - *SimRelCont.v* --- part of simulation relation, related to thread states stored in the event structure.
-  - *SimRelEventToAction.v* --- part of simulation relation, relating some components of the event structure and the execution graph.
-  - *SimRel.v* --- whole simulation relation.
-  - *SimRelInit.v* --- proof that the initial event structure satisfies simulation relation.
-  - *SimRelCert.v* --- intermediate simulation relation, preserved during the construction of certification branch.
-  - *SimRelCertBasicStep.v* --- lemmas related to performing a basic step during certification.
-  - *SimRelCertAddJF.v* --- lemmas related to updating justified-from during certification.
-  - *SimRelCertAddEW.v* --- lemmas related to updating equal-writes during certification.
-  - *SimRelCertAddCO.v* --- lemmas related to updating coherence order during certification.
-  - *SimRelCertStep.v* --- lemmas related to performing (whole) step during certification.
+  - *SimRelCont.v* --- definition of the part of the simulation relation related to thread-local states.
+  - *SimRelEventToAction.v* --- definition of the part of the simulation relation which establish a connection between some components of the event structure and the execution graph.
+  - *SimRel.v* --- definition of the whole simulation relation.
+  - *SimRelInit.v* --- proof that the initial event structure satisfies the simulation relation.
+  - *SimRelCert.v* --- intermediate simulation relation which is preserved during the construction of the certification branch.
+  - *SimRelCertBasicStep.v* --- lemmas related to performing a basic step during the certification.
+  - *SimRelCertAddJF.v* --- lemmas related to updating justified-from component during the certification.
+  - *SimRelCertAddEW.v* --- lemmas related to updating equal-writes component during the certification.
+  - *SimRelCertAddCO.v* --- lemmas related to updating coherence order component during the certification.
+  - *SimRelCertStep.v* --- lemmas related to performing (whole) step during the certification.
   - *SimRelCertStepCoh.v* --- proof that the event structure is consistent after a certification step.
   - *SimRelCertStepLemma.v* --- proof that the event structure satisfies `simrel_cert` after a certification step.
-  - *SimRelCertForwarding.v* --- performing forwarding (i.e. no step) during certification.
+  - *SimRelCertForwarding.v* --- forwarding (i.e. an idle step) of the certification.
   - *SimRelStep.v* --- simulation of the traversal step.
   - *Compilation.v* --- proof of the main theorem.
 
