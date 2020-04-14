@@ -27,6 +27,8 @@ To build the project just use `make -j` command (assuming all dependencies were 
 
 ## Relation between code and the paper 
 
+### Main theorem and lemmas
+
 * The main theorem of compilation correctness from Weakestmo to IMM (**Theorem 1** from the paper) is represented
   by `compilation_correctness` stated in `src/compilation/Compilation.v`.
 * The simulation relation `I` used to prove **Theorem 1** is represented by `simrel_consistent` in `src/compilation/SimRel.v`.
@@ -34,9 +36,23 @@ To build the project just use `make -j` command (assuming all dependencies were 
   `simrel_init` in `src/compilation/SimRelInit.v`.
 * **Lemma 3** stating that the simulation relation `I` might be restored after a traversal step is represented by
   `simrel_step` in `src/compilation/SimRelStep.v`.
-* **Lemma 4** stating that
+* **Lemma 4** stating that **TODO**
 <!-- from the simulation relation `I` holds for the initial event structure corresponds to  -->
   `simrel_extract` in `src/compilation/Compilation.v`.
+  
+### Representation of event structure and execution graphs
+
+TODO
+
+In footnote 11, we mention that for a given execution graph `G` and an event structure `S` there exists an unique function `s2g(G, E) : S.E → G.E`,
+which maps events of `S` to events of `G` /s.t./ events `es` and `s2g(G, E, es)` belong to the same thread
+and have the same `po`-position in the thread of event structure `S` and execution graph `G` correspondigly.
+It is the case for this Coq formalization since we use a representation of the execution graphs from the [IMM framework](https://github.com/weakmemory/imm)
+(see also §2.2 of [[Podkopaev-al:POPL19]](https://dl.acm.org/doi/10.1145/3290382)).
+In the representation, an execution graph event `eg` is encoded as a pair of natural numbers `<t, n>`, where `t` is the corresponding thread and
+`n` is the position number of `eg` in the thread `t`.
+
+TODO: address footnote 9.
 
 ## Description of the project's files
 
@@ -81,14 +97,3 @@ In the paper, its counterpart is `s2g` from §2.2.
 
 * `src/utils` &mdash; auxiliary definitions and lemmas.
 
-# Differences to the paper
-
-In footnote 11, we mention that for a given execution graph `G` and an event structure `S` there exists an unique function `s2g(G, E) : S.E → G.E`,
-which maps events of `S` to events of `G` /s.t./ events `es` and `s2g(G, E, es)` belong to the same thread
-and have the same `po`-position in the thread of event structure `S` and execution graph `G` correspondigly.
-It is the case for this Coq formalization since we use a representation of the execution graphs from the [IMM framework](https://github.com/weakmemory/imm)
-(see also §2.2 of [[Podkopaev-al:POPL19]](https://dl.acm.org/doi/10.1145/3290382)).
-In the representation, an execution graph event `eg` is encoded as a pair of natural numbers `<t, n>`, where `t` is the corresponding thread and
-`n` is the position number of `eg` in the thread `t`.
-
-TODO: address footnote 9.
