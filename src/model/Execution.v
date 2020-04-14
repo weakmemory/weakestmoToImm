@@ -386,7 +386,7 @@ Section ExecutionRels.
       basic_solver. }
     unfold ex_hb, Consistency.hb, ex_sb.
     rewrite ex_sw_alt; auto.
-    rewrite union_restr.
+    rewrite <- restr_union.
     rewrite <- (restr_ct_prcl SB_SW_PRCL).
     apply prcl_ct in SB_SW_PRCL.
     rewrite (dom_rel_helper (SB_SW_PRCL)).
