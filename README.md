@@ -10,7 +10,7 @@ by Evgenii Moiseenko, Anton Podkopaev, Ori Lahav, Orestis Melkonian, and Viktor 
 * [Coq 8.9.1](https://coq.inria.fr)
 * [Hahn library](https://github.com/vafeiadis/hahn) (`coq-hahn`)
 * [Utility library from the Promising semantics development](https://github.com/snu-sf/promising-lib)(`coq-promising-lib`)
-* [Intermediate Memory Model](https://github.com/weakmemory/imm)(`coq-imm`)
+* [Intermediate Memory Model](https://github.com/weakmemory/imm)(`coq-imm.1.1`)
 
 All required dependencies can be installed via [`opam`](https://opam.ocaml.org/) package manager. 
 
@@ -18,12 +18,12 @@ All required dependencies can be installed via [`opam`](https://opam.ocaml.org/)
 opam repo add coq-released https://coq.inria.fr/opam/released
 opam remote add coq-promising-local -k git https://github.com/snu-sf/promising-opam-coq-archive
 opam remote add coq-weakmemory-local -k git https://github.com/weakmemory/local-coq-opam-archive
-opam install coq-imm
+opam install coq-imm.1.1
 ```
 
 ### Building Manually
 
-To build the project just use `make` command (assuming all dependencies were installed as described above). 
+To build the project just use `make -j` command (assuming all dependencies were installed as described above). 
 
 ## Description of the project's files
 
