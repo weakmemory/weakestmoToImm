@@ -40,7 +40,7 @@ To build the project just use `make -j` command (assuming all dependencies were 
   - *AddEW.v* &mdash; `add_ew` relation used to equal-writes component of the event structure.
   - *AddCO.v* &mdash; `add_co` relation used to update coherence component of the event structure.
   - *Step.v* &mdash; `step_` and `step` relations used to update the event structure.
-  - *StepWf.v* &mdash; preservation of the event structure's well-formdness property by the `step_` relation.
+  - *StepWf.v* &mdash; preservation of the event structure's well-formedness property by the `step_` relation.
 
 * `src/imm_aux` &mdash; auxiliary definition related to `IMM`.
   - *EventToAction.v* &mdash; definition of the function which establish a connection between events of the event structure and the execution graph.
@@ -66,3 +66,15 @@ To build the project just use `make -j` command (assuming all dependencies were 
   - *Compilation.v* &mdash; proof of the main theorem.
 
 * `src/utils` &mdash; auxiliary definitions and lemmas.
+
+# Differences to the paper
+
+In footnote 11, we mention that for a given execution graph `G` and an event structure `S` there exists an unique function `s2g(G, E) : S.E → G.E`,
+which maps events of `S` to events of `G` /s.t./ events `es` and `s2g(G, E, es)` belong to the same thread
+and have the same `po`-position in the thread of event structure `S` and execution graph `G` correspondigly.
+It is the case for this Coq formalization since we use a representation of the execution graphs from the [IMM framework](https://github.com/weakmemory/imm)
+(see also §2.2 of [[Podkopaev-al:POPL19]](https://dl.acm.org/doi/10.1145/3290382)).
+In the representation, an execution graph event `eg` is encoded as a pair of natural numbers `<t, n>`, where `t` is the corresponding thread and
+`n` is the position number of `eg` in the thread `t`.
+
+TODO: address footnote 9.
