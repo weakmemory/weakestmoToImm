@@ -65,12 +65,9 @@ To build the project just use `make -j` command (assuming all dependencies were 
 
 ### (§4.2) Simulation relation `I`
 * Function `s2g(G, S)` from the paper (which maps events of event structure `S` to events of execution graph `G`)
-  is represented by function `e2a` (stands for '`eventid` to `actid`') defined in `src/imm_aux/EventToAction.v`.
+  is represented by function `e2a` (stands for *'`eventid` to `actid`'*) defined in `src/imm_aux/EventToAction.v`.
 * In Coq, functions `⌈⌈·⌉⌉` and `⌊⌊·⌋⌋` for lifting `s2g` to sets are represented as `e2a □₁ ·` and `e2a ⋄₁ ·` correspondingly;
   their relational counterparts—`e2a □ ·` and `e2a ⋄ ·`.
-
-
-and relations are defined as 
 * The simulation relation `I` is represented by `simrel_consistent` in `src/compilation/SimRel.v`.
 	
 
