@@ -27,7 +27,7 @@ To build the project just use `make -j` command (assuming all dependencies were 
 
 ## Relation between code and the paper 
 
-### Main theorem and lemmas
+### Weakestmo to IMM compilation correctness. Main theorem and lemmas (§2.3)
 
 * The main theorem of compilation correctness from Weakestmo to IMM (**Theorem 1** from the paper) is represented
   by `compilation_correctness` stated in `src/compilation/Compilation.v`.
@@ -40,7 +40,33 @@ To build the project just use `make -j` command (assuming all dependencies were 
 <!-- from the simulation relation `I` holds for the initial event structure corresponds to  -->
   `simrel_extract` in `src/compilation/Compilation.v`.
   
-### Representation of event structure and execution graphs
+### Basic definitions of event structure (§3)
+* (§3.1) Events of event structures are encoded by `eventid` (which is equal to `nat`) defined in `src/model/EventStructure.v`.
+* (§3.1) Labels (`label` in Coq) are defined in the IMM framework in file [`src/basic/Events.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/basic/Events.v).
+* (§3.2) Event structures (`ES.t` in Coq) and the well-formedness predicate (`ES.Wf` in Coq) stating basic properties of their components
+  are defined in `src/model/EventStructure.v`.
+* (§3.3) A step of operational semantics of event structure construction (`step` in Coq) is defined in `src/construction/Step.v`.
+* (§3.4) The Weakestmo event structure consistency predicate along with definitions of relations `hb` and `ecf` and the notion of visible events (predicate `vis` in Coq)
+  are defined in `src/model/Consistency.v`.
+  <br />
+  (The consistency predicate is parameterized by `model` which is either `Weakest` or `Weakestmo`.
+   The former represents a version of Weakestmo [Chakraborty-Vafeiadis:POPL19] which is not considered in our paper.)
+
+A step of operational semantics of event structure construction (`step` in Coq) is defined in `src/construction/Step.v`.
+
+used for event structures are defined in
+  
+### Representation of event structures and execution graphs
+
+Events 
+
+
+
+In footnote 11, we mention that events of execution graphs, unlike events used for event structures which are represented by natural numbers only,
+have different representation in Coq.
+In the representation, 
+  
+comparing 
 
 TODO
 
