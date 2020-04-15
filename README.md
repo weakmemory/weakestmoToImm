@@ -92,6 +92,8 @@ Most of them are represented by fields in `simrel` or derivable from them:
 11. `ew_ex_iss` (a field in `simrel`).
 12. Field `e2a_co` of `simrel_e2a` (which is represented in `simrel` via field `sr_e2a`) defined in `src/compilation/SimRelEventToAction.v`.
 
+### (§4.3) Simulation step
+
 TODO: address footnote 9.
 
 ## Description of the project's files
