@@ -68,8 +68,29 @@ To build the project just use `make -j` command (assuming all dependencies were 
   is represented by function `e2a` (stands for *'`eventid` to `actid`'*) defined in `src/imm_aux/EventToAction.v`.
 * In Coq, functions `⌈⌈·⌉⌉` and `⌊⌊·⌋⌋` for lifting `s2g` to sets are represented as `e2a □₁ ·` and `e2a ⋄₁ ·` correspondingly;
   their relational counterparts—`e2a □ ·` and `e2a ⋄ ·`.
-* The simulation relation `I` is represented by `simrel_consistent` in `src/compilation/SimRel.v`.
-	
+
+The simulation relation `I` is represented by `simrel_consistent` in `src/compilation/SimRel.v`.
+Below, we map elements of the paper's version of `I` to the Coq version.
+Most of them are represented by fields in `simrel` or derivable from them:
+
+1. `gcons` (a field in `simrel`).
+2. `SCONS` (an entry in `simrel_consistent`).
+3. `sr_exec` (a field in `simrel`).
+4. `ex_cov_iss` (a field in `simrel`).
+5. **(a)** Equality of events' threads and labels up to values for events connected via `e2a` 
+   is represented by `sr_e2a` (a field in `simrel`).
+   It uses auxiliary definition `simrel_e2a` defined in `src/compilation/SimRelEventToAction.v`.
+   <br />
+   **(b)** Equality of labels for events and their covered and issued counterparts is represented by `ex_cov_iss_lab` (a field in `simrel`).
+6. Derivable from `sr_e2a` via lemma `e2a_sb` stated in `src/imm_aux/EventToAction.v`.
+7. TODO
+8. **(a)** Field `e2a_jf` of `simrel_e2a` (which is represented in `simrel` via field `sr_e2a`) defined in `src/compilation/SimRelEventToAction.v`.
+   <br />
+   **(b)** Lemma `jf_cov_iv_rf` stated in `src/compilation/SimRel.v` derivable from `jf_ex_in_cert_rf` (a field in `simrel`).
+9. `jfe_ex_iss` (a field in `simrel`).
+10. Field `e2a_ew` of `simrel_e2a` (which is represented in `simrel` via field `sr_e2a`) defined in `src/compilation/SimRelEventToAction.v`.
+11. `ew_ex_iss` (a field in `simrel`).
+12. Field `e2a_co` of `simrel_e2a` (which is represented in `simrel` via field `sr_e2a`) defined in `src/compilation/SimRelEventToAction.v`.
 
 TODO: address footnote 9.
 
