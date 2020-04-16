@@ -94,6 +94,17 @@ Most of them are represented by fields in `simrel` or derivable from them:
 
 ### (§4.3) Simulation step
 
+TODO: mention `simrel_cert` and `Br` (`X` in Coq).
+
+* (**§4.3.1**) The `determined` set  (`D` in Coq), relations `vf` and `sjf` (`cert_rf` in Coq) are defined in `src/compilation/CertRf.v`.
+  <br />
+  The certification run is defined via predicate `cert_graph` and constructed via lemma `cert_graph_start` in `src/compilation/CertGraph.v`.
+  <br />
+  The proof of `cert_graph_start` uses the receptiveness property (`receptiveness_full` in Coq, defined in file `Receptiveness.v` of the IMM framework)
+  which is mentioned in footnote 12.
+  
+* (**§4.3.3**) TODO
+ 
 TODO: address footnote 9.
 
 ## Description of the project's files
