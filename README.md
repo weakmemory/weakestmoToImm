@@ -34,11 +34,11 @@ To build the project just use `make -j` command (assuming all dependencies were 
 * The simulation relation `I` used to prove **Theorem 1** is represented by `simrel_consistent` in `src/compilation/SimRel.v`.
 * **Lemma 2** stating that the simulation relation `I` holds for the initial event structure corresponds to 
   `simrel_init` in `src/compilation/SimRelInit.v`.
-* **Lemma 3** stating that the simulation relation `I` might be restored after a traversal step is represented by
+* **Lemma 3** stating that the simulation relation `I` can be restored after a traversal step is represented by
   `simrel_step` in `src/compilation/SimRelStep.v`.
-* **Lemma 4** stating that **TODO**
-<!-- from the simulation relation `I` holds for the initial event structure corresponds to  -->
-  `simrel_extract` in `src/compilation/Compilation.v`.
+* **Lemma 4** stating that if `I` holds for the final traversal configuration 
+  then the graph associated with the extracted subset `X` is isomorphic to the original IMM graph `G` 
+  is represented by `simrel_extract` in `src/compilation/Compilation.v`
   
 ### (§3) Basic definitions of event structure
 * (**§3.1**) Events of event structures are encoded by `eventid` (which is equal to `nat`) defined in `src/model/EventStructure.v`.
@@ -83,7 +83,7 @@ Most of them are represented by fields in `simrel` or derivable from them:
    <br />
    **(b)** Equality of labels for events and their covered and issued counterparts is represented by `ex_cov_iss_lab` (a field in `simrel`).
 6. Derivable from `sr_e2a` via lemma `e2a_sb` stated in `src/imm_aux/EventToAction.v`.
-7. TODO
+7. Derivable from `sr_e2a` via lemma `e2a_eq_in_cf` stated in `src/imm_aux/EventToAction.v`.
 8. **(a)** Field `e2a_jf` of `simrel_e2a` (which is represented in `simrel` via field `sr_e2a`) defined in `src/compilation/SimRelEventToAction.v`.
    <br />
    **(b)** Lemma `jf_cov_iv_rf` stated in `src/compilation/SimRel.v` derivable from `jf_ex_in_cert_rf` (a field in `simrel`).
@@ -105,7 +105,8 @@ TODO: mention `simrel_cert` and `Br` (`X` in Coq).
   
 * (**§4.3.3**) TODO
  
-TODO: address footnote 9.
+The proof of statement in footnote 9, which says that the two definitions of visible events are equal,
+is formalized as the lemma `cc_alt` in `src/model/Consistency.v`.
 
 ## Description of the project's files
 

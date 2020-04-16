@@ -102,6 +102,9 @@ Section Compilation.
     Notation "'C'"  := (covered TC).
     Notation "'I'"  := (issued TC).
 
+    (* Relation stating that extracted subset `X` is `isomorphic` to execution graph `G`.
+     * This definition is actually has nothing to do with `simrel`, 
+     * but for historical reasons it's defined here. *)
     Definition simrel_extracted :=
       ⟪ GACTS : GE ≡₁ e2a S □₁ X ⟫ /\
       ⟪ GLAB  : eq_dom X Slab (Glab ∘ e2a S) ⟫ /\
@@ -112,6 +115,8 @@ Section Compilation.
 
     Lemma simrel_extract
           (SRC : simrel_consistent prog S G sc TC X T)
+          (* condition that all the events are covered implies that  
+           * the traversal configuration `TC` is terminal *)
           (COVinG : GE ⊆₁ C) :
       simrel_extracted.
     Proof.
