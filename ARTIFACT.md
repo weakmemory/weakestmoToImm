@@ -80,9 +80,9 @@ TODO: some intro
 * In Coq, functions `⌈⌈·⌉⌉` and `⌊⌊·⌋⌋` for lifting `s2g` to sets are represented as `e2a □₁ ·` and `e2a ⋄₁ ·` correspondingly;
   their relational counterparts—`e2a □ ·` and `e2a ⋄ ·`.
 
-The simulation relation `I` is represented by `simrel_consistent` in `weakestmoToImm/src/compilation/SimRel.v`.
+The simulation relation `I` is represented by `simrel_consistent` (and its part `simrel`) in `weakestmoToImm/src/compilation/SimRel.v`.
 Below, we map elements of the paper's version of `I` to the Coq version.
-Most of them are represented by fields in `simrel` or derivable from them:
+Most of them are represented by fields of `simrel` or derivable from them:
 
 1. `gcons` (a field in `simrel`).
 2. `SCONS` (an entry in `simrel_consistent`).
