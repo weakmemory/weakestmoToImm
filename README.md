@@ -114,7 +114,7 @@ As mentioned in [Podkopaev-al:POPL19], we have two versions of the `IMM` model b
 [`IMM`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm.v) and
 [`IMM_S`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm_s.v).
 Paradoxically, `IMM_S` is the one we refer to in the paper and `IMM` is a stronger version of it, which we use as another intermediate
-step in compilation correctness proofs to `TSO` and `POWER`.
+step in compilation correctness proofs to hardware models.
 The proof of compilation correctness from `IMM_S` to `IMM` is presented in
 [`src/imm/imm_sToimm.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm_sToImm.v) of the IMM framework.
 <br />
@@ -131,9 +131,18 @@ Versions of relations `scb`, `psc_base`, and `psc_f` for both model are defined 
   of the IMM framework.
   It has a precondition stating that there should be an `mfence` between every SC write and following SC read as mentioned in the paper.
 
-* (**§5.1.2**) TODO
+* (**§5.1.2**) **Theorem 12** is represented by lemma `global_sc_ar` in
+  [`src/imm/Sc_opt.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/hardware/Sc_opt.v)
+  compilation correctness theorem from `IMM_SC` to `POWER` is split to a compilation 
+  <br />
+  The compilation correctness theorem from `IMM_SC` to `POWER` (assuming the absence of SC accesses which are dealt by **Theorem 12**)
+  is represented by lemma `IMM_consistent`
+  in [`src/hardware/immToPower.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/hardware/immToPower.v)
+  of the IMM framework.
 
-* (**§5.1.4**) TODO
+* (**§5.1.4**) The compilation correctness theorem from `IMM_SC` to `ARMv8` is represented by lemma `IMM_consistent`
+  in [`src/hardware/immToARM.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/hardware/immToARM.v)
+  of the IMM framework.
   
 ## Description of the project's files
 
