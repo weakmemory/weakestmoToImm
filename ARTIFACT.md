@@ -32,7 +32,13 @@ Please, note that building of the proofs might take a lot of time (especially, t
 
 ## Relation between code and the paper 
 
-TODO: some intro
+The code supplementing the paper is spread over two packages:
+
+* `imm`, where we extended the `IMM` memory model with support for SC accesses comparing to the version from [Podkopaev-al:POPL19];
+* `weakestmoToImm`, which contains definitions of the `Weaketmo` memory model and our proof of compilation correctness from `Weakestmo` to `IMM`.
+
+Below, there is a mapping from definitions and statements used in the paper to their counterparts in the Coq code.
+
 
 ### (§2.3) Weakestmo to IMM compilation correctness. Main theorem and lemmas
 
@@ -117,7 +123,7 @@ During the induction, we preserve predicate `simrel_cert` defined in `weakestmoT
   (`receptiveness_full` in Coq, defined in file `imm/src/promiseToImm/Receptiveness.v`)
   which is mentioned in footnote 12.
   
-### (§5) Handling SC Accesses (`IMM_SC`)
+### (§5) Handling SC accesses (`IMM_SC`)
 As mentioned in [Podkopaev-al:POPL19], we have two versions of the `IMM` model being implemented in Coq:
 `IMM` (file `imm/src/imm/imm.v`) and `IMM_S` (file `imm/src/imm/imm_s.v`).
 Paradoxically, `IMM_S` is the one we refer to in the paper and `IMM` is a stronger version of it, which we use as another intermediate
