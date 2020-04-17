@@ -12,7 +12,7 @@ by Evgenii Moiseenko, Anton Podkopaev, Ori Lahav, Orestis Melkonian, and Viktor 
 * [Utility library from the Promising semantics development](https://github.com/snu-sf/promising-lib) (`coq-promising-lib`)
 * [Intermediate Memory Model](https://github.com/weakmemory/imm) (`coq-imm.1.1`)
 
-All required dependencies can be installed via [`opam`](https://opam.ocaml.org/) package manager. 
+All required dependencies can be installed via package manager [`opam`](https://opam.ocaml.org/). 
 
 ```bash
 opam repo add coq-released https://coq.inria.fr/opam/released
@@ -108,6 +108,32 @@ During the induction, we preserve predicate `simrel_cert` defined in `src/compil
   <br />
   The proof of `cert_graph_start` uses the receptiveness property (`receptiveness_full` in Coq, defined in file `Receptiveness.v` of the IMM framework)
   which is mentioned in footnote 12.
+  
+### (§5) Handling SC Accesses (`IMM_SC`)
+As mentioned in [Podkopaev-al:POPL19], we have two versions of the `IMM` model being implemented in Coq:
+[`IMM`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm.v) and
+[`IMM_S`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm_s.v).
+Paradoxically, `IMM_S` is the one we refer to in the paper and `IMM` is a stronger version of it, which we use as another intermediate
+step in compilation correctness proofs to `TSO` and `POWER`.
+The proof of compilation correctness from `IMM_S` to `IMM` is presented in
+[`src/imm/imm_sToimm.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm_sToImm.v) of the IMM framework.
+<br />
+The extension of `IMM_S`-consistency predicate to SC accesses (**Definition 10**) is defined by 
+predicate `imm_psc_consistent` in file
+[`src/imm/imm_s.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm_s.v)
+of the IMM framework, whereas the extension for `IMM` is embedded in predicate `imm_consistent` in file
+[`src/imm/imm.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/imm/imm.v)
+of the IMM framework.
+Versions of relations `scb`, `psc_base`, and `psc_f` for both model are defined in the corresponding files. 
+  
+* (**§5.1.1**) The compilation correctness theorem from `IMM_SC` to `TSO` is represented by lemma `IMM_consistent`
+  in [`src/hardware/immToTSO.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/hardware/immToTSO.v)
+  of the IMM framework.
+  It has a precondition stating that there should be an `mfence` between every SC write and following SC read as mentioned in the paper.
+
+* (**§5.1.2**) TODO
+
+* (**§5.1.4**) TODO
   
 ## Description of the project's files
 
