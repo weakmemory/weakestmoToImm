@@ -52,6 +52,10 @@ To build the project just use `make -j` command (assuming all dependencies were 
   <br />
   (The consistency predicate is parameterized by `model` which is either `Weakest` or `Weakestmo`.
    The former represents a version of Weakestmo [Chakraborty-Vafeiadis:POPL19] which is not considered in our paper.)
+  <br />
+  In footnote 9, we mention that our Coq formalization uses another definition of visible events (predicate `vis` in Coq) comparing
+  to the one in [Chakraborty-Vafeiadis:POPL19].
+  Their equivalence is stated by lemma `cc_alt` in `src/model/Consistency.v`.
 * (**§3.5**)
   The notion of *execution graph* (**Definition 6**, `execution` in Coq)
   is defined in the IMM framework in file [`src/basic/Execution.v`](https://github.com/weakmemory/imm/blob/forweakestmo/src/basic/Execution.v).
@@ -105,9 +109,6 @@ TODO: mention `simrel_cert` and `Br` (`X` in Coq).
   
 * (**§4.3.3**) TODO
  
-The proof of statement in footnote 9, which says that the two definitions of visible events are equal,
-is formalized as the lemma `cc_alt` in `src/model/Consistency.v`.
-
 ## Description of the project's files
 
 * `src/model` — definitions of the `Weakestmo` memory model.
