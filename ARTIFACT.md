@@ -4,17 +4,17 @@ by Evgenii Moiseenko, Anton Podkopaev, Ori Lahav, Orestis Melkonian, and Viktor 
 
 The artifact is two Coq packages
 ([`imm.1.1`](https://github.com/weakmemory/imm/tree/1.1) and [`weakestmoToImm`](https://github.com/weakmemory/weakestmoToImm)) in a VirtualBox image. <br />
-The image has been tested with VirtualBox TODO 5.2.18 with Oracle VM VirtualBox Extension pack.
+The image has been tested with VirtualBox 5.2.34 with Oracle VM VirtualBox Extension pack.
 
 ## How to use the artifact
 Import the VirtualBox image into VirtualBox, and boot the machine.
 
-TODO: The login is `ecoop` and the password is `ecoop`.
+The login is `semantics` and the password is `semantics`.
 
 All necessary software is installed, and the `imm` and `weakestmoToImm` projects are checked out to
-`/home/ecoop/Desktop/imm` and `/home/ecoop/Desktop/weakestmoToImm` correspondingly.
-Additionally, Emacs (with Proof General) and CoqIDE are installed so that you can browse the sources
-and TODO the latest version of the paper copied to `/home/ecoop/Desktop/paper.pdf`.
+`/home/semantics/Desktop/imm` and `/home/semantics/Desktop/weakestmoToImm` correspondingly.
+Additionally, Emacs (with Proof General), VS Code, and CoqIDE are installed so that you can browse the sources
+and the latest version of the paper copied to `/home/semantics/Desktop/paper.pdf`.
 
 ### Building the projects (for checking proofs)
 
