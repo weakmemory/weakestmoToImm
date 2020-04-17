@@ -16,6 +16,19 @@ All necessary software is installed, and the `imm` and `weakestmoToImm` projects
 Additionally, Emacs (with Proof General) and CoqIDE are installed so that you can browse the sources
 and TODO the latest version of the paper copied to `/home/ecoop/Desktop/paper.pdf`.
 
+### Building the projects (for checking proofs)
+
+#### Requirements (already installed in the VirtualBox image)
+* [Coq 8.9.1](https://coq.inria.fr)
+* [Hahn library](https://github.com/vafeiadis/hahn) (`coq-hahn`)
+* [Utility library from the Promising semantics development](https://github.com/snu-sf/promising-lib) (`coq-promising-lib`)
+* [Intermediate Memory Model](https://github.com/weakmemory/imm) (`coq-imm.1.1`)
+
+Please, note that `coq-imm.1.1` is a dependency for `weakestmoToImm`, but it is also a part of our artifact.
+The preinstalled version of `coq-imm` is exactly the same as code checked out in `/home/ecoop/Desktop/imm`.
+
+#### Compilation of projects
+
 The proofs might be checked by opening a terminal and running
 ```bash
 cd /home/ecoop/Desktop/imm
