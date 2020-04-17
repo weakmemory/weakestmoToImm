@@ -98,7 +98,9 @@ Most of them are represented by fields in `simrel` or derivable from them:
 
 ### (§4.3) Simulation step
 
-TODO: mention `simrel_cert` and `Br` (`X` in Coq).
+In our proof, we show that **Lemma 3**, the simulation step (in Coq, `simrel_step` in `src/compilation/SimRelStep.v`),
+holds by doing induction on a certification run.
+During the induction, we preserve predicate `simrel_cert` defined in `src/compilation/SimRelCert.v`.
 
 * (**§4.3.1**) The `determined` set  (`D` in Coq), relations `vf` and `sjf` (`cert_rf` in Coq) are defined in `src/compilation/CertRf.v`.
   <br />
@@ -107,8 +109,6 @@ TODO: mention `simrel_cert` and `Br` (`X` in Coq).
   The proof of `cert_graph_start` uses the receptiveness property (`receptiveness_full` in Coq, defined in file `Receptiveness.v` of the IMM framework)
   which is mentioned in footnote 12.
   
-* (**§4.3.3**) TODO
- 
 ## Description of the project's files
 
 * `src/model` — definitions of the `Weakestmo` memory model.
