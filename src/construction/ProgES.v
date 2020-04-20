@@ -327,7 +327,6 @@ Lemma prog_g_es_init_init G prog :
   ES.acts_init_set (prog_g_es_init prog G).
 Proof. apply prog_l_es_init_init. Qed.
 
-(* TODO : move to a more suitable place  *)
 Lemma length_nempty {A : Type} (l : list A) (nEmpty : l <> []) :
   0 < length l.
 Proof.
@@ -567,7 +566,6 @@ Lemma prog_g_es_init_lab prog G e :
   << ELAB : ES.lab (prog_g_es_init prog G) e = init_write l >>.
 Proof. apply prog_l_es_init_lab. Qed.
 
-(* TODO : move to a more suitable place  *)
 Lemma traverse_map_indexed_list {A B} (f : A -> B) l :
   indexed_list (map f l) =
   map (fun p : nat * A => let (a, b) := p in (a, f b))

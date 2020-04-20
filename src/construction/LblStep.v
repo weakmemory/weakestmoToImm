@@ -367,7 +367,6 @@ Proof.
   eapply unique_eps_steps_to_stable; eauto.
 Qed.
 
-(* TODO: replace w/ something standard or move to AuxDef.v. *)
 Lemma app_eq {A B} (f f' : A -> B) (EQ : f = f') (a : A) :
   f a = f' a.
 Proof. by rewrite EQ. Qed.

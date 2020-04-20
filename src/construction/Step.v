@@ -12,10 +12,6 @@ Require Import AddCO.
 
 Set Implicit Arguments.
 
-(* Open a section here to hide the notations inside it.
- * TODO: invent a better solution,
- *       perhaps it is better to get rid of notation here at all.
- *)
 Section Step.
 
 Notation "'E' S" := S.(ES.acts_set) (at level 10).

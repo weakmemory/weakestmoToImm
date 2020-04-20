@@ -323,8 +323,7 @@ Section SimRelStep.
       2 : eexists; eauto.
       basic_solver. }
     (* jf_in_cert_rf : e2a □ (Sjf ⨾ ⦗kE⦘) ⊆ cert_rf G sc TC' *)
-    { (* TODO: simplify using `jf_ex_in_cert_rf` and `rf_C_in_cert_rf` *)
-      rewrite XkTIDCOV.
+    { rewrite XkTIDCOV.
       rewrite <- seq_eqvK.
       rewrite <- seqA, collect_rel_seqi.
       arewrite (X ∩₁ e2a S ⋄₁ C ∩₁ (SEinit S ∪₁ STid S (ES.cont_thread S k)) ⊆₁

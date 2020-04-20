@@ -158,7 +158,6 @@ Proof. basic_solver. Qed.
 Lemma dom_minus : dom_rel (r \ r') ⊆₁ dom_rel r.
 Proof. basic_solver. Qed.
 
-(* TODO : rename *)
 Lemma seq_codom_dom_inter : codom_rel r ∩₁ dom_rel r' ≡₁ ∅ -> r ⨾ r' ≡ ∅₂.
 Proof.
   unfold set_equiv, set_subset; ins; desf.
@@ -299,7 +298,6 @@ Proof.
   red. ins. by apply HH.
 Qed.
 
-(* TODO : rename *)
 Lemma seq_transp_sym : symmetric r -> ⦗ s ⦘ ⨾ r ⨾ ⦗ s' ⦘ ≡ (⦗ s' ⦘ ⨾ r ⨾ ⦗ s ⦘)⁻¹.
 Proof.
   ins.
@@ -709,7 +707,6 @@ Lemma collect_rel_minus (f : A -> B) :
   f □ r \ f □ r' ⊆ f □ (r \ r').
 Proof. basic_solver 15. Qed.
 
-(* TODO : the INJ requirement could be weaker *)
 Lemma collect_rel_minus_inj (f : A -> B)
       (INJ_DOM : inj_dom (dom_rel r ∪₁ dom_rel r') f)
       (INJ_CODOM : inj_dom (codom_rel r ∪₁ codom_rel r') f) :
@@ -1119,7 +1116,7 @@ Proof.
 Qed.
 
 (******************************************************************************)
-(** ** TODO : structure other properties *)
+(** ** other properties *)
 (******************************************************************************)
 
 Lemma seq_eqv : ⦗ s ⦘ ⨾ ⦗ s' ⦘ ≡ ⦗ s ∩₁ s' ⦘.

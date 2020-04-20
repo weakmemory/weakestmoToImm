@@ -1080,8 +1080,5 @@ Qed.
 
 End AddJF.
 
-(* Section hides the tactics and hints, so we repeat it here.
- * TODO: invent a better solution,
- *       perhaps it is better to get rid of notation here at all.
- *)
+(* Section hides the tactics and hints, so we repeat it here. *)
 Hint Unfold jf_delta jfi_delta jfe_delta sw_delta hb_delta : ESStepDb.

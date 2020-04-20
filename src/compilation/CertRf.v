@@ -51,8 +51,6 @@ Notation "'furr'" := (furr G sc).
 
 Definition CsbI := (C ∪₁ dom_rel (sb^? ⨾ ⦗ I ⦘)).
 
-(* TODO: rename to `determined`,
- * i.e. in the same style as `covered`/`issued` *)
 Definition D :=
   C ∪₁ I ∪₁
   dom_rel (rfi^? ⨾ ppo ⨾ ⦗ I ⦘) ∪₁
@@ -1115,7 +1113,6 @@ Proof.
     destruct HH as [HH [CsbIz nTIDz]].
     destruct HH as [RF [z' [PPO Iy']]].
     do 2 (eexists; splits; eauto).
-    (* TODO: introduce lemma `I' ∩ Ntid thread ⊆ I` *)
     eapply isim_trav_step_new_issued_tid in Iy'; eauto.
     destruct Iy' as [[Iy _] | [Iy' TIDy]]; auto.
     assert (SB := PPO).

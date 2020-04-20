@@ -608,7 +608,6 @@ Section SimRelAddCO.
           unfolder; splits; try eexists; splits; eauto; congruence. }
         apply ES.ew_eqvW; auto.
         2 : red; splits; auto.
-        (* TODO: make a lemma *)
         rewrite <- set_interK with (s := X).
         rewrite set_interA.
         rewrite Execution.ex_inE

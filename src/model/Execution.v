@@ -1,6 +1,5 @@
 From hahn Require Import Hahn.
 From imm Require Import Events.
-(* TODO : get rid of dependency on Step, move corresponding lemmas to Step.v *)
 Require Import AuxDef.
 Require Import AuxRel.
 Require Import EventStructure.

@@ -612,7 +612,6 @@ Section SimRelEventToActionLemmas.
     unfold ES.cont_last, ES.cont_thread in *.
     destruct k.
     { erewrite continit; eauto.
-      (* TODO: make a lemma *)
       unfold ES.seqn.
       arewrite_false (Ssb S ∩ ES.same_tid S ⨾ ⦗eq x⦘).
       2 : by rewrite dom_empty, countNatP_empty.

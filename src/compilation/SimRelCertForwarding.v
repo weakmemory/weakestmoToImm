@@ -1213,7 +1213,6 @@ Section SimRelCertForwarding.
     exists state'.
     red; splits; auto.
 
-    (* TODO: make a lemma in `simrel_cert` *)
     assert ((lbl_step (ES.cont_thread S k))＊ st state') as LBLSTEPS.
     { eapply steps_stable_lbl_steps.
       apply seq_eqv_lr.
@@ -1264,7 +1263,6 @@ Section SimRelCertForwarding.
       eapply lbl_steps_in_steps; eauto. }
 
     unfold compose.
-    (* TODO: make a lemma *)
     arewrite
       (lab (ProgToExecution.G st'') (e2a S e) = certLab G st'' (e2a S e)).
     { unfold certLab.
@@ -1494,7 +1492,6 @@ Section SimRelCertForwarding.
       { apply set_subset_inter_r. split.
         { rewrite ES.icfE; auto. basic_solver. }
         eapply icf_R; apply SRCC. }
-      (* TODO: introduce lemma *)
       intros x [Ex Rx].
       unfold is_r.
       erewrite basic_step_lab_eq_dom; eauto. }
@@ -1510,7 +1507,6 @@ Section SimRelCertForwarding.
         with (s := ES.cont_icf_dom S k).
       rewrite ES.cont_icf_domE at 1; auto.
       erewrite simrel_cert_cont_icf_dom_R; eauto.
-      (* TODO: introduce lemma *)
       intros x [Ex Rx].
       unfold is_r.
       erewrite basic_step_lab_eq_dom; eauto. }
@@ -1533,7 +1529,6 @@ Section SimRelCertForwarding.
     destruct (Slab S' e); done.
   Qed.
 
-  (* TODO: move to more suitable place *)
   Lemma same_label_u2v_same_val lbl lbl'
         (SAMEU2V : same_label_u2v lbl lbl')
         (SAMEVAL : val id lbl = val id lbl') :

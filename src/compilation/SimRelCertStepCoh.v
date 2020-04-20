@@ -401,7 +401,6 @@ Section SimRelCertStepCoh.
       do 2 rewrite collect_rel_seqi.
       rewrite collect_rel_transp.
       rewrite !seqA.
-      (* TODO: make a lemma *)
       arewrite (e2a S' □ Sco S' ⨾ (Sjf S')^? ⨾ ⦗X ∩₁ e2a S' ⋄₁ C⦘ ⊆ Gco ⨾ (Grf ⨾ ⦗C⦘)^?).
       { eapply e2a_co_jf_cov; eauto. }
       erewrite sim_add_jf_jf_delta_in_cert_rf; eauto.

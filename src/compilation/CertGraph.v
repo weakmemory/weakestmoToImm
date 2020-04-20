@@ -134,8 +134,6 @@ Section CertGraph.
     (** ** E0 propeties *)
     (******************************************************************************)
 
-    (* TODO: move these properties to another place *)
-
     Lemma E0_in_thread_execE st
           (TEH : thread_restricted_execution G thread st.(ProgToExecution.G)) :
       E0 ⊆₁ acts_set st.(ProgToExecution.G).

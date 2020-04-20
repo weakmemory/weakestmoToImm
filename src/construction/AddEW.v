@@ -208,8 +208,5 @@ Qed.
 
 End AddEW.
 
-(* Section hides the tactics and hints, so we repeat it here.
- * TODO: invent a better solution,
- *       perhaps it is better to get rid of notation here at all.
- *)
+(* Section hides the tactics and hints, so we repeat it here. *)
 Hint Unfold ew_delta : ESStepDb.

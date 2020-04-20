@@ -167,7 +167,6 @@ Section SimRelCertStepLemma.
     assert (Execution.t S X) as EXEC by apply SRCC.
     assert (basic_step e e' S S') as BSTEP.
     { econstructor; eauto. }
-    (* TODO: make a lemma `cont_sb_mon` *)
     erewrite basic_step_cont_sb_dom'; eauto.
     unionR left -> left.
     erewrite basic_step_cont_thread'; eauto.
@@ -718,7 +717,6 @@ Section SimRelCertStepLemma.
     repeat apply union_mori.
     { erewrite basic_step_e2a_set_collect_eq_dom; eauto.
       2 : eapply kE_inE; eauto.
-      (* TODO: make `rmw_mon` lemma *)
       assert (Srmw S ⊆ Srmw S') as AA.
       { rewrite RMW'. eauto with hahn. }
       rewrite <- AA.
@@ -996,7 +994,6 @@ Section SimRelCertStepLemma.
     exists state'.
     red; splits; auto.
 
-    (* TODO: make a lemma in `simrel_cert` *)
     assert ((lbl_step (ES.cont_thread S k))＊ st state') as LBLSTEPS.
     { eapply steps_stable_lbl_steps.
       apply seq_eqv_lr.
