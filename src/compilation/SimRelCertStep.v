@@ -1333,7 +1333,7 @@ Section SimRelCertStep.
     { arewrite (Sew S' ∩ eq (ES.next_act S) × eq (ES.next_act S) ⊆
                     eq (ES.next_act S) × eq (ES.next_act S)).
       erewrite CC. basic_solver. }
-    unfold clos_sym.
+    rewrite csE.
     rewrite inter_union_r.
     rewrite !seq_union_l, !seq_union_r.
     rewrite dom_union. unionL.
@@ -1450,7 +1450,7 @@ Section SimRelCertStep.
     rewrite !seq_union_l, !seq_union_r. rewrite dom_union. unionL.
     { arewrite (Sew S' ∩ eq w' × eq w' ⊆ eq w' × eq w').
       erewrite DD. basic_solver. }
-    unfold clos_sym.
+    rewrite csE.
     rewrite inter_union_r.
     rewrite !seq_union_l, !seq_union_r.
     rewrite dom_union. unionL.
