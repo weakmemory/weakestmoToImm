@@ -25,18 +25,18 @@ and the latest version of the paper copied to `/home/semantics/Desktop/paper.pdf
 * [Intermediate Memory Model](https://github.com/weakmemory/imm) (`coq-imm.1.1`)
 
 Please, note that `coq-imm.1.1` is a dependency for `weakestmoToImm`, but it is also a part of our artifact.
-The preinstalled version of `coq-imm` is exactly the same as code checked out in `/home/ecoop/Desktop/imm`.
+The preinstalled version of `coq-imm` is exactly the same as code checked out in `/home/semantics/Desktop/imm`.
 
 #### Compilation of projects
 
 The proofs might be checked by opening a terminal and running
 ```bash
-cd /home/ecoop/Desktop/imm
+cd /home/semantics/Desktop/imm
 make clean; make -j2
 ```
 for `imm` and
 ```bash
-cd /home/ecoop/Desktop/weakestmoToImm
+cd /home/semantics/Desktop/weakestmoToImm
 make clean; make -j2
 ```
 for `weakestmoToImm`.
