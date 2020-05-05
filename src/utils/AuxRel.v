@@ -56,7 +56,7 @@ End AuxRel.
 Notation "⊤₁" := set_full.
 Notation "⊤₂" := (fun _ _ => True).
 
-Notation "a ^⋈" := (clos_sym a) (at level 1).
+(* Notation "a ^⋈" := (clos_sym a) (at level 1). *)
 Notation "a ⁼" := (clos_refl_sym a) (at level 1, format "a ⁼").
 Notation "a ^=" := (clos_refl_sym a) (at level 1, only parsing).
 Notation "f ⋄₁ s"  := (set_map f s) (at level 39).
