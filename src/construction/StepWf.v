@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 From hahn Require Import Hahn.
 From imm Require Import AuxDef Events ProgToExecutionProperties ProgToExecution.
 From PromisingLib Require Import Basic Language.
@@ -1045,9 +1045,9 @@ Proof.
     basic_solver. }
 
   assert (~ E S (ES.next_act S)) as NES.
-  { intros HH. red in HH. omega. }
+  { intros HH. red in HH. lia. }
   assert (~ E S (Datatypes.S (ES.next_act S))) as NESN.
-  { intros HH. red in HH. omega. }
+  { intros HH. red in HH. lia. }
 
   assert (forall l (HH : ES.init_loc S l), ES.init_loc S' l) as PP.
   { ins. red. cdes HH. exists a. split.
@@ -1165,7 +1165,7 @@ Proof.
       all: match goal with
       | H : (E ?S) ?X |- _ => red in H
       end.
-      all: omega. }
+      all: lia. }
     arewrite (Eninit S ∩₁ ES.cont_sb_dom S k ⊆₁
               ES.cont_sb_dom S k \₁ Einit S ∪₁ ES.cont_cf_dom S k).
     { unfold ES.acts_ninit_set. basic_solver. }
@@ -1213,7 +1213,7 @@ Proof.
       rewrite !seq_union_l.
       rewrite <- !cross_inter_r.
       arewrite (eq_opt e' ∩₁ eq (ES.next_act S) ⊆₁ ∅).
-      { unfolder. ins. desf. simpls. omega. }
+      { unfolder. ins. desf. simpls. lia. }
       relsf.
       2 : { intros HH. eapply HH. edone. }
       eapply is_total_mori.
@@ -1228,12 +1228,12 @@ Proof.
       | H : (E ?S) ?X |- _ => red in H
       end.
       red in EE.
-      simpls; desf. simpls. omega. }
+      simpls; desf. simpls. lia. }
     unfold sb_delta.
     rewrite seq_union_l.
     rewrite <- !cross_inter_r.
     assert (eq e0 ∩₁ eq (ES.next_act S) ⊆₁ ∅) as DD.
-    { red in EE. desf. unfolder. ins. desf. simpls. omega. }
+    { red in EE. desf. unfolder. ins. desf. simpls. lia. }
     rewrite set_interC.
     relsf.
     2: { intros HH. eapply HH. split; eauto. }
@@ -1323,7 +1323,7 @@ Proof.
     rewrite TID'. simpls. rewrite upds.
     rewrite updo.
     { by rewrite upds. }
-    omega. }
+    lia. }
   { apply dom_helper_3.
     cdes BSTEP. cdes BSTEP_.
     rewrite RMW'. unionL.
@@ -1376,7 +1376,7 @@ Proof.
     { right. apply seq_eqv_l. split.
       { by right. }
       apply seq_eqv_r. split.
-      2: { red. intros AA. red in AA. simpls. omega. }
+      2: { red. intros AA. red in AA. simpls. lia. }
       red. right. red. split.
       { done. }
         by red. }
@@ -1386,7 +1386,7 @@ Proof.
     destruct A1 as [A1|A1]; desf.
     destruct A2 as [A2|A2]; desf.
     red in R1. destruct R1 as [[R1|R1]|R1]; red in R1; simpls; desf.
-    2,3: omega.
+    2,3: lia.
     eapply ES.cont_sb_domE in R1; eauto. }
   { split; [|basic_solver].
     red in TT. desf; cdes TT; desf.
@@ -1591,7 +1591,7 @@ Proof.
     unfold opt_ext in *.
     red in RMW.
     unfold eq_opt in *. inv RMW. desf.
-    inv KK; [omega|].
+    inv KK; [lia|].
     destruct c. apply NES. eapply ES.K_inE; eauto. }
   { ins. red in CK. red in CK'.
     cdes BSTEP. cdes BSTEP_.
@@ -1671,7 +1671,7 @@ Proof.
   assert (WRONG : length (xs ++ [x]) = length ([] : list A))
     by congruence.
   rewrite app_length, length_nil in WRONG.
-  unfold length in WRONG. omega.
+  unfold length in WRONG. lia.
 Qed.
 
 Lemma loc_in_istep_ thread lbl lbl' st st' instr l

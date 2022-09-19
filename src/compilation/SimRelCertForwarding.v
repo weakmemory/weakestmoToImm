@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Language.
 From imm Require Import
@@ -637,7 +637,7 @@ Section SimRelCertForwarding.
     destruct lbl' as [lbl'|].
     2 : inversion LBL'.
     unfold opt_to_list, app, length.
-    omega.
+    lia.
   Qed.
 
   Lemma simrel_cert_forwarding_jf_in_cert_rf lbl lbl' k k' e e' S
@@ -877,14 +877,14 @@ Section SimRelCertForwarding.
       eapply acts_rep
         in HH; [|eapply wf_cont_state]; eauto.
       erewrite forwarding_e2a_e in HH; eauto.
-      desc. inversion REP. omega. }
+      desc. inversion REP. lia. }
     { eapply forwarding_ex_e'; eauto. }
     { eapply ES.cont_adjacent_tid_e'; eauto. }
     intros HH.
     eapply acts_rep
       in HH; [|eapply wf_cont_state]; eauto.
     erewrite forwarding_e2a_e' in HH; eauto.
-    desc. inversion REP. omega.
+    desc. inversion REP. lia.
   Qed.
 
   Lemma simrel_cert_lbl_step_nrwm_eindex k S
@@ -940,7 +940,7 @@ Section SimRelCertForwarding.
     assert (acts_set (ProgToExecution.G st')
                      (ThreadEvent (ktid S k) xindex))
       as XINDST'.
-    { red. apply acts_clos; auto. omega. }
+    { red. apply acts_clos; auto. lia. }
     exists (ThreadEvent (ES.cont_thread S k) xindex).
     eapply steps_dont_add_rmw; eauto.
     apply seq_eqv_l. split; auto.
@@ -948,7 +948,7 @@ Section SimRelCertForwarding.
     { apply SRCC. }
     apply seq_eqv_l. splits; auto.
     all: apply acts_clos; auto.
-    all: omega.
+    all: lia.
   Qed.
 
     Lemma simrel_cert_forwarding_rmw_cov_in_kE lbl lbl' k k' e e' S
@@ -1461,7 +1461,7 @@ Section SimRelCertForwarding.
       rewrite updo_opt, upds; auto.
       unfolder.
       destruct e' as [e'|];
-        auto; omega. }
+        auto; lia. }
     red in EQll, lNone, lNone'.
     rewrite EQll.
     arewrite (lbl' = ll'); auto.

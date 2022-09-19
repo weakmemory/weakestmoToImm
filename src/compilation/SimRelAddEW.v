@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Language.
 From imm Require Import Events Execution
@@ -644,9 +644,9 @@ Section SimRelAddEW.
         apply nINITx. }
       unfolder in wEE'. desf.
       { erewrite basic_step_e2a_e in EQx; eauto.
-        inversion EQx. omega. }
+        inversion EQx. lia. }
       erewrite basic_step_e2a_e' in EQx; eauto.
-      inversion EQx. omega.
+      inversion EQx. lia.
     Qed.
 
     Lemma sim_add_ew_ex_issw w' k k' e e' S S'

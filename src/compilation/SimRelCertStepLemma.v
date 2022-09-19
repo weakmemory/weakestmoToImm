@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
 From imm Require Import
@@ -213,7 +213,7 @@ Section SimRelCertStepLemma.
     erewrite basic_step_e2a_e' in Cx; eauto.
     eapply thread_event_ge_ncov.
     1,3: eauto.
-    omega.
+    lia.
   Qed.
 
   Lemma simrel_cert_step_klast_sb_max k k' e e' S S'
@@ -245,7 +245,7 @@ Section SimRelCertStepLemma.
       { eapply basic_step_acts_set_ne'; eauto.
         eapply ES.cont_sb_domE; eauto.
         generalize SB. basic_solver. }
-      destruct SB as [EQe _]. omega. }
+      destruct SB as [EQe _]. lia. }
     relsf.
     intros x EQx. subst x.
     red. ins.
@@ -371,7 +371,7 @@ Section SimRelCertStepLemma.
       rewrite ES.jfE at 1; try apply SRCC. basic_solver. }
     { assert (Sjf S ⨾ ⦗eq e⦘ ⊆ ∅₂) as AA.
       { rewrite ES.jfE; try apply SRCC. unfold ES.acts_set.
-        cdes BSTEP_. desf. unfolder. ins. omega. }
+        cdes BSTEP_. desf. unfolder. ins. lia. }
       red in CertSTEP_. desf; cdes CertSTEP_.
       1,3: rewrite JF'; rewrite AA; basic_solver.
       all: cdes AJF; rewrite JF';
@@ -388,7 +388,7 @@ Section SimRelCertStepLemma.
     all: cdes AJF; rewrite JF'; rewrite seq_union_l; unionL; auto.
     all: unfold jf_delta.
     { basic_solver. }
-    desf. simpls. desf. unfolder. ins. desf. omega.
+    desf. simpls. desf. unfolder. ins. desf. lia.
   Qed.
 
   Lemma simrel_cert_step_icf_ex_ktid_in_co k k' e e' S S'
@@ -1028,7 +1028,7 @@ Section SimRelCertStepLemma.
     arewrite (lbl = Slab S' e).
     { rewrite LAB', updo_opt, upds; auto.
       unfold eq_opt, opt_ext in *.
-      intros EQ. destruct e'; subst; omega. }
+      intros EQ. destruct e'; subst; lia. }
 
     erewrite basic_step_e2a_certlab_e
       with (S := S); eauto; [|apply SRCC].

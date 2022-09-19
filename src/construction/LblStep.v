@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 From hahn Require Import Hahn.
 From imm Require Import
      AuxDef
@@ -92,7 +92,7 @@ Proof.
   red in TERM.
   rewrite INSTRS in *.
   inv ISTEP0; desf.
-  all: omega.
+  all: lia.
 Qed.
 
 Definition ineps_step thread lbls (state state' : state) :=
@@ -306,7 +306,7 @@ Proof.
   unfolder. intros x y [TERM STEP]. red in TERM.
   assert (nth_error (instrs x) (pc x) <> None) as NN.
   { cdes STEP. cdes STEP0. by inv ISTEP0; rewrite <- ISTEP. }
-  apply nth_error_Some in NN. omega.
+  apply nth_error_Some in NN. lia.
 Qed.
 
 Lemma no_lbl_step_from_terminal thread : ⦗ is_terminal ⦘ ⨾ (lbl_step thread) ≡ ∅₂.
@@ -389,9 +389,9 @@ Proof.
     pose proof (app_eq _ _ H0 (ThreadEvent thread (eindex state))) as AA.
   1,2: by rewrite !upds in *; inv AA.
   rewrite updo in *; [rewrite upds in *|].
-  2: { intros BB. inv BB. omega. }
+  2: { intros BB. inv BB. lia. }
   rewrite updo in *; [rewrite upds in *|].
-  2: { intros BB. inv BB. omega. }
+  2: { intros BB. inv BB. lia. }
   inv AA.
 Qed.
 
@@ -576,7 +576,7 @@ Qed.
 Lemma eps_step_eindex_same thread st st'
       (STEP : istep thread [] st st') :
   eindex st' = eindex st.
-Proof. erewrite istep_eindex_shift; eauto. simpls. omega. Qed.
+Proof. erewrite istep_eindex_shift; eauto. simpls. lia. Qed.
 
 Lemma eps_steps_eindex_same thread st st'
       (STEP : (istep thread [])＊ st st') :
@@ -604,7 +604,7 @@ Lemma ineps_step_eindex_lt thread st st' lbl
   eindex st < eindex st'.
 Proof.
   erewrite ineps_step_eindex_shift with (st':=st'); eauto.
-  cdes STEP. destruct lbl; simpls. omega.
+  cdes STEP. destruct lbl; simpls. lia.
 Qed.
 
 Lemma ilbl_step_eindex_lt thread st st' lbl
@@ -613,7 +613,7 @@ Lemma ilbl_step_eindex_lt thread st st' lbl
 Proof.
   erewrite ilbl_step_eindex_shift with (st':=st'); eauto.
   apply ilbl_step_alt in STEP. desf.
-  destruct lbl; simpls. omega.
+  destruct lbl; simpls. lia.
 Qed.
 
 Lemma lbl_step_eindex_lt thread st st'
@@ -637,7 +637,7 @@ Proof.
 
   all: apply app_eq_unit2 in LABELS; desf.
   all: rewrite UG; unfold add_rmw in *; simpls.
-  all: rewrite updo; [|intros BB; inv BB; omega].
+  all: rewrite updo; [|intros BB; inv BB; lia].
   all: by rewrite upds.
 Qed.
 
@@ -647,7 +647,7 @@ Lemma istep_eindex_lbl' thread lbl lbl' st st'
   lbl' = lab (ProgToExecution.G st') (ThreadEvent thread (1 + eindex st)).
 Proof.
   assert (eindex st + 1 = 1 + eindex st)
-    as HH by omega.
+    as HH by lia.
   cdes STEP; inv ISTEP0;
     apply opt_to_list_app_singl_pair in LABELS; desf;
     rewrite UG; unfold add_rmw in *; simpls;
@@ -664,7 +664,7 @@ Proof.
   all: rewrite GLAB.
   1-4: by rewrite upds; apply app_inj_tail in LBLS; desf.
   unfold upd_opt. rewrite updo.
-  2: intros BB; inv BB; omega.
+  2: intros BB; inv BB; lia.
   apply app_inj_tail in LBLS; desf. by rewrite upds.
 Qed.
 

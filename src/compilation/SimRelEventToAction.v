@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution TraversalConfig Traversal
@@ -276,7 +276,7 @@ Section SimRelEventToAction.
         eapply acts_rep in ACT; eauto.
         desf. unfolder. unfold ES.cont_sb_dom.
         edestruct k eqn:kEQ.
-        { erewrite continit in LE; eauto; omega. }
+        { erewrite continit in LE; eauto; lia. }
         assert (Stid eid <> tid_init) as NINITeid.
         { red. ins. eapply ES.init_tid_K; eauto. }
         erewrite contseqn in LE; eauto.
@@ -489,7 +489,7 @@ Section SimRelEventToActionLemmas.
                   (map init_write (g_locs G))))
         as [y INL].
       2: { exists y. splits; auto.
-           { apply indexed_list_helper_in_to_range in INL. omega. }
+           { apply indexed_list_helper_in_to_range in INL. lia. }
            unfold Events.loc. erewrite l2f_in; eauto; desf.
            apply indexed_list_fst_nodup. }
       apply indexed_list_in_exists.
@@ -653,7 +653,7 @@ Section SimRelEventToActionLemmas.
     2 : eapply BSTEP_.
     eapply acts_rep in HB.
     2 : eapply SRK; eauto.
-    desf. omega.
+    desf. lia.
   Qed.
 
   Lemma basic_step_cert_dom_ne' k k' e e' S'
@@ -674,7 +674,7 @@ Section SimRelEventToActionLemmas.
     2 : eapply BSTEP_.
     eapply acts_rep in HB.
     2 : eapply SRK; eauto.
-    desf. omega.
+    desf. lia.
   Qed.
 
   Lemma basic_step_cert_dom k k' e e' S'
@@ -827,7 +827,7 @@ Section SimRelEventToActionLemmas.
     arewrite ((Slab S') e = lbl).
     { rewrite LAB'. unfold upd_opt, opt_ext in *.
       destruct e'; desf.
-      { rewrite updo; [|omega].
+      { rewrite updo; [|lia].
           by rewrite upds. }
         by rewrite upds. }
     erewrite steps_preserve_lab; eauto.
@@ -879,7 +879,7 @@ Section SimRelEventToActionLemmas.
       with (st' := st').
     2 : eapply STEP.
     unfold opt_to_list, app, length.
-    omega.
+    lia.
   Qed.
 
   Lemma basic_step_e2a_certlab_e TC' k k' e e' S'

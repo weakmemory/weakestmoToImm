@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution Prog ProgToExecution ProgToExecutionProperties
@@ -247,9 +247,9 @@ Section EventToAction.
     { apply nINITx. }
     exfalso.
     destruct SB as [EQ' | [SB | tSB]]; auto.
-    { apply ES.seqn_sb_alt in SB; auto. omega. }
+    { apply ES.seqn_sb_alt in SB; auto. lia. }
     unfold transp in tSB.
-    apply ES.seqn_sb_alt in tSB; auto; [omega|].
+    apply ES.seqn_sb_alt in tSB; auto; [lia|].
     red. congruence.
   Qed.
 
