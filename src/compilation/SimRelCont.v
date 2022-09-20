@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution TraversalConfig Traversal
@@ -212,7 +212,7 @@ Section SimRelContLemmas.
         destruct HH as [IDX _].
         erewrite IDX. simpl.
         erewrite basic_step_seqn_e'; eauto.
-        arewrite (eindex st = ES.seqn S' e); [|omega].
+        arewrite (eindex st = ES.seqn S' e); [|lia].
         edestruct k.
         { erewrite continit; eauto.
           erewrite basic_step_seqn_kinit; eauto. }
@@ -346,7 +346,7 @@ Section SimRelContLemmas.
       rewrite updo_opt, upds; auto.
       destruct e' as [e'|]; auto.
       unfold opt_ext in *. subst.
-      unfolder. omega. }
+      unfolder. lia. }
     intros l [a [kICFx EQl]].
     edestruct ES.cont_icf_dom_cont_adjacent
       as [k'' [a' ADJ]]; eauto.
@@ -374,7 +374,7 @@ Section SimRelContLemmas.
       rewrite updo_opt, upds; auto.
       destruct e' as [e'|]; auto.
       unfold opt_ext in *. subst.
-      unfolder. omega. }
+      unfolder. lia. }
     intros l [a [[kICFx nR] EQl]].
     edestruct ES.cont_icf_dom_cont_adjacent
       as [k'' [a' ADJ]]; eauto.

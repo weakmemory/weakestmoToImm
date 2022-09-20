@@ -1,4 +1,4 @@
-Require Import Omega Setoid Program.Basics.
+Require Import Lia Setoid Program.Basics.
 From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
 From imm Require Import AuxDef Events.
@@ -2188,9 +2188,9 @@ Proof.
   apply seq_eqv_lr in HH.
   destruct HH as [_ [SB _]].
   repeat unfolder in SB. desf.
-  { assert (seqn x < seqn y) as HH; [|omega].
+  { assert (seqn x < seqn y) as HH; [|lia].
     eapply seqn_sb_alt; eauto. }
-  assert (seqn y < seqn x) as HH; [|omega].
+  assert (seqn y < seqn x) as HH; [|lia].
   eapply seqn_sb_alt; eauto.
 Qed.
 
@@ -2312,10 +2312,10 @@ Lemma seqn_pred WF y n (Ey : E y) (LT : n < seqn y) :
     ⟪ STIDxy : same_tid x y ⟫.
 Proof.
   assert (exists i, seqn y = i + n) as [i HH].
-  { exists (seqn y - n). omega. }
+  { exists (seqn y - n). lia. }
   apply seqn_pred_imm_i in HH; auto.
   2: { split; auto. intros EI. apply WF.(seqn_init) in EI.
-       rewrite EI in LT. omega. }
+       rewrite EI in LT. lia. }
   desf.
   assert (sb^? x y) as YY.
   { apply pow_rt in IMM. apply rtE in IMM.
@@ -2323,7 +2323,7 @@ Proof.
     { apply IMM. }
     apply sb_clos_imm_split; auto. }
   destruct YY as [|YY]; subst.
-  { omega. }
+  { lia. }
   exists x. splits; auto.
   apply WF.(sb_tid).
   apply seq_eqv_l. split; auto.
@@ -2339,7 +2339,7 @@ Proof.
     generalize HH. basic_solver. }
   rewrite AA in NN.
   rewrite countNatP_empty in NN.
-  omega.
+  lia.
 Qed.
 
 Lemma seqn_Eninit WF x (NN : seqn x > 0) : Eninit x.
@@ -2347,7 +2347,7 @@ Proof.
   split.
   { by apply seqn_E. }
   intros AA. apply seqn_init in AA; auto.
-  omega.
+  lia.
 Qed.
 
 Lemma seqn_lt_cont_cf_dom WF eid x
@@ -2361,7 +2361,7 @@ Proof.
   { right. eexists. apply seq_eqv_l. split; eauto. }
   left. eexists. apply seq_eqv_r. split; eauto.
   red.
-  assert (seqn x > 0) as SS by omega.
+  assert (seqn x > 0) as SS by lia.
   assert (Eninit x) as EX by (by apply seqn_Eninit).
   assert (Eninit eid) as ENE.
   { split; auto.
@@ -2374,8 +2374,8 @@ Proof.
   apply seq_eqv_r. split; auto.
   split; auto.
   intros SB. repeat unfolder in SB.
-  desf; [omega|].
-  apply seqn_sb_alt in SB; auto. omega.
+  desf; [lia|].
+  apply seqn_sb_alt in SB; auto. lia.
 Qed.
 
 Lemma seqn_eq_imm_sb WF x y z
@@ -2417,7 +2417,7 @@ Proof.
     { destruct SB as [EQ | [SB | SB]]; auto.
       { subst y. exfalso.
         assert (seqn x < seqn z)
-          as SEQLT; [|omega].
+          as SEQLT; [|lia].
         apply seqn_sb_alt; auto.
         apply IMMSB. }
       red in SB. exfalso.
@@ -2425,7 +2425,7 @@ Proof.
           as SEQLT.
       { apply seqn_sb_alt; auto. by symmetry. }
       assert (seqn x < seqn z)
-          as SEQLT'; [|omega].
+          as SEQLT'; [|lia].
       apply seqn_sb_alt; auto.
       { unfold ES.same_tid in *. congruence. }
       apply IMMSB. }
@@ -2442,12 +2442,12 @@ Proof.
   destruct Ex as [INITx | nINITx].
   { erewrite seqn_immsb_init
       with (y := z) in EQseqn; eauto.
-    omega. }
+    lia. }
   assert (seqn x < seqn z') as SEQNLT'.
   { apply seqn_sb_alt; auto.
     apply sb_tid; auto. basic_solver. }
   erewrite seqn_immsb
-    with (x := x) (y := z) in EQseqn; eauto; try omega.
+    with (x := x) (y := z) in EQseqn; eauto; try lia.
   apply sb_tid; auto.
   apply seq_eqv_l.
   split; auto.

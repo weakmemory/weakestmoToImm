@@ -1,4 +1,4 @@
-Require Import Omega Setoid Program.Basics.
+Require Import Lia Setoid Program.Basics.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import Events Prog Execution ProgToExecution.

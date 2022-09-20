@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 Import ListNotations.
 Set Implicit Arguments.
@@ -1585,7 +1585,7 @@ Proof.
   assert (WRONG : length (xs ++ [x]) = length ([] : list A))
     by congruence.
   rewrite app_length, length_nil in WRONG.
-  unfold length in WRONG. omega.
+  unfold length in WRONG. lia.
 Qed.
 
 End Props.

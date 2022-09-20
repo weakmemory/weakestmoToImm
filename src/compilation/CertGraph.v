@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import
@@ -230,12 +230,12 @@ Section CertGraph.
         { apply TEH.(tr_acts_set). by split. }
         assert (E (ThreadEvent thread index)) as EEE.
         { apply TEH.(tr_acts_set). eapply acts_rep in PP; eauto. desc.
-          eapply GPC.(acts_clos). inv REP. omega. }
+          eapply GPC.(acts_clos). inv REP. lia. }
         assert (sb (ThreadEvent thread index) (ThreadEvent thread mindex)) as QQQ.
         { red.
           apply seq_eqv_l. split; auto.
           apply seq_eqv_r. split; auto.
-          red. split; auto. omega. }
+          red. split; auto. lia. }
         destruct CTMAX as [AA|[z AA]]; [left|right].
         { apply isim_trav_step_coherence in AA. apply AA. eexists.
           apply seq_eqv_r. split; eauto. }

@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From PromisingLib Require Import Language.
 From hahn Require Import Hahn.
 From imm Require Import
@@ -314,7 +314,7 @@ Section SimRelCert.
       eapply cstate_covered in HH; eauto.
       eapply acts_rep in HH; desc.
       2 : eapply wf_cont_state; eauto.
-      inversion REP. omega.
+      inversion REP. lia.
     Qed.
 
     Lemma e2a_ge_ncov e

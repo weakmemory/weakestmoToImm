@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
 From imm Require Import Events Execution

@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.

@@ -1,4 +1,4 @@
-Require Import Setoid Omega.
+Require Import Setoid Lia.
 From hahn Require Import Hahn.
 From imm Require Import Events.
 
@@ -139,9 +139,9 @@ Proof.
   generalize dependent m.
   generalize dependent a.
   induction l; ins; desf.
-  { omega. }
+  { lia. }
   apply IHl in IN.
-  omega.
+  lia.
 Qed.
 
 Lemma indexed_list_helper_nodup {A} n (l : list A) :
@@ -151,7 +151,7 @@ Proof.
   induction l; ins.
   constructor.
   2: by intuition.
-  intros IN. apply indexed_list_helper_in_to_range in IN. omega.
+  intros IN. apply indexed_list_helper_in_to_range in IN. lia.
 Qed.
 
 Lemma indexed_list_nodup {A} (l : list A) : NoDup (indexed_list l).
@@ -171,7 +171,7 @@ Proof.
   destruct x; simpls; desf.
   2: destruct y; simpls; desf.
   all: match goal with
-       | H : In _ _ |- _ => apply indexed_list_helper_in_to_range in H; omega
+       | H : In _ _ |- _ => apply indexed_list_helper_in_to_range in H; lia
        end.
 Qed.
 
@@ -199,11 +199,11 @@ Proof.
   { intros [a HH]. eapply indexed_list_helper_in_to_range; eauto. }
   generalize dependent m.
   induction l; ins; desf.
-  { omega. }
+  { lia. }
   apply le_lt_or_eq in H. desf.
   2: { eexists; eauto. }
   edestruct IHl as [a' HH]; eauto.
-  omega.
+  lia.
 Qed.
 
 Lemma indexed_list_range {A} (l : list A) n :
@@ -212,7 +212,7 @@ Lemma indexed_list_range {A} (l : list A) n :
 Proof.
   arewrite (n < length l <-> 0 <= n < 0 + length l).
   2: by apply indexed_list_helper_range.
-  omega.
+  lia.
 Qed.
 
 Lemma indexed_list_helper_map_snd {A} n (l : list A) :
@@ -335,7 +335,7 @@ Proof.
   induction y0.
   { simpls. }
   ins. desf; simpls.
-  1,3: omega.
+  1,3: lia.
   exfalso. apply n. by apply H.
 Qed.
 
@@ -367,17 +367,17 @@ Proof.
   ins. unfold countNatP.
   generalize dependent e.
   induction n.
-  { ins. omega. }
+  { ins. lia. }
   ins. apply lt_n_Sm_le in LE.
   destruct LE as [|m].
   { desf; simpls. apply le_lt_n_Sm.
     apply countP_mori; auto. }
   apply NPeano.Nat.add_le_lt_mono.
   { destruct (excluded_middle_informative (s (S m))) as [SS|SS].
-    2: omega.
+    2: lia.
     clear -IN SS. desf. exfalso. apply n. by apply IN. }
   eapply IHn; eauto.
-  omega.
+  lia.
 Qed.
 
 Add Parametric Morphism : countNatP with signature
@@ -399,17 +399,17 @@ Lemma countNatP_zero s n : countNatP s n = 0 <-> forall m, s m -> n <= m.
 Proof.
   red. split.
   { induction n.
-    { ins; omega. }
+    { ins; lia. }
     unfold countNatP.
     destruct (excluded_middle_informative (s n)) as [HH | nHH].
-    { ins; omega. }
+    { ins; lia. }
     rewrite Nat.add_0_l.
     intros HH m Sm.
     eapply IHn in HH; eauto.
     destruct HH; intuition. }
   intros Hm.
   induction n.
-  { ins; omega. }
+  { ins; lia. }
   unfold countNatP.
   destruct (excluded_middle_informative (s n)) as [HH | nHH].
   { specialize (Hm n). intuition. }
@@ -423,9 +423,9 @@ Qed.
 Lemma countNatP_eq m n (LT : m < n) : countNatP (eq m) n = 1.
 Proof.
   generalize dependent m.
-  induction n; ins; [omega|].
+  induction n; ins; [lia|].
   destruct (excluded_middle_informative (m = n)) as [HH | nHH].
-  { arewrite (countNatP (eq m) n = 0); [|omega].
+  { arewrite (countNatP (eq m) n = 0); [|lia].
     eapply countNatP_zero.
     intuition. }
   rewrite Nat.add_0_l.
@@ -443,10 +443,10 @@ Proof.
     destruct HH as [S | S'].
     { assert (~ s' n) as nS'.
       { red. ins. by apply (DISJ n). }
-      desf; omega. }
+      desf; lia. }
     assert (~ s n) as nS.
     { red. ins. by apply (DISJ n). }
-    desf; omega. }
+    desf; lia. }
   unfold not, set_union in nHH.
   desf; exfalso; auto.
 Qed.
@@ -456,10 +456,10 @@ Lemma countNatP_lt_eq (s : nat -> Prop) m n (LT : m < n) (HH : forall e (EE : s 
 Proof.
   generalize dependent m.
   induction n; ins.
-  { omega. }
+  { lia. }
   apply le_lt_or_eq in LT. desf; simpls.
-  2: { apply IHn; auto. omega. }
-  all: exfalso; apply HH in s0; omega.
+  2: { apply IHn; auto. lia. }
+  all: exfalso; apply HH in s0; lia.
 Qed.
 
 Fixpoint first_nat_list (n : nat) : list nat :=
@@ -471,7 +471,7 @@ Fixpoint first_nat_list (n : nat) : list nat :=
 Lemma first_nat_list_In_alt (n m : nat) : In m (first_nat_list n) <-> m < n.
 Proof.
   induction n; simpls.
-  { omega. }
+  { lia. }
   split; intros HH; desf.
   { specialize_full IHn; auto. }
   inversion HH; auto.
@@ -483,7 +483,7 @@ Proof.
   { apply NoDup_nil. }
   apply NoDup_cons; auto.
   rewrite first_nat_list_In_alt.
-  omega.
+  lia.
 Qed.
 
 Lemma split_as_map {A B} (l : list (A * B)) :
@@ -505,10 +505,10 @@ Proof.
   induction lA; [done|].
   intros.
   destruct lB.
-  { simpls. omega. }
+  { simpls. lia. }
   simpls. desf.
   arewrite (l = lA); auto.
-  rewrite <- (IHlA lB); [|omega].
+  rewrite <- (IHlA lB); [|lia].
   unfold fst. basic_solver.
 Qed.
 

@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Program.Basics.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic Language.
@@ -263,7 +263,7 @@ Section SimRelInit.
       { erewrite steps_same_eindex; eauto.
         2: by eapply wf_thread_state_init.
         simpls.
-        split; [|omega].
+        split; [|lia].
         unfold is_init. basic_solver. }
 
       unfold prog_g_es_init, ES.init, prog_init_K, ES.cont_thread,

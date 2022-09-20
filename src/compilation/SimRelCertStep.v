@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Language.
 From imm Require Import
@@ -274,7 +274,7 @@ Section SimRelCertStep.
     { econstructor; splits; simpl; eauto.
       eexists; eexists.
       splits; simpl; eauto; by simpl. }
-    { rewrite updo; [|omega]. by rewrite upds. }
+    { rewrite updo; [|lia]. by rewrite upds. }
     by rewrite upds.
   Qed.
 
@@ -324,7 +324,7 @@ Section SimRelCertStep.
       destruct HB as [_ [_ [LAB [LBLS' RMW]]]].
       rewrite LAB.
       rewrite updo_opt, upds; desf.
-      red. ins. inv H. omega. }
+      red. ins. inv H. lia. }
       { eapply wf_thread_state_steps; eauto.
         eapply lbl_steps_in_steps.
         econstructor; econstructor; eauto. }
@@ -705,7 +705,7 @@ Section SimRelCertStep.
     all: rewrite restr_union; unionL; auto.
     all: unfold ew_delta.
     all: rewrite restr_union; unionL; auto.
-    all: unfold ES.acts_set; unfolder; ins; desf; omega.
+    all: unfold ES.acts_set; unfolder; ins; desf; lia.
   Qed.
 
   Lemma simrel_cert_step_e2a k k' e e' S S'
@@ -822,7 +822,7 @@ Section SimRelCertStep.
                  e2a S' □ jf_delta w (ES.next_act S) ⨾ Srmw S ⊆ Grf ⨾ Grmw)
         as BB.
       { unfold jf_delta. ins. rewrite (dom_l WF.(ES.rmwE)).
-        unfold ES.acts_set. unfolder. ins. desf. omega. }
+        unfold ES.acts_set. unfolder. ins. desf. lia. }
       assert (e' = Some (Datatypes.S (ES.next_act S)) ->
         (Srmw S') (ES.next_act S) (Datatypes.S (ES.next_act S)))
         as CC.
@@ -840,7 +840,7 @@ Section SimRelCertStep.
            !collect_rel_union; unionL; auto.
       1-4: basic_solver.
       { rewrite (dom_r WF.(ES.jfE)). unfold ES.acts_set.
-        unfolder. ins. desf. omega. }
+        unfolder. ins. desf. lia. }
       assert (Grf (e2a S' w) (e2a S' (ES.next_act S))) as RF.
       { eapply cert_rf_D_in_rf with (TC:=TC'); try apply SRCC; auto.
         apply seq_eqv_r. splits; eauto.
@@ -1200,7 +1200,7 @@ Section SimRelCertStep.
     assert (simrel_e2a S' G sc) as SRE2A.
     { eapply simrel_cert_step_e2a; eauto. }
     assert (~ (SE S (ES.next_act S))) as NES.
-    { intros HH. red in HH. omega. }
+    { intros HH. red in HH. lia. }
     cdes BSTEP_.
     ins. unfold sim_ews. unfolder. ins. desf.
     all: rename z into q.
@@ -1306,7 +1306,7 @@ Section SimRelCertStep.
     { eapply simrel_cert_step_e2a_lab; eauto. }
 
     assert (~ (SE S) (ES.next_act S)) as NES.
-    { intros HH. red in HH. omega. }
+    { intros HH. red in HH. lia. }
 
     cdes BSTEP_. subst.
 
@@ -1424,10 +1424,10 @@ Section SimRelCertStep.
 
     assert (~ SE S w') as NSEW'.
     { intros HH. red in HH.
-      unfold opt_ext in *. desf. omega. }
+      unfold opt_ext in *. desf. lia. }
 
     assert (~ SE S (ES.next_act S)) as NSER.
-    { intros HH. red in HH. omega. }
+    { intros HH. red in HH. lia. }
 
     assert (forall r, r × eq w' ⨾ ⦗X ∩₁ e2a S ⋄₁ I⦘ ⊆ ∅₂) as DD.
     { ins.

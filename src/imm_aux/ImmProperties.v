@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Basic.
 From imm Require Import
@@ -93,7 +93,7 @@ Proof.
   unfold ext_sb in EXT_SB.
   desc. subst.
   eapply acts_clos; auto.
-  omega.
+  lia.
 Qed.
 
 Lemma itrav_step_thread_ninit prog e TC'

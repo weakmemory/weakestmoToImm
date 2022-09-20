@@ -1,4 +1,4 @@
-Require Import Program.Basics Omega.
+Require Import Program.Basics Lia.
 From hahn Require Import Hahn.
 From PromisingLib Require Import Language.
 From imm Require Import Events Execution
@@ -1004,7 +1004,7 @@ Section SimRelAddCO.
           with (S' := S') in EQSEQN.
         2-4: subst; eauto.
         erewrite <- contseqn in EQSEQN; eauto.
-        omega. }
+        lia. }
       unfold eq_opt in *.
       destruct e' as [e'|]; [|intuition].
       subst w'.
@@ -1015,7 +1015,7 @@ Section SimRelAddCO.
         with (S' := S') in EQSEQN.
       2-4: subst; eauto.
       erewrite <- contseqn in EQSEQN; eauto.
-      omega.
+      lia.
     Qed.
 
     Lemma sim_add_co_e2a_ws_compl_ex_ktid w' k k' e e' S S'
